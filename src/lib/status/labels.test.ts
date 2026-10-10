@@ -12,6 +12,8 @@ import {
     formatRatioPercent,
     formatSeconds,
     formatUtcDateTime,
+    KEYWORD_HIT_LATENCY_NOTE,
+    LATENCY_SERIES_LABELS,
     PRODUCT_FAMILIES,
     utcDayOf,
     vendorLabel,
@@ -24,6 +26,16 @@ describe("FAMILY_LABELS", () => {
         expect(FAMILY_LABELS.websocket).toBe("WebSocket");
 
         expect(FAMILY_LABELS.sec_filings).toBe("SEC filings");
+    });
+});
+
+describe("LATENCY_SERIES_LABELS", () => {
+    it("names both speech-anchored series and carries the API-side measurement note", () => {
+        expect(LATENCY_SERIES_LABELS.firstSegment).toBe("speech → live segment");
+
+        expect(LATENCY_SERIES_LABELS.keywordHit).toBe("speech → keyword hit");
+
+        expect(KEYWORD_HIT_LATENCY_NOTE).toContain("measured inside the API process");
     });
 });
 

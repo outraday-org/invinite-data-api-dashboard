@@ -19,7 +19,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { coverageRows, earningsDayPoints, windowDayList } from "@/lib/status/chart-data";
-import { formatRatioPercent, formatSeconds, vendorLabel } from "@/lib/status/labels";
+import { formatRatioPercent, formatSeconds, KEYWORD_HIT_LATENCY_NOTE, LATENCY_SERIES_LABELS, vendorLabel } from "@/lib/status/labels";
 import { ALL_VENDORS } from "@/lib/status/search";
 
 import {
@@ -54,6 +54,8 @@ type BreachDotProps = {
 
 const SERIES_DOT = { fill: "var(--series-1)", r: 2, strokeWidth: 0 };
 
+const SECONDARY_DOT = { fill: "var(--series-2)", r: 2, strokeWidth: 0 };
+
 /**
  * Every measured day gets a small dot (an isolated day between gaps stays visible); an SLO-breach
  * day gets a larger dot in the destructive colour. A gap (no value) draws nothing.
@@ -76,15 +78,23 @@ function renderBreachDot({ cx, cy, index, payload }: BreachDotProps) {
     );
 }
 
+type LatencySeries = {
+    dataKey: "finalLatencyP95S" | "firstSegmentP95S" | "keywordHitP95S";
+    name: string;
+};
+
 type LatencyChartProps = {
-    dataKey: "finalLatencyP95S" | "firstSegmentP95S";
     description: string;
     points: Array<EarningsDayPoint>;
+    /** The SLO series (breach dots, the target line). */
+    series: LatencySeries;
+    /** A second, SLO-less series (the keyword-hit relay); its null days are gaps, never zeros. */
+    companion?: LatencySeries;
     targetS: number;
     title: string;
 };
 
-function LatencyChart({ dataKey, description, points, targetS, title }: LatencyChartProps) {
+function LatencyChart({ companion, description, points, series, targetS, title }: LatencyChartProps) {
     return (
         <ChartFrame description={description} title={title}>
             <LineChart data={points} margin={CHART_MARGIN}>
@@ -109,28 +119,43 @@ function LatencyChart({ dataKey, description, points, targetS, title }: LatencyC
                     strokeDasharray="4 4"
                     y={targetS}
                 />
+                {companion && <Legend formatter={legendText} iconType="plainline" />}
                 <Line
                     activeDot={{ r: 4 }}
                     connectNulls={false}
-                    dataKey={dataKey}
+                    dataKey={series.dataKey}
                     dot={renderBreachDot}
                     isAnimationActive={false}
-                    name="p95"
+                    name={series.name}
                     stroke="var(--series-1)"
                     strokeWidth={2}
                     type="monotone"
                 />
+                {companion && (
+                    <Line
+                        activeDot={{ r: 4 }}
+                        connectNulls={false}
+                        dataKey={companion.dataKey}
+                        dot={SECONDARY_DOT}
+                        isAnimationActive={false}
+                        name={companion.name}
+                        stroke="var(--series-2)"
+                        strokeWidth={2}
+                        type="monotone"
+                    />
+                )}
             </LineChart>
         </ChartFrame>
     );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, note, value }: { label: string; note?: string; value: string }) {
     return (
         <Card size="sm">
             <CardHeader className="gap-1">
                 <CardDescription>{label}</CardDescription>
                 <CardTitle className="text-2xl font-semibold tabular-nums">{value}</CardTitle>
+                {note && <p className="text-muted-foreground text-xs">{note}</p>}
             </CardHeader>
         </Card>
     );
@@ -176,6 +201,7 @@ function EarningsDayTable({ points, rows }: { points: Array<EarningsDayPoint>; r
                     <TableHead className="text-right">Live</TableHead>
                     <TableHead className="text-right">Capture success</TableHead>
                     <TableHead className="text-right">First segment p95</TableHead>
+                    <TableHead className="text-right" title={`${LATENCY_SERIES_LABELS.keywordHit}, all vendors; ${KEYWORD_HIT_LATENCY_NOTE}`}>Keyword hit p95</TableHead>
                     <TableHead className="text-right">Final p95</TableHead>
                     <TableHead>Breaches</TableHead>
                 </TableRow>
@@ -189,6 +215,7 @@ function EarningsDayTable({ points, rows }: { points: Array<EarningsDayPoint>; r
                         <TableCell className="text-right tabular-nums">{row.callsLive}</TableCell>
                         <TableCell className="text-right tabular-nums">{formatRatioPercent(row.captureSuccessRate, 1)}</TableCell>
                         <TableCell className="text-right tabular-nums">{formatSeconds(byDay.get(row.day)?.firstSegmentP95S)}</TableCell>
+                        <TableCell className="text-right tabular-nums">{formatSeconds(byDay.get(row.day)?.keywordHitP95S)}</TableCell>
                         <TableCell className="text-right tabular-nums">{formatSeconds(row.finalLatencyP95S)}</TableCell>
                         <TableCell className={row.breaches.length > 0 ? "text-destructive" : "text-muted-foreground"}>
                             {row.breaches.length > 0 ? row.breaches.map(breach => BREACH_LABELS[breach]).join(", ") : "none"}
@@ -219,7 +246,10 @@ export function EarningsSection({ earnings, onVendorChange, vendor }: EarningsSe
         [earnings.generatedAt, earnings.windowDays],
     );
 
-    const points = React.useMemo(() => earningsDayPoints(earnings.days, vendor, windowDays), [earnings.days, vendor, windowDays]);
+    const points = React.useMemo(
+        () => earningsDayPoints(earnings.days, vendor, windowDays, earnings.keywordHitDays),
+        [earnings.days, earnings.keywordHitDays, vendor, windowDays],
+    );
 
     const coverage = React.useMemo(() => coverageRows(earnings.coverageDays, windowDays), [earnings.coverageDays, windowDays]);
 
@@ -229,9 +259,14 @@ export function EarningsSection({ earnings, onVendorChange, vendor }: EarningsSe
                 <li>{`First live segment p95 ≤ ${firstSegmentTargetS} s after call start`}</li>
                 <li>{`Final transcript p95 ≤ ${earnings.slo.finalP95S} s after call end`}</li>
             </ul>
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                 <StatCard label="First segment p95 (7 d)" value={formatSeconds(last7d.firstSegmentP95Ms === null ? null : last7d.firstSegmentP95Ms / 1000)} />
                 <StatCard label="Final transcript p95 (7 d)" value={formatSeconds(last7d.finalLatencyP95S)} />
+                <StatCard
+                    label="Keyword hit p95 (7 d)"
+                    note={`${LATENCY_SERIES_LABELS.keywordHit}; ${KEYWORD_HIT_LATENCY_NOTE}`}
+                    value={formatSeconds(last7d.keywordHitP95Ms === null ? null : last7d.keywordHitP95Ms / 1000)}
+                />
                 <StatCard label="Capture success (7 d)" value={formatRatioPercent(last7d.captureSuccessRate, 1)} />
                 <StatCard label="Covered live (7 d)" value={formatRatioPercent(last7d.coveredLiveRate, 1)} />
             </div>
@@ -245,16 +280,17 @@ export function EarningsSection({ earnings, onVendorChange, vendor }: EarningsSe
                             </div>
                             <div className="grid gap-6 lg:grid-cols-2">
                                 <LatencyChart
-                                    dataKey="firstSegmentP95S"
-                                    description="Daily p95 from call start; red dots mark SLO-breach days"
+                                    companion={{ dataKey: "keywordHitP95S", name: LATENCY_SERIES_LABELS.keywordHit }}
+                                    description={`Daily p95 from call start (red dots mark SLO-breach days) and from the spoken word to a relayed keyword hit (all vendors, days without hits omitted; ${KEYWORD_HIT_LATENCY_NOTE})`}
                                     points={points}
+                                    series={{ dataKey: "firstSegmentP95S", name: LATENCY_SERIES_LABELS.firstSegment }}
                                     targetS={firstSegmentTargetS}
-                                    title="First live segment p95"
+                                    title="Live latency p95"
                                 />
                                 <LatencyChart
-                                    dataKey="finalLatencyP95S"
                                     description="Daily p95 from call end; red dots mark SLO-breach days"
                                     points={points}
+                                    series={{ dataKey: "finalLatencyP95S", name: "p95" }}
                                     targetS={earnings.slo.finalP95S}
                                     title="Final transcript p95"
                                 />

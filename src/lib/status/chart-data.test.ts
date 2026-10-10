@@ -97,10 +97,34 @@ describe("earningsDayPoints", () => {
         ], "all", WINDOW);
 
         expect(points).toEqual([
-            { breached: false, captureSuccessPct: 90, day: "2026-10-08", finalLatencyP95S: 200, firstSegmentP95S: 12 },
-            { breached: false, captureSuccessPct: null, day: "2026-10-09", finalLatencyP95S: null, firstSegmentP95S: null },
-            { breached: true, captureSuccessPct: 90, day: "2026-10-10", finalLatencyP95S: 200, firstSegmentP95S: 12 },
+            { breached: false, captureSuccessPct: 90, day: "2026-10-08", finalLatencyP95S: 200, firstSegmentP95S: 12, keywordHitP50S: null, keywordHitP95S: null },
+            { breached: false, captureSuccessPct: null, day: "2026-10-09", finalLatencyP95S: null, firstSegmentP95S: null, keywordHitP50S: null, keywordHitP95S: null },
+            { breached: true, captureSuccessPct: 90, day: "2026-10-10", finalLatencyP95S: 200, firstSegmentP95S: 12, keywordHitP50S: null, keywordHitP95S: null },
         ]);
+    });
+
+    it("joins the keyword-hit latency by day in seconds, null (not zero) on a day without hits", () => {
+        const points = earningsDayPoints([base, { ...base, day: "2026-10-10" }], "all", WINDOW, [
+            { day: "2026-10-08", hits: 12, p50Ms: 800, p95Ms: 1600 },
+            { day: "2026-10-09", hits: 0, p50Ms: 0, p95Ms: 0 },
+            { day: "2026-10-10", hits: 3, p50Ms: 400, p95Ms: null },
+        ]);
+
+        expect(points.map(point => ({ day: point.day, keywordHitP50S: point.keywordHitP50S, keywordHitP95S: point.keywordHitP95S }))).toEqual([
+            { day: "2026-10-08", keywordHitP50S: 0.8, keywordHitP95S: 1.6 },
+            { day: "2026-10-09", keywordHitP50S: null, keywordHitP95S: null },
+            { day: "2026-10-10", keywordHitP50S: 0.4, keywordHitP95S: null },
+        ]);
+
+        expect(points[0].firstSegmentP95S).toBe(12);
+    });
+
+    it("keeps a keyword-hit day the vendor has no SLO row for (never drop a measured day)", () => {
+        const points = earningsDayPoints([], "notified", WINDOW, [{ day: "2026-10-07", hits: 1, p50Ms: 200, p95Ms: 200 }]);
+
+        expect(points.map(point => point.day)).toEqual(["2026-10-07", ...WINDOW]);
+
+        expect(points[0]).toMatchObject({ captureSuccessPct: null, firstSegmentP95S: null, keywordHitP50S: 0.2, keywordHitP95S: 0.2 });
     });
 });
 

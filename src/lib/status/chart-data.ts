@@ -1,5 +1,6 @@
 import type {
     EarningsCallsCoverageDay,
+    EarningsCallsKeywordHitDay,
     EarningsCallsStatusDay,
     StatusFamily,
     StatusFamilyDay,
@@ -72,21 +73,41 @@ export type EarningsDayPoint = {
     day: string;
     finalLatencyP95S: null | number;
     firstSegmentP95S: null | number;
+    /** Speech → keyword hit p50 (s, measured inside the API process); null on a day without hits. */
+    keywordHitP50S: null | number;
+    /** Speech → keyword hit p95 (s); null on a day without hits or above the histogram's last bucket. */
+    keywordHitP95S: null | number;
 };
 
-/** The selected vendor's rows (`all` = the aggregate rows) on the window's days; a day without a row is all `null`. */
+const msToSeconds = (value: null | number) => (value === null ? null : value / 1000);
+
+/**
+ * The selected vendor's rows (`all` = the aggregate rows) on the window's days, joined by day with the
+ * API-measured keyword-hit latency (not per vendor); a day without a row is all `null`, a day without
+ * hits has null keyword values (a gap on the chart, never a zero).
+ */
 export function earningsDayPoints(
     days: ReadonlyArray<EarningsCallsStatusDay>,
     vendor: string,
     windowDays: ReadonlyArray<string>,
+    keywordHitDays: ReadonlyArray<EarningsCallsKeywordHitDay> = [],
 ): Array<EarningsDayPoint> {
     const byDay = new Map(days.filter(item => item.vendor === vendor).map(item => [item.day, item]));
 
-    return axisDays(windowDays, byDay.keys()).map((day) => {
+    const keywordByDay = new Map(keywordHitDays.filter(item => item.hits > 0).map(item => [item.day, item]));
+
+    return axisDays(windowDays, [...byDay.keys(), ...keywordByDay.keys()]).map((day) => {
         const item = byDay.get(day);
 
+        const keyword = keywordByDay.get(day);
+
+        const keywordValues = {
+            keywordHitP50S: msToSeconds(keyword?.p50Ms ?? null),
+            keywordHitP95S: msToSeconds(keyword?.p95Ms ?? null),
+        };
+
         if (!item) {
-            return { breached: false, captureSuccessPct: null, day, finalLatencyP95S: null, firstSegmentP95S: null };
+            return { breached: false, captureSuccessPct: null, day, finalLatencyP95S: null, firstSegmentP95S: null, ...keywordValues };
         }
 
         return {
@@ -94,7 +115,8 @@ export function earningsDayPoints(
             captureSuccessPct: item.captureSuccessRate === null ? null : item.captureSuccessRate * 100,
             day,
             finalLatencyP95S: item.finalLatencyP95S,
-            firstSegmentP95S: item.firstSegmentP95Ms === null ? null : item.firstSegmentP95Ms / 1000,
+            firstSegmentP95S: msToSeconds(item.firstSegmentP95Ms),
+            ...keywordValues,
         };
     });
 }

@@ -455,7 +455,7 @@
       },
       "WebSocketSubscribeEarningsCall": {
         "type": "object",
-        "description": "Client frame: subscribe to the live transcript of one earnings call, by event_id or by cik (the call that is live or starts within ±2 h). Requires the PRO plan.",
+        "description": "Client frame: subscribe to the live transcript of one earnings call, by event_id or by cik (the call that is live or starts within ±2 h), or with scope: all_live (no event_id / cik) to every call being captured live — keyword hits only, never segments, one subscription slot. Requires the PRO plan.",
         "required": [
           "type",
           "channel"
@@ -483,6 +483,13 @@
             "pattern": "^\\d{1,10}$",
             "description": "CIK, padded or not"
           },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "all_live"
+            ],
+            "description": "all_live = every live call (keywords required, error keywords_required without); then no event_id / cik"
+          },
           "since_seq": {
             "type": "integer",
             "minimum": -1,
@@ -492,6 +499,54 @@
             "type": "boolean",
             "default": false,
             "description": "Also receive partial (not yet final) segments"
+          },
+          "keywords": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 64
+            },
+            "description": "Keyword alerts: a keyword_hit frame for every FINAL segment that contains one (whole words, case-insensitive, multi-word allowed). Held for this subscription only"
+          },
+          "keyword_match": {
+            "type": "string",
+            "enum": [
+              "exact",
+              "stem"
+            ],
+            "default": "exact",
+            "description": "exact = whole-word match of your spelling (buyback never matches buybacks); stem = also s / es / ed / ing / 's per word (tariff matches tariffs)"
+          },
+          "speaker_roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "executive",
+                "ir_host",
+                "analyst",
+                "operator"
+              ]
+            },
+            "description": "Only hits spoken by one of these roles (from the provisional live speaker names; a hit whose speaker is still unnamed passes)"
+          },
+          "min_rank": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "all_live only: calls of companies ranked ≤ min_rank by market cap"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "keyword_hit",
+                "guidance_flash"
+              ]
+            },
+            "description": "all_live only: what reaches the subscription (default keyword_hit; add guidance_flash to receive the flashes of every live call)"
           }
         }
       },
@@ -517,16 +572,10 @@
       },
       "WebSocketSubscribedEvent": {
         "type": "object",
-        "description": "A subscription is active",
+        "description": "A subscription is active. A per-call subscription carries the call (event_id … state); a scope: all_live subscription carries scope, keywords and live_calls instead",
         "required": [
           "type",
-          "subscription_id",
-          "event_id",
-          "cik",
-          "symbol",
-          "conference_date",
-          "current_seq",
-          "state"
+          "subscription_id"
         ],
         "properties": {
           "type": {
@@ -566,6 +615,266 @@
               "capturing",
               "ended"
             ]
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "all_live"
+            ],
+            "description": "all_live subscriptions only"
+          },
+          "keywords": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "all_live only: the keywords as held"
+          },
+          "live_calls": {
+            "type": "integer",
+            "description": "all_live only: calls being captured live that the subscription follows right now"
+          }
+        }
+      },
+      "WebSocketKeywordHitEvent": {
+        "type": "object",
+        "description": "A subscribed keyword occurred in a FINAL segment (layer live; partials are never evaluated) or, once per subscription at transcript_ready, in the final transcript (layer final; a final hit within ± 5 s of a live hit of the same keyword is not repeated). The only call-level frame of a scope: all_live subscription besides guidance_flash",
+        "required": [
+          "type",
+          "subscription_id",
+          "event_id",
+          "cik",
+          "symbol",
+          "conference_date",
+          "keyword",
+          "seq",
+          "start_ms",
+          "end_ms",
+          "text",
+          "context_before",
+          "speaker_label",
+          "speaker_name",
+          "speaker_role",
+          "layer",
+          "latency_ms"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "keyword_hit"
+            ]
+          },
+          "subscription_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cik": {
+            "type": "string",
+            "description": "10-digit CIK"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "conference_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "keyword": {
+            "type": "string",
+            "description": "The subscriber's own spelling of the keyword"
+          },
+          "seq": {
+            "type": "integer",
+            "nullable": true,
+            "description": "The live final's seq; null on the final layer"
+          },
+          "start_ms": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Offset from the start of the recording"
+          },
+          "end_ms": {
+            "type": "integer",
+            "nullable": true,
+            "description": "null on the final layer when the cleaned text has no end timing"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "The segment (live) or turn (final), at most 500 chars"
+          },
+          "context_before": {
+            "type": "string",
+            "nullable": true,
+            "description": "The previous final / turn of the call (≤ 300 chars); a final is often half a sentence"
+          },
+          "speaker_label": {
+            "type": "string",
+            "nullable": true,
+            "description": "Diarization label"
+          },
+          "speaker_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "From the live speaker-name snapshot (null while unnamed) or the final transcript"
+          },
+          "speaker_role": {
+            "type": "string",
+            "nullable": true,
+            "description": "executive | ir_host | analyst | operator; null while unnamed"
+          },
+          "layer": {
+            "type": "string",
+            "enum": [
+              "live",
+              "final"
+            ],
+            "description": "live = a live final; final = the final transcript at transcript_ready (once per subscription)"
+          },
+          "latency_ms": {
+            "type": "integer",
+            "nullable": true,
+            "description": "live only: relay time inside the API process minus the segment's own end time (excludes the client's network); null when the call's clock is unknown"
+          }
+        }
+      },
+      "WebSocketGuidanceFlashEvent": {
+        "type": "object",
+        "description": "A forward-looking guidance number extracted from the live transcript seconds after it was spoken (one frame per metric / period; a restatement repeats it with a higher revision). Sent to every subscription of the call and to all_live subscriptions whose events include guidance_flash. Provisional: the structured guidance of /v1/earnings-calls/extractions replaces it after the call",
+        "required": [
+          "type",
+          "subscription_id",
+          "event_id",
+          "cik",
+          "symbol",
+          "conference_date",
+          "seq",
+          "revision",
+          "metric",
+          "metric_normalized",
+          "period_label",
+          "low",
+          "high",
+          "point",
+          "unit",
+          "currency",
+          "source_sentence",
+          "start_ms"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "guidance_flash"
+            ]
+          },
+          "subscription_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cik": {
+            "type": "string",
+            "description": "10-digit CIK"
+          },
+          "symbol": {
+            "type": "string"
+          },
+          "conference_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "seq": {
+            "type": "integer",
+            "description": "The final that triggered the extraction"
+          },
+          "revision": {
+            "type": "integer",
+            "description": "1 for the first flash of a metric / period; higher when the numbers were restated"
+          },
+          "metric": {
+            "type": "string",
+            "description": "The metric as spoken"
+          },
+          "metric_normalized": {
+            "type": "string",
+            "description": "revenue, eps_gaap, segment:<slug> …"
+          },
+          "period_label": {
+            "type": "string",
+            "description": "Q4 FY2026, FY2026 …"
+          },
+          "low": {
+            "type": "number",
+            "nullable": true,
+            "description": "Lower bound of the range (absolute units)"
+          },
+          "high": {
+            "type": "number",
+            "nullable": true,
+            "description": "Upper bound of the range"
+          },
+          "point": {
+            "type": "number",
+            "nullable": true,
+            "description": "A point value when no range was given"
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true,
+            "description": "USD, percent, shares …"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISO 4217 when a currency applies"
+          },
+          "source_sentence": {
+            "type": "string",
+            "description": "The verbatim sentence the numbers come from"
+          },
+          "start_ms": {
+            "type": "integer",
+            "description": "Offset of the sentence from the start of the recording"
+          }
+        }
+      },
+      "WebSocketWarningEvent": {
+        "type": "object",
+        "description": "A subscription is degraded but keeps running: global_scope_degraded = a new live call was not attached because this server already follows its cap of live calls (sent once per subscription while the cap holds)",
+        "required": [
+          "type",
+          "code",
+          "message",
+          "subscription_id"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "warning"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "global_scope_degraded"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "subscription_id": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -848,6 +1157,7 @@
               "subscription_limit",
               "attach_failed",
               "resume_unavailable",
+              "keywords_required",
               "unavailable"
             ]
           },
@@ -886,6 +1196,7 @@
               "earnings_call.transcript_corrected",
               "earnings_call.assets_ready",
               "earnings_call.guidance_flash",
+              "earnings_call.keyword_hit",
               "ping"
             ]
           },
@@ -16803,6 +17114,7 @@
                                 "earnings_call.transcript_corrected",
                                 "earnings_call.assets_ready",
                                 "earnings_call.guidance_flash",
+                                "earnings_call.keyword_hit",
                                 "ping"
                               ]
                             }
@@ -16826,7 +17138,7 @@
                                 "items": {
                                   "type": "string"
                                 },
-                                "description": "Keywords for keyword alerts (reserved)"
+                                "description": "Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript"
                               }
                             }
                           },
@@ -16973,7 +17285,7 @@
                         "items": {
                           "type": "string"
                         },
-                        "description": "Reserved for keyword alerts"
+                        "description": "Keyword alerts (with earnings_call.keyword_hit in events): whole-word, case-insensitive matches"
                       }
                     }
                   }
@@ -17031,6 +17343,7 @@
                           "earnings_call.transcript_corrected",
                           "earnings_call.assets_ready",
                           "earnings_call.guidance_flash",
+                          "earnings_call.keyword_hit",
                           "ping"
                         ]
                       }
@@ -17054,7 +17367,7 @@
                           "items": {
                             "type": "string"
                           },
-                          "description": "Keywords for keyword alerts (reserved)"
+                          "description": "Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript"
                         }
                       }
                     },
@@ -17185,6 +17498,235 @@
       }
     },
     "/v1/earnings-calls/webhooks/{id}": {
+      "patch": {
+        "tags": [
+          "Earnings Calls"
+        ],
+        "description": "Change a webhook subscription's keywords, companies, events or active flag (at least one field). active: true re-enables a subscription disabled after failed deliveries. Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. Minimum tier for display: FREE.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "minProperties": 1,
+                "description": "Any of the four fields; at least one",
+                "properties": {
+                  "keywords": {
+                    "type": "array",
+                    "maxItems": 20,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Replaces the keyword list (empty = no keyword alerts)"
+                  },
+                  "ciks": {
+                    "type": "array",
+                    "maxItems": 10,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Replaces the company filter (empty = every company)"
+                  },
+                  "events": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Replaces the event list"
+                  },
+                  "active": {
+                    "type": "boolean",
+                    "description": "true re-enables a disabled subscription (its failure counter resets); false pauses it (disabled_reason: paused)"
+                  }
+                }
+              }
+            }
+          },
+          "description": "Any of the four fields; at least one"
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Webhook subscription id (from the create / list response)"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "url",
+                    "events",
+                    "filters",
+                    "active",
+                    "disabled_reason",
+                    "consecutive_failures",
+                    "secret_hint",
+                    "created_at",
+                    "updated_at"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Subscription id"
+                    },
+                    "url": {
+                      "type": "string",
+                      "description": "HTTPS endpoint the deliveries are POSTed to"
+                    },
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "earnings_call.scheduled",
+                          "earnings_call.rescheduled",
+                          "earnings_call.started",
+                          "earnings_call.ended",
+                          "earnings_call.transcript_provisional",
+                          "earnings_call.transcript_ready",
+                          "earnings_call.transcript_corrected",
+                          "earnings_call.assets_ready",
+                          "earnings_call.guidance_flash",
+                          "earnings_call.keyword_hit",
+                          "ping"
+                        ]
+                      }
+                    },
+                    "filters": {
+                      "type": "object",
+                      "required": [
+                        "ciks",
+                        "keywords"
+                      ],
+                      "properties": {
+                        "ciks": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "10-digit CIKs; empty = every company"
+                        },
+                        "keywords": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript"
+                        }
+                      }
+                    },
+                    "active": {
+                      "type": "boolean",
+                      "description": "false once disabled"
+                    },
+                    "disabled_reason": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Why the subscription was disabled"
+                    },
+                    "consecutive_failures": {
+                      "type": "integer",
+                      "description": "Dead-lettered deliveries in a row"
+                    },
+                    "secret_hint": {
+                      "type": "string",
+                      "description": "Last 4 characters of the signing secret"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "403": {
+            "description": "Forbidden - webhooks require the PRO plan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Type of error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Detailed error message"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ],
+                  "description": "Forbidden - webhooks require the PRO plan"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "description": "Service Unavailable - subscriptions or deliveries are temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "description": "Type of error"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Detailed error message"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ],
+                  "description": "Service Unavailable - subscriptions or deliveries are temporarily unavailable"
+                }
+              }
+            }
+          }
+        },
+        "x-tier": "pro",
+        "x-license": "display"
+      },
       "delete": {
         "tags": [
           "Earnings Calls"
@@ -17599,6 +18141,7 @@
                               "earnings_call.transcript_corrected",
                               "earnings_call.assets_ready",
                               "earnings_call.guidance_flash",
+                              "earnings_call.keyword_hit",
                               "ping"
                             ]
                           },
@@ -18949,6 +19492,7 @@
                     "coverage",
                     "windowDays",
                     "coverageDays",
+                    "keywordHitDays",
                     "summary"
                   ],
                   "properties": {
@@ -19111,6 +19655,40 @@
                         }
                       }
                     },
+                    "keywordHitDays": {
+                      "type": "array",
+                      "description": "Keyword-hit relay latency per UTC day, oldest first (a day without hits is omitted): relay time inside the API process minus the segment's own end time; excludes the client's network. Measured by this API, not by the pipeline",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "day",
+                          "hits",
+                          "p50Ms",
+                          "p95Ms"
+                        ],
+                        "properties": {
+                          "day": {
+                            "type": "string",
+                            "format": "date",
+                            "description": "UTC day"
+                          },
+                          "hits": {
+                            "type": "integer",
+                            "description": "Live keyword_hit frames relayed"
+                          },
+                          "p50Ms": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Median keyword-hit relay latency bucket upper bound (ms)"
+                          },
+                          "p95Ms": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "p95 keyword-hit relay latency bucket upper bound (ms); null above 12,800 ms"
+                          }
+                        }
+                      }
+                    },
                     "summary": {
                       "type": "object",
                       "required": [
@@ -19123,7 +19701,8 @@
                             "firstSegmentP95Ms",
                             "finalLatencyP95S",
                             "captureSuccessRate",
-                            "coveredLiveRate"
+                            "coveredLiveRate",
+                            "keywordHitP95Ms"
                           ],
                           "properties": {
                             "firstSegmentP95Ms": {
@@ -19145,6 +19724,11 @@
                               "type": "number",
                               "nullable": true,
                               "description": "Calls covered live / calls"
+                            },
+                            "keywordHitP95Ms": {
+                              "type": "integer",
+                              "nullable": true,
+                              "description": "Worst daily keyword-hit relay p95 of the 7 newest days (ms; measured inside the API process, excludes the client's network)"
                             }
                           }
                         }
@@ -19490,7 +20074,7 @@
     "/v1/ws": {
       "ws": {
         "summary": "WebSocket filings stream and live earnings-call transcripts",
-        "description": "Upgrade to a WebSocket connection to receive real-time SEC filing events. Authenticate with API Key.\n\nLive earnings-call transcripts (channel `earnings-calls.live`, requires the PRO plan; the socket itself needs STANDARD): send a `subscribe` frame with an `event_id` or a `cik` and receive `subscribed`, then `transcript_segment` frames as the call is spoken, `speaker_names` snapshots, the lifecycle frames `call_started` / `call_ended` / `transcript_provisional` / `transcript_ready` / `rescheduled` (after `transcript_ready` or `rescheduled` the subscription ends with `unsubscribed`, whose `reason` names why; it also ends 2 h after `call_ended`, when the call will produce nothing more, or 12 h after the scheduled start). Finals are delivered in `seq` order; a `gap` frame reports a range that did not arrive within 1.5 s (a late final may still follow). To resume after a reconnect, subscribe again with `since_seq` = the last final seq you hold: the missed finals are replayed before live delivery continues (`resume_unavailable` when the call cannot be replayed). An `error` frame (code `unavailable`) reports a server-side failure; the socket always stays open. Minimum tier for display: FREE.",
+        "description": "Upgrade to a WebSocket connection to receive real-time SEC filing events. Authenticate with API Key.\n\nLive earnings-call transcripts (channel `earnings-calls.live`, requires the PRO plan; the socket itself needs STANDARD): send a `subscribe` frame with an `event_id` or a `cik` and receive `subscribed`, then `transcript_segment` frames as the call is spoken, `speaker_names` snapshots, the lifecycle frames `call_started` / `call_ended` / `transcript_provisional` / `transcript_ready` / `rescheduled` (after `transcript_ready` or `rescheduled` the subscription ends with `unsubscribed`, whose `reason` names why; it also ends 2 h after `call_ended`, when the call will produce nothing more, or 12 h after the scheduled start). Finals are delivered in `seq` order; a `gap` frame reports a range that did not arrive within 1.5 s (a late final may still follow). To resume after a reconnect, subscribe again with `since_seq` = the last final seq you hold: the missed finals are replayed before live delivery continues (`resume_unavailable` when the call cannot be replayed). An `error` frame (code `unavailable`) reports a server-side failure; the socket always stays open.\n\nKeyword alerts and guidance flashes: a `subscribe` with `keywords` (up to 20; `keyword_match` exact | stem, `speaker_roles` to keep management's words only) also sends a `keyword_hit` frame for every final segment that contains one — with the speaker's provisional name / role, the previous final as context and `latency_ms` (relay time inside the API process minus the segment's own end time; the client's network is excluded). Every subscription of a call receives `guidance_flash` frames: forward-looking numbers extracted seconds after they are spoken. `scope: all_live` with `keywords` (no `event_id` / `cik`; `min_rank` limits the companies; `events` may add `guidance_flash`) follows every call being captured live for one subscription slot and receives keyword hits only, never segments; a `warning` frame (`global_scope_degraded`) says a new call was not attached. At `transcript_ready` an `all_live` subscription also gets the final transcript's hits once (`layer: final`), without those a live hit already covered within ± 5 s. Minimum tier for display: FREE.",
         "tags": [
           "WebSocket"
         ],
@@ -19563,6 +20147,27 @@
             }
           },
           {
+            "name": "keyword_hit",
+            "description": "A subscribed keyword in a final segment (layer live) or in the final transcript at transcript_ready (layer final)",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketKeywordHitEvent"
+            }
+          },
+          {
+            "name": "guidance_flash",
+            "description": "A guidance number extracted from the live transcript seconds after it was spoken",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketGuidanceFlashEvent"
+            }
+          },
+          {
+            "name": "warning",
+            "description": "A subscription is degraded but keeps running (global_scope_degraded)",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketWarningEvent"
+            }
+          },
+          {
             "name": "call_started",
             "description": "A lifecycle phase of the subscribed call",
             "payload": {
@@ -19622,7 +20227,7 @@
         "x-client-messages": [
           {
             "name": "subscribe",
-            "description": "Subscribe to the live transcript of an earnings call (PRO)",
+            "description": "Subscribe to the live transcript of an earnings call (PRO), optionally with keyword alerts, or with scope: all_live to the keyword hits of every live call",
             "payload": {
               "$ref": "#/components/schemas/WebSocketSubscribeEarningsCall"
             }
@@ -21908,7 +22513,7 @@
     "earnings_call.guidance_flash": {
       "post": {
         "summary": "earnings_call.guidance_flash",
-        "description": "Live guidance flash (reserved)",
+        "description": "A guidance number extracted from the live transcript seconds after it was spoken (once per subscription and flash; a restated number comes again with a higher revision)",
         "tags": [
           "Webhooks"
         ],
@@ -21960,9 +22565,10 @@
                       },
                       "data": {
                         "type": "object",
-                        "description": "Live guidance flash (reserved)",
+                        "description": "A guidance number extracted from the live transcript seconds after it was spoken (once per subscription and flash; a restated number comes again with a higher revision)",
                         "required": [
-                          "event"
+                          "event",
+                          "guidance_flash"
                         ],
                         "properties": {
                           "event": {
@@ -22136,6 +22742,434 @@
                                 "type": "string",
                                 "nullable": true,
                                 "description": "Webcast page of an upcoming dated call; null once published"
+                              }
+                            }
+                          },
+                          "guidance_flash": {
+                            "type": "object",
+                            "required": [
+                              "seq",
+                              "revision",
+                              "metric",
+                              "metric_normalized",
+                              "period_label",
+                              "low",
+                              "high",
+                              "point",
+                              "unit",
+                              "currency",
+                              "source_sentence",
+                              "start_ms"
+                            ],
+                            "properties": {
+                              "seq": {
+                                "type": "integer",
+                                "description": "The final that triggered the extraction"
+                              },
+                              "revision": {
+                                "type": "integer",
+                                "description": "1 for the first flash of a metric / period; higher when the numbers were restated"
+                              },
+                              "metric": {
+                                "type": "string",
+                                "description": "The metric as spoken"
+                              },
+                              "metric_normalized": {
+                                "type": "string",
+                                "description": "revenue, eps_gaap, segment:<slug> …"
+                              },
+                              "period_label": {
+                                "type": "string",
+                                "description": "Q4 FY2026, FY2026 …"
+                              },
+                              "low": {
+                                "type": "number",
+                                "nullable": true,
+                                "description": "Lower bound of the range (absolute units)"
+                              },
+                              "high": {
+                                "type": "number",
+                                "nullable": true,
+                                "description": "Upper bound of the range"
+                              },
+                              "point": {
+                                "type": "number",
+                                "nullable": true,
+                                "description": "A point value when no range was given"
+                              },
+                              "unit": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "USD, percent, shares …"
+                              },
+                              "currency": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "ISO 4217 when a currency applies"
+                              },
+                              "source_sentence": {
+                                "type": "string",
+                                "description": "The verbatim sentence the numbers come from"
+                              },
+                              "start_ms": {
+                                "type": "integer",
+                                "description": "Offset of the sentence from the start of the recording"
+                              }
+                            }
+                          },
+                          "partial": {
+                            "type": "boolean",
+                            "description": "Present (true) only when a detail was still missing 60 s after the event"
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "2XX": {
+            "description": "Acknowledged; anything else is retried"
+          }
+        }
+      }
+    },
+    "earnings_call.keyword_hit": {
+      "post": {
+        "summary": "earnings_call.keyword_hit",
+        "description": "Keyword hits of a subscription with filters.keywords: live hits are batched per call every 5 s (layer live); at transcript_ready the final transcript's hits come once (layer final), without those a live hit already covered within ± 5 s",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "name": "X-Invinite-Event",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "earnings_call.keyword_hit"
+              ]
+            }
+          },
+          {
+            "name": "X-Invinite-Delivery",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Invinite-Signature",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/WebhookEnvelope"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "event": {
+                        "type": "string",
+                        "enum": [
+                          "earnings_call.keyword_hit"
+                        ]
+                      },
+                      "data": {
+                        "type": "object",
+                        "description": "Keyword hits of a subscription with filters.keywords: live hits are batched per call every 5 s (layer live); at transcript_ready the final transcript's hits come once (layer final), without those a live hit already covered within ± 5 s",
+                        "required": [
+                          "event",
+                          "layer",
+                          "hits"
+                        ],
+                        "properties": {
+                          "event": {
+                            "type": "object",
+                            "required": [
+                              "event_id",
+                              "source",
+                              "cik",
+                              "symbol",
+                              "company_name",
+                              "exchange",
+                              "event_type",
+                              "fiscal_year",
+                              "fiscal_quarter",
+                              "scheduled_at",
+                              "tz",
+                              "date_status",
+                              "call_time_source",
+                              "call_time_confidence",
+                              "session",
+                              "started_at",
+                              "ended_at",
+                              "results_released_at",
+                              "capture_status",
+                              "reschedule_count",
+                              "has_transcript",
+                              "has_audio",
+                              "has_slides",
+                              "has_press_release",
+                              "has_documents",
+                              "webcast_url"
+                            ],
+                            "properties": {
+                              "event_id": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "Stable event identifier"
+                              },
+                              "source": {
+                                "type": "string",
+                                "enum": [
+                                  "us"
+                                ],
+                                "description": "Always `us`"
+                              },
+                              "cik": {
+                                "type": "string",
+                                "description": "10-digit CIK"
+                              },
+                              "symbol": {
+                                "type": "string",
+                                "description": "Ticker symbol"
+                              },
+                              "company_name": {
+                                "type": "string",
+                                "description": "Company name"
+                              },
+                              "exchange": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Listing exchange"
+                              },
+                              "event_type": {
+                                "type": "string",
+                                "enum": [
+                                  "earnings_call",
+                                  "investor_day",
+                                  "conference",
+                                  "agm",
+                                  "other"
+                                ],
+                                "description": "Event type"
+                              },
+                              "fiscal_year": {
+                                "type": "integer",
+                                "nullable": true,
+                                "description": "Fiscal year of the reported period"
+                              },
+                              "fiscal_quarter": {
+                                "type": "integer",
+                                "nullable": true,
+                                "description": "Fiscal quarter of the reported period"
+                              },
+                              "scheduled_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Scheduled start (ISO 8601 UTC). When call_time_source is null only the date is known: read only its calendar date in tz."
+                              },
+                              "tz": {
+                                "type": "string",
+                                "description": "Company timezone (IANA)"
+                              },
+                              "date_status": {
+                                "type": "string",
+                                "enum": [
+                                  "estimated",
+                                  "unconfirmed",
+                                  "confirmed",
+                                  "postponed",
+                                  "cancelled"
+                                ],
+                                "description": "How firm the date is"
+                              },
+                              "call_time_source": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Source of the start time (wire, edgar, ir_feed, human, provisional, vendor, estimate); null = date only"
+                              },
+                              "call_time_confidence": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Confidence of the start time (high, low)"
+                              },
+                              "session": {
+                                "type": "string",
+                                "enum": [
+                                  "bmo",
+                                  "amc",
+                                  "intraday"
+                                ],
+                                "nullable": true,
+                                "description": "Market session"
+                              },
+                              "started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true,
+                                "description": "When the live call started (first spoken words)"
+                              },
+                              "ended_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true,
+                                "description": "When the call ended"
+                              },
+                              "results_released_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true,
+                                "description": "When the results press release was filed"
+                              },
+                              "capture_status": {
+                                "type": "string",
+                                "description": "Capture state of the call"
+                              },
+                              "reschedule_count": {
+                                "type": "integer",
+                                "description": "How often the call was rescheduled"
+                              },
+                              "has_transcript": {
+                                "type": "boolean",
+                                "description": "A transcript is available"
+                              },
+                              "has_audio": {
+                                "type": "boolean",
+                                "description": "Audio is available"
+                              },
+                              "has_slides": {
+                                "type": "boolean",
+                                "description": "A slide deck is available"
+                              },
+                              "has_press_release": {
+                                "type": "boolean",
+                                "description": "The results press release is available"
+                              },
+                              "has_documents": {
+                                "type": "boolean",
+                                "description": "Further event documents are available"
+                              },
+                              "webcast_url": {
+                                "type": "string",
+                                "nullable": true,
+                                "description": "Webcast page of an upcoming dated call; null once published"
+                              }
+                            }
+                          },
+                          "layer": {
+                            "type": "string",
+                            "enum": [
+                              "live",
+                              "final"
+                            ]
+                          },
+                          "hits": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "cik",
+                                "symbol",
+                                "conference_date",
+                                "keyword",
+                                "seq",
+                                "start_ms",
+                                "end_ms",
+                                "text",
+                                "context_before",
+                                "speaker_label",
+                                "speaker_name",
+                                "speaker_role",
+                                "layer",
+                                "latency_ms"
+                              ],
+                              "properties": {
+                                "cik": {
+                                  "type": "string",
+                                  "description": "10-digit CIK"
+                                },
+                                "symbol": {
+                                  "type": "string"
+                                },
+                                "conference_date": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                },
+                                "keyword": {
+                                  "type": "string",
+                                  "description": "The subscriber's own spelling of the keyword"
+                                },
+                                "seq": {
+                                  "type": "integer",
+                                  "nullable": true,
+                                  "description": "The live final's seq; null on the final layer"
+                                },
+                                "start_ms": {
+                                  "type": "integer",
+                                  "nullable": true,
+                                  "description": "Offset from the start of the recording"
+                                },
+                                "end_ms": {
+                                  "type": "integer",
+                                  "nullable": true,
+                                  "description": "null on the final layer when the cleaned text has no end timing"
+                                },
+                                "text": {
+                                  "type": "string",
+                                  "maxLength": 500,
+                                  "description": "The segment (live) or turn (final), at most 500 chars"
+                                },
+                                "context_before": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "The previous final / turn of the call (≤ 300 chars); a final is often half a sentence"
+                                },
+                                "speaker_label": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "Diarization label"
+                                },
+                                "speaker_name": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "From the live speaker-name snapshot (null while unnamed) or the final transcript"
+                                },
+                                "speaker_role": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "description": "executive | ir_host | analyst | operator; null while unnamed"
+                                },
+                                "layer": {
+                                  "type": "string",
+                                  "enum": [
+                                    "live",
+                                    "final"
+                                  ],
+                                  "description": "live = a live final; final = the final transcript at transcript_ready (once per subscription)"
+                                },
+                                "latency_ms": {
+                                  "type": "integer",
+                                  "nullable": true,
+                                  "description": "live only: relay time inside the API process minus the segment's own end time (excludes the client's network); null when the call's clock is unknown"
+                                }
                               }
                             }
                           },

@@ -173,6 +173,7 @@ export type FreshnessReason = NonNullable<FreshnessRow["reason"]>;
 export type StatusUniverse = ApiStatusResponse["universe"];
 export type EarningsCallsStatusDay = EarningsCallsStatusResponse["days"][number];
 export type EarningsCallsCoverageDay = EarningsCallsStatusResponse["coverageDays"][number];
+export type EarningsCallsKeywordHitDay = EarningsCallsStatusResponse["keywordHitDays"][number];
 export type LicenseRight = LicensingResponse["rights"][number];
 export type LicenseTier = keyof LicensingResponse["tiers"];
 export type LicensingFamily = LicensingResponse["families"][number];

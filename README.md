@@ -47,3 +47,5 @@ runs, the others are skipped) so `pnpm install` / `pnpm run` do not stop on
 - `/$ticker/earnings-calendar` — market earnings calendar (date window / status / session / event type — one type or "All events" — in the URL) with a "Live now" strip.
 - `/$ticker/ipos` — IPOs.
 - `/$ticker/market-holidays` — market holidays.
+- `/status` — public API status (no key): per-family availability / latency, dataset freshness, and the earnings-call capture SLOs per webcast vendor with coverage; the live-latency chart, day table and a 7-day tile also show "speech → keyword hit" p50 / p95 (the live keyword-alert relay, measured inside the API process, excludes the client's network; days without hits are gaps, not zeros).
+- `/licensing` — public licensing matrix (tiers × rights per product family).

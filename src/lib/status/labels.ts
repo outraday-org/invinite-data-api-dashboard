@@ -77,6 +77,15 @@ export const TIER_LABELS: Record<LicenseTier, string> = {
     standard: "Standard",
 };
 
+/** The earnings latency chart's series (speech = the segment's own end time, as the API measures it). */
+export const LATENCY_SERIES_LABELS = {
+    firstSegment: "speech → live segment",
+    keywordHit: "speech → keyword hit",
+} as const;
+
+/** The caveat of every keyword-hit latency number: IDA's own clock, not the subscriber's. */
+export const KEYWORD_HIT_LATENCY_NOTE = "measured inside the API process, excludes the client's network";
+
 const EM_DASH = "—";
 
 /** A 0–1 ratio as a percent with `digits` decimals; "—" when unknown. */

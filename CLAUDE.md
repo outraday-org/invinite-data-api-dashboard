@@ -59,6 +59,10 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
 - **Credits**: each `GET /v1/earnings-calls/live/stream` costs 5 — requested only for a call with `live_audio`, every 15 s while `not_started`, before the loaded URL expires and once on a 403 (said in the player's Diagnostics too)
 - **Sync**: `callMs = positionToCallMs(playingDate, call_t0)`; at the edge while playing the text is held back to it (`liveTurns(…, callMs)`); > 10 s behind = follow mode (heard turn highlighted, click seeks)
 
+### Status page (`src/routes/status.tsx`, `src/components/status/`, `src/lib/status/`)
+
+- Public, key-less `/status` (task 21): `GET /status` families + freshness and `GET /status/earnings-calls` (the pipeline's SLO payload + IDA's `windowDays` / `coverageDays` / `summary` / `keywordHitDays`). `chart-data.ts` builds every chart row on the window's day axis with `null` for a day without a value (a gap, never a zero); `earningsDayPoints(days, vendor, windowDays, keywordHitDays)` joins the per-vendor SLO rows with the API-measured keyword-hit latency by day (`keywordHitP50S` / `keywordHitP95S` in seconds, `null` without hits; `hits = 0` counts as none). `earnings-section.tsx` draws "speech → keyword hit" p95 next to "speech → live segment" on the live-latency chart, a "Keyword hit p95" day-table column and a 7-day tile, each with the note from `labels.ts` (`LATENCY_SERIES_LABELS`, `KEYWORD_HIT_LATENCY_NOTE`: measured inside the API process, excludes the client's network)
+
 ### Routing (`src/routes/`)
 
 File-based routing with TanStack Router. The route tree is auto-generated in `routeTree.gen.ts`.

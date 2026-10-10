@@ -249,6 +249,20 @@ export interface paths {
                                 coveredReplay24h: number;
                                 notCovered: number;
                             }>;
+                            /** @description Keyword-hit relay latency per UTC day, oldest first (a day without hits is omitted): relay time inside the API process minus the segment's own end time; excludes the client's network. Measured by this API, not by the pipeline */
+                            keywordHitDays: Array<{
+                                /**
+                                 * Format: date
+                                 * @description UTC day
+                                 */
+                                day: string;
+                                /** @description Live keyword_hit frames relayed */
+                                hits: number;
+                                /** @description Median keyword-hit relay latency bucket upper bound (ms) */
+                                p50Ms: null | number;
+                                /** @description p95 keyword-hit relay latency bucket upper bound (ms); null above 12,800 ms */
+                                p95Ms: null | number;
+                            }>;
                             summary: {
                                 last7d: {
                                     /** @description Worst daily first-segment p95 (ms) */
@@ -259,6 +273,8 @@ export interface paths {
                                     captureSuccessRate: null | number;
                                     /** @description Calls covered live / calls */
                                     coveredLiveRate: null | number;
+                                    /** @description Worst daily keyword-hit relay p95 of the 7 newest days (ms; measured inside the API process, excludes the client's network) */
+                                    keywordHitP95Ms: null | number;
                                 };
                             };
                         };
@@ -4926,11 +4942,11 @@ export interface paths {
                                 id: string;
                                 /** @description HTTPS endpoint the deliveries are POSTed to */
                                 url: string;
-                                events: Array<"earnings_call.assets_ready" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping">;
+                                events: Array<"earnings_call.assets_ready" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping">;
                                 filters: {
                                     /** @description 10-digit CIKs; empty = every company */
                                     ciks: Array<string>;
-                                    /** @description Keywords for keyword alerts (reserved) */
+                                    /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript */
                                     keywords: Array<string>;
                                 };
                                 /** @description false once disabled */
@@ -5002,7 +5018,7 @@ export interface paths {
                         filters?: {
                             /** @description Only these companies */
                             ciks?: Array<string>;
-                            /** @description Reserved for keyword alerts */
+                            /** @description Keyword alerts (with earnings_call.keyword_hit in events): whole-word, case-insensitive matches */
                             keywords?: Array<string>;
                         };
                     };
@@ -5020,11 +5036,11 @@ export interface paths {
                             id: string;
                             /** @description HTTPS endpoint the deliveries are POSTed to */
                             url: string;
-                            events: Array<"earnings_call.assets_ready" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping">;
+                            events: Array<"earnings_call.assets_ready" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping">;
                             filters: {
                                 /** @description 10-digit CIKs; empty = every company */
                                 ciks: Array<string>;
-                                /** @description Keywords for keyword alerts (reserved) */
+                                /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript */
                                 keywords: Array<string>;
                             };
                             /** @description false once disabled */
@@ -5164,7 +5180,100 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        patch?: never;
+        /** @description Change a webhook subscription's keywords, companies, events or active flag (at least one field). active: true re-enables a subscription disabled after failed deliveries. Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. Minimum tier for display: FREE. */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Webhook subscription id (from the create / list response) */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            /** @description Any of the four fields; at least one */
+            requestBody?: {
+                content: {
+                    "application/json": {
+                        /** @description Replaces the keyword list (empty = no keyword alerts) */
+                        keywords?: Array<string>;
+                        /** @description Replaces the company filter (empty = every company) */
+                        ciks?: Array<string>;
+                        /** @description Replaces the event list */
+                        events?: Array<string>;
+                        /** @description true re-enables a disabled subscription (its failure counter resets); false pauses it (disabled_reason: paused) */
+                        active?: boolean;
+                    };
+                };
+            };
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @description Subscription id */
+                            id: string;
+                            /** @description HTTPS endpoint the deliveries are POSTed to */
+                            url: string;
+                            events: Array<"earnings_call.assets_ready" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping">;
+                            filters: {
+                                /** @description 10-digit CIKs; empty = every company */
+                                ciks: Array<string>;
+                                /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript */
+                                keywords: Array<string>;
+                            };
+                            /** @description false once disabled */
+                            active: boolean;
+                            /** @description Why the subscription was disabled */
+                            disabled_reason: null | string;
+                            /** @description Dead-lettered deliveries in a row */
+                            consecutive_failures: number;
+                            /** @description Last 4 characters of the signing secret */
+                            secret_hint: string;
+                            /** Format: date-time */
+                            created_at: string;
+                            /** Format: date-time */
+                            updated_at: string;
+                        };
+                    };
+                };
+                400: components["responses"]["BadRequestError"];
+                401: components["responses"]["UnauthorizedError"];
+                /** @description Forbidden - webhooks require the PRO plan */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @description Type of error */
+                            error: string;
+                            /** @description Detailed error message */
+                            message: string;
+                        };
+                    };
+                };
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["InternalServerError"];
+                /** @description Service Unavailable - subscriptions or deliveries are temporarily unavailable */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @description Type of error */
+                            error: string;
+                            /** @description Detailed error message */
+                            message: string;
+                        };
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/v1/earnings-calls/webhooks/{id}/deliveries": {
@@ -5201,7 +5310,7 @@ export interface paths {
                                  */
                                 delivery_id: string;
                                 /** @enum {string} */
-                                event: "earnings_call.assets_ready" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping";
+                                event: "earnings_call.assets_ready" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping";
                                 /** @description 1-based attempt number */
                                 attempt: number;
                                 /** @enum {string} */
@@ -8640,7 +8749,7 @@ export interface components {
             /** @enum {string} */
             type: "ping";
         };
-        /** @description Client frame: subscribe to the live transcript of one earnings call, by event_id or by cik (the call that is live or starts within ±2 h). Requires the PRO plan. */
+        /** @description Client frame: subscribe to the live transcript of one earnings call, by event_id or by cik (the call that is live or starts within ±2 h), or with scope: all_live (no event_id / cik) to every call being captured live — keyword hits only, never segments, one subscription slot. Requires the PRO plan. */
         "WebSocketSubscribeEarningsCall": {
             /** @enum {string} */
             type: "subscribe";
@@ -8653,6 +8762,11 @@ export interface components {
             event_id?: string;
             /** @description CIK, padded or not */
             cik?: string;
+            /**
+             * @description all_live = every live call (keywords required, error keywords_required without); then no event_id / cik
+             * @enum {string}
+             */
+            scope?: "all_live";
             /** @description Last final seq the client holds; finals after it are replayed before live delivery (-1 = from the first final) */
             since_seq?: number;
             /**
@@ -8660,6 +8774,20 @@ export interface components {
              * @default false
              */
             partials: boolean;
+            /** @description Keyword alerts: a keyword_hit frame for every FINAL segment that contains one (whole words, case-insensitive, multi-word allowed). Held for this subscription only */
+            keywords?: Array<string>;
+            /**
+             * @description exact = whole-word match of your spelling (buyback never matches buybacks); stem = also s / es / ed / ing / 's per word (tariff matches tariffs)
+             * @default exact
+             * @enum {string}
+             */
+            keyword_match: "exact" | "stem";
+            /** @description Only hits spoken by one of these roles (from the provisional live speaker names; a hit whose speaker is still unnamed passes) */
+            speaker_roles?: Array<"analyst" | "executive" | "ir_host" | "operator">;
+            /** @description all_live only: calls of companies ranked ≤ min_rank by market cap */
+            min_rank?: number;
+            /** @description all_live only: what reaches the subscription (default keyword_hit; add guidance_flash to receive the flashes of every live call) */
+            events?: Array<"guidance_flash" | "keyword_hit">;
         };
         /** @description Client frame: end one subscription */
         "WebSocketUnsubscribe": {
@@ -8668,10 +8796,37 @@ export interface components {
             /** Format: uuid */
             subscription_id: string;
         };
-        /** @description A subscription is active */
+        /** @description A subscription is active. A per-call subscription carries the call (event_id … state); a scope: all_live subscription carries scope, keywords and live_calls instead */
         "WebSocketSubscribedEvent": {
             /** @enum {string} */
             type: "subscribed";
+            /** Format: uuid */
+            subscription_id: string;
+            /** Format: uuid */
+            event_id?: string;
+            /** @description 10-digit CIK */
+            cik?: string;
+            symbol?: string;
+            /** Format: date-time */
+            conference_date?: string;
+            /** @description Highest final seq seen so far; null before the first final (seqs start at 0) */
+            current_seq?: null | number;
+            /** @enum {string} */
+            state?: "capturing" | "ended" | "scheduled";
+            /**
+             * @description all_live subscriptions only
+             * @enum {string}
+             */
+            scope?: "all_live";
+            /** @description all_live only: the keywords as held */
+            keywords?: Array<string>;
+            /** @description all_live only: calls being captured live that the subscription follows right now */
+            live_calls?: number;
+        };
+        /** @description A subscribed keyword occurred in a FINAL segment (layer live; partials are never evaluated) or, once per subscription at transcript_ready, in the final transcript (layer final; a final hit within ± 5 s of a live hit of the same keyword is not repeated). The only call-level frame of a scope: all_live subscription besides guidance_flash */
+        "WebSocketKeywordHitEvent": {
+            /** @enum {string} */
+            type: "keyword_hit";
             /** Format: uuid */
             subscription_id: string;
             /** Format: uuid */
@@ -8681,10 +8836,79 @@ export interface components {
             symbol: string;
             /** Format: date-time */
             conference_date: string;
-            /** @description Highest final seq seen so far; null before the first final (seqs start at 0) */
-            current_seq: null | number;
+            /** @description The subscriber's own spelling of the keyword */
+            keyword: string;
+            /** @description The live final's seq; null on the final layer */
+            seq: null | number;
+            /** @description Offset from the start of the recording */
+            start_ms: null | number;
+            /** @description null on the final layer when the cleaned text has no end timing */
+            end_ms: null | number;
+            /** @description The segment (live) or turn (final), at most 500 chars */
+            text: string;
+            /** @description The previous final / turn of the call (≤ 300 chars); a final is often half a sentence */
+            context_before: null | string;
+            /** @description Diarization label */
+            speaker_label: null | string;
+            /** @description From the live speaker-name snapshot (null while unnamed) or the final transcript */
+            speaker_name: null | string;
+            /** @description executive | ir_host | analyst | operator; null while unnamed */
+            speaker_role: null | string;
+            /**
+             * @description live = a live final; final = the final transcript at transcript_ready (once per subscription)
+             * @enum {string}
+             */
+            layer: "final" | "live";
+            /** @description live only: relay time inside the API process minus the segment's own end time (excludes the client's network); null when the call's clock is unknown */
+            latency_ms: null | number;
+        };
+        /** @description A forward-looking guidance number extracted from the live transcript seconds after it was spoken (one frame per metric / period; a restatement repeats it with a higher revision). Sent to every subscription of the call and to all_live subscriptions whose events include guidance_flash. Provisional: the structured guidance of /v1/earnings-calls/extractions replaces it after the call */
+        "WebSocketGuidanceFlashEvent": {
             /** @enum {string} */
-            state: "capturing" | "ended" | "scheduled";
+            type: "guidance_flash";
+            /** Format: uuid */
+            subscription_id: string;
+            /** Format: uuid */
+            event_id: string;
+            /** @description 10-digit CIK */
+            cik: string;
+            symbol: string;
+            /** Format: date-time */
+            conference_date: string;
+            /** @description The final that triggered the extraction */
+            seq: number;
+            /** @description 1 for the first flash of a metric / period; higher when the numbers were restated */
+            revision: number;
+            /** @description The metric as spoken */
+            metric: string;
+            /** @description revenue, eps_gaap, segment:<slug> … */
+            metric_normalized: string;
+            /** @description Q4 FY2026, FY2026 … */
+            period_label: string;
+            /** @description Lower bound of the range (absolute units) */
+            low: null | number;
+            /** @description Upper bound of the range */
+            high: null | number;
+            /** @description A point value when no range was given */
+            point: null | number;
+            /** @description USD, percent, shares … */
+            unit: null | string;
+            /** @description ISO 4217 when a currency applies */
+            currency: null | string;
+            /** @description The verbatim sentence the numbers come from */
+            source_sentence: string;
+            /** @description Offset of the sentence from the start of the recording */
+            start_ms: number;
+        };
+        /** @description A subscription is degraded but keeps running: global_scope_degraded = a new live call was not attached because this server already follows its cap of live calls (sent once per subscription while the cap holds) */
+        "WebSocketWarningEvent": {
+            /** @enum {string} */
+            type: "warning";
+            /** @enum {string} */
+            code: "global_scope_degraded";
+            message: string;
+            /** Format: uuid */
+            subscription_id: string;
         };
         /** @description One live transcript segment. seq is strictly increasing per call but not contiguous; a partial carries the seq its final will get */
         "WebSocketTranscriptSegmentEvent": {
@@ -8776,7 +9000,7 @@ export interface components {
             /** @enum {string} */
             type: "error";
             /** @enum {string} */
-            code: "attach_failed" | "bad_message" | "forbidden_tier" | "not_found" | "not_live" | "resume_unavailable" | "subscription_limit" | "unavailable";
+            code: "attach_failed" | "bad_message" | "forbidden_tier" | "keywords_required" | "not_found" | "not_live" | "resume_unavailable" | "subscription_limit" | "unavailable";
             message: string;
             /** Format: uuid */
             subscription_id?: string;
@@ -8788,7 +9012,7 @@ export interface components {
              */
             id: string;
             /** @enum {string} */
-            event: "earnings_call.assets_ready" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping";
+            event: "earnings_call.assets_ready" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping";
             /**
              * Format: date-time
              * @description When the event happened; deliveries are NOT ordered — order by this and the event phase

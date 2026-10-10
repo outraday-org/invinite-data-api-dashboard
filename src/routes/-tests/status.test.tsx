@@ -81,9 +81,10 @@ const EARNINGS: EarningsCallsStatusResponse = {
         },
     ],
     generatedAt: "2026-10-10T06:15:00Z",
+    keywordHitDays: [{ day: "2026-10-09", hits: 7, p50Ms: 900, p95Ms: 2100 }],
     slo: { finalP95S: 300, firstSegmentP95Ms: 30000 },
     summary: {
-        last7d: { captureSuccessRate: 0.909, coveredLiveRate: 0.8, finalLatencyP95S: 340, firstSegmentP95Ms: 18000 },
+        last7d: { captureSuccessRate: 0.909, coveredLiveRate: 0.8, finalLatencyP95S: 340, firstSegmentP95Ms: 18000, keywordHitP95Ms: 2100 },
     },
     vendors: ["all", "notified"],
     windowDays: 30,
@@ -190,6 +191,33 @@ describe("StatusPageView", () => {
         expect(within(section).getByText("Final transcript p95 ≤ 300 s after call end")).toBeInTheDocument();
 
         expect(within(section).getByText("final transcript")).toBeInTheDocument();
+    });
+
+    it("shows the speech → keyword hit p95 tile with its API-side note and the day-table column", () => {
+        renderView();
+
+        const section = sectionByHeading("Earnings calls");
+
+        const tile = within(section).getByText("Keyword hit p95 (7 d)").closest("[data-slot=card]");
+
+        if (!tile) throw new Error("no keyword hit tile");
+
+        expect(within(tile as HTMLElement).getByText(/measured inside the API process/)).toBeInTheDocument();
+
+        // The tile and the selected vendor's row of 2026-10-09 (the hits are not per vendor).
+        expect(within(section).getAllByText("2.1 s")).toHaveLength(2);
+
+        expect(within(section).getByRole("columnheader", { name: "Keyword hit p95" })).toBeInTheDocument();
+    });
+
+    it("shows a dash, not a zero, for the keyword hit p95 when no hit was relayed", () => {
+        renderView({ earnings: loaded({ ...EARNINGS, keywordHitDays: [], summary: { last7d: { ...EARNINGS.summary.last7d, keywordHitP95Ms: null } } }) });
+
+        const section = sectionByHeading("Earnings calls");
+
+        expect(within(section).queryByText("2.1 s")).not.toBeInTheDocument();
+
+        expect(within(section).queryByText("0.0 s")).not.toBeInTheDocument();
     });
 
     it("shows only the API panel when request statistics are unavailable", () => {
