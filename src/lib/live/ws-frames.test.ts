@@ -1,0 +1,170 @@
+import { describe, expect, it } from "vitest";
+
+import {
+    EARNINGS_FRAME_TYPES,
+    liveWsUrl,
+    parseServerFrame,
+    subscribeFrame,
+    toAssignments,
+    toLiveSegment,
+    toSpeakerNames,
+    unsubscribeFrame,
+} from "./ws-frames";
+
+const SUB = { event_id: "6f1d2c3b-0000-4000-8000-000000000001", subscription_id: "9a8b7c6d-0000-4000-8000-000000000002" };
+
+const ASSIGNMENT = {
+    confidence: 0.9,
+    firm: null,
+    from_seq: 3,
+    name: "Jane Doe",
+    role: "executive",
+    source: "self_introduction",
+    speaker_label: "spk0",
+    title: "CFO",
+    to_seq: null,
+};
+
+// One valid example of every server frame of the earnings channel.
+const FRAMES: Record<string, Record<string, unknown>> = {
+    call_ended: { ...SUB, at: "2026-10-09T21:55:00.000Z", live_transcript_available: true, type: "call_ended" },
+    call_started: { ...SUB, at: "2026-10-09T21:00:00.000Z", type: "call_started" },
+    error: { code: "forbidden_tier", message: "Live earnings-call transcripts require the PRO plan", type: "error" },
+    gap: { ...SUB, after_seq: 41, next_seq: 1042, type: "gap" },
+    rescheduled: { ...SUB, at: "2026-10-09T20:00:00.000Z", new_conference_date: "2026-10-16T21:00:00.000Z", type: "rescheduled" },
+    speaker_names: { ...SUB, assignments: [ASSIGNMENT], revision: 1760043600000, type: "speaker_names" },
+    subscribed: {
+        ...SUB,
+        cik: "0000320193",
+        conference_date: "2026-10-09T21:00:00.000Z",
+        current_seq: null,
+        state: "capturing",
+        symbol: "AAPL",
+        type: "subscribed",
+    },
+    transcript_provisional: { ...SUB, at: "2026-10-09T22:05:00.000Z", type: "transcript_provisional", version: 1, word_count: 9120 },
+    transcript_ready: { ...SUB, at: "2026-10-09T22:30:00.000Z", type: "transcript_ready" },
+    transcript_segment: {
+        ...SUB,
+        end_ms: 4200,
+        is_final: true,
+        seq: 7,
+        speaker_label: "spk0",
+        start_ms: 1500,
+        text: "Good afternoon, everyone.",
+        type: "transcript_segment",
+    },
+    unsubscribed: { reason: "transcript_ready", subscription_id: SUB.subscription_id, type: "unsubscribed" },
+};
+
+describe("parseServerFrame", () => {
+    it("covers every frame type of the channel", () => {
+        expect([...EARNINGS_FRAME_TYPES].sort()).toStrictEqual(Object.keys(FRAMES).sort());
+    });
+
+    it.each(Object.entries(FRAMES))("parses a %s frame", (type, frame) => {
+        const parsed = parseServerFrame(JSON.stringify(frame));
+
+        expect(parsed.kind).toBe("frame");
+
+        expect(parsed.kind === "frame" && parsed.frame.type).toBe(type);
+    });
+
+    it("parses an error frame tied to a subscription and every error code", () => {
+        for (const code of ["bad_message", "not_live", "not_found", "subscription_limit", "attach_failed", "resume_unavailable", "unavailable"]) {
+            const parsed = parseServerFrame(JSON.stringify({ code, message: "m", subscription_id: SUB.subscription_id, type: "error" }));
+
+            expect(parsed.kind).toBe("frame");
+        }
+    });
+
+    it("reads frames of other channels and pings as other", () => {
+        expect(parseServerFrame(JSON.stringify({ filing: {}, type: "new_filing" })).kind).toBe("other");
+
+        expect(parseServerFrame(JSON.stringify({ type: "ping" })).kind).toBe("other");
+    });
+
+    it("rejects malformed frames", () => {
+        expect(parseServerFrame("not json").kind).toBe("malformed");
+
+        expect(parseServerFrame(new ArrayBuffer(2)).kind).toBe("malformed");
+
+        expect(parseServerFrame(JSON.stringify(null)).kind).toBe("malformed");
+
+        expect(parseServerFrame(JSON.stringify({ seq: 1 })).kind).toBe("malformed");
+
+        // An earnings frame type with a missing / mistyped field.
+        expect(parseServerFrame(JSON.stringify({ ...FRAMES.transcript_segment, seq: "7" })).kind).toBe("malformed");
+
+        expect(parseServerFrame(JSON.stringify({ ...FRAMES.gap, next_seq: undefined })).kind).toBe("malformed");
+
+        // An error code or unsubscribe reason the API does not send.
+        expect(parseServerFrame(JSON.stringify({ ...FRAMES.error, code: "teapot" })).kind).toBe("malformed");
+
+        expect(parseServerFrame(JSON.stringify({ ...FRAMES.unsubscribed, reason: "bored" })).kind).toBe("malformed");
+
+        expect(parseServerFrame(JSON.stringify({ ...FRAMES.subscribed, state: "live" })).kind).toBe("malformed");
+    });
+});
+
+describe("frame conversions", () => {
+    it("turns a segment frame into the reducer's segment", () => {
+        const parsed = parseServerFrame(JSON.stringify(FRAMES.transcript_segment));
+
+        if (parsed.kind !== "frame" || parsed.frame.type !== "transcript_segment") throw new Error("not a segment");
+
+        expect(toLiveSegment(parsed.frame)).toStrictEqual({
+            endMs: 4200,
+            seq: 7,
+            speakerLabel: "spk0",
+            startMs: 1500,
+            text: "Good afternoon, everyone.",
+        });
+    });
+
+    it("turns a speaker_names frame into assignments and a snapshot", () => {
+        const parsed = parseServerFrame(JSON.stringify(FRAMES.speaker_names));
+
+        if (parsed.kind !== "frame" || parsed.frame.type !== "speaker_names") throw new Error("not names");
+
+        const expected = {
+            confidence: 0.9,
+            firm: null,
+            fromSeq: 3,
+            name: "Jane Doe",
+            role: "executive",
+            source: "self_introduction",
+            speakerLabel: "spk0",
+            title: "CFO",
+            toSeq: null,
+        };
+
+        expect(toAssignments(parsed.frame)).toStrictEqual([expected]);
+
+        expect(toSpeakerNames(parsed.frame)).toStrictEqual({ assignments: [expected], revision: 1760043600000 });
+    });
+});
+
+describe("client frames and the socket URL", () => {
+    it("builds the subscribe frame with partials and a since_seq ≥ -1", () => {
+        expect(subscribeFrame("e1", 12)).toStrictEqual({
+            channel: "earnings-calls.live",
+            event_id: "e1",
+            partials: true,
+            since_seq: 12,
+            type: "subscribe",
+        });
+
+        expect(subscribeFrame("e1", -5).since_seq).toBe(-1);
+    });
+
+    it("builds the unsubscribe frame", () => {
+        expect(unsubscribeFrame("s1")).toStrictEqual({ subscription_id: "s1", type: "unsubscribe" });
+    });
+
+    it("maps the API base URL to the WebSocket URL", () => {
+        expect(liveWsUrl("https://data.invinite.com", "k 1")).toBe("wss://data.invinite.com/v1/ws?api_key=k+1");
+
+        expect(liveWsUrl("http://localhost:3000/", "abc")).toBe("ws://localhost:3000/v1/ws?api_key=abc");
+    });
+});

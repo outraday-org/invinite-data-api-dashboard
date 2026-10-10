@@ -6,6 +6,7 @@ import {
     CoinsIcon,
     FileTextIcon,
     LayoutDashboardIcon,
+    MicIcon,
     SplitIcon,
     UserRoundIcon,
 } from "lucide-react";
@@ -31,6 +32,7 @@ export const Route = createFileRoute("/$ticker")({
 const navItems = [
     { icon: LayoutDashboardIcon, label: "Overview", to: "/$ticker" },
     { icon: FileTextIcon, label: "Filings", to: "/$ticker/filings" },
+    { icon: MicIcon, label: "Earnings Calls", to: "/$ticker/earnings-calls" },
     { icon: BarChart3Icon, label: "Standardized Financials", to: "/$ticker/financials-standardized" },
     { icon: BarChart3Icon, label: "As Reported Financials", to: "/$ticker/financials-as-reported" },
     { icon: BarChart3Icon, label: "CAGR Financials", to: "/$ticker/financials-cagr" },
@@ -41,13 +43,16 @@ const navItems = [
     { icon: SplitIcon, label: "Stock Splits", to: "/$ticker/stock-splits" },
     { icon: UserRoundIcon, label: "Insider Trades", to: "/$ticker/insider-trades" },
     { icon: Building2Icon, label: "Institutions", to: "/$ticker/institutions" },
+    { icon: CalendarDaysIcon, label: "Earnings Calendar", to: "/$ticker/earnings-calendar" },
     { icon: Building2Icon, label: "IPOs", to: "/$ticker/ipos" },
     { icon: CalendarDaysIcon, label: "Market Holidays", to: "/$ticker/market-holidays" },
 ] as const;
 
-const companyNavItems = navItems.slice(0, navItems.findIndex(item => item.label === "IPOs"));
+const marketStart = navItems.findIndex(item => item.label === "Earnings Calendar");
 
-const marketNavItems = navItems.slice(navItems.findIndex(item => item.label === "IPOs"));
+const companyNavItems = navItems.slice(0, marketStart);
+
+const marketNavItems = navItems.slice(marketStart);
 
 function TickerLayout() {
     const { ticker } = Route.useParams();

@@ -12,6 +12,8 @@ import pluginReactRefresh from "eslint-plugin-react-refresh";
 export default [
     {
         ignores: [
+            // Agent tooling (plain JS outside tsconfig), not app code.
+            "**/.claude/**",
             "**/.output/**",
             "**/.nitro/**",
             "**/dist/**",

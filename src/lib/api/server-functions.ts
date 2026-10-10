@@ -7,6 +7,26 @@ import type {
     CompanyDetailsResponse,
     CompanySearchResponse,
     DividendsResponse,
+    EarningsAudioResponse,
+    EarningsCalendarResponse,
+    EarningsDiffResponse,
+    EarningsDocumentsResponse,
+    EarningsEventResponse,
+    EarningsEventsResponse,
+    EarningsExtractionsResponse,
+    EarningsGuidanceHistoryResponse,
+    EarningsLiveResponse,
+    EarningsLiveStreamResponse,
+    EarningsMetricsResponse,
+    EarningsParticipantsResponse,
+    EarningsPressReleaseResponse,
+    EarningsProsodyResponse,
+    EarningsQaResponse,
+    EarningsSearchResponse,
+    EarningsSlidesResponse,
+    EarningsTranscriptDiffResponse,
+    EarningsTranscriptResponse,
+    EarningsTranscriptVersionsResponse,
     FilingsResponse,
     FinancialCagrResponse,
     FinancialGrowthResponse,
@@ -22,7 +42,9 @@ import type {
     StandardizedFinancialsPresentationResponse,
 } from "./types";
 
+import { env } from "../env";
 import { createApiClient } from "./client.server";
+import { throwApiError } from "./errors";
 
 const apiKeySchema = z
     .string()
@@ -715,3 +737,465 @@ export const getFinancialCagr = createServerFn({ method: "GET" })
 
         return res;
     });
+
+// Earnings calls (IDA `/v1/earnings-calls/*`). The event selector picks one call: `eventId`,
+// or `identifier` + `date` (New York day YYYY-MM-DD) / `year` + `quarter`.
+const eventSelectorSchema = z.object({
+    date: z.string().optional(),
+    eventId: z.string().uuid().optional(),
+    identifier: z.string().optional(),
+    quarter: z.number().int().min(1).max(4).optional(),
+    year: z.number().int().optional(),
+});
+
+type EventSelector = z.infer<typeof eventSelectorSchema>;
+
+const toSelectorQuery = (s: EventSelector) => ({
+    date: s.date,
+    event_id: s.eventId,
+    identifier: s.identifier,
+    quarter: s.quarter,
+    year: s.year,
+});
+
+const selectorInputSchema = eventSelectorSchema.extend({ apiKey: apiKeySchema });
+
+const earningsCalendarSchema = z.object({
+    apiKey: apiKeySchema,
+    eventType: z.enum(["earnings_call", "investor_day", "conference", "agm", "other", "all"]).optional(),
+    exchange: z.string().optional(),
+    from: z.string().optional(),
+    limit: z.number().optional(),
+    offset: z.number().optional(),
+    session: z.enum(["bmo", "amc", "intraday"]).optional(),
+    sort: z.enum(["asc", "desc"]).optional(),
+    status: z.array(z.enum(["estimated", "unconfirmed", "confirmed", "postponed", "cancelled"])).optional(),
+    to: z.string().optional(),
+});
+
+export const getEarningsCalendar = createServerFn({ method: "GET" })
+    .inputValidator(earningsCalendarSchema)
+    .handler(async ({ data }): Promise<EarningsCalendarResponse> => {
+        const { apiKey, eventType, exchange, from, limit, offset, session, sort, status, to } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/calendar", {
+            params: {
+                query: {
+                    event_type: eventType,
+                    exchange,
+                    from,
+                    limit,
+                    offset,
+                    session,
+                    sort,
+                    status,
+                    to,
+                },
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const earningsEventsSchema = z.object({
+    apiKey: apiKeySchema,
+    from: z.string().optional(),
+    identifier: z.string(),
+    include: z.literal("observations").optional(),
+    limit: z.number().optional(),
+    offset: z.number().optional(),
+    sort: z.enum(["asc", "desc"]).optional(),
+    to: z.string().optional(),
+});
+
+export const getEarningsEvents = createServerFn({ method: "GET" })
+    .inputValidator(earningsEventsSchema)
+    .handler(async ({ data }): Promise<EarningsEventsResponse> => {
+        const { apiKey, from, identifier, include, limit, offset, sort, to } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/events", {
+            params: {
+                query: {
+                    from,
+                    identifier,
+                    include: include ? [include] : undefined,
+                    limit,
+                    offset,
+                    sort,
+                    to,
+                },
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getEarningsLive = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema }))
+    .handler(async ({ data }): Promise<EarningsLiveResponse> => {
+        const api = createApiClient(data.apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/live");
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getEarningsEvent = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, eventId: z.string().uuid() }))
+    .handler(async ({ data }): Promise<EarningsEventResponse> => {
+        const api = createApiClient(data.apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/event/{event_id}", {
+            params: { path: { event_id: data.eventId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const earningsTranscriptSchema = selectorInputSchema.extend({
+    asOf: z.string().optional(),
+    format: z.enum(["text", "speakers", "words", "sections", "cleaned"]).optional(),
+    version: z.number().int().optional(),
+});
+
+export const getEarningsTranscript = createServerFn({ method: "GET" })
+    .inputValidator(earningsTranscriptSchema)
+    .handler(async ({ data }): Promise<EarningsTranscriptResponse> => {
+        const { apiKey, asOf, format, version } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/transcript", {
+            params: { query: { ...toSelectorQuery(data), as_of: asOf, format, version } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        // `data` is JSON typed as `unknown` by the spec (see `JsonValue` in types.ts).
+        return res as EarningsTranscriptResponse;
+    });
+
+export const getEarningsTranscriptVersions = createServerFn({ method: "GET" })
+    .inputValidator(selectorInputSchema)
+    .handler(async ({ data }): Promise<EarningsTranscriptVersionsResponse> => {
+        const api = createApiClient(data.apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/transcript/versions", {
+            params: { query: toSelectorQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const earningsTranscriptDiffSchema = selectorInputSchema.extend({
+    from: z.number().int(),
+    to: z.number().int().optional(),
+});
+
+export const getEarningsTranscriptDiff = createServerFn({ method: "GET" })
+    .inputValidator(earningsTranscriptDiffSchema)
+    .handler(async ({ data }): Promise<EarningsTranscriptDiffResponse> => {
+        const { apiKey, from, to } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/transcript/diff", {
+            params: { query: { ...toSelectorQuery(data), from, to } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const earningsQaSchema = selectorInputSchema.extend({
+    limit: z.number().optional(),
+    offset: z.number().optional(),
+});
+
+export const getEarningsQa = createServerFn({ method: "GET" })
+    .inputValidator(earningsQaSchema)
+    .handler(async ({ data }): Promise<EarningsQaResponse> => {
+        const { apiKey, limit, offset } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/qa", {
+            params: { query: { ...toSelectorQuery(data), limit, offset } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const earningsParticipantsSchema = selectorInputSchema.extend({
+    include: z.literal("evidence").optional(),
+});
+
+export const getEarningsParticipants = createServerFn({ method: "GET" })
+    .inputValidator(earningsParticipantsSchema)
+    .handler(async ({ data }): Promise<EarningsParticipantsResponse> => {
+        const { apiKey, include } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/participants", {
+            params: { query: { ...toSelectorQuery(data), include: include ? [include] : undefined } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        // `detail` is JSON typed as `unknown` by the spec (see `JsonValue` in types.ts).
+        return res as EarningsParticipantsResponse;
+    });
+
+const earningsPressReleaseSchema = selectorInputSchema.extend({
+    include: z.literal("body").optional(),
+});
+
+export const getEarningsPressRelease = createServerFn({ method: "GET" })
+    .inputValidator(earningsPressReleaseSchema)
+    .handler(async ({ data }): Promise<EarningsPressReleaseResponse> => {
+        const { apiKey, include } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/press-release", {
+            params: { query: { ...toSelectorQuery(data), include: include ? [include] : undefined } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const earningsExtractionsSchema = selectorInputSchema.extend({
+    kind: z.enum(["guidance", "kpi"]).optional(),
+    limit: z.number().optional(),
+    offset: z.number().optional(),
+    review: z.enum(["approved", "auto", "all"]).optional(),
+});
+
+export const getEarningsExtractions = createServerFn({ method: "GET" })
+    .inputValidator(earningsExtractionsSchema)
+    .handler(async ({ data }): Promise<EarningsExtractionsResponse> => {
+        const { apiKey, kind, limit, offset, review } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/extractions", {
+            params: { query: { ...toSelectorQuery(data), kind, limit, offset, review } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const earningsGuidanceHistorySchema = z.object({
+    apiKey: apiKeySchema,
+    basis: z.enum(["gaap", "non_gaap", "unknown"]).optional(),
+    identifier: z.string(),
+    limit: z.number().optional(),
+    metric: z.string(),
+    periodKind: z.enum(["quarter", "fiscal_year", "half", "other"]).optional(),
+});
+
+export const getEarningsGuidanceHistory = createServerFn({ method: "GET" })
+    .inputValidator(earningsGuidanceHistorySchema)
+    .handler(async ({ data }): Promise<EarningsGuidanceHistoryResponse> => {
+        const { apiKey, basis, identifier, limit, metric, periodKind } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/guidance/history", {
+            params: { query: { basis, identifier, limit, metric, period_kind: periodKind } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const earningsDiffSchema = selectorInputSchema.extend({
+    vs: z.literal("prior").optional(),
+});
+
+export const getEarningsDiff = createServerFn({ method: "GET" })
+    .inputValidator(earningsDiffSchema)
+    .handler(async ({ data }): Promise<EarningsDiffResponse> => {
+        const { apiKey, vs } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/diff", {
+            params: { query: { ...toSelectorQuery(data), vs } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getEarningsMetrics = createServerFn({ method: "GET" })
+    .inputValidator(selectorInputSchema)
+    .handler(async ({ data }): Promise<EarningsMetricsResponse> => {
+        const api = createApiClient(data.apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/metrics", {
+            params: { query: toSelectorQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const earningsProsodySchema = selectorInputSchema.extend({
+    section: z.enum(["prepared", "qa", "all"]).optional(),
+});
+
+export const getEarningsProsody = createServerFn({ method: "GET" })
+    .inputValidator(earningsProsodySchema)
+    .handler(async ({ data }): Promise<EarningsProsodyResponse> => {
+        const { apiKey, section } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/prosody", {
+            params: { query: { ...toSelectorQuery(data), section } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+// Status-aware routes (audio, slides, documents, search, live stream): their pages render a
+// state per status / code (`audio_disabled`, `media_unavailable`, …), so they throw an
+// ApiRequestError instead of the bare error body.
+export const getEarningsAudio = createServerFn({ method: "GET" })
+    .inputValidator(selectorInputSchema)
+    .handler(async ({ data }): Promise<EarningsAudioResponse> => {
+        const api = createApiClient(data.apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/audio", {
+            params: { query: toSelectorQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const earningsSlidesSchema = selectorInputSchema.extend({
+    include: z.literal("markdown").optional(),
+    pages: z.string().optional(),
+});
+
+export const getEarningsSlides = createServerFn({ method: "GET" })
+    .inputValidator(earningsSlidesSchema)
+    .handler(async ({ data }): Promise<EarningsSlidesResponse> => {
+        const { apiKey, include, pages } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/slides", {
+            params: { query: { ...toSelectorQuery(data), include: include ? [include] : undefined, pages } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const earningsDocumentsSchema = selectorInputSchema.extend({
+    include: z.literal("body").optional(),
+    kind: z.array(z.string()).optional(),
+    limit: z.number().optional(),
+    offset: z.number().optional(),
+});
+
+export const getEarningsDocuments = createServerFn({ method: "GET" })
+    .inputValidator(earningsDocumentsSchema)
+    .handler(async ({ data }): Promise<EarningsDocumentsResponse> => {
+        const { apiKey, include, kind, limit, offset } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/documents", {
+            params: {
+                query: {
+                    ...toSelectorQuery(data),
+                    include: include ? [include] : undefined,
+                    kind: kind?.length ? kind : undefined,
+                    limit,
+                    offset,
+                },
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const earningsSearchSchema = z.object({
+    apiKey: apiKeySchema,
+    eventId: z.string().uuid().optional(),
+    from: z.string().optional(),
+    identifier: z.string().optional(),
+    limit: z.number().optional(),
+    q: z.string().min(1),
+    to: z.string().optional(),
+    type: z.enum(["transcript", "qa", "preparedRemarks", "presentation"]).optional(),
+});
+
+export const getEarningsSearch = createServerFn({ method: "GET" })
+    .inputValidator(earningsSearchSchema)
+    .handler(async ({ data }): Promise<EarningsSearchResponse> => {
+        const { apiKey, eventId, from, identifier, limit, q, to, type } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/search", {
+            params: { query: { event_id: eventId, from, identifier, limit, q, to, type } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getEarningsLiveStream = createServerFn({ method: "GET" })
+    .inputValidator(selectorInputSchema)
+    .handler(async ({ data }): Promise<EarningsLiveStreamResponse> => {
+        const api = createApiClient(data.apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/live/stream", {
+            params: { query: toSelectorQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+// The API base URL (not a secret) for the browser's own WebSocket to `/v1/ws` (task 8).
+export const getApiBaseUrl = createServerFn({ method: "GET" })
+    .handler((): { url: string } => ({ url: env.INVINITE_DATA_API_URL }));

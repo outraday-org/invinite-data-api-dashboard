@@ -1,0 +1,9 @@
+# pnpm 11 refuses to finish with dependency build scripts left undecided (ERR_PNPM_IGNORED_BUILDS).
+# esbuild's postinstall checks its platform binary; the others ship prebuilt binaries / an msw
+# worker the dashboard does not use.
+allowBuilds:
+  esbuild: true
+  "@parcel/watcher": false
+  msw: false
+  sharp: false
+  unrs-resolver: false

@@ -6,6 +6,10 @@ type ApiResponse<TPath extends keyof paths, TPathValue extends keyof paths[TPath
         ? R
         : never;
 
+// Helper type to extract the query parameters of a path's GET operation
+type ApiQuery<TPath extends keyof paths>
+    = paths[TPath] extends { get: { parameters: { query?: infer Q } } } ? NonNullable<Q> : never;
+
 // Response types derived from schema
 export type CompanySearchResponse = ApiResponse<"/v1/company/search", "get">;
 export type CompanyDetailsResponse = ApiResponse<"/v1/company/details", "get">;
@@ -73,6 +77,69 @@ export type FinancialMetricPeriod
     = FinancialCagrPeriod | FinancialGrowthPeriod | FinancialRatiosPeriod;
 export type SegmentedFinancialFact
     = SegmentedFinancialPeriod["facts"][string][number];
+
+// Earnings calls (IDA `/v1/earnings-calls/*`)
+
+// A JSON value. The spec types free-form fields (`transcript.data`, `participation_events[].detail`)
+// as `unknown`, which a server function's return type rejects (TanStack Start only accepts provably
+// serialisable values); the API answers JSON, so those fields are narrowed to `JsonValue`.
+export type JsonValue = Array<JsonValue> | boolean | null | number | string | { [key: string]: JsonValue };
+
+type WithJson<TObject, TKey extends keyof TObject> = Omit<TObject, TKey> & { [TProp in TKey]: JsonValue };
+
+export type EarningsCalendarResponse = ApiResponse<"/v1/earnings-calls/calendar", "get">;
+export type EarningsEventsResponse = ApiResponse<"/v1/earnings-calls/events", "get">;
+export type EarningsLiveResponse = ApiResponse<"/v1/earnings-calls/live", "get">;
+export type EarningsLiveStreamResponse = ApiResponse<"/v1/earnings-calls/live/stream", "get">;
+export type EarningsEventResponse = ApiResponse<"/v1/earnings-calls/event/{event_id}", "get">;
+export type EarningsTranscriptResponse = WithJson<ApiResponse<"/v1/earnings-calls/transcript", "get">, "data">;
+export type EarningsTranscriptVersionsResponse = ApiResponse<"/v1/earnings-calls/transcript/versions", "get">;
+export type EarningsTranscriptDiffResponse = ApiResponse<"/v1/earnings-calls/transcript/diff", "get">;
+export type EarningsQaResponse = ApiResponse<"/v1/earnings-calls/qa", "get">;
+type EarningsParticipantsRaw = ApiResponse<"/v1/earnings-calls/participants", "get">;
+
+export type EarningsParticipationEvent
+    = Omit<EarningsParticipantsRaw["participation_events"][number], "detail"> & { detail: null | Record<string, JsonValue> };
+export type EarningsParticipantsResponse
+    = Omit<EarningsParticipantsRaw, "participation_events"> & { participation_events: Array<EarningsParticipationEvent> };
+export type EarningsPressReleaseResponse = ApiResponse<"/v1/earnings-calls/press-release", "get">;
+export type EarningsExtractionsResponse = ApiResponse<"/v1/earnings-calls/extractions", "get">;
+export type EarningsGuidanceHistoryResponse = ApiResponse<"/v1/earnings-calls/guidance/history", "get">;
+export type EarningsDiffResponse = ApiResponse<"/v1/earnings-calls/diff", "get">;
+export type EarningsMetricsResponse = ApiResponse<"/v1/earnings-calls/metrics", "get">;
+export type EarningsProsodyResponse = ApiResponse<"/v1/earnings-calls/prosody", "get">;
+export type EarningsAudioResponse = ApiResponse<"/v1/earnings-calls/audio", "get">;
+export type EarningsSlidesResponse = ApiResponse<"/v1/earnings-calls/slides", "get">;
+export type EarningsDocumentsResponse = ApiResponse<"/v1/earnings-calls/documents", "get">;
+export type EarningsSearchResponse = ApiResponse<"/v1/earnings-calls/search", "get">;
+
+export type EarningsEvent = EarningsCalendarResponse["events"][number];
+export type EarningsEventWithObservations = EarningsEventsResponse["events"][number];
+export type EarningsLiveEvent = EarningsLiveResponse["events"][number];
+export type EarningsEventBrief = EarningsAudioResponse["event"];
+export type EarningsTranscriptVersion = EarningsTranscriptVersionsResponse["versions"][number];
+export type EarningsQaPair = EarningsQaResponse["pairs"][number];
+export type EarningsParticipant = EarningsParticipantsResponse["participants"][number];
+export type EarningsGuidanceItem = NonNullable<EarningsExtractionsResponse["guidance"]>[number];
+export type EarningsKpi = NonNullable<EarningsExtractionsResponse["kpis"]>[number];
+export type EarningsDocument = EarningsDocumentsResponse["documents"][number];
+export type EarningsSlide = EarningsSlidesResponse["slides"][number];
+export type EarningsSlideDeck = NonNullable<EarningsSlidesResponse["deck"]>;
+export type EarningsSearchHit = EarningsSearchResponse["hits"][number];
+export type EarningsProsodySpeaker = EarningsProsodyResponse["speakers"][number];
+
+export type EarningsDateStatus = EarningsEvent["date_status"];
+export type EarningsSession = NonNullable<ApiQuery<"/v1/earnings-calls/calendar">["session"]>;
+export type EarningsEventType = NonNullable<ApiQuery<"/v1/earnings-calls/calendar">["event_type"]>;
+export type EarningsTranscriptFormat = NonNullable<ApiQuery<"/v1/earnings-calls/transcript">["format"]>;
+export type EarningsExtractionKind = NonNullable<ApiQuery<"/v1/earnings-calls/extractions">["kind"]>;
+export type EarningsExtractionReview = NonNullable<ApiQuery<"/v1/earnings-calls/extractions">["review"]>;
+export type EarningsGuidancePeriodKind = NonNullable<ApiQuery<"/v1/earnings-calls/guidance/history">["period_kind"]>;
+export type EarningsGuidanceBasis = NonNullable<ApiQuery<"/v1/earnings-calls/guidance/history">["basis"]>;
+export type EarningsProsodySection = NonNullable<ApiQuery<"/v1/earnings-calls/prosody">["section"]>;
+export type EarningsSearchType = NonNullable<ApiQuery<"/v1/earnings-calls/search">["type"]>;
+
+export type EarningsLiveStreamStatus = EarningsLiveStreamResponse["status"];
 
 // Query parameter types
 export type FiscalPeriodType = "annual" | "quarterly" | "ttm" | "ytd";

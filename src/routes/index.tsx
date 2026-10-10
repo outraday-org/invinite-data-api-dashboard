@@ -31,6 +31,11 @@ function IndexPage() {
             to: "/$ticker/filings",
         },
         {
+            body: "Transcripts, audio, slides, guidance and KPIs per call; live calls with audio and a live transcript.",
+            title: "Earnings Calls",
+            to: "/$ticker/earnings-calls",
+        },
+        {
             body: "Historical dividend announcements and payouts.",
             title: "Dividends",
             to: "/$ticker/dividends",
@@ -49,6 +54,11 @@ function IndexPage() {
             body: "Institutional ownership snapshots.",
             title: "Institutions",
             to: "/$ticker/institutions",
+        },
+        {
+            body: "Upcoming and past calls across the market, live now.",
+            title: "Earnings Calendar",
+            to: "/$ticker/earnings-calendar",
         },
         {
             body: "Upcoming IPO calendar and listings.",
