@@ -4094,6 +4094,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/earnings-calls/price-attribution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Minute-level price moves aligned to what was being said at the time. This is temporal coincidence, not attribution of cause; pre-market bars are sparse. 404 price_attribution_unavailable until the call has been attributed. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                    event_id?: string;
+                    /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                    identifier?: string;
+                    /** @description Fiscal year of the call (with quarter) */
+                    year?: number;
+                    /** @description Fiscal quarter of the call (with year) */
+                    quarter?: number;
+                    /** @description New York calendar day of the call (YYYY-MM-DD) */
+                    date?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            event: {
+                                /**
+                                 * Format: uuid
+                                 * @description Event identifier
+                                 */
+                                event_id: string;
+                                /** @description 10-digit CIK */
+                                cik: string;
+                                /** @description Ticker symbol */
+                                symbol: string;
+                                /**
+                                 * Format: date-time
+                                 * @description Scheduled start (ISO 8601 UTC)
+                                 */
+                                conference_date: string;
+                            };
+                            /**
+                             * @description How the recording was anchored to wall-clock time; null until the summary is written
+                             * @enum {string|null}
+                             */
+                            anchor_kind: "started_at" | "t0_wallclock" | null;
+                            /** @description Lag applied to the anchor, ms */
+                            anchor_lag_ms: null | number;
+                            /**
+                             * @description Where the anchor lag came from
+                             * @enum {string|null}
+                             */
+                            lag_kind: "dialin_offset" | "none" | "playlist" | null;
+                            /** @description Uncertainty of the anchor, seconds */
+                            anchor_uncertainty_s: null | number;
+                            /**
+                             * @description Market session of the call start (New York); pre / post-market bars are thin
+                             * @enum {string|null}
+                             */
+                            session: "post" | "pre" | "regular" | null;
+                            /** @description One-minute bars in the window */
+                            bar_count: number;
+                            /** @description Return over the whole window, basis points */
+                            end_of_window_return_bps: null | number;
+                            /** @description One row per minute with a bar, oldest first; minutes without a bar are absent */
+                            buckets: Array<{
+                                /**
+                                 * Format: date-time
+                                 * @description The minute (ISO 8601 UTC)
+                                 */
+                                bucket: string;
+                                /**
+                                 * Format: date-time
+                                 * @description Start of the one-minute bar (ISO 8601 UTC)
+                                 */
+                                bar_start: string;
+                                /** @description The minute's return in basis points */
+                                return_bps: number;
+                                /** @description Return since the start of the window, basis points */
+                                cumulative_return_bps: number;
+                                /** @description Up to 5 utterances spoken in that minute */
+                                utterance_refs: Array<{
+                                    /** @description Utterance start, ms from the start of the recording */
+                                    start_ms: number;
+                                    /** @description Transcript speaker label */
+                                    speaker_label: string;
+                                    /** @description What was said */
+                                    text: string;
+                                }>;
+                            }>;
+                            /** @description Up to 5 minutes with the largest absolute return, largest first */
+                            top_minutes: Array<{
+                                /**
+                                 * Format: date-time
+                                 * @description The minute (ISO 8601 UTC)
+                                 */
+                                bucket: string;
+                                /** @description The minute's return in basis points */
+                                return_bps: number;
+                                /** @description Up to 5 utterances spoken in that minute */
+                                utterance_refs: Array<{
+                                    /** @description Utterance start, ms from the start of the recording */
+                                    start_ms: number;
+                                    /** @description Transcript speaker label */
+                                    speaker_label: string;
+                                    /** @description What was said */
+                                    text: string;
+                                }>;
+                            }>;
+                        };
+                    };
+                };
+                400: components["responses"]["BadRequestError"];
+                401: components["responses"]["UnauthorizedError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["InternalServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/earnings-calls/prosody": {
         parameters: {
             query?: never;

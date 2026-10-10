@@ -108,6 +108,8 @@ export type EarningsGuidanceHistoryResponse = ApiResponse<"/v1/earnings-calls/gu
 export type EarningsDiffResponse = ApiResponse<"/v1/earnings-calls/diff", "get">;
 export type EarningsMetricsResponse = ApiResponse<"/v1/earnings-calls/metrics", "get">;
 export type EarningsProsodyResponse = ApiResponse<"/v1/earnings-calls/prosody", "get">;
+/** Derived returns only (basis points): the response carries no price or volume. */
+export type EarningsPriceAttributionResponse = ApiResponse<"/v1/earnings-calls/price-attribution", "get">;
 export type EarningsAudioResponse = ApiResponse<"/v1/earnings-calls/audio", "get">;
 export type EarningsSlidesResponse = ApiResponse<"/v1/earnings-calls/slides", "get">;
 export type EarningsDocumentsResponse = ApiResponse<"/v1/earnings-calls/documents", "get">;
@@ -127,6 +129,9 @@ export type EarningsSlide = EarningsSlidesResponse["slides"][number];
 export type EarningsSlideDeck = NonNullable<EarningsSlidesResponse["deck"]>;
 export type EarningsSearchHit = EarningsSearchResponse["hits"][number];
 export type EarningsProsodySpeaker = EarningsProsodyResponse["speakers"][number];
+export type EarningsPriceBucket = EarningsPriceAttributionResponse["buckets"][number];
+export type EarningsPriceTopMinute = EarningsPriceAttributionResponse["top_minutes"][number];
+export type EarningsPriceUtteranceRef = EarningsPriceBucket["utterance_refs"][number];
 
 export type EarningsDateStatus = EarningsEvent["date_status"];
 export type EarningsSession = NonNullable<ApiQuery<"/v1/earnings-calls/calendar">["session"]>;

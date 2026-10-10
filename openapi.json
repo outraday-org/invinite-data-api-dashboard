@@ -16135,6 +16135,298 @@
         "x-license": "display"
       }
     },
+    "/v1/earnings-calls/price-attribution": {
+      "get": {
+        "tags": [
+          "Earnings Calls"
+        ],
+        "description": "Minute-level price moves aligned to what was being said at the time. This is temporal coincidence, not attribution of cause; pre-market bars are sparse. 404 price_attribution_unavailable until the call has been attributed. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "query",
+            "name": "event_id",
+            "required": false,
+            "description": "Event identifier (event_id of any earnings-calls response); wins over the other selectors"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "identifier",
+            "required": false,
+            "description": "Company ticker symbol or CIK (US companies only), with year+quarter or date"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 2000,
+              "maximum": 2100
+            },
+            "in": "query",
+            "name": "year",
+            "required": false,
+            "description": "Fiscal year of the call (with quarter)"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            "in": "query",
+            "name": "quarter",
+            "required": false,
+            "description": "Fiscal quarter of the call (with year)"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "description": "New York calendar day of the call (YYYY-MM-DD)"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "event",
+                    "anchor_kind",
+                    "anchor_lag_ms",
+                    "lag_kind",
+                    "anchor_uncertainty_s",
+                    "session",
+                    "bar_count",
+                    "end_of_window_return_bps",
+                    "buckets",
+                    "top_minutes"
+                  ],
+                  "properties": {
+                    "event": {
+                      "type": "object",
+                      "required": [
+                        "event_id",
+                        "cik",
+                        "symbol",
+                        "conference_date"
+                      ],
+                      "properties": {
+                        "event_id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "Event identifier"
+                        },
+                        "cik": {
+                          "type": "string",
+                          "description": "10-digit CIK"
+                        },
+                        "symbol": {
+                          "type": "string",
+                          "description": "Ticker symbol"
+                        },
+                        "conference_date": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Scheduled start (ISO 8601 UTC)"
+                        }
+                      }
+                    },
+                    "anchor_kind": {
+                      "type": "string",
+                      "enum": [
+                        "t0_wallclock",
+                        "started_at"
+                      ],
+                      "nullable": true,
+                      "description": "How the recording was anchored to wall-clock time; null until the summary is written"
+                    },
+                    "anchor_lag_ms": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "Lag applied to the anchor, ms"
+                    },
+                    "lag_kind": {
+                      "type": "string",
+                      "enum": [
+                        "dialin_offset",
+                        "playlist",
+                        "none"
+                      ],
+                      "nullable": true,
+                      "description": "Where the anchor lag came from"
+                    },
+                    "anchor_uncertainty_s": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "Uncertainty of the anchor, seconds"
+                    },
+                    "session": {
+                      "type": "string",
+                      "enum": [
+                        "pre",
+                        "regular",
+                        "post"
+                      ],
+                      "nullable": true,
+                      "description": "Market session of the call start (New York); pre / post-market bars are thin"
+                    },
+                    "bar_count": {
+                      "type": "integer",
+                      "description": "One-minute bars in the window"
+                    },
+                    "end_of_window_return_bps": {
+                      "type": "number",
+                      "nullable": true,
+                      "description": "Return over the whole window, basis points"
+                    },
+                    "buckets": {
+                      "type": "array",
+                      "description": "One row per minute with a bar, oldest first; minutes without a bar are absent",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "bucket",
+                          "bar_start",
+                          "return_bps",
+                          "cumulative_return_bps",
+                          "utterance_refs"
+                        ],
+                        "properties": {
+                          "bucket": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "The minute (ISO 8601 UTC)"
+                          },
+                          "bar_start": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Start of the one-minute bar (ISO 8601 UTC)"
+                          },
+                          "return_bps": {
+                            "type": "number",
+                            "description": "The minute's return in basis points"
+                          },
+                          "cumulative_return_bps": {
+                            "type": "number",
+                            "description": "Return since the start of the window, basis points"
+                          },
+                          "utterance_refs": {
+                            "type": "array",
+                            "description": "Up to 5 utterances spoken in that minute",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "start_ms",
+                                "speaker_label",
+                                "text"
+                              ],
+                              "properties": {
+                                "start_ms": {
+                                  "type": "integer",
+                                  "description": "Utterance start, ms from the start of the recording"
+                                },
+                                "speaker_label": {
+                                  "type": "string",
+                                  "description": "Transcript speaker label"
+                                },
+                                "text": {
+                                  "type": "string",
+                                  "description": "What was said"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "top_minutes": {
+                      "type": "array",
+                      "description": "Up to 5 minutes with the largest absolute return, largest first",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "bucket",
+                          "return_bps",
+                          "utterance_refs"
+                        ],
+                        "properties": {
+                          "bucket": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "The minute (ISO 8601 UTC)"
+                          },
+                          "return_bps": {
+                            "type": "number",
+                            "description": "The minute's return in basis points"
+                          },
+                          "utterance_refs": {
+                            "type": "array",
+                            "description": "Up to 5 utterances spoken in that minute",
+                            "items": {
+                              "type": "object",
+                              "required": [
+                                "start_ms",
+                                "speaker_label",
+                                "text"
+                              ],
+                              "properties": {
+                                "start_ms": {
+                                  "type": "integer",
+                                  "description": "Utterance start, ms from the start of the recording"
+                                },
+                                "speaker_label": {
+                                  "type": "string",
+                                  "description": "Transcript speaker label"
+                                },
+                                "text": {
+                                  "type": "string",
+                                  "description": "What was said"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequestError"
+          },
+          "401": {
+            "$ref": "#/components/responses/UnauthorizedError"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFoundError"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        },
+        "x-tier": "standard",
+        "x-license": "display"
+      }
+    },
     "/v1/earnings-calls/audio": {
       "get": {
         "tags": [

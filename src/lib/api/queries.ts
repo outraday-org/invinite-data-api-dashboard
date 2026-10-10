@@ -30,6 +30,7 @@ import type {
     EarningsMetricsResponse,
     EarningsParticipantsResponse,
     EarningsPressReleaseResponse,
+    EarningsPriceAttributionResponse,
     EarningsProsodyResponse,
     EarningsProsodySection,
     EarningsQaResponse,
@@ -79,6 +80,7 @@ import {
     getEarningsMetrics,
     getEarningsParticipants,
     getEarningsPressRelease,
+    getEarningsPriceAttribution,
     getEarningsProsody,
     getEarningsQa,
     getEarningsSearch,
@@ -1555,6 +1557,17 @@ export function useEarningsProsody(input: EarningsProsodyInput) {
         errorMessage: null,
         load: apiKey => getEarningsProsody({ data: { ...input, apiKey } }),
         queryKey: ["earnings", "prosody", ...selectorKey(input), input.section ?? ""],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/** Status-aware: `404 price_attribution_unavailable` until the call has been attributed. */
+export function useEarningsPriceAttribution(input: EarningsEventSelector) {
+    return useEarningsQuery<EarningsPriceAttributionResponse>({
+        enabled: hasEventSelector(input),
+        errorMessage: null,
+        load: apiKey => getEarningsPriceAttribution({ data: { ...input, apiKey } }),
+        queryKey: ["earnings", "price-attribution", ...selectorKey(input)],
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }

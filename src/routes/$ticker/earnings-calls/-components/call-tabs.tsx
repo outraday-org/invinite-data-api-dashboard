@@ -13,6 +13,7 @@ import { GuidanceTab } from "./tabs/guidance-tab";
 import { MetricsDiffTab } from "./tabs/metrics-diff-tab";
 import { ParticipantsTab } from "./tabs/participants-tab";
 import { PressReleaseTab } from "./tabs/press-release-tab";
+import { PriceAttributionTab } from "./tabs/price-attribution-tab";
 import { ProsodyTab } from "./tabs/prosody-tab";
 import { QaTab } from "./tabs/qa-tab";
 import { SlidesTab } from "./tabs/slides-tab";
@@ -30,6 +31,7 @@ export const CALL_TAB_VALUES = [
     "participants",
     "metrics",
     "prosody",
+    "price-moves",
 ] as const;
 
 export type CallTab = (typeof CALL_TAB_VALUES)[number];
@@ -58,7 +60,7 @@ type CallTabDefinition = {
     render: (props: CallTabProps) => React.ReactNode;
 };
 
-// The derived tabs (guidance … prosody) carry no `has_*` flag: an underived call shows each
+// The derived tabs (guidance … prosody, price moves) carry no `has_*` flag: an underived call shows each
 // tab's own empty state ("No guidance extracted", "not derived yet").
 const CALL_TABS: Record<CallTab, CallTabDefinition> = {
     "audio": { flag: "has_audio", label: "Audio", render: () => <AudioTab /> },
@@ -67,6 +69,7 @@ const CALL_TABS: Record<CallTab, CallTabDefinition> = {
     "metrics": { label: "Metrics & diff", render: props => <MetricsDiffTab {...props} /> },
     "participants": { label: "Participants", render: props => <ParticipantsTab {...props} /> },
     "press-release": { flag: "has_press_release", label: "Press release", render: props => <PressReleaseTab {...props} /> },
+    "price-moves": { label: "Price moves", render: props => <PriceAttributionTab {...props} /> },
     "prosody": { label: "Prosody", render: props => <ProsodyTab {...props} /> },
     "qa": { label: "Q&A", render: props => <QaTab {...props} /> },
     "slides": { flag: "has_slides", label: "Slides", render: props => <SlidesTab {...props} /> },

@@ -1,8 +1,9 @@
 /**
  * An API error that keeps the HTTP status. Every earnings server function throws it
  * (`throwApiError`), so the status-aware pages (audio, slides, documents, search, live
- * stream, a 404 on event / transcript / press release / metrics / diff / prosody) can
- * render a state per status instead of a toast.
+ * stream, a 404 on event / transcript / press release / metrics / diff / prosody / price
+ * attribution — `price_attribution_unavailable` until the call is attributed) can render a
+ * state per status instead of a toast.
  *
  * Server functions serialise a thrown Error with its own properties (TanStack Start /
  * seroval) but revive it as a plain `Error`, so `status`, `code` and `body` are own fields

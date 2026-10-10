@@ -22,6 +22,7 @@ import type {
     EarningsMetricsResponse,
     EarningsParticipantsResponse,
     EarningsPressReleaseResponse,
+    EarningsPriceAttributionResponse,
     EarningsProsodyResponse,
     EarningsQaResponse,
     EarningsSearchResponse,
@@ -1085,6 +1086,20 @@ export const getEarningsProsody = createServerFn({ method: "GET" })
 
         const { data: res, error, response } = await api.GET("/v1/earnings-calls/prosody", {
             params: { query: { ...toSelectorQuery(data), section } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getEarningsPriceAttribution = createServerFn({ method: "GET" })
+    .inputValidator(selectorInputSchema)
+    .handler(async ({ data }): Promise<EarningsPriceAttributionResponse> => {
+        const api = createApiClient(data.apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/price-attribution", {
+            params: { query: toSelectorQuery(data) },
         });
 
         if (error) throwApiError(error, response);
