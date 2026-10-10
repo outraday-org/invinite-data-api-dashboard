@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { formatMs } from "@/lib/earnings/format";
 
 import { useCallAudio } from "./audio-context";
+import { CaptionLine } from "./caption-line";
 
 type ElementState = { durationMs: null | number; paused: boolean; positionMs: number };
 
@@ -97,6 +98,8 @@ export function MiniPlayer({ onOpenAudioTab }: { onOpenAudioTab: () => void }) {
         <div className="bg-background/95 sticky top-0 z-10 flex flex-wrap items-center gap-2 rounded-md border px-2 py-1 text-xs backdrop-blur">
             {body}
             <div className="ml-auto">{openPlayer}</div>
+            {/* The words being spoken, so the other tabs still show what is said. */}
+            {loaded && <CaptionLine className="basis-full" />}
         </div>
     );
 }

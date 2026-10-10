@@ -1,12 +1,26 @@
 import * as React from "react";
 
-import { useEarningsAudio } from "@/lib/api/queries";
+import type { WordTurn } from "@/lib/earnings/follow-along";
+import type { PlaybackPosition } from "@/lib/earnings/use-playback-position";
+
+import { useEarningsAudio, useEarningsTranscript } from "@/lib/api/queries";
+import { toWordTurns } from "@/lib/earnings/follow-along";
+import { usePlaybackPosition } from "@/lib/earnings/use-playback-position";
 
 type AudioQuery = ReturnType<typeof useEarningsAudio>;
+
+type WordsQuery = ReturnType<typeof useEarningsTranscript>;
 
 export type CallAudio = {
     /** The `/audio` query; idle (never sent) until the Audio tab first opens or a timestamp is clicked. */
     audio: AudioQuery;
+    /**
+     * The `format=words` transcript (one request, once a recording is in): what the follow
+     * view and the caption line run over. Idle while nothing is loaded.
+     */
+    words: WordsQuery;
+    /** `words` narrowed (`toWordTurns`); `[]` until it is in. */
+    wordTurns: Array<WordTurn>;
     /** The page's one `<audio>` element, rendered by `AudioPlayer` while a recording is loaded. */
     audioRef: React.RefObject<HTMLAudioElement | null>;
     /** A recording (`/audio` or a played search hit) is in the element. */
@@ -148,6 +162,11 @@ export function CallAudioProvider({
 
     const loaded = Boolean(audio.data) || playedUrl !== null;
 
+    // The text to follow, asked for once a recording plays (a search hit plays the same recording).
+    const words = useEarningsTranscript({ eventId: loaded ? eventId : undefined, format: "words" });
+
+    const wordTurns = React.useMemo(() => (words.data ? toWordTurns(words.data.data) : []), [words.data]);
+
     const seek = (ms: number) => {
         const element = audioRef.current;
 
@@ -190,6 +209,8 @@ export function CallAudioProvider({
         seekMs: hasAudio || playedUrl ? seek : null,
         setPlaybackRate,
         skip,
+        words,
+        wordTurns,
     };
 
     return <CallAudioContext value={value}>{children}</CallAudioContext>;
@@ -201,4 +222,15 @@ export function useCallAudio(): CallAudio {
     if (!value) throw new Error("useCallAudio must be used inside CallAudioProvider");
 
     return value;
+}
+
+/**
+ * The element's play state and position, read per frame while playing. Each consumer (the
+ * caption line, the follow view, the Transcript tab's highlight) subscribes itself, so the
+ * provider's tree is not re-rendered at frame rate.
+ */
+export function useCallPlayback(): PlaybackPosition {
+    const { audioRef, loaded } = useCallAudio();
+
+    return usePlaybackPosition(audioRef, loaded);
 }

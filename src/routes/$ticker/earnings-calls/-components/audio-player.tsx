@@ -8,6 +8,7 @@ import { useMediaUrl } from "@/lib/earnings/use-media-url";
 import { cn } from "@/lib/utils";
 
 import { useCallAudio } from "./audio-context";
+import { CaptionLine } from "./caption-line";
 
 const SKIP_SECONDS = 15;
 
@@ -85,6 +86,8 @@ export function AudioPlayer({ visible }: { visible: boolean }) {
                     </div>
                 )}
             </div>
+            {/* The words being spoken, flowing past in one row (the follow view below has the whole text). */}
+            <CaptionLine />
         </div>
     );
 }

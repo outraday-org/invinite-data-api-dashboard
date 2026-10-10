@@ -4,14 +4,20 @@ import type { TranscriptTurn, TranscriptView } from "@/lib/earnings/transcript";
 
 import { qaStartTurnIndex, speakerName } from "@/lib/earnings/transcript";
 
+import { ActiveTurnBridge } from "../active-turn-bridge";
 import { SeekButton } from "../seek-button";
 
-function Turn({ turn }: { turn: TranscriptTurn }) {
+function Turn({ index, turn }: { index: number; turn: TranscriptTurn }) {
     const detail = [turn.title, turn.name ? null : turn.role].filter(Boolean).join(" · ");
 
     return (
         // `data-start-ms`: "Ask this call" (task 7) scrolls to the turn containing a hit.
-        <div className="flex flex-col gap-1" data-start-ms={turn.start_ms ?? undefined}>
+        // `data-turn-index` / `data-active`: `ActiveTurnBridge` marks the turn being heard.
+        <div
+            className="-mx-2 flex flex-col gap-1 rounded-md px-2 py-1 transition-colors data-[active=true]:bg-accent/60"
+            data-start-ms={turn.start_ms ?? undefined}
+            data-turn-index={index}
+        >
             <div className="flex flex-wrap items-baseline gap-2">
                 <span className="font-medium">{speakerName(turn)}</span>
                 {detail && <span className="text-muted-foreground">{detail}</span>}
@@ -61,6 +67,26 @@ function QaDivider({ qaStartMs }: { qaStartMs: number }) {
     );
 }
 
+/** The turns, with the one being heard marked while a recording plays (`ActiveTurnBridge`). */
+function Turns({ qaStartMs, turns }: { qaStartMs: null | number; turns: ReadonlyArray<TranscriptTurn> }) {
+    const containerRef = React.useRef<HTMLDivElement | null>(null);
+
+    const qaIndex = qaStartTurnIndex(turns, qaStartMs);
+
+    return (
+        <div className="flex flex-col gap-4" ref={containerRef}>
+            <ActiveTurnBridge containerRef={containerRef} turns={turns} />
+            {turns.map((turn, index) => (
+                // Turns have no id; their order within one answer is stable.
+                <React.Fragment key={index}>
+                    {index === qaIndex && qaStartMs !== null && <QaDivider qaStartMs={qaStartMs} />}
+                    <Turn index={index} turn={turn} />
+                </React.Fragment>
+            ))}
+        </div>
+    );
+}
+
 /**
  * The transcript body of one format (`empty` is handled by the tab). `qaStartMs` (the
  * response's `qa_start_ms`) heads the Q&A: on the sections' Q&A block, and as a divider above
@@ -83,20 +109,7 @@ export function TranscriptTurns({ qaStartMs, view }: { qaStartMs: null | number;
             );
         case "text":
             return <pre className="whitespace-pre-wrap break-words font-sans leading-relaxed">{view.text}</pre>;
-        case "turns": {
-            const qaIndex = qaStartTurnIndex(view.turns, qaStartMs);
-
-            return (
-                <div className="flex flex-col gap-4">
-                    {view.turns.map((turn, index) => (
-                        // Turns have no id; their order within one answer is stable.
-                        <React.Fragment key={index}>
-                            {index === qaIndex && qaStartMs !== null && <QaDivider qaStartMs={qaStartMs} />}
-                            <Turn turn={turn} />
-                        </React.Fragment>
-                    ))}
-                </div>
-            );
-        }
+        case "turns":
+            return <Turns qaStartMs={qaStartMs} turns={view.turns} />;
     }
 }
