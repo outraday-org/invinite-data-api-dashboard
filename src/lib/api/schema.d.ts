@@ -2424,10 +2424,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description One earnings call by event_id, with its date / time observations. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description One earnings call by event_id; `include=observations` adds the date / time observations behind its call time. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
         get: {
             parameters: {
-                query?: never;
+                query?: {
+                    /** @description Extra data (repeatable): `observations` = the date / time observations behind the call time */
+                    include?: Array<"observations">;
+                };
                 header?: never;
                 path: {
                     /** @description Event identifier (event_id of any earnings-calls response) */
@@ -2524,7 +2527,7 @@ export interface paths {
                             /** @description Webcast page of an upcoming dated call; null once published */
                             webcast_url: null | string;
                             /** @description Date / time observations, oldest first (at most 50) */
-                            observations: Array<{
+                            observations?: Array<{
                                 /** @description Source class of the observation */
                                 observed_source: string;
                                 /**
@@ -4215,7 +4218,7 @@ export interface paths {
                     date?: string;
                     /** @description text = plain text; speakers = one entry per speaker turn; words = turns with every word (w, s = start ms, e = end ms, c = confidence) — the one large format, billed by turn count; sections = prepared remarks + Q&A + qa_start_ms; cleaned = lightly cleaned turns (404 when the version has no cleaned layer) */
                     format?: "cleaned" | "sections" | "speakers" | "text" | "words";
-                    /** @description A specific published version (see transcript/versions); default = the current one */
+                    /** @description A specific published version (one listed by transcript/versions); default = the current one */
                     version?: number;
                     /** @description Point in time (ISO 8601): the version that was current then. Mutually exclusive with version; a future instant = the current version */
                     as_of?: string;
@@ -4397,7 +4400,7 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
-                    /** @description Older version (see transcript/versions) */
+                    /** @description Older version (one listed by transcript/versions) */
                     from: number;
                     /** @description Newer version; default = the current one */
                     to?: number;
@@ -4482,7 +4485,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Every published transcript version of one earnings call (live, final, corrected), ascending, without the text. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Every published transcript version of one earnings call (live, final, corrected), ascending, without the text. A final version replaced by the next final (the pipeline's speaker-naming pass) is not a version here and cannot be requested. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
         get: {
             parameters: {
                 query?: {

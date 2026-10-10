@@ -61,7 +61,7 @@ export function CallHeader({ event }: { event: EarningsEventResponse }) {
                 )}
             </div>
 
-            {event.observations.length > 0 && (
+            {(event.observations?.length ?? 0) > 0 && (
                 <div className="flex flex-col gap-2">
                     <button
                         aria-expanded={showObservations}
@@ -71,7 +71,7 @@ export function CallHeader({ event }: { event: EarningsEventResponse }) {
                     >
                         <ObservationsIcon className="size-3.5" />
                         Call-time observations (
-                        {event.observations.length}
+                        {event.observations?.length}
                         )
                     </button>
                     {showObservations && (
@@ -86,7 +86,7 @@ export function CallHeader({ event }: { event: EarningsEventResponse }) {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {event.observations.map(observation => (
+                                {event.observations?.map(observation => (
                                     <TableRow key={`${observation.observed_source}:${observation.observed_at}:${observation.starts_at ?? ""}`}>
                                         <TableCell>{observation.observed_source}</TableCell>
                                         <TableCell className="tabular-nums">{formatInstant(observation.observed_at)}</TableCell>

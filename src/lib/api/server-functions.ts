@@ -856,7 +856,8 @@ export const getEarningsEvent = createServerFn({ method: "GET" })
         const api = createApiClient(data.apiKey);
 
         const { data: res, error, response } = await api.GET("/v1/earnings-calls/event/{event_id}", {
-            params: { path: { event_id: data.eventId } },
+            // The call header shows the call-time provenance (example app); the API omits it by default.
+            params: { path: { event_id: data.eventId }, query: { include: ["observations"] } },
         });
 
         if (error) throwApiError(error, response);

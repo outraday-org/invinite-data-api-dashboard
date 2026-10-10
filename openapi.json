@@ -11900,8 +11900,23 @@
         "tags": [
           "Earnings Calls"
         ],
-        "description": "One earnings call by event_id, with its date / time observations. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served.",
+        "description": "One earnings call by event_id; `include=observations` adds the date / time observations behind its call time. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served.",
         "parameters": [
+          {
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "observations"
+                ]
+              }
+            },
+            "in": "query",
+            "name": "include",
+            "required": false,
+            "description": "Extra data (repeatable): `observations` = the date / time observations behind the call time"
+          },
           {
             "schema": {
               "type": "string",
@@ -11951,8 +11966,7 @@
                     "has_slides",
                     "has_press_release",
                     "has_documents",
-                    "webcast_url",
-                    "observations"
+                    "webcast_url"
                   ],
                   "properties": {
                     "event_id": {
@@ -12248,7 +12262,7 @@
             "in": "query",
             "name": "version",
             "required": false,
-            "description": "A specific published version (see transcript/versions); default = the current one"
+            "description": "A specific published version (one listed by transcript/versions); default = the current one"
           },
           {
             "schema": {
@@ -12564,7 +12578,7 @@
         "tags": [
           "Earnings Calls"
         ],
-        "description": "Every published transcript version of one earnings call (live, final, corrected), ascending, without the text. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served.",
+        "description": "Every published transcript version of one earnings call (live, final, corrected), ascending, without the text. A final version replaced by the next final (the pipeline's speaker-naming pass) is not a version here and cannot be requested. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served.",
         "parameters": [
           {
             "schema": {
@@ -12783,7 +12797,7 @@
             "in": "query",
             "name": "from",
             "required": true,
-            "description": "Older version (see transcript/versions)"
+            "description": "Older version (one listed by transcript/versions)"
           },
           {
             "schema": {
