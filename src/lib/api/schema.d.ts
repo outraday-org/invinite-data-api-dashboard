@@ -2179,7 +2179,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Sell-side analysts who asked questions on one US company's earnings calls, with appearance and question counts. An out-of-scope company answers an empty list. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
+        /** @description Sell-side analysts who asked questions on one US company's earnings calls, with appearance and question counts and the mean difficulty of their scored questions (a descriptive feature, not a rating). An out-of-scope company answers an empty list. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query: {
@@ -2232,6 +2232,10 @@ export interface paths {
                                  * @description Latest such call
                                  */
                                 last_seen: string;
+                                /** @description Mean difficulty (0–1) of the analyst's scored questions across every covered call — a descriptive feature of how pointed the questions were, not a rating; null while none is scored */
+                                mean_difficulty: null | number;
+                                /** @description Questions of the analyst that carry a difficulty score (every covered call) */
+                                scored_question_count: number;
                             }>;
                             /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
                             next_url?: string;
@@ -4216,7 +4220,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Structured Q&A of one earnings call: each analyst question with the analyst's identity and firm, the answering executives and the answer. pairs is [] until the Q&A has been derived. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
+        /** @description Structured Q&A of one earnings call: each analyst question with the analyst's identity and firm, the answering executives and the answer. pairs is [] until the Q&A has been derived. include=scores adds each pair's descriptive scores (where the analyst sat in the question order, the question's tone and difficulty, whether the answer addressed it) — descriptive features of the exchange, not a forecast. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query?: {
@@ -4234,6 +4238,8 @@ export interface paths {
                     limit?: number;
                     /** @description Number of Q&A pairs to skip for pagination */
                     offset?: number;
+                    /** @description scores = add each pair's descriptive scores (analyst casting order, question tone, difficulty, evasiveness, non-answer flag with verbatim evidence); null for a pair not scored yet */
+                    include?: "scores";
                 };
                 header?: never;
                 path?: never;
@@ -4298,6 +4304,28 @@ export interface paths {
                                 answer_end_ms: null | number;
                                 /** @description A follow-up of the previous question */
                                 is_follow_up: boolean;
+                                /** @description Only with include=scores: the pair's descriptive scores, or null while the pair is not scored (or its score belongs to an older transcript version) */
+                                scores?: null | {
+                                    /** @description Where the analyst sat in the call's question order (1 = first called on; a follow-up keeps its analyst's order) */
+                                    analyst_casting_order: number;
+                                    /** @description Question tone −1..1 from the Loughran-McDonald word lists (positive minus negative words over the question length); null without the lexicon */
+                                    question_tone: null | number;
+                                    /** @description How hard the question was, 0 (softball) to 1 (pointed, quantified, adversarial); null when the scorer's evidence was rejected */
+                                    difficulty: null | number;
+                                    /** @description How far the answer stayed from the question, 0 (direct) to 1 (no substantive content); null when the scorer's evidence was rejected */
+                                    evasiveness: null | number;
+                                    /** @description evasiveness ≥ 0.7 — the answer did not answer the question */
+                                    non_answer: boolean;
+                                    /** @description Verbatim quotes from the pair's own text behind each score; non_answer names the kind of non-answer (not_addressed, no_guidance_policy, restated_question, deferred, partial) or null */
+                                    evidence: {
+                                        difficulty: Array<string>;
+                                        evasiveness: Array<string>;
+                                        /** @description Kind of non-answer, null for an answered question */
+                                        non_answer: null | string;
+                                    };
+                                    /** @description Scoring model and rubric version (<model>@rubric-v<n>) */
+                                    scored_by: string;
+                                };
                             }>;
                             /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
                             next_url?: string;
