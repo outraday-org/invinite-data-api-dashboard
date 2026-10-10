@@ -48,6 +48,345 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description API request health per product family, data freshness per dataset and the earnings-call pipeline's SLOs. Measured inside the API process per product family and UTC day: availability = non-5xx responses / responses (admission 429 / 503 included), latency = time from request arrival to the response, excluding network and edge time; percentiles are bucket upper bounds (conservative), the current day is partial. */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Window in days (1–90) */
+                    days?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** Format: date-time */
+                            generated_at: string;
+                            window_days: number;
+                            measurement: {
+                                /** @description How request health is measured */
+                                note: string;
+                            };
+                            /** @description Request health per product family; null while unavailable */
+                            api: null | {
+                                families: Array<{
+                                    /**
+                                     * @description Product family
+                                     * @enum {string}
+                                     */
+                                    family: "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "sec_filings" | "websocket";
+                                    last_7d: {
+                                        /** @description Call-weighted availability of the 7 newest days */
+                                        availability: null | number;
+                                        /** @description Worst daily p95 of the 7 newest days (ms) */
+                                        p95_ms: null | number;
+                                        requests: number;
+                                    };
+                                    /** @description Oldest first; days without traffic are omitted */
+                                    days: Array<{
+                                        /**
+                                         * Format: date
+                                         * @description UTC day
+                                         */
+                                        day: string;
+                                        /** @description Responses */
+                                        requests: number;
+                                        /** @description 5xx responses */
+                                        failures: number;
+                                        /** @description Non-5xx responses / responses; null at 0 responses */
+                                        availability: null | number;
+                                        /** @description Median latency bucket upper bound (ms); null at 0 responses or above 12,800 ms */
+                                        p50_ms: null | number;
+                                        /** @description p95 latency bucket upper bound (ms); null at 0 responses or above 12,800 ms */
+                                        p95_ms: null | number;
+                                    }>;
+                                }>;
+                            };
+                            /** @description Newest ingest per dataset; null while the data DB is unavailable */
+                            freshness: Array<{
+                                dataset: string;
+                                /**
+                                 * @description Product family
+                                 * @enum {string}
+                                 */
+                                family: "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "sec_filings" | "websocket";
+                                /** Format: date-time */
+                                newest: null | string;
+                                /** @description Hours since `newest`, one decimal */
+                                age_hours: null | number;
+                                /**
+                                 * @description Why `newest` is null
+                                 * @enum {string}
+                                 */
+                                reason?: "no_timestamp" | "not_measured" | "unavailable";
+                            }> | null;
+                            /** @description Coverage universe */
+                            universe: {
+                                /** @description Listed (not delisted) companies; null while the data DB is unavailable */
+                                companies: null | number;
+                                earnings_calls: {
+                                    /** @description Earnings-call coverage scope (e.g. top500); unknown without data */
+                                    scope: string;
+                                    /** @description Companies in the earnings-call scope */
+                                    companies: number;
+                                };
+                            };
+                            /** @description Earnings-call pipeline SLOs; null while unavailable or for a test scope */
+                            earnings_calls: null | {
+                                slo: {
+                                    first_segment_p95_ms: number;
+                                    final_p95_s: number;
+                                };
+                                last_7d: {
+                                    /** @description Worst daily first-segment p95 (ms) */
+                                    first_segment_p95_ms: null | number;
+                                    /** @description Worst daily final-transcript p95 (s) */
+                                    final_latency_p95_s: null | number;
+                                    /** @description Live captures / calls */
+                                    capture_success_rate: null | number;
+                                    /** @description Calls covered live / calls */
+                                    covered_live_rate: null | number;
+                                };
+                                /** Format: date */
+                                newest_day: null | string;
+                            };
+                        };
+                    };
+                };
+                400: components["responses"]["BadRequestError"];
+                500: components["responses"]["InternalServerError"];
+                503: components["responses"]["ServiceUnavailableError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/status/earnings-calls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Daily earnings-call capture SLOs per webcast vendor and coverage. The body is the earnings pipeline's published `SloStatusPayload` served verbatim — the one camelCase response of this API — plus `windowDays`, `coverageDays` and `summary`. An unknown vendor answers `days: []`. */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Window in days (1–90) */
+                    days?: number;
+                    /** @description Webcast vendor; `all` (default) = every vendor's rows including the aggregate `vendor: all` */
+                    vendor?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** Format: date-time */
+                            generatedAt: string;
+                            slo: {
+                                firstSegmentP95Ms: number;
+                                finalP95S: number;
+                            };
+                            vendors: Array<"all" | "choruscall" | "eqs" | "euronext" | "globalmeet" | "investis" | "notified" | "on24" | "openexchange" | "q4events" | "unknown" | "viavid" | "x" | "zoom">;
+                            /** @description Oldest first */
+                            days: Array<{
+                                /** Format: date */
+                                day: string;
+                                vendor: string;
+                                callsTotal: number;
+                                callsLive: number;
+                                /** @description Live captures / calls */
+                                captureSuccessRate: null | number;
+                                /** @description Median first live segment latency (ms) */
+                                firstSegmentP50Ms: null | number;
+                                /** @description p95 first live segment latency (ms) */
+                                firstSegmentP95Ms: null | number;
+                                /** @description Median final transcript latency (s) */
+                                finalLatencyP50S: null | number;
+                                /** @description p95 final transcript latency (s) */
+                                finalLatencyP95S: null | number;
+                                breaches: Array<"final" | "first_segment">;
+                            }>;
+                            coverage: {
+                                scope: string;
+                                companies: number;
+                            };
+                            windowDays: number;
+                            coverageDays: Array<{
+                                /** Format: date */
+                                day: string;
+                                total: number;
+                                coveredLive: number;
+                                coveredReplay24h: number;
+                                notCovered: number;
+                            }>;
+                            summary: {
+                                last7d: {
+                                    /** @description Worst daily first-segment p95 (ms) */
+                                    firstSegmentP95Ms: null | number;
+                                    /** @description Worst daily final-transcript p95 (s) */
+                                    finalLatencyP95S: null | number;
+                                    /** @description Live captures / calls */
+                                    captureSuccessRate: null | number;
+                                    /** @description Calls covered live / calls */
+                                    coveredLiveRate: null | number;
+                                };
+                            };
+                        };
+                    };
+                };
+                400: components["responses"]["BadRequestError"];
+                500: components["responses"]["InternalServerError"];
+                503: components["responses"]["ServiceUnavailableError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/status/licensing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The licensing policy: rights per tier, the right and tier of every route by product family, and the coverage universe. */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            policy_version: string;
+                            counsel_signed_off: boolean;
+                            resale: string;
+                            notes: {
+                                display: string;
+                                redistribute: string;
+                                rag: string;
+                                train: string;
+                                audio: string;
+                                sec_data: string;
+                            };
+                            rights: Array<"audio" | "display" | "rag" | "redistribute" | "resell" | "train">;
+                            tiers: {
+                                free: {
+                                    display: boolean;
+                                    redistribute: boolean;
+                                    rag: boolean;
+                                    train: boolean;
+                                    audio: boolean;
+                                    resell: boolean;
+                                };
+                                lite: {
+                                    display: boolean;
+                                    redistribute: boolean;
+                                    rag: boolean;
+                                    train: boolean;
+                                    audio: boolean;
+                                    resell: boolean;
+                                };
+                                standard: {
+                                    display: boolean;
+                                    redistribute: boolean;
+                                    rag: boolean;
+                                    train: boolean;
+                                    audio: boolean;
+                                    resell: boolean;
+                                };
+                                pro: {
+                                    display: boolean;
+                                    redistribute: boolean;
+                                    rag: boolean;
+                                    train: boolean;
+                                    audio: boolean;
+                                    resell: boolean;
+                                };
+                            };
+                            families: Array<{
+                                /**
+                                 * @description Product family
+                                 * @enum {string}
+                                 */
+                                family: "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "sec_filings" | "websocket";
+                                routes: Array<{
+                                    /** @description Fastify route pattern; `#` = WebSocket channel */
+                                    route: string;
+                                    /** @enum {string} */
+                                    tier: "free" | "lite" | "pro" | "standard";
+                                    /** @enum {string} */
+                                    license: "display" | "rag" | "redistribute" | "train";
+                                }>;
+                            }>;
+                            /** @description Coverage universe */
+                            universe: {
+                                /** @description Listed (not delisted) companies; null while the data DB is unavailable */
+                                companies: null | number;
+                                earnings_calls: {
+                                    /** @description Earnings-call coverage scope (e.g. top500); unknown without data */
+                                    scope: string;
+                                    /** @description Companies in the earnings-call scope */
+                                    companies: number;
+                                };
+                            };
+                        };
+                    };
+                };
+                500: components["responses"]["InternalServerError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/as-reported/balance-sheet": {
         parameters: {
             query?: never;
@@ -55,7 +394,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch as-reported balance sheet data for a company. */
+        /** @description Fetch as-reported balance sheet data for a company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -135,7 +474,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch detailed as-reported balance sheet data with html_label, formula, accession number, and html tag info. */
+        /** @description Fetch detailed as-reported balance sheet data with html_label, formula, accession number, and html tag info. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -265,7 +604,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch as-reported balance sheet data in presentation format (nested tree structure based on parent_path). */
+        /** @description Fetch as-reported balance sheet data in presentation format (nested tree structure based on parent_path). Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -342,7 +681,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch as-reported cash flow statement data for a company. */
+        /** @description Fetch as-reported cash flow statement data for a company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -422,7 +761,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch detailed as-reported cash flow statement data with html_label, formula, accession number, and html tag info. */
+        /** @description Fetch detailed as-reported cash flow statement data with html_label, formula, accession number, and html tag info. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -552,7 +891,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch as-reported cash flow statement data in presentation format (nested tree structure based on parent_path). */
+        /** @description Fetch as-reported cash flow statement data in presentation format (nested tree structure based on parent_path). Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -629,7 +968,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch as-reported income statement data for a company. */
+        /** @description Fetch as-reported income statement data for a company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -709,7 +1048,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch detailed as-reported income statement data with html_label, formula, accession number, and html tag info. */
+        /** @description Fetch detailed as-reported income statement data with html_label, formula, accession number, and html tag info. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -839,7 +1178,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch as-reported income statement data in presentation format (nested tree structure based on parent_path). */
+        /** @description Fetch as-reported income statement data in presentation format (nested tree structure based on parent_path). Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -916,7 +1255,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch latest complete as-reported financial statements snapshot for multiple companies. */
+        /** @description Fetch latest complete as-reported financial statements snapshot for multiple companies. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -1014,7 +1353,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch latest complete detailed as-reported financial statements snapshot with html_label, formula, accession number, and html tag info. */
+        /** @description Fetch latest complete detailed as-reported financial statements snapshot with html_label, formula, accession number, and html tag info. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -1258,7 +1597,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch latest complete as-reported financial statements snapshot in presentation format (nested tree structure based on parent_path). */
+        /** @description Fetch latest complete as-reported financial statements snapshot in presentation format (nested tree structure based on parent_path). Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -1350,7 +1689,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List all available companies. */
+        /** @description List all available companies. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: never;
@@ -1400,7 +1739,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch details for a company. */
+        /** @description Fetch details for a company. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query: {
@@ -1522,7 +1861,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch stock dividends for a company. */
+        /** @description Fetch stock dividends for a company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -1614,7 +1953,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch available fiscal periods for a company. */
+        /** @description Fetch available fiscal periods for a company. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query: {
@@ -1689,7 +2028,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Search companies by ticker or name. */
+        /** @description Search companies by ticker or name. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query: {
@@ -1751,7 +2090,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch stock splits for a company. */
+        /** @description Fetch stock splits for a company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -1824,7 +2163,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Sell-side analysts who asked questions on one US company's earnings calls, with appearance and question counts. An out-of-scope company answers an empty list. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Sell-side analysts who asked questions on one US company's earnings calls, with appearance and question counts. An out-of-scope company answers an empty list. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query: {
@@ -1904,7 +2243,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description The recording of one earnings call as a signed download URL (PRO). 403 audio_unavailable when the company's audio is not licensed for delivery or no recording exists (one answer for both). 503 audio_disabled while audio delivery is switched off. Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description The recording of one earnings call as a signed download URL (PRO). 403 audio_unavailable when the company's audio is not licensed for delivery or no recording exists (one answer for both). 503 audio_disabled while audio delivery is switched off. Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -1992,7 +2331,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Upcoming and past earnings calls (event_type=all: every event type) of all covered US companies in a window of New York calendar days (default today + 14 days, at most 92). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Upcoming and past earnings calls (event_type=all: every event type) of all covered US companies in a window of New York calendar days (default today + 14 days, at most 92). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -2146,7 +2485,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description How one earnings call differs from the company's prior call: semantic similarity, new and dropped topics with verbatim evidence, hedging / uncertainty / numeric-specificity levels and their change, tone shift and the slide-deck diff. Levels (hedging, uncertainty, numeric specificity) are the better-supported signal; the literature finds the *change* from the prior call is a weaker predictor. Both are provided; do not over-weight the change. 404 diff_unavailable for a company's first call or a call not derived yet. Select the call by event_id, by identifier alone (latest call with a diff), or by identifier with year+quarter or date. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description How one earnings call differs from the company's prior call: semantic similarity, new and dropped topics with verbatim evidence, hedging / uncertainty / numeric-specificity levels and their change, tone shift and the slide-deck diff. Levels (hedging, uncertainty, numeric specificity) are the better-supported signal; the literature finds the *change* from the prior call is a weaker predictor. Both are provided; do not over-weight the change. 404 diff_unavailable for a company's first call or a call not derived yet. Select the call by event_id, by identifier alone (latest call with a diff), or by identifier with year+quarter or date. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -2292,7 +2631,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Further investor documents of one earnings call (CFO commentary, financial data sheets, shareholder letters, fact sheets, the company's own transcript, 10-Q / 10-K links, infographics), ordered by kind. Stored files come as signed URLs; link-only rows (sec_filing) have url null and point to EDGAR through source_url. Each document carries its trust_tier. documents is [] for a call without further documents (has_documents tells ahead). Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Further investor documents of one earnings call (CFO commentary, financial data sheets, shareholder letters, fact sheets, the company's own transcript, 10-Q / 10-K links, infographics), ordered by kind. Stored files come as signed URLs; link-only rows (sec_filing) have url null and point to EDGAR through source_url. Each document carries its trust_tier. documents is [] for a call without further documents (has_documents tells ahead). Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -2424,7 +2763,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description One earnings call by event_id; `include=observations` adds the date / time observations behind its call time. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description One earnings call by event_id; `include=observations` adds the date / time observations behind its call time. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -2571,7 +2910,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Event history of one US company (ticker or CIK): every event type unless event_type narrows it. An out-of-scope company answers covered: false. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Event history of one US company (ticker or CIK): every event type unless event_type narrows it. An out-of-scope company answers covered: false. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query: {
@@ -2740,7 +3079,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Forward guidance (kind=guidance: one consolidated item per metric, period and basis, with verbatim citations) or every reported KPI figure (kind=kpi) of one earnings call. Guidance items are cross-validated between the call and the press release; `cross_validated=false` items come from one source only. `confidence` is calibrated on large-cap spot checks, not a probability. `filing_link` points at the SEC filing that carries the same figure: the results 8-K's press release (`target=press_release`, matched on the text) or, once the 10-Q / 10-K is on EDGAR, its XBRL fact (`target=periodic_filing`, `concept`), which replaces the 8-K link. `match_kind=rounded` means the filing's value rounds to the figure as spoken. The list is empty until the call has been derived. A page can hold fewer than `limit` items while `next_url` is still set: items (and KPI mentions) that only a press release no longer served supports are dropped after paging. Follow `next_url` until it is null. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Forward guidance (kind=guidance: one consolidated item per metric, period and basis, with verbatim citations) or every reported KPI figure (kind=kpi) of one earnings call. Guidance items are cross-validated between the call and the press release; `cross_validated=false` items come from one source only. `confidence` is calibrated on large-cap spot checks, not a probability. `filing_link` points at the SEC filing that carries the same figure: the results 8-K's press release (`target=press_release`, matched on the text) or, once the 10-Q / 10-K is on EDGAR, its XBRL fact (`target=periodic_filing`, `concept`), which replaces the 8-K link. `match_kind=rounded` means the filing's value rounds to the figure as spoken. The list is empty until the call has been derived. A page can hold fewer than `limit` items while `next_url` is still set: items (and KPI mentions) that only a press release no longer served supports are dropped after paging. Follow `next_url` until it is null. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query?: {
@@ -2989,7 +3328,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description How a company's guidance for one metric evolved across its earnings calls: one entry per guidance item (a call usually guides several periods), newest call first, with the change versus the prior call's item. metric is matched against the normalized vocabulary: revenue, eps_gaap, eps_non_gaap, operating_margin, operating_income, gross_margin, opex, capex, fcf, tax_rate, share_count, ebitda, net_income, other, plus dynamic segment:<slug> metrics. An unknown metric returns an empty series. Guidance items are cross-validated between the call and the press release; `cross_validated=false` items come from one source only. `confidence` is calibrated on large-cap spot checks, not a probability. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description How a company's guidance for one metric evolved across its earnings calls: one entry per guidance item (a call usually guides several periods), newest call first, with the change versus the prior call's item. metric is matched against the normalized vocabulary: revenue, eps_gaap, eps_non_gaap, operating_margin, operating_income, gross_margin, opex, capex, fcf, tax_rate, share_count, ebitda, net_income, other, plus dynamic segment:<slug> metrics. An unknown metric returns an empty series. Guidance items are cross-validated between the call and the press release; `cross_validated=false` items come from one source only. `confidence` is calibrated on large-cap spot checks, not a probability. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -3102,7 +3441,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Earnings calls being captured live right now, with the WebSocket channel of their live transcript. A call appears within seconds of its start and disappears when it ends; an empty list means nothing is live. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Earnings calls being captured live right now, with the WebSocket channel of their live transcript. A call appears within seconds of its start and disappears when it ends; an empty list means nothing is live. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: never;
@@ -3237,7 +3576,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description A temporary HLS playlist URL of an earnings call's live audio (PRO). The stream is watermarked. The URL works until expires_at (2 hours by default) and is minted fresh on every request: request a new one before it expires. Play it with hls.js, Safari or VLC; the playlist is an EVENT playlist, so seek to 0 for the start of the call. call_t0 is the wall clock of call ms 0: #EXT-X-PROGRAM-DATE-TIME minus call_t0 = the start_ms of the live transcript (WebSocket channel live_channel). status not_started / disabled answer url: null. 403 audio_unavailable when the company's audio is not licensed for delivery. 503 media_unavailable while live streaming is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description A temporary HLS playlist URL of an earnings call's live audio (PRO). The stream is watermarked. The URL works until expires_at (2 hours by default) and is minted fresh on every request: request a new one before it expires. Play it with hls.js, Safari or VLC; the playlist is an EVENT playlist, so seek to 0 for the start of the call. call_t0 is the wall clock of call ms 0: #EXT-X-PROGRAM-DATE-TIME minus call_t0 = the start_ms of the live transcript (WebSocket channel live_channel). status not_started / disabled answer url: null. 403 audio_unavailable when the company's audio is not licensed for delivery. 503 media_unavailable while live streaming is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -3331,7 +3670,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Call metadata of one earnings call: length, prepared remarks vs Q&A, release-to-call gap, question and analyst counts, management's share of the Q&A and speaker coverage. 404 metrics_unavailable until the call has been derived. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Call metadata of one earnings call: length, prepared remarks vs Q&A, release-to-call gap, question and analyst counts, management's share of the Q&A and speaker coverage. 404 metrics_unavailable until the call has been derived. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query?: {
@@ -3425,7 +3764,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Speakers of one earnings call (name, title, firm, role, cross-call person_id) and its participation flags vs the prior call (cfo_absent, ceo_no_questions, new_cfo, …). Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Speakers of one earnings call (name, title, firm, role, cross-call person_id) and its participation flags vs the prior call (cfo_absent, ceo_no_questions, new_cfo, …). Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query?: {
@@ -3532,7 +3871,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description One person (executive or analyst) across every served earnings call: identity, appearances and participation flags. A merged duplicate id answers 301 to the canonical id. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description One person (executive or analyst) across every served earnings call: identity, appearances and participation flags. A merged duplicate id answers 301 to the canonical id. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query?: {
@@ -3654,7 +3993,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description The results press release of one earnings call (EDGAR 8-K exhibit, wire release or IR page): title, publication time, origin, source URL, trust tier and, with include=body, the issuer's text (display licence only). Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description The results press release of one earnings call (EDGAR 8-K exhibit, wire release or IR page): title, publication time, origin, source URL, trust tier and, with include=body, the issuer's text (display licence only). Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -3742,7 +4081,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Per-speaker delivery features of one earnings call: speech rate, pauses, fillers, time to answer and, when the audio was analysed, pitch and energy. Prosody features are a volatility and risk signal, not a direction signal. Acoustic fields (`pitch_*`, `energy_*`) are null when `acoustic_available` is false. 404 prosody_unavailable until the call has been derived. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Per-speaker delivery features of one earnings call: speech rate, pauses, fillers, time to answer and, when the audio was analysed, pitch and energy. Prosody features are a volatility and risk signal, not a direction signal. Acoustic fields (`pitch_*`, `energy_*`) are null when `acoustic_available` is false. 404 prosody_unavailable until the call has been derived. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -3861,7 +4200,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Structured Q&A of one earnings call: each analyst question with the analyst's identity and firm, the answering executives and the answer. pairs is [] until the Q&A has been derived. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Structured Q&A of one earnings call: each analyst question with the analyst's identity and firm, the answering executives and the answer. pairs is [] until the Q&A has been derived. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query?: {
@@ -3970,7 +4309,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description "Ask this call": semantic search over earnings-call transcripts and slide text — one call (event_id), one company (identifier) or every call (default: the last 365 days). Returns up to 8 passages with speaker, start_ms and, on plans that include the audio and slides routes (PRO), signed URLs: audio_url opens the recording at the passage (#t=<seconds>), slide.image_url shows the slide. Cite event_id and start_ms. 429 upstream_rate_limited and 503 search_unavailable carry Retry-After; 503 search_disabled while search is switched off. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description "Ask this call": semantic search over earnings-call transcripts and slide text — one call (event_id), one company (identifier) or every call (default: the last 365 days). Returns up to 8 passages with speaker, start_ms and, on plans that include the audio and slides routes (PRO), signed URLs: audio_url opens the recording at the passage (#t=<seconds>), slide.image_url shows the slide. Cite event_id and start_ms. 429 upstream_rate_limited and 503 search_unavailable carry Retry-After; 503 search_disabled while search is switched off. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query: {
@@ -4097,7 +4436,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description The slide deck of one earnings call (PRO): the deck PDF and each page image as signed URLs, page titles and, with include=markdown, each page's text. 404 slides_unavailable when no deck is available. Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description The slide deck of one earnings call (PRO): the deck PDF and each page image as signed URLs, page titles and, with include=markdown, each page's text. 404 slides_unavailable when no deck is available. Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -4202,7 +4541,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Transcript of one earnings call in five formats, any published version (version) or the version current at a point in time (as_of). Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Costs 5 credits; format=words is weighted by turn count. A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Transcript of one earnings call in five formats, any published version (version) or the version current at a point in time (as_of). Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Costs 5 credits; format=words is weighted by turn count. A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query?: {
@@ -4386,7 +4725,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Word-level diff between two transcript versions of one earnings call (over the cleaned text when both versions have it, else the verbatim text), each change anchored to the start of its speaker turn. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Costs 5 credits; computed per request (versions are immutable). A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Word-level diff between two transcript versions of one earnings call (over the cleaned text when both versions have it, else the verbatim text), each change anchored to the start of its speaker turn. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Costs 5 credits; computed per request (versions are immutable). A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query: {
@@ -4485,7 +4824,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Every published transcript version of one earnings call (live, final, corrected), ascending, without the text. A final version replaced by the next final (the pipeline's speaker-naming pass) is not a version here and cannot be requested. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. */
+        /** @description Every published transcript version of one earnings call (live, final, corrected), ascending, without the text. A final version replaced by the next final (the pipeline's speaker-naming pass) is not a version here and cannot be requested. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query?: {
@@ -4565,7 +4904,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List the team's webhook subscriptions (secrets are never returned). Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. */
+        /** @description List the team's webhook subscriptions (secrets are never returned). Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: never;
@@ -4645,7 +4984,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** @description Create a webhook subscription (at most 10 per team). The response carries the signing secret exactly once. The URL must be https on port 443 and resolve to public addresses only (400 invalid_webhook_url names the reason). Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. */
+        /** @description Create a webhook subscription (at most 10 per team). The response carries the signing secret exactly once. The URL must be https on port 443 and resolve to public addresses only (400 invalid_webhook_url names the reason). Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. Minimum tier for display: FREE. */
         post: {
             parameters: {
                 query?: never;
@@ -4769,7 +5108,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** @description Delete a webhook subscription. Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. */
+        /** @description Delete a webhook subscription. Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. Minimum tier for display: FREE. */
         delete: {
             parameters: {
                 query?: never;
@@ -4835,7 +5174,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description The last 100 delivery attempts of a subscription, newest first, with status and duration (kept 7 days). Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. */
+        /** @description The last 100 delivery attempts of a subscription, newest first, with status and duration (kept 7 days). Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: never;
@@ -4932,7 +5271,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Rotate the signing secret. The new secret is returned once; the old one stays valid for 5 minutes (deliveries carry one v1 signature per valid secret). Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. */
+        /** @description Rotate the signing secret. The new secret is returned once; the old one stays valid for 5 minutes (deliveries carry one v1 signature per valid secret). Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. Minimum tier for display: FREE. */
         post: {
             parameters: {
                 query?: never;
@@ -5011,7 +5350,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** @description Send a signed `ping` delivery to the subscription. Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. */
+        /** @description Send a signed `ping` delivery to the subscription. Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. Minimum tier for display: FREE. */
         post: {
             parameters: {
                 query?: never;
@@ -5099,7 +5438,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch compound annual growth rate (CAGR) metrics for a company. */
+        /** @description Fetch compound annual growth rate (CAGR) metrics for a company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -5187,7 +5526,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch period-over-period growth metrics for a company. */
+        /** @description Fetch period-over-period growth metrics for a company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -5277,7 +5616,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch financial ratios for a company. */
+        /** @description Fetch financial ratios for a company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -5367,7 +5706,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch insider transactions for a specific company. */
+        /** @description Fetch insider transactions for a specific company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -5472,7 +5811,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch institutional holders for a specific company. */
+        /** @description Fetch institutional holders for a specific company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -5573,7 +5912,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch institutional holdings for a specific institutional investor. */
+        /** @description Fetch institutional holdings for a specific institutional investor. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -5670,7 +6009,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List institutional investors, optionally filtered by CIKs. */
+        /** @description List institutional investors, optionally filtered by CIKs. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query?: {
@@ -5740,7 +6079,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch institutional transaction activity (position changes between periods). */
+        /** @description Fetch institutional transaction activity (position changes between periods). Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query?: {
@@ -5858,7 +6197,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List all IPOs. */
+        /** @description List all IPOs. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query?: {
@@ -5958,7 +6297,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch market holidays. */
+        /** @description Fetch market holidays. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -6021,7 +6360,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List all available standardized metrics (income statement, balance sheet, cash flow statement, ratios, growth, CAGR, and segmented). */
+        /** @description List all available standardized metrics (income statement, balance sheet, cash flow statement, ratios, growth, CAGR, and segmented). Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: never;
@@ -6067,7 +6406,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List all available section IDs for SEC filings, grouped by form type (10-K, 10-Q, 8-K). */
+        /** @description List all available section IDs for SEC filings, grouped by form type (10-K, 10-Q, 8-K). Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: never;
@@ -6122,7 +6461,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List available SEC filing form types present in the filings table. Optionally filter by a company identifier (ticker or CIK). */
+        /** @description List available SEC filing form types present in the filings table. Optionally filter by a company identifier (ticker or CIK). Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -6168,7 +6507,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch SEC filings for a company. */
+        /** @description Fetch SEC filings for a company. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query: {
@@ -6258,7 +6597,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Search SEC filings using natural language queries. Returns AI-generated answers with source citations from official SEC documents (10-K, 10-Q, 8-K). */
+        /** @description Search SEC filings using natural language queries. Returns AI-generated answers with source citations from official SEC documents (10-K, 10-Q, 8-K). Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query: {
@@ -6325,7 +6664,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch SEC filing sections for a company. Returns parsed sections from 10-Q, 10-K, or 8-K filings. */
+        /** @description Fetch SEC filing sections for a company. Returns parsed sections from 10-Q, 10-K, or 8-K filings. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query: {
@@ -6425,7 +6764,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch segmented financial data for a company. Returns financial facts broken down by business segments. */
+        /** @description Fetch segmented financial data for a company. Returns financial facts broken down by business segments. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -6522,7 +6861,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch detailed segmented financial data with additional metadata including axis, member, metric, accession_number, and html_tag_id. */
+        /** @description Fetch detailed segmented financial data with additional metadata including axis, member, metric, accession_number, and html_tag_id. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -6633,7 +6972,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch standardized balance sheet data for a company. */
+        /** @description Fetch standardized balance sheet data for a company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -6719,7 +7058,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch detailed balance sheet data with formula, accession number, and html tag info. */
+        /** @description Fetch detailed balance sheet data with formula, accession number, and html tag info. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -6861,7 +7200,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch balance sheet data in presentation format (nested tree structure based on parent_id). */
+        /** @description Fetch balance sheet data in presentation format (nested tree structure based on parent_id). Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -6945,7 +7284,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch standardized cash flow statement data for a company. */
+        /** @description Fetch standardized cash flow statement data for a company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -7031,7 +7370,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch detailed cash flow statement data with formula, accession number, and html tag info. */
+        /** @description Fetch detailed cash flow statement data with formula, accession number, and html tag info. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -7173,7 +7512,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch cash flow statement data in presentation format (nested tree structure based on parent_id). */
+        /** @description Fetch cash flow statement data in presentation format (nested tree structure based on parent_id). Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -7257,7 +7596,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch standardized income statement data for a company. */
+        /** @description Fetch standardized income statement data for a company. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -7343,7 +7682,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch detailed income statement data with formula, accession number, and html tag info. */
+        /** @description Fetch detailed income statement data with formula, accession number, and html tag info. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -7485,7 +7824,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch income statement data in presentation format (nested tree structure based on parent_id). */
+        /** @description Fetch income statement data in presentation format (nested tree structure based on parent_id). Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -7569,7 +7908,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch latest complete financial statements snapshot for multiple companies. */
+        /** @description Fetch latest complete financial statements snapshot for multiple companies. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -7667,7 +8006,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch latest complete detailed financial statements snapshot with formula, accession number, and html tag info. */
+        /** @description Fetch latest complete detailed financial statements snapshot with formula, accession number, and html tag info. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {
@@ -7929,7 +8268,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Fetch latest complete financial statements snapshot in presentation format (nested tree structure based on parent_id). */
+        /** @description Fetch latest complete financial statements snapshot in presentation format (nested tree structure based on parent_id). Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query: {

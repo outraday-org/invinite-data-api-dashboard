@@ -72,6 +72,20 @@ function IndexPage() {
         },
     ] as const;
 
+    // Public, key-less pages: no ticker param.
+    const publicCards = [
+        {
+            body: "Measured availability and latency per product family, data freshness, earnings-call pipeline latency and coverage.",
+            title: "API Status",
+            to: "/status",
+        },
+        {
+            body: "What each plan may do with the data, per route; never resale as your own.",
+            title: "Licensing",
+            to: "/licensing",
+        },
+    ] as const;
+
     return (
         <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 lg:px-8">
             <section className="space-y-4">
@@ -106,15 +120,30 @@ function IndexPage() {
                         params={{ ticker: sampleTicker }}
                         to={item.to}
                     >
-                        <Card className="border-border/60 h-full transition hover:border-primary/60">
-                            <CardHeader className="gap-2">
-                                <CardTitle className="text-base">{item.title}</CardTitle>
-                                <CardDescription>{item.body}</CardDescription>
-                            </CardHeader>
-                        </Card>
+                        <RouteCard body={item.body} title={item.title} />
+                    </Link>
+                ))}
+                {publicCards.map(item => (
+                    <Link
+                        className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                        key={item.title}
+                        to={item.to}
+                    >
+                        <RouteCard body={item.body} title={item.title} />
                     </Link>
                 ))}
             </section>
         </div>
+    );
+}
+
+function RouteCard({ body, title }: { body: string; title: string }) {
+    return (
+        <Card className="border-border/60 h-full transition hover:border-primary/60">
+            <CardHeader className="gap-2">
+                <CardTitle className="text-base">{title}</CardTitle>
+                <CardDescription>{body}</CardDescription>
+            </CardHeader>
+        </Card>
     );
 }

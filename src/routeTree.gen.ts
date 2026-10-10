@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as StatusRouteImport } from './routes/status'
+import { Route as LicensingRouteImport } from './routes/licensing'
 import { Route as TickerRouteRouteImport } from './routes/$ticker/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TickerIndexRouteImport } from './routes/$ticker/index'
@@ -29,6 +31,16 @@ import { Route as TickerEarningsCalendarIndexRouteImport } from './routes/$ticke
 import { Route as TickerDividendsIndexRouteImport } from './routes/$ticker/dividends/index'
 import { Route as TickerEarningsCallsEventIdIndexRouteImport } from './routes/$ticker/earnings-calls/$eventId/index'
 
+const StatusRoute = StatusRouteImport.update({
+  id: '/status',
+  path: '/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LicensingRoute = LicensingRouteImport.update({
+  id: '/licensing',
+  path: '/licensing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TickerRouteRoute = TickerRouteRouteImport.update({
   id: '/$ticker',
   path: '/$ticker',
@@ -139,6 +151,8 @@ const TickerEarningsCallsEventIdIndexRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$ticker': typeof TickerRouteRouteWithChildren
+  '/licensing': typeof LicensingRoute
+  '/status': typeof StatusRoute
   '/$ticker/': typeof TickerIndexRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
   '/$ticker/earnings-calendar': typeof TickerEarningsCalendarIndexRoute
@@ -159,6 +173,8 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/licensing': typeof LicensingRoute
+  '/status': typeof StatusRoute
   '/$ticker': typeof TickerIndexRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
   '/$ticker/earnings-calendar': typeof TickerEarningsCalendarIndexRoute
@@ -181,6 +197,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$ticker': typeof TickerRouteRouteWithChildren
+  '/licensing': typeof LicensingRoute
+  '/status': typeof StatusRoute
   '/$ticker/': typeof TickerIndexRoute
   '/$ticker/dividends/': typeof TickerDividendsIndexRoute
   '/$ticker/earnings-calendar/': typeof TickerEarningsCalendarIndexRoute
@@ -204,6 +222,8 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$ticker'
+    | '/licensing'
+    | '/status'
     | '/$ticker/'
     | '/$ticker/dividends'
     | '/$ticker/earnings-calendar'
@@ -224,6 +244,8 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/licensing'
+    | '/status'
     | '/$ticker'
     | '/$ticker/dividends'
     | '/$ticker/earnings-calendar'
@@ -245,6 +267,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$ticker'
+    | '/licensing'
+    | '/status'
     | '/$ticker/'
     | '/$ticker/dividends/'
     | '/$ticker/earnings-calendar/'
@@ -267,10 +291,26 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TickerRouteRoute: typeof TickerRouteRouteWithChildren
+  LicensingRoute: typeof LicensingRoute
+  StatusRoute: typeof StatusRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/status': {
+      id: '/status'
+      path: '/status'
+      fullPath: '/status'
+      preLoaderRoute: typeof StatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/licensing': {
+      id: '/licensing'
+      path: '/licensing'
+      fullPath: '/licensing'
+      preLoaderRoute: typeof LicensingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$ticker': {
       id: '/$ticker'
       path: '/$ticker'
@@ -455,6 +495,8 @@ const TickerRouteRouteWithChildren = TickerRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TickerRouteRoute: TickerRouteRouteWithChildren,
+  LicensingRoute: LicensingRoute,
+  StatusRoute: StatusRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

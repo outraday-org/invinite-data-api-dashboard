@@ -7,10 +7,12 @@ import { toast } from "sonner";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import type {
+    ApiStatusResponse,
     CagrPeriodYears,
     DividendsResponse,
     EarningsAudioResponse,
     EarningsCalendarResponse,
+    EarningsCallsStatusResponse,
     EarningsDateStatus,
     EarningsDiffResponse,
     EarningsDocumentsResponse,
@@ -46,6 +48,7 @@ import type {
     InstitutionalHoldingsResponse,
     InstitutionalTransactionsResponse,
     IposResponse,
+    LicensingResponse,
     MarketHolidaysResponse,
     RatioCategory,
     SegmentedFinancialsSegmentId,
@@ -56,6 +59,7 @@ import type {
 import { rethrowApiError, retryUnlessApiError } from "./errors";
 import {
     getApiBaseUrl,
+    getApiStatus,
     getAsReportedFinancialsPresentation,
     getAvailableFormTypes,
     getCompanyDetails,
@@ -63,6 +67,7 @@ import {
     getCompanySplits,
     getEarningsAudio,
     getEarningsCalendar,
+    getEarningsCallsStatus,
     getEarningsDiff,
     getEarningsDocuments,
     getEarningsEvent,
@@ -90,6 +95,7 @@ import {
     getInstitutionalTransactions,
     getInstitutions,
     getIpos,
+    getLicensing,
     getMarketHolidays,
     getSegmentedFinancials,
     getStandardizedFinancials,
@@ -1667,4 +1673,55 @@ export function useApiBaseUrl() {
     });
 
     return result.data?.url ?? null;
+}
+
+// Public status + licensing (task 21): key-less, so no `useApiKeyStore`. Status-aware: a 503
+// `status_unavailable` arrives as an `ApiRequestError` the page renders as a state, not a toast.
+const PUBLIC_STATUS_STALE_MS = 5 * 60 * 1000;
+
+export const apiStatusOptions = (days: number) =>
+    queryOptions<ApiStatusResponse>({
+        queryFn: () => getApiStatus({ data: { days } }).catch(rethrowApiError),
+        queryKey: ["status", "api", days],
+        retry: retryUnlessApiError,
+        staleTime: PUBLIC_STATUS_STALE_MS,
+    });
+
+type EarningsCallsStatusInput = {
+    days: number;
+    vendor: string;
+};
+
+export const earningsCallsStatusOptions = ({ days, vendor }: EarningsCallsStatusInput) =>
+    queryOptions<EarningsCallsStatusResponse>({
+        queryFn: () => getEarningsCallsStatus({ data: { days, vendor } }).catch(rethrowApiError),
+        queryKey: ["status", "earnings-calls", days, vendor],
+        retry: retryUnlessApiError,
+        staleTime: PUBLIC_STATUS_STALE_MS,
+    });
+
+export const licensingOptions = () =>
+    queryOptions<LicensingResponse>({
+        queryFn: () => getLicensing().catch(rethrowApiError),
+        queryKey: ["status", "licensing"],
+        retry: retryUnlessApiError,
+        staleTime: PUBLIC_STATUS_STALE_MS,
+    });
+
+export function useApiStatus(days: number) {
+    const result = useQuery(apiStatusOptions(days));
+
+    return { ...result, data: result.data ?? null };
+}
+
+export function useEarningsCallsStatus(input: EarningsCallsStatusInput) {
+    const result = useQuery(earningsCallsStatusOptions(input));
+
+    return { ...result, data: result.data ?? null };
+}
+
+export function useLicensing() {
+    const result = useQuery(licensingOptions());
+
+    return { ...result, data: result.data ?? null };
 }

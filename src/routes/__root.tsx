@@ -46,10 +46,17 @@ export const Route = createRootRoute({
     shellComponent: RootDocument,
 });
 
+// Pages outside the `$ticker` layout: no sidebar. The public status / licensing pages also take no API key.
+const PUBLIC_PATHS = new Set(["/licensing", "/status"]);
+
 function RootLayout() {
-    const showSidebarTrigger = useRouterState({
-        select: state => state.location.pathname !== "/",
+    const pathname = useRouterState({
+        select: state => state.location.pathname,
     });
+
+    const isPublicPage = PUBLIC_PATHS.has(pathname);
+
+    const showSidebarTrigger = pathname !== "/" && !isPublicPage;
 
     return (
         <>
@@ -67,7 +74,7 @@ function RootLayout() {
                     </div>
                     <TickerSearch />
                     <div className="justify-self-end">
-                        <ApiKeyDialogButton />
+                        {!isPublicPage && <ApiKeyDialogButton />}
                     </div>
                 </div>
             </div>
