@@ -4,7 +4,7 @@ import type { EarningsEventResponse } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useApiBaseUrl, useEarningsLiveStream } from "@/lib/api/queries";
+import { isEarningsEventLiveish, useApiBaseUrl, useEarningsLiveStream, useEarningsPriceAttribution } from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
 import { liveTurns } from "@/lib/live/live-transcript-reducer";
 import { activeTurnIndex, JUMP_TO_LIVE_AFTER_S, positionToCallMs } from "@/lib/live/position-to-call-ms";
@@ -13,6 +13,8 @@ import { useLiveTranscript } from "@/lib/live/use-live-transcript";
 
 import { LiveDot } from "../live-dot";
 import { LiveAudioSection } from "./live-audio-section";
+import { LivePriceChart } from "./live-price-chart";
+import { formatWallTime } from "./live-price-chart-data";
 import { LiveTranscriptView } from "./live-transcript-view";
 
 /**
@@ -26,6 +28,10 @@ import { LiveTranscriptView } from "./live-transcript-view";
  *   held back", `liveTurns`' `revealUntilMs` = `playingDate − call_t0`).
  * - Behind the edge (> 10 s) the transcript follows the audio: the turn being heard is
  *   highlighted and a turn click seeks there. `call_t0` null → no sync, no follow mode.
+ *
+ * - Between the two, the call's stock (`LivePriceChart`): the price-attribution minute rows so
+ *   far (refetched every 60 s while live) then the `price_tick` frames of the same socket, on the
+ *   transcript clock; the cursor marks the audio position while it plays.
  *
  * Credits: every stream request costs 5. The stream is asked once, then only every 15 s while
  * `not_started`, before the loaded URL expires and once on a 403 — never on a timer otherwise.
@@ -88,6 +94,18 @@ export function LivePlayer({
 
     const callEnded = transcript.state.ended || transcript.mode === "ended";
 
+    // The price line's backlog: the live minute rows (a 404 = none yet). Settled rows of the
+    // post-call run use another reference, so only live rows seed the line.
+    const minuteRows = useEarningsPriceAttribution({ eventId: event.event_id }, { live: isEarningsEventLiveish(event) }).data;
+
+    const priceSeed = minuteRows?.live ? minuteRows.buckets : [];
+
+    const { prices } = transcript;
+
+    const lastTick = prices.last;
+
+    const priceCursorMs = audio.started && audio.phase !== "ended" ? callMs : null;
+
     return (
         <Card size="sm">
             <CardHeader>
@@ -128,6 +146,13 @@ export function LivePlayer({
                     {liveAudio
                         ? <LiveAudioSection audio={audio} stream={stream} streamError={streamQuery.error} />
                         : <p className="text-muted-foreground text-sm">No live audio for this call (live transcript below).</p>}
+                </section>
+
+                <section aria-label="Live price" className="flex flex-col gap-2">
+                    <h3 className="text-xs font-semibold">Price</h3>
+                    {prices.ticks.length > 0 || priceSeed.length > 0
+                        ? <LivePriceChart buckets={priceSeed} callT0={callT0} cursorMs={priceCursorMs} prices={prices} />
+                        : <p className="text-muted-foreground text-sm">No price ticks yet.</p>}
                 </section>
 
                 <section aria-label="Live transcript" className="flex flex-col gap-2">
@@ -199,6 +224,13 @@ export function LivePlayer({
                         <dd>{transcript.state.lastSeq}</dd>
                         <dt>Pending gap</dt>
                         <dd>{transcript.state.gapRefetch === null ? "none" : `after seq ${transcript.state.gapRefetch.afterSeq}`}</dd>
+                        <dt>Price ticks</dt>
+                        <dd>
+                            {prices.ticks.length}
+                            {lastTick !== null && ` (last at ${formatWallTime(Date.parse(lastTick.at))} ET, ${lastTick.source})`}
+                        </dd>
+                        <dt>Minute rows</dt>
+                        <dd>{priceSeed.length}</dd>
                         <dt>Malformed frames</dt>
                         <dd>{transcript.malformedFrames}</dd>
                     </dl>

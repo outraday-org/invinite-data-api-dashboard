@@ -3571,6 +3571,8 @@ export interface paths {
                                 live_channel: "earnings-calls.live";
                                 /** @description true = GET /v1/earnings-calls/live/stream (PRO) returns a playable HLS URL of the call's live audio */
                                 live_audio: boolean;
+                                /** @description true = a subscription of live_channel with prices: true receives price_tick frames (the call's stock, ≤ 1 per second; temporal coincidence, not attribution of cause) */
+                                live_prices: boolean;
                             }>;
                         };
                     };
@@ -4101,7 +4103,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Minute-level price moves aligned to what was being said at the time. This is temporal coincidence, not attribution of cause; pre-market bars are sparse. 404 price_attribution_unavailable until the call has been attributed. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        /** @description Minute-level price moves aligned to what was being said at the time. This is temporal coincidence, not attribution of cause; pre-market bars are sparse. During a live call the minute rows arrive as each minute closes (live: true, settled: false; the summary fields are null); the post-call run replaces them. 404 price_attribution_unavailable until the first minute row exists. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -4145,6 +4147,10 @@ export interface paths {
                                  */
                                 conference_date: string;
                             };
+                            /** @description true = the minute rows were written live, as each minute closed during the call; the post-call run replaces them */
+                            live: boolean;
+                            /** @description true = the post-call run read the bars after the market settled; false while live or before the bars settled */
+                            settled: boolean;
                             /**
                              * @description How the recording was anchored to wall-clock time; null until the summary is written
                              * @enum {string|null}
@@ -4164,7 +4170,7 @@ export interface paths {
                              * @enum {string|null}
                              */
                             session: "post" | "pre" | "regular" | null;
-                            /** @description One-minute bars in the window */
+                            /** @description One-minute bars in the window (while live: the minute rows so far) */
                             bar_count: number;
                             /** @description Return over the whole window, basis points */
                             end_of_window_return_bps: null | number;
@@ -8938,6 +8944,11 @@ export interface components {
              * @default false
              */
             partials: boolean;
+            /**
+             * @description Also receive price_tick frames of the call's stock (≤ 1 per second while the call is live). Per-call only: with scope: all_live the subscribe is refused (bad_message). GET /v1/earnings-calls/live says live_prices: true when ticks flow
+             * @default false
+             */
+            prices: boolean;
             /** @description Keyword alerts: a keyword_hit frame for every FINAL segment that contains one (whole words, case-insensitive, multi-word allowed). Held for this subscription only */
             keywords?: Array<string>;
             /**
@@ -9063,6 +9074,52 @@ export interface components {
             source_sentence: string;
             /** @description Offset of the sentence from the start of the recording */
             start_ms: number;
+        };
+        /** @description One second of the call's stock price while the call is live (≤ 1 per second, only seconds with a trade — hold the last value and draw a missing second as a gap; pre-market and after-hours bars are sparse). Sent only to per-call subscriptions with prices: true. Temporal coincidence, not attribution of cause. The minute rows of /v1/earnings-calls/price-attribution are the backlog for a late join */
+        "WebSocketPriceTickEvent": {
+            /** @enum {string} */
+            type: "price_tick";
+            /** Format: uuid */
+            subscription_id: string;
+            /** Format: uuid */
+            event_id: string;
+            /** @description 10-digit CIK */
+            cik: string;
+            symbol: string;
+            /** Format: date-time */
+            conference_date: string;
+            /**
+             * Format: date-time
+             * @description Start of the one-second bar (ISO 8601 UTC)
+             */
+            at: string;
+            /** @description The bar start on the transcript clock (the start_ms of transcript_segment frames); null before the call's clock is known — then chart it on wall time (at) */
+            call_ms: null | number;
+            /** @description Last price of the second, shown while the call is live */
+            price: number;
+            /** @description First trade of the second */
+            open: number;
+            /** @description Highest trade of the second */
+            high: number;
+            /** @description Lowest trade of the second */
+            low: number;
+            /** @description Shares traded in the second */
+            volume: number;
+            /** @description Shares traded so far today; null when unknown */
+            cumulative_volume: null | number;
+            /** @description The call's reference: the last trade before the call start (for a late join, the previous close) */
+            reference_price: null | number;
+            /** @description Return since reference_price, basis points; null without a reference */
+            return_bps: null | number;
+            /** @description Previous session's close */
+            prev_close: null | number;
+            /** @description Return since prev_close, basis points; null without it */
+            day_return_bps: null | number;
+            /**
+             * @description stream = the real-time per-second bar; snapshot = the polled last trade while the stream is down (open = high = low = price)
+             * @enum {string}
+             */
+            source: "snapshot" | "stream";
         };
         /** @description A subscription is degraded but keeps running: global_scope_degraded = a new live call was not attached because this server already follows its cap of live calls (sent once per subscription while the cap holds) */
         "WebSocketWarningEvent": {

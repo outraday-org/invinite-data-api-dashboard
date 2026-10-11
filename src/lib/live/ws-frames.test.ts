@@ -7,6 +7,7 @@ import {
     subscribeFrame,
     toAssignments,
     toLiveSegment,
+    toPriceTick,
     toSpeakerNames,
     unsubscribeFrame,
 } from "./ws-frames";
@@ -31,6 +32,26 @@ const FRAMES: Record<string, Record<string, unknown>> = {
     call_started: { ...SUB, at: "2026-10-09T21:00:00.000Z", type: "call_started" },
     error: { code: "forbidden_tier", message: "Live earnings-call transcripts require the PRO plan", type: "error" },
     gap: { ...SUB, after_seq: 41, next_seq: 1042, type: "gap" },
+    price_tick: {
+        ...SUB,
+        at: "2026-10-09T21:05:12.000Z",
+        call_ms: 312_000,
+        cik: "0000320193",
+        conference_date: "2026-10-09T21:00:00.000Z",
+        cumulative_volume: null,
+        day_return_bps: -40.2,
+        high: 230.5,
+        low: 230.1,
+        open: 230.2,
+        prev_close: 231.4,
+        price: 230.47,
+        reference_price: 230,
+        return_bps: 20.43,
+        source: "stream",
+        symbol: "AAPL",
+        type: "price_tick",
+        volume: 1200,
+    },
     rescheduled: { ...SUB, at: "2026-10-09T20:00:00.000Z", new_conference_date: "2026-10-16T21:00:00.000Z", type: "rescheduled" },
     speaker_names: { ...SUB, assignments: [ASSIGNMENT], revision: 1760043600000, type: "speaker_names" },
     subscribed: {
@@ -104,6 +125,11 @@ describe("parseServerFrame", () => {
         expect(parseServerFrame(JSON.stringify({ ...FRAMES.unsubscribed, reason: "bored" })).kind).toBe("malformed");
 
         expect(parseServerFrame(JSON.stringify({ ...FRAMES.subscribed, state: "live" })).kind).toBe("malformed");
+
+        // A tick from a source the API does not send, or without a price.
+        expect(parseServerFrame(JSON.stringify({ ...FRAMES.price_tick, source: "feed" })).kind).toBe("malformed");
+
+        expect(parseServerFrame(JSON.stringify({ ...FRAMES.price_tick, price: null })).kind).toBe("malformed");
     });
 });
 
@@ -145,17 +171,50 @@ describe("frame conversions", () => {
     });
 });
 
+describe("price ticks", () => {
+    it("turns a price_tick frame into the reducer's tick", () => {
+        const parsed = parseServerFrame(JSON.stringify(FRAMES.price_tick));
+
+        if (parsed.kind !== "frame" || parsed.frame.type !== "price_tick") throw new Error("not a tick");
+
+        expect(toPriceTick(parsed.frame)).toStrictEqual({
+            at: "2026-10-09T21:05:12.000Z",
+            callMs: 312_000,
+            cumulativeVolume: null,
+            dayReturnBps: -40.2,
+            high: 230.5,
+            low: 230.1,
+            open: 230.2,
+            prevClose: 231.4,
+            price: 230.47,
+            referencePrice: 230,
+            returnBps: 20.43,
+            source: "stream",
+            volume: 1200,
+        });
+    });
+
+    it("accepts a snapshot tick before the call clock is known", () => {
+        const parsed = parseServerFrame(JSON.stringify({ ...FRAMES.price_tick, call_ms: null, return_bps: null, source: "snapshot" }));
+
+        expect(parsed.kind).toBe("frame");
+    });
+});
+
 describe("client frames and the socket URL", () => {
-    it("builds the subscribe frame with partials and a since_seq ≥ -1", () => {
+    it("builds the subscribe frame with partials, prices off by default and a since_seq ≥ -1", () => {
         expect(subscribeFrame("e1", 12)).toStrictEqual({
             channel: "earnings-calls.live",
             event_id: "e1",
             partials: true,
+            prices: false,
             since_seq: 12,
             type: "subscribe",
         });
 
         expect(subscribeFrame("e1", -5).since_seq).toBe(-1);
+
+        expect(subscribeFrame("e1", -1, true).prices).toBe(true);
     });
 
     it("builds the unsubscribe frame", () => {

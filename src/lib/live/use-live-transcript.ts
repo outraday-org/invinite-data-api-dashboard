@@ -2,12 +2,14 @@ import { useEffect, useReducer, useRef, useState } from "react";
 
 import type { EarningsServerFrame, UnsubscribeReason } from "./ws-frames";
 
+import { INITIAL_LIVE_PRICES, livePricesReducer } from "./live-prices-reducer";
 import { INITIAL_LIVE_TRANSCRIPT, liveTranscriptReducer } from "./live-transcript-reducer";
 import {
     liveWsUrl,
     parseServerFrame,
     subscribeFrame,
     toLiveSegment,
+    toPriceTick,
     toSpeakerNames,
     unsubscribeFrame,
 } from "./ws-frames";
@@ -25,13 +27,18 @@ import {
  * and never put in an error. A key change (`apiKeyUpdatedAt`) closes the socket and opens a
  * new one.
  *
- * FLOW. On `open`: `subscribe { event_id, since_seq, partials: true }` — `since_seq` = the
+ * FLOW. On `open`: `subscribe { event_id, since_seq, partials: true, prices: true }` — `since_seq` = the
  * reducer's last contiguous final (`-1` at first: the API replays every final of the call, so
  * there is no REST backlog). Finals / partials / names go through the reducer. The API
  * reorders finals and reports each jump as a `gap` frame before the jumped final (late finals
  * inside it still arrive on the same subscription) → the gap is accepted at once, never
  * re-subscribed. A seq jump without a `gap` frame is accepted the same way once the reducer's
  * short `gapRefetch` delay has passed.
+ *
+ * PRICES. `prices: true` adds the call's `price_tick` frames (≤ 1 / s, only seconds with a
+ * trade) → `livePricesReducer`, returned as `prices` for the live price chart. A re-subscribe
+ * (reconnect, `attach_failed`) asks for them again; ticks missed meanwhile are not replayed
+ * (the chart's backlog is the price-attribution minute rows).
  *
  * RECONNECT. A dropped socket reconnects with backoff 1 s → 30 s (10 tries) and re-subscribes
  * from `since_seq = lastSeq`: the API replays what was missed. `attach_failed` / `unavailable`
@@ -40,7 +47,8 @@ import {
  *
  * KEEP-ALIVE is the server's protocol-level ping (the browser answers it; IDA rejects a JSON
  * `ping` frame as `bad_message`). 60 s without any frame while subscribed → `stalled` (a pill,
- * not a reconnect: a quiet stretch of a call sends nothing).
+ * not a reconnect: a quiet stretch of a call sends nothing). A `price_tick` never re-arms the
+ * stall timer: a tick a second would hide a transcript that stopped.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -98,6 +106,8 @@ type UseLiveTranscriptInput = {
 
 export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }: UseLiveTranscriptInput) {
     const [state, dispatch] = useReducer(liveTranscriptReducer, INITIAL_LIVE_TRANSCRIPT);
+
+    const [prices, dispatchPrice] = useReducer(livePricesReducer, INITIAL_LIVE_PRICES);
 
     const [mode, setMode] = useState<LiveTranscriptMode>("connecting");
 
@@ -164,7 +174,7 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }:
             if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(frame));
         };
 
-        const subscribe = () => send(subscribeFrame(eventId, lastSeqRef.current));
+        const subscribe = () => send(subscribeFrame(eventId, lastSeqRef.current, true));
 
         const armStall = () => {
             clearTimeout(stallTimer);
@@ -271,6 +281,12 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }:
                     break;
                 }
 
+                case "price_tick": {
+                    dispatchPrice({ kind: "tick", tick: toPriceTick(frame) });
+
+                    break;
+                }
+
                 case "rescheduled": {
                     setRescheduledTo(frame.new_conference_date);
 
@@ -352,9 +368,11 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }:
             });
 
             next.addEventListener("message", (message: MessageEvent) => {
-                armStall();
-
                 const parsed = parseServerFrame(message.data);
+
+                // Price ticks keep flowing while the transcript is silent: only the other frames
+                // prove the transcript side is alive (see "KEEP-ALIVE" in the header).
+                if (parsed.kind !== "frame" || parsed.frame.type !== "price_tick") armStall();
 
                 if (parsed.kind === "malformed") setMalformedFrames(count => count + 1);
 
@@ -412,6 +430,7 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }:
         malformedFrames,
         mode,
         notice,
+        prices,
         provisionalVersion,
         reconnecting,
         rescheduledTo,

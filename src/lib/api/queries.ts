@@ -1561,13 +1561,19 @@ export function useEarningsProsody(input: EarningsProsodyInput) {
     });
 }
 
-/** Status-aware: `404 price_attribution_unavailable` until the call has been attributed. */
-export function useEarningsPriceAttribution(input: EarningsEventSelector) {
+/**
+ * Status-aware: `404 price_attribution_unavailable` until the first minute row exists. While
+ * the call is live (`live: true` — the caller passes `isEarningsEventLiveish`) the minute rows
+ * grow once a minute: refetched every 60 s (same query key, so the live player's seed and the
+ * Price moves tab share the answer).
+ */
+export function useEarningsPriceAttribution(input: EarningsEventSelector, { live = false }: { live?: boolean } = {}) {
     return useEarningsQuery<EarningsPriceAttributionResponse>({
         enabled: hasEventSelector(input),
         errorMessage: null,
         load: apiKey => getEarningsPriceAttribution({ data: { ...input, apiKey } }),
         queryKey: ["earnings", "price-attribution", ...selectorKey(input)],
+        refetchInterval: live ? 60 * 1000 : false,
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }

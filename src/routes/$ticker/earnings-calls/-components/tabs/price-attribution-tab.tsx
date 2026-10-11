@@ -12,7 +12,7 @@ import {
 } from "@/components/status/chart-parts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useEarningsPriceAttribution } from "@/lib/api/queries";
+import { isEarningsEventLiveish, useEarningsPriceAttribution } from "@/lib/api/queries";
 import { formatDecimal, formatSigned } from "@/lib/earnings/labels";
 
 import type { CallTabProps } from "../call-tabs";
@@ -25,6 +25,9 @@ export const PRICE_ATTRIBUTION_CAVEAT
     = "Minute-level price moves aligned to what was being said at the time. This is temporal coincidence, not attribution of cause; pre-market and after-hours bars are sparse.";
 
 export const PRICE_ATTRIBUTION_UNAVAILABLE = "Price moves are not available for this call yet";
+
+/** While the call runs the minute rows arrive as each minute closes; the post-call run replaces them. */
+export const PRICE_ATTRIBUTION_LIVE_BANNER = "Live — minute rows so far, not settled; the post-call run replaces them";
 
 type AnchorKind = NonNullable<EarningsPriceAttributionResponse["anchor_kind"]>;
 type LagKind = NonNullable<EarningsPriceAttributionResponse["lag_kind"]>;
@@ -71,6 +74,11 @@ function formatLag(data: EarningsPriceAttributionResponse) {
     const seconds = `${formatDecimal(data.anchor_lag_ms / 1000, 1)} s`;
 
     return data.lag_kind ? `${seconds} (${LAG_KIND_LABELS[data.lag_kind]})` : seconds;
+}
+
+/** The anchor / session summary exists only once the post-call run wrote it (null while live). */
+function hasSummary(data: EarningsPriceAttributionResponse) {
+    return [data.anchor_kind, data.anchor_lag_ms, data.lag_kind, data.session, data.end_of_window_return_bps].some(value => value !== null);
 }
 
 function AnchorFacts({ data }: { data: EarningsPriceAttributionResponse }) {
@@ -203,7 +211,8 @@ export type PriceAttributionViewProps = {
 /**
  * The tab's body: anchor facts, the largest minute moves with what was being said, the
  * cumulative-return line and every minute bucket. Derived returns only — the API sends no
- * price or volume, so none is shown.
+ * price or volume, so none is shown. While the call is live (`live`) a banner says the rows
+ * are not settled, and the anchor facts / top minutes wait for the post-call summary.
  */
 export function PriceAttributionView({ data, error, isLoading }: PriceAttributionViewProps) {
     return (
@@ -216,7 +225,8 @@ export function PriceAttributionView({ data, error, isLoading }: PriceAttributio
                     ? <Skeleton className="h-40 w-full" />
                     : (
                             <>
-                                <AnchorFacts data={data} />
+                                {data.live && <Notice badge="Live" title={PRICE_ATTRIBUTION_LIVE_BANNER} />}
+                                {hasSummary(data) && <AnchorFacts data={data} />}
                                 {data.buckets.length === 0
                                     ? <Notice title="No minute bars in the call window" />
                                     : (
@@ -232,9 +242,12 @@ export function PriceAttributionView({ data, error, isLoading }: PriceAttributio
     );
 }
 
-/** "Price moves" tab: minute returns of the call window next to the utterances spoken in each minute. */
-export function PriceAttributionTab({ selector }: CallTabProps) {
-    const { data, error, isLoading } = useEarningsPriceAttribution(selector);
+/**
+ * "Price moves" tab: minute returns of the call window next to the utterances spoken in each
+ * minute; refetched every minute while the call may be live.
+ */
+export function PriceAttributionTab({ event, selector }: CallTabProps) {
+    const { data, error, isLoading } = useEarningsPriceAttribution(selector, { live: isEarningsEventLiveish(event) });
 
     return <PriceAttributionView data={data} error={error} isLoading={isLoading} />;
 }

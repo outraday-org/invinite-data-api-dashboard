@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { LivePriceTick } from "./live-prices-reducer";
 import type { LiveSegment, LiveSpeakerAssignment, LiveSpeakerNames } from "./live-transcript-reducer";
 
 /**
@@ -135,6 +136,36 @@ export const unsubscribedFrameSchema = z.object({
     type: z.literal("unsubscribed"),
 });
 
+/** Where a price tick came from: the real-time stream, or the polled snapshot while the stream is down. */
+export const PRICE_TICK_SOURCES = ["stream", "snapshot"] as const;
+
+/**
+ * One second of the call's stock price (≤ 1 / s, only seconds with a trade), sent only to a
+ * subscription with `prices: true`. `call_ms` = the bar start on the transcript clock (null
+ * before the call's clock is known); `return_bps` vs `reference_price` (the last trade before
+ * the call start), `day_return_bps` vs `prev_close`.
+ */
+export const priceTickFrameSchema = z.object({
+    ...subscriptionFields,
+    at: z.string(),
+    call_ms: z.number().nullable(),
+    cik: z.string(),
+    conference_date: z.string(),
+    cumulative_volume: z.number().nullable(),
+    day_return_bps: z.number().nullable(),
+    high: z.number(),
+    low: z.number(),
+    open: z.number(),
+    prev_close: z.number().nullable(),
+    price: z.number(),
+    reference_price: z.number().nullable(),
+    return_bps: z.number().nullable(),
+    source: z.enum(PRICE_TICK_SOURCES),
+    symbol: z.string(),
+    type: z.literal("price_tick"),
+    volume: z.number(),
+});
+
 export const errorFrameSchema = z.object({
     code: z.enum(EARNINGS_WS_ERROR_CODES),
     message: z.string(),
@@ -153,6 +184,7 @@ export const earningsServerFrameSchema = z.discriminatedUnion("type", [
     transcriptReadyFrameSchema,
     rescheduledFrameSchema,
     unsubscribedFrameSchema,
+    priceTickFrameSchema,
     errorFrameSchema,
 ]);
 
@@ -163,6 +195,8 @@ export type SubscribedFrame = z.infer<typeof subscribedFrameSchema>;
 export type TranscriptSegmentFrame = z.infer<typeof transcriptSegmentFrameSchema>;
 
 export type SpeakerNamesFrame = z.infer<typeof speakerNamesFrameSchema>;
+
+export type PriceTickFrame = z.infer<typeof priceTickFrameSchema>;
 
 export type ErrorFrame = z.infer<typeof errorFrameSchema>;
 
@@ -237,15 +271,36 @@ export function toSpeakerNames(frame: SpeakerNamesFrame): LiveSpeakerNames {
     return { assignments: toAssignments(frame), revision: frame.revision };
 }
 
+/** A `price_tick` frame → the prices reducer's tick (snake → camel). */
+export function toPriceTick(frame: PriceTickFrame): LivePriceTick {
+    return {
+        at: frame.at,
+        callMs: frame.call_ms,
+        cumulativeVolume: frame.cumulative_volume,
+        dayReturnBps: frame.day_return_bps,
+        high: frame.high,
+        low: frame.low,
+        open: frame.open,
+        prevClose: frame.prev_close,
+        price: frame.price,
+        referencePrice: frame.reference_price,
+        returnBps: frame.return_bps,
+        source: frame.source,
+        volume: frame.volume,
+    };
+}
+
 /**
  * The subscribe frame. `since_seq` = the last contiguous final held (`-1` = replay every
- * final of the call); `partials: true` for the greyed tail.
+ * final of the call); `partials: true` for the greyed tail; `prices: true` adds the call's
+ * `price_tick` frames (an API without the option strips the key).
  */
-export function subscribeFrame(eventId: string, sinceSeq: number) {
+export function subscribeFrame(eventId: string, sinceSeq: number, prices = false) {
     return {
         channel: EARNINGS_LIVE_CHANNEL,
         event_id: eventId,
         partials: true,
+        prices,
         since_seq: Math.max(-1, sinceSeq),
         type: "subscribe",
     } as const;

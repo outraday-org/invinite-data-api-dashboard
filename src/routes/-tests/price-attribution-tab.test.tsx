@@ -10,6 +10,7 @@ import type { EarningsPriceAttributionResponse } from "@/lib/api/types";
 import { ApiRequestError } from "@/lib/api/errors";
 import {
     PRICE_ATTRIBUTION_CAVEAT,
+    PRICE_ATTRIBUTION_LIVE_BANNER,
     PRICE_ATTRIBUTION_UNAVAILABLE,
     PriceAttributionView,
 } from "@/routes/$ticker/earnings-calls/-components/tabs/price-attribution-tab";
@@ -29,6 +30,7 @@ vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
 
 // The view is rendered with its data directly: keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
+    isEarningsEventLiveish: vi.fn(),
     useEarningsPriceAttribution: vi.fn(),
 }));
 
@@ -74,10 +76,28 @@ const ATTRIBUTION: EarningsPriceAttributionResponse = {
         symbol: "AAPL",
     },
     lag_kind: "playlist",
+    live: false,
     session: "post",
+    settled: true,
     top_minutes: [
         { bucket: "2026-10-08T20:32:00.000Z", return_bps: -31.5, utterance_refs: [GUIDANCE] },
     ],
+};
+
+// While the call runs: the minute rows so far, no summary yet.
+const LIVE_ATTRIBUTION: EarningsPriceAttributionResponse = {
+    ...ATTRIBUTION,
+    anchor_kind: null,
+    anchor_lag_ms: null,
+    anchor_uncertainty_s: null,
+    bar_count: 2,
+    buckets: ATTRIBUTION.buckets.slice(0, 2),
+    end_of_window_return_bps: null,
+    lag_kind: null,
+    live: true,
+    session: null,
+    settled: false,
+    top_minutes: [],
 };
 
 describe("PriceAttributionView", () => {
@@ -137,5 +157,29 @@ describe("PriceAttributionView", () => {
         expect(within(rows[2]).getByText("1:05")).toBeInTheDocument();
 
         expect(within(rows[3]).getByText("−31.5 bps")).toBeInTheDocument();
+
+        expect(screen.queryByText(PRICE_ATTRIBUTION_LIVE_BANNER)).not.toBeInTheDocument();
+    });
+
+    it("shows the live banner and the minute rows so far, without anchor facts or top minutes", () => {
+        render(<PriceAttributionView data={LIVE_ATTRIBUTION} error={null} isLoading={false} />);
+
+        expect(screen.getByText(PRICE_ATTRIBUTION_CAVEAT)).toBeInTheDocument();
+
+        expect(screen.getByText(PRICE_ATTRIBUTION_LIVE_BANNER)).toBeInTheDocument();
+
+        expect(screen.queryByText("Anchor")).not.toBeInTheDocument();
+
+        expect(screen.queryByText("Largest minute moves")).not.toBeInTheDocument();
+
+        expect(screen.getByText("Cumulative return (bps)")).toBeInTheDocument();
+
+        const table = screen.getByRole("table");
+
+        const headers = within(table).getAllByRole("columnheader").map(cell => cell.textContent);
+
+        expect(headers.some(header => /price|volume/i.test(header))).toBe(false);
+
+        expect(within(table).getAllByRole("row")).toHaveLength(3);
     });
 });
