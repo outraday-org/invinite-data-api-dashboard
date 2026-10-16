@@ -8476,7 +8476,7 @@ export interface paths {
                                 firstSegmentP95Ms: number;
                                 finalP95S: number;
                             };
-                            vendors: ("all" | "notified" | "q4events" | "choruscall" | "on24" | "eqs" | "zoom" | "euronext" | "globalmeet" | "viavid" | "openexchange" | "investis" | "x" | "unknown")[];
+                            vendors: ("all" | "notified" | "q4events" | "choruscall" | "on24" | "eqs" | "zoom" | "euronext" | "globalmeet" | "viavid" | "openexchange" | "investis" | "x" | "knowledgevision" | "zoom_events" | "unknown")[];
                             /** @description Oldest first */
                             days: {
                                 /** Format: date */

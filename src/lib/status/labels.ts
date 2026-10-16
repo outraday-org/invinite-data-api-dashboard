@@ -170,6 +170,7 @@ const VENDOR_LABELS: Record<string, string> = {
     euronext: "Euronext",
     globalmeet: "GlobalMeet",
     investis: "Investis",
+    knowledgevision: "KnowledgeVision",
     notified: "Notified",
     on24: "ON24",
     openexchange: "Open Exchange",
@@ -178,6 +179,7 @@ const VENDOR_LABELS: Record<string, string> = {
     viavid: "ViaVid",
     x: "X",
     zoom: "Zoom",
+    zoom_events: "Zoom Events",
 };
 
 /** A webcast vendor's display name; an unlisted vendor shows as sent. */
