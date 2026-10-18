@@ -6,6 +6,6 @@ export const env = createEnv({
     runtimeEnv: process.env,
     server: {
         INVINITE_DATA_API_KEY: z.string().min(1, "Set INVINITE_DATA_API_KEY in the environment").optional(),
-        INVINITE_DATA_API_URL: z.url().default("https://data.invinite.com"),
+        INVINITE_DATA_API_URL: z.url().default("https://api.data.invinite.com"),
     },
 });

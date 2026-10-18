@@ -222,7 +222,7 @@ describe("client frames and the socket URL", () => {
     });
 
     it("maps the API base URL to the WebSocket URL", () => {
-        expect(liveWsUrl("https://data.invinite.com", "k 1")).toBe("wss://data.invinite.com/v1/ws?api_key=k+1");
+        expect(liveWsUrl("https://api.data.invinite.com", "k 1")).toBe("wss://api.data.invinite.com/v1/ws?api_key=k+1");
 
         expect(liveWsUrl("http://localhost:3000/", "abc")).toBe("ws://localhost:3000/v1/ws?api_key=abc");
     });

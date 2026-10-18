@@ -86,7 +86,7 @@ Base UI components built on `@base-ui/react` primitives with `class-variance-aut
 ### Environment
 
 - `INVINITE_DATA_API_KEY`: Server-side API key (optional, can be set via UI)
-- `INVINITE_DATA_API_URL`: API base URL (defaults to https://data.invinite.com)
+- `INVINITE_DATA_API_URL`: API base URL (defaults to https://api.data.invinite.com)
 
 Validated with `@t3-oss/env-core` in `src/lib/env.ts`.
 
