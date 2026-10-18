@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import { cn } from "@/lib/utils";
 
+import { NoKeyYetHint } from "./no-key-yet";
+
 export function ApiKeyInlineField({ className }: { className?: string }) {
     const apiKey = useApiKeyStore(s => s.apiKey);
 
@@ -72,7 +74,7 @@ export function ApiKeyInlineField({ className }: { className?: string }) {
                     autoComplete="off"
                     id="api-key-inline"
                     onChange={e => setDraft(e.target.value)}
-                    placeholder="inv_..."
+                    placeholder="invd_..."
                     spellCheck={false}
                     type="password"
                     value={draft}
@@ -81,6 +83,7 @@ export function ApiKeyInlineField({ className }: { className?: string }) {
                     Save
                 </Button>
             </form>
+            <NoKeyYetHint />
         </div>
     );
 }

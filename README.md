@@ -3,6 +3,9 @@
 `pnpm run dev` starts the Vite dev server. Open the printed local URL (usually
 `http://localhost:3001`).
 
+Live: https://data-api-dashboard.netlify.app/ (Netlify builds `main` on push). Keys, usage and billing
+live in the Invinite app's Data API dashboard, https://invinite.com/data-api.
+
 ## API key
 
 You can provide `INVINITE_DATA_API_KEY` two ways:

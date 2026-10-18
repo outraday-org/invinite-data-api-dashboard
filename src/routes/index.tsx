@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { ApiKeyInlineField } from "@/components/api-key/api-key-inline";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { dataApiDashboardUrl } from "@/lib/app-url";
 import { useTickerStore } from "@/lib/stores/ticker-store";
 
 export const Route = createFileRoute("/")({
@@ -132,6 +133,18 @@ function IndexPage() {
                         <RouteCard body={item.body} title={item.title} />
                     </Link>
                 ))}
+                {/* The account itself (keys, usage, credits, invoices) lives in the Invinite app, not here. */}
+                <a
+                    className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                    href={dataApiDashboardUrl()}
+                    rel="noreferrer"
+                    target="_blank"
+                >
+                    <RouteCard
+                        body="Your keys, requests and credits per day, endpoint and key, plan, prepaid credits and invoices."
+                        title="Usage and billing"
+                    />
+                </a>
             </section>
         </div>
     );

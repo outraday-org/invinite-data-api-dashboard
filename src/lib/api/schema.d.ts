@@ -6962,7 +6962,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Further investor documents of one earnings call (CFO commentary, financial data sheets, shareholder letters, fact sheets, the company's own transcript, 10-Q / 10-K links, infographics), ordered by kind. Stored files come as signed URLs; link-only rows (sec_filing) have url null and point to EDGAR through source_url. Each document carries its trust_tier. documents is [] for a call without further documents (has_documents tells ahead). Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        /** @description Further investor documents of one earnings call (CFO commentary, financial data sheets, shareholder letters, fact sheets, the company's own transcript, its prepared remarks / call script, 10-Q / 10-K links; infographics are stored as fact sheets), ordered by kind. Stored files come as signed URLs; link-only rows (sec_filing) have url null and point to EDGAR through source_url. Each document carries its trust_tier. documents is [] for a call without further documents (has_documents tells ahead). Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -6976,7 +6976,7 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
-                    /** @description Only these kinds, comma-separated or repeated: cfo_commentary, financial_data, shareholder_letter, fact_sheet, company_transcript, sec_filing, infographic, other */
+                    /** @description Only these kinds, comma-separated or repeated: cfo_commentary, financial_data, shareholder_letter, fact_sheet, company_transcript, prepared_remarks, sec_filing, infographic, other */
                     kind?: string[];
                     /** @description Extra data, comma-separated or repeated: `body` = the extracted text */
                     include?: string[];
@@ -7025,7 +7025,7 @@ export interface paths {
                                  * @description Document kind
                                  * @enum {string}
                                  */
-                                kind: "cfo_commentary" | "financial_data" | "shareholder_letter" | "fact_sheet" | "company_transcript" | "sec_filing" | "infographic" | "other";
+                                kind: "cfo_commentary" | "financial_data" | "shareholder_letter" | "fact_sheet" | "company_transcript" | "prepared_remarks" | "sec_filing" | "infographic" | "other";
                                 /**
                                  * @description Classification confidence
                                  * @enum {string}
@@ -8308,6 +8308,129 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/account/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Your team's Data API usage — credits and requests by day, endpoint family and key — plus the plan allowance and prepaid balance. Costs no credits and is available on every plan; counted, rate-limited like any route. Data is drained every 5 minutes. */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Window in UTC days ending today (inclusive): 7, 30 or 90 */
+                    days?: 7 | 30 | 90;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /**
+                             * @description The window answered
+                             * @enum {integer}
+                             */
+                            window_days: 7 | 30 | 90;
+                            /** @description The current billing period */
+                            period: {
+                                /**
+                                 * @description The team's Data API plan
+                                 * @enum {string}
+                                 */
+                                tier: "free" | "lite" | "standard" | "pro" | "prepaid";
+                                /** @description Credits the plan includes per period */
+                                included_credits: number;
+                                /** @description Credits used this period, counted as the quota gate counts them (live) */
+                                used_credits: number;
+                                /**
+                                 * Format: date-time
+                                 * @description When the included credits reset; null when the period has no reset
+                                 */
+                                resets_at: string | null;
+                                /** @description Prepaid credit balance in USD */
+                                prepaid_balance_usd: number;
+                            };
+                            /** @description One row per UTC day of the window, ascending, zero-filled */
+                            daily: {
+                                /**
+                                 * Format: date
+                                 * @description UTC day (YYYY-MM-DD)
+                                 */
+                                date: string;
+                                /** @description Requests answered (every status) */
+                                requests: number;
+                                /** @description Credits billed (2xx responses only) */
+                                credits: number;
+                                /** @description Error responses by status class */
+                                errors: {
+                                    /** @description Payment required */
+                                    402: number;
+                                    /** @description Forbidden (plan) */
+                                    403: number;
+                                    /** @description Rate limited */
+                                    429: number;
+                                    /** @description Other client errors */
+                                    "4xx": number;
+                                    /** @description Server errors */
+                                    "5xx": number;
+                                };
+                            }[];
+                            /** @description Usage per endpoint family over the window, most credits first */
+                            by_family: {
+                                /** @description Endpoint family id */
+                                family: string;
+                                /** @description Endpoint family name */
+                                label: string;
+                                /** @description Requests answered (every status) */
+                                requests: number;
+                                /** @description Credits billed (2xx responses only) */
+                                credits: number;
+                            }[];
+                            /** @description Usage per caller over the window. Never names a user or an email. */
+                            by_key: {
+                                /**
+                                 * @description An API key, a signed-in OAuth user, or a request counted before callers were recorded
+                                 * @enum {string}
+                                 */
+                                caller: "key" | "oauth" | "unknown";
+                                /** @description The key's name, or "Signed-in user" for OAuth */
+                                label: string;
+                                /** @description Masked key, null for OAuth */
+                                key_hint: string | null;
+                                /** @description Requests answered (every status) */
+                                requests: number;
+                                /** @description Credits billed (2xx responses only) */
+                                credits: number;
+                            }[];
+                            /** @description A breakdown was capped at its item limit */
+                            truncated: boolean;
+                        };
+                    };
+                };
+                400: components["responses"]["BadRequestError"];
+                401: components["responses"]["UnauthorizedError"];
+                403: components["responses"]["ForbiddenError"];
+                500: components["responses"]["InternalServerError"];
+                503: components["responses"]["ServiceUnavailableError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/status": {
         parameters: {
             query?: never;
@@ -8349,7 +8472,7 @@ export interface paths {
                                      * @description Product family
                                      * @enum {string}
                                      */
-                                    family: "company" | "financials" | "sec_filings" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "earnings_calls" | "websocket";
+                                    family: "company" | "financials" | "sec_filings" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "earnings_calls" | "websocket" | "account";
                                     last_7d: {
                                         /** @description Call-weighted availability of the 7 newest days */
                                         availability: number | null;
@@ -8384,7 +8507,7 @@ export interface paths {
                                  * @description Product family
                                  * @enum {string}
                                  */
-                                family: "company" | "financials" | "sec_filings" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "earnings_calls" | "websocket";
+                                family: "company" | "financials" | "sec_filings" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "earnings_calls" | "websocket" | "account";
                                 /** Format: date-time */
                                 newest: string | null;
                                 /** @description Hours since `newest`, one decimal */
@@ -8628,7 +8751,7 @@ export interface paths {
                                  * @description Product family
                                  * @enum {string}
                                  */
-                                family: "company" | "financials" | "sec_filings" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "earnings_calls" | "websocket";
+                                family: "company" | "financials" | "sec_filings" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "earnings_calls" | "websocket" | "account";
                                 routes: {
                                     /** @description Fastify route pattern; `#` = WebSocket channel */
                                     route: string;

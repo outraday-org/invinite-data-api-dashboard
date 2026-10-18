@@ -16,6 +16,8 @@ import { Input } from "@/components/ui/input";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import { cn } from "@/lib/utils";
 
+import { NoKeyYetHint } from "./no-key-yet";
+
 export function ApiKeyDialogButton({ className }: { className?: string }) {
     const apiKey = useApiKeyStore(s => s.apiKey);
 
@@ -93,11 +95,12 @@ export function ApiKeyDialogButton({ className }: { className?: string }) {
                         autoComplete="off"
                         id="api-key"
                         onChange={e => setDraft(e.target.value)}
-                        placeholder="inv_..."
+                        placeholder="invd_..."
                         spellCheck={false}
                         type="password"
                         value={draft}
                     />
+                    <NoKeyYetHint />
 
                     <DialogFooter className="pt-2">
                         {hasKey && (
