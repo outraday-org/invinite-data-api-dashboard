@@ -4,6 +4,7 @@ import { ApiKeyInlineField } from "@/components/api-key/api-key-inline";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { dataApiDashboardUrl } from "@/lib/app-url";
+import { LICENSING_PAGE_URL, STATUS_PAGE_URL } from "@/lib/public-hosts";
 import { useTickerStore } from "@/lib/stores/ticker-store";
 
 export const Route = createFileRoute("/")({
@@ -78,12 +79,12 @@ function IndexPage() {
     const publicCards = [
         {
             body: "Measured availability, latency and reachability of the API — on its own host.",
-            href: "https://status.data.invinite.com",
+            href: STATUS_PAGE_URL,
             title: "API Status",
         },
         {
             body: "What each plan may do with the data, per route; never resale as your own.",
-            href: "https://data.invinite.com/docs/licensing",
+            href: LICENSING_PAGE_URL,
             title: "Licensing",
         },
     ] as const;

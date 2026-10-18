@@ -29,7 +29,7 @@
     --chart-3: oklch(0.398 0.07 227.392);
     --chart-4: oklch(0.828 0.189 84.429);
     --chart-5: oklch(0.769 0.188 70.08);
-    /* Categorical series slots of the status page (dataviz reference palette, validated light + dark;
+    /* Categorical chart series slots (dataviz reference palette, validated light + dark;
        fixed slot per entity, never cycled). Slots 3-5 sit below 3:1 on the light surface: every chart
        using them ships a labelled table beside it. */
     --series-1: #2a78d6;
