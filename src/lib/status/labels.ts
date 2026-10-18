@@ -2,6 +2,7 @@ import type { FreshnessReason, LicenseRight, LicenseTier, ProductFamily } from "
 
 /** Display labels of the API's product families (status and licensing pages). */
 export const FAMILY_LABELS: Record<ProductFamily, string> = {
+    account: "Account",
     company: "Company",
     earnings_calls: "Earnings calls",
     financials: "Financials",

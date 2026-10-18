@@ -9,7 +9,7 @@ import type { CalendarSearch } from "@/routes/$ticker/earnings-calls/-components
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useEarningsCalendarInfinite } from "@/lib/api/queries";
-import { calendarWindow, formatFiscalPeriod, isCallToday, SESSION_LABELS } from "@/lib/earnings/format";
+import { calendarWindow, eventLabel, isCallToday, SESSION_LABELS } from "@/lib/earnings/format";
 import { AvailabilityIcons } from "@/routes/$ticker/earnings-calls/-components/availability-icons";
 import { CalendarFilters, DATE_STATUSES, validateCalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 import { CallStatusBadge } from "@/routes/$ticker/earnings-calls/-components/call-status-badge";
@@ -83,7 +83,7 @@ function EarningsCalendarPage() {
             {
                 cell: ({ row }) => (
                     <div className="flex items-center gap-2">
-                        {formatFiscalPeriod(row.original)}
+                        {eventLabel(row.original)}
                         <EventTypeBadge event={row.original} />
                     </div>
                 ),

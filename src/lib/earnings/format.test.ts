@@ -4,6 +4,7 @@ import {
     calendarDefaultWindow,
     calendarWindow,
     dateStatusVariant,
+    eventLabel,
     formatBytes,
     formatCallTime,
     formatFiscalPeriod,
@@ -171,5 +172,23 @@ describe("formatInstant", () => {
         expect(formatInstant(null)).toBe("—");
 
         expect(formatInstant(undefined)).toBe("—");
+    });
+});
+
+describe("eventLabel", () => {
+    const base = { event_title: null, event_type: "earnings_call" as const, fiscal_quarter: 3, fiscal_year: 2026 };
+
+    it("labels an earnings call by its fiscal period, never by a title", () => {
+        expect(eventLabel(base)).toBe("Q3 FY2026");
+
+        expect(eventLabel({ ...base, event_title: "Q3 call" })).toBe("Q3 FY2026");
+    });
+
+    it("labels a non-earnings event by its title, else its fiscal period", () => {
+        expect(eventLabel({ ...base, event_title: "Investor Day 2026", event_type: "investor_day" })).toBe("Investor Day 2026");
+
+        expect(eventLabel({ ...base, event_title: "  ", event_type: "conference" })).toBe("Q3 FY2026");
+
+        expect(eventLabel({ ...base, event_type: "agm", fiscal_quarter: null, fiscal_year: null })).toBe("—");
     });
 });

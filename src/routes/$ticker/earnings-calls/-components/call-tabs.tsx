@@ -96,7 +96,19 @@ export function CallTabs({
     tab: CallTab;
     transcriptJump: null | TranscriptJump;
 }) {
-    const active = CALL_TABS[tab];
+    // A non-earnings event (investor day, conference, AGM) hides the flagged tabs the API says it lacks (no press
+    // release for a conference); an earnings call keeps them, muted. The derived tabs show their own empty states.
+    const hidden = (value: CallTab) => {
+        const { flag } = CALL_TABS[value];
+
+        return event.event_type !== "earnings_call" && flag !== undefined && !event[flag];
+    };
+
+    const visibleTabs = CALL_TAB_VALUES.filter(value => !hidden(value));
+
+    const shownTab = hidden(tab) ? (visibleTabs[0] ?? tab) : tab;
+
+    const active = CALL_TABS[shownTab];
 
     const available = active.flag === undefined || event[active.flag];
 
@@ -109,10 +121,10 @@ export function CallTabs({
     };
 
     return (
-        <Tabs onValueChange={value => onTabChange(value as CallTab)} value={tab}>
+        <Tabs onValueChange={value => onTabChange(value as CallTab)} value={shownTab}>
             <div className="overflow-x-auto">
                 <TabsList variant="line">
-                    {CALL_TAB_VALUES.map((value) => {
+                    {visibleTabs.map((value) => {
                         const { flag, label } = CALL_TABS[value];
 
                         const muted = flag !== undefined && !event[flag];
@@ -128,7 +140,7 @@ export function CallTabs({
 
             {aboveContent}
 
-            <TabsContent className="pt-2" value={tab}>
+            <TabsContent className="pt-2" value={shownTab}>
                 {available
                     ? active.render(props)
                     : <Notice title="Not available for this call" />}

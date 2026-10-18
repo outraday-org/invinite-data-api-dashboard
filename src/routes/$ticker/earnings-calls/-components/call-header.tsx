@@ -5,7 +5,7 @@ import type { EarningsEventResponse } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatFiscalPeriod, formatInstant, SESSION_LABELS } from "@/lib/earnings/format";
+import { eventLabel, formatInstant, SESSION_LABELS } from "@/lib/earnings/format";
 
 import { AvailabilityIcons } from "./availability-icons";
 import { CallStatusBadge } from "./call-status-badge";
@@ -36,10 +36,14 @@ export function CallHeader({ event }: { event: EarningsEventResponse }) {
             <div className="flex flex-wrap items-center gap-2">
                 <span className="text-base font-medium">{event.company_name}</span>
                 <Badge variant="outline">{event.symbol}</Badge>
-                <span className="text-muted-foreground">{formatFiscalPeriod(event)}</span>
+                <span className="text-muted-foreground">{eventLabel(event)}</span>
                 <EventTypeBadge event={event} />
                 <CallStatusBadge event={event} />
             </div>
+
+            {event.event_type !== "earnings_call" && (event.has_audio || event.has_transcript) && (
+                <div className="text-muted-foreground text-xs">Recorded from the company&apos;s public webcast.</div>
+            )}
 
             <div className="flex flex-wrap gap-x-6 gap-y-2">
                 <Fact label="Call time" value={<CallTime event={event} />} />

@@ -38,7 +38,7 @@ const TYPES = Object.keys(TYPE_LABELS) as Array<EarningsSearchType>;
 
 const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
 
-function HighlightedText({ query, text }: { query: string; text: string }) {
+export function HighlightedText({ query, text }: { query: string; text: string }) {
     return (
         <p className="leading-relaxed">
             {highlightTerms(text, query).map((part, index) => (part.match
@@ -151,8 +151,11 @@ function HitCard({ hit, query, scope }: { hit: EarningsSearchHit; query: string;
     );
 }
 
-function SearchError({ error }: { error: unknown }) {
-    if (isTierError(error)) return <Notice badge="PRO" title="Your plan does not include earnings-call search" />;
+/** A search request's state; `tier` overrides the plan-gate notice (document search names its own plan). */
+export function SearchError({ error, tier }: { error: unknown; tier?: { badge: string; title: string } }) {
+    if (isTierError(error)) {
+        return <Notice badge={tier?.badge ?? "PRO"} title={tier?.title ?? "Your plan does not include earnings-call search"} />;
+    }
 
     if (error instanceof ApiRequestError) {
         if (error.code === "search_disabled") return <Notice badge="Disabled" title="Search is disabled on this environment" />;

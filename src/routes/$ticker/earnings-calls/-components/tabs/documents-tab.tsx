@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEarningsDocumentsInfinite } from "@/lib/api/queries";
+import { earliestExpiry } from "@/lib/earnings/documents";
 import { formatBytes } from "@/lib/earnings/format";
 import { useMediaUrl } from "@/lib/earnings/use-media-url";
 import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
@@ -38,13 +39,6 @@ function documentHref(doc: EarningsDocument) {
     if (doc.kind === "sec_filing") return doc.source_url;
 
     return doc.url ?? doc.source_url;
-}
-
-/** The earliest expiry among the loaded presigned links (one refetch renews every page). */
-function earliestExpiry(documents: Array<EarningsDocument>) {
-    const expiries = documents.map(doc => doc.expires_at).filter((at): at is string => at !== null);
-
-    return expiries.length > 0 ? expiries.reduce((a, b) => (Date.parse(a) <= Date.parse(b) ? a : b)) : null;
 }
 
 const TEXT_LOOKUP_LIMIT = 100;

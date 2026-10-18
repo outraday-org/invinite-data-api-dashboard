@@ -11,7 +11,8 @@ import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useEarningsEventsInfinite } from "@/lib/api/queries";
-import { formatFiscalPeriod, formatInstant, isUpcoming } from "@/lib/earnings/format";
+import { eventLabel, formatInstant, isUpcoming } from "@/lib/earnings/format";
+import { DocumentSearch } from "@/routes/$ticker/documents/-components/document-search";
 import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
 import { AskThisCall } from "./-components/ask-this-call";
@@ -28,6 +29,9 @@ export const Route = createFileRoute("/$ticker/earnings-calls/")({
 
 type CallsTab = "past" | "upcoming";
 
+/** What the company search box searches: call transcripts / slides, or company-published documents. */
+type SearchScope = "documents" | "transcripts";
+
 function EarningsCallsPage() {
     const { ticker } = Route.useParams();
 
@@ -35,6 +39,8 @@ function EarningsCallsPage() {
     const [now] = React.useState(() => new Date());
 
     const [selectedTab, setSelectedTab] = React.useState<CallsTab | null>(null);
+
+    const [searchScope, setSearchScope] = React.useState<SearchScope>("transcripts");
 
     const {
         data,
@@ -44,6 +50,8 @@ function EarningsCallsPage() {
         isFetchingNextPage,
         isLoading,
     } = useEarningsEventsInfinite({
+        // Investor days, conferences and AGMs too (badge + title per row).
+        eventType: "all",
         identifier: ticker,
         limit: 40,
         sort: "desc",
@@ -72,7 +80,7 @@ function EarningsCallsPage() {
                 cell: ({ row }) => (
                     <div className="flex items-center gap-2">
                         <EventLink className="font-medium hover:underline" event={row.original}>
-                            {formatFiscalPeriod(row.original)}
+                            {eventLabel(row.original)}
                         </EventLink>
                         <EventTypeBadge event={row.original} />
                     </div>
@@ -131,8 +139,9 @@ function EarningsCallsPage() {
             <div className="flex flex-col gap-1 shrink-0">
                 <div>Earnings Calls</div>
                 <div className="text-muted-foreground text-sm">
-                    The company&apos;s earnings calls, newest first: transcript, audio, slides,
-                    press release and documents per call.
+                    The company&apos;s earnings calls and other events (investor days, conferences,
+                    shareholder meetings), newest first: transcript, audio, slides, press release and
+                    documents per event.
                 </div>
             </div>
 
@@ -153,9 +162,17 @@ function EarningsCallsPage() {
                     )
                 : (
                         <div className="flex flex-col h-0 grow gap-2">
-                            {/* "Ask this call", company-wide: hits link to their call. */}
-                            <div className="shrink-0 max-h-[45vh] overflow-y-auto">
-                                <AskThisCall scope={{ identifier: ticker, kind: "company" }} />
+                            {/* Company-wide search: transcripts ("Ask this call", hits link to their call) or documents. */}
+                            <div className="shrink-0 max-h-[45vh] overflow-y-auto flex flex-col gap-1">
+                                <Tabs onValueChange={value => setSearchScope(value as SearchScope)} value={searchScope}>
+                                    <TabsList variant="line">
+                                        <TabsTrigger value="transcripts">Transcripts</TabsTrigger>
+                                        <TabsTrigger value="documents">Documents</TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
+                                {searchScope === "transcripts"
+                                    ? <AskThisCall scope={{ identifier: ticker, kind: "company" }} />
+                                    : <DocumentSearch identifier={ticker} />}
                             </div>
 
                             <Tabs onValueChange={value => setSelectedTab(value as CallsTab)} value={tab}>

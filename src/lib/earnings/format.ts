@@ -49,6 +49,16 @@ export function formatFiscalPeriod(event: FiscalFields) {
         : `Q${event.fiscal_quarter} FY${event.fiscal_year}`;
 }
 
+/**
+ * The row label of an event: an earnings call's fiscal period; a non-earnings event (investor day,
+ * conference, AGM, other) by its title, else its fiscal period ("—" without either).
+ */
+export function eventLabel(event: FiscalFields & Pick<EarningsEvent, "event_title" | "event_type">) {
+    if (event.event_type === "earnings_call") return formatFiscalPeriod(event);
+
+    return event.event_title?.trim() || formatFiscalPeriod(event);
+}
+
 const DATE_STATUS_VARIANTS: Record<EarningsDateStatus, BadgeVariant> = {
     cancelled: "destructive",
     confirmed: "default",

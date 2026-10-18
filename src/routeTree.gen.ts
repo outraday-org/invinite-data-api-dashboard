@@ -28,6 +28,7 @@ import { Route as TickerFinancialsAsReportedIndexRouteImport } from './routes/$t
 import { Route as TickerFilingsIndexRouteImport } from './routes/$ticker/filings/index'
 import { Route as TickerEarningsCallsIndexRouteImport } from './routes/$ticker/earnings-calls/index'
 import { Route as TickerEarningsCalendarIndexRouteImport } from './routes/$ticker/earnings-calendar/index'
+import { Route as TickerDocumentsIndexRouteImport } from './routes/$ticker/documents/index'
 import { Route as TickerDividendsIndexRouteImport } from './routes/$ticker/dividends/index'
 import { Route as TickerEarningsCallsEventIdIndexRouteImport } from './routes/$ticker/earnings-calls/$eventId/index'
 
@@ -136,6 +137,11 @@ const TickerEarningsCalendarIndexRoute =
     path: '/earnings-calendar/',
     getParentRoute: () => TickerRouteRoute,
   } as any)
+const TickerDocumentsIndexRoute = TickerDocumentsIndexRouteImport.update({
+  id: '/documents/',
+  path: '/documents/',
+  getParentRoute: () => TickerRouteRoute,
+} as any)
 const TickerDividendsIndexRoute = TickerDividendsIndexRouteImport.update({
   id: '/dividends/',
   path: '/dividends/',
@@ -155,6 +161,7 @@ export interface FileRoutesByFullPath {
   '/status': typeof StatusRoute
   '/$ticker/': typeof TickerIndexRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
+  '/$ticker/documents': typeof TickerDocumentsIndexRoute
   '/$ticker/earnings-calendar': typeof TickerEarningsCalendarIndexRoute
   '/$ticker/earnings-calls': typeof TickerEarningsCallsIndexRoute
   '/$ticker/filings': typeof TickerFilingsIndexRoute
@@ -177,6 +184,7 @@ export interface FileRoutesByTo {
   '/status': typeof StatusRoute
   '/$ticker': typeof TickerIndexRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
+  '/$ticker/documents': typeof TickerDocumentsIndexRoute
   '/$ticker/earnings-calendar': typeof TickerEarningsCalendarIndexRoute
   '/$ticker/earnings-calls': typeof TickerEarningsCallsIndexRoute
   '/$ticker/filings': typeof TickerFilingsIndexRoute
@@ -201,6 +209,7 @@ export interface FileRoutesById {
   '/status': typeof StatusRoute
   '/$ticker/': typeof TickerIndexRoute
   '/$ticker/dividends/': typeof TickerDividendsIndexRoute
+  '/$ticker/documents/': typeof TickerDocumentsIndexRoute
   '/$ticker/earnings-calendar/': typeof TickerEarningsCalendarIndexRoute
   '/$ticker/earnings-calls/': typeof TickerEarningsCallsIndexRoute
   '/$ticker/filings/': typeof TickerFilingsIndexRoute
@@ -226,6 +235,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/$ticker/'
     | '/$ticker/dividends'
+    | '/$ticker/documents'
     | '/$ticker/earnings-calendar'
     | '/$ticker/earnings-calls'
     | '/$ticker/filings'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/$ticker'
     | '/$ticker/dividends'
+    | '/$ticker/documents'
     | '/$ticker/earnings-calendar'
     | '/$ticker/earnings-calls'
     | '/$ticker/filings'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/status'
     | '/$ticker/'
     | '/$ticker/dividends/'
+    | '/$ticker/documents/'
     | '/$ticker/earnings-calendar/'
     | '/$ticker/earnings-calls/'
     | '/$ticker/filings/'
@@ -430,6 +442,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TickerEarningsCalendarIndexRouteImport
       parentRoute: typeof TickerRouteRoute
     }
+    '/$ticker/documents/': {
+      id: '/$ticker/documents/'
+      path: '/documents'
+      fullPath: '/$ticker/documents'
+      preLoaderRoute: typeof TickerDocumentsIndexRouteImport
+      parentRoute: typeof TickerRouteRoute
+    }
     '/$ticker/dividends/': {
       id: '/$ticker/dividends/'
       path: '/dividends'
@@ -450,6 +469,7 @@ declare module '@tanstack/react-router' {
 interface TickerRouteRouteChildren {
   TickerIndexRoute: typeof TickerIndexRoute
   TickerDividendsIndexRoute: typeof TickerDividendsIndexRoute
+  TickerDocumentsIndexRoute: typeof TickerDocumentsIndexRoute
   TickerEarningsCalendarIndexRoute: typeof TickerEarningsCalendarIndexRoute
   TickerEarningsCallsIndexRoute: typeof TickerEarningsCallsIndexRoute
   TickerFilingsIndexRoute: typeof TickerFilingsIndexRoute
@@ -470,6 +490,7 @@ interface TickerRouteRouteChildren {
 const TickerRouteRouteChildren: TickerRouteRouteChildren = {
   TickerIndexRoute: TickerIndexRoute,
   TickerDividendsIndexRoute: TickerDividendsIndexRoute,
+  TickerDocumentsIndexRoute: TickerDocumentsIndexRoute,
   TickerEarningsCalendarIndexRoute: TickerEarningsCalendarIndexRoute,
   TickerEarningsCallsIndexRoute: TickerEarningsCallsIndexRoute,
   TickerFilingsIndexRoute: TickerFilingsIndexRoute,

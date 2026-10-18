@@ -11,7 +11,10 @@ import type {
     EarningsAudioResponse,
     EarningsCalendarResponse,
     EarningsCallsStatusResponse,
+    EarningsCompanyDocumentResponse,
+    EarningsCompanyDocumentsResponse,
     EarningsDiffResponse,
+    EarningsDocumentSearchResponse,
     EarningsDocumentsResponse,
     EarningsEventResponse,
     EarningsEventsResponse,
@@ -809,6 +812,7 @@ export const getEarningsCalendar = createServerFn({ method: "GET" })
 
 const earningsEventsSchema = z.object({
     apiKey: apiKeySchema,
+    eventType: z.enum(["earnings_call", "investor_day", "conference", "agm", "other", "all"]).optional(),
     from: z.string().optional(),
     identifier: z.string(),
     include: z.literal("observations").optional(),
@@ -821,13 +825,14 @@ const earningsEventsSchema = z.object({
 export const getEarningsEvents = createServerFn({ method: "GET" })
     .inputValidator(earningsEventsSchema)
     .handler(async ({ data }): Promise<EarningsEventsResponse> => {
-        const { apiKey, from, identifier, include, limit, offset, sort, to } = data;
+        const { apiKey, eventType, from, identifier, include, limit, offset, sort, to } = data;
 
         const api = createApiClient(apiKey);
 
         const { data: res, error, response } = await api.GET("/v1/earnings-calls/events", {
             params: {
                 query: {
+                    event_type: eventType,
                     from,
                     identifier,
                     include: include ? [include] : undefined,
@@ -1196,6 +1201,95 @@ export const getEarningsSearch = createServerFn({ method: "GET" })
 
         const { data: res, error, response } = await api.GET("/v1/earnings-calls/search", {
             params: { query: { event_id: eventId, from, identifier, limit, q, to, type } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+// A company's IR documents outside its calls' folders (offset paging like the per-call documents).
+const earningsCompanyDocumentsSchema = z.object({
+    apiKey: apiKeySchema,
+    eventId: z.string().uuid().optional(),
+    identifier: z.string().min(1),
+    kind: z.array(z.string()).optional(),
+    limit: z.number().optional(),
+    offset: z.number().optional(),
+    section: z.array(z.string()).optional(),
+    year: z.number().int().optional(),
+});
+
+export const getEarningsCompanyDocuments = createServerFn({ method: "GET" })
+    .inputValidator(earningsCompanyDocumentsSchema)
+    .handler(async ({ data }): Promise<EarningsCompanyDocumentsResponse> => {
+        const { apiKey, eventId, identifier, kind, limit, offset, section, year } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/company-documents", {
+            params: {
+                query: {
+                    event_id: eventId,
+                    identifier,
+                    kind: kind?.length ? kind : undefined,
+                    limit,
+                    offset,
+                    section: section?.length ? section : undefined,
+                    year,
+                },
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as EarningsCompanyDocumentsResponse;
+    });
+
+export const getEarningsCompanyDocument = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, documentId: z.string().uuid(), pages: z.boolean().optional() }))
+    .handler(async ({ data }): Promise<EarningsCompanyDocumentResponse> => {
+        const api = createApiClient(data.apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/company-documents/{document_id}", {
+            params: { path: { document_id: data.documentId }, query: { include: data.pages ? ["pages"] : undefined } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as EarningsCompanyDocumentResponse;
+    });
+
+const earningsDocumentSearchSchema = z.object({
+    apiKey: apiKeySchema,
+    identifier: z.string().optional(),
+    kind: z.array(z.string()).optional(),
+    limit: z.number().optional(),
+    q: z.string().min(1),
+    section: z.array(z.string()).optional(),
+    table: z.enum(["event_documents", "company_documents"]).optional(),
+    year: z.number().int().optional(),
+});
+
+export const getEarningsDocumentSearch = createServerFn({ method: "GET" })
+    .inputValidator(earningsDocumentSearchSchema)
+    .handler(async ({ data }): Promise<EarningsDocumentSearchResponse> => {
+        const { apiKey, identifier, kind, limit, q, section, table, year } = data;
+
+        const api = createApiClient(apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/earnings-calls/documents/search", {
+            params: {
+                query: {
+                    identifier,
+                    kind: kind?.length ? kind : undefined,
+                    limit,
+                    q,
+                    section: section?.length ? section : undefined,
+                    table,
+                    year,
+                },
+            },
         });
 
         if (error) throwApiError(error, response);

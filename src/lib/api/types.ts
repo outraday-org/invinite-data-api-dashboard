@@ -114,6 +114,15 @@ export type EarningsAudioResponse = ApiResponse<"/v1/earnings-calls/audio", "get
 export type EarningsSlidesResponse = ApiResponse<"/v1/earnings-calls/slides", "get">;
 export type EarningsDocumentsResponse = ApiResponse<"/v1/earnings-calls/documents", "get">;
 export type EarningsSearchResponse = ApiResponse<"/v1/earnings-calls/search", "get">;
+type EarningsCompanyDocumentsRaw = ApiResponse<"/v1/earnings-calls/company-documents", "get">;
+// `pages_json` (detail route, `include=pages`; optional, in the shared document shape) is free-form JSON in the spec.
+type EarningsCompanyDocumentJson = Omit<EarningsCompanyDocumentsRaw["documents"][number], "pages_json"> & { pages_json?: JsonValue };
+
+export type EarningsCompanyDocumentsResponse
+    = Omit<EarningsCompanyDocumentsRaw, "documents"> & { documents: Array<EarningsCompanyDocumentJson> };
+export type EarningsCompanyDocumentResponse
+    = Omit<ApiResponse<"/v1/earnings-calls/company-documents/{document_id}", "get">, "document"> & { document: EarningsCompanyDocumentJson };
+export type EarningsDocumentSearchResponse = ApiResponse<"/v1/earnings-calls/documents/search", "get">;
 
 export type EarningsEvent = EarningsCalendarResponse["events"][number];
 export type EarningsEventWithObservations = EarningsEventsResponse["events"][number];
@@ -128,6 +137,8 @@ export type EarningsDocument = EarningsDocumentsResponse["documents"][number];
 export type EarningsSlide = EarningsSlidesResponse["slides"][number];
 export type EarningsSlideDeck = NonNullable<EarningsSlidesResponse["deck"]>;
 export type EarningsSearchHit = EarningsSearchResponse["hits"][number];
+export type EarningsCompanyDocument = EarningsCompanyDocumentsResponse["documents"][number];
+export type EarningsDocumentSearchHit = EarningsDocumentSearchResponse["hits"][number];
 export type EarningsProsodySpeaker = EarningsProsodyResponse["speakers"][number];
 export type EarningsPriceBucket = EarningsPriceAttributionResponse["buckets"][number];
 export type EarningsPriceTopMinute = EarningsPriceAttributionResponse["top_minutes"][number];
@@ -135,7 +146,8 @@ export type EarningsPriceUtteranceRef = EarningsPriceBucket["utterance_refs"][nu
 
 export type EarningsDateStatus = EarningsEvent["date_status"];
 export type EarningsSession = NonNullable<ApiQuery<"/v1/earnings-calls/calendar">["session"]>;
-export type EarningsEventType = NonNullable<ApiQuery<"/v1/earnings-calls/calendar">["event_type"]>;
+// The query parameter is a comma list (a string in the spec); one stored type or `all` is what the dashboard sends.
+export type EarningsEventType = "all" | EarningsEvent["event_type"];
 export type EarningsTranscriptFormat = NonNullable<ApiQuery<"/v1/earnings-calls/transcript">["format"]>;
 export type EarningsExtractionKind = NonNullable<ApiQuery<"/v1/earnings-calls/extractions">["kind"]>;
 export type EarningsExtractionReview = NonNullable<ApiQuery<"/v1/earnings-calls/extractions">["review"]>;

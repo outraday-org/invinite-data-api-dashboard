@@ -4293,8 +4293,8 @@ export interface paths {
                     session?: "bmo" | "amc" | "intraday";
                     /** @description Filter by listing exchange (e.g. NASDAQ, NYSE) */
                     exchange?: string;
-                    /** @description Event type; `all` = every event type (earnings calls, investor days, conferences, AGMs, other) */
-                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other" | "all";
+                    /** @description Event types as a comma list (e.g. `investor_day,conference`) of earnings_call, investor_day, conference, agm, other; `all` = every event type */
+                    event_type?: string;
                     /** @description Sort direction by scheduled start */
                     sort?: "asc" | "desc";
                     /** @description Maximum number of events to return */
@@ -4352,6 +4352,8 @@ export interface paths {
                                  * @enum {string}
                                  */
                                 event_type: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
+                                /** @description Name of an investor day, conference or shareholder meeting; null for earnings calls */
+                                event_title: string | null;
                                 /** @description Fiscal year of the reported period */
                                 fiscal_year: number | null;
                                 /** @description Fiscal quarter of the reported period */
@@ -4445,8 +4447,8 @@ export interface paths {
                     to?: string;
                     /** @description Extra data per event (repeatable): `observations` = the date / time observations */
                     include?: "observations"[];
-                    /** @description Only events of this type; `all` (default) = every event type */
-                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other" | "all";
+                    /** @description Only events of these types, a comma list (e.g. `investor_day,conference`) of earnings_call, investor_day, conference, agm, other; `all` (default) = every event type */
+                    event_type?: string;
                     /** @description Sort direction by scheduled start */
                     sort?: "asc" | "desc";
                     /** @description Maximum number of events to return */
@@ -4500,6 +4502,8 @@ export interface paths {
                                  * @enum {string}
                                  */
                                 event_type: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
+                                /** @description Name of an investor day, conference or shareholder meeting; null for earnings calls */
+                                event_title: string | null;
                                 /** @description Fiscal year of the reported period */
                                 fiscal_year: number | null;
                                 /** @description Fiscal quarter of the reported period */
@@ -4649,6 +4653,8 @@ export interface paths {
                                  * @enum {string}
                                  */
                                 event_type: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
+                                /** @description Name of an investor day, conference or shareholder meeting; null for earnings calls */
+                                event_title: string | null;
                                 /** @description Fiscal year of the reported period */
                                 fiscal_year: number | null;
                                 /** @description Fiscal quarter of the reported period */
@@ -4739,7 +4745,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description A temporary HLS playlist URL of an earnings call's live audio (PRO). The stream is watermarked. The URL works until expires_at (2 hours by default) and is minted fresh on every request: request a new one before it expires. Play it with hls.js, Safari or VLC; the playlist is an EVENT playlist, so seek to 0 for the start of the call. call_t0 is the wall clock of call ms 0: #EXT-X-PROGRAM-DATE-TIME minus call_t0 = the start_ms of the live transcript (WebSocket channel live_channel). status not_started / disabled answer url: null. 403 audio_unavailable when the company's audio is not licensed for delivery. 503 media_unavailable while live streaming is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        /** @description A temporary HLS playlist URL of an earnings call's live audio (PRO). The stream is watermarked. The URL works until expires_at (2 hours by default) and is minted fresh on every request: request a new one before it expires. Play it with hls.js, Safari or VLC; the playlist is an EVENT playlist, so seek to 0 for the start of the call. call_t0 is the wall clock of call ms 0: #EXT-X-PROGRAM-DATE-TIME minus call_t0 = the start_ms of the live transcript (WebSocket channel live_channel). status not_started / disabled answer url: null. 403 audio_unavailable when the company's audio is not licensed for delivery. 503 media_unavailable while live streaming is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -4753,6 +4759,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                 };
                 header?: never;
                 path?: never;
@@ -4879,6 +4887,8 @@ export interface paths {
                              * @enum {string}
                              */
                             event_type: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
+                            /** @description Name of an investor day, conference or shareholder meeting; null for earnings calls */
+                            event_title: string | null;
                             /** @description Fiscal year of the reported period */
                             fiscal_year: number | null;
                             /** @description Fiscal quarter of the reported period */
@@ -4980,7 +4990,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Transcript of one earnings call in five formats, any published version (version) or the version current at a point in time (as_of). Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Costs 5 credits; format=words is weighted by turn count. A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
+        /** @description Transcript of one earnings call in five formats, any published version (version) or the version current at a point in time (as_of). Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. Costs 5 credits; format=words is weighted by turn count. A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query?: {
@@ -4994,6 +5004,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                     /** @description text = plain text; speakers = one entry per speaker turn; words = turns with every word (w, s = start ms, e = end ms, c = confidence) — the one large format, billed by turn count; sections = prepared remarks + Q&A + qa_start_ms; cleaned = lightly cleaned turns (404 when the version has no cleaned layer) */
                     format?: "text" | "speakers" | "words" | "sections" | "cleaned";
                     /** @description A specific published version (one listed by transcript/versions); default = the current one */
@@ -5038,6 +5050,8 @@ export interface paths {
                                  * @enum {string}
                                  */
                                 event_type: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
+                                /** @description Name of an investor day, conference or shareholder meeting; null for earnings calls */
+                                event_title: string | null;
                                 /** @description Fiscal year of the reported period */
                                 fiscal_year: number | null;
                                 /** @description Fiscal quarter of the reported period */
@@ -5164,7 +5178,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Every published transcript version of one earnings call (live, final, corrected), ascending, without the text. A final version replaced by the next final (the pipeline's speaker-naming pass) is not a version here and cannot be requested. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
+        /** @description Every published transcript version of one earnings call (live, final, corrected), ascending, without the text. A final version replaced by the next final (the pipeline's speaker-naming pass) is not a version here and cannot be requested. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query?: {
@@ -5178,6 +5192,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                 };
                 header?: never;
                 path?: never;
@@ -5244,7 +5260,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Word-level diff between two transcript versions of one earnings call (over the cleaned text when both versions have it, else the verbatim text), each change anchored to the start of its speaker turn. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Costs 5 credits; computed per request (versions are immutable). A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
+        /** @description Word-level diff between two transcript versions of one earnings call (over the cleaned text when both versions have it, else the verbatim text), each change anchored to the start of its speaker turn. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. Costs 5 credits; computed per request (versions are immutable). A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query: {
@@ -5258,6 +5274,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                     /** @description Older version (one listed by transcript/versions) */
                     from: number;
                     /** @description Newer version; default = the current one */
@@ -5343,7 +5361,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Structured Q&A of one earnings call: each analyst question with the analyst's identity and firm, the answering executives and the answer. pairs is [] until the Q&A has been derived. include=scores adds each pair's descriptive scores (where the analyst sat in the question order, the question's tone and difficulty, whether the answer addressed it) — descriptive features of the exchange, not a forecast. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
+        /** @description Structured Q&A of one earnings call: each analyst question with the analyst's identity and firm, the answering executives and the answer. pairs is [] until the Q&A has been derived. include=scores adds each pair's descriptive scores (where the analyst sat in the question order, the question's tone and difficulty, whether the answer addressed it) — descriptive features of the exchange, not a forecast. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query?: {
@@ -5357,6 +5375,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                     /** @description Maximum number of Q&A pairs to return */
                     limit?: number;
                     /** @description Number of Q&A pairs to skip for pagination */
@@ -5476,7 +5496,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Speakers of one earnings call (name, title, firm, role, cross-call person_id) and its participation flags vs the prior call (cfo_absent, ceo_no_questions, new_cfo, …). Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
+        /** @description Speakers of one earnings call (name, title, firm, role, cross-call person_id) and its participation flags vs the prior call (cfo_absent, ceo_no_questions, new_cfo, …). Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. A call without a recording may carry the company's own transcript (stt_provider `company_document`): it is untimed (null timings) and has no cleaned layer. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query?: {
@@ -5490,6 +5510,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                     /** @description Extra data (repeatable): `evidence` = the quotes each name was resolved from */
                     include?: "evidence"[];
                 };
@@ -5789,7 +5811,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description The results press release of one earnings call (EDGAR 8-K exhibit, wire release or IR page): title, publication time, origin, source URL, trust tier and, with include=body, the issuer's text (display licence only). Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        /** @description The results press release of one earnings call (EDGAR 8-K exhibit, wire release or IR page): title, publication time, origin, source URL, trust tier and, with include=body, the issuer's text (display licence only). Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -5803,6 +5825,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                     /** @description Extra data (repeatable): `body` = the release text */
                     include?: "body"[];
                 };
@@ -5877,7 +5901,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Forward guidance (kind=guidance: one consolidated item per metric, period and basis, with verbatim citations) or every reported KPI figure (kind=kpi) of one earnings call. Guidance items are cross-validated between the call and the press release; `cross_validated=false` items come from one source only. `confidence` is calibrated on large-cap spot checks, not a probability. `filing_link` points at the SEC filing that carries the same figure: the results 8-K's press release (`target=press_release`, matched on the text) or, once the 10-Q / 10-K is on EDGAR, its XBRL fact (`target=periodic_filing`, `concept`), which replaces the 8-K link. `match_kind=rounded` means the filing's value rounds to the figure as spoken. The list is empty until the call has been derived. A page can hold fewer than `limit` items while `next_url` is still set: items (and KPI mentions) that only a press release no longer served supports are dropped after paging. Follow `next_url` until it is null. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for redistribute: PRO. */
+        /** @description Forward guidance (kind=guidance: one consolidated item per metric, period and basis, with verbatim citations) or every reported KPI figure (kind=kpi) of one earnings call. Guidance items are cross-validated between the call and the press release; `cross_validated=false` items come from one source only. `confidence` is calibrated on large-cap spot checks, not a probability. `filing_link` points at the SEC filing that carries the same figure: the results 8-K's press release (`target=press_release`, matched on the text) or, once the 10-Q / 10-K is on EDGAR, its XBRL fact (`target=periodic_filing`, `concept`), which replaces the 8-K link. `match_kind=rounded` means the filing's value rounds to the figure as spoken. The list is empty until the call has been derived. A page can hold fewer than `limit` items while `next_url` is still set: items (and KPI mentions) that only a press release no longer served supports are dropped after paging. Follow `next_url` until it is null. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query?: {
@@ -5891,6 +5915,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                     /** @description guidance = consolidated forward guidance; kpi = every reported KPI figure */
                     kind?: "guidance" | "kpi";
                     /** @description Guidance review filter: approved (human-approved only), auto, or all (auto + needs_review + approved) */
@@ -6253,6 +6279,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                     /** @description Comparison base: the company's prior call */
                     vs?: "prior";
                 };
@@ -6385,7 +6413,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Call metadata of one earnings call: length, prepared remarks vs Q&A, release-to-call gap, question and analyst counts, management's share of the Q&A and speaker coverage. 404 metrics_unavailable until the call has been derived. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for redistribute: PRO. */
+        /** @description Call metadata of one earnings call: length, prepared remarks vs Q&A, release-to-call gap, question and analyst counts, management's share of the Q&A and speaker coverage. 404 metrics_unavailable until the call has been derived. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for redistribute: PRO. */
         get: {
             parameters: {
                 query?: {
@@ -6399,6 +6427,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                 };
                 header?: never;
                 path?: never;
@@ -6479,7 +6509,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Per-speaker delivery features of one earnings call: speech rate, pauses, fillers, time to answer and, when the audio was analysed, pitch and energy. Prosody features are a volatility and risk signal, not a direction signal. Acoustic fields (`pitch_*`, `energy_*`) are null when `acoustic_available` is false. 404 prosody_unavailable until the call has been derived. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        /** @description Per-speaker delivery features of one earnings call: speech rate, pauses, fillers, time to answer and, when the audio was analysed, pitch and energy. Prosody features are a volatility and risk signal, not a direction signal. Acoustic fields (`pitch_*`, `energy_*`) are null when `acoustic_available` is false. 404 prosody_unavailable until the call has been derived. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -6493,6 +6523,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                     /** @description prepared (remarks), qa, or all (the whole call) */
                     section?: "prepared" | "qa" | "all";
                 };
@@ -6598,7 +6630,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Minute-level price moves aligned to what was being said at the time. This is temporal coincidence, not attribution of cause; pre-market bars are sparse. During a live call the minute rows arrive as each minute closes (live: true, settled: false; the summary fields are null); the post-call run replaces them. 404 price_attribution_unavailable until the first minute row exists. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        /** @description Minute-level price moves aligned to what was being said at the time. This is temporal coincidence, not attribution of cause; pre-market bars are sparse. During a live call the minute rows arrive as each minute closes (live: true, settled: false; the summary fields are null); the post-call run replaces them. 404 price_attribution_unavailable until the first minute row exists. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -6612,6 +6644,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                 };
                 header?: never;
                 path?: never;
@@ -6738,7 +6772,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description The recording of one earnings call as a signed download URL (PRO). Audio files are forensically watermarked per customer: every account gets its own copy. An account's first request for a call answers 202 { status: "preparing", retry_after_seconds } with Retry-After while that copy is prepared (not billed); repeat the request after it. 403 audio_unavailable when the company's audio is not licensed for delivery or no recording exists (one answer for both). 429 audio_quota_exceeded when the account requested too many new audio files today. 503 audio_temporarily_unavailable while audio cannot be prepared. Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        /** @description The recording of one earnings call as a signed download URL (PRO). Audio files are forensically watermarked per customer: every account gets its own copy. An account's first request for a call answers 202 { status: "preparing", retry_after_seconds } with Retry-After while that copy is prepared (not billed); repeat the request after it. 403 audio_unavailable when the company's audio is not licensed for delivery or no recording exists (one answer for both). 429 audio_quota_exceeded when the account requested too many new audio files today. 503 audio_temporarily_unavailable while audio cannot be prepared. Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -6752,6 +6786,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                 };
                 header?: never;
                 path?: never;
@@ -6857,7 +6893,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description The slide deck of one earnings call (PRO): the deck PDF and each page image as signed URLs, page titles and, with include=markdown, each page's text. 404 slides_unavailable when no deck is available. Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        /** @description The slide deck of one earnings call (PRO): the deck PDF and each page image as signed URLs, page titles and, with include=markdown, each page's text. 404 slides_unavailable when no deck is available. Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -6871,6 +6907,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                     /** @description Extra data, comma-separated or repeated: `markdown` = each page's extracted text */
                     include?: string[];
                     /** @description Page or range to serve, e.g. 3 or 1-5 (at most 200 pages per request) */
@@ -6962,7 +7000,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Further investor documents of one earnings call (CFO commentary, financial data sheets, shareholder letters, fact sheets, the company's own transcript, its prepared remarks / call script, 10-Q / 10-K links; infographics are stored as fact sheets), ordered by kind. Stored files come as signed URLs; link-only rows (sec_filing) have url null and point to EDGAR through source_url. Each document carries its trust_tier. documents is [] for a call without further documents (has_documents tells ahead). Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        /** @description Further investor documents of one earnings call (CFO commentary, financial data sheets, shareholder letters, fact sheets, the company's own transcript, its prepared remarks / call script, 10-Q / 10-K links; infographics are stored as fact sheets), ordered by kind. Stored files come as signed URLs; link-only rows (sec_filing) have url null and point to EDGAR through source_url. Each document carries its trust_tier. documents is [] for a call without further documents (has_documents tells ahead). Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day); with date, event_type (default earnings_call) also addresses an investor day, conference or shareholder meeting. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -6976,6 +7014,8 @@ export interface paths {
                     quarter?: number;
                     /** @description New York calendar day of the call (YYYY-MM-DD) */
                     date?: string;
+                    /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                    event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
                     /** @description Only these kinds, comma-separated or repeated: cfo_commentary, financial_data, shareholder_letter, fact_sheet, company_transcript, prepared_remarks, sec_filing, infographic, other */
                     kind?: string[];
                     /** @description Extra data, comma-separated or repeated: `body` = the extracted text */
@@ -7087,6 +7127,451 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/earnings-calls/company-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A company's investor-relations documents outside its earnings calls' folders — annual reports, proxy statements, ESG / governance documents, investor-day and conference decks, shareholder letters, fact sheets, and link-only webcast replay pages — filtered by IR section, kind, year, period or event, newest year first. Company-published material: displayed as published, not verified facts. Stored files come as signed URLs; pages_url is the per-page text (JSON); a link-only row (webcast) has url null and link_status. Documents of one earnings call are on /v1/earnings-calls/documents. Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        get: {
+            parameters: {
+                query: {
+                    /** @description Company ticker symbol or CIK (US companies only) */
+                    identifier: string;
+                    /** @description Only these IR site sections, comma-separated or repeated: quarterly_results, events_archive, presentations_archive, annual_reports, proxy, sec_filings, press_releases, esg, governance, faq, other */
+                    section?: string[];
+                    /** @description Only these document kinds, comma-separated or repeated: annual_report, ceo_letter, proxy_statement, proxy_supplement, esg_report, conference_presentation, investor_day_deck, earnings_deck, fact_sheet, financial_data, shareholder_letter, company_transcript, cfo_commentary, governance, press_release, infographic, webcast, other, prepared_remarks */
+                    kind?: string[];
+                    /** @description Year the document belongs to */
+                    year?: number;
+                    /** @description Period within the year */
+                    period?: "Q1" | "Q2" | "Q3" | "Q4" | "H1" | "H2" | "FY";
+                    /** @description Only documents of this event (an investor day, a conference, a shareholder meeting) */
+                    event_id?: string;
+                    /** @description Maximum number of documents to return */
+                    limit?: number;
+                    /** @description Number of documents to skip for pagination */
+                    offset?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            company: {
+                                /** @description 10-digit CIK with leading zeros */
+                                cik: string;
+                                /** @description Ticker symbol */
+                                symbol: string;
+                                /** @description Company name */
+                                name: string;
+                            };
+                            /** @description [] when there are none */
+                            documents: {
+                                /**
+                                 * Format: uuid
+                                 * @description Document identifier
+                                 */
+                                document_id: string;
+                                /**
+                                 * @description IR site section the document is filed in
+                                 * @enum {string}
+                                 */
+                                section: "quarterly_results" | "events_archive" | "presentations_archive" | "annual_reports" | "proxy" | "sec_filings" | "press_releases" | "esg" | "governance" | "faq" | "other";
+                                /**
+                                 * @description Document kind
+                                 * @enum {string}
+                                 */
+                                kind: "annual_report" | "ceo_letter" | "proxy_statement" | "proxy_supplement" | "esg_report" | "conference_presentation" | "investor_day_deck" | "earnings_deck" | "fact_sheet" | "financial_data" | "shareholder_letter" | "company_transcript" | "cfo_commentary" | "governance" | "press_release" | "infographic" | "webcast" | "other" | "prepared_remarks";
+                                /** @description Year the document belongs to; null = undated */
+                                year: number | null;
+                                /**
+                                 * @description Period within the year
+                                 * @enum {string|null}
+                                 */
+                                period: "Q1" | "Q2" | "Q3" | "Q4" | "H1" | "H2" | "FY" | null;
+                                /**
+                                 * Format: uuid
+                                 * @description The event the document belongs to
+                                 */
+                                event_id: string | null;
+                                /**
+                                 * @description Type of that event
+                                 * @enum {string|null}
+                                 */
+                                event_type: "earnings_call" | "investor_day" | "conference" | "agm" | "other" | null;
+                                /**
+                                 * Format: date
+                                 * @description The item's own date on the site
+                                 */
+                                event_date: string | null;
+                                /** @description Document title */
+                                title: string | null;
+                                /** @description The link label on the IR site */
+                                source_label: string | null;
+                                /** @description The original URL on the company's IR site */
+                                source_url: string;
+                                /** @description The IR page that listed the document */
+                                page_url: string | null;
+                                /**
+                                 * @description How the IR section was read
+                                 * @enum {string}
+                                 */
+                                origin: "q4_reports_feed" | "q4_events_feed" | "notified_listing" | "json_feed" | "html_page" | "agent";
+                                /** @description company = a transcript the issuer published itself; null = not assessed */
+                                producer: string | null;
+                                /**
+                                 * @description Classification confidence
+                                 * @enum {string}
+                                 */
+                                confidence: "low" | "medium" | "high";
+                                /**
+                                 * @description sec, wire, confirmed_domain, unconfirmed (AI-approved) or internal
+                                 * @enum {string|null}
+                                 */
+                                trust_tier: "sec" | "wire" | "confirmed_domain" | "unconfirmed" | "internal" | null;
+                                /** @description MIME type of the stored file */
+                                content_type: string | null;
+                                /** @description File size */
+                                bytes: number | null;
+                                /** @description Page count */
+                                pages: number | null;
+                                /**
+                                 * @description On a link-only `webcast` row: whether the replay page still plays; null for files
+                                 * @enum {string|null}
+                                 */
+                                link_status: "live" | "expired" | null;
+                                /** @description Signed download URL; null for a link-only row (use source_url) */
+                                url: string | null;
+                                /** @description Signed URL of the per-page text (JSON); null before the text was extracted */
+                                pages_url: string | null;
+                                /**
+                                 * Format: date-time
+                                 * @description When the signed URLs stop working
+                                 */
+                                expires_at: string | null;
+                                /**
+                                 * Format: date-time
+                                 * @description When we first stored the document
+                                 */
+                                created_at: string;
+                                /**
+                                 * Format: date-time
+                                 * @description Last change of the stored document
+                                 */
+                                updated_at: string;
+                                /** @description The per-page text (`{ pages: [{ n, title, text, sections }] }`); only with include=pages, ≤ 2 MB */
+                                pages_json?: {
+                                    [key: string]: unknown;
+                                };
+                            }[];
+                            /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
+                            next_url?: string;
+                        };
+                    };
+                };
+                400: components["responses"]["BadRequestError"];
+                401: components["responses"]["UnauthorizedError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["InternalServerError"];
+                503: components["responses"]["ServiceUnavailableError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/earnings-calls/company-documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description One company document by document_id (from /v1/earnings-calls/company-documents or a document search hit with table company_documents): signed URLs of the file and its per-page text; include=pages returns the per-page text inline when it is at most 2 MB (else only pages_url). Company-published material, not verified facts. Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Extra data: `pages` = the per-page text inline (files ≤ 2 MB; else use pages_url) */
+                    include?: string[];
+                };
+                header?: never;
+                path: {
+                    /** @description document_id of a company-documents response */
+                    document_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            company: {
+                                /** @description 10-digit CIK with leading zeros */
+                                cik: string;
+                                /** @description Ticker symbol */
+                                symbol: string;
+                                /** @description Company name */
+                                name: string;
+                            };
+                            document: {
+                                /**
+                                 * Format: uuid
+                                 * @description Document identifier
+                                 */
+                                document_id: string;
+                                /**
+                                 * @description IR site section the document is filed in
+                                 * @enum {string}
+                                 */
+                                section: "quarterly_results" | "events_archive" | "presentations_archive" | "annual_reports" | "proxy" | "sec_filings" | "press_releases" | "esg" | "governance" | "faq" | "other";
+                                /**
+                                 * @description Document kind
+                                 * @enum {string}
+                                 */
+                                kind: "annual_report" | "ceo_letter" | "proxy_statement" | "proxy_supplement" | "esg_report" | "conference_presentation" | "investor_day_deck" | "earnings_deck" | "fact_sheet" | "financial_data" | "shareholder_letter" | "company_transcript" | "cfo_commentary" | "governance" | "press_release" | "infographic" | "webcast" | "other" | "prepared_remarks";
+                                /** @description Year the document belongs to; null = undated */
+                                year: number | null;
+                                /**
+                                 * @description Period within the year
+                                 * @enum {string|null}
+                                 */
+                                period: "Q1" | "Q2" | "Q3" | "Q4" | "H1" | "H2" | "FY" | null;
+                                /**
+                                 * Format: uuid
+                                 * @description The event the document belongs to
+                                 */
+                                event_id: string | null;
+                                /**
+                                 * @description Type of that event
+                                 * @enum {string|null}
+                                 */
+                                event_type: "earnings_call" | "investor_day" | "conference" | "agm" | "other" | null;
+                                /**
+                                 * Format: date
+                                 * @description The item's own date on the site
+                                 */
+                                event_date: string | null;
+                                /** @description Document title */
+                                title: string | null;
+                                /** @description The link label on the IR site */
+                                source_label: string | null;
+                                /** @description The original URL on the company's IR site */
+                                source_url: string;
+                                /** @description The IR page that listed the document */
+                                page_url: string | null;
+                                /**
+                                 * @description How the IR section was read
+                                 * @enum {string}
+                                 */
+                                origin: "q4_reports_feed" | "q4_events_feed" | "notified_listing" | "json_feed" | "html_page" | "agent";
+                                /** @description company = a transcript the issuer published itself; null = not assessed */
+                                producer: string | null;
+                                /**
+                                 * @description Classification confidence
+                                 * @enum {string}
+                                 */
+                                confidence: "low" | "medium" | "high";
+                                /**
+                                 * @description sec, wire, confirmed_domain, unconfirmed (AI-approved) or internal
+                                 * @enum {string|null}
+                                 */
+                                trust_tier: "sec" | "wire" | "confirmed_domain" | "unconfirmed" | "internal" | null;
+                                /** @description MIME type of the stored file */
+                                content_type: string | null;
+                                /** @description File size */
+                                bytes: number | null;
+                                /** @description Page count */
+                                pages: number | null;
+                                /**
+                                 * @description On a link-only `webcast` row: whether the replay page still plays; null for files
+                                 * @enum {string|null}
+                                 */
+                                link_status: "live" | "expired" | null;
+                                /** @description Signed download URL; null for a link-only row (use source_url) */
+                                url: string | null;
+                                /** @description Signed URL of the per-page text (JSON); null before the text was extracted */
+                                pages_url: string | null;
+                                /**
+                                 * Format: date-time
+                                 * @description When the signed URLs stop working
+                                 */
+                                expires_at: string | null;
+                                /**
+                                 * Format: date-time
+                                 * @description When we first stored the document
+                                 */
+                                created_at: string;
+                                /**
+                                 * Format: date-time
+                                 * @description Last change of the stored document
+                                 */
+                                updated_at: string;
+                                /** @description The per-page text (`{ pages: [{ n, title, text, sections }] }`); only with include=pages, ≤ 2 MB */
+                                pages_json?: {
+                                    [key: string]: unknown;
+                                };
+                            };
+                        };
+                    };
+                };
+                400: components["responses"]["BadRequestError"];
+                401: components["responses"]["UnauthorizedError"];
+                404: components["responses"]["NotFoundError"];
+                500: components["responses"]["InternalServerError"];
+                503: components["responses"]["ServiceUnavailableError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/earnings-calls/documents/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Semantic search over the page text of investor documents: the documents of earnings calls (CFO commentary, shareholder letters, data sheets, the company's own transcripts) and companies' IR libraries (annual reports, proxy statements, ESG reports, investor-day decks). Returns up to 20 passages from company-published documents, with page numbers — not verified facts — and a signed URL of the file (open it at #page=<page>). Filter by company (identifier), kind, IR section, year or table. 429 upstream_rate_limited and 503 search_unavailable carry Retry-After; 503 search_disabled while search is switched off. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        get: {
+            parameters: {
+                query: {
+                    /** @description The question or phrase to search for */
+                    q: string;
+                    /** @description Search one company's documents (ticker or CIK, US only) */
+                    identifier?: string;
+                    /** @description Only these document kinds, comma-separated or repeated: annual_report, ceo_letter, proxy_statement, proxy_supplement, esg_report, conference_presentation, investor_day_deck, earnings_deck, fact_sheet, financial_data, shareholder_letter, company_transcript, cfo_commentary, governance, press_release, infographic, webcast, other, prepared_remarks, sec_filing */
+                    kind?: string[];
+                    /** @description Only company documents of these IR sections: quarterly_results, events_archive, presentations_archive, annual_reports, proxy, sec_filings, press_releases, esg, governance, faq, other */
+                    section?: string[];
+                    /** @description Only documents of this year */
+                    year?: number;
+                    /** @description event_documents (a call's documents) or company_documents (the company's IR library) */
+                    table?: "event_documents" | "company_documents";
+                    /** @description Maximum number of passages (at most 20) */
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Default Response */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @description The query as searched */
+                            query: string;
+                            /** @description Passages, best first */
+                            hits: {
+                                /** @description Cosine similarity (4 decimals) */
+                                score: number;
+                                /**
+                                 * Format: uuid
+                                 * @description Document identifier (company_documents: /v1/earnings-calls/company-documents/{document_id})
+                                 */
+                                document_id: string;
+                                /**
+                                 * @description Which document table the passage is from
+                                 * @enum {string}
+                                 */
+                                table: "event_documents" | "company_documents";
+                                /**
+                                 * Format: uuid
+                                 * @description The event the document belongs to
+                                 */
+                                event_id: string | null;
+                                /** @description 10-digit CIK with leading zeros */
+                                cik: string;
+                                /** @description Ticker symbol */
+                                symbol: string;
+                                /** @description Document kind */
+                                kind: string | null;
+                                /** @description IR site section (company documents) */
+                                section: string | null;
+                                /** @description Year of the document */
+                                year: number | null;
+                                /** @description Period within the year (Q1–Q4, H1, H2, FY) */
+                                period: string | null;
+                                /** @description 1-based page of the passage */
+                                page: number | null;
+                                /** @description Nearest heading above the passage */
+                                heading: string | null;
+                                /** @description The passage (≤ 600 characters) */
+                                text: string;
+                                /** @description Document title */
+                                title: string | null;
+                                /** @description Signed URL of the stored file; null for a link-only row */
+                                url: string | null;
+                                /**
+                                 * Format: date-time
+                                 * @description When url stops working
+                                 */
+                                expires_at: string | null;
+                            }[];
+                        };
+                    };
+                };
+                400: components["responses"]["BadRequestError"];
+                401: components["responses"]["UnauthorizedError"];
+                404: components["responses"]["NotFoundError"];
+                /** @description Rate limited (Retry-After) */
+                429: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /**
+                             * @description Type of error
+                             * @example upstream_rate_limited
+                             */
+                            error: string;
+                            /** @description Detailed error message */
+                            message: string;
+                        };
+                    };
+                };
+                500: components["responses"]["InternalServerError"];
+                503: components["responses"]["ServiceUnavailableError"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/earnings-calls/search": {
         parameters: {
             query?: never;
@@ -7094,7 +7579,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description "Ask this call": semantic search over earnings-call transcripts and slide text — one call (event_id), one company (identifier) or every call (default: the last 365 days). Returns up to 8 passages with speaker, start_ms and, on plans that include the audio and slides routes (PRO), signed URLs: audio_url opens the calling account's own watermarked copy of the recording at the passage (#t=<seconds>) — null while that copy is being prepared (repeat the search a minute later) — and slide.image_url shows the slide. Cite event_id and start_ms. 429 upstream_rate_limited and 503 search_unavailable carry Retry-After; 503 search_disabled while search is switched off. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
+        /** @description "Ask this call": semantic search over earnings-call transcripts and slide text — one call (event_id), one company (identifier) or every call (default: the last 365 days). Returns up to 8 passages with speaker, start_ms and, on plans that include the audio and slides routes (PRO), signed URLs: audio_url opens the calling account's own watermarked copy of the recording at the passage (#t=<seconds>) — null while that copy is being prepared (repeat the search a minute later) — and slide.image_url shows the slide. event_type (default earnings_call; all = every type) selects investor days, conferences or shareholder meetings too. Cite event_id and start_ms. 429 upstream_rate_limited and 503 search_unavailable carry Retry-After; 503 search_disabled while search is switched off. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query: {
@@ -7110,6 +7595,8 @@ export interface paths {
                     to?: string;
                     /** @description transcript (all speech), qa, preparedRemarks or presentation (slide text) */
                     type?: "transcript" | "qa" | "preparedRemarks" | "presentation";
+                    /** @description Events searched, as a comma list of earnings_call, investor_day, conference, agm, other; `all` = every event type (default earnings calls) */
+                    event_type?: string;
                     /** @description Maximum number of passages (at most 8) */
                     limit?: number;
                 };
@@ -7243,7 +7730,7 @@ export interface paths {
                                 id: string;
                                 /** @description HTTPS endpoint the deliveries are POSTed to */
                                 url: string;
-                                events: ("earnings_call.scheduled" | "earnings_call.rescheduled" | "earnings_call.started" | "earnings_call.ended" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "earnings_call.transcript_corrected" | "earnings_call.assets_ready" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "ping")[];
+                                events: ("earnings_call.scheduled" | "earnings_call.rescheduled" | "earnings_call.started" | "earnings_call.ended" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "earnings_call.transcript_corrected" | "earnings_call.assets_ready" | "earnings_call.guidance_flash" | "earnings_call.documents_updated" | "earnings_call.keyword_hit" | "ping")[];
                                 filters: {
                                     /** @description 10-digit CIKs; empty = every company */
                                     ciks: string[];
@@ -7337,7 +7824,7 @@ export interface paths {
                             id: string;
                             /** @description HTTPS endpoint the deliveries are POSTed to */
                             url: string;
-                            events: ("earnings_call.scheduled" | "earnings_call.rescheduled" | "earnings_call.started" | "earnings_call.ended" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "earnings_call.transcript_corrected" | "earnings_call.assets_ready" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "ping")[];
+                            events: ("earnings_call.scheduled" | "earnings_call.rescheduled" | "earnings_call.started" | "earnings_call.ended" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "earnings_call.transcript_corrected" | "earnings_call.assets_ready" | "earnings_call.guidance_flash" | "earnings_call.documents_updated" | "earnings_call.keyword_hit" | "ping")[];
                             filters: {
                                 /** @description 10-digit CIKs; empty = every company */
                                 ciks: string[];
@@ -7519,7 +8006,7 @@ export interface paths {
                             id: string;
                             /** @description HTTPS endpoint the deliveries are POSTed to */
                             url: string;
-                            events: ("earnings_call.scheduled" | "earnings_call.rescheduled" | "earnings_call.started" | "earnings_call.ended" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "earnings_call.transcript_corrected" | "earnings_call.assets_ready" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "ping")[];
+                            events: ("earnings_call.scheduled" | "earnings_call.rescheduled" | "earnings_call.started" | "earnings_call.ended" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "earnings_call.transcript_corrected" | "earnings_call.assets_ready" | "earnings_call.guidance_flash" | "earnings_call.documents_updated" | "earnings_call.keyword_hit" | "ping")[];
                             filters: {
                                 /** @description 10-digit CIKs; empty = every company */
                                 ciks: string[];
@@ -7780,7 +8267,7 @@ export interface paths {
                                  */
                                 delivery_id: string;
                                 /** @enum {string} */
-                                event: "earnings_call.scheduled" | "earnings_call.rescheduled" | "earnings_call.started" | "earnings_call.ended" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "earnings_call.transcript_corrected" | "earnings_call.assets_ready" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "ping";
+                                event: "earnings_call.scheduled" | "earnings_call.rescheduled" | "earnings_call.started" | "earnings_call.ended" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "earnings_call.transcript_corrected" | "earnings_call.assets_ready" | "earnings_call.guidance_flash" | "earnings_call.documents_updated" | "earnings_call.keyword_hit" | "ping";
                                 /** @description 1-based attempt number */
                                 attempt: number;
                                 /** @enum {string} */
@@ -9261,7 +9748,7 @@ export interface components {
              */
             id: string;
             /** @enum {string} */
-            event: "earnings_call.scheduled" | "earnings_call.rescheduled" | "earnings_call.started" | "earnings_call.ended" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "earnings_call.transcript_corrected" | "earnings_call.assets_ready" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "ping";
+            event: "earnings_call.scheduled" | "earnings_call.rescheduled" | "earnings_call.started" | "earnings_call.ended" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "earnings_call.transcript_corrected" | "earnings_call.assets_ready" | "earnings_call.guidance_flash" | "earnings_call.documents_updated" | "earnings_call.keyword_hit" | "ping";
             /**
              * Format: date-time
              * @description When the event happened; deliveries are NOT ordered — order by this and the event phase

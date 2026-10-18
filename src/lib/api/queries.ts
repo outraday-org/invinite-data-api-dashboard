@@ -13,8 +13,11 @@ import type {
     EarningsAudioResponse,
     EarningsCalendarResponse,
     EarningsCallsStatusResponse,
+    EarningsCompanyDocumentResponse,
+    EarningsCompanyDocumentsResponse,
     EarningsDateStatus,
     EarningsDiffResponse,
+    EarningsDocumentSearchResponse,
     EarningsDocumentsResponse,
     EarningsEventResponse,
     EarningsEventsResponse,
@@ -69,8 +72,11 @@ import {
     getEarningsAudio,
     getEarningsCalendar,
     getEarningsCallsStatus,
+    getEarningsCompanyDocument,
+    getEarningsCompanyDocuments,
     getEarningsDiff,
     getEarningsDocuments,
+    getEarningsDocumentSearch,
     getEarningsEvent,
     getEarningsEvents,
     getEarningsExtractions,
@@ -1316,6 +1322,7 @@ export function useEarningsCalendarInfinite(input: EarningsCalendarInfiniteInput
 }
 
 type EarningsEventsInfiniteInput = {
+    eventType?: EarningsEventType;
     from?: string;
     identifier: string;
     include?: "observations";
@@ -1333,6 +1340,7 @@ export function useEarningsEventsInfinite(input: EarningsEventsInfiniteInput) {
             "earnings",
             "events",
             input.identifier,
+            input.eventType ?? "",
             input.from ?? "",
             input.to ?? "",
             input.include ?? "",
@@ -1656,6 +1664,77 @@ export function useEarningsSearch(input: EarningsSearchInput) {
             input.from ?? "",
             input.to ?? "",
             input.type ?? "",
+            input.limit ?? "",
+        ],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+type EarningsCompanyDocumentsInfiniteInput = {
+    eventId?: string;
+    identifier: string;
+    kind?: Array<string>;
+    limit?: number;
+    section?: Array<string>;
+    year?: number;
+};
+
+/** A company's IR documents (`/company-documents`); status-aware, the Documents page renders its own error state. */
+export function useEarningsCompanyDocumentsInfinite(input: EarningsCompanyDocumentsInfiniteInput) {
+    return useEarningsInfinite<EarningsCompanyDocumentsResponse>({
+        enabled: input.identifier.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (offset, apiKey) => getEarningsCompanyDocuments({ data: { ...input, apiKey, offset } }),
+        queryKey: [
+            "earnings",
+            "company-documents",
+            input.identifier,
+            input.section?.join(",") ?? "",
+            input.kind?.join(",") ?? "",
+            input.year ?? "",
+            input.eventId ?? "",
+            input.limit ?? "",
+        ],
+        staleTime: EARNINGS_LIST_STALE_MS,
+    });
+}
+
+/** One company document; `pages` adds the per-page text (≤ 2 MB). A null id keeps it idle. */
+export function useEarningsCompanyDocument(documentId: null | string, { pages = false }: { pages?: boolean } = {}) {
+    return useEarningsQuery<EarningsCompanyDocumentResponse>({
+        enabled: Boolean(documentId),
+        errorMessage: null,
+        load: apiKey => getEarningsCompanyDocument({ data: { apiKey, documentId: documentId ?? "", pages } }),
+        queryKey: ["earnings", "company-document", documentId ?? "", pages],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+type EarningsDocumentSearchInput = {
+    identifier?: string;
+    kind?: Array<string>;
+    limit?: number;
+    q: string;
+    section?: Array<string>;
+    table?: "company_documents" | "event_documents";
+    year?: number;
+};
+
+/** Document search (passages with page numbers): runs once `q` is non-empty (set it on submit). */
+export function useEarningsDocumentSearch(input: EarningsDocumentSearchInput) {
+    return useEarningsQuery<EarningsDocumentSearchResponse>({
+        enabled: input.q.trim().length > 0,
+        errorMessage: null,
+        load: apiKey => getEarningsDocumentSearch({ data: { ...input, apiKey } }),
+        queryKey: [
+            "earnings",
+            "document-search",
+            input.q,
+            input.identifier ?? "",
+            input.kind?.join(",") ?? "",
+            input.section?.join(",") ?? "",
+            input.year ?? "",
+            input.table ?? "",
             input.limit ?? "",
         ],
         staleTime: EARNINGS_EVENT_STALE_MS,
