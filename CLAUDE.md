@@ -90,7 +90,7 @@ Base UI components built on `@base-ui/react` primitives with `class-variance-aut
 
 Validated with `@t3-oss/env-core` in `src/lib/env.ts`.
 
-The app origin is NOT an env var: `src/lib/app-url.ts` (`INVINITE_APP_URL`, `dataApiDashboardUrl`) is a plain constant because `env.ts` reads `process.env` and is server-only, while its links render in the browser. A Data API account (keys, usage, credits, invoices) lives in the app's `/data-api` dashboard — this explorer has no account surface and links there (landing card, the key fields' "No key yet?" line).
+The app origin is NOT an env var: `src/lib/app-url.ts` (`INVINITE_APP_URL` = `https://data.invinite.com`, `dataApiDashboardUrl`, `docsUrl`) is a plain constant because `env.ts` reads `process.env` and is server-only, while its links render in the browser. A Data API account (keys, usage, credits, invoices) lives in the Invinite Data app (`/`, `/keys`, `/usage`, `/billing`; docs at `/docs`) — this explorer has no account surface and links there (landing card, the key fields' "No key yet?" line).
 
 ## Code Style
 

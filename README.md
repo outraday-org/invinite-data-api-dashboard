@@ -4,7 +4,7 @@
 `http://localhost:3001`).
 
 Live: https://data-api-dashboard.netlify.app/ (Netlify builds `main` on push). Keys, usage and billing
-live in the Invinite app's Data API dashboard, https://invinite.com/data-api.
+live in the Invinite Data app, https://data.invinite.com (docs: https://data.invinite.com/docs).
 
 ## API key
 
