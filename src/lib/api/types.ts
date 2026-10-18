@@ -180,10 +180,3 @@ export type SegmentedFinancialsSegmentId
         | "seg_revenue_geographic"
         | "seg_revenue_product"
         | "seg_selling_and_marketing_expenses_business_segment";
-
-// Public licensing (IDA `/status/licensing`, task 21; no API key)
-export type LicensingResponse = ApiResponse<"/status/licensing", "get">;
-export type LicenseRight = LicensingResponse["rights"][number];
-export type LicenseTier = keyof LicensingResponse["tiers"];
-export type LicensingFamily = LicensingResponse["families"][number];
-export type LicensingRoute = LicensingFamily["routes"][number];

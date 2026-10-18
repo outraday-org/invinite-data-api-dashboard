@@ -1,18 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { LicensingPageView } from "@/components/licensing/licensing-page-view";
-import { useLicensing } from "@/lib/api/queries";
-import { PUBLIC_PAGE_HEADERS } from "@/lib/public-page";
+/**
+ * The licensing matrix lives in the Invinite Data app's docs. The old `/licensing` answers a 301 there.
+ * A server route, not a `netlify.toml` redirect: Netlify evaluates the SSR function (`path: "/*"`)
+ * BEFORE redirect rules, so a toml rule for `/licensing` never fires (see `status.tsx`).
+ */
+export const LICENSING_PAGE_URL = "https://data.invinite.com/docs/licensing";
 
 export const Route = createFileRoute("/licensing")({
-    component: LicensingPage,
-    head: () => ({ meta: [{ title: "Licensing · Invinite API" }] }),
-    // The CDN caches this shell; the data comes through the memoised, key-less server functions.
-    headers: () => PUBLIC_PAGE_HEADERS,
+    server: {
+        handlers: {
+            GET: () => new Response(null, { headers: { Location: LICENSING_PAGE_URL }, status: 301 }),
+        },
+    },
 });
-
-function LicensingPage() {
-    const { data, error, isLoading } = useLicensing();
-
-    return <LicensingPageView data={data} error={error} isLoading={isLoading} />;
-}

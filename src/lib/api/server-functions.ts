@@ -40,7 +40,6 @@ import type {
     InstitutionalTransactionsResponse,
     InstitutionsResponse,
     IposResponse,
-    LicensingResponse,
     MarketHolidaysResponse,
     SegmentedFinancialsResponse,
     SplitsResponse,
@@ -50,7 +49,6 @@ import type {
 import { env } from "../env";
 import { createApiClient } from "./client.server";
 import { throwApiError } from "./errors";
-import { fetchLicensing } from "./public-fetchers.server";
 
 const apiKeySchema = z
     .string()
@@ -1311,7 +1309,3 @@ export const getEarningsLiveStream = createServerFn({ method: "GET" })
 // The API base URL (not a secret) for the browser's own WebSocket to `/v1/ws` (task 8).
 export const getApiBaseUrl = createServerFn({ method: "GET" })
     .handler((): { url: string } => ({ url: env.INVINITE_DATA_API_URL }));
-
-// Public licensing (task 21): a thin wrapper of the key-less, memoised fetcher.
-export const getLicensing = createServerFn({ method: "GET" })
-    .handler((): Promise<LicensingResponse> => fetchLicensing());

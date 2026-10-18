@@ -50,4 +50,3 @@ runs, the others are skipped) so `pnpm install` / `pnpm run` do not stop on
 - `/$ticker/earnings-calendar` — market earnings calendar (date window / status / session / event type — one type or "All events" — in the URL) with a "Live now" strip.
 - `/$ticker/ipos` — IPOs.
 - `/$ticker/market-holidays` — market holidays.
-- `/licensing` — public licensing matrix (tiers × rights per product family).

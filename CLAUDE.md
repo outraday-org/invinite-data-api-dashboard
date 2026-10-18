@@ -82,6 +82,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 - `$ticker/route.tsx`: Layout for all company routes with sidebar navigation
 - `$ticker/*.tsx`: Company-specific pages (filings, financials, dividends, etc.)
 - `/status` redirects to `https://status.data.invinite.com` (the page lives in `../invinite-data-api/status/`): `status.tsx` is a server route answering 301 with the query kept — never a `netlify.toml` rule, which Netlify evaluates AFTER the SSR function (`path: "/*"`) and so never fires; the landing card links there directly
+- `/licensing` redirects to `https://data.invinite.com/docs/licensing` (the licensing matrix lives in the Invinite Data app's docs): `licensing.tsx` is a 301 server route like `status.tsx`; the landing card links there directly
 
 ### State Management
 
