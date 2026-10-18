@@ -6738,7 +6738,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description The recording of one earnings call as a signed download URL (PRO). Audio files are forensically watermarked per customer: every team gets its own copy. A team's first request for a call answers 202 { status: "preparing", retry_after_seconds } with Retry-After while that copy is prepared (not billed); repeat the request after it. 403 audio_unavailable when the company's audio is not licensed for delivery or no recording exists (one answer for both). 429 audio_quota_exceeded when the team requested too many new audio files today. 503 audio_temporarily_unavailable while audio cannot be prepared. Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
+        /** @description The recording of one earnings call as a signed download URL (PRO). Audio files are forensically watermarked per customer: every account gets its own copy. An account's first request for a call answers 202 { status: "preparing", retry_after_seconds } with Retry-After while that copy is prepared (not billed); repeat the request after it. 403 audio_unavailable when the company's audio is not licensed for delivery or no recording exists (one answer for both). 429 audio_quota_exceeded when the account requested too many new audio files today. 503 audio_temporarily_unavailable while audio cannot be prepared. Files are served as short-lived signed URLs (see expires_at), never proxied; request a fresh response after expiry. 503 media_unavailable while media signing is not configured. Select the call by event_id, or by identifier with year+quarter (fiscal) or date (New York day). Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: {
@@ -6803,7 +6803,7 @@ export interface paths {
                         };
                     };
                 };
-                /** @description The calling team's watermarked copy is being prepared; repeat the request after Retry-After (not billed) */
+                /** @description The calling account's watermarked copy is being prepared; repeat the request after Retry-After (not billed) */
                 202: {
                     headers: {
                         [name: string]: unknown;
@@ -6821,7 +6821,7 @@ export interface paths {
                 401: components["responses"]["UnauthorizedError"];
                 403: components["responses"]["ForbiddenError"];
                 404: components["responses"]["NotFoundError"];
-                /** @description Too many new audio files for this team (daily quota of new watermarked copies) */
+                /** @description Too many new audio files for this account (daily quota of new watermarked copies) */
                 429: {
                     headers: {
                         [name: string]: unknown;
@@ -7094,7 +7094,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description "Ask this call": semantic search over earnings-call transcripts and slide text — one call (event_id), one company (identifier) or every call (default: the last 365 days). Returns up to 8 passages with speaker, start_ms and, on plans that include the audio and slides routes (PRO), signed URLs: audio_url opens the calling team's own watermarked copy of the recording at the passage (#t=<seconds>) — null while that copy is being prepared (repeat the search a minute later) — and slide.image_url shows the slide. Cite event_id and start_ms. 429 upstream_rate_limited and 503 search_unavailable carry Retry-After; 503 search_disabled while search is switched off. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
+        /** @description "Ask this call": semantic search over earnings-call transcripts and slide text — one call (event_id), one company (identifier) or every call (default: the last 365 days). Returns up to 8 passages with speaker, start_ms and, on plans that include the audio and slides routes (PRO), signed URLs: audio_url opens the calling account's own watermarked copy of the recording at the passage (#t=<seconds>) — null while that copy is being prepared (repeat the search a minute later) — and slide.image_url shows the slide. Cite event_id and start_ms. 429 upstream_rate_limited and 503 search_unavailable carry Retry-After; 503 search_disabled while search is switched off. Data is replicated from the capture pipeline with a lag of about a minute. Only US earnings calls captured by Invinite are served. Minimum tier for rag: STANDARD. */
         get: {
             parameters: {
                 query: {
@@ -7221,7 +7221,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description List the team's webhook subscriptions (secrets are never returned). Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. Minimum tier for display: FREE. */
+        /** @description List the account's webhook subscriptions (secrets are never returned). Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. Minimum tier for display: FREE. */
         get: {
             parameters: {
                 query?: never;
@@ -7301,7 +7301,7 @@ export interface paths {
             };
         };
         put?: never;
-        /** @description Create a webhook subscription (at most 10 per team). The response carries the signing secret exactly once. The URL must be https on port 443 and resolve to public addresses only (400 invalid_webhook_url names the reason). Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. Minimum tier for display: FREE. */
+        /** @description Create a webhook subscription (at most 10 per account). The response carries the signing secret exactly once. The URL must be https on port 443 and resolve to public addresses only (400 invalid_webhook_url names the reason). Earnings-call webhooks (PRO): signed, retried POSTs of the earnings_call.* lifecycle events — see the Webhooks section of the API description and x-webhooks. Minimum tier for display: FREE. */
         post: {
             parameters: {
                 query?: never;
@@ -7378,7 +7378,7 @@ export interface paths {
                     };
                 };
                 404: components["responses"]["NotFoundError"];
-                /** @description Conflict - at most 10 subscriptions per team */
+                /** @description Conflict - at most 10 subscriptions per account */
                 409: {
                     headers: {
                         [name: string]: unknown;
@@ -8315,7 +8315,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Your team's Data API usage — credits and requests by day, endpoint family and key — plus the plan allowance and prepaid balance. Costs no credits and is available on every plan; counted, rate-limited like any route. Data is drained every 5 minutes. */
+        /** @description Your account's Data API usage — credits and requests by day, endpoint family and key — plus the plan allowance and prepaid balance. Costs no credits and is available on every plan; counted, rate-limited like any route. Data is drained every 5 minutes. */
         get: {
             parameters: {
                 query?: {
@@ -8343,7 +8343,7 @@ export interface paths {
                             /** @description The current billing period */
                             period: {
                                 /**
-                                 * @description The team's Data API plan
+                                 * @description The account's Data API plan
                                  * @enum {string}
                                  */
                                 tier: "free" | "lite" | "standard" | "pro" | "prepaid";
