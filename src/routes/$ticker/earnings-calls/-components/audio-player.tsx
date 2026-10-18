@@ -21,9 +21,9 @@ const SPEEDS = [1, 1.5, 2] as const;
  * provider (`CallAudioProvider`) swaps it in at the same position, playing or paused as before.
  */
 export function AudioPlayer({ visible }: { visible: boolean }) {
-    const { audio, audioRef, playedUrl, setPlaybackRate, skip } = useCallAudio();
+    const { audio, audioRef, playedUrl, recording: data, setPlaybackRate, skip } = useCallAudio();
 
-    const { data, refetch } = audio;
+    const { refetch } = audio;
 
     const [speed, setSpeed] = React.useState<number>(1);
 

@@ -10,7 +10,8 @@ import type {
     ApiStatusResponse,
     CagrPeriodYears,
     DividendsResponse,
-    EarningsAudioResponse,
+    EarningsAudioPreparingResponse,
+    EarningsAudioResult,
     EarningsCalendarResponse,
     EarningsCallsStatusResponse,
     EarningsCompanyDocumentResponse,
@@ -1590,12 +1591,27 @@ export function useEarningsPriceAttribution(input: EarningsEventSelector, { live
 // page to render `audio_disabled` / `audio_unavailable` / `media_unavailable` /
 // `search_disabled` / a plan gate (`isTierError`) as a state.
 
+/** The audio route's `202 { status: "preparing" }` answer (the account's copy is not ready yet). */
+export function isEarningsAudioPreparing(data: EarningsAudioResult): data is EarningsAudioPreparingResponse {
+    return "status" in data;
+}
+
+/**
+ * `data` is the recording or, while the account's watermarked copy is prepared, the `202
+ * preparing` answer — asked again after its `retry_after_seconds` (not billed), as the live
+ * stream is while `not_started`.
+ */
 export function useEarningsAudio(input: EarningsEventSelector) {
-    return useEarningsQuery<EarningsAudioResponse>({
+    return useEarningsQuery<EarningsAudioResult>({
         enabled: hasEventSelector(input),
         errorMessage: null,
         load: apiKey => getEarningsAudio({ data: { ...input, apiKey } }),
         queryKey: ["earnings", "audio", ...selectorKey(input)],
+        refetchInterval: (query) => {
+            const data = query.state.data;
+
+            return data && isEarningsAudioPreparing(data) ? Math.max(2, data.retry_after_seconds) * 1000 : false;
+        },
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }

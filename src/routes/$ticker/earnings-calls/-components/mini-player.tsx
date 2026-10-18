@@ -44,7 +44,7 @@ function useElementState(audioRef: React.RefObject<HTMLAudioElement | null>, loa
  * Sticky above the panel, so a seek on a long transcript stays audible and controllable.
  */
 export function MiniPlayer({ onOpenAudioTab }: { onOpenAudioTab: () => void }) {
-    const { audio, audioRef, loaded, playedUrl, requested } = useCallAudio();
+    const { audio, audioRef, loaded, playedUrl, preparing, recording, requested } = useCallAudio();
 
     const { durationMs, paused, positionMs } = useElementState(audioRef, loaded);
 
@@ -78,12 +78,20 @@ export function MiniPlayer({ onOpenAudioTab }: { onOpenAudioTab: () => void }) {
                     {formatMs(positionMs)}
                     {durationMs !== null && ` / ${formatMs(durationMs)}`}
                 </span>
-                {!audio.data && playedUrl && <span className="text-muted-foreground">search hit</span>}
+                {!recording && playedUrl && <span className="text-muted-foreground">search hit</span>}
             </>
         );
     }
     else if (audio.error) {
         body = <span className="text-muted-foreground">The recording could not be loaded — see the Audio tab.</span>;
+    }
+    else if (preparing) {
+        body = (
+            <span className="text-muted-foreground inline-flex items-center gap-1.5">
+                <Loader2 className="size-3 animate-spin" />
+                Preparing the recording for your account…
+            </span>
+        );
     }
     else {
         body = (

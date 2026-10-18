@@ -8,7 +8,7 @@ import type {
     CompanyDetailsResponse,
     CompanySearchResponse,
     DividendsResponse,
-    EarningsAudioResponse,
+    EarningsAudioResult,
     EarningsCalendarResponse,
     EarningsCallsStatusResponse,
     EarningsCompanyDocumentResponse,
@@ -1117,7 +1117,7 @@ export const getEarningsPriceAttribution = createServerFn({ method: "GET" })
 // ApiRequestError instead of the bare error body.
 export const getEarningsAudio = createServerFn({ method: "GET" })
     .inputValidator(selectorInputSchema)
-    .handler(async ({ data }): Promise<EarningsAudioResponse> => {
+    .handler(async ({ data }): Promise<EarningsAudioResult> => {
         const api = createApiClient(data.apiKey);
 
         const { data: res, error, response } = await api.GET("/v1/earnings-calls/audio", {
