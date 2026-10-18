@@ -73,12 +73,13 @@ function IndexPage() {
         },
     ] as const;
 
-    // Public, key-less pages: no ticker param.
+    // Public, key-less pages: no ticker param. The status page lives on its own host
+    // (`../invinite-data-api/status/`); `/status` here redirects there (`status.tsx`).
     const publicCards = [
         {
-            body: "Measured availability and latency per product family, data freshness, earnings-call pipeline latency and coverage.",
+            body: "Measured availability, latency and reachability of the API — on its own host.",
+            href: "https://status.data.invinite.com",
             title: "API Status",
-            to: "/status",
         },
         {
             body: "What each plan may do with the data, per route; never resale as your own.",
@@ -124,15 +125,26 @@ function IndexPage() {
                         <RouteCard body={item.body} title={item.title} />
                     </Link>
                 ))}
-                {publicCards.map(item => (
-                    <Link
-                        className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
-                        key={item.title}
-                        to={item.to}
-                    >
-                        <RouteCard body={item.body} title={item.title} />
-                    </Link>
-                ))}
+                {publicCards.map(item => ("href" in item
+                    ? (
+                            <a
+                                className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                                href={item.href}
+                                key={item.title}
+                                rel="noreferrer"
+                            >
+                                <RouteCard body={item.body} title={item.title} />
+                            </a>
+                        )
+                    : (
+                            <Link
+                                className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"
+                                key={item.title}
+                                to={item.to}
+                            >
+                                <RouteCard body={item.body} title={item.title} />
+                            </Link>
+                        )))}
                 {/* The account itself (keys, usage, credits, invoices) lives in the Invinite app, not here. */}
                 <a
                     className="group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-lg"

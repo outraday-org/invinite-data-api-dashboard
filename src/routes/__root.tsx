@@ -46,8 +46,8 @@ export const Route = createRootRoute({
     shellComponent: RootDocument,
 });
 
-// Pages outside the `$ticker` layout: no sidebar. The public status / licensing pages also take no API key.
-const PUBLIC_PATHS = new Set(["/licensing", "/status"]);
+// Pages outside the `$ticker` layout: no sidebar. The public licensing page also takes no API key.
+const PUBLIC_PATHS = new Set(["/licensing"]);
 
 function RootLayout() {
     const pathname = useRouterState({

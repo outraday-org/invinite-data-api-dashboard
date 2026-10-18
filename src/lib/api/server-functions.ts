@@ -2,7 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import type {
-    ApiStatusResponse,
     AsReportedFinancialsPresentationResponse,
     AvailableFormTypesResponse,
     CompanyDetailsResponse,
@@ -10,7 +9,6 @@ import type {
     DividendsResponse,
     EarningsAudioResult,
     EarningsCalendarResponse,
-    EarningsCallsStatusResponse,
     EarningsCompanyDocumentResponse,
     EarningsCompanyDocumentsResponse,
     EarningsDiffResponse,
@@ -50,10 +48,9 @@ import type {
 } from "./types";
 
 import { env } from "../env";
-import { VENDOR_PATTERN } from "../status/search";
 import { createApiClient } from "./client.server";
 import { throwApiError } from "./errors";
-import { fetchApiStatus, fetchEarningsCallsStatus, fetchLicensing } from "./public-fetchers.server";
+import { fetchLicensing } from "./public-fetchers.server";
 
 const apiKeySchema = z
     .string()
@@ -1315,16 +1312,6 @@ export const getEarningsLiveStream = createServerFn({ method: "GET" })
 export const getApiBaseUrl = createServerFn({ method: "GET" })
     .handler((): { url: string } => ({ url: env.INVINITE_DATA_API_URL }));
 
-// Public status + licensing (task 21): thin wrappers of the key-less, memoised fetchers.
-const statusDaysSchema = z.number().int().min(1).max(90).optional();
-
-export const getApiStatus = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ days: statusDaysSchema }))
-    .handler(({ data }): Promise<ApiStatusResponse> => fetchApiStatus(data.days));
-
-export const getEarningsCallsStatus = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ days: statusDaysSchema, vendor: z.string().regex(VENDOR_PATTERN).optional() }))
-    .handler(({ data }): Promise<EarningsCallsStatusResponse> => fetchEarningsCallsStatus(data));
-
+// Public licensing (task 21): a thin wrapper of the key-less, memoised fetcher.
 export const getLicensing = createServerFn({ method: "GET" })
     .handler((): Promise<LicensingResponse> => fetchLicensing());

@@ -4,7 +4,7 @@ vi.mock("../env", () => ({
     env: { INVINITE_DATA_API_KEY: "secret-key", INVINITE_DATA_API_URL: "https://api.test" },
 }));
 
-const { fetchApiStatus, fetchEarningsCallsStatus, fetchLicensing } = await import("./public-fetchers.server");
+const { fetchLicensing } = await import("./public-fetchers.server");
 
 const { ApiRequestError } = await import("./errors");
 
@@ -22,7 +22,7 @@ function requestAt(call: number) {
     return request;
 }
 
-describe("public status fetchers", () => {
+describe("public licensing fetcher", () => {
     beforeEach(() => {
         fetchMock.mockReset();
 
@@ -39,68 +39,6 @@ describe("public status fetchers", () => {
         vi.unstubAllGlobals();
     });
 
-    it("fetches /status once for two calls within 300 s, without an Authorization header", async () => {
-        fetchMock.mockImplementation(() => Promise.resolve(json({ generated_at: "x" })));
-
-        await fetchApiStatus(30);
-
-        vi.setSystemTime(new Date("2026-10-10T08:04:59Z"));
-
-        await expect(fetchApiStatus(30)).resolves.toEqual({ generated_at: "x" });
-
-        expect(fetchMock).toHaveBeenCalledTimes(1);
-
-        const request = requestAt(0);
-
-        expect(request.url).toBe("https://api.test/status?days=30");
-
-        expect(request.headers.get("Authorization")).toBeNull();
-    });
-
-    it("refetches after 300 s", async () => {
-        fetchMock.mockImplementation(() => Promise.resolve(json({ generated_at: "x" })));
-
-        await fetchApiStatus(7);
-
-        vi.setSystemTime(new Date("2026-10-10T08:05:00Z"));
-
-        await fetchApiStatus(7);
-
-        expect(fetchMock).toHaveBeenCalledTimes(2);
-    });
-
-    it("memoises /status/earnings-calls per days and vendor, key-less", async () => {
-        fetchMock.mockImplementation(() => Promise.resolve(json({ days: [] })));
-
-        await fetchEarningsCallsStatus({ days: 30, vendor: "notified" });
-
-        await fetchEarningsCallsStatus({ days: 30, vendor: "notified" });
-
-        await fetchEarningsCallsStatus({ days: 30, vendor: "all" });
-
-        expect(fetchMock).toHaveBeenCalledTimes(2);
-
-        expect(requestAt(0).url).toBe("https://api.test/status/earnings-calls?days=30&vendor=notified");
-
-        expect(requestAt(0).headers.get("Authorization")).toBeNull();
-    });
-
-    it("throws a 503 status_unavailable as ApiRequestError and does not cache it", async () => {
-        fetchMock
-            .mockImplementationOnce(() => Promise.resolve(json({ error: "status_unavailable", message: "off" }, 503)))
-            .mockImplementationOnce(() => Promise.resolve(json({ days: [] })));
-
-        const failure = await fetchEarningsCallsStatus({ days: 7 }).catch((error: unknown) => error);
-
-        expect(failure).toBeInstanceOf(ApiRequestError);
-
-        expect(failure).toMatchObject({ code: "status_unavailable", status: 503 });
-
-        await expect(fetchEarningsCallsStatus({ days: 7 })).resolves.toEqual({ days: [] });
-
-        expect(fetchMock).toHaveBeenCalledTimes(2);
-    });
-
     it("fetches /status/licensing once within 300 s, without an Authorization header", async () => {
         fetchMock.mockImplementation(() => Promise.resolve(json({ policy_version: "1" })));
 
@@ -113,5 +51,24 @@ describe("public status fetchers", () => {
         expect(requestAt(0).url).toBe("https://api.test/status/licensing");
 
         expect(requestAt(0).headers.get("Authorization")).toBeNull();
+    });
+
+    it("throws a 503 status_unavailable as ApiRequestError and does not cache it", async () => {
+        // Past the previous test's 300-s memo entry.
+        vi.setSystemTime(new Date("2026-10-10T09:00:00Z"));
+
+        fetchMock
+            .mockImplementationOnce(() => Promise.resolve(json({ error: "status_unavailable", message: "off" }, 503)))
+            .mockImplementationOnce(() => Promise.resolve(json({ policy_version: "1" })));
+
+        const failure = await fetchLicensing().catch((error: unknown) => error);
+
+        expect(failure).toBeInstanceOf(ApiRequestError);
+
+        expect(failure).toMatchObject({ code: "status_unavailable", status: 503 });
+
+        await expect(fetchLicensing()).resolves.toEqual({ policy_version: "1" });
+
+        expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 });

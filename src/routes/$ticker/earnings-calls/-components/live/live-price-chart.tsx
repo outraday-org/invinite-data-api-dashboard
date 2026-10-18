@@ -10,7 +10,7 @@ import {
     GRID_STROKE,
     LINE_CURSOR,
     TOOLTIP_CONTENT_STYLE,
-} from "@/components/status/chart-parts";
+} from "@/components/charts/chart-parts";
 import { Button } from "@/components/ui/button";
 import { formatSigned } from "@/lib/earnings/labels";
 

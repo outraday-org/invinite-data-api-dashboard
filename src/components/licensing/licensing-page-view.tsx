@@ -7,14 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ENTERPRISE_TIER, SELF_SERVE_TIERS, VOLUME_PRICING_NOTE } from "@/lib/pricing-posture";
 import {
     describeEarningsScope,
     FAMILY_LABELS,
     LICENSE_TIERS,
     RIGHT_LABELS,
     TIER_LABELS,
-} from "@/lib/status/labels";
+} from "@/lib/licensing/labels";
+import { ENTERPRISE_TIER, SELF_SERVE_TIERS, VOLUME_PRICING_NOTE } from "@/lib/pricing-posture";
 
 // The notes shown after the per-family routes (`audio` sits under the matrix with the resale callout).
 const TRAILING_NOTES = ["display", "redistribute", "rag", "train", "sec_data"] as const satisfies ReadonlyArray<keyof LicensingResponse["notes"]>;

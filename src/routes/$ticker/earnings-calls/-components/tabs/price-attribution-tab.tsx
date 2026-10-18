@@ -9,7 +9,7 @@ import {
     GRID_STROKE,
     LINE_CURSOR,
     TOOLTIP_CONTENT_STYLE,
-} from "@/components/status/chart-parts";
+} from "@/components/charts/chart-parts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { isEarningsEventLiveish, useEarningsPriceAttribution } from "@/lib/api/queries";

@@ -181,20 +181,8 @@ export type SegmentedFinancialsSegmentId
         | "seg_revenue_product"
         | "seg_selling_and_marketing_expenses_business_segment";
 
-// Public status + licensing (IDA `/status*`, task 21; no API key)
-export type ApiStatusResponse = ApiResponse<"/status", "get">;
-export type EarningsCallsStatusResponse = ApiResponse<"/status/earnings-calls", "get">;
+// Public licensing (IDA `/status/licensing`, task 21; no API key)
 export type LicensingResponse = ApiResponse<"/status/licensing", "get">;
-
-export type StatusFamily = NonNullable<ApiStatusResponse["api"]>["families"][number];
-export type ProductFamily = StatusFamily["family"];
-export type StatusFamilyDay = StatusFamily["days"][number];
-export type FreshnessRow = NonNullable<ApiStatusResponse["freshness"]>[number];
-export type FreshnessReason = NonNullable<FreshnessRow["reason"]>;
-export type StatusUniverse = ApiStatusResponse["universe"];
-export type EarningsCallsStatusDay = EarningsCallsStatusResponse["days"][number];
-export type EarningsCallsCoverageDay = EarningsCallsStatusResponse["coverageDays"][number];
-export type EarningsCallsKeywordHitDay = EarningsCallsStatusResponse["keywordHitDays"][number];
 export type LicenseRight = LicensingResponse["rights"][number];
 export type LicenseTier = keyof LicensingResponse["tiers"];
 export type LicensingFamily = LicensingResponse["families"][number];
