@@ -1,47 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import type { StatusWindow } from "@/lib/status/search";
-
-import { StatusPageView } from "@/components/status/status-page-view";
-import { useApiStatus, useEarningsCallsStatus } from "@/lib/api/queries";
-import { PUBLIC_PAGE_HEADERS } from "@/lib/public-page";
-import { ALL_VENDORS, validateStatusSearch } from "@/lib/status/search";
+/**
+ * The public status page lives on its own host (`../invinite-data-api/status/`, a Cloudflare Worker).
+ * The old `/status` answers a 301 there with the query kept (`?days=&vendor=` are the same names).
+ * A server route, not a `netlify.toml` redirect: Netlify evaluates the SSR function (`path: "/*"`)
+ * BEFORE redirect rules, so a toml rule for `/status` never fires.
+ */
+export const STATUS_PAGE_URL = "https://status.data.invinite.com/";
 
 export const Route = createFileRoute("/status")({
-    component: StatusPage,
-    head: () => ({ meta: [{ title: "API status · Invinite API" }] }),
-    // The CDN caches this shell; the data comes through the memoised, key-less server functions.
-    headers: () => PUBLIC_PAGE_HEADERS,
-    validateSearch: validateStatusSearch,
+    server: {
+        handlers: {
+            GET: ({ request }) => {
+                const target = new URL(STATUS_PAGE_URL);
+
+                target.search = new URL(request.url).search;
+
+                return new Response(null, { headers: { Location: target.toString() }, status: 301 });
+            },
+        },
+    },
 });
-
-function StatusPage() {
-    const search = Route.useSearch();
-
-    const navigate = Route.useNavigate();
-
-    const vendor = search.vendor ?? ALL_VENDORS;
-
-    const status = useApiStatus(search.days);
-
-    const earnings = useEarningsCallsStatus({ days: search.days, vendor });
-
-    const setDays = (days: StatusWindow) => {
-        void navigate({ replace: true, search: previous => ({ ...previous, days }) });
-    };
-
-    const setVendor = (next: string) => {
-        void navigate({ replace: true, search: previous => ({ ...previous, vendor: next === ALL_VENDORS ? undefined : next }) });
-    };
-
-    return (
-        <StatusPageView
-            days={search.days}
-            earnings={earnings}
-            onDaysChange={setDays}
-            onVendorChange={setVendor}
-            status={status}
-            vendor={vendor}
-        />
-    );
-}
