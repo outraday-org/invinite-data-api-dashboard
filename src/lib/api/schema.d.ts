@@ -2853,6 +2853,12 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "status": "ok",
+                     *       "timestamp": "2026-10-21T15:39:28.865Z"
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * @description Status of the API
@@ -2881,6 +2887,18 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "count": 6207,
+                     *       "companies": [
+                     *         {
+                     *           "cik": "0001090872",
+                     *           "ticker": "A",
+                     *           "name": "AGILENT TECHNOLOGIES, INC."
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Total number of available companies */
                         count: number;
@@ -2903,11 +2921,20 @@ export interface operations {
     companySearch: {
         parameters: {
             query: {
-                /** @description Search text to match against ticker (prefix) or name (contains) */
+                /**
+                 * @description Search text to match against ticker (prefix) or name (contains)
+                 * @example apple
+                 */
                 query: string;
-                /** @description Maximum number of companies to return */
+                /**
+                 * @description Maximum number of companies to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Pagination offset */
+                /**
+                 * @description Pagination offset
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -2922,6 +2949,20 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "count": 748,
+                     *       "companies": [
+                     *         {
+                     *           "cik": "0000320193",
+                     *           "ticker": "AAPL",
+                     *           "name": "Apple Inc.",
+                     *           "logo_url": "https://storage-prod.invinite.com/company_logos/AAPL.png"
+                     *         }
+                     *       ],
+                     *       "next_url": "https://api.data.invinite.com/v1/company/search?query=apple&offset=10&limit=10"
+                     *     }
+                     */
                     "application/json": {
                         /** @description Total matched companies (may be limited by pagination) */
                         count: number;
@@ -2949,7 +2990,10 @@ export interface operations {
     companyDetails: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
             };
             header?: never;
@@ -2964,6 +3008,52 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "name": "Apple Inc.",
+                     *           "description": "Apple is among the largest companies in the world, with a broad portfolio of hardware and software products targeted at consumers and businesses. Apple's iPhone accounts for the majority of the firm's sales, and Apple's other products, such…",
+                     *           "category": "",
+                     *           "sector": "Technology",
+                     *           "industry": "Consumer Electronics",
+                     *           "sic": "",
+                     *           "sic_sector": "",
+                     *           "sic_industry": "",
+                     *           "fama_sector": "",
+                     *           "fama_industry": "",
+                     *           "exchange": "NASDAQ",
+                     *           "currency": "USD",
+                     *           "cusip": "",
+                     *           "composite_figi": "BBG000B9XRY4",
+                     *           "is_delisted": false,
+                     *           "list_date": "1980-12-12 00:00:00+00",
+                     *           "employees": 166000,
+                     *           "market_cap": 4991209560000,
+                     *           "shares_outstanding": 14594180000,
+                     *           "insider_own_pct": 0.06,
+                     *           "insider_own_shares": 9342562,
+                     *           "inst_own_pct": 0.13,
+                     *           "inst_own_shares": 19413713,
+                     *           "short_float_pct": 0.83,
+                     *           "short_float_shares": 120763539,
+                     *           "homepage_url": "https://www.apple.com",
+                     *           "investor_relations_url": "https://www.apple.com",
+                     *           "logo_url": "https://storage-prod.invinite.com/company_logos/AAPL.png",
+                     *           "brand_colors": [
+                     *             "#000000"
+                     *           ],
+                     *           "street": "ONE APPLE PARK WAY",
+                     *           "city": "CUPERTINO",
+                     *           "state": "California",
+                     *           "zip_code": "95014",
+                     *           "country_code": "US"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Company details for the requested identifier */
                         companies: {
@@ -3055,17 +3145,35 @@ export interface operations {
     companyDividends: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Filter dividends with ex_dividend_date on or after this date (YYYY-MM-DD) */
+                /**
+                 * @description Filter dividends with ex_dividend_date on or after this date (YYYY-MM-DD)
+                 * @example 2025-01-01
+                 */
                 start_date?: string;
-                /** @description Filter dividends with ex_dividend_date on or before this date (YYYY-MM-DD) */
+                /**
+                 * @description Filter dividends with ex_dividend_date on or before this date (YYYY-MM-DD)
+                 * @example 2025-12-31
+                 */
                 end_date?: string;
-                /** @description Sort direction for dividends by ex_dividend_date */
+                /**
+                 * @description Sort direction for dividends by ex_dividend_date
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of dividends to return */
+                /**
+                 * @description Maximum number of dividends to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of dividends to skip for pagination */
+                /**
+                 * @description Number of dividends to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -3080,6 +3188,28 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "dividends": [
+                     *             {
+                     *               "ex_dividend_date": "2026-08-10 00:00:00",
+                     *               "declaration_date": "2026-07-30 00:00:00",
+                     *               "cash_amount": 0.27,
+                     *               "dividend_type": "CD",
+                     *               "frequency": 4,
+                     *               "pay_date": "2026-08-13 00:00:00",
+                     *               "record_date": "2026-08-10 00:00:00"
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/company/dividends?identifier=AAPL&offset=40&limit=40"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Dividends grouped by company */
                         companies: {
@@ -3131,13 +3261,25 @@ export interface operations {
     companyFiscalPeriods: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per company */
+                /**
+                 * @description Maximum number of periods per company
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -3152,6 +3294,26 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2026,
+                     *               "fiscal_quarter": 3,
+                     *               "calendar_year": 2026,
+                     *               "calendar_quarter": 2,
+                     *               "period_end": "2026-06-27 00:00:00"
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/company/fiscal-periods?identifier=AAPL&offset=40&limit=40"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Fiscal period lists grouped by company */
                         companies: {
@@ -3190,13 +3352,25 @@ export interface operations {
     companySplits: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Sort direction for splits by execution_date */
+                /**
+                 * @description Sort direction for splits by execution_date
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of splits to return */
+                /**
+                 * @description Maximum number of splits to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of splits to skip for pagination */
+                /**
+                 * @description Number of splits to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -3211,6 +3385,24 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "splits": [
+                     *             {
+                     *               "ticker": "AAPL",
+                     *               "execution_date": "2020-08-31 00:00:00",
+                     *               "split_from": 1,
+                     *               "split_to": 4
+                     *             }
+                     *           ]
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Stock split history grouped by company */
                         companies: {
@@ -3247,15 +3439,30 @@ export interface operations {
     standardizedIncomeStatement: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -3270,6 +3477,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "is_total_revenue": 416161000000,
+                     *                 "is_revenue_from_contract_with_customer": 416161000000,
+                     *                 "is_cost_of_revenue": 220960000000,
+                     *                 "is_cost_of_product_and_service_sold": 220960000000,
+                     *                 "is_other_cost_of_revenue": 0,
+                     *                 "is_gross_profit": 195201000000,
+                     *                 "is_operating_expenses": 62151000000,
+                     *                 "is_operating_costs_and_expenses": 34550000000,
+                     *                 "is_research_and_development_expenses": 34550000000,
+                     *                 "is_other_operating_costs_and_expenses": 0,
+                     *                 "is_selling_general_and_administrative_expenses": 27601000000,
+                     *                 "is_selling_and_marketing_expenses": 19524000000
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/standardized/income-statement?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their financial periods */
                         companies: {
@@ -3317,17 +3559,35 @@ export interface operations {
     standardizedIncomeStatementDetailed: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
-                /** @description Include formula in response */
+                /**
+                 * @description Include formula in response
+                 * @example true
+                 */
                 with_formula?: "true" | "false";
             };
             header?: never;
@@ -3342,6 +3602,101 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "is_total_revenue": {
+                     *                   "value": 416161000000,
+                     *                   "parent_id": null,
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "is_revenue_from_contract_with_customer": {
+                     *                   "value": 416161000000,
+                     *                   "parent_id": "is_total_revenue",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-78"
+                     *                 },
+                     *                 "is_cost_of_revenue": {
+                     *                   "value": 220960000000,
+                     *                   "parent_id": null,
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "is_cost_of_product_and_service_sold": {
+                     *                   "value": 220960000000,
+                     *                   "parent_id": "is_cost_of_revenue",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-87"
+                     *                 },
+                     *                 "is_other_cost_of_revenue": {
+                     *                   "value": 0,
+                     *                   "parent_id": "is_cost_of_revenue",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "is_gross_profit": {
+                     *                   "value": 195201000000,
+                     *                   "parent_id": null,
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-90"
+                     *                 },
+                     *                 "is_operating_expenses": {
+                     *                   "value": 62151000000,
+                     *                   "parent_id": null,
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-99"
+                     *                 },
+                     *                 "is_operating_costs_and_expenses": {
+                     *                   "value": 34550000000,
+                     *                   "parent_id": "is_operating_expenses",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "is_research_and_development_expenses": {
+                     *                   "value": 34550000000,
+                     *                   "parent_id": "is_operating_costs_and_expenses",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-93"
+                     *                 },
+                     *                 "is_other_operating_costs_and_expenses": {
+                     *                   "value": 0,
+                     *                   "parent_id": "is_operating_costs_and_expenses",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "is_selling_general_and_administrative_expenses": {
+                     *                   "value": 27601000000,
+                     *                   "parent_id": "is_operating_expenses",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-96"
+                     *                 },
+                     *                 "is_selling_and_marketing_expenses": {
+                     *                   "value": 19524000000,
+                     *                   "parent_id": "is_selling_general_and_administrative_expenses",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-1035"
+                     *                 }
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/standardized/income-statement/detailed?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their detailed financial periods */
                         companies: {
@@ -3443,15 +3798,30 @@ export interface operations {
     standardizedIncomeStatementPresentation: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -3466,6 +3836,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": [
+                     *                 {
+                     *                   "metric_id": "is_total_revenue",
+                     *                   "value": 416161000000,
+                     *                   "children": [
+                     *                     {
+                     *                       "metric_id": "is_revenue_from_contract_with_customer",
+                     *                       "value": 416161000000
+                     *                     }
+                     *                   ]
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/standardized/income-statement/presentation?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their financial periods in presentation format */
                         companies: {
@@ -3511,15 +3914,30 @@ export interface operations {
     standardizedBalanceSheet: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -3534,6 +3952,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "bs_total_assets": 359241000000,
+                     *                 "bs_total_current_assets": 147957000000,
+                     *                 "bs_cash_and_cash_equivalents_and_st_investments": 54697000000,
+                     *                 "bs_cash_and_cash_equivalents": 35934000000,
+                     *                 "bs_short_term_investments": 18763000000,
+                     *                 "bs_total_receivables_current": 72957000000,
+                     *                 "bs_accounts_and_financing_receivable_current": 39777000000,
+                     *                 "bs_accounts_receivable_current": 39777000000,
+                     *                 "bs_nontrade_receivables_current": 33180000000,
+                     *                 "bs_other_receivables_current": 0,
+                     *                 "bs_inventory_current": 5718000000,
+                     *                 "bs_other_current_assets": 14585000000
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/standardized/balance-sheet?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their financial periods */
                         companies: {
@@ -3581,17 +4034,35 @@ export interface operations {
     standardizedBalanceSheetDetailed: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
-                /** @description Include formula in response */
+                /**
+                 * @description Include formula in response
+                 * @example true
+                 */
                 with_formula?: "true" | "false";
             };
             header?: never;
@@ -3606,6 +4077,101 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "bs_total_assets": {
+                     *                   "value": 359241000000,
+                     *                   "parent_id": null,
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-189"
+                     *                 },
+                     *                 "bs_total_current_assets": {
+                     *                   "value": 147957000000,
+                     *                   "parent_id": "bs_total_assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-177"
+                     *                 },
+                     *                 "bs_cash_and_cash_equivalents_and_st_investments": {
+                     *                   "value": 54697000000,
+                     *                   "parent_id": "bs_total_current_assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "bs_cash_and_cash_equivalents": {
+                     *                   "value": 35934000000,
+                     *                   "parent_id": "bs_cash_and_cash_equivalents_and_st_investments",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-165"
+                     *                 },
+                     *                 "bs_short_term_investments": {
+                     *                   "value": 18763000000,
+                     *                   "parent_id": "bs_cash_and_cash_equivalents_and_st_investments",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "bs_total_receivables_current": {
+                     *                   "value": 72957000000,
+                     *                   "parent_id": "bs_total_current_assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "bs_accounts_and_financing_receivable_current": {
+                     *                   "value": 39777000000,
+                     *                   "parent_id": "bs_total_receivables_current",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "bs_accounts_receivable_current": {
+                     *                   "value": 39777000000,
+                     *                   "parent_id": "bs_accounts_and_financing_receivable_current",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-169"
+                     *                 },
+                     *                 "bs_nontrade_receivables_current": {
+                     *                   "value": 33180000000,
+                     *                   "parent_id": "bs_total_receivables_current",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-171"
+                     *                 },
+                     *                 "bs_other_receivables_current": {
+                     *                   "value": 0,
+                     *                   "parent_id": "bs_total_receivables_current",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "bs_inventory_current": {
+                     *                   "value": 5718000000,
+                     *                   "parent_id": "bs_total_current_assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "bs_other_current_assets": {
+                     *                   "value": 14585000000,
+                     *                   "parent_id": "bs_total_current_assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 }
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/standardized/balance-sheet/detailed?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their detailed financial periods */
                         companies: {
@@ -3707,15 +4273,30 @@ export interface operations {
     standardizedBalanceSheetPresentation: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -3730,6 +4311,51 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": [
+                     *                 {
+                     *                   "metric_id": "bs_total_assets",
+                     *                   "value": 359241000000,
+                     *                   "children": [
+                     *                     {
+                     *                       "metric_id": "bs_total_current_assets",
+                     *                       "value": 147957000000,
+                     *                       "children": [
+                     *                         {
+                     *                           "metric_id": "bs_cash_and_cash_equivalents_and_st_investments",
+                     *                           "value": 54697000000,
+                     *                           "children": [
+                     *                             {
+                     *                               "metric_id": "bs_cash_and_cash_equivalents",
+                     *                               "value": 35934000000
+                     *                             }
+                     *                           ]
+                     *                         }
+                     *                       ]
+                     *                     }
+                     *                   ]
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/standardized/balance-sheet/presentation?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their financial periods in presentation format */
                         companies: {
@@ -3775,15 +4401,30 @@ export interface operations {
     standardizedCashFlowStatement: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -3798,6 +4439,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "cfs_cash_from_operating_activities": 111482000000,
+                     *                 "cfs_cash_from_operating_activities_continuing_operations": -2100000000,
+                     *                 "cfs_income_incl_noncontrolling_interest": 112010000000,
+                     *                 "cfs_adjustments_to_reconcile_net_income_to_cash": 21190000000,
+                     *                 "cfs_depreciation_depletion_and_amortization": 11698000000,
+                     *                 "cfs_employee_benefit_and_share_based_compensation": 12863000000,
+                     *                 "cfs_shared_based_compensation": 12863000000,
+                     *                 "cfs_deferred_income_taxes": -3282000000,
+                     *                 "cfs_other_noncash_income_expense": -89000000,
+                     *                 "cfs_other_adjustments_to_net_income": 0,
+                     *                 "cfs_changes_in_operating_capital": -25000000000,
+                     *                 "cfs_changes_in_operating_assets": -14826000000
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/standardized/cash-flow-statement?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their financial periods */
                         companies: {
@@ -3845,17 +4521,35 @@ export interface operations {
     standardizedCashFlowStatementDetailed: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
-                /** @description Include formula in response */
+                /**
+                 * @description Include formula in response
+                 * @example true
+                 */
                 with_formula?: "true" | "false";
             };
             header?: never;
@@ -3870,6 +4564,101 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "cfs_cash_from_operating_activities": {
+                     *                   "value": 111482000000,
+                     *                   "parent_id": null,
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-307"
+                     *                 },
+                     *                 "cfs_cash_from_operating_activities_continuing_operations": {
+                     *                   "value": -2100000000,
+                     *                   "parent_id": "cfs_cash_from_operating_activities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_income_incl_noncontrolling_interest": {
+                     *                   "value": 112010000000,
+                     *                   "parent_id": "cfs_cash_from_operating_activities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_adjustments_to_reconcile_net_income_to_cash": {
+                     *                   "value": 21190000000,
+                     *                   "parent_id": "cfs_cash_from_operating_activities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_depreciation_depletion_and_amortization": {
+                     *                   "value": 11698000000,
+                     *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-280"
+                     *                 },
+                     *                 "cfs_employee_benefit_and_share_based_compensation": {
+                     *                   "value": 12863000000,
+                     *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_shared_based_compensation": {
+                     *                   "value": 12863000000,
+                     *                   "parent_id": "cfs_employee_benefit_and_share_based_compensation",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-283"
+                     *                 },
+                     *                 "cfs_deferred_income_taxes": {
+                     *                   "value": -3282000000,
+                     *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_other_noncash_income_expense": {
+                     *                   "value": -89000000,
+                     *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-286"
+                     *                 },
+                     *                 "cfs_other_adjustments_to_net_income": {
+                     *                   "value": 0,
+                     *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_changes_in_operating_capital": {
+                     *                   "value": -25000000000,
+                     *                   "parent_id": "cfs_cash_from_operating_activities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_changes_in_operating_assets": {
+                     *                   "value": -14826000000,
+                     *                   "parent_id": "cfs_changes_in_operating_capital",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 }
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/standardized/cash-flow-statement/detailed?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their detailed financial periods */
                         companies: {
@@ -3971,15 +4760,30 @@ export interface operations {
     standardizedCashFlowStatementPresentation: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -3994,6 +4798,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": [
+                     *                 {
+                     *                   "metric_id": "cfs_cash_from_operating_activities",
+                     *                   "value": 111482000000,
+                     *                   "children": [
+                     *                     {
+                     *                       "metric_id": "cfs_cash_from_operating_activities_continuing_operations",
+                     *                       "value": -2100000000
+                     *                     }
+                     *                   ]
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/standardized/cash-flow-statement/presentation?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their financial periods in presentation format */
                         companies: {
@@ -4039,13 +4876,25 @@ export interface operations {
     standardizedSnapshot: {
         parameters: {
             query: {
-                /** @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers) */
+                /**
+                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers)
+                 * @example AAPL,MSFT
+                 */
                 identifiers: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Calendar year. For annual periods, only calendar_year is needed. For non-annual periods, must be provided together with calendar_quarter. */
+                /**
+                 * @description Calendar year. For annual periods, only calendar_year is needed. For non-annual periods, must be provided together with calendar_quarter.
+                 * @example 2024
+                 */
                 calendar_year?: number;
-                /** @description Calendar quarter (1-4). For annual periods, should not be provided. For non-annual periods, must be provided together with calendar_year. */
+                /**
+                 * @description Calendar quarter (1-4). For annual periods, should not be provided. For non-annual periods, must be provided together with calendar_year.
+                 * @example 4
+                 */
                 calendar_quarter?: number;
             };
             header?: never;
@@ -4060,6 +4909,72 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "fiscal_year": 2025,
+                     *           "fiscal_quarter": 4,
+                     *           "calendar_year": 2025,
+                     *           "calendar_quarter": 3,
+                     *           "fiscal_period_type": "annual",
+                     *           "period_end": "2025-09-27 00:00:00",
+                     *           "statements": {
+                     *             "income_statement": {
+                     *               "facts": {
+                     *                 "is_total_revenue": 416161000000,
+                     *                 "is_revenue_from_contract_with_customer": 416161000000,
+                     *                 "is_cost_of_revenue": 220960000000,
+                     *                 "is_cost_of_product_and_service_sold": 220960000000,
+                     *                 "is_other_cost_of_revenue": 0,
+                     *                 "is_gross_profit": 195201000000,
+                     *                 "is_operating_expenses": 62151000000,
+                     *                 "is_operating_costs_and_expenses": 34550000000,
+                     *                 "is_research_and_development_expenses": 34550000000,
+                     *                 "is_other_operating_costs_and_expenses": 0,
+                     *                 "is_selling_general_and_administrative_expenses": 27601000000,
+                     *                 "is_selling_and_marketing_expenses": 19524000000
+                     *               }
+                     *             },
+                     *             "balance_sheet": {
+                     *               "facts": {
+                     *                 "bs_total_assets": 359241000000,
+                     *                 "bs_total_current_assets": 147957000000,
+                     *                 "bs_cash_and_cash_equivalents_and_st_investments": 54697000000,
+                     *                 "bs_cash_and_cash_equivalents": 35934000000,
+                     *                 "bs_short_term_investments": 18763000000,
+                     *                 "bs_total_receivables_current": 72957000000,
+                     *                 "bs_accounts_and_financing_receivable_current": 39777000000,
+                     *                 "bs_accounts_receivable_current": 39777000000,
+                     *                 "bs_nontrade_receivables_current": 33180000000,
+                     *                 "bs_other_receivables_current": 0,
+                     *                 "bs_inventory_current": 5718000000,
+                     *                 "bs_other_current_assets": 14585000000
+                     *               }
+                     *             },
+                     *             "cash_flow_statement": {
+                     *               "facts": {
+                     *                 "cfs_cash_from_operating_activities": 111482000000,
+                     *                 "cfs_cash_from_operating_activities_continuing_operations": -2100000000,
+                     *                 "cfs_income_incl_noncontrolling_interest": 112010000000,
+                     *                 "cfs_adjustments_to_reconcile_net_income_to_cash": 21190000000,
+                     *                 "cfs_depreciation_depletion_and_amortization": 11698000000,
+                     *                 "cfs_employee_benefit_and_share_based_compensation": 12863000000,
+                     *                 "cfs_shared_based_compensation": 12863000000,
+                     *                 "cfs_deferred_income_taxes": -3282000000,
+                     *                 "cfs_other_noncash_income_expense": -89000000,
+                     *                 "cfs_other_adjustments_to_net_income": 0,
+                     *                 "cfs_changes_in_operating_capital": -25000000000,
+                     *                 "cfs_changes_in_operating_assets": -14826000000
+                     *               }
+                     *             }
+                     *           }
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their latest financial statements */
                         companies: {
@@ -4121,15 +5036,30 @@ export interface operations {
     standardizedSnapshotDetailed: {
         parameters: {
             query: {
-                /** @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers) */
+                /**
+                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers)
+                 * @example AAPL,MSFT
+                 */
                 identifiers: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Calendar year. For annual periods, only calendar_year is needed. For non-annual periods, must be provided together with calendar_quarter. */
+                /**
+                 * @description Calendar year. For annual periods, only calendar_year is needed. For non-annual periods, must be provided together with calendar_quarter.
+                 * @example 2024
+                 */
                 calendar_year?: number;
-                /** @description Calendar quarter (1-4). For annual periods, should not be provided. For non-annual periods, must be provided together with calendar_year. */
+                /**
+                 * @description Calendar quarter (1-4). For annual periods, should not be provided. For non-annual periods, must be provided together with calendar_year.
+                 * @example 4
+                 */
                 calendar_quarter?: number;
-                /** @description Include formula in response */
+                /**
+                 * @description Include formula in response
+                 * @example true
+                 */
                 with_formula?: "true" | "false";
             };
             header?: never;
@@ -4144,6 +5074,252 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "fiscal_year": 2025,
+                     *           "fiscal_quarter": 4,
+                     *           "calendar_year": 2025,
+                     *           "calendar_quarter": 3,
+                     *           "fiscal_period_type": "annual",
+                     *           "period_end": "2025-09-27 00:00:00",
+                     *           "statements": {
+                     *             "income_statement": {
+                     *               "facts": {
+                     *                 "is_total_revenue": {
+                     *                   "value": 416161000000,
+                     *                   "parent_id": null,
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "is_revenue_from_contract_with_customer": {
+                     *                   "value": 416161000000,
+                     *                   "parent_id": "is_total_revenue",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-78"
+                     *                 },
+                     *                 "is_cost_of_revenue": {
+                     *                   "value": 220960000000,
+                     *                   "parent_id": null,
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "is_cost_of_product_and_service_sold": {
+                     *                   "value": 220960000000,
+                     *                   "parent_id": "is_cost_of_revenue",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-87"
+                     *                 },
+                     *                 "is_other_cost_of_revenue": {
+                     *                   "value": 0,
+                     *                   "parent_id": "is_cost_of_revenue",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "is_gross_profit": {
+                     *                   "value": 195201000000,
+                     *                   "parent_id": null,
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-90"
+                     *                 },
+                     *                 "is_operating_expenses": {
+                     *                   "value": 62151000000,
+                     *                   "parent_id": null,
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-99"
+                     *                 },
+                     *                 "is_operating_costs_and_expenses": {
+                     *                   "value": 34550000000,
+                     *                   "parent_id": "is_operating_expenses",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "is_research_and_development_expenses": {
+                     *                   "value": 34550000000,
+                     *                   "parent_id": "is_operating_costs_and_expenses",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-93"
+                     *                 },
+                     *                 "is_other_operating_costs_and_expenses": {
+                     *                   "value": 0,
+                     *                   "parent_id": "is_operating_costs_and_expenses",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "is_selling_general_and_administrative_expenses": {
+                     *                   "value": 27601000000,
+                     *                   "parent_id": "is_operating_expenses",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-96"
+                     *                 },
+                     *                 "is_selling_and_marketing_expenses": {
+                     *                   "value": 19524000000,
+                     *                   "parent_id": "is_selling_general_and_administrative_expenses",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-1035"
+                     *                 }
+                     *               }
+                     *             },
+                     *             "balance_sheet": {
+                     *               "facts": {
+                     *                 "bs_total_assets": {
+                     *                   "value": 359241000000,
+                     *                   "parent_id": null,
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-189"
+                     *                 },
+                     *                 "bs_total_current_assets": {
+                     *                   "value": 147957000000,
+                     *                   "parent_id": "bs_total_assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-177"
+                     *                 },
+                     *                 "bs_cash_and_cash_equivalents_and_st_investments": {
+                     *                   "value": 54697000000,
+                     *                   "parent_id": "bs_total_current_assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "bs_cash_and_cash_equivalents": {
+                     *                   "value": 35934000000,
+                     *                   "parent_id": "bs_cash_and_cash_equivalents_and_st_investments",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-165"
+                     *                 },
+                     *                 "bs_short_term_investments": {
+                     *                   "value": 18763000000,
+                     *                   "parent_id": "bs_cash_and_cash_equivalents_and_st_investments",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "bs_total_receivables_current": {
+                     *                   "value": 72957000000,
+                     *                   "parent_id": "bs_total_current_assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "bs_accounts_and_financing_receivable_current": {
+                     *                   "value": 39777000000,
+                     *                   "parent_id": "bs_total_receivables_current",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "bs_accounts_receivable_current": {
+                     *                   "value": 39777000000,
+                     *                   "parent_id": "bs_accounts_and_financing_receivable_current",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-169"
+                     *                 },
+                     *                 "bs_nontrade_receivables_current": {
+                     *                   "value": 33180000000,
+                     *                   "parent_id": "bs_total_receivables_current",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-171"
+                     *                 },
+                     *                 "bs_other_receivables_current": {
+                     *                   "value": 0,
+                     *                   "parent_id": "bs_total_receivables_current",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "bs_inventory_current": {
+                     *                   "value": 5718000000,
+                     *                   "parent_id": "bs_total_current_assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "bs_other_current_assets": {
+                     *                   "value": 14585000000,
+                     *                   "parent_id": "bs_total_current_assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": null
+                     *                 }
+                     *               }
+                     *             },
+                     *             "cash_flow_statement": {
+                     *               "facts": {
+                     *                 "cfs_cash_from_operating_activities": {
+                     *                   "value": 111482000000,
+                     *                   "parent_id": null,
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-307"
+                     *                 },
+                     *                 "cfs_cash_from_operating_activities_continuing_operations": {
+                     *                   "value": -2100000000,
+                     *                   "parent_id": "cfs_cash_from_operating_activities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_income_incl_noncontrolling_interest": {
+                     *                   "value": 112010000000,
+                     *                   "parent_id": "cfs_cash_from_operating_activities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_adjustments_to_reconcile_net_income_to_cash": {
+                     *                   "value": 21190000000,
+                     *                   "parent_id": "cfs_cash_from_operating_activities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_depreciation_depletion_and_amortization": {
+                     *                   "value": 11698000000,
+                     *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-280"
+                     *                 },
+                     *                 "cfs_employee_benefit_and_share_based_compensation": {
+                     *                   "value": 12863000000,
+                     *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_shared_based_compensation": {
+                     *                   "value": 12863000000,
+                     *                   "parent_id": "cfs_employee_benefit_and_share_based_compensation",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-283"
+                     *                 },
+                     *                 "cfs_deferred_income_taxes": {
+                     *                   "value": -3282000000,
+                     *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_other_noncash_income_expense": {
+                     *                   "value": -89000000,
+                     *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-286"
+                     *                 },
+                     *                 "cfs_other_adjustments_to_net_income": {
+                     *                   "value": 0,
+                     *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_changes_in_operating_capital": {
+                     *                   "value": -25000000000,
+                     *                   "parent_id": "cfs_cash_from_operating_activities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_changes_in_operating_assets": {
+                     *                   "value": -14826000000,
+                     *                   "parent_id": "cfs_changes_in_operating_capital",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 }
+                     *               }
+                     *             }
+                     *           }
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their latest detailed financial statements */
                         companies: {
@@ -4367,13 +5543,25 @@ export interface operations {
     standardizedSnapshotPresentation: {
         parameters: {
             query: {
-                /** @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers) */
+                /**
+                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers)
+                 * @example AAPL,MSFT
+                 */
                 identifiers: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Calendar year. For annual periods, only calendar_year is needed. For non-annual periods, must be provided together with calendar_quarter. */
+                /**
+                 * @description Calendar year. For annual periods, only calendar_year is needed. For non-annual periods, must be provided together with calendar_quarter.
+                 * @example 2024
+                 */
                 calendar_year?: number;
-                /** @description Calendar quarter (1-4). For annual periods, should not be provided. For non-annual periods, must be provided together with calendar_year. */
+                /**
+                 * @description Calendar quarter (1-4). For annual periods, should not be provided. For non-annual periods, must be provided together with calendar_year.
+                 * @example 4
+                 */
                 calendar_quarter?: number;
             };
             header?: never;
@@ -4388,6 +5576,78 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "fiscal_year": 2025,
+                     *           "fiscal_quarter": 4,
+                     *           "calendar_year": 2025,
+                     *           "calendar_quarter": 3,
+                     *           "fiscal_period_type": "annual",
+                     *           "period_end": "2025-09-27 00:00:00",
+                     *           "statements": {
+                     *             "income_statement": {
+                     *               "facts": [
+                     *                 {
+                     *                   "metric_id": "is_total_revenue",
+                     *                   "value": 416161000000,
+                     *                   "children": [
+                     *                     {
+                     *                       "metric_id": "is_revenue_from_contract_with_customer",
+                     *                       "value": 416161000000
+                     *                     }
+                     *                   ]
+                     *                 }
+                     *               ]
+                     *             },
+                     *             "balance_sheet": {
+                     *               "facts": [
+                     *                 {
+                     *                   "metric_id": "bs_total_assets",
+                     *                   "value": 359241000000,
+                     *                   "children": [
+                     *                     {
+                     *                       "metric_id": "bs_total_current_assets",
+                     *                       "value": 147957000000,
+                     *                       "children": [
+                     *                         {
+                     *                           "metric_id": "bs_cash_and_cash_equivalents_and_st_investments",
+                     *                           "value": 54697000000,
+                     *                           "children": [
+                     *                             {
+                     *                               "metric_id": "bs_cash_and_cash_equivalents",
+                     *                               "value": 35934000000
+                     *                             }
+                     *                           ]
+                     *                         }
+                     *                       ]
+                     *                     }
+                     *                   ]
+                     *                 }
+                     *               ]
+                     *             },
+                     *             "cash_flow_statement": {
+                     *               "facts": [
+                     *                 {
+                     *                   "metric_id": "cfs_cash_from_operating_activities",
+                     *                   "value": 111482000000,
+                     *                   "children": [
+                     *                     {
+                     *                       "metric_id": "cfs_cash_from_operating_activities_continuing_operations",
+                     *                       "value": -2100000000
+                     *                     }
+                     *                   ]
+                     *                 }
+                     *               ]
+                     *             }
+                     *           }
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their latest financial statements in presentation format */
                         companies: {
@@ -4443,15 +5703,30 @@ export interface operations {
     asReportedIncomeStatement: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -4466,6 +5741,44 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": 416161000000,
+                     *                 "CostOfGoodsAndServicesSold": 220960000000,
+                     *                 "GrossProfit": 195201000000,
+                     *                 "ResearchAndDevelopmentExpense": 34550000000,
+                     *                 "SellingGeneralAndAdministrativeExpense": 27601000000,
+                     *                 "OperatingExpenses": 62151000000,
+                     *                 "OperatingIncomeLoss": 133050000000,
+                     *                 "NonoperatingIncomeExpense": -321000000,
+                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": 132729000000,
+                     *                 "IncomeTaxExpenseBenefit": 20719000000,
+                     *                 "NetIncomeLoss": 112010000000,
+                     *                 "EarningsPerShareBasic": 7.49,
+                     *                 "EarningsPerShareDiluted": 7.46,
+                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": 14948500000,
+                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": 15004697000
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/as-reported/income-statement?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their as-reported financial statements */
                         companies: {
@@ -4507,17 +5820,35 @@ export interface operations {
     asReportedIncomeStatementDetailed: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
-                /** @description Include formula in response */
+                /**
+                 * @description Include formula in response
+                 * @example true
+                 */
                 with_formula?: "true" | "false";
             };
             header?: never;
@@ -4532,6 +5863,119 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": {
+                     *                   "value": 416161000000,
+                     *                   "html_label": "Net sales",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-78"
+                     *                 },
+                     *                 "CostOfGoodsAndServicesSold": {
+                     *                   "value": 220960000000,
+                     *                   "html_label": "Cost of sales",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-87"
+                     *                 },
+                     *                 "GrossProfit": {
+                     *                   "value": 195201000000,
+                     *                   "html_label": "Gross margin",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-90"
+                     *                 },
+                     *                 "ResearchAndDevelopmentExpense": {
+                     *                   "value": 34550000000,
+                     *                   "html_label": "Research and development",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-93"
+                     *                 },
+                     *                 "SellingGeneralAndAdministrativeExpense": {
+                     *                   "value": 27601000000,
+                     *                   "html_label": "Selling, general and administrative",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-96"
+                     *                 },
+                     *                 "OperatingExpenses": {
+                     *                   "value": 62151000000,
+                     *                   "html_label": "Total operating expenses",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-99"
+                     *                 },
+                     *                 "OperatingIncomeLoss": {
+                     *                   "value": 133050000000,
+                     *                   "html_label": "Operating income",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-102"
+                     *                 },
+                     *                 "NonoperatingIncomeExpense": {
+                     *                   "value": -321000000,
+                     *                   "html_label": "Other income/(expense), net",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-105"
+                     *                 },
+                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {
+                     *                   "value": 132729000000,
+                     *                   "html_label": "Income before provision for income taxes",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-108"
+                     *                 },
+                     *                 "IncomeTaxExpenseBenefit": {
+                     *                   "value": 20719000000,
+                     *                   "html_label": "Provision for income taxes",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-111"
+                     *                 },
+                     *                 "NetIncomeLoss": {
+                     *                   "value": 112010000000,
+                     *                   "html_label": "Net income",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-114"
+                     *                 },
+                     *                 "EarningsPerShareBasic": {
+                     *                   "value": 7.49,
+                     *                   "html_label": "Basic (in dollars per share)",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-117"
+                     *                 },
+                     *                 "EarningsPerShareDiluted": {
+                     *                   "value": 7.46,
+                     *                   "html_label": "Diluted (in dollars per share)",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-120"
+                     *                 },
+                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": {
+                     *                   "value": 14948500000,
+                     *                   "html_label": "Basic (in shares)",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-123"
+                     *                 },
+                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": {
+                     *                   "value": 15004697000,
+                     *                   "html_label": "Diluted (in shares)",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-126"
+                     *                 }
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/as-reported/income-statement/detailed?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Companies with detailed as-reported financial statements (includes labels/formulas) */
                         companies: {
@@ -4621,15 +6065,30 @@ export interface operations {
     asReportedIncomeStatementPresentation: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -4644,6 +6103,35 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": [
+                     *                 {
+                     *                   "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+                     *                   "label": "Net sales",
+                     *                   "depth": 0,
+                     *                   "value": 416161000000
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/as-reported/income-statement/presentation?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Companies with as-reported statements in presentation (tree) format */
                         companies: {
@@ -4682,15 +6170,30 @@ export interface operations {
     asReportedBalanceSheet: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -4705,6 +6208,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "CashAndCashEquivalentsAtCarryingValue": 35934000000,
+                     *                 "MarketableSecuritiesCurrent": 18763000000,
+                     *                 "AccountsReceivableNetCurrent": 39777000000,
+                     *                 "NontradeReceivablesCurrent": 33180000000,
+                     *                 "InventoryNet": 5718000000,
+                     *                 "OtherAssetsCurrent": 14585000000,
+                     *                 "AssetsCurrent": 147957000000,
+                     *                 "MarketableSecuritiesNoncurrent": 77723000000,
+                     *                 "PropertyPlantAndEquipmentNet": 49834000000,
+                     *                 "IntangibleAssetsNetExcludingGoodwillNoncurrent": 11093000000,
+                     *                 "OtherAssetsNoncurrent": 72634000000,
+                     *                 "AssetsNoncurrent": 211284000000
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/as-reported/balance-sheet?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their as-reported financial statements */
                         companies: {
@@ -4746,17 +6284,35 @@ export interface operations {
     asReportedBalanceSheetDetailed: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
-                /** @description Include formula in response */
+                /**
+                 * @description Include formula in response
+                 * @example true
+                 */
                 with_formula?: "true" | "false";
             };
             header?: never;
@@ -4771,6 +6327,101 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "CashAndCashEquivalentsAtCarryingValue": {
+                     *                   "value": 35934000000,
+                     *                   "html_label": "Cash and cash equivalents",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-165"
+                     *                 },
+                     *                 "MarketableSecuritiesCurrent": {
+                     *                   "value": 18763000000,
+                     *                   "html_label": "Marketable securities",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-167"
+                     *                 },
+                     *                 "AccountsReceivableNetCurrent": {
+                     *                   "value": 39777000000,
+                     *                   "html_label": "Accounts receivable, net",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-169"
+                     *                 },
+                     *                 "NontradeReceivablesCurrent": {
+                     *                   "value": 33180000000,
+                     *                   "html_label": "Vendor non-trade receivables",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-171"
+                     *                 },
+                     *                 "InventoryNet": {
+                     *                   "value": 5718000000,
+                     *                   "html_label": "Inventories",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-173"
+                     *                 },
+                     *                 "OtherAssetsCurrent": {
+                     *                   "value": 14585000000,
+                     *                   "html_label": "Other current assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-175"
+                     *                 },
+                     *                 "AssetsCurrent": {
+                     *                   "value": 147957000000,
+                     *                   "html_label": "Total current assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-177"
+                     *                 },
+                     *                 "MarketableSecuritiesNoncurrent": {
+                     *                   "value": 77723000000,
+                     *                   "html_label": "Marketable securities",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-179"
+                     *                 },
+                     *                 "PropertyPlantAndEquipmentNet": {
+                     *                   "value": 49834000000,
+                     *                   "html_label": "Property, plant and equipment, net",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-181"
+                     *                 },
+                     *                 "IntangibleAssetsNetExcludingGoodwillNoncurrent": {
+                     *                   "value": 11093000000,
+                     *                   "html_label": "Intangible assets, net",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-183"
+                     *                 },
+                     *                 "OtherAssetsNoncurrent": {
+                     *                   "value": 72634000000,
+                     *                   "html_label": "Other non-current assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-185"
+                     *                 },
+                     *                 "AssetsNoncurrent": {
+                     *                   "value": 211284000000,
+                     *                   "html_label": "Total non-current assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-187"
+                     *                 }
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/as-reported/balance-sheet/detailed?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Companies with detailed as-reported financial statements (includes labels/formulas) */
                         companies: {
@@ -4860,15 +6511,30 @@ export interface operations {
     asReportedBalanceSheetPresentation: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -4883,6 +6549,49 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": [
+                     *                 {
+                     *                   "concept": "AssetsAbstract",
+                     *                   "label": "ASSETS:",
+                     *                   "depth": 0,
+                     *                   "children": [
+                     *                     {
+                     *                       "concept": "AssetsCurrentAbstract",
+                     *                       "label": "Current assets:",
+                     *                       "depth": 1,
+                     *                       "children": [
+                     *                         {
+                     *                           "concept": "CashAndCashEquivalentsAtCarryingValue",
+                     *                           "label": "Cash and cash equivalents",
+                     *                           "depth": 2,
+                     *                           "value": 35934000000
+                     *                         }
+                     *                       ]
+                     *                     }
+                     *                   ]
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/as-reported/balance-sheet/presentation?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Companies with as-reported statements in presentation (tree) format */
                         companies: {
@@ -4921,15 +6630,30 @@ export interface operations {
     asReportedCashFlowStatement: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -4944,6 +6668,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "NetIncomeLoss": 112010000000,
+                     *                 "DepreciationDepletionAndAmortization": 11698000000,
+                     *                 "ShareBasedCompensation": 12863000000,
+                     *                 "OtherNoncashIncomeExpense": -89000000,
+                     *                 "IncreaseDecreaseInAccountsReceivable": -6682000000,
+                     *                 "IncreaseDecreaseInOtherReceivables": -347000000,
+                     *                 "IncreaseDecreaseInInventories": 1400000000,
+                     *                 "IncreaseDecreaseInOtherOperatingAssets": -9197000000,
+                     *                 "IncreaseDecreaseInAccountsPayable": 902000000,
+                     *                 "IncreaseDecreaseInOtherOperatingLiabilities": -11076000000,
+                     *                 "NetCashProvidedByUsedInOperatingActivities": 111482000000,
+                     *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": -24407000000
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/as-reported/cash-flow-statement?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their as-reported financial statements */
                         companies: {
@@ -4985,17 +6744,35 @@ export interface operations {
     asReportedCashFlowStatementDetailed: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
-                /** @description Include formula in response */
+                /**
+                 * @description Include formula in response
+                 * @example true
+                 */
                 with_formula?: "true" | "false";
             };
             header?: never;
@@ -5010,6 +6787,101 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "NetIncomeLoss": {
+                     *                   "value": 112010000000,
+                     *                   "html_label": "Net income",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-114"
+                     *                 },
+                     *                 "DepreciationDepletionAndAmortization": {
+                     *                   "value": 11698000000,
+                     *                   "html_label": "Depreciation and amortization",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-280"
+                     *                 },
+                     *                 "ShareBasedCompensation": {
+                     *                   "value": 12863000000,
+                     *                   "html_label": "Share-based compensation expense",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-283"
+                     *                 },
+                     *                 "OtherNoncashIncomeExpense": {
+                     *                   "value": -89000000,
+                     *                   "html_label": "Other",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-286"
+                     *                 },
+                     *                 "IncreaseDecreaseInAccountsReceivable": {
+                     *                   "value": -6682000000,
+                     *                   "html_label": "Accounts receivable, net",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-289"
+                     *                 },
+                     *                 "IncreaseDecreaseInOtherReceivables": {
+                     *                   "value": -347000000,
+                     *                   "html_label": "Vendor non-trade receivables",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-292"
+                     *                 },
+                     *                 "IncreaseDecreaseInInventories": {
+                     *                   "value": 1400000000,
+                     *                   "html_label": "Inventories",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-295"
+                     *                 },
+                     *                 "IncreaseDecreaseInOtherOperatingAssets": {
+                     *                   "value": -9197000000,
+                     *                   "html_label": "Other current and non-current assets",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-298"
+                     *                 },
+                     *                 "IncreaseDecreaseInAccountsPayable": {
+                     *                   "value": 902000000,
+                     *                   "html_label": "Accounts payable",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-301"
+                     *                 },
+                     *                 "IncreaseDecreaseInOtherOperatingLiabilities": {
+                     *                   "value": -11076000000,
+                     *                   "html_label": "Other current and non-current liabilities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-304"
+                     *                 },
+                     *                 "NetCashProvidedByUsedInOperatingActivities": {
+                     *                   "value": 111482000000,
+                     *                   "html_label": "Cash generated by operating activities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-307"
+                     *                 },
+                     *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": {
+                     *                   "value": -24407000000,
+                     *                   "html_label": "Purchases of marketable securities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-310"
+                     *                 }
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/as-reported/cash-flow-statement/detailed?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Companies with detailed as-reported financial statements (includes labels/formulas) */
                         companies: {
@@ -5099,15 +6971,30 @@ export interface operations {
     asReportedCashFlowStatementPresentation: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Sort direction for periods by period_end */
+                /**
+                 * @description Sort direction for periods by period_end
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker */
+                /**
+                 * @description Maximum number of periods per ticker
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -5122,6 +7009,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": [
+                     *                 {
+                     *                   "concept": "NetCashProvidedByUsedInOperatingActivitiesContinuingOperationsAbstract",
+                     *                   "label": "Operating activities:",
+                     *                   "depth": 0,
+                     *                   "children": [
+                     *                     {
+                     *                       "concept": "NetIncomeLoss",
+                     *                       "label": "Net income",
+                     *                       "depth": 1,
+                     *                       "value": 112010000000
+                     *                     }
+                     *                   ]
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/as-reported/cash-flow-statement/presentation?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Companies with as-reported statements in presentation (tree) format */
                         companies: {
@@ -5160,13 +7083,25 @@ export interface operations {
     asReportedSnapshot: {
         parameters: {
             query: {
-                /** @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers) */
+                /**
+                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers)
+                 * @example AAPL,MSFT
+                 */
                 identifiers: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Calendar year. For annual periods, only calendar_year is needed. For non-annual periods, must be provided together with calendar_quarter. */
+                /**
+                 * @description Calendar year. For annual periods, only calendar_year is needed. For non-annual periods, must be provided together with calendar_quarter.
+                 * @example 2024
+                 */
                 calendar_year?: number;
-                /** @description Calendar quarter (1-4). For annual periods, should not be provided. For non-annual periods, must be provided together with calendar_year. */
+                /**
+                 * @description Calendar quarter (1-4). For annual periods, should not be provided. For non-annual periods, must be provided together with calendar_year.
+                 * @example 4
+                 */
                 calendar_quarter?: number;
             };
             header?: never;
@@ -5181,6 +7116,75 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "fiscal_year": 2025,
+                     *           "fiscal_quarter": 4,
+                     *           "calendar_year": 2025,
+                     *           "calendar_quarter": 3,
+                     *           "fiscal_period_type": "annual",
+                     *           "period_end": "2025-09-27 00:00:00",
+                     *           "statements": {
+                     *             "income_statement": {
+                     *               "facts": {
+                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": 416161000000,
+                     *                 "CostOfGoodsAndServicesSold": 220960000000,
+                     *                 "GrossProfit": 195201000000,
+                     *                 "ResearchAndDevelopmentExpense": 34550000000,
+                     *                 "SellingGeneralAndAdministrativeExpense": 27601000000,
+                     *                 "OperatingExpenses": 62151000000,
+                     *                 "OperatingIncomeLoss": 133050000000,
+                     *                 "NonoperatingIncomeExpense": -321000000,
+                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": 132729000000,
+                     *                 "IncomeTaxExpenseBenefit": 20719000000,
+                     *                 "NetIncomeLoss": 112010000000,
+                     *                 "EarningsPerShareBasic": 7.49,
+                     *                 "EarningsPerShareDiluted": 7.46,
+                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": 14948500000,
+                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": 15004697000
+                     *               }
+                     *             },
+                     *             "balance_sheet": {
+                     *               "facts": {
+                     *                 "CashAndCashEquivalentsAtCarryingValue": 35934000000,
+                     *                 "MarketableSecuritiesCurrent": 18763000000,
+                     *                 "AccountsReceivableNetCurrent": 39777000000,
+                     *                 "NontradeReceivablesCurrent": 33180000000,
+                     *                 "InventoryNet": 5718000000,
+                     *                 "OtherAssetsCurrent": 14585000000,
+                     *                 "AssetsCurrent": 147957000000,
+                     *                 "MarketableSecuritiesNoncurrent": 77723000000,
+                     *                 "PropertyPlantAndEquipmentNet": 49834000000,
+                     *                 "IntangibleAssetsNetExcludingGoodwillNoncurrent": 11093000000,
+                     *                 "OtherAssetsNoncurrent": 72634000000,
+                     *                 "AssetsNoncurrent": 211284000000
+                     *               }
+                     *             },
+                     *             "cash_flow_statement": {
+                     *               "facts": {
+                     *                 "NetIncomeLoss": 112010000000,
+                     *                 "DepreciationDepletionAndAmortization": 11698000000,
+                     *                 "ShareBasedCompensation": 12863000000,
+                     *                 "OtherNoncashIncomeExpense": -89000000,
+                     *                 "IncreaseDecreaseInAccountsReceivable": -6682000000,
+                     *                 "IncreaseDecreaseInOtherReceivables": -347000000,
+                     *                 "IncreaseDecreaseInInventories": 1400000000,
+                     *                 "IncreaseDecreaseInOtherOperatingAssets": -9197000000,
+                     *                 "IncreaseDecreaseInAccountsPayable": 902000000,
+                     *                 "IncreaseDecreaseInOtherOperatingLiabilities": -11076000000,
+                     *                 "NetCashProvidedByUsedInOperatingActivities": 111482000000,
+                     *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": -24407000000
+                     *               }
+                     *             }
+                     *           }
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their latest financial statements */
                         companies: {
@@ -5242,15 +7246,30 @@ export interface operations {
     asReportedSnapshotDetailed: {
         parameters: {
             query: {
-                /** @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers) */
+                /**
+                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers)
+                 * @example AAPL,MSFT
+                 */
                 identifiers: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Calendar year. For annual periods, only calendar_year is needed. For non-annual periods, must be provided together with calendar_quarter. */
+                /**
+                 * @description Calendar year. For annual periods, only calendar_year is needed. For non-annual periods, must be provided together with calendar_quarter.
+                 * @example 2024
+                 */
                 calendar_year?: number;
-                /** @description Calendar quarter (1-4). For annual periods, should not be provided. For non-annual periods, must be provided together with calendar_year. */
+                /**
+                 * @description Calendar quarter (1-4). For annual periods, should not be provided. For non-annual periods, must be provided together with calendar_year.
+                 * @example 4
+                 */
                 calendar_quarter?: number;
-                /** @description Include formula in response */
+                /**
+                 * @description Include formula in response
+                 * @example true
+                 */
                 with_formula?: "true" | "false";
             };
             header?: never;
@@ -5265,6 +7284,270 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "fiscal_year": 2025,
+                     *           "fiscal_quarter": 4,
+                     *           "calendar_year": 2025,
+                     *           "calendar_quarter": 3,
+                     *           "fiscal_period_type": "annual",
+                     *           "period_end": "2025-09-27 00:00:00",
+                     *           "statements": {
+                     *             "income_statement": {
+                     *               "facts": {
+                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": {
+                     *                   "value": 416161000000,
+                     *                   "html_label": "Net sales",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-78"
+                     *                 },
+                     *                 "CostOfGoodsAndServicesSold": {
+                     *                   "value": 220960000000,
+                     *                   "html_label": "Cost of sales",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-87"
+                     *                 },
+                     *                 "GrossProfit": {
+                     *                   "value": 195201000000,
+                     *                   "html_label": "Gross margin",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-90"
+                     *                 },
+                     *                 "ResearchAndDevelopmentExpense": {
+                     *                   "value": 34550000000,
+                     *                   "html_label": "Research and development",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-93"
+                     *                 },
+                     *                 "SellingGeneralAndAdministrativeExpense": {
+                     *                   "value": 27601000000,
+                     *                   "html_label": "Selling, general and administrative",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-96"
+                     *                 },
+                     *                 "OperatingExpenses": {
+                     *                   "value": 62151000000,
+                     *                   "html_label": "Total operating expenses",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-99"
+                     *                 },
+                     *                 "OperatingIncomeLoss": {
+                     *                   "value": 133050000000,
+                     *                   "html_label": "Operating income",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-102"
+                     *                 },
+                     *                 "NonoperatingIncomeExpense": {
+                     *                   "value": -321000000,
+                     *                   "html_label": "Other income/(expense), net",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-105"
+                     *                 },
+                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {
+                     *                   "value": 132729000000,
+                     *                   "html_label": "Income before provision for income taxes",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-108"
+                     *                 },
+                     *                 "IncomeTaxExpenseBenefit": {
+                     *                   "value": 20719000000,
+                     *                   "html_label": "Provision for income taxes",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-111"
+                     *                 },
+                     *                 "NetIncomeLoss": {
+                     *                   "value": 112010000000,
+                     *                   "html_label": "Net income",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-114"
+                     *                 },
+                     *                 "EarningsPerShareBasic": {
+                     *                   "value": 7.49,
+                     *                   "html_label": "Basic (in dollars per share)",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-117"
+                     *                 },
+                     *                 "EarningsPerShareDiluted": {
+                     *                   "value": 7.46,
+                     *                   "html_label": "Diluted (in dollars per share)",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-120"
+                     *                 },
+                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": {
+                     *                   "value": 14948500000,
+                     *                   "html_label": "Basic (in shares)",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-123"
+                     *                 },
+                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": {
+                     *                   "value": 15004697000,
+                     *                   "html_label": "Diluted (in shares)",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-126"
+                     *                 }
+                     *               }
+                     *             },
+                     *             "balance_sheet": {
+                     *               "facts": {
+                     *                 "CashAndCashEquivalentsAtCarryingValue": {
+                     *                   "value": 35934000000,
+                     *                   "html_label": "Cash and cash equivalents",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-165"
+                     *                 },
+                     *                 "MarketableSecuritiesCurrent": {
+                     *                   "value": 18763000000,
+                     *                   "html_label": "Marketable securities",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-167"
+                     *                 },
+                     *                 "AccountsReceivableNetCurrent": {
+                     *                   "value": 39777000000,
+                     *                   "html_label": "Accounts receivable, net",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-169"
+                     *                 },
+                     *                 "NontradeReceivablesCurrent": {
+                     *                   "value": 33180000000,
+                     *                   "html_label": "Vendor non-trade receivables",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-171"
+                     *                 },
+                     *                 "InventoryNet": {
+                     *                   "value": 5718000000,
+                     *                   "html_label": "Inventories",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-173"
+                     *                 },
+                     *                 "OtherAssetsCurrent": {
+                     *                   "value": 14585000000,
+                     *                   "html_label": "Other current assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-175"
+                     *                 },
+                     *                 "AssetsCurrent": {
+                     *                   "value": 147957000000,
+                     *                   "html_label": "Total current assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-177"
+                     *                 },
+                     *                 "MarketableSecuritiesNoncurrent": {
+                     *                   "value": 77723000000,
+                     *                   "html_label": "Marketable securities",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-179"
+                     *                 },
+                     *                 "PropertyPlantAndEquipmentNet": {
+                     *                   "value": 49834000000,
+                     *                   "html_label": "Property, plant and equipment, net",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-181"
+                     *                 },
+                     *                 "IntangibleAssetsNetExcludingGoodwillNoncurrent": {
+                     *                   "value": 11093000000,
+                     *                   "html_label": "Intangible assets, net",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-183"
+                     *                 },
+                     *                 "OtherAssetsNoncurrent": {
+                     *                   "value": 72634000000,
+                     *                   "html_label": "Other non-current assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-185"
+                     *                 },
+                     *                 "AssetsNoncurrent": {
+                     *                   "value": 211284000000,
+                     *                   "html_label": "Total non-current assets",
+                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "html_tag_id": "f-187"
+                     *                 }
+                     *               }
+                     *             },
+                     *             "cash_flow_statement": {
+                     *               "facts": {
+                     *                 "NetIncomeLoss": {
+                     *                   "value": 112010000000,
+                     *                   "html_label": "Net income",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-114"
+                     *                 },
+                     *                 "DepreciationDepletionAndAmortization": {
+                     *                   "value": 11698000000,
+                     *                   "html_label": "Depreciation and amortization",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-280"
+                     *                 },
+                     *                 "ShareBasedCompensation": {
+                     *                   "value": 12863000000,
+                     *                   "html_label": "Share-based compensation expense",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-283"
+                     *                 },
+                     *                 "OtherNoncashIncomeExpense": {
+                     *                   "value": -89000000,
+                     *                   "html_label": "Other",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-286"
+                     *                 },
+                     *                 "IncreaseDecreaseInAccountsReceivable": {
+                     *                   "value": -6682000000,
+                     *                   "html_label": "Accounts receivable, net",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-289"
+                     *                 },
+                     *                 "IncreaseDecreaseInOtherReceivables": {
+                     *                   "value": -347000000,
+                     *                   "html_label": "Vendor non-trade receivables",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-292"
+                     *                 },
+                     *                 "IncreaseDecreaseInInventories": {
+                     *                   "value": 1400000000,
+                     *                   "html_label": "Inventories",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-295"
+                     *                 },
+                     *                 "IncreaseDecreaseInOtherOperatingAssets": {
+                     *                   "value": -9197000000,
+                     *                   "html_label": "Other current and non-current assets",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-298"
+                     *                 },
+                     *                 "IncreaseDecreaseInAccountsPayable": {
+                     *                   "value": 902000000,
+                     *                   "html_label": "Accounts payable",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-301"
+                     *                 },
+                     *                 "IncreaseDecreaseInOtherOperatingLiabilities": {
+                     *                   "value": -11076000000,
+                     *                   "html_label": "Other current and non-current liabilities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-304"
+                     *                 },
+                     *                 "NetCashProvidedByUsedInOperatingActivities": {
+                     *                   "value": 111482000000,
+                     *                   "html_label": "Cash generated by operating activities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-307"
+                     *                 },
+                     *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": {
+                     *                   "value": -24407000000,
+                     *                   "html_label": "Purchases of marketable securities",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": "f-310"
+                     *                 }
+                     *               }
+                     *             }
+                     *           }
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their latest detailed financial statements */
                         companies: {
@@ -5470,13 +7753,25 @@ export interface operations {
     asReportedSnapshotPresentation: {
         parameters: {
             query: {
-                /** @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers) */
+                /**
+                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers)
+                 * @example AAPL,MSFT
+                 */
                 identifiers: string;
-                /** @description Type of fiscal period */
+                /**
+                 * @description Type of fiscal period
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Calendar year. For annual periods, only calendar_year is needed. For non-annual periods, must be provided together with calendar_quarter. */
+                /**
+                 * @description Calendar year. For annual periods, only calendar_year is needed. For non-annual periods, must be provided together with calendar_quarter.
+                 * @example 2024
+                 */
                 calendar_year?: number;
-                /** @description Calendar quarter (1-4). For annual periods, should not be provided. For non-annual periods, must be provided together with calendar_year. */
+                /**
+                 * @description Calendar quarter (1-4). For annual periods, should not be provided. For non-annual periods, must be provided together with calendar_year.
+                 * @example 4
+                 */
                 calendar_quarter?: number;
             };
             header?: never;
@@ -5491,6 +7786,75 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "fiscal_year": 2025,
+                     *           "fiscal_quarter": 4,
+                     *           "calendar_year": 2025,
+                     *           "calendar_quarter": 3,
+                     *           "fiscal_period_type": "annual",
+                     *           "period_end": "2025-09-27 00:00:00",
+                     *           "statements": {
+                     *             "income_statement": {
+                     *               "facts": [
+                     *                 {
+                     *                   "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+                     *                   "label": "Net sales",
+                     *                   "depth": 0,
+                     *                   "value": 416161000000
+                     *                 }
+                     *               ]
+                     *             },
+                     *             "balance_sheet": {
+                     *               "facts": [
+                     *                 {
+                     *                   "concept": "AssetsAbstract",
+                     *                   "label": "ASSETS:",
+                     *                   "depth": 0,
+                     *                   "children": [
+                     *                     {
+                     *                       "concept": "AssetsCurrentAbstract",
+                     *                       "label": "Current assets:",
+                     *                       "depth": 1,
+                     *                       "children": [
+                     *                         {
+                     *                           "concept": "CashAndCashEquivalentsAtCarryingValue",
+                     *                           "label": "Cash and cash equivalents",
+                     *                           "depth": 2,
+                     *                           "value": 35934000000
+                     *                         }
+                     *                       ]
+                     *                     }
+                     *                   ]
+                     *                 }
+                     *               ]
+                     *             },
+                     *             "cash_flow_statement": {
+                     *               "facts": [
+                     *                 {
+                     *                   "concept": "NetCashProvidedByUsedInOperatingActivitiesContinuingOperationsAbstract",
+                     *                   "label": "Operating activities:",
+                     *                   "depth": 0,
+                     *                   "children": [
+                     *                     {
+                     *                       "concept": "NetIncomeLoss",
+                     *                       "label": "Net income",
+                     *                       "depth": 1,
+                     *                       "value": 112010000000
+                     *                     }
+                     *                   ]
+                     *                 }
+                     *               ]
+                     *             }
+                     *           }
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their latest financial statements in presentation format */
                         companies: {
@@ -5546,17 +7910,35 @@ export interface operations {
     financialMetricsRatios: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period: 'quarterly' (Q1-Q4), 'annual' (full year), 'ytd' (year-to-date), 'ttm' (trailing twelve months) */
+                /**
+                 * @description Type of fiscal period: 'quarterly' (Q1-Q4), 'annual' (full year), 'ytd' (year-to-date), 'ttm' (trailing twelve months)
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Filter by ratio category: valuation, profitability, liquidity, solvency */
+                /**
+                 * @description Filter by ratio category: valuation, profitability, liquidity, solvency
+                 * @example profitability
+                 */
                 category?: "valuation" | "profitability" | "liquidity" | "solvency";
-                /** @description Sort direction for periods by period_end: 'asc' (oldest first), 'desc' (newest first) */
+                /**
+                 * @description Sort direction for periods by period_end: 'asc' (oldest first), 'desc' (newest first)
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker (1-100) */
+                /**
+                 * @description Maximum number of periods per ticker (1-100)
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -5571,6 +7953,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "solvency": {
+                     *                   "ratio_debt_to_assets_ratio": 0.27,
+                     *                   "ratio_debt_to_equity_ratio": 1.34,
+                     *                   "ratio_long_term_debt_to_total_assets_ratio": 0.22,
+                     *                   "ratio_long_term_debt_to_total_equity_ratio": 1.06
+                     *                 },
+                     *                 "profitability": {
+                     *                   "ratio_return_on_assets_pct": 31.18,
+                     *                   "ratio_return_on_equity_pct": 151.91,
+                     *                   "ratio_return_on_invested_capital_pct": 95.4,
+                     *                   "ratio_gross_margin_pct": 46.91,
+                     *                   "ratio_operating_margin_pct": 31.97,
+                     *                   "ratio_ebitda_margin_pct": 34.78,
+                     *                   "ratio_net_margin_pct": 26.92
+                     *                 },
+                     *                 "liquidity": {
+                     *                   "ratio_quick_ratio": 0.57,
+                     *                   "ratio_current_ratio": 0.89,
+                     *                   "ratio_inventory_turnover": 38.64,
+                     *                   "ratio_asset_turnover": 1.16
+                     *                 },
+                     *                 "valuation": {
+                     *                   "ratio_price_to_earnings_ratio": 33.69,
+                     *                   "ratio_price_to_sales_ratio": 9.07,
+                     *                   "ratio_price_to_cash_flow_ratio": 33.85,
+                     *                   "ratio_price_to_book_ratio": 51.18
+                     *                 }
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/financial-metrics/ratios?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their financial ratios */
                         companies: {
@@ -5620,15 +8052,30 @@ export interface operations {
     financialMetricsCagr: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description CAGR calculation period in years: 3, 5, 10 */
+                /**
+                 * @description CAGR calculation period in years: 3, 5, 10
+                 * @example 5
+                 */
                 period_years?: "3" | "5" | "10";
-                /** @description Sort direction for periods by period_end: 'asc' (oldest first), 'desc' (newest first) */
+                /**
+                 * @description Sort direction for periods by period_end: 'asc' (oldest first), 'desc' (newest first)
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker (1-100) */
+                /**
+                 * @description Maximum number of periods per ticker (1-100)
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -5643,6 +8090,86 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "3": {
+                     *                   "cagr_cash_from_operating_activities": -3,
+                     *                   "cagr_total_revenue": 1.81,
+                     *                   "cagr_total_assets": 0.61,
+                     *                   "cagr_cash_from_investing_activities": -56.04,
+                     *                   "cagr_total_liabilities": -1.86,
+                     *                   "cagr_gross_profit": 4.56,
+                     *                   "cagr_total_equity": 13.32,
+                     *                   "cagr_ebitda": 3.5,
+                     *                   "cagr_cash_from_financing_activities": 2.91,
+                     *                   "cagr_shareholders_equity": 13.32,
+                     *                   "cagr_free_cash_flow": -3.95,
+                     *                   "cagr_operating_income_ebit": 3.66,
+                     *                   "cagr_ebt": 3.68,
+                     *                   "cagr_dividend_per_share": 4.07,
+                     *                   "cagr_net_income": 3.92,
+                     *                   "cagr_basic_eps": 6.79,
+                     *                   "cagr_diluted_eps": 6.88
+                     *                 },
+                     *                 "5": {
+                     *                   "cagr_total_assets": 2.09,
+                     *                   "cagr_cash_from_operating_activities": 6.68,
+                     *                   "cagr_total_revenue": 8.68,
+                     *                   "cagr_total_liabilities": 2,
+                     *                   "cagr_gross_profit": 13.21,
+                     *                   "cagr_cash_from_investing_activities": 4.19,
+                     *                   "cagr_ebitda": 13.35,
+                     *                   "cagr_total_equity": 2.45,
+                     *                   "cagr_cash_from_financing_activities": 6.81,
+                     *                   "cagr_free_cash_flow": 6.13,
+                     *                   "cagr_shareholders_equity": 2.45,
+                     *                   "cagr_operating_income_ebit": 14.95,
+                     *                   "cagr_dividend_per_share": 4.92,
+                     *                   "cagr_ebt": 14.62,
+                     *                   "cagr_net_income": 14.3,
+                     *                   "cagr_basic_eps": 17.74,
+                     *                   "cagr_diluted_eps": 17.86
+                     *                 },
+                     *                 "10": {
+                     *                   "cagr_total_assets": 2.15,
+                     *                   "cagr_total_revenue": 5.94,
+                     *                   "cagr_cash_from_operating_activities": 3.21,
+                     *                   "cagr_cash_from_investing_activities": -16.57,
+                     *                   "cagr_gross_profit": 7.62,
+                     *                   "cagr_total_liabilities": 5.25,
+                     *                   "cagr_ebitda": 7.15,
+                     *                   "cagr_total_equity": -4.7,
+                     *                   "cagr_cash_from_financing_activities": 21.15,
+                     *                   "cagr_shareholders_equity": -4.7,
+                     *                   "cagr_free_cash_flow": 3.5,
+                     *                   "cagr_operating_income_ebit": 6.45,
+                     *                   "cagr_dividend_per_share": 7.46,
+                     *                   "cagr_ebt": 6.23,
+                     *                   "cagr_net_income": 7.69,
+                     *                   "cagr_basic_eps": 12.43,
+                     *                   "cagr_diluted_eps": 12.46
+                     *                 }
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/financial-metrics/cagr?identifier=AAPL&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their CAGR metrics */
                         companies: {
@@ -5692,17 +8219,35 @@ export interface operations {
     financialMetricsGrowth: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period: 'quarterly' (Q1-Q4), 'annual' (full year), 'ytd' (year-to-date), 'ttm' (trailing twelve months) */
+                /**
+                 * @description Type of fiscal period: 'quarterly' (Q1-Q4), 'annual' (full year), 'ytd' (year-to-date), 'ttm' (trailing twelve months)
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Filter by growth type: year_over_year, quarter_over_quarter */
+                /**
+                 * @description Filter by growth type: year_over_year, quarter_over_quarter
+                 * @example year_over_year
+                 */
                 growth_type?: "year_over_year" | "quarter_over_quarter";
-                /** @description Sort direction for periods by period_end: 'asc' (oldest first), 'desc' (newest first) */
+                /**
+                 * @description Sort direction for periods by period_end: 'asc' (oldest first), 'desc' (newest first)
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker (1-100) */
+                /**
+                 * @description Maximum number of periods per ticker (1-100)
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -5717,6 +8262,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "year_over_year": {
+                     *                   "growth_cash_from_operating_activities": -5.73,
+                     *                   "growth_total_revenue": 6.43,
+                     *                   "growth_total_assets": -1.57,
+                     *                   "growth_cash_from_investing_activities": 417.72,
+                     *                   "growth_total_liabilities": -7.31,
+                     *                   "growth_gross_profit": 8.04,
+                     *                   "growth_total_equity": 29.47,
+                     *                   "growth_ebitda": 7.49,
+                     *                   "growth_cash_from_financing_activities": -1.06,
+                     *                   "growth_shareholders_equity": 29.47,
+                     *                   "growth_operating_income_ebit": 7.98,
+                     *                   "growth_free_cash_flow": -9.23,
+                     *                   "growth_ebt": 7.49,
+                     *                   "growth_dividend_per_share": 3.91,
+                     *                   "growth_net_income": 19.5,
+                     *                   "growth_basic_eps": 22.59,
+                     *                   "growth_diluted_eps": 22.7
+                     *                 }
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/financial-metrics/growth?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of companies with their growth metrics */
                         companies: {
@@ -5766,17 +8353,35 @@ export interface operations {
     segmentedFinancials: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period: 'quarterly' (Q1-Q4), 'annual' (full year), 'ytd' (year-to-date), 'ttm' (trailing twelve months) */
+                /**
+                 * @description Type of fiscal period: 'quarterly' (Q1-Q4), 'annual' (full year), 'ytd' (year-to-date), 'ttm' (trailing twelve months)
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Filter by segment ID: seg_revenue_product, seg_revenue_geographic, seg_revenue_business_segment, seg_cost_of_revenue_business_segment, seg_research_and_development_expenses_business_segment, seg_selling_and_marketing_expenses_business_segment, seg_general_and_administrative_expenses_business_segment */
+                /**
+                 * @description Filter by segment ID: seg_revenue_product, seg_revenue_geographic, seg_revenue_business_segment, seg_cost_of_revenue_business_segment, seg_research_and_development_expenses_business_segment, seg_selling_and_marketing_expenses_business_segment, seg_general_and_administrative_expenses_business_segment
+                 * @example seg_revenue_product
+                 */
                 segment_id?: "seg_revenue_product" | "seg_revenue_geographic" | "seg_revenue_business_segment" | "seg_cost_of_revenue_business_segment" | "seg_research_and_development_expenses_business_segment" | "seg_selling_and_marketing_expenses_business_segment" | "seg_general_and_administrative_expenses_business_segment";
-                /** @description Sort direction for periods by period_end: 'asc' (oldest first), 'desc' (newest first) */
+                /**
+                 * @description Sort direction for periods by period_end: 'asc' (oldest first), 'desc' (newest first)
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker (1-100) */
+                /**
+                 * @description Maximum number of periods per ticker (1-100)
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -5791,6 +8396,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "is_revenue_from_contract_with_customer": [
+                     *                   {
+                     *                     "value": 64377000000,
+                     *                     "segment_id": "seg_revenue_geographic",
+                     *                     "axis": "StatementGeographicalAxis",
+                     *                     "member": "CN"
+                     *                   }
+                     *                 ]
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/segmented-financials?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Companies with segmented financial facts */
                         companies: {
@@ -5847,17 +8483,35 @@ export interface operations {
     segmentedFinancialsDetailed: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Type of fiscal period: 'quarterly' (Q1-Q4), 'annual' (full year), 'ytd' (year-to-date), 'ttm' (trailing twelve months) */
+                /**
+                 * @description Type of fiscal period: 'quarterly' (Q1-Q4), 'annual' (full year), 'ytd' (year-to-date), 'ttm' (trailing twelve months)
+                 * @example annual
+                 */
                 fiscal_period_type: "quarterly" | "annual" | "ytd" | "ttm";
-                /** @description Filter by segment ID: seg_revenue_product, seg_revenue_geographic, seg_revenue_business_segment, seg_cost_of_revenue_business_segment, seg_research_and_development_expenses_business_segment, seg_selling_and_marketing_expenses_business_segment, seg_general_and_administrative_expenses_business_segment */
+                /**
+                 * @description Filter by segment ID: seg_revenue_product, seg_revenue_geographic, seg_revenue_business_segment, seg_cost_of_revenue_business_segment, seg_research_and_development_expenses_business_segment, seg_selling_and_marketing_expenses_business_segment, seg_general_and_administrative_expenses_business_segment
+                 * @example seg_revenue_product
+                 */
                 segment_id?: "seg_revenue_product" | "seg_revenue_geographic" | "seg_revenue_business_segment" | "seg_cost_of_revenue_business_segment" | "seg_research_and_development_expenses_business_segment" | "seg_selling_and_marketing_expenses_business_segment" | "seg_general_and_administrative_expenses_business_segment";
-                /** @description Sort direction for periods by period_end: 'asc' (oldest first), 'desc' (newest first) */
+                /**
+                 * @description Sort direction for periods by period_end: 'asc' (oldest first), 'desc' (newest first)
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of periods per ticker (1-100) */
+                /**
+                 * @description Maximum number of periods per ticker (1-100)
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of periods to skip for pagination */
+                /**
+                 * @description Number of periods to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -5872,6 +8526,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "0000320193",
+                     *           "periods": [
+                     *             {
+                     *               "fiscal_year": 2025,
+                     *               "fiscal_quarter": 4,
+                     *               "calendar_year": 2025,
+                     *               "calendar_quarter": 3,
+                     *               "fiscal_period_type": "annual",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "facts": {
+                     *                 "is_revenue_from_contract_with_customer": [
+                     *                   {
+                     *                     "value": 64377000000,
+                     *                     "segment_id": "seg_revenue_geographic",
+                     *                     "segment": {
+                     *                       "0": {
+                     *                         "dimension": "srt:StatementGeographicalAxis",
+                     *                         "value": "country:CN"
+                     *                       }
+                     *                     },
+                     *                     "axis": "StatementGeographicalAxis",
+                     *                     "member": "CN",
+                     *                     "metric": "RevenueFromContractWithCustomerExcludingAssessedTax",
+                     *                     "accession_number": "0000320193-25-000079",
+                     *                     "html_tag_id": "f-1018",
+                     *                     "html_label": "Net sales",
+                     *                     "unit": "usd"
+                     *                   }
+                     *                 ]
+                     *               }
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/segmented-financials/detailed?identifier=AAPL&fiscal_period_type=annual&offset=10&limit=10"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Companies with detailed segmented financial facts */
                         companies: {
@@ -5942,15 +8638,30 @@ export interface operations {
     iposList: {
         parameters: {
             query?: {
-                /** @description Filter IPOs with listing_date on or after this date (YYYY-MM-DD) */
+                /**
+                 * @description Filter IPOs with listing_date on or after this date (YYYY-MM-DD)
+                 * @example 2025-01-01
+                 */
                 start_date?: string;
-                /** @description Filter IPOs with listing_date on or before this date (YYYY-MM-DD) */
+                /**
+                 * @description Filter IPOs with listing_date on or before this date (YYYY-MM-DD)
+                 * @example 2025-12-31
+                 */
                 end_date?: string;
-                /** @description Sort direction for IPOs by listing_date */
+                /**
+                 * @description Sort direction for IPOs by listing_date
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of IPOs to return */
+                /**
+                 * @description Maximum number of IPOs to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of IPOs to skip for pagination */
+                /**
+                 * @description Number of IPOs to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -5965,6 +8676,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "ipos": [
+                     *         {
+                     *           "listing_date": "2026-10-16 00:00:00",
+                     *           "announced_date": "2026-09-25 00:00:00",
+                     *           "currency_code": "USD",
+                     *           "final_issue_price": 10,
+                     *           "highest_offer_price": 10,
+                     *           "ipo_status": "history",
+                     *           "isin": "KYG870821066",
+                     *           "issue_end_date": "1970-01-01 00:00:00",
+                     *           "issue_start_date": "1970-01-01 00:00:00",
+                     *           "issuer_name": "TCGX Acquisition Corp. II",
+                     *           "last_updated": "2026-10-19 00:00:00",
+                     *           "lot_size": 100,
+                     *           "lowest_offer_price": 10,
+                     *           "max_shares_offered": 10000000,
+                     *           "min_shares_offered": 0,
+                     *           "primary_exchange": "XNAS",
+                     *           "security_description": "Ordinary Shares - Class A",
+                     *           "security_type": "CS",
+                     *           "shares_outstanding": 12950000,
+                     *           "ticker": "TCXB",
+                     *           "total_offer_size": 100000000,
+                     *           "us_code": "G87082106"
+                     *         }
+                     *       ],
+                     *       "next_url": "https://api.data.invinite.com/v1/ipos?offset=100&limit=100"
+                     *     }
+                     */
                     "application/json": {
                         /** @description List of IPO records */
                         ipos: {
@@ -6026,13 +8768,25 @@ export interface operations {
     institutionalOwnershipHoldingsByInvestor: {
         parameters: {
             query: {
-                /** @description Institution CIK */
+                /**
+                 * @description Institution CIK
+                 * @example 1067983
+                 */
                 cik: string;
-                /** @description Sort direction by dollar_value */
+                /**
+                 * @description Sort direction by dollar_value
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of holdings to return */
+                /**
+                 * @description Maximum number of holdings to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of holdings to skip for pagination */
+                /**
+                 * @description Number of holdings to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -6047,6 +8801,35 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "cik_institution": "0001067983",
+                     *       "holdings": [
+                     *         {
+                     *           "accession_number": "0001193125-26-226661",
+                     *           "calendar_quarter": 1,
+                     *           "calendar_year": 2026,
+                     *           "cusip_company": "037833100",
+                     *           "cik_institution": "0001067983",
+                     *           "dollar_value": 57843260493,
+                     *           "filing_date": "2026-05-15 00:00:00",
+                     *           "link_to_filing_details": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526226661/primary_doc.xml",
+                     *           "period_end": "2026-03-31 00:00:00",
+                     *           "shares_or_principal_amount": 227917808,
+                     *           "shares_or_principal_amount_type": "SH",
+                     *           "cik_company": null,
+                     *           "name_company": "APPLE INC",
+                     *           "ticker_company": null,
+                     *           "name_institution": "BERKSHIRE HATHAWAY INC",
+                     *           "investment_discretion": "DFND",
+                     *           "put_call": null,
+                     *           "voting_authority_none": null,
+                     *           "voting_authority_shared": null,
+                     *           "voting_authority_sole": 692000
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Institution CIK */
                         cik_institution: string;
@@ -6107,15 +8890,30 @@ export interface operations {
     institutionalOwnershipHoldingsByCompany: {
         parameters: {
             query: {
-                /** @description Company ticker symbol or CIK */
+                /**
+                 * @description Company ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Minimum dollar value filter */
+                /**
+                 * @description Minimum dollar value filter
+                 * @example 1000000000
+                 */
                 min_value?: number;
-                /** @description Sort direction by dollar_value */
+                /**
+                 * @description Sort direction by dollar_value
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of holdings to return */
+                /**
+                 * @description Maximum number of holdings to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of holdings to skip for pagination */
+                /**
+                 * @description Number of holdings to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -6130,6 +8928,36 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "ticker": "AAPL",
+                     *       "cik": "0000320193",
+                     *       "holdings": [
+                     *         {
+                     *           "accession_number": "0001546007-26-000008",
+                     *           "calendar_quarter": 3,
+                     *           "calendar_year": 2026,
+                     *           "cusip_company": "037833100",
+                     *           "cik_institution": "0001546007",
+                     *           "dollar_value": 6431933627,
+                     *           "filing_date": "2026-10-15 00:00:00",
+                     *           "link_to_filing_details": "https://www.sec.gov/Archives/edgar/data/1546007/000154600726000008/primary_doc.xml",
+                     *           "period_end": "2026-09-30 00:00:00",
+                     *           "shares_or_principal_amount": 19313956,
+                     *           "shares_or_principal_amount_type": "SH",
+                     *           "cik_company": "0000320193",
+                     *           "name_company": "APPLE INC",
+                     *           "ticker_company": "AAPL",
+                     *           "name_institution": "Assenagon Asset Management S.A.",
+                     *           "investment_discretion": "SOLE",
+                     *           "put_call": null,
+                     *           "voting_authority_none": null,
+                     *           "voting_authority_shared": null,
+                     *           "voting_authority_sole": 19313956
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Company ticker symbol */
                         ticker: string;
@@ -6192,25 +9020,55 @@ export interface operations {
     institutionalOwnershipTransactions: {
         parameters: {
             query?: {
-                /** @description Institution CIK (at least one of cik or identifier required) */
+                /**
+                 * @description Institution CIK (at least one of cik or identifier required)
+                 * @example 1067983
+                 */
                 cik?: string;
-                /** @description Company ticker symbol or CIK (at least one of cik or identifier required) */
+                /**
+                 * @description Company ticker symbol or CIK (at least one of cik or identifier required)
+                 * @example AAPL
+                 */
                 identifier?: string;
-                /** @description Filter transactions with period_end_new on or after this date (YYYY-MM-DD) */
+                /**
+                 * @description Filter transactions with period_end_new on or after this date (YYYY-MM-DD)
+                 * @example 2025-01-01
+                 */
                 start_date?: string;
-                /** @description Filter transactions with period_end_new on or before this date (YYYY-MM-DD) */
+                /**
+                 * @description Filter transactions with period_end_new on or before this date (YYYY-MM-DD)
+                 * @example 2025-12-31
+                 */
                 end_date?: string;
-                /** @description Filter by transaction type: new_buy, added, reduced, sold_out */
+                /**
+                 * @description Filter by transaction type: new_buy, added, reduced, sold_out
+                 * @example new_buy
+                 */
                 type?: "new_buy" | "added" | "reduced" | "sold_out";
-                /** @description Filter by calendar year (of new position) */
+                /**
+                 * @description Filter by calendar year (of new position)
+                 * @example 2025
+                 */
                 calendar_year?: number;
-                /** @description Filter by calendar quarter (of new position) */
+                /**
+                 * @description Filter by calendar quarter (of new position)
+                 * @example 1
+                 */
                 calendar_quarter?: number;
-                /** @description Sort direction by period_end_new: 'asc' (oldest first), 'desc' (newest first) */
+                /**
+                 * @description Sort direction by period_end_new: 'asc' (oldest first), 'desc' (newest first)
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of transactions to return (1-1000) */
+                /**
+                 * @description Maximum number of transactions to return (1-1000)
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of transactions to skip for pagination */
+                /**
+                 * @description Number of transactions to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -6225,6 +9083,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "transactions": [
+                     *         {
+                     *           "cik_institution": "0001067983",
+                     *           "cusip_company": "02005N100",
+                     *           "type": "reduced",
+                     *           "change_dollar_value": -7726500,
+                     *           "change_shares_or_principal_amount_absolute": 0,
+                     *           "change_shares_or_principal_amount_percent": 0,
+                     *           "shares_or_principal_amount_new": 1275000,
+                     *           "shares_or_principal_amount_old": 1275000,
+                     *           "accession_number": "0001193125-26-226661",
+                     *           "calendar_quarter": 1,
+                     *           "calendar_year": 2026,
+                     *           "dollar_value": 50018250,
+                     *           "filing_date": "2026-05-15 00:00:00",
+                     *           "period_end": "2026-03-31 00:00:00",
+                     *           "shares_or_principal_amount_type": "SH",
+                     *           "name_institution": "BERKSHIRE HATHAWAY INC",
+                     *           "cik_company": null,
+                     *           "name_company": "ALLY FINL INC",
+                     *           "ticker_company": null,
+                     *           "investment_discretion": "DFND",
+                     *           "put_call": null,
+                     *           "voting_authority_none": null,
+                     *           "voting_authority_shared": null,
+                     *           "voting_authority_sole": 1275000
+                     *         }
+                     *       ],
+                     *       "next_url": "https://api.data.invinite.com/v1/institutional-ownership/transactions?cik=1067983&offset=100&limit=100"
+                     *     }
+                     */
                     "application/json": {
                         /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
                         next_url?: string;
@@ -6294,13 +9185,25 @@ export interface operations {
     institutionalOwnershipInstitutions: {
         parameters: {
             query?: {
-                /** @description Comma-separated list of CIKs (Central Index Keys) */
+                /**
+                 * @description Comma-separated list of CIKs (Central Index Keys)
+                 * @example 1067983,102909
+                 */
                 ciks?: string;
-                /** @description Maximum number of institutions to return */
+                /**
+                 * @description Maximum number of institutions to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Pagination offset */
+                /**
+                 * @description Pagination offset
+                 * @example 0
+                 */
                 offset?: number;
-                /** @description Sort direction for institutions by name */
+                /**
+                 * @description Sort direction for institutions by name
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
             };
             header?: never;
@@ -6315,6 +9218,23 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "institutions": [
+                     *         {
+                     *           "cik": "0000944388",
+                     *           "name": "1832 Asset Management L.P.",
+                     *           "city": "TORONTO",
+                     *           "state": "",
+                     *           "country": "",
+                     *           "street1": "40 TEMPERANCE STREET",
+                     *           "street2": "16TH FLOOR",
+                     *           "zip_code": "M5H 0B4"
+                     *         }
+                     *       ],
+                     *       "next_url": "https://api.data.invinite.com/v1/institutional-ownership/institutions?offset=100&limit=100"
+                     *     }
+                     */
                     "application/json": {
                         /** @description Institution records matching the query */
                         institutions: {
@@ -6348,19 +9268,40 @@ export interface operations {
     insiderTradesList: {
         parameters: {
             query: {
-                /** @description Company ticker symbol or CIK */
+                /**
+                 * @description Company ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description Filter transactions filed on or after this date (YYYY-MM-DD) */
+                /**
+                 * @description Filter transactions filed on or after this date (YYYY-MM-DD)
+                 * @example 2025-01-01
+                 */
                 start_date?: string;
-                /** @description Filter transactions filed on or before this date (YYYY-MM-DD) */
+                /**
+                 * @description Filter transactions filed on or before this date (YYYY-MM-DD)
+                 * @example 2025-12-31
+                 */
                 end_date?: string;
-                /** @description Filter by acquisition (A) or disposition (D) */
+                /**
+                 * @description Filter by acquisition (A) or disposition (D)
+                 * @example D
+                 */
                 acquired_disposed?: "A" | "D";
-                /** @description Sort direction by filed_at date */
+                /**
+                 * @description Sort direction by filed_at date
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of transactions to return */
+                /**
+                 * @description Maximum number of transactions to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of transactions to skip for pagination */
+                /**
+                 * @description Number of transactions to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -6375,6 +9316,36 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "ticker": "AAPL",
+                     *       "cik": "0000320193",
+                     *       "transactions": [
+                     *         {
+                     *           "id": "27f42c3b0f912489509b4b8cc5626ca8:f7578de3e8794e12add8:0",
+                     *           "accession_number": "0001140361-26-040127",
+                     *           "cik": "0000320193",
+                     *           "filed_at": "2026-10-19 22:32:55",
+                     *           "reporting_person_name": "Borders Ben",
+                     *           "reporting_person_is_director": false,
+                     *           "reporting_person_is_officer": true,
+                     *           "reporting_person_is_ten_percent_owner": false,
+                     *           "reporting_person_is_other": false,
+                     *           "security_title": "Common Stock",
+                     *           "acquired_disposed": "D",
+                     *           "coding_code": "S",
+                     *           "shares": 151,
+                     *           "share_price": 343.08,
+                     *           "total": 51806,
+                     *           "shares_owned_following_transaction": 39417,
+                     *           "period_of_report": "2026-10-15 00:00:00",
+                     *           "reporting_person_officer_title": true,
+                     *           "reporting_person_other_text": null,
+                     *           "shares_owned_before_transaction": 39568
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Company ticker symbol */
                         ticker: string;
@@ -6437,23 +9408,52 @@ export interface operations {
     earningsCallsCalendar: {
         parameters: {
             query?: {
-                /** @description First day (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date. Default: today */
+                /**
+                 * @description First day (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date. Default: today
+                 * @example 2026-07-01
+                 */
                 from?: string;
-                /** @description Last day (YYYY-MM-DD), at most 92 days after `from`: a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date. Default: `from` + 14 days */
+                /**
+                 * @description Last day (YYYY-MM-DD), at most 92 days after `from`: a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date. Default: `from` + 14 days
+                 * @example 2026-07-31
+                 */
                 to?: string;
-                /** @description Filter by date status (repeatable). Default: every status except `cancelled` */
+                /**
+                 * @description Filter by date status (repeatable). Default: every status except `cancelled`
+                 * @example [
+                 *       "confirmed"
+                 *     ]
+                 */
                 status?: ("estimated" | "unconfirmed" | "confirmed" | "postponed" | "cancelled")[];
-                /** @description Filter by market session */
+                /**
+                 * @description Filter by market session
+                 * @example amc
+                 */
                 session?: "bmo" | "amc" | "intraday";
-                /** @description Filter by listing exchange (e.g. NASDAQ, NYSE) */
+                /**
+                 * @description Filter by listing exchange (e.g. NASDAQ, NYSE)
+                 * @example NASDAQ
+                 */
                 exchange?: string;
-                /** @description Event types as a comma list (e.g. `investor_day,conference`) of earnings_call, investor_day, conference, agm, other; `all` = every event type */
+                /**
+                 * @description Event types as a comma list (e.g. `investor_day,conference`) of earnings_call, investor_day, conference, agm, other; `all` = every event type
+                 * @example earnings_call
+                 */
                 event_type?: string;
-                /** @description Sort direction by scheduled start */
+                /**
+                 * @description Sort direction by scheduled start
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of events to return */
+                /**
+                 * @description Maximum number of events to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of events to skip for pagination */
+                /**
+                 * @description Number of events to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -6468,6 +9468,44 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "from": "2026-10-21",
+                     *       "to": "2026-11-04",
+                     *       "events": [
+                     *         {
+                     *           "event_id": "30b4bfbf-cbee-4bc0-9b05-db29769a0432",
+                     *           "source": "us",
+                     *           "cik": "0001176334",
+                     *           "symbol": "MMLP",
+                     *           "company_name": "Martin Midstream Partners LP",
+                     *           "exchange": "NASDAQ",
+                     *           "event_type": "earnings_call",
+                     *           "event_title": null,
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 3,
+                     *           "scheduled_at": "2026-10-21T00:00:00.000Z",
+                     *           "tz": "America/New_York",
+                     *           "date_status": "confirmed",
+                     *           "call_time_source": null,
+                     *           "call_time_confidence": null,
+                     *           "session": null,
+                     *           "started_at": null,
+                     *           "ended_at": null,
+                     *           "results_released_at": null,
+                     *           "capture_status": "pending",
+                     *           "reschedule_count": 0,
+                     *           "has_transcript": false,
+                     *           "has_audio": false,
+                     *           "has_slides": false,
+                     *           "has_press_release": false,
+                     *           "has_documents": false,
+                     *           "webcast_url": null
+                     *         }
+                     *       ],
+                     *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/calendar?offset=100&limit=100&from=2026-10-21&to=2026-11-04"
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * Format: date
@@ -6577,21 +9615,47 @@ export interface operations {
     earningsCallsEvents: {
         parameters: {
             query: {
-                /** @description Company ticker symbol or CIK (US companies only) */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only)
+                 * @example MSFT
+                 */
                 identifier: string;
-                /** @description Only calls on or after this day (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Only calls on or after this day (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-01-01
+                 */
                 from?: string;
-                /** @description Only calls on or before this day (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Only calls on or before this day (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-09-30
+                 */
                 to?: string;
-                /** @description Extra data per event (repeatable): `observations` = the date / time observations */
+                /**
+                 * @description Extra data per event (repeatable): `observations` = the date / time observations
+                 * @example [
+                 *       "observations"
+                 *     ]
+                 */
                 include?: "observations"[];
-                /** @description Only events of these types, a comma list (e.g. `investor_day,conference`) of earnings_call, investor_day, conference, agm, other; `all` (default) = every event type */
+                /**
+                 * @description Only events of these types, a comma list (e.g. `investor_day,conference`) of earnings_call, investor_day, conference, agm, other; `all` (default) = every event type
+                 * @example earnings_call
+                 */
                 event_type?: string;
-                /** @description Sort direction by scheduled start */
+                /**
+                 * @description Sort direction by scheduled start
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of events to return */
+                /**
+                 * @description Maximum number of events to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of events to skip for pagination */
+                /**
+                 * @description Number of events to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -6606,6 +9670,45 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "symbol": "MSFT",
+                     *       "cik": "0000789019",
+                     *       "covered": true,
+                     *       "events": [
+                     *         {
+                     *           "event_id": "e9eb6e9e-21e8-41d7-8d9e-da648e0002a1",
+                     *           "source": "us",
+                     *           "cik": "0000789019",
+                     *           "symbol": "MSFT",
+                     *           "company_name": "Microsoft Corp",
+                     *           "exchange": "NASDAQ",
+                     *           "event_type": "earnings_call",
+                     *           "event_title": null,
+                     *           "fiscal_year": 2027,
+                     *           "fiscal_quarter": 1,
+                     *           "scheduled_at": "2026-10-28T21:30:00.000Z",
+                     *           "tz": "America/Los_Angeles",
+                     *           "date_status": "confirmed",
+                     *           "call_time_source": "wire",
+                     *           "call_time_confidence": "high",
+                     *           "session": "amc",
+                     *           "started_at": null,
+                     *           "ended_at": null,
+                     *           "results_released_at": null,
+                     *           "capture_status": "pending",
+                     *           "reschedule_count": 0,
+                     *           "has_transcript": false,
+                     *           "has_audio": false,
+                     *           "has_slides": false,
+                     *           "has_press_release": false,
+                     *           "has_documents": false,
+                     *           "webcast_url": null
+                     *         }
+                     *       ],
+                     *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/events?identifier=MSFT&offset=50&limit=50"
+                     *     }
+                     */
                     "application/json": {
                         /** @description Company ticker symbol */
                         symbol: string;
@@ -6744,6 +9847,45 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "as_of": "2026-10-21T15:39:44.634Z",
+                     *       "events": [
+                     *         {
+                     *           "event_id": "bb86c217-f8f5-4db7-925e-6885f8a74a91",
+                     *           "source": "us",
+                     *           "cik": "0001861657",
+                     *           "symbol": "CNTN",
+                     *           "company_name": "Canton Strategic Holdings, Inc. Common Stock",
+                     *           "exchange": "NASDAQ",
+                     *           "event_type": "earnings_call",
+                     *           "event_title": null,
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 3,
+                     *           "scheduled_at": "2026-10-21T15:00:00.000Z",
+                     *           "tz": "America/New_York",
+                     *           "date_status": "confirmed",
+                     *           "call_time_source": "ir_feed",
+                     *           "call_time_confidence": "high",
+                     *           "session": "intraday",
+                     *           "started_at": "2026-10-21T15:02:32.562Z",
+                     *           "ended_at": null,
+                     *           "results_released_at": null,
+                     *           "capture_status": "capturing",
+                     *           "reschedule_count": 0,
+                     *           "has_transcript": false,
+                     *           "has_audio": false,
+                     *           "has_slides": false,
+                     *           "has_press_release": false,
+                     *           "has_documents": false,
+                     *           "webcast_url": "https://app.webinar.net/ZX0qjLYp5kO",
+                     *           "live_channel": "earnings-calls.live",
+                     *           "live_audio": true,
+                     *           "live_prices": true
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * Format: date-time
@@ -6855,17 +9997,35 @@ export interface operations {
     earningsCallsLiveStream: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
             };
             header?: never;
@@ -6935,12 +10095,20 @@ export interface operations {
     earningsCallsEvent: {
         parameters: {
             query?: {
-                /** @description Extra data (repeatable): `observations` = the date / time observations behind the call time */
+                /**
+                 * @description Extra data (repeatable): `observations` = the date / time observations behind the call time
+                 * @example [
+                 *       "observations"
+                 *     ]
+                 */
                 include?: "observations"[];
             };
             header?: never;
             path: {
-                /** @description Event identifier (event_id of any earnings-calls response) */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response)
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id: string;
             };
             cookie?: never;
@@ -6953,6 +10121,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *       "source": "us",
+                     *       "cik": "0000789019",
+                     *       "symbol": "MSFT",
+                     *       "company_name": "Microsoft Corp",
+                     *       "exchange": "NASDAQ",
+                     *       "event_type": "earnings_call",
+                     *       "event_title": null,
+                     *       "fiscal_year": 2026,
+                     *       "fiscal_quarter": 4,
+                     *       "scheduled_at": "2026-07-29T00:00:00.000Z",
+                     *       "tz": "America/Los_Angeles",
+                     *       "date_status": "confirmed",
+                     *       "call_time_source": null,
+                     *       "call_time_confidence": null,
+                     *       "session": null,
+                     *       "started_at": null,
+                     *       "ended_at": null,
+                     *       "results_released_at": "2026-07-29T20:04:53.000Z",
+                     *       "capture_status": "published",
+                     *       "reschedule_count": 0,
+                     *       "has_transcript": true,
+                     *       "has_audio": true,
+                     *       "has_slides": true,
+                     *       "has_press_release": true,
+                     *       "has_documents": true,
+                     *       "webcast_url": null
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * Format: uuid
@@ -7068,23 +10267,50 @@ export interface operations {
     earningsCallsTranscript: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
-                /** @description text = plain text; speakers = one entry per speaker turn; words = turns with every word (w, s = start ms, e = end ms, c = confidence) — the one large format, billed by turn count; sections = prepared remarks + Q&A + qa_start_ms; cleaned = lightly cleaned turns (404 when the version has no cleaned layer) */
+                /**
+                 * @description text = plain text; speakers = one entry per speaker turn; words = turns with every word (w, s = start ms, e = end ms, c = confidence) — the one large format, billed by turn count; sections = prepared remarks + Q&A + qa_start_ms; cleaned = lightly cleaned turns (404 when the version has no cleaned layer)
+                 * @example speakers
+                 */
                 format?: "text" | "speakers" | "words" | "sections" | "cleaned";
-                /** @description A specific published version (one listed by transcript/versions); default = the current one */
+                /**
+                 * @description A specific published version (one listed by transcript/versions); default = the current one
+                 * @example 6
+                 */
                 version?: number;
-                /** @description Point in time (ISO 8601): the version that was current then. Mutually exclusive with version; a future instant = the current version */
+                /**
+                 * @description Point in time (ISO 8601): the version that was current then. Mutually exclusive with version; a future instant = the current version
+                 * @example 2026-10-09T00:00:00Z
+                 */
                 as_of?: string;
             };
             header?: never;
@@ -7099,6 +10325,60 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event": {
+                     *         "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *         "source": "us",
+                     *         "cik": "0000789019",
+                     *         "symbol": "MSFT",
+                     *         "company_name": "Microsoft Corp",
+                     *         "exchange": "NASDAQ",
+                     *         "event_type": "earnings_call",
+                     *         "event_title": null,
+                     *         "fiscal_year": 2026,
+                     *         "fiscal_quarter": 4,
+                     *         "scheduled_at": "2026-07-29T00:00:00.000Z",
+                     *         "tz": "America/Los_Angeles",
+                     *         "date_status": "confirmed",
+                     *         "call_time_source": null,
+                     *         "call_time_confidence": null,
+                     *         "session": null,
+                     *         "started_at": null,
+                     *         "ended_at": null,
+                     *         "results_released_at": "2026-07-29T20:04:53.000Z",
+                     *         "capture_status": "published",
+                     *         "reschedule_count": 0,
+                     *         "has_transcript": true,
+                     *         "has_audio": true,
+                     *         "has_slides": true,
+                     *         "has_press_release": true,
+                     *         "has_documents": true,
+                     *         "webcast_url": null
+                     *       },
+                     *       "version": 6,
+                     *       "version_kind": "corrected",
+                     *       "published_at": "2026-10-08T18:15:34.698Z",
+                     *       "transcript_provider": "inhouse",
+                     *       "stt_provider": "whisperx",
+                     *       "word_count": 9372,
+                     *       "qa_start_ms": 2298917,
+                     *       "format": "speakers",
+                     *       "data": [
+                     *         {
+                     *           "speaker_label": "spk00",
+                     *           "name": "Operator",
+                     *           "title": null,
+                     *           "role": "operator",
+                     *           "person_id": "6d664b16-4705-4481-8473-2c0370236a93",
+                     *           "start_ms": 800,
+                     *           "end_ms": 24977,
+                     *           "speaker_confidence": 1,
+                     *           "text": "At this time, all participants are in a listen-only mode. A question and answer session will follow the formal presentation. If anyone should require operator assistance, please press star zero on your telephone keypad. As a reminder, this …"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         event: {
                             /**
@@ -7240,17 +10520,35 @@ export interface operations {
     earningsCallsTranscriptVersions: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
             };
             header?: never;
@@ -7265,6 +10563,22 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *       "current_version": 6,
+                     *       "versions": [
+                     *         {
+                     *           "version": 3,
+                     *           "version_kind": "final",
+                     *           "published_at": "2026-10-08T17:34:32.507Z",
+                     *           "word_count": 9372,
+                     *           "change_note": "naming",
+                     *           "corrected_by": null
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * Format: uuid
@@ -7306,21 +10620,45 @@ export interface operations {
     earningsCallsTranscriptDiff: {
         parameters: {
             query: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
-                /** @description Older version (one listed by transcript/versions) */
+                /**
+                 * @description Older version (one listed by transcript/versions)
+                 * @example 3
+                 */
                 from: number;
-                /** @description Newer version; default = the current one */
+                /**
+                 * @description Newer version; default = the current one
+                 * @example 6
+                 */
                 to?: number;
             };
             header?: never;
@@ -7335,6 +10673,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *       "from": 3,
+                     *       "to": 6,
+                     *       "changes": [
+                     *         {
+                     *           "op": "del",
+                     *           "at_ms": 800,
+                     *           "text": "question and answer"
+                     *         }
+                     *       ],
+                     *       "truncated": false,
+                     *       "stats": {
+                     *         "added_words": 124,
+                     *         "removed_words": 112
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * Format: uuid
@@ -7391,23 +10748,50 @@ export interface operations {
     earningsCallsQa: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
-                /** @description Maximum number of Q&A pairs to return */
+                /**
+                 * @description Maximum number of Q&A pairs to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of Q&A pairs to skip for pagination */
+                /**
+                 * @description Number of Q&A pairs to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
-                /** @description scores = add each pair's descriptive scores (analyst casting order, question tone, difficulty, evasiveness, non-answer flag with verbatim evidence); null for a pair not scored yet */
+                /**
+                 * @description scores = add each pair's descriptive scores (analyst casting order, question tone, difficulty, evasiveness, non-answer flag with verbatim evidence); null for a pair not scored yet
+                 * @example scores
+                 */
                 include?: "scores";
             };
             header?: never;
@@ -7422,6 +10806,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *       "pairs": [
+                     *         {
+                     *           "seq": 1,
+                     *           "analyst": {
+                     *             "speaker_label": "spk05",
+                     *             "person_id": "90b1ae97-2207-48d3-8fb4-e70f165bb4b3",
+                     *             "name": "Carl Kierstad",
+                     *             "firm": "UBS"
+                     *           },
+                     *           "question": "Okay, great. Thank you, Satya. Maybe I'll start away from the numbers and ask if you could spend a minute and elaborate on your opening comments about model choice and the protection of corporate IP. Maybe I could ask this in two parts. Fir…",
+                     *           "question_start_ms": 2330338,
+                     *           "question_end_ms": 2367612,
+                     *           "answers": [
+                     *             {
+                     *               "speaker_label": "spk06",
+                     *               "person_id": "9b135e05-d7c2-4d23-9c89-728501ad8e58",
+                     *               "name": "Satya Nadella",
+                     *               "title": null
+                     *             }
+                     *           ],
+                     *           "answer": "Thank you, Carl. So the way we are coming at this is, at the end of the day, the goal is to have the firm be in control of their own destiny in terms of what I describe as building their human capital and their token capital, right? So at t…",
+                     *           "answer_start_ms": 2369608,
+                     *           "answer_end_ms": 2578699,
+                     *           "is_follow_up": false
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * Format: uuid
@@ -7510,19 +10925,42 @@ export interface operations {
     earningsCallsParticipants: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
-                /** @description Extra data (repeatable): `evidence` = the quotes each name was resolved from */
+                /**
+                 * @description Extra data (repeatable): `evidence` = the quotes each name was resolved from
+                 * @example [
+                 *       "evidence"
+                 *     ]
+                 */
                 include?: "evidence"[];
             };
             header?: never;
@@ -7537,6 +10975,34 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *       "participants": [
+                     *         {
+                     *           "speaker_label": "spk00",
+                     *           "person_id": "6d664b16-4705-4481-8473-2c0370236a93",
+                     *           "name": "Operator",
+                     *           "title": null,
+                     *           "firm": null,
+                     *           "role": "operator",
+                     *           "confidence": 1,
+                     *           "resolved_by": "llm"
+                     *         }
+                     *       ],
+                     *       "participation_events": [
+                     *         {
+                     *           "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *           "kind": "ceo_no_questions",
+                     *           "person_id": "9b135e05-d7c2-4d23-9c89-728501ad8e58",
+                     *           "detail": {
+                     *             "title": "chairman and chief executive officer, Microsoft",
+                     *             "priorEventUid": "1a7bc938-1338-4128-9ccb-99d6a9646ea2"
+                     *           }
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * Format: uuid
@@ -7603,11 +11069,20 @@ export interface operations {
     earningsCallsAnalysts: {
         parameters: {
             query: {
-                /** @description Company ticker symbol or CIK (US companies only) */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only)
+                 * @example MSFT
+                 */
                 identifier: string;
-                /** @description Maximum number of analysts to return */
+                /**
+                 * @description Maximum number of analysts to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of analysts to skip for pagination */
+                /**
+                 * @description Number of analysts to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -7622,6 +11097,25 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "symbol": "MSFT",
+                     *       "cik": "0000789019",
+                     *       "analysts": [
+                     *         {
+                     *           "person_id": "90b1ae97-2207-48d3-8fb4-e70f165bb4b3",
+                     *           "name": "Carl Kierstad",
+                     *           "firm": "UBS",
+                     *           "appearances": 4,
+                     *           "questions": 8,
+                     *           "first_seen": "2025-10-29T00:00:00.000Z",
+                     *           "last_seen": "2026-07-29T00:00:00.000Z",
+                     *           "mean_difficulty": 0.358,
+                     *           "scored_question_count": 4
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Company ticker symbol */
                         symbol: string;
@@ -7671,14 +11165,23 @@ export interface operations {
     earningsCallsPerson: {
         parameters: {
             query?: {
-                /** @description Maximum number of appearances to return */
+                /**
+                 * @description Maximum number of appearances to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of appearances to skip for pagination */
+                /**
+                 * @description Number of appearances to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
             path: {
-                /** @description Person identifier (person_id of participants / qa / analysts) */
+                /**
+                 * @description Person identifier (person_id of participants / qa / analysts)
+                 * @example 9b135e05-d7c2-4d23-9c89-728501ad8e58
+                 */
                 person_id: string;
             };
             cookie?: never;
@@ -7691,6 +11194,45 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "person_id": "9b135e05-d7c2-4d23-9c89-728501ad8e58",
+                     *       "kind": "executive",
+                     *       "name": "Satya Nadella",
+                     *       "current_firm": null,
+                     *       "current_title": "chairman and chief executive officer, Microsoft",
+                     *       "appearance_count": 4,
+                     *       "aliases": [],
+                     *       "appearances": [
+                     *         {
+                     *           "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *           "symbol": "MSFT",
+                     *           "cik": "0000789019",
+                     *           "company_name": "Microsoft Corp",
+                     *           "scheduled_at": "2026-07-29T00:00:00.000Z",
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "speaker_label": "spk02",
+                     *           "role": "executive",
+                     *           "title": "chairman and chief executive officer, Microsoft",
+                     *           "firm": null,
+                     *           "word_count": 4174,
+                     *           "question_count": 0
+                     *         }
+                     *       ],
+                     *       "participation_events": [
+                     *         {
+                     *           "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *           "kind": "ceo_no_questions",
+                     *           "person_id": "9b135e05-d7c2-4d23-9c89-728501ad8e58",
+                     *           "detail": {
+                     *             "title": "chairman and chief executive officer, Microsoft",
+                     *             "priorEventUid": "1a7bc938-1338-4128-9ccb-99d6a9646ea2"
+                     *           }
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * Format: uuid
@@ -7777,19 +11319,42 @@ export interface operations {
     earningsCallsPressRelease: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
-                /** @description Extra data (repeatable): `body` = the release text */
+                /**
+                 * @description Extra data (repeatable): `body` = the release text
+                 * @example [
+                 *       "body"
+                 *     ]
+                 */
                 include?: "body"[];
             };
             header?: never;
@@ -7804,6 +11369,24 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *       "title": "Microsoft Cloud and AI Strength Fuels Fourth Quarter Results",
+                     *       "published_at": "2026-07-29T20:04:53.000Z",
+                     *       "origin": "edgar",
+                     *       "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/msft-ex99_1.htm",
+                     *       "accession_number": "0001193125-26-323632",
+                     *       "participants": [
+                     *         {
+                     *           "name": "Satya Nadella",
+                     *           "title": "chairman and chief executive officer",
+                     *           "role": "executive"
+                     *         }
+                     *       ],
+                     *       "trust_tier": "sec"
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * Format: uuid
@@ -7851,25 +11434,55 @@ export interface operations {
     earningsCallsExtractions: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
-                /** @description guidance = consolidated forward guidance; kpi = every reported KPI figure */
+                /**
+                 * @description guidance = consolidated forward guidance; kpi = every reported KPI figure
+                 * @example guidance
+                 */
                 kind?: "guidance" | "kpi";
-                /** @description Guidance review filter: approved (human-approved only), auto, or all (auto + needs_review + approved) */
+                /**
+                 * @description Guidance review filter: approved (human-approved only), auto, or all (auto + needs_review + approved)
+                 * @example all
+                 */
                 review?: "approved" | "auto" | "all";
-                /** @description Maximum number of items to return */
+                /**
+                 * @description Maximum number of items to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of items to skip for pagination */
+                /**
+                 * @description Number of items to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -7884,6 +11497,49 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event": {
+                     *         "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *         "cik": "0000789019",
+                     *         "symbol": "MSFT",
+                     *         "conference_date": "2026-07-29T00:00:00.000Z"
+                     *       },
+                     *       "kind": "guidance",
+                     *       "guidance": [
+                     *         {
+                     *           "id": "4f521b3e-a746-470c-89b9-9bb1986580a2",
+                     *           "metric": "Capital expenditures",
+                     *           "metric_normalized": "capex",
+                     *           "period_label": "FY2026",
+                     *           "period_kind": "fiscal_year",
+                     *           "low": 175000000000,
+                     *           "high": 175000000000,
+                     *           "midpoint": 175000000000,
+                     *           "unit": "usd",
+                     *           "currency": "USD",
+                     *           "basis": "unknown",
+                     *           "direction": "lowered",
+                     *           "prior_item_id": "7a7abc62-fc38-4e1b-b4f5-f1f29a15d7e5",
+                     *           "confidence": 0.7,
+                     *           "cross_validated": false,
+                     *           "review_status": "needs_review",
+                     *           "sources": [
+                     *             {
+                     *               "origin": "transcript",
+                     *               "sentence": "However, the shift from finance to operating leases adjusts our expectation to approximately $175 billion.",
+                     *               "start_ms": 1217049,
+                     *               "speaker": {
+                     *                 "label": "spk03",
+                     *                 "name": "Amy Hood",
+                     *                 "title": "executive vice president and chief financial officer, Microsoft"
+                     *               }
+                     *             }
+                     *           ]
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         event: {
                             /**
@@ -8086,15 +11742,30 @@ export interface operations {
     earningsCallsGuidanceHistory: {
         parameters: {
             query: {
-                /** @description Company ticker symbol or CIK (US companies only) */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only)
+                 * @example MSFT
+                 */
                 identifier: string;
-                /** @description Normalized metric (e.g. revenue, eps_non_gaap, segment:iphone) */
+                /**
+                 * @description Normalized metric (e.g. revenue, eps_non_gaap, segment:iphone)
+                 * @example revenue
+                 */
                 metric: string;
-                /** @description Only this kind of guided period */
+                /**
+                 * @description Only this kind of guided period
+                 * @example quarter
+                 */
                 period_kind?: "quarter" | "fiscal_year" | "half" | "other";
-                /** @description Only this accounting basis */
+                /**
+                 * @description Only this accounting basis
+                 * @example gaap
+                 */
                 basis?: "gaap" | "non_gaap" | "unknown";
-                /** @description Maximum number of series entries to return */
+                /**
+                 * @description Maximum number of series entries to return
+                 * @example 5
+                 */
                 limit?: number;
             };
             header?: never;
@@ -8109,6 +11780,32 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "symbol": "MSFT",
+                     *       "cik": "0000789019",
+                     *       "metric_normalized": "revenue",
+                     *       "series": [
+                     *         {
+                     *           "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *           "conference_date": "2026-07-29T00:00:00.000Z",
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "period_label": "Q1 FY2027",
+                     *           "period_kind": "quarter",
+                     *           "low": 16,
+                     *           "high": 17,
+                     *           "midpoint": 16.5,
+                     *           "unit": "pct",
+                     *           "currency": null,
+                     *           "basis": "unknown",
+                     *           "direction": "new",
+                     *           "change_vs_prior": null,
+                     *           "confidence": 0.5
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Ticker symbol */
                         symbol: string;
@@ -8183,19 +11880,40 @@ export interface operations {
     earningsCallsDiff: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only); alone = the latest call with a diff, else with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only); alone = the latest call with a diff, else with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
-                /** @description Comparison base: the company's prior call */
+                /**
+                 * @description Comparison base: the company's prior call
+                 * @example prior
+                 */
                 vs?: "prior";
             };
             header?: never;
@@ -8210,6 +11928,57 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event": {
+                     *         "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *         "cik": "0000789019",
+                     *         "symbol": "MSFT",
+                     *         "conference_date": "2026-07-29T00:00:00.000Z"
+                     *       },
+                     *       "prior_event": {
+                     *         "event_id": "1a7bc938-1338-4128-9ccb-99d6a9646ea2",
+                     *         "conference_date": "2026-04-29T00:00:00.000Z"
+                     *       },
+                     *       "similarity": 0.9897,
+                     *       "new_topics": [
+                     *         {
+                     *           "topic": "AI sovereignty and sovereign-cloud models",
+                     *           "evidence": "AI sovereignty is increasingly top of mind for our customers, and we are expanding our offerings to meet that need.",
+                     *           "start_ms": 181970
+                     *         }
+                     *       ],
+                     *       "dropped_topics": [
+                     *         {
+                     *           "topic": "Maia Transcribe 1 speech-to-text model",
+                     *           "evidence": "We introduced Maia Transcribe 1, a state-of-the-art speech-to-text model, and Maia Image 2, one of the top image generation models in the world.",
+                     *           "start_ms": 186794
+                     *         }
+                     *       ],
+                     *       "hedging": {
+                     *         "level": null,
+                     *         "change": null
+                     *       },
+                     *       "uncertainty": {
+                     *         "level": null,
+                     *         "change": null
+                     *       },
+                     *       "numeric_specificity": {
+                     *         "level": 4.02979,
+                     *         "change": -0.67415
+                     *       },
+                     *       "tone_shift": "more_cautious",
+                     *       "slide_diff": {
+                     *         "current_pages": 23,
+                     *         "prior_pages": 22,
+                     *         "page_delta": 1,
+                     *         "new_titles": [],
+                     *         "dropped_titles": [],
+                     *         "shared_titles": 0
+                     *       },
+                     *       "summary": "The current call adds detail on sovereign AI, new model and agent offerings, customer-embedded engineering, and a useful-life accounting change. Management described a reset to Xbox and weaker PC-market conditions, and FY27 operating margin…"
+                     *     }
+                     */
                     "application/json": {
                         event: {
                             /**
@@ -8315,17 +12084,35 @@ export interface operations {
     earningsCallsMetrics: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
             };
             header?: never;
@@ -8340,6 +12127,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event": {
+                     *         "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *         "cik": "0000789019",
+                     *         "symbol": "MSFT",
+                     *         "conference_date": "2026-07-29T00:00:00.000Z"
+                     *       },
+                     *       "call_happened": true,
+                     *       "call_length_ms": 3900124,
+                     *       "release_to_call_gap_s": null,
+                     *       "prepared_remarks_ms": 2298117,
+                     *       "qa_ms": 1602007,
+                     *       "qa_share": 0.4108,
+                     *       "question_count": 9,
+                     *       "analyst_count": 6,
+                     *       "mgmt_word_share_qa": 0.8523,
+                     *       "zero_questions": false,
+                     *       "prepared_remarks_posted_in_advance": false,
+                     *       "speaker_count": 14,
+                     *       "unknown_speaker_word_share": 0.1591
+                     *     }
+                     */
                     "application/json": {
                         event: {
                             /**
@@ -8395,19 +12205,40 @@ export interface operations {
     earningsCallsProsody: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
-                /** @description prepared (remarks), qa, or all (the whole call) */
+                /**
+                 * @description prepared (remarks), qa, or all (the whole call)
+                 * @example qa
+                 */
                 section?: "prepared" | "qa" | "all";
             };
             header?: never;
@@ -8422,6 +12253,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event": {
+                     *         "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *         "cik": "0000789019",
+                     *         "symbol": "MSFT",
+                     *         "conference_date": "2026-07-29T00:00:00.000Z"
+                     *       },
+                     *       "section": "all",
+                     *       "speakers": [
+                     *         {
+                     *           "speaker": {
+                     *             "label": "spk00",
+                     *             "name": "Operator",
+                     *             "title": null,
+                     *             "role": "operator"
+                     *           },
+                     *           "section": "all",
+                     *           "speech_rate_wpm": 172.46,
+                     *           "pause_count": 12,
+                     *           "pause_mean_ms": 1024,
+                     *           "pause_p95_ms": 2743,
+                     *           "filler_rate": null,
+                     *           "time_to_answer_mean_ms": null,
+                     *           "time_to_answer_p95_ms": null,
+                     *           "pitch_mean_hz": 141.4,
+                     *           "pitch_sd_hz": 43.96,
+                     *           "energy_mean_db": -22.85,
+                     *           "spoken_ms": 85932,
+                     *           "word_count": 247,
+                     *           "acoustic_available": true
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         event: {
                             /**
@@ -8500,17 +12366,35 @@ export interface operations {
     earningsCallsPriceAttribution: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example dd04abe1-f83f-4e92-8ddf-1f8864e7db30
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example JPM
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 3
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-10-13
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
             };
             header?: never;
@@ -8525,6 +12409,41 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event": {
+                     *         "event_id": "dd04abe1-f83f-4e92-8ddf-1f8864e7db30",
+                     *         "cik": "0000019617",
+                     *         "symbol": "JPM",
+                     *         "conference_date": "2026-10-13T12:30:00.000Z"
+                     *       },
+                     *       "live": false,
+                     *       "settled": true,
+                     *       "anchor_kind": "t0_wallclock",
+                     *       "anchor_lag_ms": 3353,
+                     *       "lag_kind": "playlist",
+                     *       "anchor_uncertainty_s": 10,
+                     *       "session": "pre",
+                     *       "bar_count": 102,
+                     *       "end_of_window_return_bps": 7.47,
+                     *       "buckets": [
+                     *         {
+                     *           "bucket": "2026-10-13T12:15:00.000Z",
+                     *           "bar_start": "2026-10-13T12:15:00.000Z",
+                     *           "return_bps": 9.57,
+                     *           "cumulative_return_bps": 9.57,
+                     *           "utterance_refs": []
+                     *         }
+                     *       ],
+                     *       "top_minutes": [
+                     *         {
+                     *           "bucket": "2026-10-13T13:34:00.000Z",
+                     *           "return_bps": -81.39,
+                     *           "utterance_refs": []
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         event: {
                             /**
@@ -8626,17 +12545,35 @@ export interface operations {
     earningsCallsAudio: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
             };
             header?: never;
@@ -8731,21 +12668,47 @@ export interface operations {
     earningsCallsSlides: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
-                /** @description Extra data, comma-separated or repeated: `markdown` = each page's extracted text */
+                /**
+                 * @description Extra data, comma-separated or repeated: `markdown` = each page's extracted text
+                 * @example [
+                 *       "markdown"
+                 *     ]
+                 */
                 include?: string[];
-                /** @description Page or range to serve, e.g. 3 or 1-5 (at most 200 pages per request) */
+                /**
+                 * @description Page or range to serve, e.g. 3 or 1-5 (at most 200 pages per request)
+                 * @example 1-3
+                 */
                 pages?: string;
             };
             header?: never;
@@ -8760,6 +12723,31 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event": {
+                     *         "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *         "cik": "0000789019",
+                     *         "symbol": "MSFT",
+                     *         "conference_date": "2026-07-29T00:00:00.000Z"
+                     *       },
+                     *       "deck": {
+                     *         "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/2026-07-29/slides/q4-fy2026-earnings-presentation.pdf?X-Amz-Signature=…",
+                     *         "expires_at": "2026-10-21T15:54:50.064Z",
+                     *         "pages": 23,
+                     *         "origin": "ir_page",
+                     *         "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/SlidesFY26Q4.pptx",
+                     *         "trust_tier": "confirmed_domain"
+                     *       },
+                     *       "slides": [
+                     *         {
+                     *           "page": 1,
+                     *           "title": null,
+                     *           "image_url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/2026-07-29/slides/q4-fy2026-earnings-presentation/page-001.webp?X-Amz-Signature=…"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         event: {
                             /**
@@ -8822,25 +12810,59 @@ export interface operations {
     earningsCallsDocuments: {
         parameters: {
             query?: {
-                /** @description Event identifier (event_id of any earnings-calls response); wins over the other selectors */
+                /**
+                 * @description Event identifier (event_id of any earnings-calls response); wins over the other selectors
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Company ticker symbol or CIK (US companies only), with year+quarter or date */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only), with year+quarter or date
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Fiscal year of the call (with quarter) */
+                /**
+                 * @description Fiscal year of the call (with quarter)
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Fiscal quarter of the call (with year) */
+                /**
+                 * @description Fiscal quarter of the call (with year)
+                 * @example 4
+                 */
                 quarter?: number;
-                /** @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Day of the call (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-29
+                 */
                 date?: string;
-                /** @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only */
+                /**
+                 * @description Event type the date selector matches (default earnings_call): investor_day, conference, agm or other address a non-earnings event by its date; year+quarter select earnings calls only
+                 * @example earnings_call
+                 */
                 event_type?: "earnings_call" | "investor_day" | "conference" | "agm" | "other";
-                /** @description Only these kinds, comma-separated or repeated: cfo_commentary, financial_data, shareholder_letter, fact_sheet, company_transcript, prepared_remarks, sec_filing, infographic, other */
+                /**
+                 * @description Only these kinds, comma-separated or repeated: cfo_commentary, financial_data, shareholder_letter, fact_sheet, company_transcript, prepared_remarks, sec_filing, infographic, other
+                 * @example [
+                 *       "cfo_commentary"
+                 *     ]
+                 */
                 kind?: string[];
-                /** @description Extra data, comma-separated or repeated: `body` = the extracted text */
+                /**
+                 * @description Extra data, comma-separated or repeated: `body` = the extracted text
+                 * @example [
+                 *       "body"
+                 *     ]
+                 */
                 include?: string[];
-                /** @description Maximum number of documents to return */
+                /**
+                 * @description Maximum number of documents to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of documents to skip for pagination */
+                /**
+                 * @description Number of documents to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -8855,6 +12877,35 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event": {
+                     *         "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *         "cik": "0000789019",
+                     *         "symbol": "MSFT",
+                     *         "conference_date": "2026-07-29T00:00:00.000Z"
+                     *       },
+                     *       "documents": [
+                     *         {
+                     *           "document_id": "ab52d56f-b7c8-48e7-8e72-894bf3644d53",
+                     *           "kind": "cfo_commentary",
+                     *           "confidence": "high",
+                     *           "title": "Q4 FY2026 CFO Commentary",
+                     *           "origin": "playbook_pattern",
+                     *           "producer": null,
+                     *           "source_label": null,
+                     *           "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/OutlookFY27Q1",
+                     *           "accession_number": null,
+                     *           "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/2026-07-29/documents/cfo-commentary/q4-fy2026-cfo-commentary.pdf?X-Amz-Signature=…",
+                     *           "expires_at": "2026-10-21T15:54:50.220Z",
+                     *           "content_type": "application/pdf",
+                     *           "bytes": 487074,
+                     *           "pages": 6,
+                     *           "trust_tier": "confirmed_domain"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         event: {
                             /**
@@ -8940,21 +12991,49 @@ export interface operations {
     earningsCallsCompanyDocuments: {
         parameters: {
             query: {
-                /** @description Company ticker symbol or CIK (US companies only) */
+                /**
+                 * @description Company ticker symbol or CIK (US companies only)
+                 * @example MSFT
+                 */
                 identifier: string;
-                /** @description Only these IR site sections, comma-separated or repeated: quarterly_results, events_archive, presentations_archive, annual_reports, proxy, sec_filings, press_releases, esg, governance, faq, other */
+                /**
+                 * @description Only these IR site sections, comma-separated or repeated: quarterly_results, events_archive, presentations_archive, annual_reports, proxy, sec_filings, press_releases, esg, governance, faq, other
+                 * @example [
+                 *       "quarterly_results"
+                 *     ]
+                 */
                 section?: string[];
-                /** @description Only these document kinds, comma-separated or repeated: annual_report, ceo_letter, proxy_statement, proxy_supplement, esg_report, conference_presentation, investor_day_deck, earnings_deck, fact_sheet, financial_data, shareholder_letter, company_transcript, cfo_commentary, governance, press_release, infographic, webcast, other, prepared_remarks */
+                /**
+                 * @description Only these document kinds, comma-separated or repeated: annual_report, ceo_letter, proxy_statement, proxy_supplement, esg_report, conference_presentation, investor_day_deck, earnings_deck, fact_sheet, financial_data, shareholder_letter, company_transcript, cfo_commentary, governance, press_release, infographic, webcast, other, prepared_remarks
+                 * @example [
+                 *       "webcast"
+                 *     ]
+                 */
                 kind?: string[];
-                /** @description Year the document belongs to */
+                /**
+                 * @description Year the document belongs to
+                 * @example 2026
+                 */
                 year?: number;
-                /** @description Period within the year */
+                /**
+                 * @description Period within the year
+                 * @example Q1
+                 */
                 period?: "Q1" | "Q2" | "Q3" | "Q4" | "H1" | "H2" | "FY";
-                /** @description Only documents of this event (an investor day, a conference, a shareholder meeting) */
+                /**
+                 * @description Only documents of this event (an investor day, a conference, a shareholder meeting)
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Maximum number of documents to return */
+                /**
+                 * @description Maximum number of documents to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of documents to skip for pagination */
+                /**
+                 * @description Number of documents to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -8969,6 +13048,45 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "company": {
+                     *         "cik": "0000789019",
+                     *         "symbol": "MSFT",
+                     *         "name": "Microsoft Corp"
+                     *       },
+                     *       "documents": [
+                     *         {
+                     *           "document_id": "f06b3e8d-169d-4142-a558-435c93a02232",
+                     *           "section": "esg",
+                     *           "kind": "esg_report",
+                     *           "year": 2030,
+                     *           "period": null,
+                     *           "event_id": null,
+                     *           "event_type": null,
+                     *           "event_date": null,
+                     *           "title": "Microsoft datacenters in Finland",
+                     *           "source_label": "Learn more",
+                     *           "source_url": "https://local.microsoft.com/wp-content/uploads/2025/10/Microsoft-datacenters-in-Finland.pdf",
+                     *           "page_url": "https://www.microsoft.com/en-us/corporate-responsibility/topics/sustainability/",
+                     *           "origin": "html_page",
+                     *           "producer": null,
+                     *           "confidence": "medium",
+                     *           "trust_tier": "confirmed_domain",
+                     *           "content_type": "application/pdf",
+                     *           "bytes": 11966273,
+                     *           "pages": 5,
+                     *           "link_status": null,
+                     *           "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/documents/esg/2030/microsoft-datacenters-in-finland.pdf?X-Amz-Signature=…",
+                     *           "pages_url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/documents/esg/2030/microsoft-datacenters-in-finland.pdf.pages.json?X-Amz-Signature=…",
+                     *           "expires_at": "2026-10-21T15:54:50.388Z",
+                     *           "created_at": "2026-10-16T20:46:08.960Z",
+                     *           "updated_at": "2026-10-21T13:18:13.882Z"
+                     *         }
+                     *       ],
+                     *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/company-documents?identifier=MSFT&offset=50&limit=50"
+                     *     }
+                     */
                     "application/json": {
                         company: {
                             /** @description 10-digit CIK with leading zeros */
@@ -9092,12 +13210,20 @@ export interface operations {
     earningsCallsCompanyDocument: {
         parameters: {
             query?: {
-                /** @description Extra data: `pages` = the per-page text inline (files ≤ 2 MB; else use pages_url) */
+                /**
+                 * @description Extra data: `pages` = the per-page text inline (files ≤ 2 MB; else use pages_url)
+                 * @example [
+                 *       "pages"
+                 *     ]
+                 */
                 include?: string[];
             };
             header?: never;
             path: {
-                /** @description document_id of a company-documents response */
+                /**
+                 * @description document_id of a company-documents response
+                 * @example 30f56e78-1702-4183-9deb-02150a8147fb
+                 */
                 document_id: string;
             };
             cookie?: never;
@@ -9110,6 +13236,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "company": {
+                     *         "cik": "0000789019",
+                     *         "symbol": "MSFT",
+                     *         "name": "Microsoft Corp"
+                     *       },
+                     *       "document": {
+                     *         "document_id": "30f56e78-1702-4183-9deb-02150a8147fb",
+                     *         "section": "quarterly_results",
+                     *         "kind": "webcast",
+                     *         "year": 2026,
+                     *         "period": "Q1",
+                     *         "event_id": null,
+                     *         "event_type": null,
+                     *         "event_date": null,
+                     *         "title": "Press Release & Webcast",
+                     *         "source_label": "Press Release & Webcast",
+                     *         "source_url": "https://microsoft.com/en-us/investor/earnings/fy-2026-q1/press-release-webcast",
+                     *         "page_url": "https://www.microsoft.com/en-us/Investor/earnings/FY-2026-Q1/press-release-webcast",
+                     *         "origin": "html_page",
+                     *         "producer": null,
+                     *         "confidence": "high",
+                     *         "trust_tier": "confirmed_domain",
+                     *         "content_type": null,
+                     *         "bytes": null,
+                     *         "pages": null,
+                     *         "link_status": "live",
+                     *         "url": null,
+                     *         "pages_url": null,
+                     *         "expires_at": null,
+                     *         "created_at": "2026-10-16T19:06:46.674Z",
+                     *         "updated_at": "2026-10-16T20:49:35.743Z"
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         company: {
                             /** @description 10-digit CIK with leading zeros */
@@ -9230,19 +13392,44 @@ export interface operations {
     earningsCallsDocumentSearch: {
         parameters: {
             query: {
-                /** @description The question or phrase to search for */
+                /**
+                 * @description The question or phrase to search for
+                 * @example Azure growth
+                 */
                 q: string;
-                /** @description Search one company's documents (ticker or CIK, US only) */
+                /**
+                 * @description Search one company's documents (ticker or CIK, US only)
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description Only these document kinds, comma-separated or repeated: annual_report, ceo_letter, proxy_statement, proxy_supplement, esg_report, conference_presentation, investor_day_deck, earnings_deck, fact_sheet, financial_data, shareholder_letter, company_transcript, cfo_commentary, governance, press_release, infographic, webcast, other, prepared_remarks, sec_filing */
+                /**
+                 * @description Only these document kinds, comma-separated or repeated: annual_report, ceo_letter, proxy_statement, proxy_supplement, esg_report, conference_presentation, investor_day_deck, earnings_deck, fact_sheet, financial_data, shareholder_letter, company_transcript, cfo_commentary, governance, press_release, infographic, webcast, other, prepared_remarks, sec_filing
+                 * @example [
+                 *       "annual_report"
+                 *     ]
+                 */
                 kind?: string[];
-                /** @description Only company documents of these IR sections: quarterly_results, events_archive, presentations_archive, annual_reports, proxy, sec_filings, press_releases, esg, governance, faq, other */
+                /**
+                 * @description Only company documents of these IR sections: quarterly_results, events_archive, presentations_archive, annual_reports, proxy, sec_filings, press_releases, esg, governance, faq, other
+                 * @example [
+                 *       "annual_reports"
+                 *     ]
+                 */
                 section?: string[];
-                /** @description Only documents of this year */
+                /**
+                 * @description Only documents of this year
+                 * @example 2025
+                 */
                 year?: number;
-                /** @description event_documents (a call's documents) or company_documents (the company's IR library) */
+                /**
+                 * @description event_documents (a call's documents) or company_documents (the company's IR library)
+                 * @example company_documents
+                 */
                 table?: "event_documents" | "company_documents";
-                /** @description Maximum number of passages (at most 20) */
+                /**
+                 * @description Maximum number of passages (at most 20)
+                 * @example 5
+                 */
                 limit?: number;
             };
             header?: never;
@@ -9337,21 +13524,45 @@ export interface operations {
     earningsCallsSearch: {
         parameters: {
             query: {
-                /** @description The question or phrase to search for */
+                /**
+                 * @description The question or phrase to search for
+                 * @example Azure growth
+                 */
                 q: string;
-                /** @description Search one call */
+                /**
+                 * @description Search one call
+                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 */
                 event_id?: string;
-                /** @description Search one company's calls (ticker or CIK, US only) */
+                /**
+                 * @description Search one company's calls (ticker or CIK, US only)
+                 * @example MSFT
+                 */
                 identifier?: string;
-                /** @description First call day (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date. An unscoped search defaults to 365 days back */
+                /**
+                 * @description First call day (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date. An unscoped search defaults to 365 days back
+                 * @example 2026-07-01
+                 */
                 from?: string;
-                /** @description Last call day (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date */
+                /**
+                 * @description Last call day (YYYY-MM-DD): a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date
+                 * @example 2026-07-31
+                 */
                 to?: string;
-                /** @description transcript (all speech), qa, preparedRemarks or presentation (slide text) */
+                /**
+                 * @description transcript (all speech), qa, preparedRemarks or presentation (slide text)
+                 * @example qa
+                 */
                 type?: "transcript" | "qa" | "preparedRemarks" | "presentation";
-                /** @description Events searched, as a comma list of earnings_call, investor_day, conference, agm, other; `all` = every event type (default earnings calls) */
+                /**
+                 * @description Events searched, as a comma list of earnings_call, investor_day, conference, agm, other; `all` = every event type (default earnings calls)
+                 * @example earnings_call
+                 */
                 event_type?: string;
-                /** @description Maximum number of passages (at most 8) */
+                /**
+                 * @description Maximum number of passages (at most 8)
+                 * @example 5
+                 */
                 limit?: number;
             };
             header?: never;
@@ -9366,6 +13577,33 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "query": "Azure growth",
+                     *       "hits": [
+                     *         {
+                     *           "event_id": "1a7bc938-1338-4128-9ccb-99d6a9646ea2",
+                     *           "cik": "0000789019",
+                     *           "symbol": "MSFT",
+                     *           "conference_date": "2026-04-29T00:00:00.000Z",
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 3,
+                     *           "type": "qa",
+                     *           "speaker": {
+                     *             "label": "spk06",
+                     *             "name": "Unknown speaker 2",
+                     *             "title": null
+                     *           },
+                     *           "start_ms": 2953487,
+                     *           "end_ms": 2987496,
+                     *           "text": "you. Thanks, Mark. Let me maybe start with Azure, which given its size and its growth rates, where we've talked about acceleration from where we are, which is the guy to 39 to 40 into a bigger number in the second half of the calendar year.…",
+                     *           "score": 0.7056,
+                     *           "audio_url": null,
+                     *           "slide": null
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description The query as searched */
                         query: string;
@@ -9462,6 +13700,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "id": "js7a2c9xq4m8v1k6t3w5r0n2b8gnd4fh",
+                     *           "url": "https://hooks.example.com/webhook",
+                     *           "events": [
+                     *             "earnings_call.transcript_ready"
+                     *           ],
+                     *           "filters": {
+                     *             "ciks": [],
+                     *             "keywords": []
+                     *           },
+                     *           "active": true,
+                     *           "disabled_reason": null,
+                     *           "consecutive_failures": 0,
+                     *           "secret_hint": "a91c",
+                     *           "created_at": "2026-10-20T17:48:12.157Z",
+                     *           "updated_at": "2026-10-20T17:48:12.996Z"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         data: {
                             /** @description Subscription id */
@@ -9534,6 +13795,21 @@ export interface operations {
         };
         requestBody: {
             content: {
+                /**
+                 * @example {
+                 *       "url": "https://hooks.example.com/invinite",
+                 *       "events": [
+                 *         "earnings_call.transcript_ready",
+                 *         "earnings_call.ended"
+                 *       ],
+                 *       "filters": {
+                 *         "ciks": [
+                 *           "0000789019",
+                 *           "0000320193"
+                 *         ]
+                 *       }
+                 *     }
+                 */
                 "application/json": {
                     /** @description https endpoint (port 443, public addresses only) */
                     url: string;
@@ -9637,7 +13913,10 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Webhook subscription id (from the create / list response) */
+                /**
+                 * @description Webhook subscription id (from the create / list response)
+                 * @example js7a2c9xq4m8v1k6t3w5r0n2b8gnd4fh
+                 */
                 id: string;
             };
             cookie?: never;
@@ -9690,7 +13969,10 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Webhook subscription id (from the create / list response) */
+                /**
+                 * @description Webhook subscription id (from the create / list response)
+                 * @example js7a2c9xq4m8v1k6t3w5r0n2b8gnd4fh
+                 */
                 id: string;
             };
             cookie?: never;
@@ -9698,6 +13980,14 @@ export interface operations {
         /** @description Any of the four fields; at least one */
         requestBody?: {
             content: {
+                /**
+                 * @example {
+                 *       "events": [
+                 *         "earnings_call.transcript_ready"
+                 *       ],
+                 *       "active": true
+                 *     }
+                 */
                 "application/json": {
                     /** @description Replaces the keyword list (empty = no keyword alerts; PRO only) */
                     keywords?: string[];
@@ -9783,7 +14073,10 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Webhook subscription id (from the create / list response) */
+                /**
+                 * @description Webhook subscription id (from the create / list response)
+                 * @example js7a2c9xq4m8v1k6t3w5r0n2b8gnd4fh
+                 */
                 id: string;
             };
             cookie?: never;
@@ -9846,7 +14139,10 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Webhook subscription id (from the create / list response) */
+                /**
+                 * @description Webhook subscription id (from the create / list response)
+                 * @example js7a2c9xq4m8v1k6t3w5r0n2b8gnd4fh
+                 */
                 id: string;
             };
             cookie?: never;
@@ -9920,7 +14216,10 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @description Webhook subscription id (from the create / list response) */
+                /**
+                 * @description Webhook subscription id (from the create / list response)
+                 * @example js7a2c9xq4m8v1k6t3w5r0n2b8gnd4fh
+                 */
                 id: string;
             };
             cookie?: never;
@@ -9997,15 +14296,30 @@ export interface operations {
     secFilingsList: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description SEC form type filter (e.g., 10-K, 10-Q, 8-K, 3, 4, 5, 13F-HR). Leave empty to return all form types. */
+                /**
+                 * @description SEC form type filter (e.g., 10-K, 10-Q, 8-K, 3, 4, 5, 13F-HR). Leave empty to return all form types.
+                 * @example 10-K
+                 */
                 form_type?: string;
-                /** @description Sort direction for filings by filing_date */
+                /**
+                 * @description Sort direction for filings by filing_date
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of filings to return */
+                /**
+                 * @description Maximum number of filings to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of filings to skip for pagination */
+                /**
+                 * @description Number of filings to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -10020,6 +14334,31 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "320193",
+                     *           "filings": [
+                     *             {
+                     *               "accession_number": "0001140361-26-040127",
+                     *               "calendar_quarter": 4,
+                     *               "calendar_year": 2026,
+                     *               "cik": "0000320193",
+                     *               "filing_date": "2026-10-19 18:32:55",
+                     *               "fiscal_quarter": null,
+                     *               "fiscal_year": null,
+                     *               "form_type": "4",
+                     *               "html_url": "https://storage-prod.invinite.com/filing_htmls/320193_0001140361-26-040127_4_2026-10-19.html",
+                     *               "period_end": "2026-10-15 00:00:00"
+                     *             }
+                     *           ],
+                     *           "next_url": "https://api.data.invinite.com/v1/sec-filings/filings?identifier=AAPL&offset=40&limit=40"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Companies with filings */
                         companies: {
@@ -10071,11 +14410,20 @@ export interface operations {
     secFilingsSearch: {
         parameters: {
             query: {
-                /** @description Natural language search request for SEC filing information (e.g., 'What are Apple's main risk factors?') */
+                /**
+                 * @description Natural language search request for SEC filing information (e.g., 'What are Apple's main risk factors?')
+                 * @example What are Apple's main risk factors?
+                 */
                 request: string;
-                /** @description Ticker symbol or CIK to filter search results to a specific company */
+                /**
+                 * @description Ticker symbol or CIK to filter search results to a specific company
+                 * @example AAPL
+                 */
                 identifier?: string;
-                /** @description Accession number to filter search results to a specific filing */
+                /**
+                 * @description Accession number to filter search results to a specific filing
+                 * @example 0000320193-25-000079
+                 */
                 accession_number?: string;
             };
             header?: never;
@@ -10090,6 +14438,21 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "text": "Apple’s principal risks, as disclosed in its SEC filings, are:\n\n- **Intense competition and rapid technological change:** Apple competes across smartphones, PCs, tablets, wearables, services, and digital content; competitors may offer lower…",
+                     *       "sources": [
+                     *         {
+                     *           "cik": "0000320193",
+                     *           "accession_number": "0000320193-25-000079",
+                     *           "html_url": "https://storage-prod.invinite.com/filing_htmls/320193_0000320193-25-000079_10-K_2025-10-31.html",
+                     *           "ticker": "AAPL",
+                     *           "filing_date": "2025-10-31 06:01:26",
+                     *           "form_type": "10-K"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description The search response text answering the query */
                         text: string;
@@ -10122,17 +14485,35 @@ export interface operations {
     secFilingsSections: {
         parameters: {
             query: {
-                /** @description Ticker symbol or CIK */
+                /**
+                 * @description Ticker symbol or CIK
+                 * @example AAPL
+                 */
                 identifier: string;
-                /** @description SEC form type. Filter requirements vary: 8-K requires accession_number; 10-K requires accession_number or fiscal_year; 10-Q requires accession_number or fiscal_year+fiscal_quarter. */
+                /**
+                 * @description SEC form type. Filter requirements vary: 8-K requires accession_number; 10-K requires accession_number or fiscal_year; 10-Q requires accession_number or fiscal_year+fiscal_quarter.
+                 * @example 10-K
+                 */
                 form_type: "10-Q" | "10-K" | "8-K";
-                /** @description Optional section ID. If not specified, all sections from the filing are returned. */
+                /**
+                 * @description Optional section ID. If not specified, all sections from the filing are returned.
+                 * @example part_i-item_1a
+                 */
                 section_id?: string;
-                /** @description SEC accession number of the filing */
+                /**
+                 * @description SEC accession number of the filing
+                 * @example 0000320193-25-000079
+                 */
                 accession_number?: string;
-                /** @description Fiscal year */
+                /**
+                 * @description Fiscal year
+                 * @example 2025
+                 */
                 fiscal_year?: number;
-                /** @description Fiscal quarter (1-4). Required for 10-Q when using fiscal_year filter. */
+                /**
+                 * @description Fiscal quarter (1-4). Required for 10-Q when using fiscal_year filter.
+                 * @example 4
+                 */
                 fiscal_quarter?: number;
             };
             header?: never;
@@ -10147,6 +14528,35 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "companies": [
+                     *         {
+                     *           "ticker": "AAPL",
+                     *           "cik": "320193",
+                     *           "sections": [
+                     *             {
+                     *               "accession_number": "0000320193-25-000079",
+                     *               "calendar_quarter": 3,
+                     *               "calendar_year": 2025,
+                     *               "cik": "0000320193",
+                     *               "content": "**Item 13. Certain Relationships and Related Transactions, and Director Independence**\n\nThe information required by this Item will be included in the 2026 Proxy Statement, and is incorporated herein by reference.",
+                     *               "filing_date": "2025-10-31 06:01:26",
+                     *               "fiscal_quarter": 4,
+                     *               "fiscal_year": 2025,
+                     *               "form_type": "10-K",
+                     *               "html_tag_id": "i719388195b384d85a4e238ad88eba90a_274",
+                     *               "html_url": null,
+                     *               "item_id": "Item 13.",
+                     *               "part": "Part III",
+                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "title": "Certain Relationships and Related Transactions, and Director Independence"
+                     *             }
+                     *           ]
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Companies with requested filing sections */
                         companies: {
@@ -10206,7 +14616,10 @@ export interface operations {
     secFilingsAvailableFormTypes: {
         parameters: {
             query?: {
-                /** @description Optional ticker symbol or CIK. If omitted, returns form types across all filings. */
+                /**
+                 * @description Optional ticker symbol or CIK. If omitted, returns form types across all filings.
+                 * @example AAPL
+                 */
                 identifier?: string;
             };
             header?: never;
@@ -10221,6 +14634,13 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "form_types": [
+                     *         "10-K"
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Deduplicated SEC form types present in the filings table */
                         form_types: string[];
@@ -10236,11 +14656,20 @@ export interface operations {
     marketHolidays: {
         parameters: {
             query?: {
-                /** @description Sort direction for holidays by date */
+                /**
+                 * @description Sort direction for holidays by date
+                 * @example desc
+                 */
                 sort?: "asc" | "desc";
-                /** @description Maximum number of holidays to return */
+                /**
+                 * @description Maximum number of holidays to return
+                 * @example 5
+                 */
                 limit?: number;
-                /** @description Number of holidays to skip for pagination */
+                /**
+                 * @description Number of holidays to skip for pagination
+                 * @example 0
+                 */
                 offset?: number;
             };
             header?: never;
@@ -10255,6 +14684,19 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "holidays": [
+                     *         {
+                     *           "day": "2023-01-02 05:00:00",
+                     *           "event_name": "New Year's Day",
+                     *           "start_time": null,
+                     *           "end_time": null
+                     *         }
+                     *       ],
+                     *       "next_url": "https://api.data.invinite.com/v1/market/market-holidays?offset=100&limit=100"
+                     *     }
+                     */
                     "application/json": {
                         /** @description Market holidays */
                         holidays: {
@@ -10295,6 +14737,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "metrics": [
+                     *         {
+                     *           "metric_id": "is_total_revenue",
+                     *           "name": "Total Revenue"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Available metric identifiers */
                         metrics: {
@@ -10325,6 +14777,23 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "form_types": [
+                     *         {
+                     *           "form_type": "10-K",
+                     *           "sections": [
+                     *             {
+                     *               "section_id": "part_i-item_1",
+                     *               "part": "Part I",
+                     *               "item_id": "Item 1.",
+                     *               "title": "Business"
+                     *             }
+                     *           ]
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description Supported form types with their section IDs */
                         form_types: {
@@ -10352,7 +14821,10 @@ export interface operations {
     accountUsage: {
         parameters: {
             query?: {
-                /** @description Window in UTC days ending today (inclusive): 7, 30 or 90 */
+                /**
+                 * @description Window in UTC days ending today (inclusive): 7, 30 or 90
+                 * @example 30
+                 */
                 days?: 7 | 30 | 90;
             };
             header?: never;
@@ -10367,6 +14839,50 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "window_days": 30,
+                     *       "period": {
+                     *         "tier": "pro",
+                     *         "included_credits": 4000000,
+                     *         "used_credits": 3866,
+                     *         "resets_at": "2026-11-18T18:05:27.000Z",
+                     *         "prepaid_balance_usd": 0
+                     *       },
+                     *       "daily": [
+                     *         {
+                     *           "date": "2026-09-22",
+                     *           "requests": 0,
+                     *           "credits": 0,
+                     *           "errors": {
+                     *             "402": 0,
+                     *             "403": 0,
+                     *             "429": 0,
+                     *             "4xx": 0,
+                     *             "5xx": 0
+                     *           }
+                     *         }
+                     *       ],
+                     *       "by_family": [
+                     *         {
+                     *           "family": "company",
+                     *           "label": "Company",
+                     *           "requests": 1073,
+                     *           "credits": 1058
+                     *         }
+                     *       ],
+                     *       "by_key": [
+                     *         {
+                     *           "caller": "key",
+                     *           "label": "Production",
+                     *           "key_hint": "invd_3f2...a91c",
+                     *           "requests": 640,
+                     *           "credits": 1157
+                     *         }
+                     *       ],
+                     *       "truncated": false
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * @description The window answered
@@ -10471,6 +14987,27 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "generated_at": "2026-10-21T15:40:05.432Z",
+                     *       "services": [
+                     *         {
+                     *           "family": "company",
+                     *           "status": "operational",
+                     *           "uptime_7d": 0.993,
+                     *           "uptime_30d": 0.99,
+                     *           "uptime_90d": 0.99
+                     *         }
+                     *       ],
+                     *       "universe": {
+                     *         "companies": 6204,
+                     *         "earnings_calls": {
+                     *           "scope": "all",
+                     *           "companies": 5540
+                     *         }
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** Format: date-time */
                         generated_at: string;
@@ -10526,6 +15063,77 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "policy_version": "2026-10-draft",
+                     *       "counsel_signed_off": false,
+                     *       "resale": "Invinite data may be shown and, from PRO, redistributed inside the licensee's own product with attribution (\"Source: Invinite\" on screen or in the API response that carries it). It may never be resold, relicensed, white-labelled or offered …",
+                     *       "notes": {
+                     *         "display": "Show the data to the licensee's own users, with attribution.",
+                     *         "redistribute": "Pass the data on inside the licensee's product (exports, embedded widgets, downstream API responses) with attribution; never as a stand-alone data product.",
+                     *         "rag": "Use the text as retrieval context in a customer-facing product.",
+                     *         "train": "Model training is contract-only.",
+                     *         "audio": "Audio files are forensically watermarked per customer. Audio is served through signed URLs, is subject to per-company takedown and may not be re-hosted; every delivered file carries a per-account forensic watermark: a copy found elsewhere i…",
+                     *         "sec_data": "Figures and filings originate from SEC EDGAR; the standardisation, mapping and derived metrics are Invinite's."
+                     *       },
+                     *       "rights": [
+                     *         "display"
+                     *       ],
+                     *       "tiers": {
+                     *         "free": {
+                     *           "display": true,
+                     *           "redistribute": false,
+                     *           "rag": false,
+                     *           "train": false,
+                     *           "audio": false,
+                     *           "resell": false
+                     *         },
+                     *         "lite": {
+                     *           "display": true,
+                     *           "redistribute": false,
+                     *           "rag": false,
+                     *           "train": false,
+                     *           "audio": false,
+                     *           "resell": false
+                     *         },
+                     *         "standard": {
+                     *           "display": true,
+                     *           "redistribute": false,
+                     *           "rag": true,
+                     *           "train": false,
+                     *           "audio": false,
+                     *           "resell": false
+                     *         },
+                     *         "pro": {
+                     *           "display": true,
+                     *           "redistribute": true,
+                     *           "rag": true,
+                     *           "train": false,
+                     *           "audio": true,
+                     *           "resell": false
+                     *         }
+                     *       },
+                     *       "families": [
+                     *         {
+                     *           "family": "company",
+                     *           "routes": [
+                     *             {
+                     *               "route": "/v1/company/available-companies",
+                     *               "tier": "free",
+                     *               "license": "display"
+                     *             }
+                     *           ]
+                     *         }
+                     *       ],
+                     *       "universe": {
+                     *         "companies": 6204,
+                     *         "earnings_calls": {
+                     *           "scope": "all",
+                     *           "companies": 5540
+                     *         }
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         policy_version: string;
                         counsel_signed_off: boolean;
