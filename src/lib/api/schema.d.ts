@@ -2856,7 +2856,7 @@ export interface operations {
                     /**
                      * @example {
                      *       "status": "ok",
-                     *       "timestamp": "2026-10-21T15:39:28.865Z"
+                     *       "timestamp": "2026-10-21T16:11:57.458Z"
                      *     }
                      */
                     "application/json": {
@@ -3029,7 +3029,7 @@ export interface operations {
                      *           "cusip": "",
                      *           "composite_figi": "BBG000B9XRY4",
                      *           "is_delisted": false,
-                     *           "list_date": "1980-12-12 00:00:00+00",
+                     *           "list_date": "1980-12-12",
                      *           "employees": 166000,
                      *           "market_cap": 4991209560000,
                      *           "shares_outstanding": 14594180000,
@@ -3196,13 +3196,13 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "dividends": [
                      *             {
-                     *               "ex_dividend_date": "2026-08-10 00:00:00",
-                     *               "declaration_date": "2026-07-30 00:00:00",
+                     *               "ex_dividend_date": "2026-08-10",
+                     *               "declaration_date": "2026-07-30",
                      *               "cash_amount": 0.27,
                      *               "dividend_type": "CD",
                      *               "frequency": 4,
-                     *               "pay_date": "2026-08-13 00:00:00",
-                     *               "record_date": "2026-08-10 00:00:00"
+                     *               "pay_date": "2026-08-13",
+                     *               "record_date": "2026-08-10"
                      *             }
                      *           ],
                      *           "next_url": "https://api.data.invinite.com/v1/company/dividends?identifier=AAPL&offset=40&limit=40"
@@ -3306,7 +3306,7 @@ export interface operations {
                      *               "fiscal_quarter": 3,
                      *               "calendar_year": 2026,
                      *               "calendar_quarter": 2,
-                     *               "period_end": "2026-06-27 00:00:00"
+                     *               "period_end": "2026-06-27"
                      *             }
                      *           ],
                      *           "next_url": "https://api.data.invinite.com/v1/company/fiscal-periods?identifier=AAPL&offset=40&limit=40"
@@ -3394,7 +3394,7 @@ export interface operations {
                      *           "splits": [
                      *             {
                      *               "ticker": "AAPL",
-                     *               "execution_date": "2020-08-31 00:00:00",
+                     *               "execution_date": "2020-08-31",
                      *               "split_from": 1,
                      *               "split_to": 4
                      *             }
@@ -3490,7 +3490,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "is_total_revenue": 416161000000,
                      *                 "is_revenue_from_contract_with_customer": 416161000000,
@@ -3615,7 +3615,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "is_total_revenue": {
                      *                   "value": 416161000000,
@@ -3849,7 +3849,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": [
                      *                 {
                      *                   "metric_id": "is_total_revenue",
@@ -3965,7 +3965,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "bs_total_assets": 359241000000,
                      *                 "bs_total_current_assets": 147957000000,
@@ -4090,7 +4090,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "bs_total_assets": {
                      *                   "value": 359241000000,
@@ -4324,7 +4324,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": [
                      *                 {
                      *                   "metric_id": "bs_total_assets",
@@ -4452,7 +4452,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "cfs_cash_from_operating_activities": 111482000000,
                      *                 "cfs_cash_from_operating_activities_continuing_operations": -2100000000,
@@ -4577,7 +4577,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "cfs_cash_from_operating_activities": {
                      *                   "value": 111482000000,
@@ -4811,7 +4811,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": [
                      *                 {
                      *                   "metric_id": "cfs_cash_from_operating_activities",
@@ -4920,7 +4920,7 @@ export interface operations {
                      *           "calendar_year": 2025,
                      *           "calendar_quarter": 3,
                      *           "fiscal_period_type": "annual",
-                     *           "period_end": "2025-09-27 00:00:00",
+                     *           "period_end": "2025-09-27",
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": {
@@ -5085,7 +5085,7 @@ export interface operations {
                      *           "calendar_year": 2025,
                      *           "calendar_quarter": 3,
                      *           "fiscal_period_type": "annual",
-                     *           "period_end": "2025-09-27 00:00:00",
+                     *           "period_end": "2025-09-27",
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": {
@@ -5587,7 +5587,7 @@ export interface operations {
                      *           "calendar_year": 2025,
                      *           "calendar_quarter": 3,
                      *           "fiscal_period_type": "annual",
-                     *           "period_end": "2025-09-27 00:00:00",
+                     *           "period_end": "2025-09-27",
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": [
@@ -7127,7 +7127,7 @@ export interface operations {
                      *           "calendar_year": 2025,
                      *           "calendar_quarter": 3,
                      *           "fiscal_period_type": "annual",
-                     *           "period_end": "2025-09-27 00:00:00",
+                     *           "period_end": "2025-09-27",
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": {
@@ -7295,7 +7295,7 @@ export interface operations {
                      *           "calendar_year": 2025,
                      *           "calendar_quarter": 3,
                      *           "fiscal_period_type": "annual",
-                     *           "period_end": "2025-09-27 00:00:00",
+                     *           "period_end": "2025-09-27",
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": {
@@ -7797,7 +7797,7 @@ export interface operations {
                      *           "calendar_year": 2025,
                      *           "calendar_quarter": 3,
                      *           "fiscal_period_type": "annual",
-                     *           "period_end": "2025-09-27 00:00:00",
+                     *           "period_end": "2025-09-27",
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": [
@@ -7966,7 +7966,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "solvency": {
                      *                   "ratio_debt_to_assets_ratio": 0.27,
@@ -8103,7 +8103,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "3": {
                      *                   "cagr_cash_from_operating_activities": -3,
@@ -8275,7 +8275,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "year_over_year": {
                      *                   "growth_cash_from_operating_activities": -5.73,
@@ -8409,7 +8409,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "is_revenue_from_contract_with_customer": [
                      *                   {
@@ -8539,7 +8539,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "is_revenue_from_contract_with_customer": [
                      *                   {
@@ -9849,36 +9849,36 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "as_of": "2026-10-21T15:39:44.634Z",
+                     *       "as_of": "2026-10-21T16:12:10.298Z",
                      *       "events": [
                      *         {
-                     *           "event_id": "bb86c217-f8f5-4db7-925e-6885f8a74a91",
+                     *           "event_id": "cb6894b6-5437-4cc0-8649-3decfa0dfdae",
                      *           "source": "us",
-                     *           "cik": "0001861657",
-                     *           "symbol": "CNTN",
-                     *           "company_name": "Canton Strategic Holdings, Inc. Common Stock",
-                     *           "exchange": "NASDAQ",
+                     *           "cik": "0000766421",
+                     *           "symbol": "ALK",
+                     *           "company_name": "Alaska Air Group, Inc.",
+                     *           "exchange": "NYSE",
                      *           "event_type": "earnings_call",
                      *           "event_title": null,
                      *           "fiscal_year": 2026,
                      *           "fiscal_quarter": 3,
-                     *           "scheduled_at": "2026-10-21T15:00:00.000Z",
-                     *           "tz": "America/New_York",
+                     *           "scheduled_at": "2026-10-21T15:30:00.000Z",
+                     *           "tz": "America/Los_Angeles",
                      *           "date_status": "confirmed",
-                     *           "call_time_source": "ir_feed",
+                     *           "call_time_source": "wire",
                      *           "call_time_confidence": "high",
                      *           "session": "intraday",
-                     *           "started_at": "2026-10-21T15:02:32.562Z",
+                     *           "started_at": "2026-10-21T15:30:22.011Z",
                      *           "ended_at": null,
-                     *           "results_released_at": null,
+                     *           "results_released_at": "2026-10-20T21:09:36.000Z",
                      *           "capture_status": "capturing",
                      *           "reschedule_count": 0,
                      *           "has_transcript": false,
                      *           "has_audio": false,
                      *           "has_slides": false,
-                     *           "has_press_release": false,
+                     *           "has_press_release": true,
                      *           "has_documents": false,
-                     *           "webcast_url": "https://app.webinar.net/ZX0qjLYp5kO",
+                     *           "webcast_url": "https://edge.media-server.com/mmc/p/in3893v2",
                      *           "live_channel": "earnings-calls.live",
                      *           "live_audio": true,
                      *           "live_prices": true
@@ -12733,7 +12733,7 @@ export interface operations {
                      *       },
                      *       "deck": {
                      *         "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/2026-07-29/slides/q4-fy2026-earnings-presentation.pdf?X-Amz-Signature=…",
-                     *         "expires_at": "2026-10-21T15:54:50.064Z",
+                     *         "expires_at": "2026-10-21T16:27:16.031Z",
                      *         "pages": 23,
                      *         "origin": "ir_page",
                      *         "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/SlidesFY26Q4.pptx",
@@ -12897,7 +12897,7 @@ export interface operations {
                      *           "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/OutlookFY27Q1",
                      *           "accession_number": null,
                      *           "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/2026-07-29/documents/cfo-commentary/q4-fy2026-cfo-commentary.pdf?X-Amz-Signature=…",
-                     *           "expires_at": "2026-10-21T15:54:50.220Z",
+                     *           "expires_at": "2026-10-21T16:27:16.218Z",
                      *           "content_type": "application/pdf",
                      *           "bytes": 487074,
                      *           "pages": 6,
@@ -13079,7 +13079,7 @@ export interface operations {
                      *           "link_status": null,
                      *           "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/documents/esg/2030/microsoft-datacenters-in-finland.pdf?X-Amz-Signature=…",
                      *           "pages_url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/documents/esg/2030/microsoft-datacenters-in-finland.pdf.pages.json?X-Amz-Signature=…",
-                     *           "expires_at": "2026-10-21T15:54:50.388Z",
+                     *           "expires_at": "2026-10-21T16:27:16.389Z",
                      *           "created_at": "2026-10-16T20:46:08.960Z",
                      *           "updated_at": "2026-10-21T13:18:13.882Z"
                      *         }
@@ -14346,12 +14346,12 @@ export interface operations {
                      *               "calendar_quarter": 4,
                      *               "calendar_year": 2026,
                      *               "cik": "0000320193",
-                     *               "filing_date": "2026-10-19 18:32:55",
+                     *               "filing_date": "2026-10-19",
                      *               "fiscal_quarter": null,
                      *               "fiscal_year": null,
                      *               "form_type": "4",
                      *               "html_url": "https://storage-prod.invinite.com/filing_htmls/320193_0001140361-26-040127_4_2026-10-19.html",
-                     *               "period_end": "2026-10-15 00:00:00"
+                     *               "period_end": "2026-10-15"
                      *             }
                      *           ],
                      *           "next_url": "https://api.data.invinite.com/v1/sec-filings/filings?identifier=AAPL&offset=40&limit=40"
@@ -14440,14 +14440,14 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "text": "Apple’s principal risks, as disclosed in its SEC filings, are:\n\n- **Intense competition and rapid technological change:** Apple competes across smartphones, PCs, tablets, wearables, services, and digital content; competitors may offer lower…",
+                     *       "text": "Apple’s main risk factors, as disclosed in its latest available Form 10-K for fiscal year ended September 27, 2025, are:\n\n- **Intense competition and rapid technological change:** Apple operates in highly competitive markets with aggressive…",
                      *       "sources": [
                      *         {
                      *           "cik": "0000320193",
                      *           "accession_number": "0000320193-25-000079",
                      *           "html_url": "https://storage-prod.invinite.com/filing_htmls/320193_0000320193-25-000079_10-K_2025-10-31.html",
                      *           "ticker": "AAPL",
-                     *           "filing_date": "2025-10-31 06:01:26",
+                     *           "filing_date": "2025-10-31",
                      *           "form_type": "10-K"
                      *         }
                      *       ]
@@ -14541,7 +14541,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "cik": "0000320193",
                      *               "content": "**Item 13. Certain Relationships and Related Transactions, and Director Independence**\n\nThe information required by this Item will be included in the 2026 Proxy Statement, and is incorporated herein by reference.",
-                     *               "filing_date": "2025-10-31 06:01:26",
+                     *               "filing_date": "2025-10-31",
                      *               "fiscal_quarter": 4,
                      *               "fiscal_year": 2025,
                      *               "form_type": "10-K",
@@ -14549,7 +14549,7 @@ export interface operations {
                      *               "html_url": null,
                      *               "item_id": "Item 13.",
                      *               "part": "Part III",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "title": "Certain Relationships and Related Transactions, and Director Independence"
                      *             }
                      *           ]
@@ -14688,7 +14688,7 @@ export interface operations {
                      * @example {
                      *       "holidays": [
                      *         {
-                     *           "day": "2023-01-02 05:00:00",
+                     *           "day": "2023-01-02",
                      *           "event_name": "New Year's Day",
                      *           "start_time": null,
                      *           "end_time": null
@@ -14845,7 +14845,7 @@ export interface operations {
                      *       "period": {
                      *         "tier": "pro",
                      *         "included_credits": 4000000,
-                     *         "used_credits": 3866,
+                     *         "used_credits": 4311,
                      *         "resets_at": "2026-11-18T18:05:27.000Z",
                      *         "prepaid_balance_usd": 0
                      *       },
@@ -14867,17 +14867,17 @@ export interface operations {
                      *         {
                      *           "family": "company",
                      *           "label": "Company",
-                     *           "requests": 1073,
-                     *           "credits": 1058
+                     *           "requests": 1099,
+                     *           "credits": 1108
                      *         }
                      *       ],
                      *       "by_key": [
                      *         {
                      *           "caller": "key",
-                     *           "label": "Production",
+                     *           "label": "spec examples smoke",
                      *           "key_hint": "invd_3f2...a91c",
-                     *           "requests": 640,
-                     *           "credits": 1157
+                     *           "requests": 433,
+                     *           "credits": 1260
                      *         }
                      *       ],
                      *       "truncated": false
@@ -14989,14 +14989,14 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "generated_at": "2026-10-21T15:40:05.432Z",
+                     *       "generated_at": "2026-10-21T16:12:28.575Z",
                      *       "services": [
                      *         {
                      *           "family": "company",
                      *           "status": "operational",
-                     *           "uptime_7d": 0.993,
-                     *           "uptime_30d": 0.99,
-                     *           "uptime_90d": 0.99
+                     *           "uptime_7d": 0.991,
+                     *           "uptime_30d": 0.989,
+                     *           "uptime_90d": 0.989
                      *         }
                      *       ],
                      *       "universe": {
