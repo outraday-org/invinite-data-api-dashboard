@@ -1717,7 +1717,11 @@ export interface paths {
          *
          *     - Files are served as short-lived signed URLs (see `expires_at`), never proxied; request a fresh response after expiry.
          *
-         *     - Each document carries its `trust_tier`.
+         *     - Each document carries its `trust_tier` and its folder of the company's document tree (`group`, `group_label`, `category`; filter with `category` / `group`). A call's own files sit in its earnings folder, e.g. `earnings/fy2027/q2`.
+         *
+         *     ### The document tree
+         *
+         *     Every stored document sits in one folder of the company's document tree: `group` (its path) under one of nine `category` spine folders, in this order: `earnings` (`earnings/fy2027/q2` = one fiscal quarter's call: release, deck, CFO commentary, data sheets, transcript; `earnings/cy2026/08-26` = a call without a fiscal period), `events` (`events/2026/09-10-<event>` = a conference, investor day or shareholder meeting), `news` (`news/2025`), `reports` (`reports/2025`: annual reports, proxy statements, annual letters), `presentations` (`presentations/2024`), `governance`, `esg` (`esg/2025`), `shareholder` (`shareholder/tax`, `shareholder/dividends`, `shareholder/stock`) and `other` (`other/faq`, `other/fact-sheets`, `other/financial-data[/2025]`, `other/web-pages`, `other/documents`). `…/undated` = no date could be read. `group` and `category` are null while a document has not been placed yet.
          *
          *     - `documents` is `[]` for a call without further documents (`has_documents` tells ahead).
          *
@@ -1761,7 +1765,11 @@ export interface paths {
          * Company documents
          * @description A company's investor-relations documents outside its earnings calls' folders, newest year first: annual reports, proxy statements, ESG / governance documents, investor-day and conference decks, shareholder letters, fact sheets, and link-only webcast replay pages.
          *
-         *     Filter by IR section, kind, year, period or event. Documents of one earnings call are on `/v1/earnings-calls/documents`.
+         *     Filter by IR section, kind, year, period or event, or by the document tree: `category`, `group` (a folder and everything below it) and `fiscal_year` / `fiscal_quarter` (the earnings folder `earnings/fy<YYYY>/q<N>`). Documents of one earnings call are on `/v1/earnings-calls/documents`.
+         *
+         *     ### The document tree
+         *
+         *     Every stored document sits in one folder of the company's document tree: `group` (its path) under one of nine `category` spine folders, in this order: `earnings` (`earnings/fy2027/q2` = one fiscal quarter's call: release, deck, CFO commentary, data sheets, transcript; `earnings/cy2026/08-26` = a call without a fiscal period), `events` (`events/2026/09-10-<event>` = a conference, investor day or shareholder meeting), `news` (`news/2025`), `reports` (`reports/2025`: annual reports, proxy statements, annual letters), `presentations` (`presentations/2024`), `governance`, `esg` (`esg/2025`), `shareholder` (`shareholder/tax`, `shareholder/dividends`, `shareholder/stock`) and `other` (`other/faq`, `other/fact-sheets`, `other/financial-data[/2025]`, `other/web-pages`, `other/documents`). `…/undated` = no date could be read. `group` and `category` are null while a document has not been placed yet.
          *
          *     ### What you get
          *
@@ -1848,6 +1856,8 @@ export interface paths {
          *     - Up to 20 passages from company-published documents, with page numbers — not verified facts — and a signed URL of the file (open it at `#page=<page>`).
          *
          *     - Filter by company (`identifier`), kind, IR section, year or table.
+         *
+         *     - Each hit names the document's folder of the company's document tree (`group`, e.g. `earnings/fy2027/q2`, `group_label`, `category`).
          *
          *     ### Errors
          *
@@ -12848,6 +12858,18 @@ export interface operations {
                  */
                 kind?: string[];
                 /**
+                 * @description Only these tree categories, comma-separated or repeated: earnings, events, news, reports, presentations, governance, esg, shareholder, other
+                 * @example [
+                 *       "earnings"
+                 *     ]
+                 */
+                category?: string[];
+                /**
+                 * @description Only this folder of the document tree and everything below it (prefix match), e.g. earnings/fy2027 or earnings/fy2027/q2 or reports
+                 * @example earnings/fy2026/q4
+                 */
+                group?: string;
+                /**
                  * @description Extra data, comma-separated or repeated: `body` = the extracted text
                  * @example [
                  *       "body"
@@ -12901,7 +12923,10 @@ export interface operations {
                      *           "content_type": "application/pdf",
                      *           "bytes": 487074,
                      *           "pages": 6,
-                     *           "trust_tier": "confirmed_domain"
+                     *           "trust_tier": "confirmed_domain",
+                     *           "group": "earnings/fy2026/q4",
+                     *           "group_label": "Q4 FY2026",
+                     *           "category": "earnings"
                      *         }
                      *       ]
                      *     }
@@ -12973,6 +12998,15 @@ export interface operations {
                              * @enum {string|null}
                              */
                             trust_tier: "sec" | "wire" | "confirmed_domain" | "unconfirmed" | "internal" | null;
+                            /** @description Folder of the document tree, e.g. earnings/fy2027/q2, events/2026/09-10-<event>, news/2025, reports/2025, governance, shareholder/tax; null = not placed yet */
+                            group: string | null;
+                            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "Shareholder · Tax" */
+                            group_label: string | null;
+                            /**
+                             * @description Spine folder of the tree: earnings, events, news, reports, presentations, governance, esg, shareholder, other; null = not placed yet
+                             * @enum {string|null}
+                             */
+                            category: "earnings" | "events" | "news" | "reports" | "presentations" | "governance" | "esg" | "shareholder" | "other" | null;
                             /** @description Extracted text, capped (only with include=body; null for spreadsheets / link-only rows) */
                             body_text?: string | null;
                         }[];
@@ -13026,6 +13060,28 @@ export interface operations {
                  */
                 event_id?: string;
                 /**
+                 * @description Only these tree categories, comma-separated or repeated: earnings, events, news, reports, presentations, governance, esg, shareholder, other
+                 * @example [
+                 *       "earnings"
+                 *     ]
+                 */
+                category?: string[];
+                /**
+                 * @description Only this folder of the document tree and everything below it (prefix match), e.g. earnings/fy2027 or earnings/fy2027/q2 or reports
+                 * @example earnings/fy2026/q4
+                 */
+                group?: string;
+                /**
+                 * @description Only documents of this fiscal year's earnings folders (earnings/fy<YYYY>/…)
+                 * @example 2026
+                 */
+                fiscal_year?: number;
+                /**
+                 * @description Only documents of this fiscal quarter's earnings folder (earnings/fy…/q<N>); combine with fiscal_year
+                 * @example 4
+                 */
+                fiscal_quarter?: number;
+                /**
                  * @description Maximum number of documents to return
                  * @example 5
                  */
@@ -13062,6 +13118,9 @@ export interface operations {
                      *           "kind": "esg_report",
                      *           "year": 2030,
                      *           "period": null,
+                     *           "group": "esg/2030",
+                     *           "group_label": "ESG 2030",
+                     *           "category": "esg",
                      *           "event_id": null,
                      *           "event_type": null,
                      *           "event_date": null,
@@ -13120,6 +13179,15 @@ export interface operations {
                              * @enum {string|null}
                              */
                             period: "Q1" | "Q2" | "Q3" | "Q4" | "H1" | "H2" | "FY" | null;
+                            /** @description Folder of the document tree, e.g. earnings/fy2027/q2, events/2026/09-10-<event>, news/2025, reports/2025, governance, shareholder/tax; null = not placed yet */
+                            group: string | null;
+                            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "Shareholder · Tax" */
+                            group_label: string | null;
+                            /**
+                             * @description Spine folder of the tree: earnings, events, news, reports, presentations, governance, esg, shareholder, other; null = not placed yet
+                             * @enum {string|null}
+                             */
+                            category: "earnings" | "events" | "news" | "reports" | "presentations" | "governance" | "esg" | "shareholder" | "other" | null;
                             /**
                              * Format: uuid
                              * @description The event the document belongs to
@@ -13249,6 +13317,9 @@ export interface operations {
                      *         "kind": "webcast",
                      *         "year": 2026,
                      *         "period": "Q1",
+                     *         "group": "earnings/fy2026/q1",
+                     *         "group_label": "Q1 FY2026",
+                     *         "category": "earnings",
                      *         "event_id": null,
                      *         "event_type": null,
                      *         "event_date": null,
@@ -13304,6 +13375,15 @@ export interface operations {
                              * @enum {string|null}
                              */
                             period: "Q1" | "Q2" | "Q3" | "Q4" | "H1" | "H2" | "FY" | null;
+                            /** @description Folder of the document tree, e.g. earnings/fy2027/q2, events/2026/09-10-<event>, news/2025, reports/2025, governance, shareholder/tax; null = not placed yet */
+                            group: string | null;
+                            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "Shareholder · Tax" */
+                            group_label: string | null;
+                            /**
+                             * @description Spine folder of the tree: earnings, events, news, reports, presentations, governance, esg, shareholder, other; null = not placed yet
+                             * @enum {string|null}
+                             */
+                            category: "earnings" | "events" | "news" | "reports" | "presentations" | "governance" | "esg" | "shareholder" | "other" | null;
                             /**
                              * Format: uuid
                              * @description The event the document belongs to
@@ -13486,6 +13566,15 @@ export interface operations {
                             text: string;
                             /** @description Document title */
                             title: string | null;
+                            /** @description Folder of the document tree, e.g. earnings/fy2027/q2, events/2026/09-10-<event>, news/2025, reports/2025, governance, shareholder/tax; null = not placed yet */
+                            group: string | null;
+                            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "Shareholder · Tax" */
+                            group_label: string | null;
+                            /**
+                             * @description Spine folder of the tree: earnings, events, news, reports, presentations, governance, esg, shareholder, other; null = not placed yet
+                             * @enum {string|null}
+                             */
+                            category: "earnings" | "events" | "news" | "reports" | "presentations" | "governance" | "esg" | "shareholder" | "other" | null;
                             /** @description Signed URL of the stored file; null for a link-only row */
                             url: string | null;
                             /**

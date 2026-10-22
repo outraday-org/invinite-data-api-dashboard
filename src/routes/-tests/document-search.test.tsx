@@ -35,10 +35,13 @@ vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
 afterEach(cleanup);
 
 const HIT: EarningsDocumentSearchResponse["hits"][number] = {
+    category: "reports",
     cik: "0000000001",
     document_id: "00000000-0000-4000-8000-000000000001",
     event_id: null,
     expires_at: "2026-10-18T12:15:00.000Z",
+    group: "reports/2025",
+    group_label: "Reports 2025",
     heading: "Capital allocation",
     kind: "annual_report",
     page: 14,

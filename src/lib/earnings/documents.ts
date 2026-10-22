@@ -67,9 +67,48 @@ export const documentKindLabel = (kind: string) => kind.replaceAll("_", " ");
 export const sectionLabel = (section: string) =>
     (SECTION_LABELS as Record<string, string | undefined>)[section] ?? documentKindLabel(section);
 
+/**
+ * The spine folders of the company document tree (IDA `ASSET_GROUP_CATEGORIES` in `src/lib/earnings/asset-groups.ts`,
+ * from the pipeline's `asset-groups.ts`), in tree order. Change with IDA.
+ */
+export const ASSET_GROUP_CATEGORIES = [
+    "earnings",
+    "events",
+    "news",
+    "reports",
+    "presentations",
+    "governance",
+    "esg",
+    "shareholder",
+    "other",
+] as const;
+
+export type AssetGroupCategory = (typeof ASSET_GROUP_CATEGORIES)[number];
+
+export const CATEGORY_LABELS: Record<AssetGroupCategory, string> = {
+    earnings: "Earnings",
+    esg: "ESG",
+    events: "Events",
+    governance: "Governance",
+    news: "News",
+    other: "Other",
+    presentations: "Presentations",
+    reports: "Reports",
+    shareholder: "Shareholder",
+};
+
+/** The tree's bucket for documents the pipeline has not placed yet (`category` null), after every category. */
+export const UNPLACED_CATEGORY = "unplaced";
+
+export const categoryLabel = (category: string) =>
+    category === UNPLACED_CATEGORY
+        ? "Not yet placed"
+        : (CATEGORY_LABELS as Record<string, string | undefined>)[category] ?? documentKindLabel(category);
+
 // Every field optional: a bare `/$ticker/documents` link shows the whole library; an invalid value
 // falls back to "no filter" instead of failing the route (as the calendar filters).
 const documentsSearchSchema = z.object({
+    category: z.enum(ASSET_GROUP_CATEGORIES).optional().catch(undefined),
     kind: z.enum(COMPANY_DOCUMENT_KINDS).optional().catch(undefined),
     section: z.enum(IR_SECTION_KINDS).optional().catch(undefined),
     year: z.coerce.number().int().min(1990).max(2100).optional().catch(undefined),
@@ -82,49 +121,100 @@ export function validateDocumentsSearch(search: Record<string, unknown>): Docume
     return documentsSearchSchema.parse(search);
 }
 
-type TreeDocument = { section: string; year: null | number };
-
-export type DocumentYearGroup<T extends TreeDocument> = { documents: Array<T>; year: null | number };
-
-export type DocumentSectionGroup<T extends TreeDocument> = {
-    count: number;
+type TreeDocument = {
+    category: null | string;
+    group: null | string;
+    group_label: null | string;
     section: string;
-    years: Array<DocumentYearGroup<T>>;
+    year: null | number;
 };
 
-const sectionRank = (section: string) => {
-    const index = (IR_SECTION_KINDS as ReadonlyArray<string>).indexOf(section);
+export type DocumentFolder<T extends TreeDocument> = { documents: Array<T>; key: string; label: string };
 
-    return index === -1 ? IR_SECTION_KINDS.length : index;
+export type DocumentCategoryGroup<T extends TreeDocument> = {
+    category: string;
+    count: number;
+    folders: Array<DocumentFolder<T>>;
 };
+
+const categoryRank = (category: string) => {
+    const index = (ASSET_GROUP_CATEGORIES as ReadonlyArray<string>).indexOf(category);
+
+    if (index !== -1) return index;
+
+    return category === UNPLACED_CATEGORY ? ASSET_GROUP_CATEGORIES.length + 1 : ASSET_GROUP_CATEGORIES.length;
+};
+
+const DATED_SEGMENT = /^(?:fy|cy|q)?\d/;
 
 /**
- * Section → year tree of the loaded documents: sections in `IR_SECTION_KINDS` order (an unknown section after
- * them, by name), years newest first with undated (`year: null`) last; within a year the API's order is kept.
+ * Folder order inside a category (the pipeline's `compareGroupPaths`): dated segments (`fy2027`, `q2`, `2025`,
+ * `09-10-…`) newest first, named ones A–Z, `undated` last; a parent before its children.
  */
-export function groupDocumentTree<T extends TreeDocument>(documents: ReadonlyArray<T>): Array<DocumentSectionGroup<T>> {
-    const bySection = new Map<string, Map<null | number, Array<T>>>();
+export function compareFolderKeys(a: string, b: string) {
+    const left = a.split("/");
 
-    for (const doc of documents) {
-        const years = bySection.get(doc.section) ?? new Map<null | number, Array<T>>();
+    const right = b.split("/");
 
-        const list = years.get(doc.year) ?? [];
+    for (let index = 0; index < Math.min(left.length, right.length); index++) {
+        const x = left[index];
 
-        list.push(doc);
+        const y = right[index];
 
-        years.set(doc.year, list);
+        if (x === y) continue;
 
-        bySection.set(doc.section, years);
+        if (x === "undated") return 1;
+
+        if (y === "undated") return -1;
+
+        if (DATED_SEGMENT.test(x) && DATED_SEGMENT.test(y)) return y.localeCompare(x);
+
+        return x.localeCompare(y);
     }
 
-    return [...bySection.entries()]
-        .sort(([a], [b]) => sectionRank(a) - sectionRank(b) || a.localeCompare(b))
-        .map(([section, years]) => ({
-            count: [...years.values()].reduce((sum, list) => sum + list.length, 0),
-            section,
-            years: [...years.entries()]
-                .sort(([a], [b]) => (a === null ? 1 : b === null ? -1 : b - a))
-                .map(([year, list]) => ({ documents: list, year })),
+    return left.length - right.length;
+}
+
+/** A document's folder: its `group`, else (not placed yet) its IR section and year. */
+function folderOf(doc: TreeDocument) {
+    if (doc.group) return { key: doc.group, label: doc.group_label ?? doc.group };
+
+    return {
+        key: `${doc.section}/${doc.year ?? "undated"}`,
+        label: `${sectionLabel(doc.section)} · ${doc.year ?? "Undated"}`,
+    };
+}
+
+/**
+ * Category → folder tree of the loaded documents, by the API's document tree (`category`, `group`, `group_label`):
+ * categories in `ASSET_GROUP_CATEGORIES` order (an unknown one after them, documents not placed yet last, by IR
+ * section and year), folders by `compareFolderKeys`; within a folder the API's order is kept.
+ */
+export function groupDocumentFolders<T extends TreeDocument>(documents: ReadonlyArray<T>): Array<DocumentCategoryGroup<T>> {
+    const byCategory = new Map<string, Map<string, DocumentFolder<T>>>();
+
+    for (const doc of documents) {
+        const category = doc.category ?? UNPLACED_CATEGORY;
+
+        const folders = byCategory.get(category) ?? new Map<string, DocumentFolder<T>>();
+
+        const { key, label } = folderOf(doc);
+
+        const folder = folders.get(key) ?? { documents: [], key, label };
+
+        folder.documents.push(doc);
+
+        folders.set(key, folder);
+
+        byCategory.set(category, folders);
+    }
+
+    return [...byCategory.entries()]
+        .sort(([a], [b]) => categoryRank(a) - categoryRank(b) || a.localeCompare(b))
+        .map(([category, folders]) => ({
+            category,
+            count: [...folders.values()].reduce((sum, folder) => sum + folder.documents.length, 0),
+            folders: [...folders.values()].sort((a, b) => compareFolderKeys(a.key, b.key)),
         }));
 }
 

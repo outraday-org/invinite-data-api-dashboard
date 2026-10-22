@@ -3,7 +3,7 @@ import type { DocumentsSearch } from "@/lib/earnings/documents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
-import { COMPANY_DOCUMENT_KINDS, documentKindLabel, IR_SECTION_KINDS, sectionLabel } from "@/lib/earnings/documents";
+import { ASSET_GROUP_CATEGORIES, categoryLabel, COMPANY_DOCUMENT_KINDS, documentKindLabel, IR_SECTION_KINDS, sectionLabel } from "@/lib/earnings/documents";
 
 const ALL = "all";
 
@@ -22,10 +22,24 @@ export function DocumentFilters({
     onChange: (patch: Partial<DocumentsSearch>) => void;
     search: DocumentsSearch;
 }) {
-    const active = search.section !== undefined || search.kind !== undefined || search.year !== undefined;
+    const active = search.category !== undefined || search.section !== undefined || search.kind !== undefined || search.year !== undefined;
 
     return (
         <div className="flex flex-wrap items-center gap-2">
+            <Select
+                onValueChange={value => onChange({ category: value === ALL ? undefined : value as DocumentsSearch["category"] })}
+                value={search.category ?? ALL}
+            >
+                <SelectTrigger aria-label="Category" className="w-[160px]">
+                    {search.category ? categoryLabel(search.category) : "All categories"}
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value={ALL}>All categories</SelectItem>
+                    {ASSET_GROUP_CATEGORIES.map(category => (
+                        <SelectItem key={category} value={category}>{categoryLabel(category)}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
             <Select
                 onValueChange={value => onChange({ section: value === ALL ? undefined : value as DocumentsSearch["section"] })}
                 value={search.section ?? ALL}
@@ -71,7 +85,7 @@ export function DocumentFilters({
                 type="number"
             />
             {active && (
-                <Button onClick={() => onChange({ kind: undefined, section: undefined, year: undefined })} size="xs" type="button" variant="ghost">
+                <Button onClick={() => onChange({ category: undefined, kind: undefined, section: undefined, year: undefined })} size="xs" type="button" variant="ghost">
                     Clear
                 </Button>
             )}

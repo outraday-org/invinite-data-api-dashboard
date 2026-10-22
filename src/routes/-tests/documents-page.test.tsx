@@ -29,6 +29,7 @@ const SIGNED = "https://r2.example.com/docs/annual-report.pdf?X-Amz-Signature=se
 
 const base: EarningsCompanyDocument = {
     bytes: 2_400_000,
+    category: "reports",
     confidence: "high",
     content_type: "application/pdf",
     created_at: "2026-10-01T00:00:00.000Z",
@@ -37,6 +38,8 @@ const base: EarningsCompanyDocument = {
     event_id: null,
     event_type: null,
     expires_at: "2026-10-18T12:15:00.000Z",
+    group: "reports/2025",
+    group_label: "Reports 2025",
     kind: "annual_report",
     link_status: null,
     origin: "html_page",
@@ -57,15 +60,25 @@ const base: EarningsCompanyDocument = {
 
 const DOCUMENTS: Array<EarningsCompanyDocument> = [
     base,
-    { ...base, document_id: "00000000-0000-4000-8000-000000000002", title: "Annual Report 2024", year: 2024 },
+    {
+        ...base,
+        document_id: "00000000-0000-4000-8000-000000000002",
+        group: "reports/2024",
+        group_label: "Reports 2024",
+        title: "Annual Report 2024",
+        year: 2024,
+    },
     {
         ...base,
         bytes: null,
+        category: "events",
         content_type: null,
         document_id: "00000000-0000-4000-8000-000000000003",
         event_date: "2026-03-12",
         event_id: "11111111-1111-4111-8111-111111111111",
         event_type: "investor_day",
+        group: "events/2026/03-12-investor-day",
+        group_label: "Events 2026 · Investor Day",
         kind: "webcast",
         link_status: "expired",
         pages: null,
@@ -80,15 +93,15 @@ const DOCUMENTS: Array<EarningsCompanyDocument> = [
 ];
 
 describe("DocumentTree", () => {
-    it("groups by section then year: sections open, only the newest year open", () => {
+    it("groups by category then folder: categories open, only the newest folder open", () => {
         render(<DocumentTree documents={DOCUMENTS} onShowText={vi.fn()} ticker="ACME" />);
 
         const sections = screen.getAllByRole("button", { expanded: true }).map(button => button.textContent);
 
-        // Events (open, its only year open) before Annual reports (open, 2025 open); 2024 is collapsed.
-        expect(sections).toEqual(["Events1", "20261", "Annual reports2", "20251"]);
+        // Events (open, its only folder open) before Reports (open, 2025 open); 2024 is collapsed.
+        expect(sections).toEqual(["Events1", "Events 2026 · Investor Day1", "Reports2", "Reports 20251"]);
 
-        expect(screen.getByRole("button", { expanded: false })).toHaveTextContent("20241");
+        expect(screen.getByRole("button", { expanded: false })).toHaveTextContent("Reports 20241");
 
         expect(screen.queryByText("Annual Report 2024")).toBeNull();
 

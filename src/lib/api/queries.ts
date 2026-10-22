@@ -4,6 +4,8 @@ import { queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query"
 import * as React from "react";
 import { toast } from "sonner";
 
+import type { AssetGroupCategory } from "@/lib/earnings/documents";
+
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import type {
@@ -1681,6 +1683,7 @@ export function useEarningsSearch(input: EarningsSearchInput) {
 }
 
 type EarningsCompanyDocumentsInfiniteInput = {
+    category?: Array<AssetGroupCategory>;
     eventId?: string;
     identifier: string;
     kind?: Array<string>;
@@ -1699,6 +1702,7 @@ export function useEarningsCompanyDocumentsInfinite(input: EarningsCompanyDocume
             "earnings",
             "company-documents",
             input.identifier,
+            input.category?.join(",") ?? "",
             input.section?.join(",") ?? "",
             input.kind?.join(",") ?? "",
             input.year ?? "",

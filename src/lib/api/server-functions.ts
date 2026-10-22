@@ -46,6 +46,7 @@ import type {
     StandardizedFinancialsPresentationResponse,
 } from "./types";
 
+import { ASSET_GROUP_CATEGORIES } from "../earnings/documents";
 import { env } from "../env";
 import { createApiClient } from "./client.server";
 import { throwApiError } from "./errors";
@@ -1206,6 +1207,7 @@ export const getEarningsSearch = createServerFn({ method: "GET" })
 // A company's IR documents outside its calls' folders (offset paging like the per-call documents).
 const earningsCompanyDocumentsSchema = z.object({
     apiKey: apiKeySchema,
+    category: z.array(z.enum(ASSET_GROUP_CATEGORIES)).optional(),
     eventId: z.string().uuid().optional(),
     identifier: z.string().min(1),
     kind: z.array(z.string()).optional(),
@@ -1218,13 +1220,14 @@ const earningsCompanyDocumentsSchema = z.object({
 export const getEarningsCompanyDocuments = createServerFn({ method: "GET" })
     .inputValidator(earningsCompanyDocumentsSchema)
     .handler(async ({ data }): Promise<EarningsCompanyDocumentsResponse> => {
-        const { apiKey, eventId, identifier, kind, limit, offset, section, year } = data;
+        const { apiKey, category, eventId, identifier, kind, limit, offset, section, year } = data;
 
         const api = createApiClient(apiKey);
 
         const { data: res, error, response } = await api.GET("/v1/earnings-calls/company-documents", {
             params: {
                 query: {
+                    category: category?.length ? category : undefined,
                     event_id: eventId,
                     identifier,
                     kind: kind?.length ? kind : undefined,

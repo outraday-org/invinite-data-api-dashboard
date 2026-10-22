@@ -82,6 +82,7 @@ function DocumentsPage() {
         isLoading,
         refetch,
     } = useEarningsCompanyDocumentsInfinite({
+        category: search.category ? [search.category] : undefined,
         identifier: ticker,
         kind: search.kind ? [search.kind] : undefined,
         limit: PAGE_SIZE,
@@ -100,14 +101,14 @@ function DocumentsPage() {
         void navigate({ search: prev => ({ ...prev, ...patch }) });
     };
 
-    const filtered = search.section !== undefined || search.kind !== undefined || search.year !== undefined;
+    const filtered = search.category !== undefined || search.section !== undefined || search.kind !== undefined || search.year !== undefined;
 
     return (
         <div className="space-y-4 relative flex flex-col h-0 grow">
             <div className="flex flex-col gap-1 shrink-0">
                 <div>Documents</div>
                 <div className="text-muted-foreground text-sm">
-                    The company&apos;s investor-relations library by section and year — annual reports, proxy
+                    The company&apos;s document tree by category and folder — earnings quarters, events, reports, proxy
                     statements, ESG reports, investor-day and conference decks, letters — and its calls&apos; document
                     folders. Company-published material, shown as published.
                 </div>

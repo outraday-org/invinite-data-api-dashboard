@@ -1,56 +1,93 @@
 import { describe, expect, it } from "vitest";
 
 import {
+    categoryLabel,
+    compareFolderKeys,
     documentHref,
     documentPageHref,
     earliestExpiry,
-    groupDocumentTree,
+    groupDocumentFolders,
     pagesOf,
     sectionLabel,
+    UNPLACED_CATEGORY,
     validateDocumentsSearch,
 } from "./documents";
 
-const doc = (id: string, section: string, year: null | number) => ({ id, section, year });
+const doc = (id: string, category: null | string, group: null | string, section = "other", year: null | number = null) => ({
+    category,
+    group,
+    group_label: group ? `label ${group}` : null,
+    id,
+    section,
+    year,
+});
 
-describe("groupDocumentTree", () => {
-    it("orders sections by the IR section list, years newest first, undated last", () => {
-        const tree = groupDocumentTree([
-            doc("a", "proxy", 2024),
-            doc("b", "annual_reports", 2023),
-            doc("c", "annual_reports", null),
-            doc("d", "annual_reports", 2025),
-            doc("e", "quarterly_results", 2025),
-            doc("f", "annual_reports", 2025),
+describe("groupDocumentFolders", () => {
+    it("orders categories by the spine, folders newest first, undated last", () => {
+        const tree = groupDocumentFolders([
+            doc("a", "reports", "reports/2024"),
+            doc("b", "earnings", "earnings/fy2026/q4"),
+            doc("c", "earnings", "earnings/undated"),
+            doc("d", "earnings", "earnings/fy2027/q2"),
+            doc("e", "earnings", "earnings/fy2027/q1"),
+            doc("f", "earnings", "earnings/fy2027/q2"),
+            doc("g", "shareholder", "shareholder/tax"),
+            doc("h", "shareholder", "shareholder/dividends"),
         ]);
 
-        expect(tree.map(group => group.section)).toEqual(["quarterly_results", "annual_reports", "proxy"]);
+        expect(tree.map(group => group.category)).toEqual(["earnings", "reports", "shareholder"]);
 
-        expect(tree[1].count).toBe(4);
+        expect(tree[0].count).toBe(5);
 
-        expect(tree[1].years.map(group => group.year)).toEqual([2025, 2023, null]);
+        expect(tree[0].folders.map(folder => folder.key))
+            .toEqual(["earnings/fy2027/q2", "earnings/fy2027/q1", "earnings/fy2026/q4", "earnings/undated"]);
 
-        // The API's order within a year is kept.
-        expect(tree[1].years[0].documents.map(d => d.id)).toEqual(["d", "f"]);
+        // The API's order within a folder is kept; the folder label is the API's group_label.
+        expect(tree[0].folders[0].documents.map(d => d.id)).toEqual(["d", "f"]);
+
+        expect(tree[0].folders[0].label).toBe("label earnings/fy2027/q2");
+
+        // Named folders A–Z.
+        expect(tree[2].folders.map(folder => folder.key)).toEqual(["shareholder/dividends", "shareholder/tax"]);
     });
 
-    it("puts an unknown section after the known ones", () => {
-        const tree = groupDocumentTree([doc("a", "zz_new", 2025), doc("b", "other", 2025), doc("c", "faq", 2025)]);
+    it("puts documents not placed yet last, by IR section and year", () => {
+        const tree = groupDocumentFolders([
+            doc("a", null, null, "annual_reports", 2025),
+            doc("b", "zz_new", "zz_new/x"),
+            doc("c", "other", "other/faq"),
+            doc("d", null, null, "esg", null),
+        ]);
 
-        expect(tree.map(group => group.section)).toEqual(["faq", "other", "zz_new"]);
+        expect(tree.map(group => group.category)).toEqual(["other", "zz_new", UNPLACED_CATEGORY]);
 
-        expect(groupDocumentTree([])).toEqual([]);
+        expect(tree[2].folders.map(folder => folder.label)).toEqual(["Annual reports · 2025", "ESG · Undated"]);
+
+        expect(categoryLabel(UNPLACED_CATEGORY)).toBe("Not yet placed");
+
+        expect(groupDocumentFolders([])).toEqual([]);
+    });
+
+    it("compares folder keys like the pipeline", () => {
+        expect(compareFolderKeys("events/2026/09-10-a", "events/2025/12-01-b")).toBeLessThan(0);
+
+        expect(compareFolderKeys("news/undated", "news/2020")).toBeGreaterThan(0);
+
+        expect(compareFolderKeys("other/fact-sheets", "other/faq")).toBeLessThan(0);
+
+        expect(compareFolderKeys("other/financial-data", "other/financial-data/2025")).toBeLessThan(0);
     });
 });
 
 describe("validateDocumentsSearch", () => {
     it("keeps valid filters and coerces the year", () => {
-        expect(validateDocumentsSearch({ kind: "annual_report", section: "esg", year: "2025" }))
-            .toEqual({ kind: "annual_report", section: "esg", year: 2025 });
+        expect(validateDocumentsSearch({ category: "esg", kind: "annual_report", section: "esg", year: "2025" }))
+            .toEqual({ category: "esg", kind: "annual_report", section: "esg", year: 2025 });
     });
 
     it("drops invalid values instead of failing the route", () => {
-        expect(validateDocumentsSearch({ kind: "nope", section: 7, year: "abc" }))
-            .toEqual({ kind: undefined, section: undefined, year: undefined });
+        expect(validateDocumentsSearch({ category: "filings", kind: "nope", section: 7, year: "abc" }))
+            .toEqual({ category: undefined, kind: undefined, section: undefined, year: undefined });
 
         expect(validateDocumentsSearch({})).toEqual({});
     });

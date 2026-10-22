@@ -6,7 +6,7 @@ import type { EarningsCompanyDocument } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { documentHref, documentKindLabel, groupDocumentTree, sectionLabel } from "@/lib/earnings/documents";
+import { categoryLabel, documentHref, documentKindLabel, groupDocumentFolders } from "@/lib/earnings/documents";
 import { formatBytes } from "@/lib/earnings/format";
 
 const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
@@ -77,8 +77,9 @@ function Toggle({ children, onToggle, open }: { children: React.ReactNode; onTog
 }
 
 /**
- * The company's documents as a section → year tree (`groupDocumentTree`). A section starts open; a year only when it
- * is the section's newest. Rows open the stored file (or the source page of a link-only row) in a new tab.
+ * The company's documents as the API's document tree: category → folder (`groupDocumentFolders`, e.g. Earnings → Q2
+ * FY2027). A category starts open; a folder only when it is the category's first (newest). Rows open the stored file
+ * (or the source page of a link-only row) in a new tab.
  */
 export function DocumentTree({
     documents,
@@ -89,7 +90,7 @@ export function DocumentTree({
     onShowText: (doc: EarningsCompanyDocument) => void;
     ticker: string;
 }) {
-    const tree = React.useMemo(() => groupDocumentTree(documents), [documents]);
+    const tree = React.useMemo(() => groupDocumentFolders(documents), [documents]);
 
     // Only the keys the user toggled; the rest follow the default above.
     const [toggled, setToggled] = React.useState<Record<string, boolean>>({});
@@ -102,30 +103,32 @@ export function DocumentTree({
     return (
         <ul className="flex flex-col gap-3">
             {tree.map((group) => {
-                const sectionOpen = isOpen(group.section, true);
+                const categoryKey = `category:${group.category}`;
+
+                const categoryOpen = isOpen(categoryKey, true);
 
                 return (
-                    <li className="flex flex-col gap-1" key={group.section}>
-                        <Toggle onToggle={() => toggle(group.section, true)} open={sectionOpen}>
-                            <span className="font-medium">{sectionLabel(group.section)}</span>
+                    <li className="flex flex-col gap-1" key={categoryKey}>
+                        <Toggle onToggle={() => toggle(categoryKey, true)} open={categoryOpen}>
+                            <span className="font-medium">{categoryLabel(group.category)}</span>
                             <span className="text-muted-foreground tabular-nums">{group.count}</span>
                         </Toggle>
-                        {sectionOpen && (
+                        {categoryOpen && (
                             <ul className="flex flex-col gap-1 pl-5">
-                                {group.years.map((yearGroup, index) => {
-                                    const key = `${group.section}:${yearGroup.year ?? "undated"}`;
+                                {group.folders.map((folder, index) => {
+                                    const key = `${group.category}:${folder.key}`;
 
-                                    const yearOpen = isOpen(key, index === 0);
+                                    const folderOpen = isOpen(key, index === 0);
 
                                     return (
                                         <li className="flex flex-col" key={key}>
-                                            <Toggle onToggle={() => toggle(key, index === 0)} open={yearOpen}>
-                                                <span>{yearGroup.year ?? "Undated"}</span>
-                                                <span className="text-muted-foreground tabular-nums">{yearGroup.documents.length}</span>
+                                            <Toggle onToggle={() => toggle(key, index === 0)} open={folderOpen}>
+                                                <span>{folder.label}</span>
+                                                <span className="text-muted-foreground tabular-nums">{folder.documents.length}</span>
                                             </Toggle>
-                                            {yearOpen && (
+                                            {folderOpen && (
                                                 <ul className="pl-5">
-                                                    {yearGroup.documents.map(doc => (
+                                                    {folder.documents.map(doc => (
                                                         <DocumentRow doc={doc} key={doc.document_id} onShowText={onShowText} ticker={ticker} />
                                                     ))}
                                                 </ul>
