@@ -109,3 +109,14 @@ The app origin is NOT an env var: `src/lib/app-url.ts` (`INVINITE_APP_URL` = `ht
 - React Compiler enabled (`react-compiler/react-compiler: error`)
 - Blank lines required before most statements (const, let, if, return, etc.)
 - Path alias: `@/*` maps to `./src/*`
+
+## Data contract ownership
+
+SDK generation/packaging/publication and API/MCP reference export belong to
+`invinite-data-api`; CLI command/reference export belongs to `invinite-data-cli`.
+This example dashboard retains its UI, server-side API consumption and
+`generate:api` frontend type projection. Its `openapi.json` is a pinned consumer
+artifact: adopt `reference/openapi.json` from a versioned API reference bundle,
+then regenerate its local types and run mocked tests. No SDK generator or source
+introspection of sibling checkouts belongs here. An ownership-only SDK move does
+not require a dashboard spec refresh or runtime deployment.
