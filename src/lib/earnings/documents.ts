@@ -216,12 +216,14 @@ const titleCase = (slug: string) =>
 
 /**
  * A folder segment's label: the category at depth 0, `fy2027` → FY2027, `q2` → Q2, `cy2026` → 2026, `09-10-<slug>` →
- * "Sep 10 · Title Case Slug", `undated` → Undated, a year as is, a named folder in title case.
+ * "Sep 10 · Title Case Slug", `undated` → Undated, `faq` → FAQ, a year as is, a named folder in title case.
  */
 export function segmentLabel(segment: string, depth: number) {
     if (depth === 0) return categoryLabel(segment);
 
     if (segment === "undated") return "Undated";
+
+    if (segment === "faq") return "FAQ";
 
     const fiscal = /^fy(\d{4})$/.exec(segment);
 
@@ -239,7 +241,7 @@ export function segmentLabel(segment: string, depth: number) {
 
     const month = day ? MONTHS[Number(day[1]) - 1] : undefined;
 
-    if (day && month) return `${month} ${day[2]}${day[3] ? ` · ${titleCase(day[3])}` : ""}`;
+    if (day && month) return `${month} ${Number(day[2])}${day[3] ? ` · ${titleCase(day[3])}` : ""}`;
 
     if (/^\d{4}$/.test(segment)) return segment;
 
@@ -250,19 +252,58 @@ export function segmentLabel(segment: string, depth: number) {
  * A document's folder path: its `group` split on `/` (the first segment is its category), else (not placed yet) the
  * "Not yet placed" bucket with one folder per IR section and year.
  */
-function pathOf(doc: TreeDocument): { label: string; path: Array<string> } {
-    if (doc.group) {
-        const path = doc.group.split("/");
+function pathOf(doc: TreeDocument): Array<string> {
+    if (doc.group) return doc.group.split("/");
 
-        return { label: doc.group_label ?? segmentLabel(path.at(-1) ?? doc.group, path.length - 1), path };
+    return [UNPLACED_CATEGORY, `${doc.section ?? "other"}-${doc.year ?? "undated"}`];
+}
+
+// The API's label of an event folder with a stored name: "May 18, 2025 · GTC Taipei 2025" (IDA
+// `eventFolderDisplayLabel`); without one it reads "2025-05-18 · <slug>" (`groupLabel`), which never matches.
+const STORED_EVENT_LABEL = new RegExp(`^(?:${MONTHS.join("|")}) \\d{1,2}, \\d{4} · (.+)$`);
+
+const storedEventName = (label: null | string) => (label ? STORED_EVENT_LABEL.exec(label)?.[1].trim() : undefined);
+
+/**
+ * A folder's label from its path, its own documents and the loaded events' titles (`eventTitleMap`). An event folder
+ * (`events/<YYYY>/<MM-DD>-<slug>`) reads "May 18 · <name>" — the stored name of a document's `group_label`, else the
+ * `event_title` of a document's event, else the title-cased slug; a "Not yet placed" folder "IR section · year"; any
+ * other folder its own segment (`segmentLabel`: "Q2", "2025", "Tax", never the parent's words again).
+ */
+export function folderLabel(
+    path: ReadonlyArray<string>,
+    docs: ReadonlyArray<TreeDocument>,
+    eventTitles: ReadonlyMap<string, string>,
+) {
+    const depth = path.length - 1;
+
+    const segment = path[depth];
+
+    if (path[0] === UNPLACED_CATEGORY && depth === 1 && docs.length > 0) {
+        return `${sectionLabel(docs[0].section ?? "other")} · ${docs[0].year ?? "Undated"}`;
     }
 
-    const section = doc.section ?? "other";
+    const day = path[0] === "events" && depth === 2 ? /^(\d{2}-\d{2})-.+$/.exec(segment) : null;
 
-    return {
-        label: `${sectionLabel(section)} · ${doc.year ?? "Undated"}`,
-        path: [UNPLACED_CATEGORY, `${section}-${doc.year ?? "undated"}`],
-    };
+    if (!day) return segmentLabel(segment, depth);
+
+    const name = docs.map(doc => storedEventName(doc.group_label)).find(Boolean)
+        ?? docs.map(doc => (doc.event_id ? eventTitles.get(doc.event_id) : undefined)).find(Boolean);
+
+    return name ? `${segmentLabel(day[1], depth)} · ${name}` : segmentLabel(segment, depth);
+}
+
+/** `event_id` → trimmed `event_title` of the loaded events (the event-folder fallback of `folderLabel`). */
+export function eventTitleMap(events: ReadonlyArray<Pick<CallEvent, "event_id" | "event_title">>) {
+    const titles = new Map<string, string>();
+
+    for (const event of events) {
+        const title = event.event_title?.trim();
+
+        if (title) titles.set(event.event_id, title);
+    }
+
+    return titles;
 }
 
 const pathLabels = (path: ReadonlyArray<string>) => path.map((segment, depth) => segmentLabel(segment, depth));
@@ -271,18 +312,27 @@ const includesQuery = (parts: ReadonlyArray<null | number | string | undefined>,
     parts.some(part => part !== null && part !== undefined && String(part).toLowerCase().includes(query));
 
 /**
- * The tree's text filter, case-insensitive: title, kind label, folder path and its labels, `group_label`, year and
- * date. An empty query matches everything.
+ * The tree's text filter, case-insensitive: title, kind label, folder path and its labels, the full `group_label`
+ * ("Q2 FY2027", "May 18, 2025 · GTC Taipei 2025"), year and date. An empty query matches everything.
  */
 export function matchesQuery(doc: TreeDocument, query: string) {
     const needle = query.trim().toLowerCase();
 
     if (!needle) return true;
 
-    const { label, path } = pathOf(doc);
+    const path = pathOf(doc);
 
     return includesQuery(
-        [doc.title, documentKindLabel(doc.kind), doc.group, label, ...pathLabels(path), doc.year, doc.event_date],
+        [
+            doc.title,
+            documentKindLabel(doc.kind),
+            doc.group,
+            doc.group_label,
+            folderLabel(path, [doc], new Map()),
+            ...pathLabels(path),
+            doc.year,
+            doc.event_date,
+        ],
         needle,
     );
 }
@@ -341,14 +391,14 @@ export function filterCallEntries(calls: ReadonlyArray<CallEntry>, search: Docum
         && (search.year === undefined || (call.event.fiscal_year ?? Number(call.date.slice(0, 4))) === search.year));
 }
 
-const callMatchesQuery = (call: CallEntry, query: string) => {
+const callMatchesQuery = (call: CallEntry, query: string, folder: string) => {
     const needle = query.trim().toLowerCase();
 
     if (!needle) return true;
 
     const path = call.key.split("/");
 
-    return includesQuery([call.label, call.date, call.key, ...pathLabels(path)], needle);
+    return includesQuery([call.label, call.date, call.key, folder, ...pathLabels(path)], needle);
 };
 
 type MutableNode<T> = TreeNode<T> & { byKey: Map<string, MutableNode<T>> };
@@ -374,14 +424,31 @@ function sortNodes<T>(nodes: Array<MutableNode<T>>, depth: number): Array<TreeNo
  * `group` (documents not placed yet last, by IR section and year), plus the call rows at their folders. Categories in
  * `ASSET_GROUP_CATEGORIES` order (an unknown one after them), folders newest first (`compareFolderKeys`); in a folder
  * the call rows first, then the documents in the API's order. A text `query` keeps the matches (`matchesQuery`) and
- * drops empty folders; counts are the matches then. The innermost folder of a group is labelled by its `group_label`.
+ * drops empty folders; counts are the matches then. Every folder is labelled by `folderLabel` from ALL its documents
+ * (a filter never changes a label), a call-only folder too; a match on a folder's label keeps its rows.
  */
 export function buildDocumentTree<T extends TreeDocument>(
     documents: ReadonlyArray<T>,
     calls: ReadonlyArray<CallEntry>,
     query: string,
+    eventTitles: ReadonlyMap<string, string> = new Map(),
 ): Array<TreeNode<T>> {
     const roots = new Map<string, MutableNode<T>>();
+
+    const docsByKey = new Map<string, Array<T>>();
+
+    for (const doc of documents) {
+        const key = pathOf(doc).join("/");
+
+        const folder = docsByKey.get(key);
+
+        if (folder) folder.push(doc);
+        else docsByKey.set(key, [doc]);
+    }
+
+    const labelOf = (path: ReadonlyArray<string>) => folderLabel(path, docsByKey.get(path.join("/")) ?? [], eventTitles);
+
+    const needle = query.trim().toLowerCase();
 
     const nodeAt = (path: ReadonlyArray<string>) => {
         let level = roots;
@@ -394,7 +461,7 @@ export function buildDocumentTree<T extends TreeDocument>(
             node = level.get(segment);
 
             if (!node) {
-                node = { byKey: new Map(), calls: [], children: [], count: 0, documents: [], key, label: segmentLabel(segment, depth), segment };
+                node = { byKey: new Map(), calls: [], children: [], count: 0, documents: [], key, label: labelOf(path.slice(0, depth + 1)), segment };
 
                 level.set(segment, node);
             }
@@ -406,19 +473,15 @@ export function buildDocumentTree<T extends TreeDocument>(
     };
 
     for (const call of calls) {
-        if (callMatchesQuery(call, query)) nodeAt(call.key.split("/")).calls.push(call);
+        const path = call.key.split("/");
+
+        if (callMatchesQuery(call, query, labelOf(path))) nodeAt(path).calls.push(call);
     }
 
     for (const doc of documents) {
-        if (!matchesQuery(doc, query)) continue;
+        const path = pathOf(doc);
 
-        const { label, path } = pathOf(doc);
-
-        const node = nodeAt(path);
-
-        if (path.length > 1) node.label = label;
-
-        node.documents.push(doc);
+        if (matchesQuery(doc, query) || includesQuery([labelOf(path)], needle)) nodeAt(path).documents.push(doc);
     }
 
     return sortNodes([...roots.values()], 0);

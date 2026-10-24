@@ -13,7 +13,9 @@ import {
     documentHref,
     documentPageHref,
     earliestExpiry,
+    eventTitleMap,
     filterCallEntries,
+    folderLabel,
     matchesQuery,
     pagesOf,
     sectionLabel,
@@ -79,6 +81,68 @@ describe("segmentLabel", () => {
         expect(segmentLabel("2025", 1)).toBe("2025");
 
         expect(segmentLabel("financial-data", 1)).toBe("Financial Data");
+
+        expect(segmentLabel("faq", 1)).toBe("FAQ");
+
+        // The day without a leading zero, as the API's "Dec 5, 2016".
+        expect(segmentLabel("12-05-event", 2)).toBe("Dec 5 · Event");
+    });
+});
+
+describe("folderLabel", () => {
+    const GTC = "events/2025/05-18-gtc-taipei-2025";
+
+    const titles = new Map([["ev1", "Computex 2025 Keynote"]]);
+
+    const at = (group: string, overrides: Partial<Doc> = {}): Doc => ({ ...doc("x", group.split("/")[0], group), ...overrides });
+
+    it("names an event folder by the stored name of the API's group_label", () => {
+        const docs = [at(GTC, { event_id: "ev1", group_label: "May 18, 2025 · GTC Taipei 2025" })];
+
+        expect(folderLabel(GTC.split("/"), docs, titles)).toBe("May 18 · GTC Taipei 2025");
+    });
+
+    it("falls back to the title of a document's event, then to the slug", () => {
+        // The API's computed label (no stored name) is not a name.
+        const computed = at(GTC, { event_id: "ev1", group_label: "2025-05-18 · gtc-taipei-2025" });
+
+        expect(folderLabel(GTC.split("/"), [computed], titles)).toBe("May 18 · Computex 2025 Keynote");
+
+        expect(folderLabel(GTC.split("/"), [{ ...computed, event_id: "unknown" }], titles)).toBe("May 18 · Gtc Taipei 2025");
+
+        expect(folderLabel(GTC.split("/"), [], titles)).toBe("May 18 · Gtc Taipei 2025");
+    });
+
+    it("never repeats the parent's words: every other folder names its own segment", () => {
+        const label = (group: string, groupLabel: string) => folderLabel(group.split("/"), [at(group, { group_label: groupLabel })], titles);
+
+        expect(label("earnings/fy2027/q2", "Q2 FY2027")).toBe("Q2");
+
+        expect(label("earnings/cy2026/08-26", "Earnings call 2026-08-26")).toBe("Aug 26");
+
+        expect(label("reports/2025", "Reports 2025")).toBe("2025");
+
+        expect(label("esg/2025", "ESG 2025")).toBe("2025");
+
+        expect(label("esg/undated", "ESG (undated)")).toBe("Undated");
+
+        expect(label("shareholder/tax", "Shareholder · Tax")).toBe("Tax");
+
+        expect(label("other/faq", "Other · FAQ")).toBe("FAQ");
+
+        expect(label("other/fact-sheets", "Other · Fact sheets")).toBe("Fact Sheets");
+
+        expect(label("other/financial-data/2025", "Other · Financial data 2025")).toBe("2025");
+
+        expect(label("events/2025", "Events 2025")).toBe("2025");
+
+        // A month-led label outside an event day folder is never read as a name.
+        expect(label("events/2025", "May 18, 2025 · GTC Taipei 2025")).toBe("2025");
+    });
+
+    it("maps the loaded events to their trimmed titles, untitled ones left out", () => {
+        expect([...eventTitleMap([{ event_id: "a", event_title: " Investor Day " }, { event_id: "b", event_title: null }, { event_id: "c", event_title: " " }])])
+            .toEqual([["a", "Investor Day"]]);
     });
 });
 
@@ -117,10 +181,10 @@ describe("buildDocumentTree", () => {
 
         const q2 = tree[0].children[0].children[0];
 
-        // The API's order within a folder; the innermost folder of a group is labelled by its group_label.
+        // The API's order within a folder; a folder names its own segment, not the full group_label.
         expect(q2.documents.map(d => d.id)).toEqual(["d", "f"]);
 
-        expect(q2.label).toBe("label earnings/fy2027/q2");
+        expect(q2.label).toBe("Q2");
 
         expect(tree[0].children[0].label).toBe("FY2027");
 
@@ -148,6 +212,32 @@ describe("buildDocumentTree", () => {
         expect(categoryLabel(UNPLACED_CATEGORY)).toBe("Not yet placed");
 
         expect(buildDocumentTree([], [], "")).toEqual([]);
+    });
+
+    it("labels event folders from all their documents and the event titles, also under a filter", () => {
+        const documents = [
+            { ...doc("a", "events", "events/2025/05-18-gtc-taipei-2025"), group_label: "May 18, 2025 · GTC Taipei 2025", title: "Keynote" },
+            { ...doc("b", "events", "events/2025/05-18-gtc-taipei-2025"), group_label: "May 18, 2025 · GTC Taipei 2025", title: "Deck" },
+            { ...doc("c", "events", "events/2024/03-18-microsoft-t-nlg"), event_id: "ev1", group_label: "2024-03-18 · microsoft-t-nlg" },
+        ];
+
+        const titles = new Map([["ev1", "GTC 2024"]]);
+
+        const labels = (nodes: ReadonlyArray<TreeNode<unknown>>): Array<string> => nodes.flatMap(node => [node.label, ...labels(node.children)]);
+
+        expect(labels(buildDocumentTree(documents, [], "", titles)))
+            .toEqual(["Events", "2025", "May 18 · GTC Taipei 2025", "2024", "Mar 18 · GTC 2024"]);
+
+        // "deck" keeps b only; the folder still reads its stored name. "GTC 2024" matches the event-title label.
+        expect(labels(buildDocumentTree(documents, [], "deck", titles))).toEqual(["Events", "2025", "May 18 · GTC Taipei 2025"]);
+
+        expect(shape(buildDocumentTree(documents, [], "gtc 2024", titles))).toEqual([["events", 1], ["events/2024", 1], ["events/2024/03-18-microsoft-t-nlg", 1]]);
+    });
+
+    it("labels a folder holding only a call row like its siblings", () => {
+        const tree = buildDocumentTree([doc("a", "earnings", "earnings/fy2027/q2")], callEntries([event({ fiscal_quarter: 1 })], []), "");
+
+        expect(tree[0].children[0].children.map(node => node.label)).toEqual(["Q2", "Q1"]);
     });
 
     it("places call rows before the folder's documents and counts them", () => {
@@ -255,6 +345,9 @@ describe("matchesQuery", () => {
         expect(matchesQuery(report, "reports/2025")).toBe(true);
 
         expect(matchesQuery(report, "label reports")).toBe(true);
+
+        // The full group_label, though the folder itself reads "May 18 · GTC Taipei 2025".
+        expect(matchesQuery({ ...report, group: "events/2025/05-18-gtc-taipei-2025", group_label: "May 18, 2025 · GTC Taipei 2025" }, "May 18, 2025")).toBe(true);
 
         expect(matchesQuery(report, "2025-03")).toBe(true);
 

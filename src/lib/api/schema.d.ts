@@ -573,7 +573,7 @@ export interface paths {
          *
          *     ### The document tree
          *
-         *     Every stored document sits in one folder of the company's document tree: `group` (its path) under one of eight `category` spine folders, in this order: `earnings` (`earnings/fy2027/q2` = one fiscal quarter's call: release, deck, CFO commentary, data sheets, transcript; `earnings/cy2026/08-26` = a call without a fiscal period), `events` (`events/2026/09-10-<event>` = a conference, investor day or shareholder meeting), `reports` (`reports/2025`: annual reports, proxy statements, annual letters), `presentations` (`presentations/2024`), `governance`, `esg` (`esg/2025`), `shareholder` (`shareholder/tax`, `shareholder/dividends`, `shareholder/stock`) and `other` (`other/faq`, `other/fact-sheets`, `other/financial-data[/2025]`, `other/web-pages`, `other/documents`). `…/undated` = no date could be read. `group` and `category` are null while a document has not been placed yet.
+         *     Every stored document sits in one folder of the company's document tree: `group` (its path) under one of eight `category` spine folders, in this order: `earnings` (`earnings/fy2027/q2` = one fiscal quarter's call: release, deck, CFO commentary, data sheets, transcript; `earnings/cy2026/08-26` = a call without a fiscal period), `events` (`events/2026/09-10-<event>` = a conference, investor day or shareholder meeting; its `group_label` reads the event's date and name, e.g. "May 18, 2025 · GTC Taipei 2025"), `reports` (`reports/2025`: annual reports, proxy statements, annual letters), `presentations` (`presentations/2024`), `governance`, `esg` (`esg/2025`), `shareholder` (`shareholder/tax`, `shareholder/dividends`, `shareholder/stock`) and `other` (`other/faq`, `other/fact-sheets`, `other/financial-data[/2025]`, `other/web-pages`, `other/documents`). `…/undated` = no date could be read. `group` and `category` are null while a document has not been placed yet.
          *
          *     ### What you get
          *
@@ -709,7 +709,7 @@ export interface paths {
          *
          *     ### The document tree
          *
-         *     Every stored document sits in one folder of the company's document tree: `group` (its path) under one of eight `category` spine folders, in this order: `earnings` (`earnings/fy2027/q2` = one fiscal quarter's call: release, deck, CFO commentary, data sheets, transcript; `earnings/cy2026/08-26` = a call without a fiscal period), `events` (`events/2026/09-10-<event>` = a conference, investor day or shareholder meeting), `reports` (`reports/2025`: annual reports, proxy statements, annual letters), `presentations` (`presentations/2024`), `governance`, `esg` (`esg/2025`), `shareholder` (`shareholder/tax`, `shareholder/dividends`, `shareholder/stock`) and `other` (`other/faq`, `other/fact-sheets`, `other/financial-data[/2025]`, `other/web-pages`, `other/documents`). `…/undated` = no date could be read. `group` and `category` are null while a document has not been placed yet.
+         *     Every stored document sits in one folder of the company's document tree: `group` (its path) under one of eight `category` spine folders, in this order: `earnings` (`earnings/fy2027/q2` = one fiscal quarter's call: release, deck, CFO commentary, data sheets, transcript; `earnings/cy2026/08-26` = a call without a fiscal period), `events` (`events/2026/09-10-<event>` = a conference, investor day or shareholder meeting; its `group_label` reads the event's date and name, e.g. "May 18, 2025 · GTC Taipei 2025"), `reports` (`reports/2025`: annual reports, proxy statements, annual letters), `presentations` (`presentations/2024`), `governance`, `esg` (`esg/2025`), `shareholder` (`shareholder/tax`, `shareholder/dividends`, `shareholder/stock`) and `other` (`other/faq`, `other/fact-sheets`, `other/financial-data[/2025]`, `other/web-pages`, `other/documents`). `…/undated` = no date could be read. `group` and `category` are null while a document has not been placed yet.
          *
          *     - `documents` is `[]` for a call without further documents (`has_documents` tells ahead).
          *
@@ -6311,7 +6311,7 @@ export interface operations {
                             period: "FY" | "H1" | "H2" | "Q1" | "Q2" | "Q3" | "Q4" | null;
                             /** @description Folder of the document tree, e.g. earnings/fy2027/q2, events/2026/09-10-<event>, reports/2025, governance, shareholder/tax; null = not placed yet */
                             group: null | string;
-                            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "Shareholder · Tax" */
+                            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "May 18, 2025 · GTC Taipei 2025" (an event's name) */
                             group_label: null | string;
                             /**
                              * @description Spine folder of the tree: earnings, events, reports, presentations, governance, esg, shareholder, other; null = not placed yet
@@ -6575,7 +6575,7 @@ export interface operations {
                             period: "FY" | "H1" | "H2" | "Q1" | "Q2" | "Q3" | "Q4" | null;
                             /** @description Folder of the document tree, e.g. earnings/fy2027/q2, events/2026/09-10-<event>, reports/2025, governance, shareholder/tax; null = not placed yet */
                             group: null | string;
-                            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "Shareholder · Tax" */
+                            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "May 18, 2025 · GTC Taipei 2025" (an event's name) */
                             group_label: null | string;
                             /**
                              * @description Spine folder of the tree: earnings, events, reports, presentations, governance, esg, shareholder, other; null = not placed yet
@@ -7056,7 +7056,7 @@ export interface operations {
                             trust_tier: "confirmed_domain" | "internal" | "sec" | "unconfirmed" | "wire" | null;
                             /** @description Folder of the document tree, e.g. earnings/fy2027/q2, events/2026/09-10-<event>, reports/2025, governance, shareholder/tax; null = not placed yet */
                             group: null | string;
-                            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "Shareholder · Tax" */
+                            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "May 18, 2025 · GTC Taipei 2025" (an event's name) */
                             group_label: null | string;
                             /**
                              * @description Spine folder of the tree: earnings, events, reports, presentations, governance, esg, shareholder, other; null = not placed yet
@@ -7177,7 +7177,7 @@ export interface operations {
                             title: null | string;
                             /** @description Folder of the document tree, e.g. earnings/fy2027/q2, events/2026/09-10-<event>, reports/2025, governance, shareholder/tax; null = not placed yet */
                             group: null | string;
-                            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "Shareholder · Tax" */
+                            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "May 18, 2025 · GTC Taipei 2025" (an event's name) */
                             group_label: null | string;
                             /**
                              * @description Spine folder of the tree: earnings, events, reports, presentations, governance, esg, shareholder, other; null = not placed yet

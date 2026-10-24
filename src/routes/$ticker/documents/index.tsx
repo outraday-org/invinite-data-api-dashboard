@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { isTierError } from "@/lib/api/errors";
 import { useEarningsCompanyDocumentsInfinite, useEarningsEventsInfinite } from "@/lib/api/queries";
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
-import { buildDocumentTree, callEntries, earliestExpiry, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
+import { buildDocumentTree, callEntries, earliestExpiry, eventTitleMap, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
 import { useMediaUrl } from "@/lib/earnings/use-media-url";
 import { MediaState, Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
@@ -65,12 +65,17 @@ function DocumentsPage() {
 
     const documents = React.useMemo(() => data?.pages.flatMap(page => page.documents) ?? [], [data]);
 
-    const calls = React.useMemo(
-        () => filterCallEntries(callEntries(events.data?.pages.flatMap(page => page.events) ?? [], documents), search),
-        [documents, events.data, search],
-    );
+    const eventList = React.useMemo(() => events.data?.pages.flatMap(page => page.events) ?? [], [events.data]);
 
-    const tree = React.useMemo(() => buildDocumentTree(documents, calls, search.q ?? ""), [calls, documents, search.q]);
+    const calls = React.useMemo(() => filterCallEntries(callEntries(eventList, documents), search), [documents, eventList, search]);
+
+    // An event folder without a stored name is named after its event (`folderLabel`).
+    const eventTitles = React.useMemo(() => eventTitleMap(eventList), [eventList]);
+
+    const tree = React.useMemo(
+        () => buildDocumentTree(documents, calls, search.q ?? "", eventTitles),
+        [calls, documents, eventTitles, search.q],
+    );
 
     const company = data?.pages[0]?.company;
 

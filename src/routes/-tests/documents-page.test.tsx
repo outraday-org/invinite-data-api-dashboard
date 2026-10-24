@@ -102,7 +102,7 @@ const DOCUMENTS: Array<EarningsCompanyDocument> = [
         event_id: "11111111-1111-4111-8111-111111111111",
         event_type: "investor_day",
         group: "events/2026/03-12-investor-day",
-        group_label: "Events 2026 · Investor Day",
+        group_label: "2026-03-12 · investor-day",
         kind: "webcast",
         link_status: "expired",
         pages: null,
@@ -125,10 +125,11 @@ describe("DocumentTree", () => {
 
         const sections = screen.getAllByRole("button", { expanded: true }).map(button => button.textContent);
 
-        // Events (open, its newest path open) before Reports (open, 2025 open); 2024 is collapsed.
-        expect(sections).toEqual(["Events1", "20261", "Events 2026 · Investor Day1", "Reports2", "Reports 20251"]);
+        // Events (open, its newest path open) before Reports (open, 2025 open); 2024 is collapsed. A folder names its
+        // own segment only (never "Reports 2025" under Reports); an event folder without a name shows its slug.
+        expect(sections).toEqual(["Events1", "20261", "Mar 12 · Investor Day1", "Reports2", "20251"]);
 
-        expect(screen.getByRole("button", { expanded: false })).toHaveTextContent("Reports 20241");
+        expect(screen.getByRole("button", { expanded: false })).toHaveTextContent("20241");
 
         expect(screen.queryByText("Annual Report 2024")).toBeNull();
 
@@ -274,9 +275,9 @@ describe("Documents page", () => {
 
         render(<DocumentsPage />);
 
-        expect(openFolders().slice(0, 3)).toEqual(["Earnings2", "FY20272", "Q2 FY20272"]);
+        expect(openFolders().slice(0, 3)).toEqual(["Earnings2", "FY20272", "Q22"]);
 
-        const quarter = screen.getByRole("button", { name: /Q2 FY2027/ }).closest("li")!;
+        const quarter = screen.getByRole("button", { name: /^Q2/ }).closest("li")!;
 
         const callRow = quarter.querySelector<HTMLElement>(`[data-event-id="${CALL_EVENT_ID}"]`)!;
 
@@ -313,7 +314,7 @@ describe("Documents page", () => {
 
         render(<DocumentsPage />);
 
-        expect(openFolders()).toEqual(["Events1", "20261", "Events 2026 · Investor Day1"]);
+        expect(openFolders()).toEqual(["Events1", "20261", "Mar 12 · Investor Day1"]);
 
         expect(screen.getByText("Investor Day replay")).toBeInTheDocument();
 
@@ -328,6 +329,41 @@ describe("Documents page", () => {
         render(<DocumentsPage />);
 
         expect(screen.getByText("No documents match “zzz”.")).toBeInTheDocument();
+    });
+
+    it("names an event folder by its stored name, else by its event's title; finds a folder by its full label", () => {
+        const named = { ...DOCUMENTS[2], document_id: "00000000-0000-4000-8000-000000000005", group: "events/2025/05-18-gtc-taipei-2025", group_label: "May 18, 2025 · GTC Taipei 2025", title: "Keynote deck" };
+
+        const investorDay = { ...CALL_EVENT, event_id: DOCUMENTS[2].event_id!, event_title: "Acme Investor Day 2026", event_type: "investor_day", has_documents: false, has_press_release: false } as EarningsEventWithObservations;
+
+        mockLists(infinite([documentsPage([CALL_DOCUMENT, DOCUMENTS[2], named])]), infinite([{ events: [CALL_EVENT, investorDay], next_url: null }]));
+
+        render(<DocumentsPage />);
+
+        expect(screen.getByRole("button", { name: /^Mar 12 · Acme Investor Day 2026/ })).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: /^2025/ }));
+
+        expect(screen.getByRole("button", { name: /^May 18 · GTC Taipei 2025/ })).toBeInTheDocument();
+
+        cleanup();
+
+        // The short folder label reads "Q2"; the filter still matches the full group_label "Q2 FY2027".
+        route.search = { q: "Q2 FY2027" };
+
+        render(<DocumentsPage />);
+
+        expect(openFolders()).toEqual(["Earnings2", "FY20272", "Q22"]);
+
+        cleanup();
+
+        route.search = { q: "acme investor day" };
+
+        render(<DocumentsPage />);
+
+        expect(screen.getByText("Investor Day replay")).toBeInTheDocument();
+
+        expect(screen.queryByText("Keynote deck")).toBeNull();
     });
 
     it("writes the typed filter to ?q= after 200 ms, replacing the history entry", () => {
