@@ -11,10 +11,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEarningsDocumentsInfinite } from "@/lib/api/queries";
+import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
 import { earliestExpiry } from "@/lib/earnings/documents";
 import { formatBytes } from "@/lib/earnings/format";
 import { useMediaUrl } from "@/lib/earnings/use-media-url";
-import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -67,21 +67,38 @@ function DocumentText({ doc, selector }: { doc: EarningsDocument; selector: Earn
     );
 }
 
-/** Documents tab: the call's investor documents with a kind filter, links and their text. */
-export function DocumentsTab({ selector }: CallTabProps) {
+/** "Also on this call:" the call's press release and slides tabs, when it has them. */
+function AlsoOnThisCall({ event, onTabChange }: Pick<CallTabProps, "event" | "onTabChange">) {
+    const tabs = [
+        ...(event.has_press_release ? [{ label: "Press release", tab: "press-release" as const }] : []),
+        ...(event.has_slides ? [{ label: "Slides", tab: "slides" as const }] : []),
+    ];
+
+    if (tabs.length === 0) return null;
+
+    return (
+        <div className="text-muted-foreground flex flex-wrap items-center gap-x-2 text-xs">
+            Also on this call:
+            {tabs.map(({ label, tab }) => (
+                <Button className="h-auto p-0 text-xs" key={tab} onClick={() => onTabChange(tab)} type="button" variant="link">
+                    {label}
+                </Button>
+            ))}
+        </div>
+    );
+}
+
+/** Documents tab: the call's investor documents (every page) with a kind filter, links and their text. */
+export function DocumentsTab({ event, onTabChange, selector }: CallTabProps) {
     const [kinds, setKinds] = React.useState<Array<EarningsDocument["kind"]>>([]);
 
     const [textOf, setTextOf] = React.useState<EarningsDocument | null>(null);
 
-    const {
-        data,
-        error,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-        isLoading,
-        refetch,
-    } = useEarningsDocumentsInfinite({ ...selector, kind: kinds.length > 0 ? kinds : undefined });
+    const documentsQuery = useEarningsDocumentsInfinite({ ...selector, kind: kinds.length > 0 ? kinds : undefined });
+
+    useLoadAllPages({ ...documentsQuery, hasNextPage: Boolean(documentsQuery.hasNextPage) });
+
+    const { data, error, isLoading, refetch } = documentsQuery;
 
     const documents = data?.pages.flatMap(page => page.documents) ?? [];
 
@@ -92,6 +109,8 @@ export function DocumentsTab({ selector }: CallTabProps) {
 
     return (
         <div className="flex flex-col gap-3">
+            <AlsoOnThisCall event={event} onTabChange={onTabChange} />
+
             <div className="flex flex-wrap items-center gap-1">
                 {EVENT_DOCUMENT_KINDS.map(kind => (
                     <Button
@@ -172,12 +191,6 @@ export function DocumentsTab({ selector }: CallTabProps) {
                                     ))}
                                 </TableBody>
                             </Table>
-
-                            <LoadMoreButton
-                                hasNextPage={Boolean(hasNextPage)}
-                                isFetchingNextPage={isFetchingNextPage}
-                                onLoadMore={() => fetchNextPage()}
-                            />
 
                             {!isLoading && documents.length === 0 && (
                                 <div className="text-muted-foreground w-full p-2 text-center text-xs">

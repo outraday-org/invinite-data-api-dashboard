@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-import type { EarningsCompanyDocument, JsonValue } from "@/lib/api/types";
+import type { EarningsCompanyDocument, EarningsEvent, JsonValue } from "@/lib/api/types";
+
+import { eventLabel, zonedDate } from "@/lib/earnings/format";
 
 /**
  * Company document kinds (IDA `COMPANY_DOCUMENT_KINDS` in `src/lib/earnings/constants.ts`; the spec types `kind` as a
@@ -74,7 +76,6 @@ export const sectionLabel = (section: string) =>
 export const ASSET_GROUP_CATEGORIES = [
     "earnings",
     "events",
-    "news",
     "reports",
     "presentations",
     "governance",
@@ -90,7 +91,6 @@ export const CATEGORY_LABELS: Record<AssetGroupCategory, string> = {
     esg: "ESG",
     events: "Events",
     governance: "Governance",
-    news: "News",
     other: "Other",
     presentations: "Presentations",
     reports: "Reports",
@@ -110,6 +110,8 @@ export const categoryLabel = (category: string) =>
 const documentsSearchSchema = z.object({
     category: z.enum(ASSET_GROUP_CATEGORIES).optional().catch(undefined),
     kind: z.enum(COMPANY_DOCUMENT_KINDS).optional().catch(undefined),
+    // The tree's text filter (client-side): trimmed, empty = no filter.
+    q: z.string().trim().transform(q => q || undefined).optional().catch(undefined),
     section: z.enum(IR_SECTION_KINDS).optional().catch(undefined),
     year: z.coerce.number().int().min(1990).max(2100).optional().catch(undefined),
 });
@@ -121,20 +123,49 @@ export function validateDocumentsSearch(search: Record<string, unknown>): Docume
     return documentsSearchSchema.parse(search);
 }
 
-type TreeDocument = {
+export type TreeDocument = {
     category: null | string;
+    event_date: null | string;
+    event_id: null | string;
     group: null | string;
     group_label: null | string;
-    section: string;
+    kind: string;
+    section: null | string;
+    title: null | string;
     year: null | number;
 };
 
-export type DocumentFolder<T extends TreeDocument> = { documents: Array<T>; key: string; label: string };
+/** The events-list fields a call row needs. */
+export type CallEvent = Pick<
+    EarningsEvent,
+    | "event_id"
+    | "event_title"
+    | "event_type"
+    | "fiscal_quarter"
+    | "fiscal_year"
+    | "has_audio"
+    | "has_documents"
+    | "has_press_release"
+    | "has_slides"
+    | "has_transcript"
+    | "scheduled_at"
+    | "symbol"
+>;
 
-export type DocumentCategoryGroup<T extends TreeDocument> = {
-    category: string;
+/** One call row of the tree: a call with a press release, slides or documents, at its folder (`callPlacement`). */
+export type CallEntry = { date: string; event: CallEvent; key: string; label: string };
+
+export type TreeNode<T> = {
+    calls: Array<CallEntry>;
+    children: Array<TreeNode<T>>;
+    /** Documents + call rows in this subtree (under a text filter: the matches). */
     count: number;
-    folders: Array<DocumentFolder<T>>;
+    /** Documents whose folder is exactly `key`. */
+    documents: Array<T>;
+    /** The full path, e.g. `earnings/fy2027/q2`. */
+    key: string;
+    label: string;
+    segment: string;
 };
 
 const categoryRank = (category: string) => {
@@ -147,6 +178,19 @@ const categoryRank = (category: string) => {
 
 const DATED_SEGMENT = /^(?:fy|cy|q)?\d/;
 
+/** Sibling folder order: dated segments newest first (numeric-aware), named ones A–Z, `undated` last. */
+function compareSegments(x: string, y: string) {
+    if (x === y) return 0;
+
+    if (x === "undated") return 1;
+
+    if (y === "undated") return -1;
+
+    if (DATED_SEGMENT.test(x) && DATED_SEGMENT.test(y)) return y.localeCompare(x, "en", { numeric: true });
+
+    return x.localeCompare(y);
+}
+
 /**
  * Folder order inside a category (the pipeline's `compareGroupPaths`): dated segments (`fy2027`, `q2`, `2025`,
  * `09-10-…`) newest first, named ones A–Z, `undated` last; a parent before its children.
@@ -157,65 +201,249 @@ export function compareFolderKeys(a: string, b: string) {
     const right = b.split("/");
 
     for (let index = 0; index < Math.min(left.length, right.length); index++) {
-        const x = left[index];
+        const order = compareSegments(left[index], right[index]);
 
-        const y = right[index];
-
-        if (x === y) continue;
-
-        if (x === "undated") return 1;
-
-        if (y === "undated") return -1;
-
-        if (DATED_SEGMENT.test(x) && DATED_SEGMENT.test(y)) return y.localeCompare(x);
-
-        return x.localeCompare(y);
+        if (order !== 0) return order;
     }
 
     return left.length - right.length;
 }
 
-/** A document's folder: its `group`, else (not placed yet) its IR section and year. */
-function folderOf(doc: TreeDocument) {
-    if (doc.group) return { key: doc.group, label: doc.group_label ?? doc.group };
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
-    return {
-        key: `${doc.section}/${doc.year ?? "undated"}`,
-        label: `${sectionLabel(doc.section)} · ${doc.year ?? "Undated"}`,
-    };
+const titleCase = (slug: string) =>
+    slug.split("-").filter(Boolean).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+
+/**
+ * A folder segment's label: the category at depth 0, `fy2027` → FY2027, `q2` → Q2, `cy2026` → 2026, `09-10-<slug>` →
+ * "Sep 10 · Title Case Slug", `undated` → Undated, a year as is, a named folder in title case.
+ */
+export function segmentLabel(segment: string, depth: number) {
+    if (depth === 0) return categoryLabel(segment);
+
+    if (segment === "undated") return "Undated";
+
+    const fiscal = /^fy(\d{4})$/.exec(segment);
+
+    if (fiscal) return `FY${fiscal[1]}`;
+
+    const quarter = /^q(\d)$/.exec(segment);
+
+    if (quarter) return `Q${quarter[1]}`;
+
+    const calendar = /^cy(\d{4})$/.exec(segment);
+
+    if (calendar) return calendar[1];
+
+    const day = /^(\d{2})-(\d{2})(?:-(.+))?$/.exec(segment);
+
+    const month = day ? MONTHS[Number(day[1]) - 1] : undefined;
+
+    if (day && month) return `${month} ${day[2]}${day[3] ? ` · ${titleCase(day[3])}` : ""}`;
+
+    if (/^\d{4}$/.test(segment)) return segment;
+
+    return titleCase(segment);
 }
 
 /**
- * Category → folder tree of the loaded documents, by the API's document tree (`category`, `group`, `group_label`):
- * categories in `ASSET_GROUP_CATEGORIES` order (an unknown one after them, documents not placed yet last, by IR
- * section and year), folders by `compareFolderKeys`; within a folder the API's order is kept.
+ * A document's folder path: its `group` split on `/` (the first segment is its category), else (not placed yet) the
+ * "Not yet placed" bucket with one folder per IR section and year.
  */
-export function groupDocumentFolders<T extends TreeDocument>(documents: ReadonlyArray<T>): Array<DocumentCategoryGroup<T>> {
-    const byCategory = new Map<string, Map<string, DocumentFolder<T>>>();
+function pathOf(doc: TreeDocument): { label: string; path: Array<string> } {
+    if (doc.group) {
+        const path = doc.group.split("/");
 
-    for (const doc of documents) {
-        const category = doc.category ?? UNPLACED_CATEGORY;
-
-        const folders = byCategory.get(category) ?? new Map<string, DocumentFolder<T>>();
-
-        const { key, label } = folderOf(doc);
-
-        const folder = folders.get(key) ?? { documents: [], key, label };
-
-        folder.documents.push(doc);
-
-        folders.set(key, folder);
-
-        byCategory.set(category, folders);
+        return { label: doc.group_label ?? segmentLabel(path.at(-1) ?? doc.group, path.length - 1), path };
     }
 
-    return [...byCategory.entries()]
-        .sort(([a], [b]) => categoryRank(a) - categoryRank(b) || a.localeCompare(b))
-        .map(([category, folders]) => ({
-            category,
-            count: [...folders.values()].reduce((sum, folder) => sum + folder.documents.length, 0),
-            folders: [...folders.values()].sort((a, b) => compareFolderKeys(a.key, b.key)),
+    const section = doc.section ?? "other";
+
+    return {
+        label: `${sectionLabel(section)} · ${doc.year ?? "Undated"}`,
+        path: [UNPLACED_CATEGORY, `${section}-${doc.year ?? "undated"}`],
+    };
+}
+
+const pathLabels = (path: ReadonlyArray<string>) => path.map((segment, depth) => segmentLabel(segment, depth));
+
+const includesQuery = (parts: ReadonlyArray<null | number | string | undefined>, query: string) =>
+    parts.some(part => part !== null && part !== undefined && String(part).toLowerCase().includes(query));
+
+/**
+ * The tree's text filter, case-insensitive: title, kind label, folder path and its labels, `group_label`, year and
+ * date. An empty query matches everything.
+ */
+export function matchesQuery(doc: TreeDocument, query: string) {
+    const needle = query.trim().toLowerCase();
+
+    if (!needle) return true;
+
+    const { label, path } = pathOf(doc);
+
+    return includesQuery(
+        [doc.title, documentKindLabel(doc.kind), doc.group, label, ...pathLabels(path), doc.year, doc.event_date],
+        needle,
+    );
+}
+
+const NEW_YORK = "America/New_York";
+
+/**
+ * A call row's folder: the `group` of the call's loaded documents, else an earnings call with a fiscal period →
+ * `earnings/fy<YYYY>/q<N>`, without one → `earnings/cy<YYYY>/<MM-DD>` (New York day of `scheduled_at`), any other
+ * event → `events/<YYYY>` (the pipeline's folder rules).
+ */
+export function callPlacement(event: CallEvent, documentGroups: ReadonlyMap<string, string>) {
+    const group = documentGroups.get(event.event_id);
+
+    if (group) return group;
+
+    const day = zonedDate(new Date(event.scheduled_at), NEW_YORK);
+
+    if (event.event_type !== "earnings_call") return `events/${day.slice(0, 4)}`;
+
+    if (event.fiscal_year !== null && event.fiscal_quarter !== null) return `earnings/fy${event.fiscal_year}/q${event.fiscal_quarter}`;
+
+    return `earnings/cy${day.slice(0, 4)}/${day.slice(5)}`;
+}
+
+/**
+ * The call rows of the loaded events: one per call with a press release, slides or documents, placed by
+ * `callPlacement` (the `group` of its first loaded document, by `event_id`).
+ */
+export function callEntries(events: ReadonlyArray<CallEvent>, documents: ReadonlyArray<TreeDocument>): Array<CallEntry> {
+    const documentGroups = new Map<string, string>();
+
+    for (const doc of documents) {
+        if (doc.event_id && doc.group && !documentGroups.has(doc.event_id)) documentGroups.set(doc.event_id, doc.group);
+    }
+
+    return events
+        .filter(event => event.has_press_release || event.has_slides || event.has_documents)
+        .map(event => ({
+            date: zonedDate(new Date(event.scheduled_at), NEW_YORK),
+            event,
+            key: callPlacement(event, documentGroups),
+            label: eventLabel(event),
         }));
+}
+
+/**
+ * The call rows the route's filters keep: none under a section or kind filter (a call row is no IR-section document of
+ * a kind), a category filter on the folder's category, a year filter on the fiscal year (else the call's year).
+ */
+export function filterCallEntries(calls: ReadonlyArray<CallEntry>, search: DocumentsSearch) {
+    if (search.section !== undefined || search.kind !== undefined) return [];
+
+    return calls.filter(call =>
+        (search.category === undefined || call.key.split("/")[0] === search.category)
+        && (search.year === undefined || (call.event.fiscal_year ?? Number(call.date.slice(0, 4))) === search.year));
+}
+
+const callMatchesQuery = (call: CallEntry, query: string) => {
+    const needle = query.trim().toLowerCase();
+
+    if (!needle) return true;
+
+    const path = call.key.split("/");
+
+    return includesQuery([call.label, call.date, call.key, ...pathLabels(path)], needle);
+};
+
+type MutableNode<T> = TreeNode<T> & { byKey: Map<string, MutableNode<T>> };
+
+function sortNodes<T>(nodes: Array<MutableNode<T>>, depth: number): Array<TreeNode<T>> {
+    const sorted = depth === 0
+        ? nodes.sort((a, b) => categoryRank(a.segment) - categoryRank(b.segment) || a.segment.localeCompare(b.segment))
+        : nodes.sort((a, b) => compareSegments(a.segment, b.segment));
+
+    return sorted.map(({ byKey, ...node }) => {
+        const children = sortNodes([...byKey.values()], depth + 1);
+
+        return {
+            ...node,
+            children,
+            count: node.documents.length + node.calls.length + children.reduce((sum, child) => sum + child.count, 0),
+        };
+    });
+}
+
+/**
+ * The company's whole document tree from the loaded rows: category → path segments → documents, any depth, split on
+ * `group` (documents not placed yet last, by IR section and year), plus the call rows at their folders. Categories in
+ * `ASSET_GROUP_CATEGORIES` order (an unknown one after them), folders newest first (`compareFolderKeys`); in a folder
+ * the call rows first, then the documents in the API's order. A text `query` keeps the matches (`matchesQuery`) and
+ * drops empty folders; counts are the matches then. The innermost folder of a group is labelled by its `group_label`.
+ */
+export function buildDocumentTree<T extends TreeDocument>(
+    documents: ReadonlyArray<T>,
+    calls: ReadonlyArray<CallEntry>,
+    query: string,
+): Array<TreeNode<T>> {
+    const roots = new Map<string, MutableNode<T>>();
+
+    const nodeAt = (path: ReadonlyArray<string>) => {
+        let level = roots;
+
+        let node: MutableNode<T> | undefined;
+
+        path.forEach((segment, depth) => {
+            const key = path.slice(0, depth + 1).join("/");
+
+            node = level.get(segment);
+
+            if (!node) {
+                node = { byKey: new Map(), calls: [], children: [], count: 0, documents: [], key, label: segmentLabel(segment, depth), segment };
+
+                level.set(segment, node);
+            }
+
+            level = node.byKey;
+        });
+
+        return node!;
+    };
+
+    for (const call of calls) {
+        if (callMatchesQuery(call, query)) nodeAt(call.key.split("/")).calls.push(call);
+    }
+
+    for (const doc of documents) {
+        if (!matchesQuery(doc, query)) continue;
+
+        const { label, path } = pathOf(doc);
+
+        const node = nodeAt(path);
+
+        if (path.length > 1) node.label = label;
+
+        node.documents.push(doc);
+    }
+
+    return sortNodes([...roots.values()], 0);
+}
+
+/** The default open folders: every category, and the newest child at each level below it (its first path). */
+export function defaultOpenKeys(tree: ReadonlyArray<TreeNode<unknown>>) {
+    const keys = new Set<string>();
+
+    for (const category of tree) {
+        let node: TreeNode<unknown> | undefined = category;
+
+        while (node) {
+            keys.add(node.key);
+
+            node = node.children.at(0);
+        }
+    }
+
+    return keys;
+}
+
+/** Every folder of the tree (under a text filter all of them hold a match and open). */
+export function allKeys(tree: ReadonlyArray<TreeNode<unknown>>): Array<string> {
+    return tree.flatMap(node => [node.key, ...allKeys(node.children)]);
 }
 
 /** Where a row opens: the stored copy (signed), else the page it was found on (a link-only webcast row). */

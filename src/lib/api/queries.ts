@@ -1686,6 +1686,8 @@ type EarningsCompanyDocumentsInfiniteInput = {
     category?: Array<AssetGroupCategory>;
     eventId?: string;
     identifier: string;
+    /** `calls` adds every earnings call's documents (`source: "call"`) to the same list. */
+    include?: Array<"calls">;
     kind?: Array<string>;
     limit?: number;
     section?: Array<string>;
@@ -1707,6 +1709,7 @@ export function useEarningsCompanyDocumentsInfinite(input: EarningsCompanyDocume
             input.kind?.join(",") ?? "",
             input.year ?? "",
             input.eventId ?? "",
+            input.include?.join(",") ?? "",
             input.limit ?? "",
         ],
         staleTime: EARNINGS_LIST_STALE_MS,

@@ -1,30 +1,90 @@
 import { describe, expect, it } from "vitest";
 
+import type { CallEvent, TreeDocument, TreeNode } from "./documents";
+
 import {
+    allKeys,
+    buildDocumentTree,
+    callEntries,
+    callPlacement,
     categoryLabel,
     compareFolderKeys,
+    defaultOpenKeys,
     documentHref,
     documentPageHref,
     earliestExpiry,
-    groupDocumentFolders,
+    filterCallEntries,
+    matchesQuery,
     pagesOf,
     sectionLabel,
+    segmentLabel,
     UNPLACED_CATEGORY,
     validateDocumentsSearch,
 } from "./documents";
 
-const doc = (id: string, category: null | string, group: null | string, section = "other", year: null | number = null) => ({
+type Doc = TreeDocument & { id: string };
+
+const doc = (id: string, category: null | string, group: null | string, section: null | string = "other", year: null | number = null): Doc => ({
     category,
+    event_date: null,
+    event_id: null,
     group,
     group_label: group ? `label ${group}` : null,
     id,
+    kind: "other",
     section,
+    title: `Title ${id}`,
     year,
 });
 
-describe("groupDocumentFolders", () => {
-    it("orders categories by the spine, folders newest first, undated last", () => {
-        const tree = groupDocumentFolders([
+const event = (overrides: Partial<CallEvent> = {}): CallEvent => ({
+    event_id: "e1",
+    event_title: null,
+    event_type: "earnings_call",
+    fiscal_quarter: 2,
+    fiscal_year: 2027,
+    has_audio: true,
+    has_documents: false,
+    has_press_release: true,
+    has_slides: true,
+    has_transcript: true,
+    // 2026-08-27 00:30 UTC = Aug 26, 8:30 PM in New York.
+    scheduled_at: "2026-08-27T00:30:00.000Z",
+    symbol: "ACME",
+    ...overrides,
+});
+
+/** `[key, count]` of every node, depth-first. */
+const shape = (nodes: ReadonlyArray<TreeNode<unknown>>): Array<[string, number]> =>
+    nodes.flatMap(node => [[node.key, node.count] as [string, number], ...shape(node.children)]);
+
+describe("segmentLabel", () => {
+    it("labels the pipeline's folder segments", () => {
+        expect(segmentLabel("earnings", 0)).toBe("Earnings");
+
+        expect(segmentLabel(UNPLACED_CATEGORY, 0)).toBe("Not yet placed");
+
+        expect(segmentLabel("fy2027", 1)).toBe("FY2027");
+
+        expect(segmentLabel("q2", 2)).toBe("Q2");
+
+        expect(segmentLabel("cy2026", 1)).toBe("2026");
+
+        expect(segmentLabel("08-26", 2)).toBe("Aug 26");
+
+        expect(segmentLabel("09-10-goldman-sachs-communacopia", 2)).toBe("Sep 10 · Goldman Sachs Communacopia");
+
+        expect(segmentLabel("undated", 1)).toBe("Undated");
+
+        expect(segmentLabel("2025", 1)).toBe("2025");
+
+        expect(segmentLabel("financial-data", 1)).toBe("Financial Data");
+    });
+});
+
+describe("buildDocumentTree", () => {
+    it("nests on the group path, counts every descendant, newest first, undated last", () => {
+        const tree = buildDocumentTree([
             doc("a", "reports", "reports/2024"),
             doc("b", "earnings", "earnings/fy2026/q4"),
             doc("c", "earnings", "earnings/undated"),
@@ -33,45 +93,113 @@ describe("groupDocumentFolders", () => {
             doc("f", "earnings", "earnings/fy2027/q2"),
             doc("g", "shareholder", "shareholder/tax"),
             doc("h", "shareholder", "shareholder/dividends"),
+            doc("i", "events", "events/2026/09-10-goldman-sachs-communacopia"),
+            doc("j", "events", "events/2026/01-07-ces"),
+            doc("k", "other", "other/financial-data"),
+            doc("l", "other", "other/financial-data/2025"),
+        ], [], "");
+
+        expect(tree.map(node => node.key)).toEqual(["earnings", "events", "reports", "shareholder", "other"]);
+
+        expect(shape(tree.slice(0, 2))).toEqual([
+            ["earnings", 5],
+            ["earnings/fy2027", 3],
+            ["earnings/fy2027/q2", 2],
+            ["earnings/fy2027/q1", 1],
+            ["earnings/fy2026", 1],
+            ["earnings/fy2026/q4", 1],
+            ["earnings/undated", 1],
+            ["events", 2],
+            ["events/2026", 2],
+            ["events/2026/09-10-goldman-sachs-communacopia", 1],
+            ["events/2026/01-07-ces", 1],
         ]);
 
-        expect(tree.map(group => group.category)).toEqual(["earnings", "reports", "shareholder"]);
+        const q2 = tree[0].children[0].children[0];
 
-        expect(tree[0].count).toBe(5);
+        // The API's order within a folder; the innermost folder of a group is labelled by its group_label.
+        expect(q2.documents.map(d => d.id)).toEqual(["d", "f"]);
 
-        expect(tree[0].folders.map(folder => folder.key))
-            .toEqual(["earnings/fy2027/q2", "earnings/fy2027/q1", "earnings/fy2026/q4", "earnings/undated"]);
+        expect(q2.label).toBe("label earnings/fy2027/q2");
 
-        // The API's order within a folder is kept; the folder label is the API's group_label.
-        expect(tree[0].folders[0].documents.map(d => d.id)).toEqual(["d", "f"]);
+        expect(tree[0].children[0].label).toBe("FY2027");
 
-        expect(tree[0].folders[0].label).toBe("label earnings/fy2027/q2");
+        // Named folders A–Z; a folder holds documents and subfolders.
+        expect(tree[3].children.map(node => node.segment)).toEqual(["dividends", "tax"]);
 
-        // Named folders A–Z.
-        expect(tree[2].folders.map(folder => folder.key)).toEqual(["shareholder/dividends", "shareholder/tax"]);
+        expect(shape([tree[4]])).toEqual([["other", 2], ["other/financial-data", 2], ["other/financial-data/2025", 1]]);
     });
 
     it("puts documents not placed yet last, by IR section and year", () => {
-        const tree = groupDocumentFolders([
+        const tree = buildDocumentTree([
             doc("a", null, null, "annual_reports", 2025),
             doc("b", "zz_new", "zz_new/x"),
             doc("c", "other", "other/faq"),
             doc("d", null, null, "esg", null),
-        ]);
+            doc("e", null, null, null, 2024),
+        ], [], "");
 
-        expect(tree.map(group => group.category)).toEqual(["other", "zz_new", UNPLACED_CATEGORY]);
+        expect(tree.map(node => node.key)).toEqual(["other", "zz_new", UNPLACED_CATEGORY]);
 
-        expect(tree[2].folders.map(folder => folder.label)).toEqual(["Annual reports · 2025", "ESG · Undated"]);
+        expect(tree[2].label).toBe("Not yet placed");
+
+        expect(tree[2].children.map(node => node.label)).toEqual(["Annual reports · 2025", "ESG · Undated", "Other · 2024"]);
 
         expect(categoryLabel(UNPLACED_CATEGORY)).toBe("Not yet placed");
 
-        expect(groupDocumentFolders([])).toEqual([]);
+        expect(buildDocumentTree([], [], "")).toEqual([]);
+    });
+
+    it("places call rows before the folder's documents and counts them", () => {
+        const calls = callEntries([event()], []);
+
+        const tree = buildDocumentTree([doc("a", "earnings", "earnings/fy2027/q2")], calls, "");
+
+        const q2 = tree[0].children[0].children[0];
+
+        expect(q2.calls.map(call => call.label)).toEqual(["Q2 FY2027"]);
+
+        expect(q2.count).toBe(2);
+
+        expect(tree[0].count).toBe(2);
+    });
+
+    it("keeps only the matches under a text query, with their ancestors, and drops empty folders", () => {
+        const documents = [
+            { ...doc("a", "reports", "reports/2025"), kind: "proxy_statement", title: "Notice of meeting" },
+            doc("b", "reports", "reports/2024"),
+            doc("c", "earnings", "earnings/fy2027/q2"),
+        ];
+
+        const tree = buildDocumentTree(documents, callEntries([event({ fiscal_quarter: 1 })], []), "PROXY");
+
+        expect(shape(tree)).toEqual([["reports", 1], ["reports/2025", 1]]);
+
+        // "Q2" matches the folder label of c (and its path), not the Q1 call.
+        expect(shape(buildDocumentTree(documents, callEntries([event({ fiscal_quarter: 1 })], []), "q2")))
+            .toEqual([["earnings", 1], ["earnings/fy2027", 1], ["earnings/fy2027/q2", 1]]);
+
+        expect(buildDocumentTree(documents, [], "nothing like it")).toEqual([]);
+    });
+
+    it("opens every category and its newest path by default, every folder under a query", () => {
+        const tree = buildDocumentTree([
+            doc("a", "earnings", "earnings/fy2027/q2"),
+            doc("b", "earnings", "earnings/fy2026/q4"),
+            doc("c", "reports", "reports/2025"),
+            doc("d", "reports", "reports/2024"),
+        ], [], "");
+
+        expect([...defaultOpenKeys(tree)])
+            .toEqual(["earnings", "earnings/fy2027", "earnings/fy2027/q2", "reports", "reports/2025"]);
+
+        expect(allKeys(tree)).toHaveLength(8);
     });
 
     it("compares folder keys like the pipeline", () => {
         expect(compareFolderKeys("events/2026/09-10-a", "events/2025/12-01-b")).toBeLessThan(0);
 
-        expect(compareFolderKeys("news/undated", "news/2020")).toBeGreaterThan(0);
+        expect(compareFolderKeys("reports/undated", "reports/2020")).toBeGreaterThan(0);
 
         expect(compareFolderKeys("other/fact-sheets", "other/faq")).toBeLessThan(0);
 
@@ -79,15 +207,74 @@ describe("groupDocumentFolders", () => {
     });
 });
 
+describe("callPlacement / callEntries", () => {
+    it("uses the group of the call's documents first", () => {
+        expect(callPlacement(event(), new Map([["e1", "earnings/fy2027/q3"]]))).toBe("earnings/fy2027/q3");
+    });
+
+    it("places an earnings call by its fiscal period, else its New York day", () => {
+        expect(callPlacement(event(), new Map())).toBe("earnings/fy2027/q2");
+
+        expect(callPlacement(event({ fiscal_quarter: null, fiscal_year: null }), new Map())).toBe("earnings/cy2026/08-26");
+    });
+
+    it("places any other event in its year under events", () => {
+        expect(callPlacement(event({ event_title: "Investor Day", event_type: "investor_day" }), new Map())).toBe("events/2026");
+    });
+
+    it("lists calls with a press release, slides or documents, placed by their loaded documents", () => {
+        const entries = callEntries([
+            event({ event_id: "e1", has_documents: true }),
+            event({ event_id: "e2", has_documents: false, has_press_release: false, has_slides: false }),
+        ], [{ ...doc("x", "earnings", "earnings/fy2027/q3"), event_id: "e1" }]);
+
+        expect(entries).toEqual([{ date: "2026-08-26", event: expect.objectContaining({ event_id: "e1" }), key: "earnings/fy2027/q3", label: "Q2 FY2027" }]);
+    });
+
+    it("follows the route's category and year filters, none under a section or kind filter", () => {
+        const entries = callEntries([event()], []);
+
+        expect(filterCallEntries(entries, { category: "earnings", year: 2027 })).toHaveLength(1);
+
+        expect(filterCallEntries(entries, { category: "reports" })).toEqual([]);
+
+        expect(filterCallEntries(entries, { year: 2026 })).toEqual([]);
+
+        expect(filterCallEntries(entries, { kind: "annual_report" })).toEqual([]);
+    });
+});
+
+describe("matchesQuery", () => {
+    const report = { ...doc("a", "reports", "reports/2025"), event_date: "2025-03-14", kind: "proxy_statement", title: "Notice of Meeting", year: 2025 };
+
+    it("matches title, kind label, folder path and labels, year and date, case-insensitively", () => {
+        expect(matchesQuery(report, "notice")).toBe(true);
+
+        expect(matchesQuery(report, "Proxy Statement")).toBe(true);
+
+        expect(matchesQuery(report, "reports/2025")).toBe(true);
+
+        expect(matchesQuery(report, "label reports")).toBe(true);
+
+        expect(matchesQuery(report, "2025-03")).toBe(true);
+
+        expect(matchesQuery({ ...doc("b", "earnings", "earnings/fy2027/q2"), group_label: null }, "FY2027")).toBe(true);
+
+        expect(matchesQuery(report, "dividend")).toBe(false);
+
+        expect(matchesQuery(report, "  ")).toBe(true);
+    });
+});
+
 describe("validateDocumentsSearch", () => {
     it("keeps valid filters and coerces the year", () => {
-        expect(validateDocumentsSearch({ category: "esg", kind: "annual_report", section: "esg", year: "2025" }))
-            .toEqual({ category: "esg", kind: "annual_report", section: "esg", year: 2025 });
+        expect(validateDocumentsSearch({ category: "esg", kind: "annual_report", q: "  proxy ", section: "esg", year: "2025" }))
+            .toEqual({ category: "esg", kind: "annual_report", q: "proxy", section: "esg", year: 2025 });
     });
 
     it("drops invalid values instead of failing the route", () => {
-        expect(validateDocumentsSearch({ category: "filings", kind: "nope", section: 7, year: "abc" }))
-            .toEqual({ category: undefined, kind: undefined, section: undefined, year: undefined });
+        expect(validateDocumentsSearch({ category: "news", kind: "nope", q: "   ", section: 7, year: "abc" }))
+            .toEqual({ category: undefined, kind: undefined, q: undefined, section: undefined, year: undefined });
 
         expect(validateDocumentsSearch({})).toEqual({});
     });

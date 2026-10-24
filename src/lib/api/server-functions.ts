@@ -1210,6 +1210,7 @@ const earningsCompanyDocumentsSchema = z.object({
     category: z.array(z.enum(ASSET_GROUP_CATEGORIES)).optional(),
     eventId: z.string().uuid().optional(),
     identifier: z.string().min(1),
+    include: z.array(z.enum(["calls"])).optional(),
     kind: z.array(z.string()).optional(),
     limit: z.number().optional(),
     offset: z.number().optional(),
@@ -1220,7 +1221,7 @@ const earningsCompanyDocumentsSchema = z.object({
 export const getEarningsCompanyDocuments = createServerFn({ method: "GET" })
     .inputValidator(earningsCompanyDocumentsSchema)
     .handler(async ({ data }): Promise<EarningsCompanyDocumentsResponse> => {
-        const { apiKey, category, eventId, identifier, kind, limit, offset, section, year } = data;
+        const { apiKey, category, eventId, identifier, include, kind, limit, offset, section, year } = data;
 
         const api = createApiClient(apiKey);
 
@@ -1230,6 +1231,7 @@ export const getEarningsCompanyDocuments = createServerFn({ method: "GET" })
                     category: category?.length ? category : undefined,
                     event_id: eventId,
                     identifier,
+                    include: include?.length ? include : undefined,
                     kind: kind?.length ? kind : undefined,
                     limit,
                     offset,
