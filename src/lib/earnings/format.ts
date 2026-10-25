@@ -119,10 +119,10 @@ function addDays(date: string, days: number) {
  * `scheduled_at` is midnight UTC of its calendar date — read it in UTC, never in `tz`; a timed
  * call's date in `tz`.
  */
-export function callCalendarDate(event: CallTimeFields) {
+export function callCalendarDate(event: Pick<EarningsEvent, "call_time_source" | "scheduled_at">, tz: string) {
     const at = new Date(event.scheduled_at);
 
-    return event.call_time_source === null ? zonedDate(at, "UTC") : zonedDate(at, event.tz);
+    return event.call_time_source === null ? zonedDate(at, "UTC") : zonedDate(at, tz);
 }
 
 /**
@@ -130,14 +130,14 @@ export function callCalendarDate(event: CallTimeFields) {
  * (`call_time_source === null`) is on or after today in `tz` (`callCalendarDate`).
  */
 export function isUpcoming(event: CallTimeFields, now: Date) {
-    if (event.call_time_source === null) return callCalendarDate(event) >= zonedDate(now, event.tz);
+    if (event.call_time_source === null) return callCalendarDate(event, event.tz) >= zonedDate(now, event.tz);
 
     return new Date(event.scheduled_at).getTime() > now.getTime();
 }
 
 /** The call's calendar date (`callCalendarDate`) is today in `tz`. */
 export function isCallToday(event: CallTimeFields, now: Date) {
-    return callCalendarDate(event) === zonedDate(now, event.tz);
+    return callCalendarDate(event, event.tz) === zonedDate(now, event.tz);
 }
 
 export type CalendarWindow = { from: string; to: string };

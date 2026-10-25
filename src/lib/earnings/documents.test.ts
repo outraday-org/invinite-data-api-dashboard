@@ -40,6 +40,7 @@ const doc = (id: string, category: null | string, group: null | string, section:
 });
 
 const event = (overrides: Partial<CallEvent> = {}): CallEvent => ({
+    call_time_source: "wire",
     event_id: "e1",
     event_title: null,
     event_type: "earnings_call",
@@ -306,6 +307,14 @@ describe("callPlacement / callEntries", () => {
         expect(callPlacement(event(), new Map())).toBe("earnings/fy2027/q2");
 
         expect(callPlacement(event({ fiscal_quarter: null, fiscal_year: null }), new Map())).toBe("earnings/cy2026/08-26");
+    });
+
+    it("places a date-only call on its UTC date, never the previous New York day", () => {
+        const dateOnly = event({ call_time_source: null, fiscal_quarter: null, fiscal_year: null, scheduled_at: "2027-01-01T00:00:00.000Z" });
+
+        expect(callPlacement(dateOnly, new Map())).toBe("earnings/cy2027/01-01");
+
+        expect(callEntries([{ ...dateOnly, has_documents: true }], [])[0]?.date).toBe("2027-01-01");
     });
 
     it("places any other event in its year under events", () => {

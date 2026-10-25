@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import type { EarningsCompanyDocument, EarningsEvent, JsonValue } from "@/lib/api/types";
 
-import { eventLabel, zonedDate } from "@/lib/earnings/format";
+import { callCalendarDate, eventLabel } from "@/lib/earnings/format";
 
 /**
  * Company document kinds (IDA `COMPANY_DOCUMENT_KINDS` in `src/lib/earnings/constants.ts`; the spec types `kind` as a
@@ -138,6 +138,7 @@ export type TreeDocument = {
 /** The events-list fields a call row needs. */
 export type CallEvent = Pick<
     EarningsEvent,
+    | "call_time_source"
     | "event_id"
     | "event_title"
     | "event_type"
@@ -341,15 +342,15 @@ const NEW_YORK = "America/New_York";
 
 /**
  * A call row's folder: the `group` of the call's loaded documents, else an earnings call with a fiscal period →
- * `earnings/fy<YYYY>/q<N>`, without one → `earnings/cy<YYYY>/<MM-DD>` (New York day of `scheduled_at`), any other
- * event → `events/<YYYY>` (the pipeline's folder rules).
+ * `earnings/fy<YYYY>/q<N>`, without one → `earnings/cy<YYYY>/<MM-DD>` (`callCalendarDate`: a timed call's New York
+ * day, a date-only one's UTC date), any other event → `events/<YYYY>` (the pipeline's folder rules).
  */
 export function callPlacement(event: CallEvent, documentGroups: ReadonlyMap<string, string>) {
     const group = documentGroups.get(event.event_id);
 
     if (group) return group;
 
-    const day = zonedDate(new Date(event.scheduled_at), NEW_YORK);
+    const day = callCalendarDate(event, NEW_YORK);
 
     if (event.event_type !== "earnings_call") return `events/${day.slice(0, 4)}`;
 
@@ -372,7 +373,7 @@ export function callEntries(events: ReadonlyArray<CallEvent>, documents: Readonl
     return events
         .filter(event => event.has_press_release || event.has_slides || event.has_documents)
         .map(event => ({
-            date: zonedDate(new Date(event.scheduled_at), NEW_YORK),
+            date: callCalendarDate(event, NEW_YORK),
             event,
             key: callPlacement(event, documentGroups),
             label: eventLabel(event),
