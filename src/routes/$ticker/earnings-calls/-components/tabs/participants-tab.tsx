@@ -2,7 +2,6 @@ import type { EarningsParticipant } from "@/lib/api/types";
 import type { RoleGroup } from "@/lib/earnings/labels";
 
 import { Badge } from "@/components/ui/badge";
-import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -18,7 +17,7 @@ import {
 
 import type { CallTabProps } from "../call-tabs";
 
-import { Notice } from "../media-state";
+import { MediaState, NO_TRANSCRIPT_TITLE, Notice } from "../media-state";
 import { SeekButton } from "../seek-button";
 
 function Evidence({ evidence }: { evidence: EarningsParticipant["evidence"] }) {
@@ -76,7 +75,7 @@ function ParticipantRows({ group, participants }: { group: RoleGroup; participan
 export function ParticipantsTab({ selector }: CallTabProps) {
     const { data, error, isLoading } = useEarningsParticipants({ ...selector, include: "evidence" });
 
-    if (error) return <ErrorState error={error} title="Failed to load participants" />;
+    if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} title="Failed to load participants" />;
 
     if (isLoading || !data) return <Skeleton className="h-40 w-full" />;
 

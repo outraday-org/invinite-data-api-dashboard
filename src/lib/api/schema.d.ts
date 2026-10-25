@@ -6143,7 +6143,7 @@ export interface operations {
                             fiscal_quarter: null | number;
                             /**
                              * Format: date-time
-                             * @description Scheduled start (ISO 8601 UTC). When call_time_source is null only the date is known: read only its calendar date in tz.
+                             * @description Scheduled start (ISO 8601 UTC). A date-only event (call_time_source null) is stored at 00:00:00Z of its calendar date: read its UTC date; do not convert it to tz.
                              */
                             scheduled_at: string;
                             /** @description Company timezone (IANA) */
@@ -7311,7 +7311,7 @@ export interface operations {
                         fiscal_quarter: null | number;
                         /**
                          * Format: date-time
-                         * @description Scheduled start (ISO 8601 UTC). When call_time_source is null only the date is known: read only its calendar date in tz.
+                         * @description Scheduled start (ISO 8601 UTC). A date-only event (call_time_source null) is stored at 00:00:00Z of its calendar date: read its UTC date; do not convert it to tz.
                          */
                         scheduled_at: string;
                         /** @description Company timezone (IANA) */
@@ -7530,7 +7530,7 @@ export interface operations {
                             fiscal_quarter: null | number;
                             /**
                              * Format: date-time
-                             * @description Scheduled start (ISO 8601 UTC). When call_time_source is null only the date is known: read only its calendar date in tz.
+                             * @description Scheduled start (ISO 8601 UTC). A date-only event (call_time_source null) is stored at 00:00:00Z of its calendar date: read its UTC date; do not convert it to tz.
                              */
                             scheduled_at: string;
                             /** @description Company timezone (IANA) */
@@ -8150,7 +8150,7 @@ export interface operations {
                             fiscal_quarter: null | number;
                             /**
                              * Format: date-time
-                             * @description Scheduled start (ISO 8601 UTC). When call_time_source is null only the date is known: read only its calendar date in tz.
+                             * @description Scheduled start (ISO 8601 UTC). A date-only event (call_time_source null) is stored at 00:00:00Z of its calendar date: read its UTC date; do not convert it to tz.
                              */
                             scheduled_at: string;
                             /** @description Company timezone (IANA) */
@@ -9822,7 +9822,7 @@ export interface operations {
                             fiscal_quarter: null | number;
                             /**
                              * Format: date-time
-                             * @description Scheduled start (ISO 8601 UTC). When call_time_source is null only the date is known: read only its calendar date in tz.
+                             * @description Scheduled start (ISO 8601 UTC). A date-only event (call_time_source null) is stored at 00:00:00Z of its calendar date: read its UTC date; do not convert it to tz.
                              */
                             scheduled_at: string;
                             /** @description Company timezone (IANA) */

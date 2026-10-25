@@ -3,7 +3,6 @@ import { ExternalLink } from "lucide-react";
 import type { EarningsKpi } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
-import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -13,7 +12,7 @@ import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-b
 
 import type { CallTabProps } from "../call-tabs";
 
-import { Notice } from "../media-state";
+import { MediaState, NO_TRANSCRIPT_TITLE, Notice } from "../media-state";
 import { SeekButton } from "../seek-button";
 import { EXTRACTIONS_PAGE_LIMIT } from "./guidance-table";
 
@@ -102,7 +101,7 @@ export function KpiTable({ selector }: Pick<CallTabProps, "selector">) {
 
     const kpis = data?.pages.flatMap(page => page.kpis ?? []) ?? [];
 
-    if (error) return <ErrorState error={error} title="Failed to load KPIs" />;
+    if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} title="Failed to load KPIs" />;
 
     if (isLoading) return <Skeleton className="h-40 w-full" />;
 

@@ -13,8 +13,8 @@ type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 
 /**
  * "Oct 29, 2026 · 4:30 PM ET" in the company's timezone; only the date ("Oct 29, 2026")
- * when the start time is unknown (`call_time_source === null`: read only the calendar date
- * of `scheduled_at` in `tz`).
+ * when the start time is unknown (`call_time_source === null`: a date-only event's
+ * `scheduled_at` is midnight UTC of its calendar date — read it in UTC, never in `tz`).
  */
 export function formatCallTime(event: CallTimeFields) {
     const at = new Date(event.scheduled_at);
@@ -24,7 +24,7 @@ export function formatCallTime(event: CallTimeFields) {
     const date = new Intl.DateTimeFormat("en-US", {
         day: "numeric",
         month: "short",
-        timeZone: event.tz,
+        timeZone: event.call_time_source === null ? "UTC" : event.tz,
         year: "numeric",
     }).format(at);
 
@@ -115,20 +115,29 @@ function addDays(date: string, days: number) {
 }
 
 /**
- * A call that has not happened yet: a timed call starts after `now`; a date-only call
- * (`call_time_source === null`, `scheduled_at` is a placeholder) is on or after today in `tz`.
+ * `YYYY-MM-DD` the call is on (the pipeline's `eventCalendarDate`): a date-only event's
+ * `scheduled_at` is midnight UTC of its calendar date — read it in UTC, never in `tz`; a timed
+ * call's date in `tz`.
  */
-export function isUpcoming(event: CallTimeFields, now: Date) {
+export function callCalendarDate(event: CallTimeFields) {
     const at = new Date(event.scheduled_at);
 
-    if (event.call_time_source === null) return zonedDate(at, event.tz) >= zonedDate(now, event.tz);
-
-    return at.getTime() > now.getTime();
+    return event.call_time_source === null ? zonedDate(at, "UTC") : zonedDate(at, event.tz);
 }
 
-/** The call's calendar date (in `tz`) is today. */
-export function isCallToday(event: Pick<EarningsEvent, "scheduled_at" | "tz">, now: Date) {
-    return zonedDate(new Date(event.scheduled_at), event.tz) === zonedDate(now, event.tz);
+/**
+ * A call that has not happened yet: a timed call starts after `now`; a date-only call
+ * (`call_time_source === null`) is on or after today in `tz` (`callCalendarDate`).
+ */
+export function isUpcoming(event: CallTimeFields, now: Date) {
+    if (event.call_time_source === null) return callCalendarDate(event) >= zonedDate(now, event.tz);
+
+    return new Date(event.scheduled_at).getTime() > now.getTime();
+}
+
+/** The call's calendar date (`callCalendarDate`) is today in `tz`. */
+export function isCallToday(event: CallTimeFields, now: Date) {
+    return callCalendarDate(event) === zonedDate(now, event.tz);
 }
 
 export type CalendarWindow = { from: string; to: string };

@@ -20,6 +20,20 @@ export function Notice({ badge, children, title }: { badge?: string; children?: 
     );
 }
 
+export const NO_TRANSCRIPT_TITLE = "No transcript yet";
+
+// Capture statuses that end a call without a recording (`capture_status` is a plain string on the event).
+const NO_RECORDING_STATUSES = new Set(["expired", "missed"]);
+
+/** The state of a transcript-derived tab of an event without a transcript (`has_transcript: false`). */
+export function NoTranscriptNotice({ captureStatus }: { captureStatus: string }) {
+    const reason = NO_RECORDING_STATUSES.has(captureStatus)
+        ? "No recording was captured."
+        : "The call has not been transcribed.";
+
+    return <Notice title={NO_TRANSCRIPT_TITLE}>{reason}</Notice>;
+}
+
 // The answers IDA's media routes give by design (`code` = the body's `error`).
 const MEDIA_CODES: Partial<Record<string, { badge: string; title: string }>> = {
     audio_disabled: {

@@ -2,7 +2,6 @@ import type { EarningsQaPair } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEarningsQaInfinite } from "@/lib/api/queries";
 import { cn } from "@/lib/utils";
@@ -10,7 +9,7 @@ import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-b
 
 import type { CallTabProps } from "../call-tabs";
 
-import { Notice } from "../media-state";
+import { MediaState, NO_TRANSCRIPT_TITLE, Notice } from "../media-state";
 import { SeekButton } from "../seek-button";
 
 const QA_PAGE_LIMIT = 50;
@@ -63,7 +62,7 @@ export function QaTab({ selector }: CallTabProps) {
 
     const pairs = data?.pages.flatMap(page => page.pairs) ?? [];
 
-    if (error) return <ErrorState error={error} title="Failed to load Q&A" />;
+    if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} title="Failed to load Q&A" />;
 
     if (isLoading) return <Skeleton className="h-40 w-full" />;
 

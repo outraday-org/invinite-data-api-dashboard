@@ -6,7 +6,7 @@ import type { EarningsEventResponse } from "@/lib/api/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
-import { Notice } from "./media-state";
+import { Notice, NoTranscriptNotice } from "./media-state";
 import { AudioTab } from "./tabs/audio-tab";
 import { DocumentsTab } from "./tabs/documents-tab";
 import { GuidanceTab } from "./tabs/guidance-tab";
@@ -60,18 +60,19 @@ type CallTabDefinition = {
     render: (props: CallTabProps) => React.ReactNode;
 };
 
-// The derived tabs (guidance … prosody, price moves) carry no `has_*` flag: an underived call shows each
-// tab's own empty state ("No guidance extracted", "not derived yet").
+// The transcript-derived tabs (guidance … prosody) carry `has_transcript`: without a transcript they show
+// `NoTranscriptNotice` and send no request; a transcribed but underived call shows each tab's own empty state
+// ("No guidance extracted", "not derived yet"). Price moves keeps no flag (its own 404 state).
 const CALL_TABS: Record<CallTab, CallTabDefinition> = {
     "audio": { flag: "has_audio", label: "Audio", render: () => <AudioTab /> },
     "documents": { flag: "has_documents", label: "Documents", render: props => <DocumentsTab {...props} /> },
-    "guidance": { label: "Guidance & KPIs", render: props => <GuidanceTab {...props} /> },
-    "metrics": { label: "Metrics & diff", render: props => <MetricsDiffTab {...props} /> },
-    "participants": { label: "Participants", render: props => <ParticipantsTab {...props} /> },
+    "guidance": { flag: "has_transcript", label: "Guidance & KPIs", render: props => <GuidanceTab {...props} /> },
+    "metrics": { flag: "has_transcript", label: "Metrics & diff", render: props => <MetricsDiffTab {...props} /> },
+    "participants": { flag: "has_transcript", label: "Participants", render: props => <ParticipantsTab {...props} /> },
     "press-release": { flag: "has_press_release", label: "Press release", render: props => <PressReleaseTab {...props} /> },
     "price-moves": { label: "Price moves", render: props => <PriceAttributionTab {...props} /> },
-    "prosody": { label: "Prosody", render: props => <ProsodyTab {...props} /> },
-    "qa": { label: "Q&A", render: props => <QaTab {...props} /> },
+    "prosody": { flag: "has_transcript", label: "Prosody", render: props => <ProsodyTab {...props} /> },
+    "qa": { flag: "has_transcript", label: "Q&A", render: props => <QaTab {...props} /> },
     "slides": { flag: "has_slides", label: "Slides", render: props => <SlidesTab {...props} /> },
     "transcript": { flag: "has_transcript", label: "Transcript", render: props => <TranscriptTab {...props} /> },
 };
@@ -97,7 +98,7 @@ export function CallTabs({
     transcriptJump: null | TranscriptJump;
 }) {
     // A non-earnings event (investor day, conference, AGM) hides the flagged tabs the API says it lacks (no press
-    // release for a conference); an earnings call keeps them, muted. The derived tabs show their own empty states.
+    // release, no transcript-derived tabs without a transcript); an earnings call keeps them, muted.
     const hidden = (value: CallTab) => {
         const { flag } = CALL_TABS[value];
 
@@ -143,7 +144,9 @@ export function CallTabs({
             <TabsContent className="pt-2" value={shownTab}>
                 {available
                     ? active.render(props)
-                    : <Notice title="Not available for this call" />}
+                    : active.flag === "has_transcript"
+                        ? <NoTranscriptNotice captureStatus={event.capture_status} />
+                        : <Notice title="Not available for this call" />}
             </TabsContent>
         </Tabs>
     );

@@ -5,7 +5,6 @@ import type { EarningsGuidanceItem } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEarningsExtractionsInfinite } from "@/lib/api/queries";
@@ -24,7 +23,7 @@ import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-b
 
 import type { CallTabProps } from "../call-tabs";
 
-import { Notice } from "../media-state";
+import { MediaState, NO_TRANSCRIPT_TITLE, Notice } from "../media-state";
 import { SeekButton } from "../seek-button";
 
 export const EXTRACTIONS_PAGE_LIMIT = 50;
@@ -187,7 +186,7 @@ export function GuidanceTable({
 
     const items = review === "needs_review" ? all.filter(item => item.review_status === "needs_review") : all;
 
-    if (error) return <ErrorState error={error} title="Failed to load guidance" />;
+    if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} title="Failed to load guidance" />;
 
     return (
         <div className="flex flex-col gap-2">

@@ -60,7 +60,7 @@ import type {
     StatementType,
 } from "./types";
 
-import { rethrowApiError, retryUnlessApiError } from "./errors";
+import { ApiRequestError, rethrowApiError, retryUnlessApiError } from "./errors";
 import {
     getApiBaseUrl,
     getAsReportedFinancialsPresentation,
@@ -440,6 +440,13 @@ function useErrorToast(error: Error | null, message: string) {
             });
         }
     }, [error, message]);
+}
+
+/** The toast's error: none when the hook keeps quiet (`errorMessage: null`) or the API's status is a page state. */
+function toastableError(error: Error | null, errorMessage: null | string, quietStatuses: ReadonlyArray<number> = []) {
+    if (errorMessage === null) return null;
+
+    return error instanceof ApiRequestError && quietStatuses.includes(error.status) ? null : error;
 }
 
 // Hooks with error handling
@@ -1228,18 +1235,20 @@ type EarningsQueryExtras<T> = Pick<
  * Shared shape of the earnings hooks. Every earnings server function throws an
  * `ApiRequestError` (`throwApiError`), revived here by `rethrowApiError`, and an API answer is
  * never retried (`retryUnlessApiError`). `errorMessage: null` = status-aware: no toast, the
- * page classifies `error` (`status`, `code`); a string = toast with that title.
+ * page classifies `error` (`status`, `code`); a string = toast with that title, except for an
+ * `ApiRequestError` whose status is in `quietStatuses` (a page state, e.g. 404 "No transcript").
  */
 function useEarningsQuery<T>(options: EarningsQueryExtras<T> & {
     enabled: boolean;
     errorMessage: null | string;
     load: (apiKey: string | undefined) => Promise<T>;
     queryKey: ReadonlyArray<unknown>;
+    quietStatuses?: ReadonlyArray<number>;
     staleTime: number;
 }) {
     const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
 
-    const { enabled, errorMessage, load, queryKey, ...rest } = options;
+    const { enabled, errorMessage, load, queryKey, quietStatuses, ...rest } = options;
 
     const result = useQuery<T, Error, T, ReadonlyArray<unknown>>({
         ...rest,
@@ -1249,7 +1258,7 @@ function useEarningsQuery<T>(options: EarningsQueryExtras<T> & {
         retry: rest.retry ?? retryUnlessApiError,
     });
 
-    useErrorToast(errorMessage === null ? null : result.error, errorMessage ?? "");
+    useErrorToast(toastableError(result.error, errorMessage, quietStatuses), errorMessage ?? "");
 
     return {
         ...result,
@@ -1262,11 +1271,12 @@ function useEarningsInfinite<TPage extends { next_url?: null | string }>(options
     errorMessage: null | string;
     fetchPage: (offset: number, apiKey: string | undefined) => Promise<TPage>;
     queryKey: ReadonlyArray<unknown>;
+    quietStatuses?: ReadonlyArray<number>;
     staleTime: number;
 }) {
     const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
 
-    const { enabled, errorMessage, fetchPage, queryKey, staleTime } = options;
+    const { enabled, errorMessage, fetchPage, queryKey, quietStatuses, staleTime } = options;
 
     const result = useInfiniteQuery<TPage, Error, InfiniteData<TPage, number>, ReadonlyArray<unknown>, number>({
         enabled: hasHydrated && enabled,
@@ -1278,7 +1288,7 @@ function useEarningsInfinite<TPage extends { next_url?: null | string }>(options
         staleTime,
     });
 
-    useErrorToast(errorMessage === null ? null : result.error, errorMessage ?? "");
+    useErrorToast(toastableError(result.error, errorMessage, quietStatuses), errorMessage ?? "");
 
     return {
         ...result,
@@ -1447,6 +1457,7 @@ export function useEarningsQaInfinite(input: EarningsQaInfiniteInput) {
         errorMessage: "Failed to load Q&A",
         fetchPage: (offset, apiKey) => getEarningsQa({ data: { ...input, apiKey, offset } }),
         queryKey: ["earnings", "qa", ...selectorKey(input), input.limit],
+        quietStatuses: [404],
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }
@@ -1461,6 +1472,7 @@ export function useEarningsParticipants(input: EarningsParticipantsInput) {
         errorMessage: "Failed to load participants",
         load: apiKey => getEarningsParticipants({ data: { ...input, apiKey } }),
         queryKey: ["earnings", "participants", ...selectorKey(input), input.include ?? ""],
+        quietStatuses: [404],
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }
@@ -1499,6 +1511,7 @@ export function useEarningsExtractionsInfinite(input: EarningsExtractionsInfinit
             input.review ?? "",
             input.limit,
         ],
+        quietStatuses: [404],
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }

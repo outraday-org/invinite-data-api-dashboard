@@ -27,14 +27,14 @@ describe("formatCallTime", () => {
         expect(value).toBe("Oct 29, 2026 · 4:30 PM ET");
     });
 
-    it("shows only the calendar date in tz when the time is unknown", () => {
+    it("shows a date-only event's UTC calendar date, never the previous day in tz", () => {
         const value = formatCallTime({
             call_time_source: null,
-            scheduled_at: "2026-10-30T02:00:00.000Z",
+            scheduled_at: "2026-10-21T00:00:00Z",
             tz: "America/Los_Angeles",
         });
 
-        expect(value).toBe("Oct 29, 2026");
+        expect(value).toBe("Oct 21, 2026");
     });
 });
 
@@ -87,17 +87,40 @@ describe("isUpcoming", () => {
         expect(isUpcoming({ ...base, scheduled_at: "2026-10-10T12:30:00.000Z" }, now)).toBe(false);
     });
 
-    it("reads only the New York date of a date-only row's placeholder instant", () => {
-        // Placeholder 2026-10-11T02:00Z = Oct 10 in New York: today, so still upcoming.
-        const dateOnly = { call_time_source: null, scheduled_at: "2026-10-11T02:00:00.000Z", tz: "America/New_York" };
+    it("reads a date-only row (00:00Z of its date) on its UTC date, compared with today in tz", () => {
+        // 2026-10-10T00:00Z = the Oct 10 event, which is today in New York: still upcoming.
+        const dateOnly = { call_time_source: null, scheduled_at: "2026-10-10T00:00:00.000Z", tz: "America/New_York" };
 
         expect(isUpcoming(dateOnly, now)).toBe(true);
 
-        expect(isCallToday(dateOnly, now)).toBe(true);
-
         expect(formatCallTime(dateOnly)).toBe("Oct 10, 2026");
 
-        expect(isUpcoming({ ...dateOnly, scheduled_at: "2026-10-10T02:00:00.000Z" }, now)).toBe(false);
+        expect(isUpcoming({ ...dateOnly, scheduled_at: "2026-10-11T00:00:00.000Z" }, now)).toBe(true);
+
+        expect(isUpcoming({ ...dateOnly, scheduled_at: "2026-10-09T00:00:00.000Z" }, now)).toBe(false);
+    });
+});
+
+describe("isCallToday", () => {
+    const now = new Date("2026-10-21T18:00:00.000Z"); // Oct 21 in every US zone
+
+    it("is true for a date-only event on its UTC date in every US zone", () => {
+        for (const tz of ["America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles", "Pacific/Honolulu"]) {
+            const dateOnly = { call_time_source: null, scheduled_at: "2026-10-21T00:00:00Z", tz };
+
+            expect(isCallToday(dateOnly, now)).toBe(true);
+
+            expect(isCallToday({ ...dateOnly, scheduled_at: "2026-10-20T00:00:00Z" }, now)).toBe(false);
+        }
+    });
+
+    it("reads a timed call's date in tz", () => {
+        // 2026-10-22T05:00Z = 10:00 PM Oct 21 in Los Angeles, 1:00 AM Oct 22 in New York.
+        const timed = { call_time_source: "wire", scheduled_at: "2026-10-22T05:00:00.000Z", tz: "America/Los_Angeles" };
+
+        expect(isCallToday(timed, now)).toBe(true);
+
+        expect(isCallToday({ ...timed, tz: "America/New_York" }, now)).toBe(false);
     });
 });
 
