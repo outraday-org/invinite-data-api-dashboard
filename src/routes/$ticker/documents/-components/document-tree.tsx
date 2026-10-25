@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronRight, ExternalLink, FileText, Folder, FolderOpen, Link2, Mic } from "lucide-react";
 import * as React from "react";
 
 import type { EarningsCompanyDocument } from "@/lib/api/types";
@@ -7,12 +7,17 @@ import type { CallEntry, TreeNode } from "@/lib/earnings/documents";
 import type { CallTab } from "@/routes/$ticker/earnings-calls/-components/call-tabs";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { allKeys, defaultOpenKeys, documentHref, documentKindLabel } from "@/lib/earnings/documents";
 import { formatBytes } from "@/lib/earnings/format";
 import { AvailabilityIcons } from "@/routes/$ticker/earnings-calls/-components/availability-icons";
 
-const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
+const actionClass = "text-muted-foreground hover:text-foreground inline-flex items-center gap-1 whitespace-nowrap transition-colors";
+
+// Rows share one height and padding; the chevron column (`size-3.5`) is held by a spacer on leaf rows so every icon
+// of a level lines up, and each nested list draws its guide line under its parent's chevron.
+const rowClass = "hover:bg-muted/60 flex min-h-7 items-center gap-1.5 rounded-md px-1.5 py-0.5";
+
+const guideClass = "ml-[13px] border-l pl-1";
 
 /** "Q3 2025" / "2025" / the event's day; "Undated" without either. */
 function documentDate(doc: EarningsCompanyDocument) {
@@ -22,6 +27,8 @@ function documentDate(doc: EarningsCompanyDocument) {
 
     return doc.period ? `${doc.period} ${doc.year}` : String(doc.year);
 }
+
+const ChevronSpacer = () => <span aria-hidden className="size-3.5 shrink-0" />;
 
 function DocumentRow({
     doc,
@@ -34,53 +41,48 @@ function DocumentRow({
 }) {
     const linkOnly = doc.url === null;
 
+    const Icon = linkOnly ? Link2 : FileText;
+
     return (
-        <li className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b py-1.5 last:border-b-0" data-document-id={doc.document_id}>
-            <Badge variant="outline">{documentKindLabel(doc.kind)}</Badge>
+        <li className={`${rowClass} group`} data-document-id={doc.document_id}>
+            <ChevronSpacer />
+            <Icon className="text-muted-foreground size-3.5 shrink-0" />
+            <span className="min-w-0 truncate" title={doc.title ?? undefined}>{doc.title ?? "Untitled"}</span>
+            <Badge className="font-normal" variant="outline">{documentKindLabel(doc.kind)}</Badge>
             {doc.source === "call" && doc.event_id && (
                 <CallLink aria-label="Call documents" eventId={doc.event_id} tab="documents" ticker={ticker}>
                     <Badge variant="secondary">Call</Badge>
                 </CallLink>
             )}
-            <span className="min-w-0 max-w-md truncate font-medium">{doc.title ?? "Untitled"}</span>
-            <span className="text-muted-foreground tabular-nums">{documentDate(doc)}</span>
-            {doc.pages !== null && <span className="text-muted-foreground tabular-nums">{`${doc.pages} pp.`}</span>}
-            {doc.bytes !== null && <span className="text-muted-foreground tabular-nums">{formatBytes(doc.bytes)}</span>}
             {doc.link_status === "expired" && <Badge variant="secondary">replay expired</Badge>}
-            <div className="ml-auto flex items-center gap-3">
-                {doc.event_id && doc.source !== "call" && (
-                    <Link
-                        className={linkClass}
-                        params={{ eventId: doc.event_id, ticker }}
-                        search={{ tab: "documents" }}
-                        to="/$ticker/earnings-calls/$eventId"
-                    >
-                        Event
-                    </Link>
-                )}
-                {/* Presigned: a bearer credential — only ever an href, never router state; no referrer. */}
-                <a className={linkClass} href={documentHref(doc)} rel="noopener noreferrer" target="_blank">
-                    <ExternalLink className="size-3" />
-                    {linkOnly ? "Open page" : "Open"}
-                </a>
-                {doc.pages_url && (
-                    <Button onClick={() => onShowText(doc)} size="xs" type="button" variant="ghost">
-                        Show text
-                    </Button>
-                )}
+            <div className="text-muted-foreground ml-auto flex shrink-0 items-center gap-3 pl-3 text-xs tabular-nums">
+                <span className="w-20">{documentDate(doc)}</span>
+                <span className="hidden w-12 text-right sm:inline">{doc.pages !== null ? `${doc.pages} pp.` : ""}</span>
+                <span className="hidden w-16 text-right sm:inline">{doc.bytes !== null ? formatBytes(doc.bytes) : ""}</span>
+                <div className="flex w-36 items-center justify-end gap-2.5">
+                    {doc.event_id && doc.source !== "call" && (
+                        <Link
+                            className={actionClass}
+                            params={{ eventId: doc.event_id, ticker }}
+                            search={{ tab: "documents" }}
+                            to="/$ticker/earnings-calls/$eventId"
+                        >
+                            Event
+                        </Link>
+                    )}
+                    {doc.pages_url && (
+                        <button className={actionClass} onClick={() => onShowText(doc)} type="button">
+                            Show text
+                        </button>
+                    )}
+                    {/* Presigned: a bearer credential — only ever an href, never router state; no referrer. */}
+                    <a className={actionClass} href={documentHref(doc)} rel="noopener noreferrer" target="_blank">
+                        <ExternalLink className="size-3" />
+                        {linkOnly ? "Open page" : "Open"}
+                    </a>
+                </div>
             </div>
         </li>
-    );
-}
-
-function Toggle({ children, onToggle, open }: { children: React.ReactNode; onToggle: () => void; open: boolean }) {
-    const Icon = open ? ChevronDown : ChevronRight;
-
-    return (
-        <button aria-expanded={open} className="hover:text-foreground flex w-fit items-center gap-1 text-left" onClick={onToggle} type="button">
-            <Icon className="size-3.5 shrink-0" />
-            {children}
-        </button>
     );
 }
 
@@ -106,21 +108,31 @@ function CallRow({ call }: { call: CallEntry }) {
     const ticker = event.symbol;
 
     return (
-        <li className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b py-1.5 last:border-b-0" data-event-id={event.event_id}>
-            <Badge variant="secondary">Call</Badge>
-            <CallLink className={`${linkClass} font-medium`} eventId={event.event_id} ticker={ticker}>
+        <li className={rowClass} data-event-id={event.event_id}>
+            <ChevronSpacer />
+            <Mic className="text-primary size-3.5 shrink-0" />
+            <CallLink
+                className="min-w-0 truncate font-medium underline-offset-4 hover:underline"
+                eventId={event.event_id}
+                ticker={ticker}
+            >
                 {`${call.label} call`}
             </CallLink>
-            <span className="text-muted-foreground tabular-nums">{call.date}</span>
-            <AvailabilityIcons event={event} />
-            <div className="ml-auto flex items-center gap-3">
-                {event.has_press_release && (
-                    <CallLink className={linkClass} eventId={event.event_id} tab="press-release" ticker={ticker}>Press release</CallLink>
-                )}
-                {event.has_slides && <CallLink className={linkClass} eventId={event.event_id} tab="slides" ticker={ticker}>Slides</CallLink>}
-                {event.has_documents && (
-                    <CallLink className={linkClass} eventId={event.event_id} tab="documents" ticker={ticker}>Documents</CallLink>
-                )}
+            {/* The shared icons are `size-3.5`; one step smaller here, in line with the row's text. */}
+            <span className="text-muted-foreground [&_svg]:size-3">
+                <AvailabilityIcons event={event} />
+            </span>
+            <div className="text-muted-foreground ml-auto flex shrink-0 items-center gap-3 pl-3 text-xs tabular-nums">
+                <span className="w-20">{call.date}</span>
+                <div className="flex items-center justify-end gap-2.5">
+                    {event.has_press_release && (
+                        <CallLink className={actionClass} eventId={event.event_id} tab="press-release" ticker={ticker}>Press release</CallLink>
+                    )}
+                    {event.has_slides && <CallLink className={actionClass} eventId={event.event_id} tab="slides" ticker={ticker}>Slides</CallLink>}
+                    {event.has_documents && (
+                        <CallLink className={actionClass} eventId={event.event_id} tab="documents" ticker={ticker}>Documents</CallLink>
+                    )}
+                </div>
             </div>
         </li>
     );
@@ -143,14 +155,25 @@ function FolderNode({
 }) {
     const open = isOpen(node.key);
 
+    const Chevron = open ? ChevronDown : ChevronRight;
+
+    const FolderIcon = open ? FolderOpen : Folder;
+
     return (
-        <li className="flex flex-col gap-1" data-folder={node.key}>
-            <Toggle onToggle={() => onToggle(node.key)} open={open}>
-                <span className={depth === 0 ? "font-medium" : undefined}>{node.label}</span>
-                <span className="text-muted-foreground tabular-nums">{node.count}</span>
-            </Toggle>
+        <li data-folder={node.key}>
+            <button
+                aria-expanded={open}
+                className={`${rowClass} w-full text-left`}
+                onClick={() => onToggle(node.key)}
+                type="button"
+            >
+                <Chevron className="text-muted-foreground size-3.5 shrink-0" />
+                <FolderIcon className="text-muted-foreground size-3.5 shrink-0" />
+                <span className={depth === 0 ? "font-semibold" : "font-medium"}>{node.label}</span>
+                <span className="text-muted-foreground text-xs tabular-nums">{node.count}</span>
+            </button>
             {open && (
-                <ul className="flex flex-col gap-1 pl-5">
+                <ul className={guideClass}>
                     {node.children.map(child => (
                         <FolderNode
                             depth={depth + 1}
@@ -162,16 +185,10 @@ function FolderNode({
                             ticker={ticker}
                         />
                     ))}
-                    {(node.calls.length > 0 || node.documents.length > 0) && (
-                        <li>
-                            <ul>
-                                {node.calls.map(call => <CallRow call={call} key={call.event.event_id} />)}
-                                {node.documents.map(doc => (
-                                    <DocumentRow doc={doc} key={doc.document_id} onShowText={onShowText} ticker={ticker} />
-                                ))}
-                            </ul>
-                        </li>
-                    )}
+                    {node.calls.map(call => <CallRow call={call} key={call.event.event_id} />)}
+                    {node.documents.map(doc => (
+                        <DocumentRow doc={doc} key={doc.document_id} onShowText={onShowText} ticker={ticker} />
+                    ))}
                 </ul>
             )}
         </li>
@@ -209,7 +226,7 @@ export function DocumentTree({
     };
 
     return (
-        <ul className="flex flex-col gap-3">
+        <ul className="text-sm">
             {tree.map(node => (
                 <FolderNode depth={0} isOpen={isOpen} key={node.key} node={node} onShowText={onShowText} onToggle={toggle} ticker={ticker} />
             ))}
