@@ -110,11 +110,8 @@ export type EarningsMetricsResponse = ApiResponse<"/v1/earnings-calls/metrics", 
 export type EarningsProsodyResponse = ApiResponse<"/v1/earnings-calls/prosody", "get">;
 /** Derived returns only (basis points): the response carries no price or volume. */
 export type EarningsPriceAttributionResponse = ApiResponse<"/v1/earnings-calls/price-attribution", "get">;
+/** `url` is the recording's permanent public URL (one forensic watermark per call); it does not expire. */
 export type EarningsAudioResponse = ApiResponse<"/v1/earnings-calls/audio", "get">;
-/** `202`: the account's watermarked copy is being prepared (not billed); ask again after `retry_after_seconds`. */
-export type EarningsAudioPreparingResponse
-    = paths["/v1/earnings-calls/audio"]["get"]["responses"][202]["content"]["application/json"];
-export type EarningsAudioResult = EarningsAudioPreparingResponse | EarningsAudioResponse;
 export type EarningsSlidesResponse = ApiResponse<"/v1/earnings-calls/slides", "get">;
 export type EarningsDocumentsResponse = ApiResponse<"/v1/earnings-calls/documents", "get">;
 export type EarningsSearchResponse = ApiResponse<"/v1/earnings-calls/search", "get">;

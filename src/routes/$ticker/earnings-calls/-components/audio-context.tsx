@@ -1,10 +1,10 @@
 import * as React from "react";
 
-import type { EarningsAudioPreparingResponse, EarningsAudioResponse } from "@/lib/api/types";
+import type { EarningsAudioResponse } from "@/lib/api/types";
 import type { WordTurn } from "@/lib/earnings/follow-along";
 import type { PlaybackPosition } from "@/lib/earnings/use-playback-position";
 
-import { isEarningsAudioPreparing, useEarningsAudio, useEarningsTranscript } from "@/lib/api/queries";
+import { useEarningsAudio, useEarningsTranscript } from "@/lib/api/queries";
 import { toWordTurns } from "@/lib/earnings/follow-along";
 import { usePlaybackPosition } from "@/lib/earnings/use-playback-position";
 
@@ -15,10 +15,8 @@ type WordsQuery = ReturnType<typeof useEarningsTranscript>;
 export type CallAudio = {
     /** The `/audio` query; idle (never sent) until the Audio tab first opens or a timestamp is clicked. */
     audio: AudioQuery;
-    /** `audio.data` when it is the recording (`200`); `null` while idle, loading or preparing. */
+    /** `audio.data`: the recording at its permanent public URL; `null` while idle or loading. */
     recording: EarningsAudioResponse | null;
-    /** `audio.data` when it is the `202 preparing` answer; the query asks again after its `retry_after_seconds`. */
-    preparing: EarningsAudioPreparingResponse | null;
     /**
      * The `format=words` transcript (one request, once a recording is in): what the follow
      * view and the caption line run over. Idle while nothing is loaded.
@@ -108,14 +106,12 @@ export function CallAudioProvider({
 
     const [playedUrl, setPlayedUrl] = React.useState<null | PlayedUrl>(null);
 
-    const preparing = audio.data && isEarningsAudioPreparing(audio.data) ? audio.data : null;
-
-    const recording = audio.data && !isEarningsAudioPreparing(audio.data) ? audio.data : null;
+    const recording = audio.data ?? null;
 
     const recordingUrl = recording?.url ?? null;
 
-    // The src is set imperatively, never as a prop: a re-render with a refreshed presigned URL
-    // would restart at 0. A replaced source resumes at the same position, rate and play state.
+    // The src is set imperatively, never as a prop: a re-render with a new URL (a re-marked
+    // recording) would restart at 0. A replaced source resumes at the same position, rate and play state.
     React.useEffect(() => {
         const element = audioRef.current;
 
@@ -213,7 +209,6 @@ export function CallAudioProvider({
         loaded,
         playedUrl,
         playUrl,
-        preparing,
         recording,
         requested,
         // A played search hit loads the same recording: its timestamps can seek it too.

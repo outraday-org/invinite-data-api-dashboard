@@ -4,7 +4,7 @@ import { ApiRequestError, fromSerialized, isTierError, rethrowApiError, throwApi
 
 describe("ApiRequestError", () => {
     it("survives a JSON round trip through fromSerialized", () => {
-        const original = new ApiRequestError(503, { error: "audio_disabled", message: "Audio delivery is switched off" });
+        const original = new ApiRequestError(503, { error: "media_unavailable", message: "Media is temporarily unavailable" });
 
         const revived = fromSerialized(JSON.parse(JSON.stringify(original)));
 
@@ -12,9 +12,9 @@ describe("ApiRequestError", () => {
 
         expect(revived?.status).toBe(503);
 
-        expect(revived?.code).toBe("audio_disabled");
+        expect(revived?.code).toBe("media_unavailable");
 
-        expect(revived?.message).toBe("Audio delivery is switched off");
+        expect(revived?.message).toBe("Media is temporarily unavailable");
     });
 
     it("revives the plain Error a server function rethrows on the client", () => {

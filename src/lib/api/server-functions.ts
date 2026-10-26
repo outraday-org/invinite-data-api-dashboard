@@ -7,7 +7,7 @@ import type {
     CompanyDetailsResponse,
     CompanySearchResponse,
     DividendsResponse,
-    EarningsAudioResult,
+    EarningsAudioResponse,
     EarningsCalendarResponse,
     EarningsCompanyDocumentResponse,
     EarningsCompanyDocumentsResponse,
@@ -1109,11 +1109,11 @@ export const getEarningsPriceAttribution = createServerFn({ method: "GET" })
     });
 
 // Status-aware routes (audio, slides, documents, search, live stream): their pages render a
-// state per status / code (`audio_disabled`, `media_unavailable`, …), so they throw an
+// state per status / code (`audio_unavailable`, `media_unavailable`, …), so they throw an
 // ApiRequestError instead of the bare error body.
 export const getEarningsAudio = createServerFn({ method: "GET" })
     .inputValidator(selectorInputSchema)
-    .handler(async ({ data }): Promise<EarningsAudioResult> => {
+    .handler(async ({ data }): Promise<EarningsAudioResponse> => {
         const api = createApiClient(data.apiKey);
 
         const { data: res, error, response } = await api.GET("/v1/earnings-calls/audio", {

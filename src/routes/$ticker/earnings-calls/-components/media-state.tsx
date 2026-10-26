@@ -36,13 +36,10 @@ export function NoTranscriptNotice({ captureStatus }: { captureStatus: string })
 
 // The answers IDA's media routes give by design (`code` = the body's `error`).
 const MEDIA_CODES: Partial<Record<string, { badge: string; title: string }>> = {
-    audio_disabled: {
-        badge: "Not enabled",
-        title: "Audio delivery is not enabled on the API yet (PRO; per-customer watermarked copies — coming)",
-    },
+    // One answer for an unlicensed company and a recording not served yet (not marked, failed, too long).
     audio_unavailable: {
         badge: "Unavailable",
-        title: "Audio for this company is not available under the current licence",
+        title: "Audio for this call is not available (not licensed for delivery, or the recording is not ready yet)",
     },
     media_unavailable: { badge: "Unavailable", title: "Media temporarily unavailable" },
 };

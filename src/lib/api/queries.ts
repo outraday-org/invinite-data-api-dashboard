@@ -11,8 +11,7 @@ import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import type {
     CagrPeriodYears,
     DividendsResponse,
-    EarningsAudioPreparingResponse,
-    EarningsAudioResult,
+    EarningsAudioResponse,
     EarningsCalendarResponse,
     EarningsCompanyDocumentResponse,
     EarningsCompanyDocumentsResponse,
@@ -1597,30 +1596,19 @@ export function useEarningsPriceAttribution(input: EarningsEventSelector, { live
 }
 
 // Status-aware hooks: no toast; `error` is an ApiRequestError (`status`, `code`) for the
-// page to render `audio_disabled` / `audio_unavailable` / `media_unavailable` /
-// `search_disabled` / a plan gate (`isTierError`) as a state.
-
-/** The audio route's `202 { status: "preparing" }` answer (the account's copy is not ready yet). */
-export function isEarningsAudioPreparing(data: EarningsAudioResult): data is EarningsAudioPreparingResponse {
-    return "status" in data;
-}
+// page to render `audio_unavailable` / `media_unavailable` / `search_disabled` / a plan gate
+// (`isTierError`) as a state.
 
 /**
- * `data` is the recording or, while the account's watermarked copy is prepared, the `202
- * preparing` answer — asked again after its `retry_after_seconds` (not billed), as the live
- * stream is while `not_started`.
+ * The recording at its permanent public URL, in one request (no polling: a call without a
+ * servable recording answers `403 audio_unavailable`).
  */
 export function useEarningsAudio(input: EarningsEventSelector) {
-    return useEarningsQuery<EarningsAudioResult>({
+    return useEarningsQuery<EarningsAudioResponse>({
         enabled: hasEventSelector(input),
         errorMessage: null,
         load: apiKey => getEarningsAudio({ data: { ...input, apiKey } }),
         queryKey: ["earnings", "audio", ...selectorKey(input)],
-        refetchInterval: (query) => {
-            const data = query.state.data;
-
-            return data && isEarningsAudioPreparing(data) ? Math.max(2, data.retry_after_seconds) * 1000 : false;
-        },
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }

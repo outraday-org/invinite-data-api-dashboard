@@ -4,7 +4,6 @@ import * as React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatBytes, formatMs } from "@/lib/earnings/format";
-import { useMediaUrl } from "@/lib/earnings/use-media-url";
 import { cn } from "@/lib/utils";
 
 import { useCallAudio } from "./audio-context";
@@ -17,17 +16,13 @@ const SPEEDS = [1, 1.5, 2] as const;
 /**
  * The call recording: the page's one `<audio>` element plus a small bar (±15 s, speed, file
  * facts). Mounted above the tab panels and only hidden off the Audio tab, so a transcript
- * timestamp can seek and start it. The presigned URL is refreshed before it expires; the
- * provider (`CallAudioProvider`) swaps it in at the same position, playing or paused as before.
+ * timestamp can seek and start it. The recording's URL is permanent (no refresh); the provider
+ * (`CallAudioProvider`) owns the element's src.
  */
 export function AudioPlayer({ visible }: { visible: boolean }) {
-    const { audio, audioRef, playedUrl, recording: data, setPlaybackRate, skip } = useCallAudio();
-
-    const { refetch } = audio;
+    const { audioRef, playedUrl, recording: data, setPlaybackRate, skip } = useCallAudio();
 
     const [speed, setSpeed] = React.useState<number>(1);
-
-    const { onMediaError } = useMediaUrl({ expiresAt: data?.expires_at, refetch });
 
     if (!data && !playedUrl) return null;
 
@@ -44,7 +39,6 @@ export function AudioPlayer({ visible }: { visible: boolean }) {
             <audio
                 className="w-full"
                 controls
-                onError={onMediaError}
                 onRateChange={event => setSpeed(event.currentTarget.playbackRate)}
                 preload="metadata"
                 ref={audioRef}

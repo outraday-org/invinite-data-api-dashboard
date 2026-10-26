@@ -483,23 +483,15 @@ export interface paths {
         };
         /**
          * Earnings call audio
-         * @description The recording of one earnings call as a signed download URL (PRO). Audio files are forensically watermarked per customer: every account gets its own copy.
+         * @description The recording of one earnings call at its permanent public URL (PRO). The file carries one forensic watermark that identifies the recording.
          *
          *     ### Getting the file
          *
-         *     - An account's first request for a call answers `202` `{ status: "preparing", retry_after_seconds }` with `Retry-After` while that copy is prepared (not billed). Repeat the request after it.
-         *
-         *     - Files are served as short-lived signed URLs (see `expires_at`), never proxied; request a fresh response after expiry.
+         *     - `url` does not expire; download it or play it directly. Audio may not be re-hosted.
          *
          *     ### Errors
          *
-         *     - `403 audio_unavailable` when the company's audio is not licensed for delivery or no recording exists (one answer for both).
-         *
-         *     - `429 audio_quota_exceeded` when the account requested too many new audio files today.
-         *
-         *     - `503 audio_temporarily_unavailable` while audio cannot be prepared.
-         *
-         *     - `503 media_unavailable` while media signing is not configured.
+         *     - `403 audio_unavailable` when the company's audio is not licensed for delivery or no recording is available yet (one answer for both).
          *
          *     ### Choose the call
          *
@@ -1329,7 +1321,7 @@ export interface paths {
          *
          *     - Up to 8 passages with speaker and `start_ms`. Cite `event_id` and `start_ms`.
          *
-         *     - On plans that include the audio and slides routes (PRO), signed URLs: `audio_url` opens the calling account's own watermarked copy of the recording at the passage (`#t=<seconds>`) — null while that copy is being prepared (repeat the search a minute later) — and `slide.image_url` shows the slide.
+         *     - On plans that include the audio and slides routes (PRO): `audio_url` opens the recording's permanent URL at the passage (`#t=<seconds>`; null while no recording is available) and `slide.image_url` (a signed URL) shows the slide.
          *
          *     ### Event types
          *
@@ -5936,13 +5928,8 @@ export interface operations {
                              */
                             conference_date: string;
                         };
-                        /** @description Signed download URL; a bearer credential, do not share or cache */
+                        /** @description Permanent public URL of the recording; the file carries one forensic watermark that identifies it */
                         url: string;
-                        /**
-                         * Format: date-time
-                         * @description When the signed URL stops working
-                         */
-                        expires_at: string;
                         /** @description Length of the recording */
                         duration_seconds: null | number;
                         /** @description File size */
@@ -5957,43 +5944,11 @@ export interface operations {
                     };
                 };
             };
-            /** @description The calling account's watermarked copy is being prepared; repeat the request after Retry-After (not billed) */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {string} */
-                        status: "preparing";
-                        /** @description Seconds until the copy is usually ready */
-                        retry_after_seconds: number;
-                    };
-                };
-            };
             400: components["responses"]["BadRequestError"];
             401: components["responses"]["UnauthorizedError"];
             403: components["responses"]["ForbiddenError"];
             404: components["responses"]["NotFoundError"];
-            /** @description Too many new audio files for this account (daily quota of new watermarked copies) */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Type of error
-                         * @example audio_quota_exceeded
-                         */
-                        error: string;
-                        /** @description Detailed error message */
-                        message: string;
-                    };
-                };
-            };
             500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailableError"];
         };
     };
     earningsCallsCalendar: {
@@ -9495,7 +9450,7 @@ export interface operations {
                             text: string;
                             /** @description Cosine similarity to the query (4 decimals) */
                             score: number;
-                            /** @description Signed audio URL opening at the passage (#t=<seconds>); null without the PRO plan, without a recording, without start_ms or while audio delivery is off. A bearer credential that expires (EARNINGS_SIGNED_URL_TTL_SECONDS, 15 min). */
+                            /** @description The recording's permanent URL opening at the passage (#t=<seconds>); null without the PRO plan, without a servable recording, without start_ms or for an audio opt-out. */
                             audio_url: null | string;
                             /** @description Slide of a presentation passage; null for spoken passages */
                             slide: null | {
@@ -15185,7 +15140,7 @@ export interface operations {
                      *         "redistribute": "Pass the data on inside the licensee's product (exports, embedded widgets, downstream API responses) with attribution; never as a stand-alone data product.",
                      *         "rag": "Use the text as retrieval context in a customer-facing product.",
                      *         "train": "Model training is contract-only.",
-                     *         "audio": "Audio files are forensically watermarked per customer. Audio is served through signed URLs, is subject to per-company takedown and may not be re-hosted; every delivered file carries a per-account forensic watermark: a copy found elsewhere i…",
+                     *         "audio": "Audio files carry a forensic watermark that identifies the recording. Audio is subject to per-company takedown and may not be re-hosted.",
                      *         "sec_data": "Figures and filings originate from SEC EDGAR; the standardisation, mapping and derived metrics are Invinite's."
                      *       },
                      *       "rights": [
