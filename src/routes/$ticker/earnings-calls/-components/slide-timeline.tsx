@@ -36,16 +36,44 @@ export function SlideTimeline({
 
     const index = Math.min(timeline.length - 1, following ? Math.max(0, indexAt(entries, positionMs)) : browsed);
 
-    if (timeline.length === 0) return null;
-
-    const slide = timeline[index];
-
-    const show = (next: number) => {
+    const show = React.useCallback((next: number) => {
         const target = Math.min(timeline.length - 1, Math.max(0, next));
 
         if (following) seekMs(timeline[target].at_ms);
         else setBrowsed(target);
-    };
+    }, [following, seekMs, timeline]);
+
+    if (timeline.length === 0) return null;
+
+    // The position ticks every animation frame; the view re-renders only when the slide changes.
+    return (
+        <SlideTimelineView
+            following={following}
+            index={index}
+            onMediaError={onMediaError}
+            onShow={show}
+            seekMs={seekMs}
+            timeline={timeline}
+        />
+    );
+}
+
+const SlideTimelineView = React.memo(function SlideTimelineView({
+    following,
+    index,
+    onMediaError,
+    onShow,
+    seekMs,
+    timeline,
+}: {
+    following: boolean;
+    index: number;
+    onMediaError: () => void;
+    onShow: (next: number) => void;
+    seekMs: ((ms: number) => void) | null;
+    timeline: Array<EarningsSlideTimelineEntry>;
+}) {
+    const slide = timeline[index];
 
     const alt = `Webcast slide ${index + 1} at ${formatMs(slide.at_ms)}`;
 
@@ -85,7 +113,7 @@ export function SlideTimeline({
                     )}
 
             <div className="flex items-center gap-2 text-xs">
-                <Button aria-label="Previous slide" disabled={index === 0} onClick={() => show(index - 1)} size="icon-sm" variant="outline">
+                <Button aria-label="Previous slide" disabled={index === 0} onClick={() => onShow(index - 1)} size="icon-sm" variant="outline">
                     <ChevronLeft />
                 </Button>
                 <span className="tabular-nums">
@@ -96,7 +124,7 @@ export function SlideTimeline({
                 <Button
                     aria-label="Next slide"
                     disabled={index === timeline.length - 1}
-                    onClick={() => show(index + 1)}
+                    onClick={() => onShow(index + 1)}
                     size="icon-sm"
                     variant="outline"
                 >
@@ -106,4 +134,4 @@ export function SlideTimeline({
             </div>
         </div>
     );
-}
+});

@@ -85,4 +85,14 @@ describe("EventVideoSlot", () => {
 
         expect(screen.getByRole("button", { name: `Play video: ${GTC.title}` })).toBeInTheDocument();
     });
+
+    it("keeps a playing video when a live capture starts (the 30-s refetch)", () => {
+        const { container, rerender } = render(<EventVideoSlot event={{ capture_status: "published", video: GTC }} />);
+
+        fireEvent.click(screen.getByRole("button", { name: `Play video: ${GTC.title}` }));
+
+        rerender(<EventVideoSlot event={{ capture_status: "capturing", video: GTC }} />);
+
+        expect(container.querySelector("iframe")).not.toBeNull();
+    });
 });

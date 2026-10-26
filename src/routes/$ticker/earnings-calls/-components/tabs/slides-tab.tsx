@@ -61,7 +61,7 @@ export function SlidesTab({ selector }: CallTabProps) {
 
     return (
         <div className="flex flex-col gap-4">
-            <SlideTimeline onMediaError={onMediaError} timeline={timeline} />
+            {timeline.length > 0 && <SlideTimeline onMediaError={onMediaError} timeline={timeline} />}
 
             {deck && (
                 <div className="flex flex-col gap-2">

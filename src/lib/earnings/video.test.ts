@@ -30,6 +30,17 @@ describe("videoEmbedSrc", () => {
         expect(videoEmbedSrc({ ...GTC, embeddable: null })).not.toBeNull();
     });
 
+    it("forces Vimeo's dnt=1 even when the API's URL lacks it", () => {
+        const src = videoEmbedSrc({
+            ...GTC,
+            embed_url: "https://player.vimeo.com/video/1084537",
+            provider: "vimeo",
+            video_id: "1084537",
+        });
+
+        expect(src && new URL(src).searchParams.get("dnt")).toBe("1");
+    });
+
     it("never embeds a non-embeddable video", () => {
         expect(videoEmbedSrc({ ...GTC, embeddable: false })).toBeNull();
     });

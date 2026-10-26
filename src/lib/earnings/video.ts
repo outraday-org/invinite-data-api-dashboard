@@ -28,8 +28,8 @@ export function httpsUrl(value: null | string): null | URL {
 
 /**
  * The iframe src of an embeddable video (`embeddable` true or null = not checked yet): `embed_url`
- * with `autoplay=1` (the click on the facade is the play), only on the provider's privacy-enhanced
- * player host. Null = link the watch page instead.
+ * with `autoplay=1` (the click on the facade is the play) and, for Vimeo, `dnt=1`, only on the provider's
+ * privacy-enhanced player host. Null = link the watch page instead.
  */
 export function videoEmbedSrc(video: EarningsEventVideo): null | string {
     if (video.embeddable === false) return null;
@@ -39,6 +39,9 @@ export function videoEmbedSrc(video: EarningsEventVideo): null | string {
     if (!url || url.hostname !== EMBED_HOSTS[video.provider]) return null;
 
     url.searchParams.set("autoplay", "1");
+
+    // Vimeo tracks unless told not to: enforced here, never trusted to the API's URL.
+    if (video.provider === "vimeo") url.searchParams.set("dnt", "1");
 
     return url.toString();
 }

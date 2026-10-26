@@ -27,7 +27,7 @@ function ChannelNote({ video }: { video: EarningsEventVideo }) {
  * click, GDPR), the title, provider and a play button; the privacy-enhanced player iframe
  * (`youtube-nocookie.com` / Vimeo `dnt=1`) is created only by the click. Not embeddable: a link to the watch page. `null`: nothing.
  */
-export function EventVideo({ video }: { video: EarningsEventVideo | null }) {
+export function EventVideo({ onPlay, video }: { onPlay?: () => void; video: EarningsEventVideo | null }) {
     const [playing, setPlaying] = React.useState(false);
 
     if (!video) return null;
@@ -82,7 +82,11 @@ export function EventVideo({ video }: { video: EarningsEventVideo | null }) {
                             <button
                                 aria-label={`Play video: ${title}`}
                                 className="group absolute inset-0 flex size-full items-center justify-center"
-                                onClick={() => setPlaying(true)}
+                                onClick={() => {
+                                    setPlaying(true);
+
+                                    onPlay?.();
+                                }}
                                 type="button"
                             >
                                 <Video className="absolute size-10 text-muted-foreground" />
@@ -108,10 +112,13 @@ export function EventVideo({ video }: { video: EarningsEventVideo | null }) {
  * The video's place on the call page, above the tabs. During a live capture the live player
  * stays primary and the video waits under "Watch the broadcast"; before and after the call it
  * is shown. The disclosure button is the only conditional sibling, so a playing video keeps its
- * iframe when the capture ends.
+ * iframe when the capture ends; a video the user started stays mounted when a capture starts
+ * (the 30-s refetch would otherwise tear the player down mid-play).
  */
 export function EventVideoSlot({ event }: { event: Pick<EarningsEvent, "capture_status" | "video"> }) {
     const [open, setOpen] = React.useState(false);
+
+    const [started, setStarted] = React.useState(false);
 
     if (!event.video) return null;
 
@@ -132,7 +139,7 @@ export function EventVideoSlot({ event }: { event: Pick<EarningsEvent, "capture_
                     Watch the broadcast
                 </button>
             )}
-            {(!live || open) && <EventVideo video={event.video} />}
+            {(!live || open || started) && <EventVideo onPlay={() => setStarted(true)} video={event.video} />}
         </div>
     );
 }
