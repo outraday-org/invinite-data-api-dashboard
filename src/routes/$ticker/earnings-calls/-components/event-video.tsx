@@ -23,9 +23,9 @@ function ChannelNote({ video }: { video: EarningsEventVideo }) {
 
 /**
  * The event's public broadcast (`video`). Embeddable (`embeddable` not false): a click-to-load
- * facade — the thumbnail, title, provider and a play button; the privacy-enhanced player iframe
- * (`youtube-nocookie.com` / Vimeo `dnt=1`) is created only by the click, so the page sends nothing
- * to the player before it. Not embeddable: a link to the watch page. `null`: nothing.
+ * facade — a neutral placeholder (never `thumbnail_url`: no request to the platform before the
+ * click, GDPR), the title, provider and a play button; the privacy-enhanced player iframe
+ * (`youtube-nocookie.com` / Vimeo `dnt=1`) is created only by the click. Not embeddable: a link to the watch page. `null`: nothing.
  */
 export function EventVideo({ video }: { video: EarningsEventVideo | null }) {
     const [playing, setPlaying] = React.useState(false);
@@ -62,8 +62,6 @@ export function EventVideo({ video }: { video: EarningsEventVideo | null }) {
         );
     }
 
-    const thumbnail = httpsUrl(video.thumbnail_url);
-
     return (
         <div className="flex w-full max-w-xl flex-col gap-1">
             <div className="relative aspect-video w-full overflow-hidden rounded-md border bg-muted/30">
@@ -87,16 +85,7 @@ export function EventVideo({ video }: { video: EarningsEventVideo | null }) {
                                 onClick={() => setPlaying(true)}
                                 type="button"
                             >
-                                {thumbnail
-                                    ? (
-                                            <img
-                                                alt=""
-                                                className="absolute inset-0 size-full object-cover"
-                                                referrerPolicy="no-referrer"
-                                                src={thumbnail.toString()}
-                                            />
-                                        )
-                                    : <Video className="absolute size-10 text-muted-foreground" />}
+                                <Video className="absolute size-10 text-muted-foreground" />
                                 <span className="absolute inset-x-0 bottom-0 bg-black/60 px-2 py-1 text-left text-xs text-white">
                                     {title}
                                     <span className="text-white/70">

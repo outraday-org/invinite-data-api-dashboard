@@ -51,7 +51,8 @@ export function SlidesTab({ selector }: CallTabProps) {
 
     if (!data) return <Skeleton className="h-40 w-full" />;
 
-    const { deck, slides, timeline } = data;
+    // Default `[]`: an API without the field (released before IDA's timeline) must not break the tab.
+    const { deck, slides, timeline = [] } = data;
 
     if (!deck && slides.length === 0 && timeline.length === 0) return <Notice title="No slides stored for this call" />;
 

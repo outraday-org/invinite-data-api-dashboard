@@ -2,7 +2,10 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { CallTabProps } from "@/routes/$ticker/earnings-calls/-components/call-tabs";
+
 import { SlideTimeline } from "@/routes/$ticker/earnings-calls/-components/slide-timeline";
+import { SlidesTab } from "@/routes/$ticker/earnings-calls/-components/tabs/slides-tab";
 
 // The page's audio host, stubbed: `loaded` / `seekMs` and the element's position.
 const audio = vi.hoisted(() => ({
@@ -14,6 +17,20 @@ const audio = vi.hoisted(() => ({
 vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
     useCallAudio: () => ({ loaded: audio.loaded, seekMs: audio.seekMs }),
     useCallPlayback: () => ({ durationMs: null, playing: true, positionMs: audio.positionMs }),
+}));
+
+// The Slides tab's request, stubbed: an answer of an IDA released before `timeline`.
+vi.mock("@/lib/api/queries", () => ({
+    useEarningsSlides: () => ({
+        data: {
+            deck: null,
+            event: {},
+            slides: [{ image_url: "https://r2.example/page-1.webp", markdown: null, page: 1, title: "Cover" }],
+        },
+        dataUpdatedAt: 0,
+        error: null,
+        refetch: () => {},
+    }),
 }));
 
 afterEach(cleanup);
@@ -107,5 +124,17 @@ describe("SlideTimeline", () => {
         const { container } = render(<SlideTimeline onMediaError={() => {}} timeline={[]} />);
 
         expect(container).toBeEmptyDOMElement();
+    });
+});
+
+describe("SlidesTab", () => {
+    it("renders the page strip when the API answers no timeline", () => {
+        const props = { selector: { eventId: "e1" } } as CallTabProps;
+
+        render(<SlidesTab {...props} />);
+
+        expect(screen.getByRole("img", { name: "Cover" })).toBeInTheDocument();
+
+        expect(screen.queryByText("Webcast slides")).toBeNull();
     });
 });

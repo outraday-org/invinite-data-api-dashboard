@@ -21,12 +21,13 @@ const GTC: EarningsEventVideo = {
 };
 
 describe("EventVideo", () => {
-    it("shows the facade and creates no iframe before the click", () => {
+    it("shows the facade and requests nothing from the platform before the click", () => {
         const { container } = render(<EventVideo video={GTC} />);
 
         expect(screen.getByText(GTC.title!)).toBeInTheDocument();
 
-        expect(container.querySelector("img")).toHaveAttribute("src", GTC.thumbnail_url);
+        // Neither the thumbnail nor the player: a neutral placeholder until the click (GDPR).
+        expect(container.querySelector("img")).toBeNull();
 
         expect(container.querySelector("iframe")).toBeNull();
 
@@ -45,14 +46,6 @@ describe("EventVideo", () => {
         expect(iframe).toHaveAttribute("referrerpolicy", "strict-origin-when-cross-origin");
 
         expect(iframe).toHaveAttribute("title", GTC.title);
-    });
-
-    it("shows a placeholder without a thumbnail", () => {
-        const { container } = render(<EventVideo video={{ ...GTC, thumbnail_url: null }} />);
-
-        expect(container.querySelector("img")).toBeNull();
-
-        expect(screen.getByRole("button", { name: `Play video: ${GTC.title}` })).toBeInTheDocument();
     });
 
     it("links a non-embeddable video", () => {
