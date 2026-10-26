@@ -137,6 +137,10 @@ export type EarningsKpi = NonNullable<EarningsExtractionsResponse["kpis"]>[numbe
 export type EarningsDocument = EarningsDocumentsResponse["documents"][number];
 export type EarningsSlide = EarningsSlidesResponse["slides"][number];
 export type EarningsSlideDeck = NonNullable<EarningsSlidesResponse["deck"]>;
+/** A player slide on the audio's clock (`at_ms` from the start of the recording `/audio` serves). */
+export type EarningsSlideTimelineEntry = EarningsSlidesResponse["timeline"][number];
+/** The company's public broadcast on a video platform (`video` of every event; null = none known). */
+export type EarningsEventVideo = NonNullable<EarningsEvent["video"]>;
 export type EarningsSearchHit = EarningsSearchResponse["hits"][number];
 export type EarningsCompanyDocument = EarningsCompanyDocumentsResponse["documents"][number];
 export type EarningsDocumentSearchHit = EarningsDocumentSearchResponse["hits"][number];

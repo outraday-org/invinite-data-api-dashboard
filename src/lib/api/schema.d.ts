@@ -1365,6 +1365,8 @@ export interface paths {
          *
          *     - Files are served as short-lived signed URLs (see `expires_at`), never proxied; request a fresh response after expiry.
          *
+         *     - `timeline`: the slides shown in the webcast player, keyed to the call audio (`at_ms` from the start of the recording the audio route serves; the whole call, whatever `pages` asks).
+         *
          *     ### Errors
          *
          *     - `404 slides_unavailable` when no deck is available.
@@ -6046,7 +6048,8 @@ export interface operations {
                      *           "has_slides": false,
                      *           "has_press_release": false,
                      *           "has_documents": false,
-                     *           "webcast_url": null
+                     *           "webcast_url": null,
+                     *           "video": null
                      *         }
                      *       ],
                      *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/calendar?offset=100&limit=100&from=2026-10-21&to=2026-11-04"
@@ -6148,6 +6151,28 @@ export interface operations {
                             has_documents: boolean;
                             /** @description Webcast page of an upcoming dated call; null once published */
                             webcast_url: null | string;
+                            /** @description The company's public broadcast on a video platform (YouTube, Vimeo). Embed `embed_url` when `embeddable` is not false; otherwise link `url`. Present before, during and after the event; null = none known. */
+                            video: null | {
+                                /**
+                                 * @description Video platform
+                                 * @enum {string}
+                                 */
+                                provider: "vimeo" | "youtube";
+                                /** @description The platform's video id */
+                                video_id: string;
+                                /** @description Watch page */
+                                url: string;
+                                /** @description Privacy-enhanced player URL (YouTube: youtube-nocookie.com; Vimeo: dnt=1) */
+                                embed_url: string;
+                                /** @description Video title */
+                                title: null | string;
+                                /** @description Channel or account that published it */
+                                channel: null | string;
+                                /** @description Thumbnail image */
+                                thumbnail_url: null | string;
+                                /** @description false = the owner disabled or restricted embedding (link `url`); null = not checked yet */
+                                embeddable: boolean | null;
+                            };
                         }>;
                     };
                 };
@@ -7189,7 +7214,7 @@ export interface operations {
             path: {
                 /**
                  * @description Event identifier (event_id of any earnings-calls response)
-                 * @example cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c
+                 * @example 9655a5db-8968-40be-8c79-7cd1a8aed8e9
                  */
                 event_id: string;
             };
@@ -7205,17 +7230,17 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *       "event_id": "9655a5db-8968-40be-8c79-7cd1a8aed8e9",
                      *       "source": "us",
-                     *       "cik": "0000789019",
-                     *       "symbol": "MSFT",
-                     *       "company_name": "Microsoft Corp",
+                     *       "cik": "0001045810",
+                     *       "symbol": "NVDA",
+                     *       "company_name": "Nvidia Corp",
                      *       "exchange": "NASDAQ",
-                     *       "event_type": "earnings_call",
-                     *       "event_title": null,
-                     *       "fiscal_year": 2026,
-                     *       "fiscal_quarter": 4,
-                     *       "scheduled_at": "2026-07-29T00:00:00.000Z",
+                     *       "event_type": "conference",
+                     *       "event_title": "GTC Berlin 2026 Keynote",
+                     *       "fiscal_year": null,
+                     *       "fiscal_quarter": null,
+                     *       "scheduled_at": "2026-10-21T00:00:00.000Z",
                      *       "tz": "America/Los_Angeles",
                      *       "date_status": "confirmed",
                      *       "call_time_source": null,
@@ -7223,15 +7248,25 @@ export interface operations {
                      *       "session": null,
                      *       "started_at": null,
                      *       "ended_at": null,
-                     *       "results_released_at": "2026-07-29T20:04:53.000Z",
+                     *       "results_released_at": null,
                      *       "capture_status": "published",
                      *       "reschedule_count": 0,
                      *       "has_transcript": true,
                      *       "has_audio": true,
-                     *       "has_slides": true,
-                     *       "has_press_release": true,
-                     *       "has_documents": true,
-                     *       "webcast_url": null
+                     *       "has_slides": false,
+                     *       "has_press_release": false,
+                     *       "has_documents": false,
+                     *       "webcast_url": null,
+                     *       "video": {
+                     *         "provider": "youtube",
+                     *         "video_id": "v-NGxyPjcrE",
+                     *         "url": "https://www.youtube.com/watch?v=v-NGxyPjcrE",
+                     *         "embed_url": "https://www.youtube-nocookie.com/embed/v-NGxyPjcrE",
+                     *         "title": "NVIDIA GTC Berlin 2026 Keynote With CEO Jensen Huang",
+                     *         "channel": "NVIDIA",
+                     *         "thumbnail_url": "https://i.ytimg.com/vi/v-NGxyPjcrE/hqdefault.jpg",
+                     *         "embeddable": true
+                     *       }
                      *     }
                      */
                     "application/json": {
@@ -7316,6 +7351,28 @@ export interface operations {
                         has_documents: boolean;
                         /** @description Webcast page of an upcoming dated call; null once published */
                         webcast_url: null | string;
+                        /** @description The company's public broadcast on a video platform (YouTube, Vimeo). Embed `embed_url` when `embeddable` is not false; otherwise link `url`. Present before, during and after the event; null = none known. */
+                        video: null | {
+                            /**
+                             * @description Video platform
+                             * @enum {string}
+                             */
+                            provider: "vimeo" | "youtube";
+                            /** @description The platform's video id */
+                            video_id: string;
+                            /** @description Watch page */
+                            url: string;
+                            /** @description Privacy-enhanced player URL (YouTube: youtube-nocookie.com; Vimeo: dnt=1) */
+                            embed_url: string;
+                            /** @description Video title */
+                            title: null | string;
+                            /** @description Channel or account that published it */
+                            channel: null | string;
+                            /** @description Thumbnail image */
+                            thumbnail_url: null | string;
+                            /** @description false = the owner disabled or restricted embedding (link `url`); null = not checked yet */
+                            embeddable: boolean | null;
+                        };
                         /** @description Date / time observations, oldest first (at most 50) */
                         observations?: Array<{
                             /** @description Source class of the observation */
@@ -7437,7 +7494,8 @@ export interface operations {
                      *           "has_slides": false,
                      *           "has_press_release": false,
                      *           "has_documents": false,
-                     *           "webcast_url": null
+                     *           "webcast_url": null,
+                     *           "video": null
                      *         }
                      *       ],
                      *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/events?identifier=MSFT&offset=50&limit=50"
@@ -7535,6 +7593,28 @@ export interface operations {
                             has_documents: boolean;
                             /** @description Webcast page of an upcoming dated call; null once published */
                             webcast_url: null | string;
+                            /** @description The company's public broadcast on a video platform (YouTube, Vimeo). Embed `embed_url` when `embeddable` is not false; otherwise link `url`. Present before, during and after the event; null = none known. */
+                            video: null | {
+                                /**
+                                 * @description Video platform
+                                 * @enum {string}
+                                 */
+                                provider: "vimeo" | "youtube";
+                                /** @description The platform's video id */
+                                video_id: string;
+                                /** @description Watch page */
+                                url: string;
+                                /** @description Privacy-enhanced player URL (YouTube: youtube-nocookie.com; Vimeo: dnt=1) */
+                                embed_url: string;
+                                /** @description Video title */
+                                title: null | string;
+                                /** @description Channel or account that published it */
+                                channel: null | string;
+                                /** @description Thumbnail image */
+                                thumbnail_url: null | string;
+                                /** @description false = the owner disabled or restricted embedding (link `url`); null = not checked yet */
+                                embeddable: boolean | null;
+                            };
                             /** @description Date / time observations, oldest first (at most 50) */
                             observations?: Array<{
                                 /** @description Source class of the observation */
@@ -8059,6 +8139,7 @@ export interface operations {
                      *           "has_press_release": true,
                      *           "has_documents": false,
                      *           "webcast_url": "https://edge.media-server.com/mmc/p/in3893v2",
+                     *           "video": null,
                      *           "live_channel": "earnings-calls.live",
                      *           "live_audio": true,
                      *           "live_prices": true
@@ -8155,6 +8236,28 @@ export interface operations {
                             has_documents: boolean;
                             /** @description Webcast page of an upcoming dated call; null once published */
                             webcast_url: null | string;
+                            /** @description The company's public broadcast on a video platform (YouTube, Vimeo). Embed `embed_url` when `embeddable` is not false; otherwise link `url`. Present before, during and after the event; null = none known. */
+                            video: null | {
+                                /**
+                                 * @description Video platform
+                                 * @enum {string}
+                                 */
+                                provider: "vimeo" | "youtube";
+                                /** @description The platform's video id */
+                                video_id: string;
+                                /** @description Watch page */
+                                url: string;
+                                /** @description Privacy-enhanced player URL (YouTube: youtube-nocookie.com; Vimeo: dnt=1) */
+                                embed_url: string;
+                                /** @description Video title */
+                                title: null | string;
+                                /** @description Channel or account that published it */
+                                channel: null | string;
+                                /** @description Thumbnail image */
+                                thumbnail_url: null | string;
+                                /** @description false = the owner disabled or restricted embedding (link `url`); null = not checked yet */
+                                embeddable: boolean | null;
+                            };
                             /**
                              * @description WebSocket channel to subscribe to with event_id for the live transcript
                              * @enum {string}
@@ -9567,6 +9670,12 @@ export interface operations {
                      *           "title": null,
                      *           "image_url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/2026-07-29/slides/q4-fy2026-earnings-presentation/page-001.webp?X-Amz-Signature=…"
                      *         }
+                     *       ],
+                     *       "timeline": [
+                     *         {
+                     *           "at_ms": 312000,
+                     *           "image_url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/2026-07-29/slides/player/0b6f4c1e-5a7d-4f0e-9a51-2f7c3b8d1e64/312000.webp?X-Amz-Signature=…"
+                     *         }
                      *       ]
                      *     }
                      */
@@ -9618,6 +9727,13 @@ export interface operations {
                             image_url: string;
                             /** @description Page text (only with include=markdown) */
                             markdown?: null | string;
+                        }>;
+                        /** @description Player slides keyed to the call audio (ms from the audio's start), ascending; [] when the webcast player showed no slides */
+                        timeline: Array<{
+                            /** @description When the slide appeared, in ms from the start of the event's audio file */
+                            at_ms: number;
+                            /** @description Signed URL of the slide screenshot (same expiry as the deck) */
+                            image_url: string;
                         }>;
                     };
                 };
@@ -9719,7 +9835,8 @@ export interface operations {
                      *         "has_slides": true,
                      *         "has_press_release": true,
                      *         "has_documents": true,
-                     *         "webcast_url": null
+                     *         "webcast_url": null,
+                     *         "video": null
                      *       },
                      *       "version": 6,
                      *       "version_kind": "corrected",
@@ -9827,6 +9944,28 @@ export interface operations {
                             has_documents: boolean;
                             /** @description Webcast page of an upcoming dated call; null once published */
                             webcast_url: null | string;
+                            /** @description The company's public broadcast on a video platform (YouTube, Vimeo). Embed `embed_url` when `embeddable` is not false; otherwise link `url`. Present before, during and after the event; null = none known. */
+                            video: null | {
+                                /**
+                                 * @description Video platform
+                                 * @enum {string}
+                                 */
+                                provider: "vimeo" | "youtube";
+                                /** @description The platform's video id */
+                                video_id: string;
+                                /** @description Watch page */
+                                url: string;
+                                /** @description Privacy-enhanced player URL (YouTube: youtube-nocookie.com; Vimeo: dnt=1) */
+                                embed_url: string;
+                                /** @description Video title */
+                                title: null | string;
+                                /** @description Channel or account that published it */
+                                channel: null | string;
+                                /** @description Thumbnail image */
+                                thumbnail_url: null | string;
+                                /** @description false = the owner disabled or restricted embedding (link `url`); null = not checked yet */
+                                embeddable: boolean | null;
+                            };
                         };
                         /** @description Version served */
                         version: number;

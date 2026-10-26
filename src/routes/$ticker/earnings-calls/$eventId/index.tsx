@@ -17,6 +17,7 @@ import { CallAudioProvider } from "../-components/audio-context";
 import { AudioPlayer } from "../-components/audio-player";
 import { CallHeader } from "../-components/call-header";
 import { CALL_TAB_VALUES, CallTabs, DEFAULT_CALL_TAB } from "../-components/call-tabs";
+import { EventVideoSlot } from "../-components/event-video";
 import { LivePlayerSlot } from "../-components/live-player-slot";
 import { MiniPlayer } from "../-components/mini-player";
 
@@ -101,6 +102,9 @@ function CallPage({ eventId }: { eventId: string }) {
 
                     {/* The live player while the call is in progress (nothing for other calls). */}
                     <LivePlayerSlot event={event} />
+
+                    {/* The company's public broadcast (click-to-load), collapsed while the call is captured live. */}
+                    <EventVideoSlot event={event} />
 
                     <AskThisCall
                         scope={{

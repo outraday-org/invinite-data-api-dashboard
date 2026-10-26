@@ -13,6 +13,7 @@ import { useMediaUrl } from "@/lib/earnings/use-media-url";
 import type { CallTabProps } from "../call-tabs";
 
 import { MediaState, Notice } from "../media-state";
+import { SlideTimeline } from "../slide-timeline";
 
 // `react-pdf` pulls its CSS and pdf.js; load it only when a deck is shown.
 const PdfViewer = React.lazy(() => import("@/components/pdf/pdf-viewer").then(module => ({ default: module.PdfViewer })));
@@ -30,7 +31,8 @@ function DeckViewer({ url }: { url: string }) {
 
 /**
  * Slides tab: the deck PDF (unless the slides are captured player images, `origin: "player"`)
- * with a download link, and a page strip of the slide images with their extracted text.
+ * with a download link, and a page strip of the slide images with their extracted text. Above
+ * them the player slides on the audio's clock (`timeline`, `SlideTimeline`), when there are any.
  * Presigned URLs are refreshed before they expire.
  */
 export function SlidesTab({ selector }: CallTabProps) {
@@ -49,15 +51,17 @@ export function SlidesTab({ selector }: CallTabProps) {
 
     if (!data) return <Skeleton className="h-40 w-full" />;
 
-    const { deck, slides } = data;
+    const { deck, slides, timeline } = data;
 
-    if (!deck && slides.length === 0) return <Notice title="No slides stored for this call" />;
+    if (!deck && slides.length === 0 && timeline.length === 0) return <Notice title="No slides stored for this call" />;
 
     // Reopened from the refreshed answer so the dialog's image URL is current.
     const shownSlide = openSlide ? slides.find(slide => slide.page === openSlide.page) ?? openSlide : null;
 
     return (
         <div className="flex flex-col gap-4">
+            <SlideTimeline onMediaError={onMediaError} timeline={timeline} />
+
             {deck && (
                 <div className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center gap-2 text-xs">

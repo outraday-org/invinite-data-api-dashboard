@@ -16,6 +16,7 @@ import { CallStatusBadge } from "@/routes/$ticker/earnings-calls/-components/cal
 import { CallTime } from "@/routes/$ticker/earnings-calls/-components/call-time";
 import { EventLink } from "@/routes/$ticker/earnings-calls/-components/event-link";
 import { EventTypeBadge } from "@/routes/$ticker/earnings-calls/-components/event-type-badge";
+import { EventVideoLink } from "@/routes/$ticker/earnings-calls/-components/event-video";
 import { EventsTable } from "@/routes/$ticker/earnings-calls/-components/events-table";
 import { LiveNowStrip } from "@/routes/$ticker/earnings-calls/-components/live-now-strip";
 import { WebcastLink } from "@/routes/$ticker/earnings-calls/-components/webcast-link";
@@ -105,6 +106,7 @@ function EarningsCalendarPage() {
                     <div className="flex items-center gap-3">
                         <AvailabilityIcons event={row.original} />
                         <WebcastLink url={row.original.webcast_url} />
+                        <EventVideoLink event={row.original} />
                     </div>
                 ),
                 header: "Materials",
