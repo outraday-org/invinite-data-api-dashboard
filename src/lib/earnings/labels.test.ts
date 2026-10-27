@@ -4,6 +4,7 @@ import {
     formatGuidanceRange,
     formatGuidanceValue,
     formatSigned,
+    highlightSpans,
     highlightTerms,
     metricLabel,
     participationDetailText,
@@ -46,6 +47,32 @@ describe("highlightTerms", () => {
         expect(highlightTerms("text", "   ")).toEqual([{ match: false, text: "text" }]);
 
         expect(highlightTerms("", "term")).toEqual([]);
+    });
+});
+
+describe("highlightSpans", () => {
+    it("marks code-point spans, so an emoji before the match does not shift it", () => {
+        // "📈" is one code point but two UTF-16 units: string.slice offsets would be off by one.
+        expect(highlightSpans("📈 Margin rose", [{ end: 8, start: 2 }])).toEqual([
+            { match: false, text: "📈 " },
+            { match: true, text: "Margin" },
+            { match: false, text: " rose" },
+        ]);
+    });
+
+    it("sorts, clamps and merges overlapping or touching spans", () => {
+        expect(highlightSpans("abcdefgh", [{ end: 99, start: 6 }, { end: 3, start: 1 }, { end: 4, start: 2 }, { end: 6, start: 4 }])).toEqual([
+            { match: false, text: "a" },
+            { match: true, text: "bcdefgh" },
+        ]);
+
+        expect(highlightSpans("abc", [{ end: 1, start: 1 }, { end: 0, start: -2 }])).toEqual([{ match: false, text: "abc" }]);
+    });
+
+    it("returns the whole text unmarked without spans and nothing for empty text", () => {
+        expect(highlightSpans("text", [])).toEqual([{ match: false, text: "text" }]);
+
+        expect(highlightSpans("", [{ end: 1, start: 0 }])).toEqual([]);
     });
 });
 

@@ -37,6 +37,8 @@ import type {
     EarningsProsodyResponse,
     EarningsProsodySection,
     EarningsQaResponse,
+    EarningsSearchCaseSensitive,
+    EarningsSearchMode,
     EarningsSearchResponse,
     EarningsSearchType,
     EarningsSession,
@@ -1653,10 +1655,12 @@ export function useEarningsDocumentsInfinite(input: EarningsDocumentsInfiniteInp
 }
 
 type EarningsSearchInput = {
+    caseSensitive?: EarningsSearchCaseSensitive;
     eventId?: string;
     from?: string;
     identifier?: string;
     limit?: number;
+    mode?: EarningsSearchMode;
     q: string;
     to?: string;
     type?: EarningsSearchType;
@@ -1672,6 +1676,8 @@ export function useEarningsSearch(input: EarningsSearchInput) {
             "earnings",
             "search",
             input.q,
+            input.mode ?? "",
+            input.caseSensitive ?? "",
             input.eventId ?? "",
             input.identifier ?? "",
             input.from ?? "",
@@ -1729,9 +1735,11 @@ export function useEarningsCompanyDocument(documentId: null | string, { pages = 
 }
 
 type EarningsDocumentSearchInput = {
+    caseSensitive?: EarningsSearchCaseSensitive;
     identifier?: string;
     kind?: Array<string>;
     limit?: number;
+    mode?: EarningsSearchMode;
     q: string;
     section?: Array<string>;
     table?: "company_documents" | "event_documents";
@@ -1748,6 +1756,8 @@ export function useEarningsDocumentSearch(input: EarningsDocumentSearchInput) {
             "earnings",
             "document-search",
             input.q,
+            input.mode ?? "",
+            input.caseSensitive ?? "",
             input.identifier ?? "",
             input.kind?.join(",") ?? "",
             input.section?.join(",") ?? "",

@@ -1,13 +1,14 @@
 // @vitest-environment jsdom
 import type * as React from "react";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { EarningsDocumentSearchResponse } from "@/lib/api/types";
+import type { EarningsDocumentSearchResponse, SearchCoverage } from "@/lib/api/types";
 
 import { ApiRequestError } from "@/lib/api/errors";
-import { DocumentSearchResults } from "@/routes/$ticker/documents/-components/document-search";
+import { useEarningsDocumentSearch } from "@/lib/api/queries";
+import { DocumentSearch, DocumentSearchResults } from "@/routes/$ticker/documents/-components/document-search";
 
 vi.mock("@tanstack/react-router", () => ({
     Link: ({ children, params, search, to }: {
@@ -36,6 +37,7 @@ afterEach(cleanup);
 
 const HIT: EarningsDocumentSearchResponse["hits"][number] = {
     category: "reports",
+    chunk_index: 3,
     cik: "0000000001",
     document_id: "00000000-0000-4000-8000-000000000001",
     event_id: null,
@@ -44,6 +46,7 @@ const HIT: EarningsDocumentSearchResponse["hits"][number] = {
     group_label: "Reports 2025",
     heading: "Capital allocation",
     kind: "annual_report",
+    match: { lexical_rank: 1, semantic_rank: null, spans: [{ end: 22, start: 4 }], type: "lexical" },
     page: 14,
     period: "FY",
     score: 0.8123,
@@ -51,21 +54,40 @@ const HIT: EarningsDocumentSearchResponse["hits"][number] = {
     symbol: "ACME",
     table: "company_documents",
     text: "Our capital allocation priorities remain investment, dividends and buybacks.",
+    text_truncated: false,
     title: "Annual Report 2025",
     url: "https://r2.example.com/docs/annual-report.pdf?X-Amz-Signature=secret",
     year: 2025,
 };
 
+const COMPLETE: SearchCoverage = {
+    completeness: "complete",
+    lexical: { failed: 0, indexed: 12, pending: 0, state: "ready" },
+    reasons: [],
+    semantic: null,
+};
+
+const answer = (
+    hits: EarningsDocumentSearchResponse["hits"],
+    query: string,
+    coverage: SearchCoverage = COMPLETE,
+    mode: EarningsDocumentSearchResponse["mode"] = "lexical",
+): EarningsDocumentSearchResponse => ({ coverage, hits, mode, query });
+
 describe("DocumentSearchResults", () => {
     it("shows each passage with its document, year and page and opens the PDF at that page", () => {
-        render(<DocumentSearchResults data={{ hits: [HIT], query: "capital allocation" }} error={null} isLoading={false} />);
+        render(<DocumentSearchResults data={answer([HIT], "capital allocation")} error={null} isLoading={false} mode="lexical" />);
 
         expect(screen.getByText("Annual Report 2025 · 2025 · p. 14")).toBeInTheDocument();
 
         expect(screen.getByText("annual report")).toBeInTheDocument();
 
-        // The query terms are highlighted.
-        expect(screen.getByText("capital", { selector: "mark" })).toBeInTheDocument();
+        expect(screen.getByText("keyword")).toBeInTheDocument();
+
+        // The server's span is highlighted as one mark, not the query's terms one by one.
+        expect(screen.getByText("capital allocation", { selector: "mark" })).toBeInTheDocument();
+
+        expect(screen.queryByText("capital", { selector: "mark" })).toBeNull();
 
         const open = screen.getByRole("link", { name: "Open page" });
 
@@ -87,7 +109,7 @@ describe("DocumentSearchResults", () => {
             year: null,
         };
 
-        render(<DocumentSearchResults data={{ hits: [hit], query: "dividends" }} error={null} isLoading={false} />);
+        render(<DocumentSearchResults data={answer([hit], "dividends")} error={null} isLoading={false} mode="lexical" />);
 
         expect(screen.getByText("Untitled document · undated")).toBeInTheDocument();
 
@@ -97,14 +119,93 @@ describe("DocumentSearchResults", () => {
     });
 
     it("renders empty answers and the plan gate as states", () => {
-        const { rerender } = render(<DocumentSearchResults data={{ hits: [], query: "x" }} error={null} isLoading={false} />);
+        const { rerender } = render(<DocumentSearchResults data={answer([], "x")} error={null} isLoading={false} mode="lexical" />);
 
         expect(screen.getByText("No passages found")).toBeInTheDocument();
 
-        rerender(<DocumentSearchResults data={null} error={new ApiRequestError(403, { error: "Forbidden", message: "This endpoint requires STANDARD plan." })} isLoading={false} />);
+        rerender(<DocumentSearchResults data={null} error={new ApiRequestError(403, { error: "Forbidden", message: "This endpoint requires STANDARD plan." })} isLoading={false} mode="lexical" />);
 
         expect(screen.getByText("Your plan does not include document search")).toBeInTheDocument();
 
         expect(screen.getByText("STANDARD")).toBeInTheDocument();
+    });
+
+    it("falls back to term highlighting for a semantic hit and notes a missing meaning index", () => {
+        const hit = { ...HIT, match: { lexical_rank: null, semantic_rank: 1, spans: [], type: "semantic" as const } };
+
+        const coverage: SearchCoverage = {
+            completeness: "unknown",
+            lexical: null,
+            reasons: ["semantic_index_missing"],
+            semantic: { failed: 0, indexed: 0, pending: 4, state: "not_ready" },
+        };
+
+        render(<DocumentSearchResults data={answer([hit], "capital allocation", coverage, "semantic")} error={null} isLoading={false} mode="semantic" />);
+
+        expect(screen.getByText("meaning")).toBeInTheDocument();
+
+        expect(screen.getByText("capital", { selector: "mark" })).toBeInTheDocument();
+
+        expect(screen.getByText("Meaning search is not available yet")).toBeInTheDocument();
+    });
+
+    it("never reads a bare \"No passages found\" when coverage is partial", () => {
+        const coverage: SearchCoverage = {
+            completeness: "partial",
+            lexical: { failed: 0, indexed: 3, pending: 9, state: "partial" },
+            reasons: ["lexical_backfill_pending"],
+            semantic: null,
+        };
+
+        render(<DocumentSearchResults data={answer([], "buybacks", coverage)} error={null} isLoading={false} mode="lexical" />);
+
+        expect(screen.queryByText("No passages found")).toBeNull();
+
+        expect(screen.getByText("Search index is still being built for this company — results may be incomplete")).toBeInTheDocument();
+    });
+
+    it("names the exact-search scope rule on a 400 under Exact, else shows the API's message", () => {
+        const error = new ApiRequestError(400, { error: "Bad Request", message: "pattern too short" });
+
+        const { rerender } = render(<DocumentSearchResults data={null} error={error} isLoading={false} mode="literal" />);
+
+        expect(screen.getByText("Exact search needs 3 characters or a company")).toBeInTheDocument();
+
+        rerender(<DocumentSearchResults data={null} error={error} isLoading={false} mode="lexical" />);
+
+        expect(screen.getByText("pattern too short")).toBeInTheDocument();
+    });
+});
+
+describe("DocumentSearch", () => {
+    it("defaults to Keyword and re-runs the submitted query with a new mode", () => {
+        const search = vi.mocked(useEarningsDocumentSearch);
+
+        search.mockReturnValue({ data: null, error: null, isFetching: false } as unknown as ReturnType<typeof useEarningsDocumentSearch>);
+
+        render(<DocumentSearch identifier="ACME" />);
+
+        expect(screen.getByRole("button", { name: "Keyword" })).toHaveAttribute("aria-pressed", "true");
+
+        fireEvent.change(screen.getByLabelText("Search this company's documents"), { target: { value: "FY2027" } });
+
+        fireEvent.submit(screen.getByLabelText("Search this company's documents").closest("form")!);
+
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: undefined, mode: "lexical", q: "FY2027" }));
+
+        // "Match case" belongs to Exact only.
+        expect(screen.queryByRole("button", { name: "Match case" })).toBeNull();
+
+        fireEvent.click(screen.getByRole("button", { name: "Exact" }));
+
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: "true", mode: "literal", q: "FY2027" }));
+
+        fireEvent.click(screen.getByRole("button", { name: "Match case" }));
+
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: "false", mode: "literal", q: "FY2027" }));
+
+        fireEvent.click(screen.getByRole("button", { name: "Meaning" }));
+
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: undefined, mode: "semantic", q: "FY2027" }));
     });
 });

@@ -160,6 +160,14 @@ export type EarningsGuidancePeriodKind = NonNullable<ApiQuery<"/v1/earnings-call
 export type EarningsGuidanceBasis = NonNullable<ApiQuery<"/v1/earnings-calls/guidance/history">["basis"]>;
 export type EarningsProsodySection = NonNullable<ApiQuery<"/v1/earnings-calls/prosody">["section"]>;
 export type EarningsSearchType = NonNullable<ApiQuery<"/v1/earnings-calls/search">["type"]>;
+/** `lexical` (the API default) · `literal` · `semantic` · `hybrid`; both search routes take the same modes. */
+export type EarningsSearchMode = NonNullable<ApiQuery<"/v1/earnings-calls/search">["mode"]>;
+/** The API's string enum (`mode=literal` only). */
+export type EarningsSearchCaseSensitive = NonNullable<ApiQuery<"/v1/earnings-calls/search">["case_sensitive"]>;
+export type SearchCoverage = EarningsSearchResponse["coverage"];
+export type HitMatch = EarningsSearchHit["match"];
+/** Zero-based, end-exclusive Unicode code-point offsets into the hit's `text`. */
+export type MatchSpan = HitMatch["spans"][number];
 
 export type EarningsLiveStreamStatus = EarningsLiveStreamResponse["status"];
 

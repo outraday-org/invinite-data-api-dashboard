@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ExternalLink, Search } from "lucide-react";
 import * as React from "react";
 
-import type { EarningsDocumentSearchHit, EarningsDocumentSearchResponse } from "@/lib/api/types";
+import type { EarningsDocumentSearchHit, EarningsDocumentSearchResponse, EarningsSearchMode } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,15 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEarningsDocumentSearch } from "@/lib/api/queries";
 import { documentKindLabel, documentPageHref } from "@/lib/earnings/documents";
-import { HighlightedText, SearchError } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
+import { SEARCH_MODE_LABELS } from "@/lib/earnings/labels";
+import {
+    HitPassage,
+    MatchBadge,
+    SearchCoverageNote,
+    SearchEmptyState,
+    SearchError,
+    SearchScore,
+} from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
 
 const SEARCH_LIMIT = 10;
 
@@ -25,6 +33,12 @@ const TABLE_LABELS: Record<DocumentTable, string> = {
 
 const TABLES = Object.keys(TABLE_LABELS) as Array<DocumentTable>;
 
+/** Chip order: Keyword (the API default) first. */
+const MODES: Array<EarningsSearchMode> = ["lexical", "literal", "semantic", "hybrid"];
+
+/** The API's literal scope rule; the page always sends `identifier`, so this 400 should not occur. */
+const EXACT_TOO_SHORT = "Exact search needs 3 characters or a company";
+
 /** The wording rule: passages, never facts; every hit names its document, year and page. */
 export const DOCUMENT_SEARCH_LEAD = "Passages from company-published documents, not verified facts.";
 
@@ -32,7 +46,7 @@ const DOCUMENT_SEARCH_TIER = { badge: "STANDARD", title: "Your plan does not inc
 
 const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
 
-function DocumentHitCard({ hit, query }: { hit: EarningsDocumentSearchHit; query: string }) {
+function DocumentHitCard({ hit, mode, query }: { hit: EarningsDocumentSearchHit; mode: EarningsSearchMode; query: string }) {
     const source = [
         hit.title ?? "Untitled document",
         hit.year === null ? "undated" : String(hit.year),
@@ -43,11 +57,12 @@ function DocumentHitCard({ hit, query }: { hit: EarningsDocumentSearchHit; query
         <li className="flex flex-col gap-1.5 rounded-md border p-3">
             <div className="flex flex-wrap items-center gap-2">
                 {hit.kind && <Badge variant="outline">{documentKindLabel(hit.kind)}</Badge>}
+                <MatchBadge match={hit.match} />
                 <span className="font-medium">{source}</span>
                 {hit.heading && <span className="text-muted-foreground">{hit.heading}</span>}
-                <span className="text-muted-foreground ml-auto tabular-nums" title="Relevance score">{hit.score.toFixed(2)}</span>
+                <SearchScore mode={mode} score={hit.score} />
             </div>
-            <HighlightedText query={query} text={hit.text} />
+            <HitPassage match={hit.match} query={query} text={hit.text} />
             <div className="flex flex-wrap items-center gap-3">
                 {hit.url
                     ? (
@@ -73,41 +88,52 @@ function DocumentHitCard({ hit, query }: { hit: EarningsDocumentSearchHit; query
     );
 }
 
-/** The results body (pure: data / error / loading in, list out). */
+/** The results body (pure: data / error / loading in, list + coverage note out); `mode` = the requested mode. */
 export function DocumentSearchResults({
     data,
     error,
     isLoading,
+    mode,
 }: {
     data: EarningsDocumentSearchResponse | null;
     error: unknown;
     isLoading: boolean;
+    mode: EarningsSearchMode;
 }) {
-    if (error) return <SearchError error={error} tier={DOCUMENT_SEARCH_TIER} />;
+    if (error) {
+        return <SearchError badRequest={mode === "literal" ? EXACT_TOO_SHORT : undefined} error={error} tier={DOCUMENT_SEARCH_TIER} />;
+    }
 
     if (isLoading && !data) return <Skeleton className="h-24 w-full" />;
 
     if (!data) return null;
 
-    if (data.hits.length === 0) return <div className="text-muted-foreground">No passages found</div>;
-
     return (
-        <ul className="flex flex-col gap-2">
-            {data.hits.map(hit => (
-                <DocumentHitCard
-                    hit={hit}
-                    // A hit has no id of its own: document + page + chunk start is unique within one answer.
-                    key={`${hit.document_id}:${hit.page ?? ""}:${hit.text.slice(0, 32)}`}
-                    query={data.query}
-                />
-            ))}
-        </ul>
+        <>
+            {data.hits.length === 0
+                ? <SearchEmptyState coverage={data.coverage} />
+                : (
+                        <ul className="flex flex-col gap-2">
+                            {data.hits.map(hit => (
+                                <DocumentHitCard
+                                    hit={hit}
+                                    // A hit has no id of its own: document + page + chunk start is unique within one answer.
+                                    key={`${hit.document_id}:${hit.page ?? ""}:${hit.text.slice(0, 32)}`}
+                                    mode={data.mode}
+                                    query={data.query}
+                                />
+                            ))}
+                        </ul>
+                    )}
+            <SearchCoverageNote coverage={data.coverage} />
+        </>
     );
 }
 
 /**
- * Semantic search over one company's documents (`/documents/search`, 10 credits): its calls' documents and its IR
- * library. Runs on submit, never per keystroke; a source chip re-runs the submitted question.
+ * Search over one company's documents (`/documents/search`, 10 credits): its calls' documents and its IR library, by
+ * keywords (default), exact text, meaning or both. Runs on submit, never per keystroke; a mode or source chip re-runs
+ * the submitted query.
  */
 export function DocumentSearch({ identifier }: { identifier: string }) {
     const [draft, setDraft] = React.useState("");
@@ -116,7 +142,19 @@ export function DocumentSearch({ identifier }: { identifier: string }) {
 
     const [table, setTable] = React.useState<DocumentTable | undefined>(undefined);
 
-    const { data, error, isFetching } = useEarningsDocumentSearch({ identifier, limit: SEARCH_LIMIT, q: query, table });
+    const [mode, setMode] = React.useState<EarningsSearchMode>("lexical");
+
+    // The API's literal default is case-sensitive; the parameter is sent with Exact only (else a 400).
+    const [matchCase, setMatchCase] = React.useState(true);
+
+    const { data, error, isFetching } = useEarningsDocumentSearch({
+        caseSensitive: mode === "literal" ? (matchCase ? "true" : "false") : undefined,
+        identifier,
+        limit: SEARCH_LIMIT,
+        mode,
+        q: query,
+        table,
+    });
 
     const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH;
 
@@ -143,6 +181,30 @@ export function DocumentSearch({ identifier }: { identifier: string }) {
             </form>
 
             <div className="flex flex-wrap items-center gap-1">
+                {MODES.map(value => (
+                    <Button
+                        aria-pressed={mode === value}
+                        key={value}
+                        onClick={() => setMode(value)}
+                        size="xs"
+                        type="button"
+                        variant={mode === value ? "secondary" : "outline"}
+                    >
+                        {SEARCH_MODE_LABELS[value]}
+                    </Button>
+                ))}
+                {mode === "literal" && (
+                    <Button
+                        aria-pressed={matchCase}
+                        onClick={() => setMatchCase(value => !value)}
+                        size="xs"
+                        type="button"
+                        variant={matchCase ? "secondary" : "outline"}
+                    >
+                        Match case
+                    </Button>
+                )}
+                <span aria-hidden className="bg-border mx-1 h-4 w-px" />
                 <Button
                     aria-pressed={table === undefined}
                     onClick={() => setTable(undefined)}
@@ -170,7 +232,7 @@ export function DocumentSearch({ identifier }: { identifier: string }) {
             {query && (
                 <>
                     <div className="text-muted-foreground text-xs">{DOCUMENT_SEARCH_LEAD}</div>
-                    <DocumentSearchResults data={data} error={error} isLoading={isFetching} />
+                    <DocumentSearchResults data={data} error={error} isLoading={isFetching} mode={mode} />
                 </>
             )}
         </section>

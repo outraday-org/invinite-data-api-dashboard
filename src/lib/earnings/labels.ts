@@ -1,4 +1,4 @@
-import type { EarningsGuidanceItem } from "@/lib/api/types";
+import type { EarningsGuidanceItem, EarningsSearchMode, HitMatch, MatchSpan } from "@/lib/api/types";
 
 import { formatNumberEnCompact } from "@/lib/utils";
 
@@ -245,3 +245,62 @@ export function highlightTerms(text: string, query: string): Array<HighlightPart
 
     return parts;
 }
+
+/**
+ * Splits `text` into parts with the server's match spans (`hit.match.spans`) marked. Spans are code-point offsets — an
+ * emoji is one position, two UTF-16 units — so the text is indexed through `Array.from`. Out-of-range spans are
+ * clamped, overlapping or touching ones merged.
+ */
+export function highlightSpans(text: string, spans: ReadonlyArray<MatchSpan>): Array<HighlightPart> {
+    const points = Array.from(text);
+
+    if (points.length === 0) return [];
+
+    const ordered = spans
+        .map(span => ({ end: Math.min(span.end, points.length), start: Math.max(span.start, 0) }))
+        .filter(span => span.start < span.end)
+        .sort((a, b) => a.start - b.start);
+
+    const parts: Array<HighlightPart> = [];
+
+    let cursor = 0;
+
+    for (const span of ordered) {
+        if (span.end <= cursor) continue;
+
+        const start = Math.max(span.start, cursor);
+
+        const marked = points.slice(start, span.end).join("");
+
+        if (start > cursor) parts.push({ match: false, text: points.slice(cursor, start).join("") });
+
+        const last = parts.at(-1);
+
+        if (last?.match) last.text += marked;
+        else parts.push({ match: true, text: marked });
+
+        cursor = span.end;
+    }
+
+    if (cursor < points.length) parts.push({ match: false, text: points.slice(cursor).join("") });
+
+    return parts;
+}
+
+/** The mode chips' labels; exhaustive over the API's mode enum (the server functions' zod enum is its keys). */
+export const SEARCH_MODE_LABELS: Record<EarningsSearchMode, string> = {
+    hybrid: "Hybrid",
+    lexical: "Keyword",
+    literal: "Exact",
+    semantic: "Meaning",
+};
+
+export const SEARCH_MODES = Object.keys(SEARCH_MODE_LABELS) as [EarningsSearchMode, ...Array<EarningsSearchMode>];
+
+/** A hit's match badge: the leg that found it; `both` = a hybrid hit both legs ranked. */
+export const MATCH_TYPE_LABELS: Record<HitMatch["type"], string> = {
+    hybrid: "both",
+    lexical: "keyword",
+    literal: "exact",
+    semantic: "meaning",
+};

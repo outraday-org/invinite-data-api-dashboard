@@ -23,7 +23,7 @@ browser's `localStorage`). Without a key entered in the UI the live player asks 
 
 ## API types
 
-`openapi.json` is a copy of the data API's spec (`../invinite-data-api/openapi.json`).
+`openapi.json` is the pinned data API spec, adopted from the API's versioned `reference/openapi.json`.
 Copy it over and run `pnpm generate:api` to regenerate `src/lib/api/schema.d.ts`.
 `pnpm-workspace.yaml` records pnpm 11's `allowBuilds` decisions (esbuild's postinstall
 runs, the others are skipped) so `pnpm install` / `pnpm run` do not stop on

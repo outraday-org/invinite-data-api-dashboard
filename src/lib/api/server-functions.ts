@@ -26,6 +26,7 @@ import type {
     EarningsPriceAttributionResponse,
     EarningsProsodyResponse,
     EarningsQaResponse,
+    EarningsSearchCaseSensitive,
     EarningsSearchResponse,
     EarningsSlidesResponse,
     EarningsTranscriptDiffResponse,
@@ -47,6 +48,7 @@ import type {
 } from "./types";
 
 import { ASSET_GROUP_CATEGORIES } from "../earnings/documents";
+import { SEARCH_MODES } from "../earnings/labels";
 import { env } from "../env";
 import { createApiClient } from "./client.server";
 import { throwApiError } from "./errors";
@@ -1177,12 +1179,20 @@ export const getEarningsDocuments = createServerFn({ method: "GET" })
         return res;
     });
 
+// Both search routes: `mode` = the keys of the exhaustive `SEARCH_MODE_LABELS`; `case_sensitive` is the API's string
+// enum (`mode=literal` only — the API answers 400 otherwise).
+const searchModeSchema = z.enum(SEARCH_MODES);
+
+const caseSensitiveSchema = z.enum(["true", "false"] satisfies [EarningsSearchCaseSensitive, EarningsSearchCaseSensitive]);
+
 const earningsSearchSchema = z.object({
     apiKey: apiKeySchema,
+    caseSensitive: caseSensitiveSchema.optional(),
     eventId: z.string().uuid().optional(),
     from: z.string().optional(),
     identifier: z.string().optional(),
     limit: z.number().optional(),
+    mode: searchModeSchema.optional(),
     q: z.string().min(1),
     to: z.string().optional(),
     type: z.enum(["transcript", "qa", "preparedRemarks", "presentation"]).optional(),
@@ -1191,12 +1201,12 @@ const earningsSearchSchema = z.object({
 export const getEarningsSearch = createServerFn({ method: "GET" })
     .inputValidator(earningsSearchSchema)
     .handler(async ({ data }): Promise<EarningsSearchResponse> => {
-        const { apiKey, eventId, from, identifier, limit, q, to, type } = data;
+        const { apiKey, caseSensitive, eventId, from, identifier, limit, mode, q, to, type } = data;
 
         const api = createApiClient(apiKey);
 
         const { data: res, error, response } = await api.GET("/v1/earnings-calls/search", {
-            params: { query: { event_id: eventId, from, identifier, limit, q, to, type } },
+            params: { query: { case_sensitive: caseSensitive, event_id: eventId, from, identifier, limit, mode, q, to, type } },
         });
 
         if (error) throwApiError(error, response);
@@ -1262,9 +1272,11 @@ export const getEarningsCompanyDocument = createServerFn({ method: "GET" })
 
 const earningsDocumentSearchSchema = z.object({
     apiKey: apiKeySchema,
+    caseSensitive: caseSensitiveSchema.optional(),
     identifier: z.string().optional(),
     kind: z.array(z.string()).optional(),
     limit: z.number().optional(),
+    mode: searchModeSchema.optional(),
     q: z.string().min(1),
     section: z.array(z.string()).optional(),
     table: z.enum(["event_documents", "company_documents"]).optional(),
@@ -1274,16 +1286,18 @@ const earningsDocumentSearchSchema = z.object({
 export const getEarningsDocumentSearch = createServerFn({ method: "GET" })
     .inputValidator(earningsDocumentSearchSchema)
     .handler(async ({ data }): Promise<EarningsDocumentSearchResponse> => {
-        const { apiKey, identifier, kind, limit, q, section, table, year } = data;
+        const { apiKey, caseSensitive, identifier, kind, limit, mode, q, section, table, year } = data;
 
         const api = createApiClient(apiKey);
 
         const { data: res, error, response } = await api.GET("/v1/earnings-calls/documents/search", {
             params: {
                 query: {
+                    case_sensitive: caseSensitive,
                     identifier,
                     kind: kind?.length ? kind : undefined,
                     limit,
+                    mode,
                     q,
                     section: section?.length ? section : undefined,
                     table,
