@@ -33,8 +33,6 @@ const TABLE_LABELS: Record<DocumentTable, string> = {
 
 const TABLES = Object.keys(TABLE_LABELS) as Array<DocumentTable>;
 
-/** Chip order: Keyword (the API default) first. */
-
 /** The API's literal scope rule; the page always sends `identifier`, so this 400 should not occur. */
 const EXACT_TOO_SHORT = "Exact search needs 3 characters or a company";
 
@@ -131,8 +129,8 @@ export function DocumentSearchResults({
 
 /**
  * Search over one company's documents (`/documents/search`, 10 credits): its calls' documents and its IR library, by
- * keywords (default), exact text, meaning or both. Runs on submit, never per keystroke; a mode or source chip re-runs
- * the submitted query.
+ * keywords (default; every word must match) or exact text. Runs on submit, never per keystroke; a mode or source chip
+ * re-runs the submitted query.
  */
 export function DocumentSearch({ identifier }: { identifier: string }) {
     const [draft, setDraft] = React.useState("");

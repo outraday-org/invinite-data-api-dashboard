@@ -8,6 +8,7 @@ import type { EarningsDocumentSearchResponse, SearchCoverage } from "@/lib/api/t
 
 import { ApiRequestError } from "@/lib/api/errors";
 import { useEarningsDocumentSearch } from "@/lib/api/queries";
+import { SEARCH_MODES } from "@/lib/earnings/labels";
 import { DocumentSearch, DocumentSearchResults } from "@/routes/$ticker/documents/-components/document-search";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -46,7 +47,7 @@ const HIT: EarningsDocumentSearchResponse["hits"][number] = {
     group_label: "Reports 2025",
     heading: "Capital allocation",
     kind: "annual_report",
-    match: { lexical_rank: 1, semantic_rank: null, spans: [{ end: 22, start: 4 }], type: "lexical" },
+    match: { lexical_rank: 1, spans: [{ end: 22, start: 4 }], type: "lexical" },
     page: 14,
     period: "FY",
     score: 0.8123,
@@ -64,7 +65,6 @@ const COMPLETE: SearchCoverage = {
     completeness: "complete",
     lexical: { failed: 0, indexed: 12, pending: 0, state: "ready" },
     reasons: [],
-    semantic: null,
 };
 
 const answer = (
@@ -130,23 +130,22 @@ describe("DocumentSearchResults", () => {
         expect(screen.getByText("STANDARD")).toBeInTheDocument();
     });
 
-    it("falls back to term highlighting for a semantic hit and notes a missing meaning index", () => {
-        const hit = { ...HIT, match: { lexical_rank: null, semantic_rank: 1, spans: [], type: "semantic" as const } };
+    it("falls back to term highlighting for a hit without spans and notes failed passages", () => {
+        const hit = { ...HIT, match: { lexical_rank: 1, spans: [], type: "lexical" as const } };
 
         const coverage: SearchCoverage = {
-            completeness: "unknown",
-            lexical: null,
-            reasons: ["semantic_index_missing"],
-            semantic: { failed: 0, indexed: 0, pending: 4, state: "not_ready" },
+            completeness: "partial",
+            lexical: { failed: 2, indexed: 10, pending: 0, state: "partial" },
+            reasons: ["projection_failed"],
         };
 
-        render(<DocumentSearchResults data={answer([hit], "capital allocation", coverage, "semantic")} error={null} isLoading={false} mode="semantic" />);
+        render(<DocumentSearchResults data={answer([hit], "capital allocation", coverage)} error={null} isLoading={false} mode="lexical" />);
 
-        expect(screen.getByText("meaning")).toBeInTheDocument();
+        expect(screen.getByText("keyword")).toBeInTheDocument();
 
         expect(screen.getByText("capital", { selector: "mark" })).toBeInTheDocument();
 
-        expect(screen.getByText("Meaning search is not available yet")).toBeInTheDocument();
+        expect(screen.getByText("Some passages could not be indexed — results may be incomplete")).toBeInTheDocument();
     });
 
     it("never reads a bare \"No passages found\" when coverage is partial", () => {
@@ -154,7 +153,6 @@ describe("DocumentSearchResults", () => {
             completeness: "partial",
             lexical: { failed: 0, indexed: 3, pending: 9, state: "partial" },
             reasons: ["lexical_backfill_pending"],
-            semantic: null,
         };
 
         render(<DocumentSearchResults data={answer([], "buybacks", coverage)} error={null} isLoading={false} mode="lexical" />);
@@ -204,8 +202,24 @@ describe("DocumentSearch", () => {
 
         expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: "false", mode: "literal", q: "FY2027" }));
 
-        fireEvent.click(screen.getByRole("button", { name: "Meaning" }));
+        fireEvent.click(screen.getByRole("button", { name: "Keyword" }));
 
-        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: undefined, mode: "semantic", q: "FY2027" }));
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: undefined, mode: "lexical", q: "FY2027" }));
+    });
+
+    it("offers only the Keyword and Exact chips (no meaning or hybrid mode)", () => {
+        vi.mocked(useEarningsDocumentSearch).mockReturnValue({ data: null, error: null, isFetching: false } as unknown as ReturnType<typeof useEarningsDocumentSearch>);
+
+        render(<DocumentSearch identifier="ACME" />);
+
+        expect(screen.getByRole("button", { name: "Keyword" })).toBeInTheDocument();
+
+        expect(screen.getByRole("button", { name: "Exact" })).toBeInTheDocument();
+
+        expect(screen.queryByRole("button", { name: "Hybrid" })).toBeNull();
+
+        expect(screen.queryByRole("button", { name: "Meaning" })).toBeNull();
+
+        expect(SEARCH_MODES).toEqual(["lexical", "literal"]);
     });
 });

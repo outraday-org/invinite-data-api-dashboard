@@ -160,7 +160,7 @@ export type EarningsGuidancePeriodKind = NonNullable<ApiQuery<"/v1/earnings-call
 export type EarningsGuidanceBasis = NonNullable<ApiQuery<"/v1/earnings-calls/guidance/history">["basis"]>;
 export type EarningsProsodySection = NonNullable<ApiQuery<"/v1/earnings-calls/prosody">["section"]>;
 export type EarningsSearchType = NonNullable<ApiQuery<"/v1/earnings-calls/search">["type"]>;
-/** `lexical` (the API default) · `literal` · `semantic` · `hybrid`; both search routes take the same modes. */
+/** `lexical` (the API default) · `literal`; both search routes take the same modes. */
 export type EarningsSearchMode = NonNullable<ApiQuery<"/v1/earnings-calls/search">["mode"]>;
 /** The API's string enum (`mode=literal` only). */
 export type EarningsSearchCaseSensitive = NonNullable<ApiQuery<"/v1/earnings-calls/search">["case_sensitive"]>;

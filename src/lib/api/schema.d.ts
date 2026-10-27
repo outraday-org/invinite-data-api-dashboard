@@ -743,7 +743,7 @@ export interface paths {
         };
         /**
          * Search investor documents
-         * @description Search the page text of investor documents by keywords (default `mode=lexical`), exact text (`literal`), meaning (`semantic`) or both (`hybrid`): the documents of earnings calls (CFO commentary, shareholder letters, data sheets, the company's own transcripts) and companies' IR libraries (annual reports, proxy statements, ESG reports, investor-day decks).
+         * @description Search the page text of investor documents by keywords (default `mode=lexical`) or exact text (`literal`): the documents of earnings calls (CFO commentary, shareholder letters, data sheets, the company's own transcripts) and companies' IR libraries (annual reports, proxy statements, ESG reports, investor-day decks).
          *
          *     ### What you get
          *
@@ -755,31 +755,29 @@ export interface paths {
          *
          *     ### Search modes
          *
-         *     - `lexical` (default): keyword search — English full text with stemming; quoted phrases, `OR` and `-word` work (`websearch_to_tsquery`); ranked by `ts_rank_cd`. Finance tokens such as `FY2027`, `10-K`, `Q3` or `EBITDA` match as written.
+         *     - `lexical` (default): keyword search — English full text with stemming; quoted phrases, `OR` and `-word` work; every word must match; ranked by `ts_rank_cd` (`websearch_to_tsquery`). Finance tokens such as `FY2027`, `10-K`, `Q3` or `EBITDA` match as written.
          *
          *     - `literal`: the exact characters of the passage — no stemming, no fuzzy matching, `%` / `_` / `\` match themselves; case-sensitive unless `case_sensitive=false` (only allowed with `mode=literal`; default `true`). A pattern under 3 characters needs `identifier`. Newest first; `score` is 0.
          *
-         *     - `semantic`: meaning-based search (multilingual sentence embeddings); `score` is the cosine similarity.
-         *
-         *     - `hybrid`: `lexical` and `semantic` fused by reciprocal rank (`score = Σ 1 / (60 + rank)`, equal weights, ties by passage); `match.lexical_rank` / `match.semantic_rank` give each leg's rank. Best for natural-language questions.
-         *
-         *     - `match.spans` mark the matched characters in `text` (zero-based, end-exclusive Unicode code-point offsets); `text` is cut around the first match (`text_truncated`). Semantic matches carry no spans. An exact mode never expands into semantic or fuzzy results. Every mode costs the same.
+         *     - `match.spans` mark the matched characters in `text` (zero-based, end-exclusive Unicode code-point offsets); `text` is cut around the first match (`text_truncated`); `match.lexical_rank` is the hit's 1-based rank. Neither mode expands into fuzzy results. Both modes cost the same.
          *
          *     ### Coverage
          *
-         *     - `coverage.completeness` = `complete` (every searched passage is indexed: no hits is a genuine no-result), `partial` (some passages are still being indexed or failed, or a hybrid leg was unavailable) or `unknown` (a mode's index is not built for the searched scope, e.g. `semantic_index_missing`) — read it before treating an empty list as "not found".
+         *     - `coverage.completeness` = `complete` (every searched passage is indexed: no hits is a genuine no-result), `partial` (some passages are still being indexed or failed) or `unknown` (nothing of the searched scope is indexed yet, or the counts could not be read) — read it before treating an empty list as "not found".
          *
-         *     - `coverage.lexical` / `coverage.semantic` count the searched transcripts or documents per index (`indexed`, `pending`, `failed`); null for a leg the mode did not use. `reasons` lists why the answer may be incomplete. The counts come from the indexing ledger: a transcript or document whose current version the index has not confirmed counts as `pending`; when they cannot be read, the hits are still returned with `completeness: unknown`, both legs null and `coverage_unavailable`.
+         *     - `coverage.lexical` counts the searched transcripts or documents in the text index (`indexed`, `pending`, `failed`). `reasons` lists why the answer may be incomplete. The counts come from the indexing ledger: a transcript or document whose current version the index has not confirmed counts as `pending`; when they cannot be read, the hits are still returned with `completeness: unknown`, `lexical` null and `coverage_unavailable`.
          *
          *     ### Changelog
          *
-         *     - 2026-10: modes added and the default mode changed from semantic to `lexical`; pass `mode=semantic` for the previous behaviour (or `mode=hybrid` for natural-language questions).
+         *     - 2026-10: modes added and the default mode changed from semantic to `lexical`.
+         *
+         *     - 2026-11: modes `semantic` and `hybrid` removed; vector search is gone, pass `mode=lexical` (default) or `literal`.
          *
          *     ### Errors
          *
          *     - `400` for a `mode=lexical` query of stopwords only (no searchable words), for `case_sensitive` with any mode but `literal`, and for a `mode=literal` pattern under 3 characters without a scope (see Search modes).
          *
-         *     - `429 upstream_rate_limited` and `503 search_unavailable` carry `Retry-After` (`503` also when a keyword search runs over its time limit — never an empty answer).
+         *     - `503 search_unavailable` (a search over its time limit — never an empty answer) carries `Retry-After`.
          *
          *     - `503 search_disabled` while search is switched off.
          *
@@ -1339,7 +1337,7 @@ export interface paths {
         };
         /**
          * Search earnings calls
-         * @description "Ask this call": search earnings-call transcripts and slide text by keywords (default `mode=lexical`), exact text (`literal`), meaning (`semantic`) or both (`hybrid`) — one call (`event_id`), one company (`identifier`) or every call (default: the last 365 days).
+         * @description "Ask this call": search earnings-call transcripts and slide text by keywords (default `mode=lexical`) or exact text (`literal`) — one call (`event_id`), one company (`identifier`) or every call (default: the last 365 days).
          *
          *     ### What you get
          *
@@ -1353,31 +1351,29 @@ export interface paths {
          *
          *     ### Search modes
          *
-         *     - `lexical` (default): keyword search — English full text with stemming; quoted phrases, `OR` and `-word` work (`websearch_to_tsquery`); ranked by `ts_rank_cd`. Finance tokens such as `FY2027`, `10-K`, `Q3` or `EBITDA` match as written.
+         *     - `lexical` (default): keyword search — English full text with stemming; quoted phrases, `OR` and `-word` work; scoped by `identifier` or `event_id`, a passage needs any of the words, ranked by BM25 (rarer words weigh more), and the answer to a matching analyst question follows right after it (its `match.spans` may be empty); without a scope every word must match, ranked by `ts_rank_cd`. Finance tokens such as `FY2027`, `10-K`, `Q3` or `EBITDA` match as written.
          *
          *     - `literal`: the exact characters of the passage — no stemming, no fuzzy matching, `%` / `_` / `\` match themselves; case-sensitive unless `case_sensitive=false` (only allowed with `mode=literal`; default `true`). A pattern under 3 characters needs `identifier` or `event_id`. Newest first; `score` is 0.
          *
-         *     - `semantic`: meaning-based search (multilingual sentence embeddings); `score` is the cosine similarity.
-         *
-         *     - `hybrid`: `lexical` and `semantic` fused by reciprocal rank (`score = Σ 1 / (60 + rank)`, equal weights, ties by passage); `match.lexical_rank` / `match.semantic_rank` give each leg's rank. Best for natural-language questions.
-         *
-         *     - `match.spans` mark the matched characters in `text` (zero-based, end-exclusive Unicode code-point offsets); `text` is cut around the first match (`text_truncated`). Semantic matches carry no spans. An exact mode never expands into semantic or fuzzy results. Every mode costs the same.
+         *     - `match.spans` mark the matched characters in `text` (zero-based, end-exclusive Unicode code-point offsets); `text` is cut around the first match (`text_truncated`); `match.lexical_rank` is the hit's 1-based rank. Neither mode expands into fuzzy results. Both modes cost the same.
          *
          *     ### Coverage
          *
-         *     - `coverage.completeness` = `complete` (every searched passage is indexed: no hits is a genuine no-result), `partial` (some passages are still being indexed or failed, or a hybrid leg was unavailable) or `unknown` (a mode's index is not built for the searched scope, e.g. `semantic_index_missing`) — read it before treating an empty list as "not found".
+         *     - `coverage.completeness` = `complete` (every searched passage is indexed: no hits is a genuine no-result), `partial` (some passages are still being indexed or failed) or `unknown` (nothing of the searched scope is indexed yet, or the counts could not be read) — read it before treating an empty list as "not found".
          *
-         *     - `coverage.lexical` / `coverage.semantic` count the searched transcripts or documents per index (`indexed`, `pending`, `failed`); null for a leg the mode did not use. `reasons` lists why the answer may be incomplete. The counts come from the indexing ledger: a transcript or document whose current version the index has not confirmed counts as `pending`; when they cannot be read, the hits are still returned with `completeness: unknown`, both legs null and `coverage_unavailable`.
+         *     - `coverage.lexical` counts the searched transcripts or documents in the text index (`indexed`, `pending`, `failed`). `reasons` lists why the answer may be incomplete. The counts come from the indexing ledger: a transcript or document whose current version the index has not confirmed counts as `pending`; when they cannot be read, the hits are still returned with `completeness: unknown`, `lexical` null and `coverage_unavailable`.
          *
          *     ### Changelog
          *
-         *     - 2026-10: modes added and the default mode changed from semantic to `lexical`; pass `mode=semantic` for the previous behaviour (or `mode=hybrid` for natural-language questions).
+         *     - 2026-10: modes added and the default mode changed from semantic to `lexical`.
+         *
+         *     - 2026-11: modes `semantic` and `hybrid` removed; vector search is gone, pass `mode=lexical` (default) or `literal`.
          *
          *     ### Errors
          *
          *     - `400` for a `mode=lexical` query of stopwords only (no searchable words), for `case_sensitive` with any mode but `literal`, and for a `mode=literal` pattern under 3 characters without a scope (see Search modes).
          *
-         *     - `429 upstream_rate_limited` and `503 search_unavailable` carry `Retry-After` (`503` also when a keyword search runs over its time limit — never an empty answer).
+         *     - `503 search_unavailable` (a search over its time limit — never an empty answer) carries `Retry-After`.
          *
          *     - `503 search_disabled` while search is switched off.
          *
@@ -2534,15 +2530,13 @@ export interface components {
          */
         HitMatch: {
             /**
-             * @description The leg that found the passage; hybrid = both legs of mode=hybrid
+             * @description The mode that found the passage
              * @enum {string}
              */
-            type: "hybrid" | "lexical" | "literal" | "semantic";
-            /** @description 1-based rank in the keyword leg (lexical / literal); null when it did not find it */
-            lexical_rank: null | number;
-            /** @description 1-based rank in the semantic leg; null when it did not find it */
-            semantic_rank: null | number;
-            /** @description Matched characters in `text`; empty for semantic matches */
+            type: "lexical" | "literal";
+            /** @description 1-based rank of the passage in the answer */
+            lexical_rank: number;
+            /** @description Matched characters in `text`; empty for an answer attached after its matched question (scoped lexical transcript search) */
             spans: Array<{
                 /** @description Zero-based Unicode code-point offset into `text` */
                 start: number;
@@ -2552,7 +2546,7 @@ export interface components {
         };
         /**
          * SearchCoverage
-         * @description How much of the searched scope the mode's indexes cover
+         * @description How much of the searched scope the text index covers
          */
         SearchCoverage: {
             /**
@@ -2562,7 +2556,7 @@ export interface components {
             completeness: "complete" | "partial" | "unknown";
             /**
              * SearchCoverageLeg
-             * @description The keyword index (lexical / literal / hybrid); null when the mode did not use it
+             * @description The text index (lexical and literal); null when the counts could not be read
              */
             lexical: null | {
                 /**
@@ -2577,25 +2571,8 @@ export interface components {
                 /** @description Indexing failed */
                 failed: number;
             };
-            /**
-             * SearchCoverageLeg
-             * @description The semantic index (semantic / hybrid); null when the mode did not use it
-             */
-            semantic: null | {
-                /**
-                 * @description ready = nothing outstanding; partial = some owners outstanding; not_ready = nothing indexed
-                 * @enum {string}
-                 */
-                state: "not_ready" | "partial" | "ready";
-                /** @description Transcripts / documents of the scope searchable in this index */
-                indexed: number;
-                /** @description Not indexed yet (or not provably) */
-                pending: number;
-                /** @description Indexing failed */
-                failed: number;
-            };
             /** @description Why the answer may be incomplete */
-            reasons: Array<"coverage_unavailable" | "lexical_backfill_pending" | "lexical_unavailable" | "projection_failed" | "semantic_backfill_pending" | "semantic_index_missing" | "semantic_unavailable">;
+            reasons: Array<"coverage_unavailable" | "lexical_backfill_pending" | "projection_failed">;
         };
         WebSocketFiling: {
             /** @description SEC filing accession number */
@@ -7179,15 +7156,15 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description The keywords, exact text (mode=literal) or question (semantic / hybrid) to search for
+                 * @description The keywords or phrases (mode=lexical) or exact text (mode=literal) to search for
                  * @example Azure growth
                  */
                 q: string;
                 /**
-                 * @description lexical (keywords, default), literal (exact characters), semantic (meaning) or hybrid (lexical + semantic, fused)
-                 * @example hybrid
+                 * @description lexical (keywords and phrases, default) or literal (exact characters)
+                 * @example lexical
                  */
-                mode?: "hybrid" | "lexical" | "literal" | "semantic";
+                mode?: "lexical" | "literal";
                 /**
                  * @description mode=literal only: "false" matches regardless of case (default "true": case-sensitive)
                  * @example false
@@ -7247,11 +7224,11 @@ export interface operations {
                          * @description The mode searched
                          * @enum {string}
                          */
-                        mode: "hybrid" | "lexical" | "literal" | "semantic";
+                        mode: "lexical" | "literal";
                         coverage: components["schemas"]["SearchCoverage"];
                         /** @description Passages, best first */
                         hits: Array<{
-                            /** @description Relevance per mode: lexical = ts_rank_cd (4 decimals), literal = 0 (hits are ordered newest year first), semantic = cosine similarity (4 decimals), hybrid = reciprocal-rank-fusion score (6 decimals) */
+                            /** @description Relevance per mode: lexical = ts_rank_cd (4 decimals), literal = 0 (hits are ordered newest year first) */
                             score: number;
                             match: components["schemas"]["HitMatch"];
                             /**
@@ -7316,23 +7293,6 @@ export interface operations {
             400: components["responses"]["BadRequestError"];
             401: components["responses"]["UnauthorizedError"];
             404: components["responses"]["NotFoundError"];
-            /** @description Rate limited (Retry-After) */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Type of error
-                         * @example upstream_rate_limited
-                         */
-                        error: string;
-                        /** @description Detailed error message */
-                        message: string;
-                    };
-                };
-            };
             500: components["responses"]["InternalServerError"];
             503: components["responses"]["ServiceUnavailableError"];
         };
@@ -9568,15 +9528,15 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description The keywords, exact text (mode=literal) or question (semantic / hybrid) to search for
+                 * @description The keywords or phrases (mode=lexical) or exact text (mode=literal) to search for
                  * @example Azure growth
                  */
                 q: string;
                 /**
-                 * @description lexical (keywords, default), literal (exact characters), semantic (meaning) or hybrid (lexical + semantic, fused)
-                 * @example semantic
+                 * @description lexical (keywords and phrases, default) or literal (exact characters)
+                 * @example lexical
                  */
-                mode?: "hybrid" | "lexical" | "literal" | "semantic";
+                mode?: "lexical" | "literal";
                 /**
                  * @description mode=literal only: "false" matches regardless of case (default "true": case-sensitive)
                  * @example false
@@ -9633,11 +9593,10 @@ export interface operations {
                     /**
                      * @example {
                      *       "query": "Azure growth",
-                     *       "mode": "semantic",
+                     *       "mode": "lexical",
                      *       "coverage": {
                      *         "completeness": "complete",
-                     *         "lexical": null,
-                     *         "semantic": {
+                     *         "lexical": {
                      *           "state": "ready",
                      *           "indexed": 1,
                      *           "pending": 0,
@@ -9661,15 +9620,23 @@ export interface operations {
                      *           },
                      *           "start_ms": 2953487,
                      *           "end_ms": 2987496,
-                     *           "chunk_index": null,
+                     *           "chunk_index": 41,
                      *           "text": "you. Thanks, Mark. Let me maybe start with Azure, which given its size and its growth rates, where we've talked about acceleration from where we are, which is the guy to 39 to 40 into a bigger number in the second half of the calendar year.…",
                      *           "text_truncated": true,
-                     *           "score": 0.7056,
+                     *           "score": 0.3125,
                      *           "match": {
-                     *             "type": "semantic",
-                     *             "lexical_rank": null,
-                     *             "semantic_rank": 1,
-                     *             "spans": []
+                     *             "type": "lexical",
+                     *             "lexical_rank": 1,
+                     *             "spans": [
+                     *               {
+                     *                 "start": 43,
+                     *                 "end": 48
+                     *               },
+                     *               {
+                     *                 "start": 79,
+                     *                 "end": 85
+                     *               }
+                     *             ]
                      *           },
                      *           "audio_url": null,
                      *           "slide": null
@@ -9684,7 +9651,7 @@ export interface operations {
                          * @description The mode searched
                          * @enum {string}
                          */
-                        mode: "hybrid" | "lexical" | "literal" | "semantic";
+                        mode: "lexical" | "literal";
                         coverage: components["schemas"]["SearchCoverage"];
                         /** @description Passages, best match first */
                         hits: Array<{
@@ -9729,7 +9696,7 @@ export interface operations {
                             text: string;
                             /** @description true = text is shorter than the passage */
                             text_truncated: boolean;
-                            /** @description Relevance per mode: lexical = ts_rank_cd (4 decimals), literal = 0 (hits are ordered newest call first), semantic = cosine similarity (4 decimals), hybrid = reciprocal-rank-fusion score (6 decimals) */
+                            /** @description Relevance per mode: lexical = BM25 with `identifier` / `event_id` (an answer attached to its question scores 0.99 × the question), else ts_rank_cd (4 decimals), literal = 0 (hits are ordered newest call first) */
                             score: number;
                             match: components["schemas"]["HitMatch"];
                             /** @description The recording's permanent URL opening at the passage (#t=<seconds>); null without the PRO plan, without a servable recording, without start_ms or for an audio opt-out. */
@@ -9748,23 +9715,6 @@ export interface operations {
             400: components["responses"]["BadRequestError"];
             401: components["responses"]["UnauthorizedError"];
             404: components["responses"]["NotFoundError"];
-            /** @description Rate limited (Retry-After) */
-            429: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /**
-                         * @description Type of error
-                         * @example upstream_rate_limited
-                         */
-                        error: string;
-                        /** @description Detailed error message */
-                        message: string;
-                    };
-                };
-            };
             500: components["responses"]["InternalServerError"];
             503: components["responses"]["ServiceUnavailableError"];
         };

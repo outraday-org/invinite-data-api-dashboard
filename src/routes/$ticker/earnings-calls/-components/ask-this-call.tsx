@@ -58,7 +58,10 @@ function MarkedText({ parts }: { parts: Array<HighlightPart> }) {
     );
 }
 
-/** Client-side guess: the query's terms marked (semantic hits carry no spans). */
+/**
+ * Client-side guess: the query's terms marked, for a hit without spans (the answer attached after a matched question,
+ * or a keyword hit whose words `ts_headline` could not locate).
+ */
 export function HighlightedText({ query, text }: { query: string; text: string }) {
     return <MarkedText parts={highlightTerms(text, query)} />;
 }
@@ -75,21 +78,21 @@ export function HitPassage({ match, query, text }: { match: HitMatch; query: str
         : <HighlightedText query={query} text={text} />;
 }
 
-/** Which leg found the hit: keyword / exact / meaning, `both` for a hybrid hit both legs ranked. */
+/** How the hit matched: keyword (`lexical`) or exact (`literal`). */
 export function MatchBadge({ match }: { match: HitMatch }) {
     return <Badge title="How the passage matched" variant="secondary">{MATCH_TYPE_LABELS[match.type]}</Badge>;
 }
 
 /**
- * The score of a mode: literal is always 0 (newest first, none shown); the API serves 4 decimals, which hybrid RRF
- * scores (~0.016) and keyword `ts_rank_cd` ranks (often < 0.01) need; cosine similarities read fine with 2.
+ * The score of a mode: literal is always 0 (newest first, none shown); keyword ranks (BM25 / `ts_rank_cd`, often
+ * < 0.01) need the API's 4 decimals.
  */
 export function SearchScore({ mode, score }: { mode: EarningsSearchMode; score: number }) {
     if (mode === "literal") return null;
 
     return (
         <span className="text-muted-foreground ml-auto tabular-nums" title="Relevance score">
-            {score.toFixed(mode === "semantic" ? 2 : 4)}
+            {score.toFixed(4)}
         </span>
     );
 }
@@ -101,11 +104,7 @@ const STILL_BUILDING = "Search index is still being built for this company — r
 const COVERAGE_REASON_TEXT: Record<CoverageReason, string> = {
     coverage_unavailable: "Search coverage could not be checked — results may be incomplete",
     lexical_backfill_pending: STILL_BUILDING,
-    lexical_unavailable: "Keyword search is temporarily unavailable — results may be incomplete",
     projection_failed: "Some passages could not be indexed — results may be incomplete",
-    semantic_backfill_pending: STILL_BUILDING,
-    semantic_index_missing: "Meaning search is not available yet",
-    semantic_unavailable: "Meaning search is temporarily unavailable — results may be incomplete",
 };
 
 /** Why an answer may be incomplete (`coverage.completeness` partial / unknown); nothing for a complete one. */
@@ -243,7 +242,7 @@ export function SearchError({ badRequest, error, tier }: { badRequest?: string; 
 
         if (error.status === 400) return <Notice badge="Invalid query" title={badRequest ?? error.message} />;
 
-        // 429 upstream_rate_limited and 503 search_unavailable: the API's own message.
+        // 429 (rate limited) and 503 search_unavailable: the API's own message.
         if (error.status === 429 || error.code === "search_unavailable") {
             return <Notice badge={error.status === 429 ? "Rate limited" : "Unavailable"} title={error.message} />;
         }
@@ -294,9 +293,9 @@ export function AskResults({
 }
 
 /**
- * "Ask this call": hybrid (keyword + meaning) search over the call's (or the company's) transcripts
- * and slide text — questions, so no mode control. Runs on submit, never per keystroke; a type chip
- * re-runs the submitted question.
+ * "Search this call": keyword (`lexical`) search over the call's (or the company's) transcripts and slide text, no
+ * mode control. Scoped, any word may match (BM25) and the management answer follows a matched analyst question.
+ * Runs on submit, never per keystroke; a type chip re-runs the submitted query.
  */
 export function AskThisCall({ scope }: { scope: AskScope }) {
     const [draft, setDraft] = React.useState("");
@@ -309,7 +308,7 @@ export function AskThisCall({ scope }: { scope: AskScope }) {
         eventId: scope.kind === "event" ? scope.eventId : undefined,
         identifier: scope.kind === "company" ? scope.identifier : undefined,
         limit: SEARCH_LIMIT,
-        mode: "hybrid",
+        mode: "lexical",
         q: query,
         type,
     });
@@ -326,10 +325,10 @@ export function AskThisCall({ scope }: { scope: AskScope }) {
         <section className="flex flex-col gap-2 rounded-md border p-3">
             <form className="flex items-center gap-2" onSubmit={submit}>
                 <Input
-                    aria-label={scope.kind === "event" ? "Ask this call" : "Search this company's calls"}
+                    aria-label={scope.kind === "event" ? "Search this call" : "Search this company's calls"}
                     maxLength={500}
                     onChange={event => setDraft(event.target.value)}
-                    placeholder={scope.kind === "event" ? "Ask this call — e.g. what did they say about margins?" : "Search this company's calls"}
+                    placeholder={scope.kind === "event" ? "e.g. gross margin, data center revenue, \"free cash flow\"" : "Search this company's calls"}
                     value={draft}
                 />
                 <Button disabled={!canSubmit || isFetching} type="submit">

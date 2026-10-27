@@ -289,17 +289,15 @@ export function highlightSpans(text: string, spans: ReadonlyArray<MatchSpan>): A
 
 /** The mode chips' labels; exhaustive over the API's mode enum (the server functions' zod enum is its keys). */
 export const SEARCH_MODE_LABELS: Record<EarningsSearchMode, string> = {
-    hybrid: "Hybrid",
     lexical: "Keyword",
     literal: "Exact",
-    semantic: "Meaning",
 };
 
 /** `true` only when `Listed` names every member of `All` (a list typed against a generated union). */
 export type ListsEvery<TAll, TListed> = [Exclude<TAll, TListed>] extends [never] ? true : never;
 
 /** Every search mode in chip order (Keyword first, the API default). */
-export const SEARCH_MODES = ["lexical", "literal", "semantic", "hybrid"] as const satisfies ReadonlyArray<EarningsSearchMode>;
+export const SEARCH_MODES = ["lexical", "literal"] as const satisfies ReadonlyArray<EarningsSearchMode>;
 
 // Compile-time: a mode the API adds fails here until it is listed above (and labelled in SEARCH_MODE_LABELS).
 export const SEARCH_MODES_COMPLETE: ListsEvery<EarningsSearchMode, (typeof SEARCH_MODES)[number]> = true;
@@ -312,10 +310,8 @@ export const SEARCH_CASE_SENSITIVE_COMPLETE: ListsEvery<
     (typeof SEARCH_CASE_SENSITIVE_VALUES)[number]
 > = true;
 
-/** A hit's match badge: the leg that found it; `both` = a hybrid hit both legs ranked. */
+/** A hit's match badge: how it matched (keyword or exact). */
 export const MATCH_TYPE_LABELS: Record<HitMatch["type"], string> = {
-    hybrid: "both",
     lexical: "keyword",
     literal: "exact",
-    semantic: "meaning",
 };
