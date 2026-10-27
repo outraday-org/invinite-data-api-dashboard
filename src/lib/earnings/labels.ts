@@ -1,4 +1,4 @@
-import type { EarningsGuidanceItem, EarningsSearchMode, HitMatch, MatchSpan } from "@/lib/api/types";
+import type { EarningsGuidanceItem, EarningsSearchCaseSensitive, EarningsSearchMode, HitMatch, MatchSpan } from "@/lib/api/types";
 
 import { formatNumberEnCompact } from "@/lib/utils";
 
@@ -295,7 +295,22 @@ export const SEARCH_MODE_LABELS: Record<EarningsSearchMode, string> = {
     semantic: "Meaning",
 };
 
-export const SEARCH_MODES = Object.keys(SEARCH_MODE_LABELS) as [EarningsSearchMode, ...Array<EarningsSearchMode>];
+/** `true` only when `Listed` names every member of `All` (a list typed against a generated union). */
+export type ListsEvery<TAll, TListed> = [Exclude<TAll, TListed>] extends [never] ? true : never;
+
+/** Every search mode in chip order (Keyword first, the API default). */
+export const SEARCH_MODES = ["lexical", "literal", "semantic", "hybrid"] as const satisfies ReadonlyArray<EarningsSearchMode>;
+
+// Compile-time: a mode the API adds fails here until it is listed above (and labelled in SEARCH_MODE_LABELS).
+export const SEARCH_MODES_COMPLETE: ListsEvery<EarningsSearchMode, (typeof SEARCH_MODES)[number]> = true;
+
+/** The API's `case_sensitive` string enum (`mode=literal` only). */
+export const SEARCH_CASE_SENSITIVE_VALUES = ["true", "false"] as const satisfies ReadonlyArray<EarningsSearchCaseSensitive>;
+
+export const SEARCH_CASE_SENSITIVE_COMPLETE: ListsEvery<
+    EarningsSearchCaseSensitive,
+    (typeof SEARCH_CASE_SENSITIVE_VALUES)[number]
+> = true;
 
 /** A hit's match badge: the leg that found it; `both` = a hybrid hit both legs ranked. */
 export const MATCH_TYPE_LABELS: Record<HitMatch["type"], string> = {

@@ -75,6 +75,34 @@ describe("AskResults", () => {
         expect(screen.getByText("0.0325")).toBeInTheDocument();
     });
 
+    it("badges a hybrid hit only one leg found by that leg and guesses the highlight from the query", () => {
+        const semanticOnly = { ...HIT, match: { lexical_rank: null, semantic_rank: 1, spans: [], type: "semantic" as const } };
+
+        render(<AskResults data={{ coverage: coverage("complete"), hits: [semanticOnly], mode: "hybrid", query: "margins" }} error={null} isLoading={false} scope={SCOPE} />);
+
+        expect(screen.getByText("meaning")).toBeInTheDocument();
+
+        expect(screen.queryByText("both")).toBeNull();
+
+        // No server spans: the term guess marks the query word.
+        expect(screen.getByText("margins", { selector: "mark" })).toBeInTheDocument();
+    });
+
+    it("explains unreadable coverage instead of an empty answer", () => {
+        render(
+            <AskResults
+                data={{ coverage: { completeness: "unknown", lexical: null, reasons: ["coverage_unavailable"], semantic: null }, hits: [], mode: "hybrid", query: "margins" }}
+                error={null}
+                isLoading={false}
+                scope={SCOPE}
+            />,
+        );
+
+        expect(screen.getByText("Search coverage could not be checked — results may be incomplete")).toBeInTheDocument();
+
+        expect(screen.queryByText("No passages found")).toBeNull();
+    });
+
     it("reads \"No passages found\" only with complete coverage", () => {
         const { rerender } = render(
             <AskResults data={{ coverage: coverage("complete"), hits: [], mode: "hybrid", query: "margins" }} error={null} isLoading={false} scope={SCOPE} />,

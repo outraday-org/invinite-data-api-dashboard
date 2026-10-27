@@ -26,7 +26,6 @@ import type {
     EarningsPriceAttributionResponse,
     EarningsProsodyResponse,
     EarningsQaResponse,
-    EarningsSearchCaseSensitive,
     EarningsSearchResponse,
     EarningsSlidesResponse,
     EarningsTranscriptDiffResponse,
@@ -48,7 +47,7 @@ import type {
 } from "./types";
 
 import { ASSET_GROUP_CATEGORIES } from "../earnings/documents";
-import { SEARCH_MODES } from "../earnings/labels";
+import { SEARCH_CASE_SENSITIVE_VALUES, SEARCH_MODES } from "../earnings/labels";
 import { env } from "../env";
 import { createApiClient } from "./client.server";
 import { throwApiError } from "./errors";
@@ -1179,11 +1178,11 @@ export const getEarningsDocuments = createServerFn({ method: "GET" })
         return res;
     });
 
-// Both search routes: `mode` = the keys of the exhaustive `SEARCH_MODE_LABELS`; `case_sensitive` is the API's string
-// enum (`mode=literal` only — the API answers 400 otherwise).
+// Both search routes: `mode` = the exhaustive `SEARCH_MODES`; `case_sensitive` is the API's string enum (`mode=literal`
+// only — the API answers 400 otherwise).
 const searchModeSchema = z.enum(SEARCH_MODES);
 
-const caseSensitiveSchema = z.enum(["true", "false"] satisfies [EarningsSearchCaseSensitive, EarningsSearchCaseSensitive]);
+const caseSensitiveSchema = z.enum(SEARCH_CASE_SENSITIVE_VALUES);
 
 const earningsSearchSchema = z.object({
     apiKey: apiKeySchema,

@@ -80,13 +80,16 @@ export function MatchBadge({ match }: { match: HitMatch }) {
     return <Badge title="How the passage matched" variant="secondary">{MATCH_TYPE_LABELS[match.type]}</Badge>;
 }
 
-/** The score of a mode: literal is always 0 (newest first, none shown); hybrid RRF scores (~0.016) need 4 decimals. */
+/**
+ * The score of a mode: literal is always 0 (newest first, none shown); the API serves 4 decimals, which hybrid RRF
+ * scores (~0.016) and keyword `ts_rank_cd` ranks (often < 0.01) need; cosine similarities read fine with 2.
+ */
 export function SearchScore({ mode, score }: { mode: EarningsSearchMode; score: number }) {
     if (mode === "literal") return null;
 
     return (
         <span className="text-muted-foreground ml-auto tabular-nums" title="Relevance score">
-            {score.toFixed(mode === "hybrid" ? 4 : 2)}
+            {score.toFixed(mode === "semantic" ? 2 : 4)}
         </span>
     );
 }
@@ -96,6 +99,7 @@ type CoverageReason = SearchCoverage["reasons"][number];
 const STILL_BUILDING = "Search index is still being built for this company — results may be incomplete";
 
 const COVERAGE_REASON_TEXT: Record<CoverageReason, string> = {
+    coverage_unavailable: "Search coverage could not be checked — results may be incomplete",
     lexical_backfill_pending: STILL_BUILDING,
     lexical_unavailable: "Keyword search is temporarily unavailable — results may be incomplete",
     projection_failed: "Some passages could not be indexed — results may be incomplete",

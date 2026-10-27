@@ -189,7 +189,7 @@ describe("DocumentSearch", () => {
 
         fireEvent.change(screen.getByLabelText("Search this company's documents"), { target: { value: "FY2027" } });
 
-        fireEvent.submit(screen.getByLabelText("Search this company's documents").closest("form")!);
+        fireEvent.click(screen.getByRole("button", { name: "Search" }));
 
         expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: undefined, mode: "lexical", q: "FY2027" }));
 

@@ -769,7 +769,7 @@ export interface paths {
          *
          *     - `coverage.completeness` = `complete` (every searched passage is indexed: no hits is a genuine no-result), `partial` (some passages are still being indexed or failed, or a hybrid leg was unavailable) or `unknown` (a mode's index is not built for the searched scope, e.g. `semantic_index_missing`) — read it before treating an empty list as "not found".
          *
-         *     - `coverage.lexical` / `coverage.semantic` count the searched transcripts or documents per index (`indexed`, `pending`, `failed`); null for a leg the mode did not use. `reasons` lists why the answer may be incomplete. The counts come from the indexing ledger: a transcript or document whose current version the index has not confirmed counts as `pending`.
+         *     - `coverage.lexical` / `coverage.semantic` count the searched transcripts or documents per index (`indexed`, `pending`, `failed`); null for a leg the mode did not use. `reasons` lists why the answer may be incomplete. The counts come from the indexing ledger: a transcript or document whose current version the index has not confirmed counts as `pending`; when they cannot be read, the hits are still returned with `completeness: unknown`, both legs null and `coverage_unavailable`.
          *
          *     ### Changelog
          *
@@ -1367,7 +1367,7 @@ export interface paths {
          *
          *     - `coverage.completeness` = `complete` (every searched passage is indexed: no hits is a genuine no-result), `partial` (some passages are still being indexed or failed, or a hybrid leg was unavailable) or `unknown` (a mode's index is not built for the searched scope, e.g. `semantic_index_missing`) — read it before treating an empty list as "not found".
          *
-         *     - `coverage.lexical` / `coverage.semantic` count the searched transcripts or documents per index (`indexed`, `pending`, `failed`); null for a leg the mode did not use. `reasons` lists why the answer may be incomplete. The counts come from the indexing ledger: a transcript or document whose current version the index has not confirmed counts as `pending`.
+         *     - `coverage.lexical` / `coverage.semantic` count the searched transcripts or documents per index (`indexed`, `pending`, `failed`); null for a leg the mode did not use. `reasons` lists why the answer may be incomplete. The counts come from the indexing ledger: a transcript or document whose current version the index has not confirmed counts as `pending`; when they cannot be read, the hits are still returned with `completeness: unknown`, both legs null and `coverage_unavailable`.
          *
          *     ### Changelog
          *
@@ -2595,7 +2595,7 @@ export interface components {
                 failed: number;
             };
             /** @description Why the answer may be incomplete */
-            reasons: Array<"lexical_backfill_pending" | "lexical_unavailable" | "projection_failed" | "semantic_backfill_pending" | "semantic_index_missing" | "semantic_unavailable">;
+            reasons: Array<"coverage_unavailable" | "lexical_backfill_pending" | "lexical_unavailable" | "projection_failed" | "semantic_backfill_pending" | "semantic_index_missing" | "semantic_unavailable">;
         };
         WebSocketFiling: {
             /** @description SEC filing accession number */

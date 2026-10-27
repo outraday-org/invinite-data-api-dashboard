@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEarningsDocumentSearch } from "@/lib/api/queries";
 import { documentKindLabel, documentPageHref } from "@/lib/earnings/documents";
-import { SEARCH_MODE_LABELS } from "@/lib/earnings/labels";
+import { SEARCH_MODE_LABELS, SEARCH_MODES } from "@/lib/earnings/labels";
 import {
     HitPassage,
     MatchBadge,
@@ -34,7 +34,6 @@ const TABLE_LABELS: Record<DocumentTable, string> = {
 const TABLES = Object.keys(TABLE_LABELS) as Array<DocumentTable>;
 
 /** Chip order: Keyword (the API default) first. */
-const MODES: Array<EarningsSearchMode> = ["lexical", "literal", "semantic", "hybrid"];
 
 /** The API's literal scope rule; the page always sends `identifier`, so this 400 should not occur. */
 const EXACT_TOO_SHORT = "Exact search needs 3 characters or a company";
@@ -181,7 +180,7 @@ export function DocumentSearch({ identifier }: { identifier: string }) {
             </form>
 
             <div className="flex flex-wrap items-center gap-1">
-                {MODES.map(value => (
+                {SEARCH_MODES.map(value => (
                     <Button
                         aria-pressed={mode === value}
                         key={value}
