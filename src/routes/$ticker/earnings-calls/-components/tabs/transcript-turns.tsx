@@ -11,7 +11,7 @@ function Turn({ index, turn }: { index: number; turn: TranscriptTurn }) {
     const detail = [turn.title, turn.name ? null : turn.role].filter(Boolean).join(" · ");
 
     return (
-        // `data-start-ms`: "Ask this call" (task 7) scrolls to the turn containing a hit.
+        // `data-start-ms`: "Search this call" (task 7) scrolls to the turn containing a hit.
         // `data-turn-index` / `data-active`: `ActiveTurnBridge` marks the turn being heard.
         <div
             className="-mx-2 flex flex-col gap-1 rounded-md px-2 py-1 transition-colors data-[active=true]:bg-accent/60"

@@ -150,7 +150,7 @@ export function CallAudioProvider({
         return () => element.removeEventListener("loadedmetadata", restore);
     }, [recordingUrl]);
 
-    // "Ask this call" → "Play from here": the hit's own URL starts at its `#t=` fragment.
+    // "Search this call" → "Play from here": the hit's own URL starts at its `#t=` fragment.
     React.useEffect(() => {
         const element = audioRef.current;
 

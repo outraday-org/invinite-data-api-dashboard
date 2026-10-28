@@ -162,7 +162,7 @@ function EarningsCallsPage() {
                     )
                 : (
                         <div className="flex flex-col h-0 grow gap-2">
-                            {/* Company-wide search: transcripts ("Ask this call", hits link to their call) or documents. */}
+                            {/* Company-wide search: transcripts ("Search this call", hits link to their call) or documents. */}
                             <div className="shrink-0 max-h-[45vh] overflow-y-auto flex flex-col gap-1">
                                 <Tabs onValueChange={value => setSearchScope(value as SearchScope)} value={searchScope}>
                                     <TabsList variant="line">

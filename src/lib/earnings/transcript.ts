@@ -107,7 +107,7 @@ export function qaStartTurnIndex(turns: ReadonlyArray<Pick<TranscriptTurn, "star
 
 /**
  * Index of the turn that contains `ms`: the last start ≤ `ms` (starts in call order), else
- * the first turn; `-1` for no starts. "Ask this call" scrolls there.
+ * the first turn; `-1` for no starts. "Search this call" scrolls there.
  */
 export function turnIndexAt(starts: ReadonlyArray<number>, ms: number) {
     if (starts.length === 0) return -1;

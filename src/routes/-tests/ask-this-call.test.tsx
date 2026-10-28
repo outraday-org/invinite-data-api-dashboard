@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import type * as React from "react";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { EarningsSearchResponse, SearchCoverage } from "@/lib/api/types";
 
-import { AskResults, SpanHighlightedText } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
+import { useEarningsSearch } from "@/lib/api/queries";
+import { AskResults, AskThisCall, SpanHighlightedText } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
 
 vi.mock("@tanstack/react-router", () => ({
     Link: ({ children }: { children: React.ReactNode }) => <a href="/">{children}</a>,
@@ -135,5 +136,21 @@ describe("AskResults", () => {
         expect(screen.queryByText("No passages found")).toBeNull();
 
         expect(screen.getByText("Results may be incomplete")).toBeInTheDocument();
+    });
+});
+
+describe("AskThisCall", () => {
+    it("is a keyword search box: \"Search this call\" sends mode=lexical on submit, never another mode", () => {
+        const search = vi.mocked(useEarningsSearch).mockReturnValue({ data: null, error: null, isFetching: false } as unknown as ReturnType<typeof useEarningsSearch>);
+
+        render(<AskThisCall scope={SCOPE} />);
+
+        fireEvent.change(screen.getByRole("textbox", { name: "Search this call" }), { target: { value: "gross margin" } });
+
+        fireEvent.click(screen.getByRole("button", { name: "Search" }));
+
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ eventId: SCOPE.eventId, mode: "lexical", q: "gross margin" }));
+
+        expect(search.mock.calls.every(([input]) => input.mode === "lexical")).toBe(true);
     });
 });

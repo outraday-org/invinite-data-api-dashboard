@@ -1666,7 +1666,7 @@ type EarningsSearchInput = {
     type?: EarningsSearchType;
 };
 
-/** "Ask this call": runs once `q` is non-empty (set it on submit, not per keystroke). */
+/** "Search this call" (`AskThisCall`): runs once `q` is non-empty (set it on submit, not per keystroke). */
 export function useEarningsSearch(input: EarningsSearchInput) {
     return useEarningsQuery<EarningsSearchResponse>({
         enabled: input.q.trim().length > 0,
