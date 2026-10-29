@@ -1400,12 +1400,18 @@ export const getNewsItem = createServerFn({ method: "GET" })
 
 /** A short-lived (≤ 60 s) URL of one news image / file: asked only on an explicit click, never cached. */
 export const getNewsAssetDownload = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, assetId: z.string().uuid(), id: z.string().uuid() }))
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        assetId: z.string().uuid(),
+        id: z.string().uuid(),
+        /** `display` = an inline URL (an image, or a PDF viewed in the browser); `download` = an attachment. */
+        purpose: z.enum(["display", "download"]),
+    }))
     .handler(async ({ data }): Promise<NewsAssetDownloadResponse> => {
         const api = createApiClient(data.apiKey);
 
         const { data: res, error, response } = await api.GET("/v1/news/{id}/assets/{asset_id}/download", {
-            params: { path: { asset_id: data.assetId, id: data.id } },
+            params: { path: { asset_id: data.assetId, id: data.id }, query: { purpose: data.purpose } },
         });
 
         if (error) throwApiError(error, response);

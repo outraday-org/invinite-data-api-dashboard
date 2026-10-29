@@ -58,7 +58,7 @@ function mockDelivery(purpose: "display" | "download") {
 
     const mutate = vi.fn((_vars: unknown, options?: { onSuccess?: (d: typeof delivered) => void }) => options?.onSuccess?.(delivered));
 
-    const mutateAsync = vi.fn((_vars: { assetId: string; id: string }) => Promise.resolve(delivered));
+    const mutateAsync = vi.fn((_vars: { assetId: string; id: string; purpose: string }) => Promise.resolve(delivered));
 
     const reset = vi.fn();
 
@@ -294,7 +294,7 @@ describe("NewsItemView", () => {
 
         fireEvent.click(within(row).getByText("Download"));
 
-        expect(mutate).toHaveBeenCalledWith({ assetId: pdfAsset().id, id: item.id }, expect.anything());
+        expect(mutate).toHaveBeenCalledWith({ assetId: pdfAsset().id, id: item.id, purpose: "download" }, expect.anything());
 
         expect(click).toHaveBeenCalledTimes(1);
 
@@ -304,6 +304,71 @@ describe("NewsItemView", () => {
         expect(document.querySelector(`a[href="${SIGNED}"]`)).toBeNull();
 
         expect(screen.queryByText(/Download all/)).toBeNull();
+    });
+
+    it("views a downloadable PDF inline in the panel: View asks for purpose=display", () => {
+        const { mutate } = mockDelivery("display");
+
+        const item = newsroomItem();
+
+        render(<NewsItemView data={newsDetail(item, { assets: [pdfAsset()] })} error={null} isLoading={false} onOpen={() => undefined} />);
+
+        expect(screen.queryByTestId("news-pdf-viewer")).toBeNull();
+
+        fireEvent.click(screen.getByText("View"));
+
+        expect(mutate).toHaveBeenCalledWith({ assetId: pdfAsset().id, id: item.id, purpose: "display" }, expect.anything());
+
+        expect(screen.getByTestId("news-pdf-viewer").getAttribute("src")).toBe(SIGNED);
+
+        // Download stays beside the viewer.
+        expect(screen.getByText("Download")).toBeTruthy();
+
+        fireEvent.click(screen.getByText("Hide"));
+
+        expect(screen.queryByTestId("news-pdf-viewer")).toBeNull();
+    });
+
+    it("opens a PDF in a new tab on a fresh display URL, the tab opened on the click", () => {
+        const { mutate } = mockDelivery("display");
+
+        const tab = { close: vi.fn(), location: { href: "" }, opener: {} as unknown };
+
+        const open = vi.spyOn(window, "open").mockReturnValue(tab as unknown as Window);
+
+        render(<NewsItemView data={newsDetail(newsroomItem(), { assets: [pdfAsset()] })} error={null} isLoading={false} onOpen={() => undefined} />);
+
+        fireEvent.click(screen.getByText("Open in new tab"));
+
+        expect(open).toHaveBeenCalledWith("", "_blank");
+
+        expect(mutate.mock.calls[0]?.[0]).toMatchObject({ purpose: "display" });
+
+        expect(tab.location.href).toBe(SIGNED);
+
+        expect(tab.opener).toBeNull();
+    });
+
+    it("offers no View for a PDF without either grant, nor for an image", () => {
+        render(
+            <NewsItemView
+                data={newsDetail(newsroomItem(), {
+                    assets: [
+                        pdfAsset({ can_download: false, download_url: null }),
+                        pdfAsset({ can_display: true, can_download: false, content_type: "image/png", id: "00000000-0000-4000-8000-0000000000b5", kind: "hero_image" }),
+                    ],
+                })}
+                error={null}
+                isLoading={false}
+                onOpen={() => undefined}
+            />,
+        );
+
+        expect(screen.queryByText("View")).toBeNull();
+
+        expect(screen.getByText("Show")).toBeTruthy();
+
+        expect(screen.getByText("At the source")).toBeTruthy();
     });
 
     it("never follows an inline URL as a download", () => {
@@ -349,6 +414,8 @@ describe("NewsItemView", () => {
         await vi.waitFor(() => expect(click).toHaveBeenCalledTimes(2));
 
         expect(mutateAsync.mock.calls.map(([vars]) => vars.assetId)).toEqual([pdfAsset().id, second.id]);
+
+        expect(mutateAsync.mock.calls.every(([vars]) => vars.purpose === "download")).toBe(true);
     });
 
     it("renders 404 and the plan gate as states", () => {

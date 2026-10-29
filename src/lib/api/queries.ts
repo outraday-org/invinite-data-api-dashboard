@@ -1868,8 +1868,8 @@ export function useNewsAssetDownload() {
     const { apiKey } = useApiKey();
 
     return useMutation({
-        mutationFn: ({ assetId, id }: { assetId: string; id: string }) =>
-            getNewsAssetDownload({ data: { apiKey: apiKey ?? undefined, assetId, id } }).catch(rethrowApiError),
+        mutationFn: ({ assetId, id, purpose }: { assetId: string; id: string; purpose: "display" | "download" }) =>
+            getNewsAssetDownload({ data: { apiKey: apiKey ?? undefined, assetId, id, purpose } }).catch(rethrowApiError),
         retry: false,
     });
 }

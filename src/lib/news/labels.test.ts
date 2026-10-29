@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { fileTypeLabel, issuerLabels, matchesNewsFilters, mergeLiveItems, publishedBy, sourceLabel, validateNewsSearch } from "./labels";
+import { canViewPdf, fileTypeLabel, issuerLabels, matchesNewsFilters, mergeLiveItems, publishedBy, sourceLabel, validateNewsSearch } from "./labels";
 import { edgarItem, newsroomItem } from "./news-fixtures";
 
 describe("sourceLabel", () => {
@@ -52,6 +52,18 @@ describe("validateNewsSearch media", () => {
         expect(validateNewsSearch({ media: true, scope: "market" }).media).toBe(true);
 
         expect(validateNewsSearch({ media: "yes" }).media).toBeUndefined();
+    });
+});
+
+describe("canViewPdf", () => {
+    it("views a PDF with its display or download grant, never an image or a PDF without either", () => {
+        expect(canViewPdf({ can_display: false, can_download: true, content_type: "application/pdf" })).toBe(true);
+
+        expect(canViewPdf({ can_display: true, can_download: false, content_type: "application/pdf" })).toBe(true);
+
+        expect(canViewPdf({ can_display: false, can_download: false, content_type: "application/pdf" })).toBe(false);
+
+        expect(canViewPdf({ can_display: true, can_download: true, content_type: "image/png" })).toBe(false);
     });
 });
 

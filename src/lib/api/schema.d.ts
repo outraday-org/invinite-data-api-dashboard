@@ -2165,6 +2165,8 @@ export interface paths {
          *
          *     - `url` works for at most 60 seconds (never past the permission it rests on): fetch the file at once and never store or share the URL. `purpose` says whether it may be embedded (`display`) or downloaded (`download`).
          *
+         *     - `purpose=display` asks for an inline URL (`Content-Disposition: inline`, the file's own `Content-Type`), `purpose=download` for an attachment; without it, download wins when both are allowed. Display is allowed for an asset with `can_display`, and for a PDF with `can_download` (inline viewing of a downloadable original: a browser's PDF viewer renders it); a purpose the asset does not allow is `403 asset_unavailable`.
+         *
          *     - Show `credit` with the file. Files are bound to the item: the asset id must be one of the item's `assets[]`.
          *
          *     ### Errors
@@ -13375,7 +13377,13 @@ export interface operations {
     };
     newsAssetDownload: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description display = an inline URL (an image with `can_display`, or a PDF with `can_download`: viewed in the browser); download = an attachment (`can_download`). Omitted: download when allowed, else display
+                 * @example display
+                 */
+                purpose?: "display" | "download";
+            };
             header?: never;
             path: {
                 /**

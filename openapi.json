@@ -29349,8 +29349,22 @@
         "tags": [
           "News"
         ],
-        "description": "A short-lived URL of one image or original file of a news item, where the publisher's terms allow delivering it.\n\n### What you get\n\n- `url` works for at most 60 seconds (never past the permission it rests on): fetch the file at once and never store or share the URL. `purpose` says whether it may be embedded (`display`) or downloaded (`download`).\n\n- Show `credit` with the file. Files are bound to the item: the asset id must be one of the item's `assets[]`.\n\n### Errors\n\n- `404` for an unknown or no longer served item or asset; `403 asset_unavailable` when the file may not be delivered (link to `original_url`); `503 media_unavailable` while file delivery is not configured.\n\n### Sources and rights\n\n- Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.\n\n- Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.\n\n- A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).\n\nMinimum tier for display: FREE.",
+        "description": "A short-lived URL of one image or original file of a news item, where the publisher's terms allow delivering it.\n\n### What you get\n\n- `url` works for at most 60 seconds (never past the permission it rests on): fetch the file at once and never store or share the URL. `purpose` says whether it may be embedded (`display`) or downloaded (`download`).\n\n- `purpose=display` asks for an inline URL (`Content-Disposition: inline`, the file's own `Content-Type`), `purpose=download` for an attachment; without it, download wins when both are allowed. Display is allowed for an asset with `can_display`, and for a PDF with `can_download` (inline viewing of a downloadable original: a browser's PDF viewer renders it); a purpose the asset does not allow is `403 asset_unavailable`.\n\n- Show `credit` with the file. Files are bound to the item: the asset id must be one of the item's `assets[]`.\n\n### Errors\n\n- `404` for an unknown or no longer served item or asset; `403 asset_unavailable` when the file may not be delivered (link to `original_url`); `503 media_unavailable` while file delivery is not configured.\n\n### Sources and rights\n\n- Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.\n\n- Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.\n\n- A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).\n\nMinimum tier for display: FREE.",
         "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "display",
+                "download"
+              ]
+            },
+            "in": "query",
+            "name": "purpose",
+            "required": false,
+            "description": "display = an inline URL (an image with `can_display`, or a PDF with `can_download`: viewed in the browser); download = an attachment (`can_download`). Omitted: download when allowed, else display",
+            "example": "display"
+          },
           {
             "schema": {
               "type": "string",

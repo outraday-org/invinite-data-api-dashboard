@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { NewsDevelopment, NewsItemPublic, NewsKind, NewsPublication } from "@/lib/api/types";
+import type { NewsAsset, NewsDevelopment, NewsItemPublic, NewsKind, NewsPublication } from "@/lib/api/types";
 
 /**
  * Labels, the route's search params and the pure filter / merge rules of the News page (backend earnings
@@ -237,4 +237,12 @@ export function fileTypeLabel(contentType: null | string) {
     if (!subtype) return null;
 
     return subtype.replace(/^(x-|vnd\.)/, "").replace(/\+xml$/, "").toUpperCase();
+}
+
+/**
+ * A PDF the API serves inline (`purpose=display`): with its display grant, or — inline viewing of a downloadable
+ * original (owner 2026-10-29, IDA `assets.ts` `deliveryTtl`) — with its download grant. Mirrors IDA's rule.
+ */
+export function canViewPdf(asset: Pick<NewsAsset, "can_display" | "can_download" | "content_type">) {
+    return asset.content_type?.toLowerCase() === "application/pdf" && (asset.can_display || asset.can_download);
 }

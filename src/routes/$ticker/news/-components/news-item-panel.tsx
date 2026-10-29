@@ -1,4 +1,4 @@
-import { DownloadIcon } from "lucide-react";
+import { DownloadIcon, ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
 
 import type { NewsAsset, NewsAssetDownloadResponse, NewsAttribution, NewsDevelopment, NewsItemResponse } from "@/lib/api/types";
@@ -14,6 +14,7 @@ import { useNewsAssetDownload, useNewsItem } from "@/lib/api/queries";
 import { formatBytes, formatInstant } from "@/lib/earnings/format";
 import { startDownload } from "@/lib/news/download";
 import {
+    canViewPdf,
     CLAIM_STATUS_LABELS,
     edgarLabel,
     fileTypeLabel,
@@ -71,15 +72,40 @@ function assetFacts(asset: NewsAsset) {
 
 const NOT_DOWNLOADABLE = "This file cannot be downloaded right now.";
 
+/** Opens a fresh inline URL in a new tab: the tab is opened on the click (no popup block), then pointed at the file. */
+function useOpenInNewTab(assetId: string, itemId: string) {
+    const download = useNewsAssetDownload();
+
+    const open = () => {
+        const tab = window.open("", "_blank");
+
+        if (tab) tab.opener = null;
+
+        download.mutate({ assetId, id: itemId, purpose: "display" }, {
+            onError: () => tab?.close(),
+            onSuccess: (delivered) => {
+                if (tab) tab.location.href = delivered.url;
+
+                download.reset();
+            },
+        });
+    };
+
+    return { error: download.error, isPending: download.isPending, open };
+}
+
 /**
  * One image / original file: type, size, metadata and credit always; the file only through the API's short-lived URL,
- * on click. "Download" fetches that URL and saves the file at once (`startDownload`: no second click, the URL kept
- * nowhere); "Show" previews a displayable image inline; neither permission → the original link only.
+ * on click. "View" shows a PDF inline in the panel (`purpose=display`: the browser's PDF viewer, with "Open in new
+ * tab"); "Show" previews a displayable image; "Download" (`purpose=download`) saves the file at once (`startDownload`:
+ * no second click, the URL kept nowhere); neither permission → the original link only. A viewed / shown URL lives
+ * only in this row's state while the panel is open (the frame has loaded the bytes; it is never cached or stored).
  */
 function AssetRow({ asset, itemId }: { asset: NewsAsset; itemId: string }) {
     const download = useNewsAssetDownload();
 
-    // A shown image only, while this panel is open: the URL is a ≤ 60-s bearer credential, never cached or stored.
+    const newTab = useOpenInNewTab(asset.id, itemId);
+
     const [preview, setPreview] = React.useState<NewsAssetDownloadResponse | null>(null);
 
     const [refused, setRefused] = React.useState(false);
@@ -88,13 +114,15 @@ function AssetRow({ asset, itemId }: { asset: NewsAsset; itemId: string }) {
 
     const facts = assetFacts(asset);
 
-    const request = (onDelivered: (delivered: NewsAssetDownloadResponse) => void) => {
+    const pdf = canViewPdf(asset);
+
+    const request = (purpose: "display" | "download", onDelivered: (delivered: NewsAssetDownloadResponse) => void) => {
         setRefused(false);
 
-        download.mutate({ assetId: asset.id, id: itemId }, { onSuccess: onDelivered });
+        download.mutate({ assetId: asset.id, id: itemId, purpose }, { onSuccess: onDelivered });
     };
 
-    const onDownload = () => request((delivered) => {
+    const onDownload = () => request("download", (delivered) => {
         // Only an attachment URL is followed: an inline one would replace this page.
         if (delivered.purpose === "download") startDownload(delivered.url);
         else setRefused(true);
@@ -102,7 +130,29 @@ function AssetRow({ asset, itemId }: { asset: NewsAsset; itemId: string }) {
         download.reset();
     });
 
-    const onShow = () => request(delivered => setPreview(delivered.content_type?.startsWith("image/") ? delivered : null));
+    const onShow = () => request("display", delivered => setPreview(delivered.purpose === "display" ? delivered : null));
+
+    const busy = download.isPending || newTab.isPending;
+
+    const viewer = preview && pdf
+        ? (
+                <div className="flex flex-col gap-1">
+                    <iframe
+                        className="h-[60vh] w-full rounded border"
+                        data-testid="news-pdf-viewer"
+                        referrerPolicy="no-referrer"
+                        src={preview.url}
+                        title={asset.title ?? "PDF"}
+                    />
+                    <div className="text-muted-foreground">Not showing? Open it in a new tab.</div>
+                </div>
+            )
+        : preview && (
+            <figure className="flex flex-col gap-1">
+                <img alt={asset.alt ?? asset.title ?? ""} className="max-h-80 w-auto self-start rounded border" referrerPolicy="no-referrer" src={preview.url} />
+                {(preview.credit ?? credit) && <figcaption className="text-muted-foreground">{preview.credit ?? credit}</figcaption>}
+            </figure>
+        );
 
     return (
         <li className="flex flex-col gap-1 rounded-md border p-2 text-xs" data-testid="news-asset">
@@ -113,27 +163,39 @@ function AssetRow({ asset, itemId }: { asset: NewsAsset; itemId: string }) {
             </div>
             {asset.caption && <div>{asset.caption}</div>}
             {credit && <div className="text-muted-foreground">{`Credit: ${credit}`}</div>}
-            {preview && (
-                <figure className="flex flex-col gap-1">
-                    <img alt={asset.alt ?? asset.title ?? ""} className="max-h-80 w-auto self-start rounded border" referrerPolicy="no-referrer" src={preview.url} />
-                    {(preview.credit ?? credit) && <figcaption className="text-muted-foreground">{preview.credit ?? credit}</figcaption>}
-                </figure>
-            )}
+            {viewer}
             {asset.can_display || asset.can_download
                 ? (
                         <div className="flex flex-wrap items-center gap-2">
+                            {pdf && (preview
+                                ? (
+                                        <Button onClick={() => setPreview(null)} size="sm" type="button" variant="outline">
+                                            Hide
+                                        </Button>
+                                    )
+                                : (
+                                        <Button disabled={busy} onClick={onShow} size="sm" type="button" variant="outline">
+                                            View
+                                        </Button>
+                                    ))}
+                            {pdf && (
+                                <Button disabled={busy} onClick={newTab.open} size="sm" type="button" variant="outline">
+                                    <ExternalLinkIcon aria-hidden />
+                                    Open in new tab
+                                </Button>
+                            )}
                             {asset.can_download && (
-                                <Button disabled={download.isPending} onClick={onDownload} size="sm" type="button" variant="outline">
+                                <Button disabled={busy} onClick={onDownload} size="sm" type="button" variant="outline">
                                     <DownloadIcon aria-hidden />
                                     Download
                                 </Button>
                             )}
-                            {asset.can_display && !preview && (
-                                <Button disabled={download.isPending} onClick={onShow} size="sm" type="button" variant="outline">
+                            {asset.can_display && !pdf && !preview && (
+                                <Button disabled={busy} onClick={onShow} size="sm" type="button" variant="outline">
                                     Show
                                 </Button>
                             )}
-                            {download.error && <span className="text-destructive">{download.error.message}</span>}
+                            {(download.error ?? newTab.error) && <span className="text-destructive">{(download.error ?? newTab.error)?.message}</span>}
                             {refused && <span className="text-destructive">{NOT_DOWNLOADABLE}</span>}
                         </div>
                     )
@@ -169,7 +231,7 @@ function DownloadAll({ assets, itemId }: { assets: ReadonlyArray<NewsAsset>; ite
             if (index > 0) await new Promise(resolve => setTimeout(resolve, DOWNLOAD_ALL_GAP_MS));
 
             try {
-                const delivered = await download.mutateAsync({ assetId: asset.id, id: itemId });
+                const delivered = await download.mutateAsync({ assetId: asset.id, id: itemId, purpose: "download" });
 
                 if (delivered.purpose === "download") startDownload(delivered.url);
                 else failures += 1;
