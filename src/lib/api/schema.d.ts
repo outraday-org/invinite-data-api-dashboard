@@ -461,7 +461,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for rag: STANDARD.
          */
@@ -505,7 +505,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -533,7 +533,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -557,7 +557,7 @@ export interface paths {
          * Company documents
          * @description A company's investor-relations documents, newest year first: annual reports, proxy statements, ESG / governance documents, investor-day and conference decks, shareholder letters, fact sheets, and link-only webcast replay pages. By default the IR library outside its earnings calls' folders; `include=calls` adds the documents of every earnings call (CFO commentary, data sheets, letters, the company's own transcript, prepared remarks, 10-Q / 10-K links) to the same list, marked `source: call` with the call's `event_id`, so one paged list holds the company's whole document tree.
          *
-         *     Filter by IR section, kind, year, period or event, or by the document tree: `category`, `group` (a folder and everything below it) and `fiscal_year` / `fiscal_quarter` (the earnings folder `earnings/fy<YYYY>/q<N>`). On a call document `year` / `period` are the call's fiscal year / quarter; a `section` filter matches IR-library rows only. Documents of one earnings call alone are on `/v1/earnings-calls/documents`; a call's press release and slide deck are on `/v1/earnings-calls/press-release` and `/v1/earnings-calls/slides`.
+         *     Filter by IR section, kind, year, period or event, or by the document tree: `category`, `group` (a folder and everything below it) and `fiscal_year` / `fiscal_quarter` (the earnings folder `earnings/fy<YYYY>/q<N>`). On a call document `year` / `period` are the call's fiscal year / quarter; a `section` filter matches IR-library rows only. Documents of one earnings call alone are on `/v1/earnings-calls/documents`; a call's press release and slide deck are on `/v1/earnings-calls/press-release` and `/v1/earnings-calls/slides`. A press release that is no call or event material is a news item: `GET /v1/news?publisher=320193`.
          *
          *     ### Order and paging
          *
@@ -565,7 +565,7 @@ export interface paths {
          *
          *     ### The document tree
          *
-         *     Every stored document sits in one folder of the company's document tree: `group` (its path) under one of eight `category` spine folders, in this order: `earnings` (`earnings/fy2027/q2` = one fiscal quarter's call: release, deck, CFO commentary, data sheets, transcript; `earnings/cy2026/08-26` = a call without a fiscal period), `events` (`events/2026/09-10-<event>` = a conference, investor day or shareholder meeting; its `group_label` reads the event's date and name, e.g. "May 18, 2025 · GTC Taipei 2025"), `reports` (`reports/2025`: annual reports, proxy statements, annual letters), `presentations` (`presentations/2024`), `governance`, `esg` (`esg/2025`), `shareholder` (`shareholder/tax`, `shareholder/dividends`, `shareholder/stock`) and `other` (`other/faq`, `other/fact-sheets`, `other/financial-data[/2025]`, `other/web-pages`, `other/documents`). `…/undated` = no date could be read. `group` and `category` are null while a document has not been placed yet.
+         *     Every stored document sits in one folder of the company's document tree: `group` (its path) under one of eight `category` spine folders, in this order: `earnings` (`earnings/fy2027/q2` = one fiscal quarter's call: release, deck, CFO commentary, data sheets, transcript; `earnings/cy2026/08-26` = a call without a fiscal period), `events` (`events/2026/09-10-<event>` = a conference, investor day or shareholder meeting; its `group_label` reads the event's date and name, e.g. "May 18, 2025 · GTC Taipei 2025"), `reports` (`reports/2025`: annual reports, proxy statements, annual letters), `presentations` (`presentations/2024`), `governance`, `esg` (`esg/2025`), `shareholder` (`shareholder/tax`, `shareholder/dividends`, `shareholder/stock`) and `other` (`other/faq`, `other/fact-sheets`, `other/financial-data[/2025]`, `other/web-pages`, `other/documents`). `…/undated` = no date could be read. `group` and `category` are null while a document has not been placed yet. A press release that is no call or event material is not a document: it is a news item, served by `GET /v1/news`.
          *
          *     ### What you get
          *
@@ -583,7 +583,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -623,7 +623,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -661,13 +661,13 @@ export interface paths {
          *
          *     ### Errors
          *
-         *     - `404 diff_unavailable` for a company's first call or a call not derived yet.
+         *     - `404 diff_unavailable`, its message naming the reason: no earlier call of the company to compare with, or not derived yet.
          *
          *     ### Freshness and coverage
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -701,7 +701,7 @@ export interface paths {
          *
          *     ### The document tree
          *
-         *     Every stored document sits in one folder of the company's document tree: `group` (its path) under one of eight `category` spine folders, in this order: `earnings` (`earnings/fy2027/q2` = one fiscal quarter's call: release, deck, CFO commentary, data sheets, transcript; `earnings/cy2026/08-26` = a call without a fiscal period), `events` (`events/2026/09-10-<event>` = a conference, investor day or shareholder meeting; its `group_label` reads the event's date and name, e.g. "May 18, 2025 · GTC Taipei 2025"), `reports` (`reports/2025`: annual reports, proxy statements, annual letters), `presentations` (`presentations/2024`), `governance`, `esg` (`esg/2025`), `shareholder` (`shareholder/tax`, `shareholder/dividends`, `shareholder/stock`) and `other` (`other/faq`, `other/fact-sheets`, `other/financial-data[/2025]`, `other/web-pages`, `other/documents`). `…/undated` = no date could be read. `group` and `category` are null while a document has not been placed yet.
+         *     Every stored document sits in one folder of the company's document tree: `group` (its path) under one of eight `category` spine folders, in this order: `earnings` (`earnings/fy2027/q2` = one fiscal quarter's call: release, deck, CFO commentary, data sheets, transcript; `earnings/cy2026/08-26` = a call without a fiscal period), `events` (`events/2026/09-10-<event>` = a conference, investor day or shareholder meeting; its `group_label` reads the event's date and name, e.g. "May 18, 2025 · GTC Taipei 2025"), `reports` (`reports/2025`: annual reports, proxy statements, annual letters), `presentations` (`presentations/2024`), `governance`, `esg` (`esg/2025`), `shareholder` (`shareholder/tax`, `shareholder/dividends`, `shareholder/stock`) and `other` (`other/faq`, `other/fact-sheets`, `other/financial-data[/2025]`, `other/web-pages`, `other/documents`). `…/undated` = no date could be read. `group` and `category` are null while a document has not been placed yet. A press release that is no call or event material is not a document: it is a news item, served by `GET /v1/news`.
          *
          *     - `documents` is `[]` for a call without further documents (`has_documents` tells ahead).
          *
@@ -721,7 +721,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -755,7 +755,7 @@ export interface paths {
          *
          *     ### Search modes
          *
-         *     - `lexical` (default): keyword search — English full text with stemming; quoted phrases, `OR` and `-word` work; every word must match; ranked by `ts_rank_cd` (`websearch_to_tsquery`). Finance tokens such as `FY2027`, `10-K`, `Q3` or `EBITDA` match as written.
+         *     - `lexical` (default): keyword search — English full text with stemming; quoted phrases, `OR` and `-word` work; every word must match; ranked by `ts_rank_cd` (`websearch_to_tsquery`). Without `identifier`, at most 5,000 matching passages are ranked, split evenly between earnings-call documents and IR-library documents (each the first matches in index order, not the best) — add `identifier` to rank every match of one company. Finance tokens such as `FY2027`, `10-K`, `Q3` or `EBITDA` match as written.
          *
          *     - `literal`: the exact characters of the passage — no stemming, no fuzzy matching, `%` / `_` / `\` match themselves; case-sensitive unless `case_sensitive=false` (only allowed with `mode=literal`; default `true`). A pattern under 3 characters needs `identifier`. Newest first; `score` is 0.
          *
@@ -785,7 +785,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -813,7 +813,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -843,7 +843,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -905,7 +905,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for redistribute: PRO.
          */
@@ -931,7 +931,9 @@ export interface paths {
          *
          *     ### Metrics
          *
-         *     - `metric` is matched against the normalized vocabulary: `revenue`, `eps_gaap`, `eps_non_gaap`, `operating_margin`, `operating_income`, `gross_margin`, `opex`, `capex`, `fcf`, `tax_rate`, `share_count`, `ebitda`, `net_income`, `other`, plus dynamic `segment:<slug>` metrics.
+         *     - `metric` is matched against the normalized vocabulary: `revenue`, `eps_gaap`, `eps_non_gaap`, `operating_margin`, `operating_income`, `gross_margin`, `opex`, `capex`, `fcf`, `tax_rate`, `share_count`, `ebitda`, `net_income`, `revenue_growth`, `eps_gaap_growth`, `eps_non_gaap_growth`, `operating_income_growth`, `ebitda_growth`, `net_income_growth`, `fcf_growth`, `opex_growth`, `capex_growth`, `ebitda_margin`, `fcf_margin`, `fcf_conversion`, `opex_pct_revenue`, `capex_pct_revenue`, `other`, plus dynamic `segment:<slug>` (a segment's revenue) and `segment_growth:<slug>` metrics.
+         *
+         *     - Amount metrics (`revenue`, `eps_gaap`, `eps_non_gaap`, `operating_income`, `opex`, `capex`, `fcf`, `ebitda`, `net_income`, `share_count`, `segment:<slug>`) never carry `unit=pct`: a growth rate or a share of revenue is its own metric (`revenue_growth`, `ebitda_margin`, `capex_pct_revenue`, `fcf_conversion` …), always in `pct`. Growth rates are signed (a decline is negative).
          *
          *     - An unknown metric returns an empty series.
          *
@@ -945,7 +947,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for redistribute: PRO.
          */
@@ -975,7 +977,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -1027,7 +1029,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -1067,7 +1069,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for redistribute: PRO.
          */
@@ -1107,7 +1109,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for rag: STANDARD.
          */
@@ -1137,7 +1139,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for rag: STANDARD.
          */
@@ -1179,7 +1181,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -1225,7 +1227,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -1269,7 +1271,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -1315,7 +1317,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for rag: STANDARD.
          */
@@ -1381,7 +1383,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for rag: STANDARD.
          */
@@ -1429,7 +1431,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for display: FREE.
          */
@@ -1473,7 +1475,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for rag: STANDARD.
          */
@@ -1517,7 +1519,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for rag: STANDARD.
          */
@@ -1555,7 +1557,7 @@ export interface paths {
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
-         *     - Only US earnings calls captured by Invinite are served.
+         *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
          *
          *     Minimum tier for rag: STANDARD.
          */
@@ -1577,13 +1579,13 @@ export interface paths {
         };
         /**
          * List webhooks
-         * @description List the account's webhook subscriptions (secrets are never returned). Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events, see x-webhooks. Minimum tier for display: FREE.
+         * @description List the account's webhook subscriptions (secrets are never returned). Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events and news.published (new news items, STANDARD and above), see x-webhooks. Minimum tier for display: FREE.
          */
         get: operations["earningsCallsWebhooksList"];
         put?: never;
         /**
          * Create a webhook
-         * @description Create a webhook subscription (at most 5 / 15 / 50 per account on LITE / STANDARD / PRO; 403 plan_limit beyond the plan's webhooks, events, CIKs or keywords). The response carries the signing secret exactly once. The URL must be https on port 443 and resolve to public addresses only (400 invalid_webhook_url names the reason). Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events, see x-webhooks. Minimum tier for display: FREE.
+         * @description Create a webhook subscription (at most 5 / 15 / 50 per account on LITE / STANDARD / PRO; 403 plan_limit beyond the plan's webhooks, events, CIKs or keywords). The response carries the signing secret exactly once. The URL must be https on port 443 and resolve to public addresses only (400 invalid_webhook_url names the reason). Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events and news.published (new news items, STANDARD and above), see x-webhooks. Minimum tier for display: FREE.
          */
         post: operations["earningsCallsWebhooksCreate"];
         delete?: never;
@@ -1604,14 +1606,14 @@ export interface paths {
         post?: never;
         /**
          * Delete a webhook
-         * @description Delete a webhook subscription. Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events, see x-webhooks. Minimum tier for display: FREE.
+         * @description Delete a webhook subscription. Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events and news.published (new news items, STANDARD and above), see x-webhooks. Minimum tier for display: FREE.
          */
         delete: operations["earningsCallsWebhooksDelete"];
         options?: never;
         head?: never;
         /**
          * Update a webhook
-         * @description Change a webhook subscription's keywords, companies, events or active flag (at least one field). active: true re-enables a subscription disabled after failed deliveries. Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events, see x-webhooks. Minimum tier for display: FREE.
+         * @description Change a webhook subscription's keywords, companies, events or active flag (at least one field). active: true re-enables a subscription disabled after failed deliveries. Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events and news.published (new news items, STANDARD and above), see x-webhooks. Minimum tier for display: FREE.
          */
         patch: operations["earningsCallsWebhooksUpdate"];
         trace?: never;
@@ -1625,7 +1627,7 @@ export interface paths {
         };
         /**
          * Webhook delivery attempts
-         * @description The last 100 delivery attempts of a subscription, newest first, with status and duration (kept 7 days). Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events, see x-webhooks. Minimum tier for display: FREE.
+         * @description The last 100 delivery attempts of a subscription, newest first, with status and duration (kept 7 days). Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events and news.published (new news items, STANDARD and above), see x-webhooks. Minimum tier for display: FREE.
          */
         get: operations["earningsCallsWebhooksDeliveries"];
         put?: never;
@@ -1647,7 +1649,7 @@ export interface paths {
         put?: never;
         /**
          * Rotate a webhook signing secret
-         * @description Rotate the signing secret. The new secret is returned once; the old one stays valid for 5 minutes (deliveries carry one v1 signature per valid secret). Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events, see x-webhooks. Minimum tier for display: FREE.
+         * @description Rotate the signing secret. The new secret is returned once; the old one stays valid for 5 minutes (deliveries carry one v1 signature per valid secret). Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events and news.published (new news items, STANDARD and above), see x-webhooks. Minimum tier for display: FREE.
          */
         post: operations["earningsCallsWebhooksRotateSecret"];
         delete?: never;
@@ -1667,7 +1669,7 @@ export interface paths {
         put?: never;
         /**
          * Send a test delivery
-         * @description Send a signed `ping` delivery to the subscription. Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events, see x-webhooks. Minimum tier for display: FREE.
+         * @description Send a signed `ping` delivery to the subscription. Earnings-call webhooks (LITE and above; webhook count, events, CIKs and keywords by plan — see the Webhooks section of the API description): signed, retried POSTs of the earnings_call.* lifecycle events and news.published (new news items, STANDARD and above), see x-webhooks. Minimum tier for display: FREE.
          */
         post: operations["earningsCallsWebhooksTest"];
         delete?: never;
@@ -1845,9 +1847,35 @@ export interface paths {
         };
         /**
          * List IPOs
-         * @description List all IPOs. Minimum tier for redistribute: PRO.
+         * @description List all IPOs of the Massive IPO calendar, keyed by ticker; rows usually appear near pricing. `registration` links a row to the SEC-sourced registration track (`GET /v1/ipos/registrations`) Massive matched to the same ticker, or is null. Minimum tier for redistribute: PRO.
          */
         get: operations["iposList"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/ipos/registrations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List IPO registrations (SEC)
+         * @description The SEC-sourced IPO calendar: one row per registration statement of a company that is not listed yet, from its first public S-1 or F-1 until it trades or is withdrawn, keyed by CIK. Each row carries the stage, the proposed ticker(s), the price range and final price from the prospectus, the SEC timestamps of every step, and the filings that moved it.
+         *
+         *     `GET /v1/ipos` is a different source: the Massive IPO calendar, keyed by ticker, whose rows usually appear only near pricing. A registration shows up weeks earlier. `massive` holds the Massive row matched to a registration (by ticker and issuer name), `proposed_symbols[].ipo_calendar_match` flags a proposed ticker that is on that calendar, and each `GET /v1/ipos` row links back through `registration`.
+         *
+         *     Pre-IPO companies have no ticker yet: read their filings with `GET /v1/sec-filings/filings?identifier=<cik>`.
+         *
+         *     Minimum tier for redistribute: PRO.
+         */
+        get: operations["iposRegistrationsList"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1916,6 +1944,228 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/news": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List news items
+         * @description News of US companies — SEC filings and the companies' own newsroom publications — newest first.
+         *
+         *     ### What you get
+         *
+         *     - Headline, lede, publication time, canonical URL, first source, kind, topics, the companies mentioned (`symbols`, `ciks`) and the companies' own publications of the item.
+         *
+         *     - Every item carries `attribution`; the full text is on `GET /v1/news/{id}`.
+         *
+         *     ### Filters
+         *
+         *     - `ticker` / `cik` = items mentioning the company (either matches); `publisher` = items the company published itself. Several filters intersect; several values of one filter match any of them.
+         *
+         *     - An unknown ticker is not an error: the list is empty.
+         *
+         *     ### Pagination
+         *
+         *     - News is an append-heavy feed, so pages use a cursor instead of an offset: follow `next_url` (or pass `next_cursor` as `cursor` with the same filters) until it is null. An item published between two calls never shifts a page — no duplicates, no gaps.
+         *
+         *     - `next_url` pins the resolved `from` / `to`, so a default window does not slide while you page.
+         *
+         *     ### Sources and rights
+         *
+         *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
+         *
+         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
+         *
+         *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["newsItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/news/developments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List company developments from news
+         * @description Company developments — product launches, partnerships, customer contracts, capacity, regulatory steps, research — read from the companies' own publications, newest announcement first.
+         *
+         *     ### What you get
+         *
+         *     - Each development cites the source: `evidence[]` quotes the publisher's exact words with block pointers into `GET /v1/news/{id}/text`, and `item` names the publication with its `attribution`.
+         *
+         *     - `title` and `summary` are model-derived (`derived: true`); the quotes are the source. A claim is what the text says, never a verified fact or a lasting relationship.
+         *
+         *     - Only medium- and high-confidence developments of each item's current text.
+         *
+         *     ### Pagination
+         *
+         *     - News is an append-heavy feed, so pages use a cursor instead of an offset: follow `next_url` (or pass `next_cursor` as `cursor` with the same filters) until it is null. An item published between two calls never shifts a page — no duplicates, no gaps.
+         *
+         *     - `next_url` pins the resolved `from` / `to`, so a default window does not slide while you page.
+         *
+         *     ### Sources and rights
+         *
+         *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
+         *
+         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
+         *
+         *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["newsDevelopments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/news/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a news item
+         * @description One news item with its full text, the companies it is about, every sighting, its images and original files, and the developments read from it.
+         *
+         *     ### What you get
+         *
+         *     - `body_text`: the publisher's text of the current revision, verbatim (`content_status: available`); `no_text` = headline and link only.
+         *
+         *     - **Attribution duty:** wherever you show `body_text` or `description`, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` with it (and `attribution.edgar` for a filing), with `attribution.statement`.
+         *
+         *     - `text_url` serves the same text in citable blocks; `assets[].download_url` mints a short-lived file URL where the publisher's terms allow it.
+         *
+         *     - `model_processing_allowed` says whether the text may be processed by AI models (the publisher's machine-readable reservation); API access alone does not authorize forwarding the text into models.
+         *
+         *     - A corrected item names its successor in `superseded_by` and stays served under its id.
+         *
+         *     ### Errors
+         *
+         *     - `404` for an unknown id, or an item that is no longer served (opt-out, takedown).
+         *
+         *     ### Sources and rights
+         *
+         *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
+         *
+         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
+         *
+         *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["newsItem"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/news/{id}/assets/{asset_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a short-lived URL of a news image or file
+         * @description A short-lived URL of one image or original file of a news item, where the publisher's terms allow delivering it.
+         *
+         *     ### What you get
+         *
+         *     - `url` works for at most 60 seconds (never past the permission it rests on): fetch the file at once and never store or share the URL. `purpose` says whether it may be embedded (`display`) or downloaded (`download`).
+         *
+         *     - Show `credit` with the file. Files are bound to the item: the asset id must be one of the item's `assets[]`.
+         *
+         *     ### Errors
+         *
+         *     - `404` for an unknown or no longer served item or asset; `403 asset_unavailable` when the file may not be delivered (link to `original_url`); `503 media_unavailable` while file delivery is not configured.
+         *
+         *     ### Sources and rights
+         *
+         *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
+         *
+         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
+         *
+         *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["newsAssetDownload"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/news/{id}/text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a news item's text in blocks
+         * @description The text of one news item in stable, citable blocks (paragraphs, list items, table rows), page by page.
+         *
+         *     ### What you get
+         *
+         *     - Each block carries its stable `block_id`, heading, PDF page and Unicode code-point offsets into the full text; development evidence points at these blocks.
+         *
+         *     - `max_chars` bounds a page in code points without ever splitting a block; `has_more`, `next_cursor` and `coverage` say what is left — nothing is cut silently.
+         *
+         *     - A cursor belongs to one text revision: after a correction it answers `409 revision_changed`; restart without `cursor`.
+         *
+         *     - An item without readable text answers `content_status: no_text` with no blocks. Show `attribution` with the text.
+         *
+         *     ### Errors
+         *
+         *     - `404` for an unknown or no longer served item; `400 invalid_cursor` for a cursor of another item or list.
+         *
+         *     ### Sources and rights
+         *
+         *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
+         *
+         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
+         *
+         *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["newsItemText"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/sec-filings/available-form-types": {
         parameters: {
             query?: never;
@@ -1945,7 +2195,7 @@ export interface paths {
         };
         /**
          * SEC filings
-         * @description Fetch SEC filings for a company. Minimum tier for display: FREE.
+         * @description Fetch SEC filings for a company. `identifier` is a ticker or a CIK; a CIK also resolves a company that is not listed yet (a pre-IPO registrant), whose `ticker` is null. Registration statements (S-1, S-1/A, F-1, F-1/A) carry the `proposed_symbols` the prospectus names. Minimum tier for display: FREE.
          */
         get: operations["secFilingsList"];
         put?: never;
@@ -2460,6 +2710,11 @@ export interface components {
              * @example No valid company found for identifier
              */
             message: string;
+            /**
+             * @description Set only for `not_covered`: the company is known, but this data family holds no data for it (financial data covers SEC registrants and US listings)
+             * @enum {string}
+             */
+            code?: "not_covered";
         };
         /** InternalServerError */
         InternalServerError: {
@@ -2574,6 +2829,23 @@ export interface components {
             /** @description Why the answer may be incomplete */
             reasons: Array<"coverage_unavailable" | "lexical_backfill_pending" | "projection_failed">;
         };
+        /**
+         * ProposedSymbol
+         * @description A ticker the registration statement says the issuer applied, intends or was approved to list under
+         */
+        ProposedSymbol: {
+            /** @description Proposed ticker, upper case (`ABCD.WS` for warrants) */
+            symbol: string;
+            /** @description NASDAQ, NYSE, NYSE American, NYSE Arca or Cboe BZX; null when the prospectus names none */
+            exchange: null | string;
+            /** @description common, ads, units, warrants, rights, preferred or other */
+            security_class: null | string;
+            /** @description How it was read: regex or llm */
+            source: null | string;
+            /** @description The ticker and issuer name are also on the Massive IPO calendar (GET /v1/ipos) — a hint, not an identity */
+            ipo_calendar_match: boolean;
+        };
+        /** @description A new SEC filing, the same fields as a GET /v1/sec-filings/filings row plus `ticker`. Until 2026-10 the frame forwarded the upstream camelCase envelope (`schemaVersion`, `eventKey`, `filing.accessionNumber`, …) instead of this documented shape; it now is exactly this object */
         WebSocketFiling: {
             /** @description SEC filing accession number */
             accession_number: string;
@@ -2601,6 +2873,10 @@ export interface components {
              * @description Period end date
              */
             period_end: null | string;
+            /** @description Ticker of the company's primary listing; null for a company that is not listed yet (pre-IPO) */
+            ticker: null | string;
+            /** @description Tickers a registration statement (S-1, S-1/A, F-1, F-1/A) proposes; null when the filing carries none */
+            proposed_symbols: Array<components["schemas"]["ProposedSymbol"]> | null;
         };
         /** @description Broadcast when a new SEC filing finishes processing */
         WebSocketNewFilingEvent: {
@@ -2750,7 +3026,7 @@ export interface components {
             revision: number;
             /** @description The metric as spoken */
             metric: string;
-            /** @description revenue, eps_gaap, segment:<slug> … */
+            /** @description revenue, eps_gaap, revenue_growth, segment:<slug>, segment_growth:<slug> … */
             metric_normalized: string;
             /** @description Q4 FY2026, FY2026 … */
             period_label: string;
@@ -2915,10 +3191,217 @@ export interface components {
             /** @enum {string} */
             type: "error";
             /** @enum {string} */
-            code: "attach_failed" | "bad_message" | "forbidden_tier" | "keywords_required" | "not_found" | "not_live" | "resume_unavailable" | "subscription_limit" | "unavailable";
+            code: "attach_failed" | "bad_message" | "channel_unavailable" | "forbidden_tier" | "keywords_required" | "not_found" | "not_live" | "resume_unavailable" | "subscription_limit" | "unavailable";
             message: string;
             /** Format: uuid */
             subscription_id?: string;
+            /**
+             * @description news.live for a refusal of a news frame (channel_unavailable = live news is switched off; read GET /v1/news)
+             * @enum {string}
+             */
+            channel?: "news.live";
+        };
+        /** @description Client frame: follow new news items. One news subscription per connection; a second subscribe replaces the filters. No filter = every item. tickers and ciks together = either; every other filter narrows */
+        WebSocketSubscribeNews: {
+            /** @enum {string} */
+            type: "subscribe";
+            /** @enum {string} */
+            channel: "news.live";
+            /** @description Tickers (BRK.B and BRK-B both match) */
+            tickers?: Array<string>;
+            /** @description CIKs, padded or not */
+            ciks?: Array<string>;
+            /**
+             * @description Earnings news only
+             * @default false
+             */
+            earnings_only: boolean;
+            kinds?: Array<"call_announcement" | "capital_markets" | "dividend" | "earnings_results" | "event_announcement" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "promo" | "results_date">;
+            /** @description edgar (SEC filings) and / or ir (company newsrooms) */
+            sources?: Array<"edgar" | "ir">;
+        };
+        /** @description Client frame: stop following news */
+        WebSocketUnsubscribeNews: {
+            /** @enum {string} */
+            type: "unsubscribe";
+            /** @enum {string} */
+            channel: "news.live";
+        };
+        /** @description The news subscription is active, with its normalised filters */
+        WebSocketNewsSubscribedEvent: {
+            /** @enum {string} */
+            type: "subscribed";
+            /** @enum {string} */
+            channel: "news.live";
+            filters: {
+                /** @description Upper-case, both spellings (BRK.B, BRK-B) */
+                tickers: Array<string>;
+                /** @description Without leading zeros */
+                ciks: Array<string>;
+                earnings_only: boolean;
+                kinds: Array<string>;
+                sources: Array<string>;
+            };
+        };
+        /** @description A new news item, the same object as a GET /v1/news row (with its attribution). Sent once when the pipeline announces the item; corrections, later enrichment and items without a ticker are not pushed — GET /v1/news has them */
+        WebSocketNewsItemEvent: {
+            /** @enum {string} */
+            type: "news_item";
+            /** @enum {string} */
+            channel: "news.live";
+            item: {
+                /**
+                 * Format: uuid
+                 * @description Stable item id (a correction is a new item, see supersedes_id)
+                 */
+                id: string;
+                /** @description Headline */
+                title: string;
+                /** @description Lede of the text (the publisher's, verbatim); null for an item without readable text or whose publisher reserved reuse */
+                description: null | string;
+                /** @description Canonical URL of the item (the first publication) */
+                url: string;
+                /**
+                 * Format: date-time
+                 * @description Publication time (ISO 8601 UTC)
+                 */
+                published_at: string;
+                /**
+                 * Format: date-time
+                 * @description When Invinite first saw it
+                 */
+                first_seen_at: string;
+                /** @description The item's first source */
+                source: {
+                    /** @description `edgar` or `ir` (a company newsroom) */
+                    id: string;
+                    /** @description Source label */
+                    name: null | string;
+                    /** @description The newsroom host of an `ir` source; null otherwise */
+                    host: null | string;
+                };
+                /**
+                 * @description What the item is about
+                 * @enum {string}
+                 */
+                kind: "call_announcement" | "capital_markets" | "dividend" | "earnings_results" | "event_announcement" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "promo" | "results_date";
+                /** @description Development topics found in the text */
+                topics: Array<"availability" | "capacity_expansion" | "customer_contract" | "other" | "partnership" | "product_launch" | "product_update" | "regulatory" | "research">;
+                /**
+                 * @description public_record = an SEC filing; issuer = the company's own publication
+                 * @enum {string}
+                 */
+                rights: "issuer" | "public_record";
+                /** @description Results, results date, call announcement or guidance */
+                is_earnings_news: boolean;
+                /** @description The fiscal period an earnings item belongs to; null when none was found */
+                earnings: null | {
+                    /** @description Fiscal year */
+                    fiscal_year: null | number;
+                    /** @description Fiscal quarter */
+                    fiscal_quarter: null | number;
+                    /**
+                     * Format: date-time
+                     * @description The results call it announces or follows
+                     */
+                    conference_date: null | string;
+                };
+                /** @description Tickers mentioned (stored dash spelling, `BRK-B`) */
+                symbols: Array<string>;
+                /** @description 10-digit CIKs mentioned */
+                ciks: Array<string>;
+                /** @description Text revision (grows when the publisher corrects the text) */
+                revision: number;
+                /** @description The older item this one corrects */
+                supersedes_id: null | string;
+                /** @description The companies' own verified publications of the item, oldest first (at most 10) */
+                publications: Array<{
+                    /** @description The newsroom source (`ir:<host>`) */
+                    source_id: string;
+                    publisher: {
+                        /** @description 10-digit CIK of the publishing company */
+                        cik: null | string;
+                        /** @description Ticker of the publishing company */
+                        symbol: null | string;
+                        /** @description Name the newsroom publishes under */
+                        name: null | string;
+                    };
+                    /** @description The company's own publication */
+                    url: string;
+                    /** @description press_release, company_blog, company_update or unknown */
+                    publication_type: string;
+                    /**
+                     * Format: date-time
+                     * @description Publication time the newsroom states (else when we first saw it)
+                     */
+                    published_at: string;
+                    /**
+                     * Format: date-time
+                     * @description Last modification the newsroom states
+                     */
+                    modified_at: null | string;
+                    /** @description The newsroom's own categories */
+                    categories: Array<{
+                        /** @description The newsroom's own id of the label, when it has one */
+                        id: null | string;
+                        /** @description The label as the newsroom shows it */
+                        label: string;
+                        /** @description The newsroom's page of the label */
+                        url: null | string;
+                    }>;
+                    /** @description The newsroom's own tags */
+                    tags: Array<{
+                        /** @description The newsroom's own id of the label, when it has one */
+                        id: null | string;
+                        /** @description The label as the newsroom shows it */
+                        label: string;
+                        /** @description The newsroom's page of the label */
+                        url: null | string;
+                    }>;
+                }>;
+                /** @description More than 10 publications exist (the detail lists every sighting) */
+                publications_truncated: boolean;
+                /** @description Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models */
+                model_processing_allowed: boolean;
+                /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
+                attribution: {
+                    /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
+                    publisher: string;
+                    /** @description Host of the original URL */
+                    publisher_host: null | string;
+                    /** @description The original publication the text was read from */
+                    source_url: string;
+                    /**
+                     * Format: date-time
+                     * @description Publication time (ISO 8601 UTC)
+                     */
+                    published_at: string;
+                    /**
+                     * @description public_record = an SEC filing; issuer = the company's own publication
+                     * @enum {string}
+                     */
+                    rights: "issuer" | "public_record";
+                    /** @description The filing of an SEC item; null otherwise */
+                    edgar: null | {
+                        /** @description SEC form type (8-K, 6-K, …) */
+                        form: null | string;
+                        /** @description SEC accession number */
+                        accession: string;
+                    };
+                    /**
+                     * @description The attribution sentence to carry with the text
+                     * @enum {string}
+                     */
+                    statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
+                };
+            };
+        };
+        /** @description The news subscription ended (on request) */
+        WebSocketNewsUnsubscribedEvent: {
+            /** @enum {string} */
+            type: "unsubscribed";
+            /** @enum {string} */
+            channel: "news.live";
         };
         WebhookEnvelope: {
             /**
@@ -2927,7 +3410,7 @@ export interface components {
              */
             id: string;
             /** @enum {string} */
-            event: "earnings_call.assets_ready" | "earnings_call.documents_updated" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping";
+            event: "earnings_call.assets_ready" | "earnings_call.documents_updated" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "news.published" | "ping";
             /**
              * Format: date-time
              * @description When the event happened; deliveries are NOT ordered — order by this and the event phase
@@ -2967,13 +3450,13 @@ export interface operations {
                      *       "period": {
                      *         "tier": "pro",
                      *         "included_credits": 4000000,
-                     *         "used_credits": 4311,
-                     *         "resets_at": "2026-11-18T18:05:27.000Z",
+                     *         "used_credits": 3089,
+                     *         "resets_at": "2026-11-28T12:43:10.000Z",
                      *         "prepaid_balance_usd": 0
                      *       },
                      *       "daily": [
                      *         {
-                     *           "date": "2026-09-22",
+                     *           "date": "2026-09-30",
                      *           "requests": 0,
                      *           "credits": 0,
                      *           "errors": {
@@ -2985,23 +3468,8 @@ export interface operations {
                      *           }
                      *         }
                      *       ],
-                     *       "by_family": [
-                     *         {
-                     *           "family": "company",
-                     *           "label": "Company",
-                     *           "requests": 1099,
-                     *           "credits": 1108
-                     *         }
-                     *       ],
-                     *       "by_key": [
-                     *         {
-                     *           "caller": "key",
-                     *           "label": "spec examples smoke",
-                     *           "key_hint": "invd_3f2...a91c",
-                     *           "requests": 433,
-                     *           "credits": 1260
-                     *         }
-                     *       ],
+                     *       "by_family": [],
+                     *       "by_key": [],
                      *       "truncated": false
                      *     }
                      */
@@ -3098,7 +3566,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -3148,7 +3616,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "CashAndCashEquivalentsAtCarryingValue": 35934000000,
                      *                 "MarketableSecuritiesCurrent": 18763000000,
@@ -3189,7 +3657,10 @@ export interface operations {
                                 calendar_quarter: number;
                                 /** @description Type of fiscal period */
                                 fiscal_period_type: string;
-                                /** @description Period end date (YYYY-MM-DD) */
+                                /**
+                                 * Format: date
+                                 * @description Period end date (YYYY-MM-DD)
+                                 */
                                 period_end: string;
                                 /** @description As-reported facts keyed by concept */
                                 facts: {
@@ -3212,7 +3683,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -3267,7 +3738,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "CashAndCashEquivalentsAtCarryingValue": {
                      *                   "value": 35934000000,
@@ -3368,7 +3839,10 @@ export interface operations {
                                 calendar_quarter: number;
                                 /** @description Type of fiscal period */
                                 fiscal_period_type: string;
-                                /** @description Period end date (YYYY-MM-DD) */
+                                /**
+                                 * Format: date
+                                 * @description Period end date (YYYY-MM-DD)
+                                 */
                                 period_end: string;
                                 facts: {
                                     [key: string]: {
@@ -3388,11 +3862,20 @@ export interface operations {
                                                 value: number;
                                                 /** @description Financial concept */
                                                 concept: string;
-                                                /** @description Start date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description Start date (YYYY-MM-DD)
+                                                 */
                                                 start_date?: null | string;
-                                                /** @description End date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description End date (YYYY-MM-DD)
+                                                 */
                                                 end_date?: null | string;
-                                                /** @description Instant date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description Instant date (YYYY-MM-DD)
+                                                 */
                                                 instant_date?: null | string;
                                                 /** @description Segment information */
                                                 segment?: null | {
@@ -3439,7 +3922,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -3489,7 +3972,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": [
                      *                 {
                      *                   "concept": "AssetsAbstract",
@@ -3538,7 +4021,10 @@ export interface operations {
                                 calendar_quarter: number;
                                 /** @description Type of fiscal period */
                                 fiscal_period_type: string;
-                                /** @description Period end date (YYYY-MM-DD) */
+                                /**
+                                 * Format: date
+                                 * @description Period end date (YYYY-MM-DD)
+                                 */
                                 period_end: string;
                                 facts: Array<components["schemas"]["PresentationFact"]>;
                             }>;
@@ -3558,7 +4044,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -3608,7 +4094,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "NetIncomeLoss": 112010000000,
                      *                 "DepreciationDepletionAndAmortization": 11698000000,
@@ -3649,7 +4135,10 @@ export interface operations {
                                 calendar_quarter: number;
                                 /** @description Type of fiscal period */
                                 fiscal_period_type: string;
-                                /** @description Period end date (YYYY-MM-DD) */
+                                /**
+                                 * Format: date
+                                 * @description Period end date (YYYY-MM-DD)
+                                 */
                                 period_end: string;
                                 /** @description As-reported facts keyed by concept */
                                 facts: {
@@ -3672,7 +4161,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -3727,7 +4216,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "NetIncomeLoss": {
                      *                   "value": 112010000000,
@@ -3828,7 +4317,10 @@ export interface operations {
                                 calendar_quarter: number;
                                 /** @description Type of fiscal period */
                                 fiscal_period_type: string;
-                                /** @description Period end date (YYYY-MM-DD) */
+                                /**
+                                 * Format: date
+                                 * @description Period end date (YYYY-MM-DD)
+                                 */
                                 period_end: string;
                                 facts: {
                                     [key: string]: {
@@ -3848,11 +4340,20 @@ export interface operations {
                                                 value: number;
                                                 /** @description Financial concept */
                                                 concept: string;
-                                                /** @description Start date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description Start date (YYYY-MM-DD)
+                                                 */
                                                 start_date?: null | string;
-                                                /** @description End date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description End date (YYYY-MM-DD)
+                                                 */
                                                 end_date?: null | string;
-                                                /** @description Instant date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description Instant date (YYYY-MM-DD)
+                                                 */
                                                 instant_date?: null | string;
                                                 /** @description Segment information */
                                                 segment?: null | {
@@ -3899,7 +4400,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -3949,7 +4450,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": [
                      *                 {
                      *                   "concept": "NetCashProvidedByUsedInOperatingActivitiesContinuingOperationsAbstract",
@@ -3991,7 +4492,10 @@ export interface operations {
                                 calendar_quarter: number;
                                 /** @description Type of fiscal period */
                                 fiscal_period_type: string;
-                                /** @description Period end date (YYYY-MM-DD) */
+                                /**
+                                 * Format: date
+                                 * @description Period end date (YYYY-MM-DD)
+                                 */
                                 period_end: string;
                                 facts: Array<components["schemas"]["PresentationFact"]>;
                             }>;
@@ -4011,7 +4515,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -4061,7 +4565,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "RevenueFromContractWithCustomerExcludingAssessedTax": 416161000000,
                      *                 "CostOfGoodsAndServicesSold": 220960000000,
@@ -4105,7 +4609,10 @@ export interface operations {
                                 calendar_quarter: number;
                                 /** @description Type of fiscal period */
                                 fiscal_period_type: string;
-                                /** @description Period end date (YYYY-MM-DD) */
+                                /**
+                                 * Format: date
+                                 * @description Period end date (YYYY-MM-DD)
+                                 */
                                 period_end: string;
                                 /** @description As-reported facts keyed by concept */
                                 facts: {
@@ -4128,7 +4635,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -4183,7 +4690,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "RevenueFromContractWithCustomerExcludingAssessedTax": {
                      *                   "value": 416161000000,
@@ -4302,7 +4809,10 @@ export interface operations {
                                 calendar_quarter: number;
                                 /** @description Type of fiscal period */
                                 fiscal_period_type: string;
-                                /** @description Period end date (YYYY-MM-DD) */
+                                /**
+                                 * Format: date
+                                 * @description Period end date (YYYY-MM-DD)
+                                 */
                                 period_end: string;
                                 facts: {
                                     [key: string]: {
@@ -4322,11 +4832,20 @@ export interface operations {
                                                 value: number;
                                                 /** @description Financial concept */
                                                 concept: string;
-                                                /** @description Start date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description Start date (YYYY-MM-DD)
+                                                 */
                                                 start_date?: null | string;
-                                                /** @description End date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description End date (YYYY-MM-DD)
+                                                 */
                                                 end_date?: null | string;
-                                                /** @description Instant date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description Instant date (YYYY-MM-DD)
+                                                 */
                                                 instant_date?: null | string;
                                                 /** @description Segment information */
                                                 segment?: null | {
@@ -4373,7 +4892,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -4423,7 +4942,7 @@ export interface operations {
                      *               "calendar_year": 2025,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27 00:00:00",
+                     *               "period_end": "2025-09-27",
                      *               "facts": [
                      *                 {
                      *                   "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
@@ -4458,7 +4977,10 @@ export interface operations {
                                 calendar_quarter: number;
                                 /** @description Type of fiscal period */
                                 fiscal_period_type: string;
-                                /** @description Period end date (YYYY-MM-DD) */
+                                /**
+                                 * Format: date
+                                 * @description Period end date (YYYY-MM-DD)
+                                 */
                                 period_end: string;
                                 facts: Array<components["schemas"]["PresentationFact"]>;
                             }>;
@@ -4478,7 +5000,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers)
+                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers). Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL,MSFT
                  */
                 identifiers: string;
@@ -4641,7 +5163,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers)
+                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers). Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL,MSFT
                  */
                 identifiers: string;
@@ -4988,11 +5510,20 @@ export interface operations {
                                                     value: number;
                                                     /** @description Financial concept */
                                                     concept: string;
-                                                    /** @description Start date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description Start date (YYYY-MM-DD)
+                                                     */
                                                     start_date?: null | string;
-                                                    /** @description End date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description End date (YYYY-MM-DD)
+                                                     */
                                                     end_date?: null | string;
-                                                    /** @description Instant date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description Instant date (YYYY-MM-DD)
+                                                     */
                                                     instant_date?: null | string;
                                                     /** @description Segment information */
                                                     segment?: null | {
@@ -5043,11 +5574,20 @@ export interface operations {
                                                     value: number;
                                                     /** @description Financial concept */
                                                     concept: string;
-                                                    /** @description Start date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description Start date (YYYY-MM-DD)
+                                                     */
                                                     start_date?: null | string;
-                                                    /** @description End date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description End date (YYYY-MM-DD)
+                                                     */
                                                     end_date?: null | string;
-                                                    /** @description Instant date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description Instant date (YYYY-MM-DD)
+                                                     */
                                                     instant_date?: null | string;
                                                     /** @description Segment information */
                                                     segment?: null | {
@@ -5098,11 +5638,20 @@ export interface operations {
                                                     value: number;
                                                     /** @description Financial concept */
                                                     concept: string;
-                                                    /** @description Start date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description Start date (YYYY-MM-DD)
+                                                     */
                                                     start_date?: null | string;
-                                                    /** @description End date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description End date (YYYY-MM-DD)
+                                                     */
                                                     end_date?: null | string;
-                                                    /** @description Instant date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description Instant date (YYYY-MM-DD)
+                                                     */
                                                     instant_date?: null | string;
                                                     /** @description Segment information */
                                                     segment?: null | {
@@ -5148,7 +5697,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers)
+                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers). Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL,MSFT
                  */
                 identifiers: string;
@@ -5318,7 +5867,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "count": 6207,
+                     *       "count": 6217,
                      *       "companies": [
                      *         {
                      *           "cik": "0001090872",
@@ -5351,7 +5900,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -5391,12 +5940,12 @@ export interface operations {
                      *           "is_delisted": false,
                      *           "list_date": "1980-12-12",
                      *           "employees": 166000,
-                     *           "market_cap": 4991209560000,
+                     *           "market_cap": 5081985359600,
                      *           "shares_outstanding": 14594180000,
                      *           "insider_own_pct": 0.06,
-                     *           "insider_own_shares": 9342562,
-                     *           "inst_own_pct": 0.13,
-                     *           "inst_own_shares": 19413713,
+                     *           "insider_own_shares": 9340163,
+                     *           "inst_own_pct": 61.65,
+                     *           "inst_own_shares": 8998013800,
                      *           "short_float_pct": 0.83,
                      *           "short_float_shares": 120763539,
                      *           "homepage_url": "https://www.apple.com",
@@ -5506,7 +6055,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -5622,7 +6171,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -5742,7 +6291,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "count": 748,
+                     *       "count": 752,
                      *       "companies": [
                      *         {
                      *           "cik": "0000320193",
@@ -5782,7 +6331,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -6007,6 +6556,21 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "event": {
+                     *         "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                     *         "cik": "0000789019",
+                     *         "symbol": "MSFT",
+                     *         "conference_date": "2026-07-29T00:00:00.000Z"
+                     *       },
+                     *       "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/audio/q4-fy2026-earnings-call-510kqr.mp3",
+                     *       "duration_seconds": 3919,
+                     *       "bytes": 31350117,
+                     *       "codec": "mp3",
+                     *       "capture_path": "browser_audio"
+                     *     }
+                     */
                     "application/json": {
                         event: {
                             /**
@@ -6112,21 +6676,21 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "from": "2026-10-21",
-                     *       "to": "2026-11-04",
+                     *       "from": "2026-10-29",
+                     *       "to": "2026-11-12",
                      *       "events": [
                      *         {
-                     *           "event_id": "30b4bfbf-cbee-4bc0-9b05-db29769a0432",
+                     *           "event_id": "0113a5ee-e3cd-4f06-8595-96a9c9f115f3",
                      *           "source": "us",
-                     *           "cik": "0001176334",
-                     *           "symbol": "MMLP",
-                     *           "company_name": "Martin Midstream Partners LP",
-                     *           "exchange": "NASDAQ",
+                     *           "cik": "0001122411",
+                     *           "symbol": "ASX",
+                     *           "company_name": "ASE Technology Holding Co., Ltd.",
+                     *           "exchange": "NYSE",
                      *           "event_type": "earnings_call",
                      *           "event_title": null,
                      *           "fiscal_year": 2026,
                      *           "fiscal_quarter": 3,
-                     *           "scheduled_at": "2026-10-21T00:00:00.000Z",
+                     *           "scheduled_at": "2026-10-29T00:00:00.000Z",
                      *           "tz": "America/New_York",
                      *           "date_status": "confirmed",
                      *           "call_time_source": null,
@@ -6134,19 +6698,19 @@ export interface operations {
                      *           "session": null,
                      *           "started_at": null,
                      *           "ended_at": null,
-                     *           "results_released_at": null,
+                     *           "results_released_at": "2026-10-29T10:08:03.000Z",
                      *           "capture_status": "pending",
                      *           "reschedule_count": 0,
                      *           "has_transcript": false,
                      *           "has_audio": false,
                      *           "has_slides": false,
                      *           "has_press_release": false,
-                     *           "has_documents": false,
-                     *           "webcast_url": null,
+                     *           "has_documents": true,
+                     *           "webcast_url": "https://zoom.us/webinar/register/WN_dhsOpYJfR5--F4QQ0B7KqQ",
                      *           "video": null
                      *         }
                      *       ],
-                     *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/calendar?offset=100&limit=100&from=2026-10-21&to=2026-11-04"
+                     *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/calendar?offset=100&limit=100&from=2026-10-29&to=2026-11-12"
                      *     }
                      */
                     "application/json": {
@@ -6419,7 +6983,7 @@ export interface operations {
                              * @description How the IR section was read (a call document: where it was found)
                              * @enum {string}
                              */
-                            origin: "agent" | "agent_archive" | "edgar_exhibit" | "edgar_filing" | "html_page" | "ir_listing" | "json_feed" | "notified_listing" | "playbook_pattern" | "q4_event" | "q4_events_feed" | "q4_reports" | "q4_reports_feed";
+                            origin: "agent" | "agent_archive" | "edgar_exhibit" | "edgar_filing" | "html_page" | "ir_listing" | "ir_site" | "json_feed" | "notified_listing" | "playbook_pattern" | "q4_event" | "q4_events_feed" | "q4_reports" | "q4_reports_feed";
                             /** @description company = a transcript the issuer published itself; null = not assessed */
                             producer: null | string;
                             /**
@@ -6575,35 +7139,35 @@ export interface operations {
                      *       },
                      *       "documents": [
                      *         {
-                     *           "document_id": "f06b3e8d-169d-4142-a558-435c93a02232",
+                     *           "document_id": "065c2cc6-51f2-4cfb-be36-477de01fe6dc",
                      *           "source": "company",
                      *           "section": "esg",
                      *           "kind": "esg_report",
-                     *           "year": 2030,
-                     *           "period": null,
-                     *           "group": "esg/2030",
-                     *           "group_label": "ESG 2030",
+                     *           "year": 2026,
+                     *           "period": "FY",
+                     *           "group": "esg/2026",
+                     *           "group_label": "ESG 2026",
                      *           "category": "esg",
                      *           "event_id": null,
                      *           "event_type": null,
                      *           "event_date": null,
-                     *           "title": "Microsoft datacenters in Finland",
-                     *           "source_label": "Learn more",
-                     *           "source_url": "https://local.microsoft.com/wp-content/uploads/2025/10/Microsoft-datacenters-in-Finland.pdf",
-                     *           "page_url": "https://www.microsoft.com/en-us/corporate-responsibility/topics/sustainability/",
-                     *           "origin": "html_page",
+                     *           "title": "2026 Environmental Sustainability Data Factsheet",
+                     *           "source_label": null,
+                     *           "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/msc/documents/presentations/CSR/2026-Microsoft-Environmental-Data-Fact-Sheet-PDF.pdf",
+                     *           "page_url": "https://www.microsoft.com/en-us/corporate-responsibility/reports-hub",
+                     *           "origin": "agent",
                      *           "producer": null,
                      *           "confidence": "medium",
                      *           "trust_tier": "confirmed_domain",
                      *           "content_type": "application/pdf",
-                     *           "bytes": 11966273,
-                     *           "pages": 5,
+                     *           "bytes": 3912081,
+                     *           "pages": 28,
                      *           "link_status": null,
-                     *           "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/documents/esg/2030/microsoft-datacenters-in-finland.pdf?X-Amz-Signature=…",
-                     *           "pages_url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/documents/esg/2030/microsoft-datacenters-in-finland.pdf.pages.json?X-Amz-Signature=…",
-                     *           "expires_at": "2026-10-21T16:27:16.389Z",
-                     *           "created_at": "2026-10-16T20:46:08.960Z",
-                     *           "updated_at": "2026-10-21T13:18:13.882Z"
+                     *           "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/esg/2026/2026-environmental-sustainability-data-factsheet.pdf?X-Amz-Signature=…",
+                     *           "pages_url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/esg/2026/text/2026-environmental-sustainability-data-factsheet.pdf.pages.json?X-Amz-Signature=…",
+                     *           "expires_at": "2026-10-29T12:54:37.501Z",
+                     *           "created_at": "2026-10-14T07:39:24.133Z",
+                     *           "updated_at": "2026-10-21T19:15:32.574Z"
                      *         }
                      *       ],
                      *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/company-documents?identifier=MSFT&offset=50&limit=50"
@@ -6683,7 +7247,7 @@ export interface operations {
                              * @description How the IR section was read (a call document: where it was found)
                              * @enum {string}
                              */
-                            origin: "agent" | "agent_archive" | "edgar_exhibit" | "edgar_filing" | "html_page" | "ir_listing" | "json_feed" | "notified_listing" | "playbook_pattern" | "q4_event" | "q4_events_feed" | "q4_reports" | "q4_reports_feed";
+                            origin: "agent" | "agent_archive" | "edgar_exhibit" | "edgar_filing" | "html_page" | "ir_listing" | "ir_site" | "json_feed" | "notified_listing" | "playbook_pattern" | "q4_event" | "q4_events_feed" | "q4_reports" | "q4_reports_feed";
                             /** @description company = a transcript the issuer published itself; null = not assessed */
                             producer: null | string;
                             /**
@@ -7048,8 +7612,8 @@ export interface operations {
                      *           "source_label": null,
                      *           "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/OutlookFY27Q1",
                      *           "accession_number": null,
-                     *           "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/2026-07-29/documents/cfo-commentary/q4-fy2026-cfo-commentary.pdf?X-Amz-Signature=…",
-                     *           "expires_at": "2026-10-21T16:27:16.218Z",
+                     *           "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-cfo-commentary.pdf?X-Amz-Signature=…",
+                     *           "expires_at": "2026-10-29T12:54:37.262Z",
                      *           "content_type": "application/pdf",
                      *           "bytes": 487074,
                      *           "pages": 6,
@@ -7101,7 +7665,7 @@ export interface operations {
                              * @description Where the document was found
                              * @enum {string}
                              */
-                            origin: "agent_archive" | "edgar_exhibit" | "edgar_filing" | "ir_listing" | "json_feed" | "playbook_pattern" | "q4_event" | "q4_reports";
+                            origin: "agent_archive" | "edgar_exhibit" | "edgar_filing" | "ir_listing" | "ir_site" | "json_feed" | "playbook_pattern" | "q4_event" | "q4_reports";
                             /** @description company = the issuer's own transcript (company_transcript); null = not assessed */
                             producer: null | string;
                             /** @description The link label on the source page */
@@ -7217,6 +7781,59 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "query": "Azure growth",
+                     *       "mode": "lexical",
+                     *       "coverage": {
+                     *         "completeness": "partial",
+                     *         "lexical": {
+                     *           "state": "partial",
+                     *           "indexed": 484,
+                     *           "pending": 23,
+                     *           "failed": 0
+                     *         },
+                     *         "reasons": [
+                     *           "lexical_backfill_pending"
+                     *         ]
+                     *       },
+                     *       "hits": [
+                     *         {
+                     *           "score": 0.1403,
+                     *           "match": {
+                     *             "type": "lexical",
+                     *             "lexical_rank": 1,
+                     *             "spans": [
+                     *               {
+                     *                 "start": 25,
+                     *                 "end": 30
+                     *               }
+                     *             ]
+                     *           },
+                     *           "document_id": "bd3ef3aa-751a-40e8-9a1a-98af4602dcee",
+                     *           "table": "company_documents",
+                     *           "event_id": null,
+                     *           "cik": "0000789019",
+                     *           "symbol": "MSFT",
+                     *           "kind": "proxy_statement",
+                     *           "section": "proxy",
+                     *           "year": 2025,
+                     *           "period": "FY",
+                     *           "page": 45,
+                     *           "heading": null,
+                     *           "chunk_index": 1174,
+                     *           "text": "FY24 PSA Metrics Weights Azure and Other Cloud Services Revenue Growth 35% Microsoft Cloud Revenue Growth, excluding Azure and Other Cloud Services 35% Search and News Advertising Revenue (ex TAC) Growth 10% Xbox Content and Services Revenu…",
+                     *           "text_truncated": false,
+                     *           "title": "2025 Proxy Statement",
+                     *           "group": "reports/2025",
+                     *           "group_label": "Reports 2025",
+                     *           "category": "reports",
+                     *           "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/reports/2025/2025-proxy-statement.pdf?X-Amz-Signature=…",
+                     *           "expires_at": "2026-10-29T12:54:38.230Z"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description The query as searched */
                         query: string;
@@ -7566,22 +8183,22 @@ export interface operations {
                      *       "covered": true,
                      *       "events": [
                      *         {
-                     *           "event_id": "e9eb6e9e-21e8-41d7-8d9e-da648e0002a1",
+                     *           "event_id": "1a191870-5d98-4711-9211-ba8aa7a79b7d",
                      *           "source": "us",
                      *           "cik": "0000789019",
                      *           "symbol": "MSFT",
                      *           "company_name": "Microsoft Corp",
                      *           "exchange": "NASDAQ",
-                     *           "event_type": "earnings_call",
-                     *           "event_title": null,
-                     *           "fiscal_year": 2027,
-                     *           "fiscal_quarter": 1,
-                     *           "scheduled_at": "2026-10-28T21:30:00.000Z",
+                     *           "event_type": "agm",
+                     *           "event_title": "Microsoft 2026 Annual Shareholders Meeting (virtual)",
+                     *           "fiscal_year": null,
+                     *           "fiscal_quarter": null,
+                     *           "scheduled_at": "2026-12-08T00:00:00.000Z",
                      *           "tz": "America/Los_Angeles",
                      *           "date_status": "confirmed",
-                     *           "call_time_source": "wire",
-                     *           "call_time_confidence": "high",
-                     *           "session": "amc",
+                     *           "call_time_source": null,
+                     *           "call_time_confidence": null,
+                     *           "session": null,
                      *           "started_at": null,
                      *           "ended_at": null,
                      *           "results_released_at": null,
@@ -7592,7 +8209,7 @@ export interface operations {
                      *           "has_slides": false,
                      *           "has_press_release": false,
                      *           "has_documents": false,
-                     *           "webcast_url": null,
+                     *           "webcast_url": "https://microsoft.com/en-us/investor/annual-meeting",
                      *           "video": null
                      *         }
                      *       ],
@@ -8061,8 +8678,8 @@ export interface operations {
                  */
                 identifier: string;
                 /**
-                 * @description Normalized metric (e.g. revenue, eps_non_gaap, segment:iphone)
-                 * @example revenue
+                 * @description Normalized metric (e.g. revenue, eps_non_gaap, revenue_growth, segment:iphone)
+                 * @example revenue_growth
                  */
                 metric: string;
                 /**
@@ -8097,7 +8714,7 @@ export interface operations {
                      * @example {
                      *       "symbol": "MSFT",
                      *       "cik": "0000789019",
-                     *       "metric_normalized": "revenue",
+                     *       "metric_normalized": "revenue_growth",
                      *       "series": [
                      *         {
                      *           "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
@@ -8653,7 +9270,7 @@ export interface operations {
                      *       "participants": [
                      *         {
                      *           "speaker_label": "spk00",
-                     *           "person_id": "6d664b16-4705-4481-8473-2c0370236a93",
+                     *           "person_id": "a402b882-300f-4241-8368-f62dff516b0d",
                      *           "name": "Operator",
                      *           "title": null,
                      *           "firm": null,
@@ -9598,7 +10215,7 @@ export interface operations {
                      *         "completeness": "complete",
                      *         "lexical": {
                      *           "state": "ready",
-                     *           "indexed": 1,
+                     *           "indexed": 4,
                      *           "pending": 0,
                      *           "failed": 0
                      *         },
@@ -9606,39 +10223,35 @@ export interface operations {
                      *       },
                      *       "hits": [
                      *         {
-                     *           "event_id": "1a7bc938-1338-4128-9ccb-99d6a9646ea2",
+                     *           "event_id": "947e3f21-47e0-4076-b83d-099a1b36c7a9",
                      *           "cik": "0000789019",
                      *           "symbol": "MSFT",
-                     *           "conference_date": "2026-04-29T00:00:00.000Z",
+                     *           "conference_date": "2026-01-28T00:00:00.000Z",
                      *           "fiscal_year": 2026,
-                     *           "fiscal_quarter": 3,
+                     *           "fiscal_quarter": 2,
                      *           "type": "qa",
                      *           "speaker": {
-                     *             "label": "spk06",
-                     *             "name": "Unknown speaker 2",
+                     *             "label": "spk05",
+                     *             "name": "Keith Weiss",
                      *             "title": null
                      *           },
-                     *           "start_ms": 2953487,
-                     *           "end_ms": 2987496,
-                     *           "chunk_index": 41,
-                     *           "text": "you. Thanks, Mark. Let me maybe start with Azure, which given its size and its growth rates, where we've talked about acceleration from where we are, which is the guy to 39 to 40 into a bigger number in the second half of the calendar year.…",
-                     *           "text_truncated": true,
-                     *           "score": 0.3125,
+                     *           "start_ms": 2161066,
+                     *           "end_ms": 2188702,
+                     *           "chunk_index": 74,
+                     *           "text": "And I think that fundamentally comes down to a concern on the ROI on this CapEx spend over time. So I was hoping you guys could help us fill in some of the blanks a little bit in terms of how should we think about capacity expansion and wha…",
+                     *           "text_truncated": false,
+                     *           "score": 3.8458,
                      *           "match": {
                      *             "type": "lexical",
                      *             "lexical_rank": 1,
                      *             "spans": [
                      *               {
-                     *                 "start": 43,
-                     *                 "end": 48
-                     *               },
-                     *               {
-                     *                 "start": 79,
-                     *                 "end": 85
+                     *                 "start": 269,
+                     *                 "end": 274
                      *               }
                      *             ]
                      *           },
-                     *           "audio_url": null,
+                     *           "audio_url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q2/audio/q2-fy2026-earnings-call-2vvlfp.mp3#t=2161",
                      *           "slide": null
                      *         }
                      *       ]
@@ -9786,8 +10399,8 @@ export interface operations {
                      *         "conference_date": "2026-07-29T00:00:00.000Z"
                      *       },
                      *       "deck": {
-                     *         "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/2026-07-29/slides/q4-fy2026-earnings-presentation.pdf?X-Amz-Signature=…",
-                     *         "expires_at": "2026-10-21T16:27:16.031Z",
+                     *         "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-earnings-presentation.pdf?X-Amz-Signature=…",
+                     *         "expires_at": "2026-10-29T12:54:37.020Z",
                      *         "pages": 23,
                      *         "origin": "ir_page",
                      *         "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/SlidesFY26Q4.pptx",
@@ -9797,15 +10410,10 @@ export interface operations {
                      *         {
                      *           "page": 1,
                      *           "title": null,
-                     *           "image_url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/2026-07-29/slides/q4-fy2026-earnings-presentation/page-001.webp?X-Amz-Signature=…"
+                     *           "image_url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/earnings/fy2026/q4/slides/q4-fy2026-earnings-presentation/page-001.webp?X-Amz-Signature=…"
                      *         }
                      *       ],
-                     *       "timeline": [
-                     *         {
-                     *           "at_ms": 312000,
-                     *           "image_url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/2026-07-29/slides/player/0b6f4c1e-5a7d-4f0e-9a51-2f7c3b8d1e64/312000.webp?X-Amz-Signature=…"
-                     *         }
-                     *       ]
+                     *       "timeline": []
                      *     }
                      */
                     "application/json": {
@@ -9981,7 +10589,7 @@ export interface operations {
                      *           "name": "Operator",
                      *           "title": null,
                      *           "role": "operator",
-                     *           "person_id": "6d664b16-4705-4481-8473-2c0370236a93",
+                     *           "person_id": "a402b882-300f-4241-8368-f62dff516b0d",
                      *           "start_ms": 800,
                      *           "end_ms": 24977,
                      *           "speaker_confidence": 1,
@@ -10408,9 +11016,9 @@ export interface operations {
                     /** @description Event names to receive (the plan decides which; `ping` needs no subscription — every subscription receives it) */
                     events: Array<string>;
                     filters?: {
-                        /** @description Only these companies (at most 10 / 25 / 100 on LITE / STANDARD / PRO) */
+                        /** @description Only these companies (at most 10 / 25 / 100 on LITE / STANDARD / PRO); a news item matches when it mentions any of them */
                         ciks?: Array<string>;
-                        /** @description Keyword alerts (PRO, with earnings_call.keyword_hit in events): whole-word, case-insensitive matches */
+                        /** @description Keyword alerts (PRO, with earnings_call.keyword_hit in events): whole-word, case-insensitive matches; with news.published they also narrow news items to those whose headline or lede names one */
                         keywords?: Array<string>;
                     };
                 };
@@ -10428,11 +11036,11 @@ export interface operations {
                         id: string;
                         /** @description HTTPS endpoint the deliveries are POSTed to */
                         url: string;
-                        events: Array<"earnings_call.assets_ready" | "earnings_call.documents_updated" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping">;
+                        events: Array<"earnings_call.assets_ready" | "earnings_call.documents_updated" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "news.published" | "ping">;
                         filters: {
                             /** @description 10-digit CIKs; empty = every company */
                             ciks: Array<string>;
-                            /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript */
+                            /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript, and news.published (headline + lede) */
                             keywords: Array<string>;
                         };
                         /** @description false once disabled */
@@ -10585,7 +11193,7 @@ export interface operations {
                              */
                             delivery_id: string;
                             /** @enum {string} */
-                            event: "earnings_call.assets_ready" | "earnings_call.documents_updated" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping";
+                            event: "earnings_call.assets_ready" | "earnings_call.documents_updated" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "news.published" | "ping";
                             /** @description 1-based attempt number */
                             attempt: number;
                             /** @enum {string} */
@@ -10682,11 +11290,11 @@ export interface operations {
                             id: string;
                             /** @description HTTPS endpoint the deliveries are POSTed to */
                             url: string;
-                            events: Array<"earnings_call.assets_ready" | "earnings_call.documents_updated" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping">;
+                            events: Array<"earnings_call.assets_ready" | "earnings_call.documents_updated" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "news.published" | "ping">;
                             filters: {
                                 /** @description 10-digit CIKs; empty = every company */
                                 ciks: Array<string>;
-                                /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript */
+                                /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript, and news.published (headline + lede) */
                                 keywords: Array<string>;
                             };
                             /** @description false once disabled */
@@ -10930,11 +11538,11 @@ export interface operations {
                         id: string;
                         /** @description HTTPS endpoint the deliveries are POSTed to */
                         url: string;
-                        events: Array<"earnings_call.assets_ready" | "earnings_call.documents_updated" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "ping">;
+                        events: Array<"earnings_call.assets_ready" | "earnings_call.documents_updated" | "earnings_call.ended" | "earnings_call.guidance_flash" | "earnings_call.keyword_hit" | "earnings_call.rescheduled" | "earnings_call.scheduled" | "earnings_call.started" | "earnings_call.transcript_corrected" | "earnings_call.transcript_provisional" | "earnings_call.transcript_ready" | "news.published" | "ping">;
                         filters: {
                             /** @description 10-digit CIKs; empty = every company */
                             ciks: Array<string>;
-                            /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript */
+                            /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript, and news.published (headline + lede) */
                             keywords: Array<string>;
                         };
                         /** @description false once disabled */
@@ -10990,7 +11598,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -11043,39 +11651,39 @@ export interface operations {
                      *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "3": {
-                     *                   "cagr_cash_from_operating_activities": -3,
-                     *                   "cagr_total_revenue": 1.81,
                      *                   "cagr_total_assets": 0.61,
-                     *                   "cagr_cash_from_investing_activities": -56.04,
+                     *                   "cagr_total_revenue": 1.81,
+                     *                   "cagr_cash_from_operating_activities": -3,
                      *                   "cagr_total_liabilities": -1.86,
+                     *                   "cagr_cash_from_investing_activities": -56.04,
                      *                   "cagr_gross_profit": 4.56,
-                     *                   "cagr_total_equity": 13.32,
-                     *                   "cagr_ebitda": 3.5,
                      *                   "cagr_cash_from_financing_activities": 2.91,
+                     *                   "cagr_ebitda": 3.5,
+                     *                   "cagr_total_equity": 13.32,
                      *                   "cagr_shareholders_equity": 13.32,
-                     *                   "cagr_free_cash_flow": -3.95,
                      *                   "cagr_operating_income_ebit": 3.66,
-                     *                   "cagr_ebt": 3.68,
+                     *                   "cagr_free_cash_flow": -3.95,
                      *                   "cagr_dividend_per_share": 4.07,
+                     *                   "cagr_ebt": 3.68,
                      *                   "cagr_net_income": 3.92,
                      *                   "cagr_basic_eps": 6.79,
                      *                   "cagr_diluted_eps": 6.88
                      *                 },
                      *                 "5": {
                      *                   "cagr_total_assets": 2.09,
-                     *                   "cagr_cash_from_operating_activities": 6.68,
                      *                   "cagr_total_revenue": 8.68,
-                     *                   "cagr_total_liabilities": 2,
-                     *                   "cagr_gross_profit": 13.21,
+                     *                   "cagr_cash_from_operating_activities": 6.68,
                      *                   "cagr_cash_from_investing_activities": 4.19,
+                     *                   "cagr_gross_profit": 13.21,
+                     *                   "cagr_total_liabilities": 2,
+                     *                   "cagr_cash_from_financing_activities": 6.81,
                      *                   "cagr_ebitda": 13.35,
                      *                   "cagr_total_equity": 2.45,
-                     *                   "cagr_cash_from_financing_activities": 6.81,
-                     *                   "cagr_free_cash_flow": 6.13,
                      *                   "cagr_shareholders_equity": 2.45,
                      *                   "cagr_operating_income_ebit": 14.95,
-                     *                   "cagr_dividend_per_share": 4.92,
+                     *                   "cagr_free_cash_flow": 6.13,
                      *                   "cagr_ebt": 14.62,
+                     *                   "cagr_dividend_per_share": 4.92,
                      *                   "cagr_net_income": 14.3,
                      *                   "cagr_basic_eps": 17.74,
                      *                   "cagr_diluted_eps": 17.86
@@ -11085,13 +11693,13 @@ export interface operations {
                      *                   "cagr_total_revenue": 5.94,
                      *                   "cagr_cash_from_operating_activities": 3.21,
                      *                   "cagr_cash_from_investing_activities": -16.57,
-                     *                   "cagr_gross_profit": 7.62,
                      *                   "cagr_total_liabilities": 5.25,
+                     *                   "cagr_gross_profit": 7.62,
                      *                   "cagr_ebitda": 7.15,
-                     *                   "cagr_total_equity": -4.7,
                      *                   "cagr_cash_from_financing_activities": 21.15,
-                     *                   "cagr_shareholders_equity": -4.7,
+                     *                   "cagr_total_equity": -4.7,
                      *                   "cagr_free_cash_flow": 3.5,
+                     *                   "cagr_shareholders_equity": -4.7,
                      *                   "cagr_operating_income_ebit": 6.45,
                      *                   "cagr_dividend_per_share": 7.46,
                      *                   "cagr_ebt": 6.23,
@@ -11157,7 +11765,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -11291,7 +11899,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -11447,7 +12055,7 @@ export interface operations {
                     /**
                      * @example {
                      *       "status": "ok",
-                     *       "timestamp": "2026-10-21T16:11:57.458Z"
+                     *       "timestamp": "2026-10-29T12:39:17.782Z"
                      *     }
                      */
                     "application/json": {
@@ -11456,7 +12064,10 @@ export interface operations {
                          * @default ok
                          */
                         status: string;
-                        /** @description Current server time */
+                        /**
+                         * Format: date-time
+                         * @description Current server time (ISO 8601, UTC)
+                         */
                         timestamp: string;
                     };
                 };
@@ -11467,7 +12078,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Company ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -11520,11 +12131,11 @@ export interface operations {
                      *       "cik": "0000320193",
                      *       "transactions": [
                      *         {
-                     *           "id": "27f42c3b0f912489509b4b8cc5626ca8:f7578de3e8794e12add8:0",
-                     *           "accession_number": "0001140361-26-040127",
+                     *           "id": "34c0a2968c321a49eaf256c3037300fb:8fc5165120fc4e82cf77:0",
+                     *           "accession_number": "0001140361-26-040540",
                      *           "cik": "0000320193",
-                     *           "filed_at": "2026-10-19 22:32:55",
-                     *           "reporting_person_name": "Borders Ben",
+                     *           "filed_at": "2026-10-22T22:32:20.000Z",
+                     *           "reporting_person_name": "Newstead Jennifer",
                      *           "reporting_person_is_director": false,
                      *           "reporting_person_is_officer": true,
                      *           "reporting_person_is_ten_percent_owner": false,
@@ -11532,14 +12143,14 @@ export interface operations {
                      *           "security_title": "Common Stock",
                      *           "acquired_disposed": "D",
                      *           "coding_code": "S",
-                     *           "shares": 151,
-                     *           "share_price": 343.08,
-                     *           "total": 51806,
-                     *           "shares_owned_following_transaction": 39417,
-                     *           "period_of_report": "2026-10-15 00:00:00",
-                     *           "reporting_person_officer_title": true,
+                     *           "shares": 2399,
+                     *           "share_price": 339.62,
+                     *           "total": 814749,
+                     *           "shares_owned_following_transaction": 34795,
+                     *           "period_of_report": "2026-10-20",
+                     *           "reporting_person_officer_title": "SVP, GC and Government Affairs",
                      *           "reporting_person_other_text": null,
-                     *           "shares_owned_before_transaction": 39568
+                     *           "shares_owned_before_transaction": 37194
                      *         }
                      *       ]
                      *     }
@@ -11559,9 +12170,15 @@ export interface operations {
                             accession_number: string;
                             /** @description CIK of the company */
                             cik: string;
-                            /** @description Filing timestamp (ISO string) */
+                            /**
+                             * Format: date-time
+                             * @description Filing time (ISO 8601, UTC)
+                             */
                             filed_at: string;
-                            /** @description Period of report (ISO date) */
+                            /**
+                             * Format: date
+                             * @description Period of report (YYYY-MM-DD)
+                             */
                             period_of_report?: null | string;
                             /** @description Name of the reporting insider */
                             reporting_person_name: string;
@@ -11573,8 +12190,8 @@ export interface operations {
                             reporting_person_is_ten_percent_owner: boolean;
                             /** @description Insider flagged as other */
                             reporting_person_is_other: boolean;
-                            /** @description Officer title flag (if applicable) */
-                            reporting_person_officer_title?: boolean | null;
+                            /** @description Officer title as reported (e.g. Chief Executive Officer) */
+                            reporting_person_officer_title?: null | string;
                             /** @description Other role description */
                             reporting_person_other_text?: null | string;
                             /** @description Security title */
@@ -11607,7 +12224,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Company ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -11650,28 +12267,29 @@ export interface operations {
                      *       "cik": "0000320193",
                      *       "holdings": [
                      *         {
-                     *           "accession_number": "0001546007-26-000008",
-                     *           "calendar_quarter": 3,
-                     *           "calendar_year": 2026,
+                     *           "accession_number": "0000102909-26-000031",
+                     *           "calendar_quarter": 4,
+                     *           "calendar_year": 2025,
                      *           "cusip_company": "037833100",
-                     *           "cik_institution": "0001546007",
-                     *           "dollar_value": 6431933627,
-                     *           "filing_date": "2026-10-15 00:00:00",
-                     *           "link_to_filing_details": "https://www.sec.gov/Archives/edgar/data/1546007/000154600726000008/primary_doc.xml",
-                     *           "period_end": "2026-09-30 00:00:00",
-                     *           "shares_or_principal_amount": 19313956,
+                     *           "cik_institution": "0000102909",
+                     *           "dollar_value": 387749544852,
+                     *           "filing_date": "2026-01-29",
+                     *           "link_to_filing_details": "https://www.sec.gov/Archives/edgar/data/102909/000010290926000031/primary_doc.xml",
+                     *           "period_end": "2025-12-31",
+                     *           "shares_or_principal_amount": 1426283914,
                      *           "shares_or_principal_amount_type": "SH",
                      *           "cik_company": "0000320193",
                      *           "name_company": "APPLE INC",
                      *           "ticker_company": "AAPL",
-                     *           "name_institution": "Assenagon Asset Management S.A.",
-                     *           "investment_discretion": "SOLE",
+                     *           "name_institution": "VANGUARD GROUP INC",
+                     *           "investment_discretion": "DFND",
                      *           "put_call": null,
-                     *           "voting_authority_none": null,
+                     *           "voting_authority_none": 233,
                      *           "voting_authority_shared": null,
-                     *           "voting_authority_sole": 19313956
+                     *           "voting_authority_sole": null
                      *         }
-                     *       ]
+                     *       ],
+                     *       "next_url": "https://api.data.invinite.com/v1/institutional-ownership/holdings-by-company?identifier=AAPL&offset=100&limit=100"
                      *     }
                      */
                     "application/json": {
@@ -11703,13 +12321,19 @@ export interface operations {
                             name_institution?: null | string;
                             /** @description Position market value in USD */
                             dollar_value: number;
-                            /** @description Filing date (YYYY-MM-DD) */
+                            /**
+                             * Format: date
+                             * @description Filing date (YYYY-MM-DD)
+                             */
                             filing_date: string;
                             /** @description Investment discretion type */
                             investment_discretion?: null | string;
                             /** @description URL to SEC filing details */
                             link_to_filing_details: string;
-                            /** @description Period end date (YYYY-MM-DD) */
+                            /**
+                             * Format: date
+                             * @description Period end date (YYYY-MM-DD)
+                             */
                             period_end: string;
                             /** @description Option type if applicable */
                             put_call?: null | string;
@@ -11774,26 +12398,26 @@ export interface operations {
                      *       "cik_institution": "0001067983",
                      *       "holdings": [
                      *         {
-                     *           "accession_number": "0001193125-26-226661",
-                     *           "calendar_quarter": 1,
+                     *           "accession_number": "0001193125-26-352200",
+                     *           "calendar_quarter": 2,
                      *           "calendar_year": 2026,
                      *           "cusip_company": "037833100",
                      *           "cik_institution": "0001067983",
-                     *           "dollar_value": 57843260493,
-                     *           "filing_date": "2026-05-15 00:00:00",
-                     *           "link_to_filing_details": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526226661/primary_doc.xml",
-                     *           "period_end": "2026-03-31 00:00:00",
+                     *           "dollar_value": 65950296923,
+                     *           "filing_date": "2026-08-14",
+                     *           "link_to_filing_details": "https://www.sec.gov/Archives/edgar/data/1067983/000119312526352200/primary_doc.xml",
+                     *           "period_end": "2026-06-30",
                      *           "shares_or_principal_amount": 227917808,
                      *           "shares_or_principal_amount_type": "SH",
-                     *           "cik_company": null,
+                     *           "cik_company": "0000320193",
                      *           "name_company": "APPLE INC",
-                     *           "ticker_company": null,
+                     *           "ticker_company": "AAPL",
                      *           "name_institution": "BERKSHIRE HATHAWAY INC",
                      *           "investment_discretion": "DFND",
                      *           "put_call": null,
                      *           "voting_authority_none": null,
                      *           "voting_authority_shared": null,
-                     *           "voting_authority_sole": 692000
+                     *           "voting_authority_sole": 227917808
                      *         }
                      *       ]
                      *     }
@@ -11825,13 +12449,19 @@ export interface operations {
                             name_institution?: null | string;
                             /** @description Position market value in USD */
                             dollar_value: number;
-                            /** @description Filing date (YYYY-MM-DD) */
+                            /**
+                             * Format: date
+                             * @description Filing date (YYYY-MM-DD)
+                             */
                             filing_date: string;
                             /** @description Investment discretion type */
                             investment_discretion?: null | string;
                             /** @description URL to SEC filing details */
                             link_to_filing_details: string;
-                            /** @description Period end date (YYYY-MM-DD) */
+                            /**
+                             * Format: date
+                             * @description Period end date (YYYY-MM-DD)
+                             */
                             period_end: string;
                             /** @description Option type if applicable */
                             put_call?: null | string;
@@ -11899,7 +12529,7 @@ export interface operations {
                      *           "name": "1832 Asset Management L.P.",
                      *           "city": "TORONTO",
                      *           "state": "",
-                     *           "country": "",
+                     *           "country": null,
                      *           "street1": "40 TEMPERANCE STREET",
                      *           "street2": "16TH FLOOR",
                      *           "zip_code": "M5H 0B4"
@@ -11947,7 +12577,7 @@ export interface operations {
                  */
                 cik?: string;
                 /**
-                 * @description Company ticker symbol or CIK (at least one of cik or identifier required)
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404. At least one of cik or identifier is required.
                  * @example AAPL
                  */
                 identifier?: string;
@@ -12011,27 +12641,27 @@ export interface operations {
                      *           "cik_institution": "0001067983",
                      *           "cusip_company": "02005N100",
                      *           "type": "reduced",
-                     *           "change_dollar_value": -7726500,
-                     *           "change_shares_or_principal_amount_absolute": 0,
-                     *           "change_shares_or_principal_amount_percent": 0,
-                     *           "shares_or_principal_amount_new": 1275000,
-                     *           "shares_or_principal_amount_old": 1275000,
-                     *           "accession_number": "0001193125-26-226661",
-                     *           "calendar_quarter": 1,
+                     *           "change_dollar_value": 102980000,
+                     *           "change_shares_or_principal_amount_absolute": -2000000,
+                     *           "change_shares_or_principal_amount_percent": -0.06896551724137931,
+                     *           "shares_or_principal_amount_new": 27000000,
+                     *           "shares_or_principal_amount_old": 29000000,
+                     *           "accession_number": "0001193125-26-352200",
+                     *           "calendar_quarter": 2,
                      *           "calendar_year": 2026,
-                     *           "dollar_value": 50018250,
-                     *           "filing_date": "2026-05-15 00:00:00",
-                     *           "period_end": "2026-03-31 00:00:00",
+                     *           "dollar_value": 1240650000,
+                     *           "filing_date": "2026-08-14",
+                     *           "period_end": "2026-06-30",
                      *           "shares_or_principal_amount_type": "SH",
                      *           "name_institution": "BERKSHIRE HATHAWAY INC",
-                     *           "cik_company": null,
+                     *           "cik_company": "0000040729",
                      *           "name_company": "ALLY FINL INC",
-                     *           "ticker_company": null,
+                     *           "ticker_company": "ALLY",
                      *           "investment_discretion": "DFND",
                      *           "put_call": null,
                      *           "voting_authority_none": null,
                      *           "voting_authority_shared": null,
-                     *           "voting_authority_sole": 1275000
+                     *           "voting_authority_sole": 27000000
                      *         }
                      *       ],
                      *       "next_url": "https://api.data.invinite.com/v1/institutional-ownership/transactions?cik=1067983&offset=100&limit=100"
@@ -12077,11 +12707,17 @@ export interface operations {
                             calendar_year: number;
                             /** @description Position market value in USD */
                             dollar_value: number;
-                            /** @description Filing date (YYYY-MM-DD) */
+                            /**
+                             * Format: date
+                             * @description Filing date (YYYY-MM-DD)
+                             */
                             filing_date: string;
                             /** @description Investment discretion type */
                             investment_discretion?: null | string;
-                            /** @description Period end date (YYYY-MM-DD) */
+                            /**
+                             * Format: date
+                             * @description Period end date (YYYY-MM-DD)
+                             */
                             period_end: string;
                             /** @description Option type if applicable */
                             put_call?: null | string;
@@ -12148,28 +12784,34 @@ export interface operations {
                      * @example {
                      *       "ipos": [
                      *         {
-                     *           "listing_date": "2026-10-16 00:00:00",
-                     *           "announced_date": "2026-09-25 00:00:00",
+                     *           "listing_date": "2026-10-30",
+                     *           "announced_date": "2026-10-09",
                      *           "currency_code": "USD",
-                     *           "final_issue_price": 10,
-                     *           "highest_offer_price": 10,
-                     *           "ipo_status": "history",
-                     *           "isin": "KYG870821066",
-                     *           "issue_end_date": "1970-01-01 00:00:00",
-                     *           "issue_start_date": "1970-01-01 00:00:00",
-                     *           "issuer_name": "TCGX Acquisition Corp. II",
-                     *           "last_updated": "2026-10-19 00:00:00",
+                     *           "final_issue_price": null,
+                     *           "highest_offer_price": 21,
+                     *           "ipo_status": "pending",
+                     *           "isin": "US68348G1022",
+                     *           "issue_end_date": null,
+                     *           "issue_start_date": null,
+                     *           "issuer_name": "OPay Ltd.",
+                     *           "last_updated": "2026-10-28T00:00:00.000Z",
                      *           "lot_size": 100,
-                     *           "lowest_offer_price": 10,
-                     *           "max_shares_offered": 10000000,
-                     *           "min_shares_offered": 0,
-                     *           "primary_exchange": "XNAS",
-                     *           "security_description": "Ordinary Shares - Class A",
-                     *           "security_type": "CS",
-                     *           "shares_outstanding": 12950000,
-                     *           "ticker": "TCXB",
-                     *           "total_offer_size": 100000000,
-                     *           "us_code": "G87082106"
+                     *           "lowest_offer_price": 19,
+                     *           "max_shares_offered": 16000000,
+                     *           "min_shares_offered": null,
+                     *           "primary_exchange": "XNYS",
+                     *           "security_description": "ADR",
+                     *           "security_type": "ADRC",
+                     *           "shares_outstanding": null,
+                     *           "ticker": "OPAY",
+                     *           "total_offer_size": 336000000,
+                     *           "us_code": "68348G102",
+                     *           "registration": {
+                     *             "cik": "0002103076",
+                     *             "track_key": "333-299385",
+                     *             "stage": "exchange_approved",
+                     *             "final_offer_price": null
+                     *           }
                      *         }
                      *       ],
                      *       "next_url": "https://api.data.invinite.com/v1/ipos?offset=100&limit=100"
@@ -12178,50 +12820,307 @@ export interface operations {
                     "application/json": {
                         /** @description List of IPO records */
                         ipos: Array<{
-                            /** @description IPO listing date (YYYY-MM-DD) */
-                            listing_date: string;
-                            /** @description IPO announcement date (YYYY-MM-DD) */
-                            announced_date: string;
-                            /** @description Currency code (e.g., USD) */
-                            currency_code: string;
-                            /** @description Final issue price */
-                            final_issue_price: number;
-                            /** @description Highest offer price */
-                            highest_offer_price: number;
+                            /**
+                             * Format: date
+                             * @description IPO listing date (YYYY-MM-DD); null when Massive has no value
+                             */
+                            listing_date: null | string;
+                            /**
+                             * Format: date
+                             * @description IPO announcement date (YYYY-MM-DD); null when Massive has no value
+                             */
+                            announced_date: null | string;
+                            /** @description Currency code (e.g., USD); null when Massive has no value */
+                            currency_code: null | string;
+                            /** @description Final issue price; null when Massive has no value */
+                            final_issue_price: null | number;
+                            /** @description Highest offer price; null when Massive has no value */
+                            highest_offer_price: null | number;
                             /** @description IPO status */
                             ipo_status: string;
-                            /** @description ISIN identifier */
-                            isin: string;
-                            /** @description Issue end date (YYYY-MM-DD) */
-                            issue_end_date: string;
-                            /** @description Issue start date (YYYY-MM-DD) */
-                            issue_start_date: string;
+                            /** @description ISIN identifier; null when Massive has no value */
+                            isin: null | string;
+                            /**
+                             * Format: date
+                             * @description Issue end date (YYYY-MM-DD); null when Massive has no value
+                             */
+                            issue_end_date: null | string;
+                            /**
+                             * Format: date
+                             * @description Issue start date (YYYY-MM-DD); null when Massive has no value
+                             */
+                            issue_start_date: null | string;
                             /** @description Issuer name */
                             issuer_name: string;
-                            /** @description Last updated timestamp */
+                            /**
+                             * Format: date-time
+                             * @description Last update of the row (ISO 8601, UTC)
+                             */
                             last_updated: string;
-                            /** @description Lot size */
-                            lot_size: number;
-                            /** @description Lowest offer price */
-                            lowest_offer_price: number;
-                            /** @description Maximum shares offered */
-                            max_shares_offered: number;
-                            /** @description Minimum shares offered */
-                            min_shares_offered: number;
-                            /** @description Primary exchange */
-                            primary_exchange: string;
-                            /** @description Security description */
-                            security_description: string;
+                            /** @description Lot size; null when Massive has no value */
+                            lot_size: null | number;
+                            /** @description Lowest offer price; null when Massive has no value */
+                            lowest_offer_price: null | number;
+                            /** @description Maximum shares offered; null when Massive has no value */
+                            max_shares_offered: null | number;
+                            /** @description Minimum shares offered; null when Massive has no value */
+                            min_shares_offered: null | number;
+                            /** @description Primary exchange; null when Massive has no value */
+                            primary_exchange: null | string;
+                            /** @description Security description; null when Massive has no value */
+                            security_description: null | string;
                             /** @description Security type */
                             security_type: string;
-                            /** @description Shares outstanding */
-                            shares_outstanding: number;
+                            /** @description Shares outstanding; null when Massive has no value */
+                            shares_outstanding: null | number;
                             /** @description Ticker symbol */
                             ticker: string;
-                            /** @description Total offer size */
-                            total_offer_size: number;
-                            /** @description Country code */
-                            us_code: string;
+                            /** @description Total offer size; null when Massive has no value */
+                            total_offer_size: null | number;
+                            /** @description CUSIP; null when Massive has no value */
+                            us_code: null | string;
+                            /** @description The SEC registration track (GET /v1/ipos/registrations) matched to this ticker; null when none is */
+                            registration: null | {
+                                /** @description 10-digit CIK of the issuer */
+                                cik: string;
+                                /** @description The registration's track key */
+                                track_key: string;
+                                /**
+                                 * @description The registration's stage
+                                 * @enum {string}
+                                 */
+                                stage: "effective" | "exchange_approved" | "price_range" | "priced" | "registered" | "trading" | "withdrawn";
+                                /** @description Final offering price from the SEC final prospectus (decimal string) */
+                                final_offer_price: null | string;
+                            };
+                        }>;
+                        /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
+                        next_url?: string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequestError"];
+            401: components["responses"]["UnauthorizedError"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    iposRegistrationsList: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Registrations first made public on or after this day (YYYY-MM-DD, UTC)
+                 * @example 2026-09-01
+                 */
+                start_date?: string;
+                /**
+                 * @description Registrations first made public on or before this day (YYYY-MM-DD, UTC)
+                 * @example 2026-10-31
+                 */
+                end_date?: string;
+                /**
+                 * @description Filter by stage (repeatable). Default: every stage
+                 * @example [
+                 *       "priced",
+                 *       "trading"
+                 *     ]
+                 */
+                stage?: Array<"effective" | "exchange_approved" | "price_range" | "priced" | "registered" | "trading" | "withdrawn">;
+                /**
+                 * @description true = blank-check companies (SPACs) only, false = no SPACs. Default: both
+                 * @example false
+                 */
+                is_spac?: "false" | "true";
+                /**
+                 * @description Sort direction by first_public_at
+                 * @example desc
+                 */
+                sort?: "asc" | "desc";
+                /**
+                 * @description Maximum number of registrations to return
+                 * @example 5
+                 */
+                limit?: number;
+                /**
+                 * @description Number of registrations to skip for pagination
+                 * @example 0
+                 */
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "registrations": [
+                     *         {
+                     *           "cik": "0002049977",
+                     *           "company_name": "Starton Holdings, Inc.",
+                     *           "track_key": "333-292059",
+                     *           "form_family": "S-1",
+                     *           "stage": "price_range",
+                     *           "is_spac": false,
+                     *           "proposed_symbols": [
+                     *             {
+                     *               "symbol": "STA",
+                     *               "exchange": "NASDAQ",
+                     *               "security_class": "common",
+                     *               "source": "regex",
+                     *               "ipo_calendar_match": true
+                     *             }
+                     *           ],
+                     *           "exchange": null,
+                     *           "price_range_low": "5.0000",
+                     *           "price_range_high": "7.0000",
+                     *           "shares_offered": 5000000,
+                     *           "final_offer_price": null,
+                     *           "final_shares_offered": null,
+                     *           "first_public_at": "2026-10-28T21:21:40.000Z",
+                     *           "price_range_at": "2026-10-28T21:21:40.000Z",
+                     *           "exchange_approved_at": null,
+                     *           "effective_at": null,
+                     *           "priced_at": null,
+                     *           "withdrawn_at": null,
+                     *           "first_trade_date": null,
+                     *           "massive": {
+                     *             "ticker": "STA",
+                     *             "ipo_status": "pending",
+                     *             "listing_date": null,
+                     *             "price_low": "5.0000",
+                     *             "price_high": "7.0000",
+                     *             "final_price": null
+                     *           },
+                     *           "filings": [
+                     *             {
+                     *               "accession_number": "0001213900-26-113388",
+                     *               "form_type": "S-1/A",
+                     *               "signal": "registration",
+                     *               "filed_at": "2026-10-28T21:21:40.000Z",
+                     *               "filing_date": "2026-10-28",
+                     *               "html_url": "https://storage-prod.invinite.com/filing_htmls/2049977_0001213900-26-113388_S-1/A_2026-10-28.html"
+                     *             }
+                     *           ]
+                     *         }
+                     *       ]
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description IPO registrations, one per registration statement track */
+                        registrations: Array<{
+                            /** @description 10-digit CIK of the issuer */
+                            cik: string;
+                            /** @description Issuer name (SEC) */
+                            company_name: null | string;
+                            /** @description The registration: its Securities Act file number (333-…), else the accession of its first registration statement */
+                            track_key: string;
+                            /**
+                             * @description S-1 (domestic) or F-1 (foreign issuer)
+                             * @enum {string}
+                             */
+                            form_family: "F-1" | "S-1";
+                            /**
+                             * @description registered → price_range (an amendment states the range) → exchange_approved (8-A12B / exchange certification) → effective (SEC EFFECT) → priced (final prospectus 424B4 / 424B1) → trading (a listing appeared); withdrawn (RW) ends a track
+                             * @enum {string}
+                             */
+                            stage: "effective" | "exchange_approved" | "price_range" | "priced" | "registered" | "trading" | "withdrawn";
+                            /** @description Blank-check company ("blank check company" on the cover or SIC 6770) */
+                            is_spac: boolean | null;
+                            /** @description Tickers the registration statement proposes (S-1, S-1/A, F-1, F-1/A only). null = not a registration form (or not read), [] = none found */
+                            proposed_symbols: Array<components["schemas"]["ProposedSymbol"]> | null;
+                            /** @description Exchange the issuer applied to (NASDAQ, NYSE, NYSE American, NYSE Arca, Cboe BZX) */
+                            exchange: null | string;
+                            /** @description Low end of the price range per share, ADS or unit (decimal string) */
+                            price_range_low: null | string;
+                            /** @description High end of the price range (decimal string) */
+                            price_range_high: null | string;
+                            /** @description Shares offered at the price range */
+                            shares_offered: null | number;
+                            /** @description Final offering price (final prospectus) (decimal string) */
+                            final_offer_price: null | string;
+                            /** @description Shares sold at the final price */
+                            final_shares_offered: null | number;
+                            /**
+                             * Format: date-time
+                             * @description SEC acceptance time of the first public registration statement (ISO 8601 UTC)
+                             */
+                            first_public_at: string;
+                            /**
+                             * Format: date-time
+                             * @description When the price range was first filed (ISO 8601 UTC)
+                             */
+                            price_range_at: null | string;
+                            /**
+                             * Format: date-time
+                             * @description When the exchange approval was filed (ISO 8601 UTC)
+                             */
+                            exchange_approved_at: null | string;
+                            /**
+                             * Format: date-time
+                             * @description When the registration became effective (ISO 8601 UTC)
+                             */
+                            effective_at: null | string;
+                            /**
+                             * Format: date-time
+                             * @description When the final prospectus was filed (ISO 8601 UTC)
+                             */
+                            priced_at: null | string;
+                            /**
+                             * Format: date-time
+                             * @description When the withdrawal was filed (ISO 8601 UTC)
+                             */
+                            withdrawn_at: null | string;
+                            /**
+                             * Format: date
+                             * @description First trading day of the listing (YYYY-MM-DD); set at stage trading
+                             */
+                            first_trade_date: null | string;
+                            /** @description The matching row of the Massive IPO calendar (GET /v1/ipos, by ticker and issuer name); null when none matched. Its values never overwrite the SEC ones */
+                            massive: null | {
+                                /** @description Ticker on the Massive calendar (the `ticker` of GET /v1/ipos) */
+                                ticker: string;
+                                /** @description Massive IPO status (pending, new, history, withdrawn, …) */
+                                ipo_status: null | string;
+                                /**
+                                 * Format: date
+                                 * @description Expected or actual listing day (YYYY-MM-DD)
+                                 */
+                                listing_date: null | string;
+                                /** @description Low end of the Massive price range (decimal string) */
+                                price_low: null | string;
+                                /** @description High end of the Massive price range (decimal string) */
+                                price_high: null | string;
+                                /** @description Massive final issue price (decimal string) */
+                                final_price: null | string;
+                            };
+                            /** @description The filings that moved this registration, in the order they were applied */
+                            filings: Array<{
+                                /** @description SEC accession number */
+                                accession_number: string;
+                                /** @description SEC form type (S-1, S-1/A, F-1, F-1/A, 8-A12B, CERT, EFFECT, 424B4, 424B1, RW) */
+                                form_type: null | string;
+                                /** @description What the filing meant for the registration: registration, exchange_approval, effective, priced or withdrawn */
+                                signal: null | string;
+                                /**
+                                 * Format: date-time
+                                 * @description SEC acceptance time (ISO 8601 UTC)
+                                 */
+                                filed_at: null | string;
+                                /**
+                                 * Format: date
+                                 * @description Filing date (YYYY-MM-DD); null when the filing is not archived
+                                 */
+                                filing_date: null | string;
+                                /** @description URL to the archived filing HTML; null when the filing is not archived */
+                                html_url: null | string;
+                            }>;
                         }>;
                         /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
                         next_url?: string;
@@ -12287,9 +13186,15 @@ export interface operations {
                             day: string;
                             /** @description Holiday name */
                             event_name: string;
-                            /** @description Market open time (if partial day) */
+                            /**
+                             * Format: date-time
+                             * @description Market open on a partial day (ISO 8601, UTC); null when closed all day
+                             */
                             start_time: null | string;
-                            /** @description Market close time (if partial day) */
+                            /**
+                             * Format: date-time
+                             * @description Market close on a partial day (ISO 8601, UTC); null when closed all day
+                             */
                             end_time: null | string;
                         }>;
                         /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
@@ -12398,6 +13303,1022 @@ export interface operations {
             500: components["responses"]["InternalServerError"];
         };
     };
+    newsAssetDownload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description News item id
+                 * @example 4c1d9e62-3b7a-4f2e-8d1c-9e0a7b6c5d4f
+                 */
+                id: string;
+                /**
+                 * @description Asset id (`assets[].id` of the item)
+                 * @example 7e2f0c19-5a8b-4d3e-9f1a-2b6c8d0e4a7b
+                 */
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * Format: uuid
+                         * @description Asset id
+                         */
+                        asset_id: string;
+                        /**
+                         * Format: uuid
+                         * @description News item id
+                         */
+                        item_id: string;
+                        /**
+                         * @description What the URL may be used for
+                         * @enum {string}
+                         */
+                        purpose: "display" | "download";
+                        /** @description Short-lived URL of the file (fetch it within `expires_at`; never store it) */
+                        url: string;
+                        /**
+                         * Format: date-time
+                         * @description When the URL stops working (at most 60 seconds)
+                         */
+                        expires_at: string;
+                        /** @description MIME type */
+                        content_type: null | string;
+                        /** @description Size in bytes */
+                        byte_size: null | number;
+                        /** @description Credit line to show with it */
+                        credit: null | string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequestError"];
+            401: components["responses"]["UnauthorizedError"];
+            403: components["responses"]["ForbiddenError"];
+            404: components["responses"]["NotFoundError"];
+            500: components["responses"]["InternalServerError"];
+            503: components["responses"]["ServiceUnavailableError"];
+        };
+    };
+    newsDevelopments: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Published by these companies (CIK, padded or not; ≤ 20): an item with a verified issuer-newsroom publication of one of them — not a mention, not the item's first source. The CIK namespace is the SEC's
+                 * @example [
+                 *       "1045810"
+                 *     ]
+                 */
+                publisher?: Array<string>;
+                /**
+                 * @description Only these topics, comma-separated or repeated: product_launch, product_update, availability, partnership, customer_contract, capacity_expansion, regulatory, research
+                 * @example [
+                 *       "product_launch"
+                 *     ]
+                 */
+                topic?: Array<string>;
+                /**
+                 * @description Only the developments of this news item
+                 * @example 4c1d9e62-3b7a-4f2e-8d1c-9e0a7b6c5d4f
+                 */
+                item_id?: string;
+                /**
+                 * @description Start of the announcement window: an ISO 8601 instant or a day (YYYY-MM-DD, from its UTC midnight). Default: `to` minus 7 days
+                 * @example 2026-10-22
+                 */
+                from?: string;
+                /**
+                 * @description End of the announcement window: an ISO 8601 instant (exclusive) or a day (inclusive). Default: now. At most 92 days after `from` (400 otherwise)
+                 * @example 2026-10-29
+                 */
+                to?: string;
+                /**
+                 * @description Effective on or after this day (developments without an effective date are left out)
+                 * @example 2026-10-01
+                 */
+                effective_from?: string;
+                /**
+                 * @description Effective on or before this day (developments without an effective date are left out)
+                 * @example 2026-12-31
+                 */
+                effective_to?: string;
+                /**
+                 * @description Developments per page
+                 * @example 20
+                 */
+                limit?: number;
+                /**
+                 * @description `next_cursor` of the previous page (with the same filters); an altered or foreign cursor is a 400 `invalid_cursor`
+                 * @example WyIyMDI2LTEwLTI5VDIwOjMwOjA1LjEyMzQ1NloiLCI0YzFkOWU2Mi0zYjdhLTRmMmUtOGQxYy05ZTBhN2I2YzVkNGYiXQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        developments: Array<{
+                            /**
+                             * Format: uuid
+                             * @description Development id
+                             */
+                            id: string;
+                            /**
+                             * Format: uuid
+                             * @description The news item it was read from
+                             */
+                            item_id: string;
+                            /** @description Text revision it was read from */
+                            revision: number;
+                            /**
+                             * @description Topic
+                             * @enum {string}
+                             */
+                            topic: "availability" | "capacity_expansion" | "customer_contract" | "partnership" | "product_launch" | "product_update" | "regulatory" | "research";
+                            /** @description Short title (model-derived; see `derived`) */
+                            title: string;
+                            /** @description Summary (model-derived; the quotes in `evidence` are the source words) */
+                            summary: string;
+                            /**
+                             * @description Always true: title and summary are derived by a model, not the publisher's words
+                             * @enum {boolean}
+                             */
+                            derived: true;
+                            /** @description Products named, verbatim */
+                            products: Array<{
+                                name: string;
+                            }>;
+                            /** @description Partners, customers or other parties named */
+                            counterparties: Array<{
+                                /** @description Counterparty, verbatim */
+                                name: string;
+                                /** @description 10-digit CIK when the article names exactly one known company */
+                                cik: null | string;
+                                /** @description exact_ticker or unresolved */
+                                resolution: string;
+                            }>;
+                            /**
+                             * Format: date-time
+                             * @description When it was announced (the item's publication)
+                             */
+                            announced_at: string;
+                            /** @description The effective date as the text states it */
+                            effective_date_text: null | string;
+                            /**
+                             * Format: date
+                             * @description Effective from (YYYY-MM-DD)
+                             */
+                            effective_from: null | string;
+                            /**
+                             * Format: date
+                             * @description Effective until (YYYY-MM-DD)
+                             */
+                            effective_to: null | string;
+                            /**
+                             * @description Precision of the effective dates
+                             * @enum {string}
+                             */
+                            date_precision: "day" | "month" | "quarter" | "unknown" | "year";
+                            /**
+                             * @description What the cited text says happened
+                             * @enum {string}
+                             */
+                            claim_status: "announced" | "available" | "cancelled" | "completed" | "planned" | "unknown";
+                            /**
+                             * @description Extraction confidence
+                             * @enum {string}
+                             */
+                            confidence: "high" | "medium";
+                            /** @description Citations into the item's text blocks */
+                            evidence: Array<{
+                                /**
+                                 * Format: uuid
+                                 * @description Block of the item's text (see /v1/news/{id}/text)
+                                 */
+                                block_id: string;
+                                /** @description Start in the block (Unicode code points, zero-based) */
+                                start: number;
+                                /** @description End in the block (exclusive) */
+                                end: number;
+                                /** @description The exact source words */
+                                quote: string;
+                            }>;
+                            /** @description Whether the source text may be processed by AI models; API access alone does not authorize forwarding text into models */
+                            model_processing_allowed: boolean;
+                            /** @description The news item the development cites */
+                            item: {
+                                /** @description Headline */
+                                title: string;
+                                /** @description Canonical URL */
+                                url: string;
+                                /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
+                                attribution: {
+                                    /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
+                                    publisher: string;
+                                    /** @description Host of the original URL */
+                                    publisher_host: null | string;
+                                    /** @description The original publication the text was read from */
+                                    source_url: string;
+                                    /**
+                                     * Format: date-time
+                                     * @description Publication time (ISO 8601 UTC)
+                                     */
+                                    published_at: string;
+                                    /**
+                                     * @description public_record = an SEC filing; issuer = the company's own publication
+                                     * @enum {string}
+                                     */
+                                    rights: "issuer" | "public_record";
+                                    /** @description The filing of an SEC item; null otherwise */
+                                    edgar: null | {
+                                        /** @description SEC form type (8-K, 6-K, …) */
+                                        form: null | string;
+                                        /** @description SEC accession number */
+                                        accession: string;
+                                    };
+                                    /**
+                                     * @description The attribution sentence to carry with the text
+                                     * @enum {string}
+                                     */
+                                    statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
+                                };
+                            };
+                        }>;
+                        /** @description Cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description The next page with every filter; null on the last page */
+                        next_url: null | string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequestError"];
+            401: components["responses"]["UnauthorizedError"];
+            404: components["responses"]["NotFoundError"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    newsItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description News item id
+                 * @example 4c1d9e62-3b7a-4f2e-8d1c-9e0a7b6c5d4f
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * Format: uuid
+                         * @description Stable item id (a correction is a new item, see supersedes_id)
+                         */
+                        id: string;
+                        /** @description Headline */
+                        title: string;
+                        /** @description Lede of the text (the publisher's, verbatim); null for an item without readable text or whose publisher reserved reuse */
+                        description: null | string;
+                        /** @description Canonical URL of the item (the first publication) */
+                        url: string;
+                        /**
+                         * Format: date-time
+                         * @description Publication time (ISO 8601 UTC)
+                         */
+                        published_at: string;
+                        /**
+                         * Format: date-time
+                         * @description When Invinite first saw it
+                         */
+                        first_seen_at: string;
+                        /** @description The item's first source */
+                        source: {
+                            /** @description `edgar` or `ir` (a company newsroom) */
+                            id: string;
+                            /** @description Source label */
+                            name: null | string;
+                            /** @description The newsroom host of an `ir` source; null otherwise */
+                            host: null | string;
+                        };
+                        /**
+                         * @description What the item is about
+                         * @enum {string}
+                         */
+                        kind: "call_announcement" | "capital_markets" | "dividend" | "earnings_results" | "event_announcement" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "promo" | "results_date";
+                        /** @description Development topics found in the text */
+                        topics: Array<"availability" | "capacity_expansion" | "customer_contract" | "other" | "partnership" | "product_launch" | "product_update" | "regulatory" | "research">;
+                        /**
+                         * @description public_record = an SEC filing; issuer = the company's own publication
+                         * @enum {string}
+                         */
+                        rights: "issuer" | "public_record";
+                        /** @description Results, results date, call announcement or guidance */
+                        is_earnings_news: boolean;
+                        /** @description The fiscal period an earnings item belongs to; null when none was found */
+                        earnings: null | {
+                            /** @description Fiscal year */
+                            fiscal_year: null | number;
+                            /** @description Fiscal quarter */
+                            fiscal_quarter: null | number;
+                            /**
+                             * Format: date-time
+                             * @description The results call it announces or follows
+                             */
+                            conference_date: null | string;
+                        };
+                        /** @description Tickers mentioned (stored dash spelling, `BRK-B`) */
+                        symbols: Array<string>;
+                        /** @description 10-digit CIKs mentioned */
+                        ciks: Array<string>;
+                        /** @description Text revision (grows when the publisher corrects the text) */
+                        revision: number;
+                        /** @description The older item this one corrects */
+                        supersedes_id: null | string;
+                        /** @description The companies' own verified publications of the item, oldest first (at most 10) */
+                        publications: Array<{
+                            /** @description The newsroom source (`ir:<host>`) */
+                            source_id: string;
+                            publisher: {
+                                /** @description 10-digit CIK of the publishing company */
+                                cik: null | string;
+                                /** @description Ticker of the publishing company */
+                                symbol: null | string;
+                                /** @description Name the newsroom publishes under */
+                                name: null | string;
+                            };
+                            /** @description The company's own publication */
+                            url: string;
+                            /** @description press_release, company_blog, company_update or unknown */
+                            publication_type: string;
+                            /**
+                             * Format: date-time
+                             * @description Publication time the newsroom states (else when we first saw it)
+                             */
+                            published_at: string;
+                            /**
+                             * Format: date-time
+                             * @description Last modification the newsroom states
+                             */
+                            modified_at: null | string;
+                            /** @description The newsroom's own categories */
+                            categories: Array<{
+                                /** @description The newsroom's own id of the label, when it has one */
+                                id: null | string;
+                                /** @description The label as the newsroom shows it */
+                                label: string;
+                                /** @description The newsroom's page of the label */
+                                url: null | string;
+                            }>;
+                            /** @description The newsroom's own tags */
+                            tags: Array<{
+                                /** @description The newsroom's own id of the label, when it has one */
+                                id: null | string;
+                                /** @description The label as the newsroom shows it */
+                                label: string;
+                                /** @description The newsroom's page of the label */
+                                url: null | string;
+                            }>;
+                        }>;
+                        /** @description More than 10 publications exist (the detail lists every sighting) */
+                        publications_truncated: boolean;
+                        /** @description Whether the source text may be processed by AI models; API access alone does not authorize forwarding text into models */
+                        model_processing_allowed: boolean;
+                        /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
+                        attribution: {
+                            /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
+                            publisher: string;
+                            /** @description Host of the original URL */
+                            publisher_host: null | string;
+                            /** @description The original publication the text was read from */
+                            source_url: string;
+                            /**
+                             * Format: date-time
+                             * @description Publication time (ISO 8601 UTC)
+                             */
+                            published_at: string;
+                            /**
+                             * @description public_record = an SEC filing; issuer = the company's own publication
+                             * @enum {string}
+                             */
+                            rights: "issuer" | "public_record";
+                            /** @description The filing of an SEC item; null otherwise */
+                            edgar: null | {
+                                /** @description SEC form type (8-K, 6-K, …) */
+                                form: null | string;
+                                /** @description SEC accession number */
+                                accession: string;
+                            };
+                            /**
+                             * @description The attribution sentence to carry with the text
+                             * @enum {string}
+                             */
+                            statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
+                        };
+                        /** @description The full text of the current revision (verbatim, with `attribution`); null = no readable text */
+                        body_text: null | string;
+                        /**
+                         * @description available = `body_text` holds the text; no_text = headline and link only
+                         * @enum {string}
+                         */
+                        content_status: "available" | "no_text";
+                        /** @description The text in citable blocks (`/v1/news/{id}/text`); null without text */
+                        text_url: null | string;
+                        /** @description A newer item that corrects this one (this one stays served) */
+                        superseded_by: null | string;
+                        /** @description Companies the item is about */
+                        companies: Array<{
+                            /** @description 10-digit CIK */
+                            cik: null | string;
+                            /** @description Ticker */
+                            symbol: string;
+                            /** @description How the company was matched: ticker, name, cik, host, filer */
+                            match_kind: string;
+                            /** @description Match confidence (0–1) */
+                            confidence: number;
+                        }>;
+                        /** @description Every place the item was seen, oldest first */
+                        sightings: Array<{
+                            /** @description `edgar` or `ir:<host>` */
+                            source_id: string;
+                            /** @description URL of the sighting */
+                            url: string;
+                            /**
+                             * Format: date-time
+                             * @description When it was seen
+                             */
+                            seen_at: string;
+                            /**
+                             * Format: date-time
+                             * @description Publication time the source states
+                             */
+                            published_at_claimed: null | string;
+                        }>;
+                        /** @description Images and original files of the publication */
+                        assets: Array<{
+                            /**
+                             * Format: uuid
+                             * @description Asset id
+                             */
+                            id: string;
+                            /** @description image, original_pdf, … */
+                            kind: string;
+                            /** @description MIME type */
+                            content_type: null | string;
+                            /** @description Size in bytes */
+                            byte_size: null | number;
+                            /** @description Image width (px) */
+                            width: null | number;
+                            /** @description Image height (px) */
+                            height: null | number;
+                            /** @description Title the publisher gave it */
+                            title: null | string;
+                            /** @description Caption */
+                            caption: null | string;
+                            /** @description Alt text */
+                            alt: null | string;
+                            /** @description Credit line to show with it */
+                            credit: null | string;
+                            /** @description Copyright notice */
+                            copyright_notice: null | string;
+                            /** @description Where the publisher hosts it (link to it when it may not be shown) */
+                            original_url: null | string;
+                            /** @description May be shown (embedded) now */
+                            can_display: boolean;
+                            /** @description May be downloaded now */
+                            can_download: boolean;
+                            /** @description Our authenticated route that mints a short-lived URL; null when neither is allowed */
+                            download_url: null | string;
+                        }>;
+                        /** @description Developments read from the text (medium or high confidence, at most 20) */
+                        developments: Array<{
+                            /**
+                             * Format: uuid
+                             * @description Development id
+                             */
+                            id: string;
+                            /**
+                             * Format: uuid
+                             * @description The news item it was read from
+                             */
+                            item_id: string;
+                            /** @description Text revision it was read from */
+                            revision: number;
+                            /**
+                             * @description Topic
+                             * @enum {string}
+                             */
+                            topic: "availability" | "capacity_expansion" | "customer_contract" | "partnership" | "product_launch" | "product_update" | "regulatory" | "research";
+                            /** @description Short title (model-derived; see `derived`) */
+                            title: string;
+                            /** @description Summary (model-derived; the quotes in `evidence` are the source words) */
+                            summary: string;
+                            /**
+                             * @description Always true: title and summary are derived by a model, not the publisher's words
+                             * @enum {boolean}
+                             */
+                            derived: true;
+                            /** @description Products named, verbatim */
+                            products: Array<{
+                                name: string;
+                            }>;
+                            /** @description Partners, customers or other parties named */
+                            counterparties: Array<{
+                                /** @description Counterparty, verbatim */
+                                name: string;
+                                /** @description 10-digit CIK when the article names exactly one known company */
+                                cik: null | string;
+                                /** @description exact_ticker or unresolved */
+                                resolution: string;
+                            }>;
+                            /**
+                             * Format: date-time
+                             * @description When it was announced (the item's publication)
+                             */
+                            announced_at: string;
+                            /** @description The effective date as the text states it */
+                            effective_date_text: null | string;
+                            /**
+                             * Format: date
+                             * @description Effective from (YYYY-MM-DD)
+                             */
+                            effective_from: null | string;
+                            /**
+                             * Format: date
+                             * @description Effective until (YYYY-MM-DD)
+                             */
+                            effective_to: null | string;
+                            /**
+                             * @description Precision of the effective dates
+                             * @enum {string}
+                             */
+                            date_precision: "day" | "month" | "quarter" | "unknown" | "year";
+                            /**
+                             * @description What the cited text says happened
+                             * @enum {string}
+                             */
+                            claim_status: "announced" | "available" | "cancelled" | "completed" | "planned" | "unknown";
+                            /**
+                             * @description Extraction confidence
+                             * @enum {string}
+                             */
+                            confidence: "high" | "medium";
+                            /** @description Citations into the item's text blocks */
+                            evidence: Array<{
+                                /**
+                                 * Format: uuid
+                                 * @description Block of the item's text (see /v1/news/{id}/text)
+                                 */
+                                block_id: string;
+                                /** @description Start in the block (Unicode code points, zero-based) */
+                                start: number;
+                                /** @description End in the block (exclusive) */
+                                end: number;
+                                /** @description The exact source words */
+                                quote: string;
+                            }>;
+                            /** @description Whether the source text may be processed by AI models; API access alone does not authorize forwarding text into models */
+                            model_processing_allowed: boolean;
+                        }>;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequestError"];
+            401: components["responses"]["UnauthorizedError"];
+            404: components["responses"]["NotFoundError"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    newsItems: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Items mentioning these tickers (≤ 20, comma-separated or repeated). `BRK.B` and `BRK-B` both match; responses carry the stored dash spelling. With `cik`, either matches
+                 * @example [
+                 *       "NVDA"
+                 *     ]
+                 */
+                ticker?: Array<string>;
+                /**
+                 * @description Items mentioning these companies by CIK (padded or not, ≤ 20). With `ticker`, either matches
+                 * @example [
+                 *       "1045810"
+                 *     ]
+                 */
+                cik?: Array<string>;
+                /**
+                 * @description Start of the publication window: an ISO 8601 instant or a day (YYYY-MM-DD, from its UTC midnight). Default: `to` minus 7 days
+                 * @example 2026-10-22
+                 */
+                from?: string;
+                /**
+                 * @description End of the publication window: an ISO 8601 instant (exclusive) or a day (inclusive). Default: now. At most 92 days after `from` (400 otherwise)
+                 * @example 2026-10-29
+                 */
+                to?: string;
+                /**
+                 * @description The item's FIRST source: `edgar` (an SEC filing) or `ir` (any company newsroom), comma-separated or repeated
+                 * @example [
+                 *       "edgar"
+                 *     ]
+                 */
+                source?: Array<string>;
+                /**
+                 * @description Only these kinds, comma-separated or repeated: earnings_results, results_date, call_announcement, event_announcement, guidance, m_and_a, material_agreement, management_change, dividend, capital_markets, legal_spam, promo, other
+                 * @example [
+                 *       "earnings_results"
+                 *     ]
+                 */
+                kind?: Array<string>;
+                /**
+                 * @description Only these topics (any of them), comma-separated or repeated: product_launch, product_update, availability, partnership, customer_contract, capacity_expansion, regulatory, research, other
+                 * @example [
+                 *       "product_launch"
+                 *     ]
+                 */
+                topic?: Array<string>;
+                /**
+                 * @description true = only earnings news (results, results dates, call announcements, guidance); false = none of it
+                 * @example true
+                 */
+                earnings?: "false" | "true";
+                /**
+                 * @description Published by these companies (CIK, padded or not; ≤ 20): an item with a verified issuer-newsroom publication of one of them — not a mention, not the item's first source. The CIK namespace is the SEC's
+                 * @example [
+                 *       "1045810"
+                 *     ]
+                 */
+                publisher?: Array<string>;
+                /**
+                 * @description Only these publication types of the issuer's own publication, comma-separated or repeated: press_release, company_blog, company_update
+                 * @example [
+                 *       "press_release"
+                 *     ]
+                 */
+                publication_type?: Array<string>;
+                /**
+                 * @description The publisher's own newsroom category, by exact label or by the publisher's category id (≤ 10); needs exactly one `publisher` — labels and ids are per newsroom
+                 * @example [
+                 *       "Press Releases"
+                 *     ]
+                 */
+                issuer_category?: Array<string>;
+                /**
+                 * @description The publisher's own newsroom tag, by exact label or id (≤ 10); needs exactly one `publisher`
+                 * @example [
+                 *       "Data Center"
+                 *     ]
+                 */
+                issuer_tag?: Array<string>;
+                /**
+                 * @description Items per page
+                 * @example 20
+                 */
+                limit?: number;
+                /**
+                 * @description `next_cursor` of the previous page (with the same filters); an altered or foreign cursor is a 400 `invalid_cursor`
+                 * @example WyIyMDI2LTEwLTI5VDIwOjMwOjA1LjEyMzQ1NloiLCI0YzFkOWU2Mi0zYjdhLTRmMmUtOGQxYy05ZTBhN2I2YzVkNGYiXQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: Array<{
+                            /**
+                             * Format: uuid
+                             * @description Stable item id (a correction is a new item, see supersedes_id)
+                             */
+                            id: string;
+                            /** @description Headline */
+                            title: string;
+                            /** @description Lede of the text (the publisher's, verbatim); null for an item without readable text or whose publisher reserved reuse */
+                            description: null | string;
+                            /** @description Canonical URL of the item (the first publication) */
+                            url: string;
+                            /**
+                             * Format: date-time
+                             * @description Publication time (ISO 8601 UTC)
+                             */
+                            published_at: string;
+                            /**
+                             * Format: date-time
+                             * @description When Invinite first saw it
+                             */
+                            first_seen_at: string;
+                            /** @description The item's first source */
+                            source: {
+                                /** @description `edgar` or `ir` (a company newsroom) */
+                                id: string;
+                                /** @description Source label */
+                                name: null | string;
+                                /** @description The newsroom host of an `ir` source; null otherwise */
+                                host: null | string;
+                            };
+                            /**
+                             * @description What the item is about
+                             * @enum {string}
+                             */
+                            kind: "call_announcement" | "capital_markets" | "dividend" | "earnings_results" | "event_announcement" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "promo" | "results_date";
+                            /** @description Development topics found in the text */
+                            topics: Array<"availability" | "capacity_expansion" | "customer_contract" | "other" | "partnership" | "product_launch" | "product_update" | "regulatory" | "research">;
+                            /**
+                             * @description public_record = an SEC filing; issuer = the company's own publication
+                             * @enum {string}
+                             */
+                            rights: "issuer" | "public_record";
+                            /** @description Results, results date, call announcement or guidance */
+                            is_earnings_news: boolean;
+                            /** @description The fiscal period an earnings item belongs to; null when none was found */
+                            earnings: null | {
+                                /** @description Fiscal year */
+                                fiscal_year: null | number;
+                                /** @description Fiscal quarter */
+                                fiscal_quarter: null | number;
+                                /**
+                                 * Format: date-time
+                                 * @description The results call it announces or follows
+                                 */
+                                conference_date: null | string;
+                            };
+                            /** @description Tickers mentioned (stored dash spelling, `BRK-B`) */
+                            symbols: Array<string>;
+                            /** @description 10-digit CIKs mentioned */
+                            ciks: Array<string>;
+                            /** @description Text revision (grows when the publisher corrects the text) */
+                            revision: number;
+                            /** @description The older item this one corrects */
+                            supersedes_id: null | string;
+                            /** @description The companies' own verified publications of the item, oldest first (at most 10) */
+                            publications: Array<{
+                                /** @description The newsroom source (`ir:<host>`) */
+                                source_id: string;
+                                publisher: {
+                                    /** @description 10-digit CIK of the publishing company */
+                                    cik: null | string;
+                                    /** @description Ticker of the publishing company */
+                                    symbol: null | string;
+                                    /** @description Name the newsroom publishes under */
+                                    name: null | string;
+                                };
+                                /** @description The company's own publication */
+                                url: string;
+                                /** @description press_release, company_blog, company_update or unknown */
+                                publication_type: string;
+                                /**
+                                 * Format: date-time
+                                 * @description Publication time the newsroom states (else when we first saw it)
+                                 */
+                                published_at: string;
+                                /**
+                                 * Format: date-time
+                                 * @description Last modification the newsroom states
+                                 */
+                                modified_at: null | string;
+                                /** @description The newsroom's own categories */
+                                categories: Array<{
+                                    /** @description The newsroom's own id of the label, when it has one */
+                                    id: null | string;
+                                    /** @description The label as the newsroom shows it */
+                                    label: string;
+                                    /** @description The newsroom's page of the label */
+                                    url: null | string;
+                                }>;
+                                /** @description The newsroom's own tags */
+                                tags: Array<{
+                                    /** @description The newsroom's own id of the label, when it has one */
+                                    id: null | string;
+                                    /** @description The label as the newsroom shows it */
+                                    label: string;
+                                    /** @description The newsroom's page of the label */
+                                    url: null | string;
+                                }>;
+                            }>;
+                            /** @description More than 10 publications exist (the detail lists every sighting) */
+                            publications_truncated: boolean;
+                            /** @description Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models */
+                            model_processing_allowed: boolean;
+                            /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
+                            attribution: {
+                                /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
+                                publisher: string;
+                                /** @description Host of the original URL */
+                                publisher_host: null | string;
+                                /** @description The original publication the text was read from */
+                                source_url: string;
+                                /**
+                                 * Format: date-time
+                                 * @description Publication time (ISO 8601 UTC)
+                                 */
+                                published_at: string;
+                                /**
+                                 * @description public_record = an SEC filing; issuer = the company's own publication
+                                 * @enum {string}
+                                 */
+                                rights: "issuer" | "public_record";
+                                /** @description The filing of an SEC item; null otherwise */
+                                edgar: null | {
+                                    /** @description SEC form type (8-K, 6-K, …) */
+                                    form: null | string;
+                                    /** @description SEC accession number */
+                                    accession: string;
+                                };
+                                /**
+                                 * @description The attribution sentence to carry with the text
+                                 * @enum {string}
+                                 */
+                                statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
+                            };
+                        }>;
+                        /** @description Cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description The next page with every filter; null on the last page */
+                        next_url: null | string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequestError"];
+            401: components["responses"]["UnauthorizedError"];
+            404: components["responses"]["NotFoundError"];
+            500: components["responses"]["InternalServerError"];
+        };
+    };
+    newsItemText: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Blocks per page
+                 * @example 20
+                 */
+                limit?: number;
+                /**
+                 * @description Unicode code points per page; a block is never split (the minimum is the largest block)
+                 * @example 12000
+                 */
+                max_chars?: number;
+                /**
+                 * @description `next_cursor` of the previous page (with the same filters); an altered or foreign cursor is a 400 `invalid_cursor`
+                 * @example WyIyMDI2LTEwLTI5VDIwOjMwOjA1LjEyMzQ1NloiLCI0YzFkOWU2Mi0zYjdhLTRmMmUtOGQxYy05ZTBhN2I2YzVkNGYiXQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description News item id
+                 * @example 4c1d9e62-3b7a-4f2e-8d1c-9e0a7b6c5d4f
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /**
+                         * Format: uuid
+                         * @description News item id
+                         */
+                        item_id: string;
+                        /** @description The text revision every block belongs to */
+                        revision: number;
+                        /** @description Headline */
+                        title: string;
+                        /**
+                         * @description available = `body_text` holds the text; no_text = headline and link only
+                         * @enum {string}
+                         */
+                        content_status: "available" | "no_text";
+                        /** @description Whether the source text may be processed by AI models; API access alone does not authorize forwarding text into models */
+                        model_processing_allowed: boolean;
+                        /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
+                        attribution: {
+                            /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
+                            publisher: string;
+                            /** @description Host of the original URL */
+                            publisher_host: null | string;
+                            /** @description The original publication the text was read from */
+                            source_url: string;
+                            /**
+                             * Format: date-time
+                             * @description Publication time (ISO 8601 UTC)
+                             */
+                            published_at: string;
+                            /**
+                             * @description public_record = an SEC filing; issuer = the company's own publication
+                             * @enum {string}
+                             */
+                            rights: "issuer" | "public_record";
+                            /** @description The filing of an SEC item; null otherwise */
+                            edgar: null | {
+                                /** @description SEC form type (8-K, 6-K, …) */
+                                form: null | string;
+                                /** @description SEC accession number */
+                                accession: string;
+                            };
+                            /**
+                             * @description The attribution sentence to carry with the text
+                             * @enum {string}
+                             */
+                            statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
+                        };
+                        /** @description Blocks of this page, in order */
+                        blocks: Array<{
+                            /**
+                             * Format: uuid
+                             * @description Stable block id (evidence pointers cite it)
+                             */
+                            block_id: string;
+                            /** @description Position in the text (zero-based) */
+                            index: number;
+                            /** @description The heading the block sits under */
+                            heading: null | string;
+                            /** @description Page of a PDF original */
+                            page: null | number;
+                            /** @description The block's text, verbatim */
+                            text: string;
+                            /** @description Start in the full text (Unicode code points) */
+                            start_offset: number;
+                            /** @description End in the full text (exclusive) */
+                            end_offset: number;
+                        }>;
+                        coverage: {
+                            /** @description Blocks of the revision */
+                            blocks_total: number;
+                            /** @description Blocks served up to and including this page */
+                            blocks_through: number;
+                        };
+                        /** @description More blocks follow (never a silent cut) */
+                        has_more: boolean;
+                        /** @description Cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description The next page with every filter; null on the last page */
+                        next_url: null | string;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequestError"];
+            401: components["responses"]["UnauthorizedError"];
+            404: components["responses"]["NotFoundError"];
+            /** @description Conflict - the text changed since the cursor was issued (`revision_changed`): restart without `cursor` */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description revision_changed */
+                        error: string;
+                        /** @description Detailed error message */
+                        message: string;
+                    };
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+        };
+    };
     secFilingsAvailableFormTypes: {
         parameters: {
             query?: {
@@ -12442,7 +14363,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. A CIK also finds a registrant that is not listed yet (pre-IPO).
                  * @example AAPL
                  */
                 identifier: string;
@@ -12484,19 +14405,20 @@ export interface operations {
                      *       "companies": [
                      *         {
                      *           "ticker": "AAPL",
-                     *           "cik": "320193",
+                     *           "cik": "0000320193",
                      *           "filings": [
                      *             {
-                     *               "accession_number": "0001140361-26-040127",
+                     *               "accession_number": "0001140361-26-040540",
                      *               "calendar_quarter": 4,
                      *               "calendar_year": 2026,
                      *               "cik": "0000320193",
-                     *               "filing_date": "2026-10-19",
+                     *               "filing_date": "2026-10-22",
                      *               "fiscal_quarter": null,
                      *               "fiscal_year": null,
                      *               "form_type": "4",
-                     *               "html_url": "https://storage-prod.invinite.com/filing_htmls/320193_0001140361-26-040127_4_2026-10-19.html",
-                     *               "period_end": "2026-10-15"
+                     *               "html_url": "https://storage-prod.invinite.com/filing_htmls/320193_0001140361-26-040540_4_2026-10-22.html",
+                     *               "period_end": "2026-10-20",
+                     *               "proposed_symbols": null
                      *             }
                      *           ],
                      *           "next_url": "https://api.data.invinite.com/v1/sec-filings/filings?identifier=AAPL&offset=40&limit=40"
@@ -12507,8 +14429,8 @@ export interface operations {
                     "application/json": {
                         /** @description Companies with filings */
                         companies: Array<{
-                            /** @description Ticker symbol */
-                            ticker: string;
+                            /** @description Ticker symbol; null for a company that is not listed yet (pre-IPO) */
+                            ticker: null | string;
                             /** @description CIK (with or without leading zeros) */
                             cik: string;
                             /** @description Company filings */
@@ -12539,6 +14461,8 @@ export interface operations {
                                  * @description Period end date
                                  */
                                 period_end: null | string;
+                                /** @description Tickers the registration statement proposes (S-1, S-1/A, F-1, F-1/A only). null = not a registration form (or not read), [] = none found */
+                                proposed_symbols: Array<components["schemas"]["ProposedSymbol"]> | null;
                             }>;
                             /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
                             next_url?: string;
@@ -12585,14 +14509,14 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "text": "Apple’s main risk factors, as disclosed in its latest available Form 10-K for fiscal year ended September 27, 2025, are:\n\n- **Intense competition and rapid technological change:** Apple operates in highly competitive markets with aggressive…",
+                     *       "text": "Apple’s principal risk factors, as disclosed in its SEC filings for **CIK 0000320193 (AAPL)**, are:\n\n- **Macroeconomic and international exposure:** A majority of Apple’s sales and much of its supply chain are outside the United States, exp…",
                      *       "sources": [
                      *         {
                      *           "cik": "0000320193",
-                     *           "accession_number": "0000320193-25-000079",
-                     *           "html_url": "https://storage-prod.invinite.com/filing_htmls/320193_0000320193-25-000079_10-K_2025-10-31.html",
+                     *           "accession_number": "0000320193-24-000123",
+                     *           "html_url": "https://storage-prod.invinite.com/filing_htmls/320193_0000320193-24-000123_10-K_2024-11-01.html",
                      *           "ticker": "AAPL",
-                     *           "filing_date": "2025-10-31",
+                     *           "filing_date": "2024-11-01",
                      *           "form_type": "10-K"
                      *         }
                      *       ]
@@ -12631,7 +14555,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -12641,7 +14565,7 @@ export interface operations {
                  */
                 form_type: "8-K" | "10-K" | "10-Q";
                 /**
-                 * @description Optional section ID. If not specified, all sections from the filing are returned.
+                 * @description Optional section ID. If not specified, all sections from the filing are returned. A section the filing does not have answers 404 with the section IDs it has.
                  * @example part_i-item_1a
                  */
                 section_id?: string;
@@ -12678,7 +14602,7 @@ export interface operations {
                      *       "companies": [
                      *         {
                      *           "ticker": "AAPL",
-                     *           "cik": "320193",
+                     *           "cik": "0000320193",
                      *           "sections": [
                      *             {
                      *               "accession_number": "0000320193-25-000079",
@@ -12762,7 +14686,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -12892,7 +14816,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -13047,7 +14971,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -13167,7 +15091,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -13353,11 +15277,20 @@ export interface operations {
                                                 value: number;
                                                 /** @description Financial concept */
                                                 concept: string;
-                                                /** @description Start date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description Start date (YYYY-MM-DD)
+                                                 */
                                                 start_date?: null | string;
-                                                /** @description End date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description End date (YYYY-MM-DD)
+                                                 */
                                                 end_date?: null | string;
-                                                /** @description Instant date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description Instant date (YYYY-MM-DD)
+                                                 */
                                                 instant_date?: null | string;
                                                 /** @description Segment information */
                                                 segment?: null | {
@@ -13406,7 +15339,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -13534,7 +15467,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -13587,7 +15520,6 @@ export interface operations {
                      *               "period_end": "2025-09-27",
                      *               "facts": {
                      *                 "cfs_cash_from_operating_activities": 111482000000,
-                     *                 "cfs_cash_from_operating_activities_continuing_operations": -2100000000,
                      *                 "cfs_income_incl_noncontrolling_interest": 112010000000,
                      *                 "cfs_adjustments_to_reconcile_net_income_to_cash": 21190000000,
                      *                 "cfs_depreciation_depletion_and_amortization": 11698000000,
@@ -13597,7 +15529,8 @@ export interface operations {
                      *                 "cfs_other_noncash_income_expense": -89000000,
                      *                 "cfs_other_adjustments_to_net_income": 0,
                      *                 "cfs_changes_in_operating_capital": -25000000000,
-                     *                 "cfs_changes_in_operating_assets": -14826000000
+                     *                 "cfs_changes_in_operating_assets": -14826000000,
+                     *                 "cfs_changes_in_receivables": -7029000000
                      *               }
                      *             }
                      *           ],
@@ -13654,7 +15587,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -13717,12 +15650,6 @@ export interface operations {
                      *                   "accession_number": "0000320193-25-000079",
                      *                   "html_tag_id": "f-307"
                      *                 },
-                     *                 "cfs_cash_from_operating_activities_continuing_operations": {
-                     *                   "value": -2100000000,
-                     *                   "parent_id": "cfs_cash_from_operating_activities",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": null
-                     *                 },
                      *                 "cfs_income_incl_noncontrolling_interest": {
                      *                   "value": 112010000000,
                      *                   "parent_id": "cfs_cash_from_operating_activities",
@@ -13780,6 +15707,12 @@ export interface operations {
                      *                 "cfs_changes_in_operating_assets": {
                      *                   "value": -14826000000,
                      *                   "parent_id": "cfs_changes_in_operating_capital",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_changes_in_receivables": {
+                     *                   "value": -7029000000,
+                     *                   "parent_id": "cfs_changes_in_operating_assets",
                      *                   "accession_number": "0000320193-25-000079",
                      *                   "html_tag_id": null
                      *                 }
@@ -13840,11 +15773,20 @@ export interface operations {
                                                 value: number;
                                                 /** @description Financial concept */
                                                 concept: string;
-                                                /** @description Start date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description Start date (YYYY-MM-DD)
+                                                 */
                                                 start_date?: null | string;
-                                                /** @description End date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description End date (YYYY-MM-DD)
+                                                 */
                                                 end_date?: null | string;
-                                                /** @description Instant date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description Instant date (YYYY-MM-DD)
+                                                 */
                                                 instant_date?: null | string;
                                                 /** @description Segment information */
                                                 segment?: null | {
@@ -13893,7 +15835,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -13950,8 +15892,8 @@ export interface operations {
                      *                   "value": 111482000000,
                      *                   "children": [
                      *                     {
-                     *                       "metric_id": "cfs_cash_from_operating_activities_continuing_operations",
-                     *                       "value": -2100000000
+                     *                       "metric_id": "cfs_income_incl_noncontrolling_interest",
+                     *                       "value": 112010000000
                      *                     }
                      *                   ]
                      *                 }
@@ -14009,7 +15951,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -14129,7 +16071,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -14315,11 +16257,20 @@ export interface operations {
                                                 value: number;
                                                 /** @description Financial concept */
                                                 concept: string;
-                                                /** @description Start date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description Start date (YYYY-MM-DD)
+                                                 */
                                                 start_date?: null | string;
-                                                /** @description End date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description End date (YYYY-MM-DD)
+                                                 */
                                                 end_date?: null | string;
-                                                /** @description Instant date (ISO format) */
+                                                /**
+                                                 * Format: date
+                                                 * @description Instant date (YYYY-MM-DD)
+                                                 */
                                                 instant_date?: null | string;
                                                 /** @description Segment information */
                                                 segment?: null | {
@@ -14368,7 +16319,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker symbol or CIK
+                 * @description Ticker symbol or CIK. Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL
                  */
                 identifier: string;
@@ -14484,7 +16435,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers)
+                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers). Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL,MSFT
                  */
                 identifiers: string;
@@ -14564,7 +16515,6 @@ export interface operations {
                      *             "cash_flow_statement": {
                      *               "facts": {
                      *                 "cfs_cash_from_operating_activities": 111482000000,
-                     *                 "cfs_cash_from_operating_activities_continuing_operations": -2100000000,
                      *                 "cfs_income_incl_noncontrolling_interest": 112010000000,
                      *                 "cfs_adjustments_to_reconcile_net_income_to_cash": 21190000000,
                      *                 "cfs_depreciation_depletion_and_amortization": 11698000000,
@@ -14574,7 +16524,8 @@ export interface operations {
                      *                 "cfs_other_noncash_income_expense": -89000000,
                      *                 "cfs_other_adjustments_to_net_income": 0,
                      *                 "cfs_changes_in_operating_capital": -25000000000,
-                     *                 "cfs_changes_in_operating_assets": -14826000000
+                     *                 "cfs_changes_in_operating_assets": -14826000000,
+                     *                 "cfs_changes_in_receivables": -7029000000
                      *               }
                      *             }
                      *           }
@@ -14644,7 +16595,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers)
+                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers). Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL,MSFT
                  */
                 identifiers: string;
@@ -14854,12 +16805,6 @@ export interface operations {
                      *                   "accession_number": "0000320193-25-000079",
                      *                   "html_tag_id": "f-307"
                      *                 },
-                     *                 "cfs_cash_from_operating_activities_continuing_operations": {
-                     *                   "value": -2100000000,
-                     *                   "parent_id": "cfs_cash_from_operating_activities",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": null
-                     *                 },
                      *                 "cfs_income_incl_noncontrolling_interest": {
                      *                   "value": 112010000000,
                      *                   "parent_id": "cfs_cash_from_operating_activities",
@@ -14917,6 +16862,12 @@ export interface operations {
                      *                 "cfs_changes_in_operating_assets": {
                      *                   "value": -14826000000,
                      *                   "parent_id": "cfs_changes_in_operating_capital",
+                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "html_tag_id": null
+                     *                 },
+                     *                 "cfs_changes_in_receivables": {
+                     *                   "value": -7029000000,
+                     *                   "parent_id": "cfs_changes_in_operating_assets",
                      *                   "accession_number": "0000320193-25-000079",
                      *                   "html_tag_id": null
                      *                 }
@@ -14977,11 +16928,20 @@ export interface operations {
                                                     value: number;
                                                     /** @description Financial concept */
                                                     concept: string;
-                                                    /** @description Start date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description Start date (YYYY-MM-DD)
+                                                     */
                                                     start_date?: null | string;
-                                                    /** @description End date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description End date (YYYY-MM-DD)
+                                                     */
                                                     end_date?: null | string;
-                                                    /** @description Instant date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description Instant date (YYYY-MM-DD)
+                                                     */
                                                     instant_date?: null | string;
                                                     /** @description Segment information */
                                                     segment?: null | {
@@ -15038,11 +16998,20 @@ export interface operations {
                                                     value: number;
                                                     /** @description Financial concept */
                                                     concept: string;
-                                                    /** @description Start date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description Start date (YYYY-MM-DD)
+                                                     */
                                                     start_date?: null | string;
-                                                    /** @description End date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description End date (YYYY-MM-DD)
+                                                     */
                                                     end_date?: null | string;
-                                                    /** @description Instant date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description Instant date (YYYY-MM-DD)
+                                                     */
                                                     instant_date?: null | string;
                                                     /** @description Segment information */
                                                     segment?: null | {
@@ -15099,11 +17068,20 @@ export interface operations {
                                                     value: number;
                                                     /** @description Financial concept */
                                                     concept: string;
-                                                    /** @description Start date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description Start date (YYYY-MM-DD)
+                                                     */
                                                     start_date?: null | string;
-                                                    /** @description End date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description End date (YYYY-MM-DD)
+                                                     */
                                                     end_date?: null | string;
-                                                    /** @description Instant date (ISO format) */
+                                                    /**
+                                                     * Format: date
+                                                     * @description Instant date (YYYY-MM-DD)
+                                                     */
                                                     instant_date?: null | string;
                                                     /** @description Segment information */
                                                     segment?: null | {
@@ -15151,7 +17129,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers)
+                 * @description Comma-separated list of ticker symbols or CIKs (1-10 identifiers). Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
                  * @example AAPL,MSFT
                  */
                 identifiers: string;
@@ -15243,8 +17221,8 @@ export interface operations {
                      *                   "value": 111482000000,
                      *                   "children": [
                      *                     {
-                     *                       "metric_id": "cfs_cash_from_operating_activities_continuing_operations",
-                     *                       "value": -2100000000
+                     *                       "metric_id": "cfs_income_incl_noncontrolling_interest",
+                     *                       "value": 112010000000
                      *                     }
                      *                   ]
                      *                 }
@@ -15324,21 +17302,21 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "generated_at": "2026-10-21T16:12:28.575Z",
+                     *       "generated_at": "2026-10-29T12:39:48.832Z",
                      *       "services": [
                      *         {
                      *           "family": "company",
                      *           "status": "operational",
-                     *           "uptime_7d": 0.991,
+                     *           "uptime_7d": 0.99,
                      *           "uptime_30d": 0.989,
                      *           "uptime_90d": 0.989
                      *         }
                      *       ],
                      *       "universe": {
-                     *         "companies": 6204,
+                     *         "companies": 6214,
                      *         "earnings_calls": {
                      *           "scope": "all",
-                     *           "companies": 5540
+                     *           "companies": 5544
                      *         }
                      *       }
                      *     }
@@ -15352,7 +17330,7 @@ export interface operations {
                              * @description Product family
                              * @enum {string}
                              */
-                            family: "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "sec_filings";
+                            family: "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "sec_filings";
                             /**
                              * @description Over the last 24 hours; too little traffic to judge reads as operational
                              * @enum {string}
@@ -15409,7 +17387,8 @@ export interface operations {
                      *         "rag": "Use the text as retrieval context in a customer-facing product.",
                      *         "train": "Model training is contract-only.",
                      *         "audio": "Audio files carry a forensic watermark that identifies the recording. Audio is subject to per-company takedown and may not be re-hosted.",
-                     *         "sec_data": "Figures and filings originate from SEC EDGAR; the standardisation, mapping and derived metrics are Invinite's."
+                     *         "sec_data": "Figures and filings originate from SEC EDGAR; the standardisation, mapping and derived metrics are Invinite's.",
+                     *         "news": "Issuer and SEC text is served in full with its attribution; the licensee shows publisher, source URL and date next to it and may forward it unmodified; the resale rule applies."
                      *       },
                      *       "rights": [
                      *         "display"
@@ -15461,10 +17440,10 @@ export interface operations {
                      *         }
                      *       ],
                      *       "universe": {
-                     *         "companies": 6204,
+                     *         "companies": 6214,
                      *         "earnings_calls": {
                      *           "scope": "all",
-                     *           "companies": 5540
+                     *           "companies": 5544
                      *         }
                      *       }
                      *     }
@@ -15480,6 +17459,7 @@ export interface operations {
                             train: string;
                             audio: string;
                             sec_data: string;
+                            news: string;
                         };
                         rights: Array<"audio" | "display" | "rag" | "redistribute" | "resell" | "train">;
                         tiers: {
@@ -15521,7 +17501,7 @@ export interface operations {
                              * @description Product family
                              * @enum {string}
                              */
-                            family: "account" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "sec_filings" | "websocket";
+                            family: "account" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "sec_filings" | "websocket";
                             routes: Array<{
                                 /** @description Fastify route pattern; `#` = WebSocket channel */
                                 route: string;

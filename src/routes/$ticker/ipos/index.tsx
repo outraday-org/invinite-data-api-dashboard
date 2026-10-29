@@ -39,7 +39,7 @@ function IposPage() {
         [data],
     );
 
-    const formatCurrency = React.useCallback((value: number, currency: string | undefined) => {
+    const formatCurrency = React.useCallback((value: number, currency: null | string | undefined) => {
         if (!Number.isFinite(value)) return "-";
 
         if (!currency) {
