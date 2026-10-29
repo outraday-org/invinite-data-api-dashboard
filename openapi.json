@@ -1677,6 +1677,7 @@
               "publications",
               "publications_truncated",
               "model_processing_allowed",
+              "media_count",
               "attribution"
             ],
             "properties": {
@@ -1963,6 +1964,11 @@
               "model_processing_allowed": {
                 "type": "boolean",
                 "description": "Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models"
+              },
+              "media_count": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable)"
               },
               "attribution": {
                 "type": "object",
@@ -27026,7 +27032,7 @@
         "tags": [
           "News"
         ],
-        "description": "News of US companies — SEC filings and the companies' own newsroom publications — newest first.\n\n### What you get\n\n- Headline, lede, publication time, canonical URL, first source, kind, topics, the companies mentioned (`symbols`, `ciks`) and the companies' own publications of the item.\n\n- Every item carries `attribution`; the full text is on `GET /v1/news/{id}`.\n\n### Filters\n\n- `ticker` / `cik` = items mentioning the company (either matches); `publisher` = items the company published itself. Several filters intersect; several values of one filter match any of them.\n\n- An unknown ticker is not an error: the list is empty.\n\n### Pagination\n\n- News is an append-heavy feed, so pages use a cursor instead of an offset: follow `next_url` (or pass `next_cursor` as `cursor` with the same filters) until it is null. An item published between two calls never shifts a page — no duplicates, no gaps.\n\n- `next_url` pins the resolved `from` / `to`, so a default window does not slide while you page.\n\n### Sources and rights\n\n- Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.\n\n- Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.\n\n- A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).\n\nMinimum tier for display: FREE.",
+        "description": "News of US companies — SEC filings and the companies' own newsroom publications — newest first.\n\n### What you get\n\n- Headline, lede, publication time, canonical URL, first source, kind, topics, the companies mentioned (`symbols`, `ciks`) and the companies' own publications of the item.\n\n- Every item carries `attribution`; the full text is on `GET /v1/news/{id}`.\n\n- `media_count` = the item's media you can get now (original PDFs, images); `has_media=true` lists only those items, and `GET /v1/news/{id}` lists the files with their `download_url`.\n\n### Filters\n\n- `ticker` / `cik` = items mentioning the company (either matches); `publisher` = items the company published itself. Several filters intersect; several values of one filter match any of them.\n\n- An unknown ticker is not an error: the list is empty.\n\n### Pagination\n\n- News is an append-heavy feed, so pages use a cursor instead of an offset: follow `next_url` (or pass `next_cursor` as `cursor` with the same filters) until it is null. An item published between two calls never shifts a page — no duplicates, no gaps.\n\n- `next_url` pins the resolved `from` / `to`, so a default window does not slide while you page.\n\n### Sources and rights\n\n- Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.\n\n- Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.\n\n- A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).\n\nMinimum tier for display: FREE.",
         "parameters": [
           {
             "schema": {
@@ -27135,6 +27141,20 @@
             "name": "earnings",
             "required": false,
             "description": "true = only earnings news (results, results dates, call announcements, guidance); false = none of it",
+            "example": "true"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "in": "query",
+            "name": "has_media",
+            "required": false,
+            "description": "true = only items with media you can get now (`media_count` > 0: an original PDF or image to show or download); false = items without",
             "example": "true"
           },
           {
@@ -27279,6 +27299,7 @@
                           "publications",
                           "publications_truncated",
                           "model_processing_allowed",
+                          "media_count",
                           "attribution"
                         ],
                         "properties": {
@@ -27565,6 +27586,11 @@
                           "model_processing_allowed": {
                             "type": "boolean",
                             "description": "Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models"
+                          },
+                          "media_count": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable)"
                           },
                           "attribution": {
                             "type": "object",
@@ -28218,6 +28244,7 @@
                     "publications",
                     "publications_truncated",
                     "model_processing_allowed",
+                    "media_count",
                     "attribution",
                     "body_text",
                     "content_status",
@@ -28512,6 +28539,11 @@
                     "model_processing_allowed": {
                       "type": "boolean",
                       "description": "Whether the source text may be processed by AI models; API access alone does not authorize forwarding text into models"
+                    },
+                    "media_count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable)"
                     },
                     "attribution": {
                       "type": "object",
@@ -29718,6 +29750,7 @@
                               "publications",
                               "publications_truncated",
                               "model_processing_allowed",
+                              "media_count",
                               "attribution"
                             ],
                             "properties": {
@@ -30004,6 +30037,11 @@
                               "model_processing_allowed": {
                                 "type": "boolean",
                                 "description": "Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models"
+                              },
+                              "media_count": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable)"
                               },
                               "attribution": {
                                 "type": "object",
@@ -36524,6 +36562,7 @@
                               "publications",
                               "publications_truncated",
                               "model_processing_allowed",
+                              "media_count",
                               "attribution"
                             ],
                             "properties": {
@@ -36810,6 +36849,11 @@
                               "model_processing_allowed": {
                                 "type": "boolean",
                                 "description": "Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models"
+                              },
+                              "media_count": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "description": "Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable)"
                               },
                               "attribution": {
                                 "type": "object",

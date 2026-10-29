@@ -1961,6 +1961,8 @@ export interface paths {
          *
          *     - Every item carries `attribution`; the full text is on `GET /v1/news/{id}`.
          *
+         *     - `media_count` = the item's media you can get now (original PDFs, images); `has_media=true` lists only those items, and `GET /v1/news/{id}` lists the files with their `download_url`.
+         *
          *     ### Filters
          *
          *     - `ticker` / `cik` = items mentioning the company (either matches); `publisher` = items the company published itself. Several filters intersect; several values of one filter match any of them.
@@ -3429,6 +3431,8 @@ export interface components {
                 publications_truncated: boolean;
                 /** @description Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models */
                 model_processing_allowed: boolean;
+                /** @description Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable) */
+                media_count: number;
                 /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
                 attribution: {
                     /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
@@ -13776,6 +13780,8 @@ export interface operations {
                         publications_truncated: boolean;
                         /** @description Whether the source text may be processed by AI models; API access alone does not authorize forwarding text into models */
                         model_processing_allowed: boolean;
+                        /** @description Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable) */
+                        media_count: number;
                         /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
                         attribution: {
                             /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
@@ -14035,6 +14041,11 @@ export interface operations {
                  */
                 earnings?: "false" | "true";
                 /**
+                 * @description true = only items with media you can get now (`media_count` > 0: an original PDF or image to show or download); false = items without
+                 * @example true
+                 */
+                has_media?: "false" | "true";
+                /**
                  * @description Published by these companies (CIK, padded or not; ≤ 20): an item with a verified issuer-newsroom publication of one of them — not a mention, not the item's first source. The CIK namespace is the SEC's
                  * @example [
                  *       "1045810"
@@ -14200,6 +14211,8 @@ export interface operations {
                             publications_truncated: boolean;
                             /** @description Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models */
                             model_processing_allowed: boolean;
+                            /** @description Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable) */
+                            media_count: number;
                             /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
                             attribution: {
                                 /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
@@ -14596,6 +14609,8 @@ export interface operations {
                                 publications_truncated: boolean;
                                 /** @description Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models */
                                 model_processing_allowed: boolean;
+                                /** @description Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable) */
+                                media_count: number;
                                 /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
                                 attribution: {
                                     /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */

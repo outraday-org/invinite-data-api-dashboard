@@ -28,6 +28,7 @@ const orNone = <T extends string>(value: T | typeof ALL) => (value === ALL ? und
  * scope) selects items the company published itself — its verified newsroom publications, by CIK — not every item
  * that mentions it; publication type and the publisher's own newsroom categories / tags apply only there. Kind (the
  * pipeline's classification), topic (AI-read development topics) and the publisher's categories stay separate controls.
+ * "Has media" keeps the items with an original PDF or image the API serves now (`has_media=true`), in either scope.
  */
 export function NewsFilters({
     categories,
@@ -70,6 +71,15 @@ export function NewsFilters({
                         Company-published
                     </Button>
                 )}
+                <Button
+                    aria-pressed={search.media === true}
+                    onClick={() => onChange({ media: search.media ? undefined : true })}
+                    size="lg"
+                    type="button"
+                    variant={search.media ? "default" : "outline"}
+                >
+                    Has media
+                </Button>
                 <Input
                     aria-label="From"
                     className="w-[150px]"

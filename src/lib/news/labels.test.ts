@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { issuerLabels, matchesNewsFilters, mergeLiveItems, publishedBy, sourceLabel, validateNewsSearch } from "./labels";
+import { fileTypeLabel, issuerLabels, matchesNewsFilters, mergeLiveItems, publishedBy, sourceLabel, validateNewsSearch } from "./labels";
 import { edgarItem, newsroomItem } from "./news-fixtures";
 
 describe("sourceLabel", () => {
@@ -47,6 +47,28 @@ describe("validateNewsSearch", () => {
     });
 });
 
+describe("validateNewsSearch media", () => {
+    it("keeps the Has media switch in either scope and drops a non-boolean", () => {
+        expect(validateNewsSearch({ media: true, scope: "market" }).media).toBe(true);
+
+        expect(validateNewsSearch({ media: "yes" }).media).toBeUndefined();
+    });
+});
+
+describe("fileTypeLabel", () => {
+    it("names a file by its MIME subtype; null without one", () => {
+        expect(fileTypeLabel("application/pdf")).toBe("PDF");
+
+        expect(fileTypeLabel("image/jpeg")).toBe("JPEG");
+
+        expect(fileTypeLabel("image/svg+xml; charset=utf-8")).toBe("SVG");
+
+        expect(fileTypeLabel(null)).toBeNull();
+
+        expect(fileTypeLabel("garbage")).toBeNull();
+    });
+});
+
 describe("matchesNewsFilters (live items)", () => {
     it("applies kind, topic, source and earnings", () => {
         const item = newsroomItem();
@@ -64,6 +86,14 @@ describe("matchesNewsFilters (live items)", () => {
         expect(matchesNewsFilters(item, { earnings: "true" })).toBe(false);
 
         expect(matchesNewsFilters(edgarItem(), { earnings: "true" })).toBe(true);
+    });
+
+    it("Has media keeps only a pushed item with media", () => {
+        expect(matchesNewsFilters(newsroomItem(), { hasMedia: true })).toBe(false);
+
+        expect(matchesNewsFilters(newsroomItem({ media_count: 2 }), { hasMedia: true })).toBe(true);
+
+        expect(matchesNewsFilters(newsroomItem(), {})).toBe(true);
     });
 
     it("Company-published = the publisher's own publication (padded CIK too), with its type / category / tag", () => {

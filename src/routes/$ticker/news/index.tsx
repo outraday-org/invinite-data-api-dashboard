@@ -39,6 +39,7 @@ function ListError({ error }: { error: unknown }) {
 /** The News page body (pure: tested in `src/routes/-tests/news-page.test.tsx`). */
 export function NewsPageView({
     controls,
+    emptyText = "No news in this window.",
     error,
     hasNextPage,
     isFetchingNextPage,
@@ -51,6 +52,8 @@ export function NewsPageView({
     scopeLabel,
 }: {
     controls?: React.ReactNode;
+    /** The empty list's line (the "Has media" filter names itself). */
+    emptyText?: string;
     error: unknown;
     hasNextPage: boolean;
     isFetchingNextPage: boolean;
@@ -81,7 +84,7 @@ export function NewsPageView({
                 : (
                         <ScrollArea className="h-0 grow">
                             {!isLoading && items.length === 0
-                                ? <div className="text-muted-foreground w-full p-2 text-center text-xs">No news in this window.</div>
+                                ? <div className="text-muted-foreground w-full p-2 text-center text-xs">{emptyText}</div>
                                 : <NewsTable isLoading={isLoading} items={items} liveIds={liveIds} onOpen={onOpen} />}
                             <LoadMoreButton hasNextPage={hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={onLoadMore} />
                         </ScrollArea>
@@ -107,6 +110,7 @@ function NewsPage() {
     const list = useNewsInfinite({
         earnings: search.earnings,
         from: search.from,
+        hasMedia: search.media,
         issuerCategory: search.category ? [search.category] : undefined,
         issuerTag: search.tag ? [search.tag] : undefined,
         kind: search.kind ? [search.kind] : undefined,
@@ -127,6 +131,7 @@ function NewsPage() {
     const filters: NewsFilters = {
         category: search.category,
         earnings: search.earnings,
+        hasMedia: search.media,
         kind: search.kind,
         publicationType: search.pubType,
         publisherCik,
@@ -165,7 +170,7 @@ function NewsPage() {
         apiKeyUpdatedAt,
         baseUrl,
         enabled: search.live === true,
-        // What the socket filters; topic, publisher and publication type are re-checked below.
+        // What the socket filters; topic, publisher, publication type and media are re-checked below.
         filters: {
             earningsOnly: search.earnings === "true",
             kinds: search.kind ? [search.kind] : undefined,
@@ -217,6 +222,7 @@ function NewsPage() {
         <>
             <NewsPageView
                 controls={controls}
+                emptyText={search.media ? "No news with media in this window." : undefined}
                 error={list.error}
                 hasNextPage={Boolean(list.hasNextPage)}
                 isFetchingNextPage={list.isFetchingNextPage}

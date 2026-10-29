@@ -1794,6 +1794,8 @@ export function useEarningsLiveStream(input: EarningsEventSelector) {
 export type NewsListInput = {
     earnings?: "false" | "true";
     from?: string;
+    /** Only items with media (`has_media=true`). */
+    hasMedia?: boolean;
     issuerCategory?: Array<string>;
     issuerTag?: Array<string>;
     kind?: Array<string>;
@@ -1837,6 +1839,7 @@ export function useNewsInfinite(input: NewsListInput) {
             input.kind?.join(",") ?? "",
             input.topic?.join(",") ?? "",
             input.earnings ?? "",
+            input.hasMedia ? "media" : "",
             input.publicationType?.join(",") ?? "",
             input.issuerCategory?.join(",") ?? "",
             input.issuerTag?.join(",") ?? "",

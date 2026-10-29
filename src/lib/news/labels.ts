@@ -102,6 +102,8 @@ const newsSearchSchema = z.object({
     item: z.uuid().optional().catch(undefined),
     kind: z.enum(NEWS_KINDS as [NewsKind, ...Array<NewsKind>]).optional().catch(undefined),
     live: z.boolean().optional().catch(undefined),
+    /** "Has media": items with media the API serves now (`has_media=true`, `media_count` > 0). */
+    media: z.boolean().optional().catch(undefined),
     /** "Company-published": items the company published itself (`publisher=<cik>`), company scope only. */
     published: z.boolean().optional().catch(undefined),
     pubType: z.enum(NEWS_PUBLICATION_TYPES as [string, ...Array<string>]).optional().catch(undefined),
@@ -137,6 +139,8 @@ export function validateNewsSearch(search: Record<string, unknown>): NewsSearch 
 export type NewsFilters = {
     category?: string;
     earnings?: "false" | "true";
+    /** Only items with media (`media_count` > 0). */
+    hasMedia?: boolean;
     kind?: NewsKind;
     publicationType?: string;
     /** Unpadded CIK of the "Company-published" publisher. */
@@ -164,6 +168,8 @@ export function matchesNewsFilters(item: NewsItemPublic, filters: NewsFilters): 
     if (filters.source && firstSourceKind(item.source.id) !== filters.source) return false;
 
     if (filters.earnings && item.is_earnings_news !== (filters.earnings === "true")) return false;
+
+    if (filters.hasMedia && !(item.media_count > 0)) return false;
 
     if (filters.publisherCik) {
         const cik = filters.publisherCik.replace(/^0+/, "");
@@ -222,4 +228,13 @@ export function edgarLabel(edgar: NewsItemPublic["attribution"]["edgar"]) {
     if (!edgar) return null;
 
     return [edgar.form, edgar.accession].filter(Boolean).join(" · ");
+}
+
+/** A file type label from a MIME type: `application/pdf` → "PDF", `image/jpeg` → "JPEG"; null without one. */
+export function fileTypeLabel(contentType: null | string) {
+    const subtype = contentType?.split(";")[0].split("/")[1]?.trim();
+
+    if (!subtype) return null;
+
+    return subtype.replace(/^(x-|vnd\.)/, "").replace(/\+xml$/, "").toUpperCase();
 }

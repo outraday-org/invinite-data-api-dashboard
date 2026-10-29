@@ -2,8 +2,12 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { NewsAsset } from "@/lib/api/types";
+
 import { ApiRequestError } from "@/lib/api/errors";
+import { useNewsAssetDownload } from "@/lib/api/queries";
 import { edgarItem, newsDetail, newsroomItem } from "@/lib/news/news-fixtures";
+import { NewsFilters } from "@/routes/$ticker/news/-components/news-filters";
 import { NewsItemView } from "@/routes/$ticker/news/-components/news-item-panel";
 import { NewsPageView } from "@/routes/$ticker/news/index";
 
@@ -16,12 +20,52 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("@/lib/api/queries", () => ({
     useApiBaseUrl: vi.fn(() => null),
     useCompanyDetails: vi.fn(() => ({ data: null })),
-    useNewsAssetDownload: vi.fn(() => ({ error: null, isPending: false, mutate: vi.fn() })),
+    useNewsAssetDownload: vi.fn(() => ({ error: null, isPending: false, mutate: vi.fn(), mutateAsync: vi.fn(), reset: vi.fn() })),
     useNewsInfinite: vi.fn(),
     useNewsItem: vi.fn(),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+    cleanup();
+
+    vi.restoreAllMocks();
+});
+
+const SIGNED = "https://r2.example/news/deck.pdf?X-Amz-Signature=abc";
+
+const pdfAsset = (overrides: Partial<NewsAsset> = {}): NewsAsset => ({
+    alt: null,
+    byte_size: 1_258_291,
+    can_display: false,
+    can_download: true,
+    caption: null,
+    content_type: "application/pdf",
+    copyright_notice: null,
+    credit: null,
+    download_url: "/v1/news/x/assets/p1/download",
+    height: null,
+    id: "00000000-0000-4000-8000-0000000000b1",
+    kind: "original_pdf",
+    original_url: "https://nvidianews.nvidia.com/rubin.pdf",
+    title: "Rubin press release",
+    width: null,
+    ...overrides,
+});
+
+/** The download mutation answering `purpose` at once (the server function is not loaded). */
+function mockDelivery(purpose: "display" | "download") {
+    const delivered = { content_type: "application/pdf", credit: null, expires_at: "2026-10-29T20:00:00Z", purpose, url: SIGNED };
+
+    const mutate = vi.fn((_vars: unknown, options?: { onSuccess?: (d: typeof delivered) => void }) => options?.onSuccess?.(delivered));
+
+    const mutateAsync = vi.fn((_vars: { assetId: string; id: string }) => Promise.resolve(delivered));
+
+    const reset = vi.fn();
+
+    vi.mocked(useNewsAssetDownload).mockReturnValue({ error: null, isPending: false, mutate, mutateAsync, reset } as unknown as ReturnType<typeof useNewsAssetDownload>);
+
+    return { mutate, mutateAsync, reset };
+}
 
 const pageProps = {
     error: null,
@@ -76,6 +120,22 @@ describe("NewsPageView", () => {
         expect(onLoadMore).toHaveBeenCalledTimes(1);
     });
 
+    it("marks an item with media by a paperclip and its count, nothing without", () => {
+        render(<NewsPageView {...pageProps} items={[newsroomItem({ media_count: 2 }), edgarItem()]} />);
+
+        const rows = screen.getAllByTestId("news-row");
+
+        expect(within(rows[0]).getByLabelText("2 files").textContent).toBe("2");
+
+        expect(within(rows[1]).queryByTestId("news-media")).toBeNull();
+    });
+
+    it("names the Has media filter in the empty state", () => {
+        render(<NewsPageView {...pageProps} emptyText="No news with media in this window." items={[]} />);
+
+        expect(screen.getByText("No news with media in this window.")).toBeTruthy();
+    });
+
     it("says when the window is empty", () => {
         render(<NewsPageView {...pageProps} items={[]} />);
 
@@ -88,6 +148,26 @@ describe("NewsPageView", () => {
         render(<NewsPageView {...pageProps} error={new ApiRequestError(403, { error: "Forbidden", message: "Upgrade" })} items={[]} />);
 
         expect(screen.getByText("Your plan does not include news")).toBeTruthy();
+    });
+});
+
+describe("NewsFilters", () => {
+    it("toggles Has media in the URL search", () => {
+        const onChange = vi.fn();
+
+        const { rerender } = render(<NewsFilters categories={[]} onChange={onChange} search={{}} tags={[]} ticker="NVDA" />);
+
+        fireEvent.click(screen.getByText("Has media"));
+
+        expect(onChange).toHaveBeenLastCalledWith({ media: true });
+
+        rerender(<NewsFilters categories={[]} onChange={onChange} search={{ media: true }} tags={[]} ticker="NVDA" />);
+
+        expect(screen.getByText("Has media").getAttribute("aria-pressed")).toBe("true");
+
+        fireEvent.click(screen.getByText("Has media"));
+
+        expect(onChange).toHaveBeenLastCalledWith({ media: undefined });
     });
 });
 
@@ -193,6 +273,82 @@ describe("NewsItemView", () => {
         expect(screen.getByText("Show")).toBeTruthy();
 
         expect(screen.getByText("Company newsroom (nvidianews.nvidia.com)", { selector: "a" })).toBeTruthy();
+    });
+
+    it("downloads a file in one click: the signed URL is followed at once and kept nowhere", () => {
+        const { mutate, reset } = mockDelivery("download");
+
+        const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+            expect(this.href).toBe(SIGNED);
+        });
+
+        const item = newsroomItem();
+
+        render(<NewsItemView data={newsDetail(item, { assets: [pdfAsset()] })} error={null} isLoading={false} onOpen={() => undefined} />);
+
+        const row = screen.getByTestId("news-asset");
+
+        expect(within(row).getByText("PDF · 1.2 MB")).toBeTruthy();
+
+        expect(within(row).queryByText("Show")).toBeNull();
+
+        fireEvent.click(within(row).getByText("Download"));
+
+        expect(mutate).toHaveBeenCalledWith({ assetId: pdfAsset().id, id: item.id }, expect.anything());
+
+        expect(click).toHaveBeenCalledTimes(1);
+
+        expect(reset).toHaveBeenCalled();
+
+        // No link to the signed URL is left in the page, and a single file has no "Download all".
+        expect(document.querySelector(`a[href="${SIGNED}"]`)).toBeNull();
+
+        expect(screen.queryByText(/Download all/)).toBeNull();
+    });
+
+    it("never follows an inline URL as a download", () => {
+        mockDelivery("display");
+
+        const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+
+        render(<NewsItemView data={newsDetail(newsroomItem(), { assets: [pdfAsset()] })} error={null} isLoading={false} onOpen={() => undefined} />);
+
+        fireEvent.click(screen.getByText("Download"));
+
+        expect(click).not.toHaveBeenCalled();
+
+        expect(screen.getByText("This file cannot be downloaded right now.")).toBeTruthy();
+    });
+
+    it("downloads all downloadable files of the item, skipping display-only and link-only ones", async () => {
+        const { mutateAsync } = mockDelivery("download");
+
+        const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+
+        const second = pdfAsset({ id: "00000000-0000-4000-8000-0000000000b2", title: "Deck" });
+
+        const displayOnly = pdfAsset({ can_display: true, can_download: false, content_type: "image/png", id: "00000000-0000-4000-8000-0000000000b3", kind: "hero_image" });
+
+        const linkOnly = pdfAsset({ can_download: false, download_url: null, id: "00000000-0000-4000-8000-0000000000b4", title: "Logo" });
+
+        const item = newsroomItem();
+
+        render(
+            <NewsItemView
+                data={newsDetail(item, { assets: [pdfAsset(), second, displayOnly, linkOnly] })}
+                error={null}
+                isLoading={false}
+                onOpen={() => undefined}
+            />,
+        );
+
+        expect(screen.getAllByText("At the source")).toHaveLength(1);
+
+        fireEvent.click(screen.getByText("Download all (2)"));
+
+        await vi.waitFor(() => expect(click).toHaveBeenCalledTimes(2));
+
+        expect(mutateAsync.mock.calls.map(([vars]) => vars.assetId)).toEqual([pdfAsset().id, second.id]);
     });
 
     it("renders 404 and the plan gate as states", () => {

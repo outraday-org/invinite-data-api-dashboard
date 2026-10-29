@@ -23,6 +23,7 @@ export function newsroomItem(overrides: Partial<NewsItemPublic> = {}): NewsItemP
         id: "4c1d9e62-3b7a-4f2e-8d1c-9e0a7b6c5d4f",
         is_earnings_news: false,
         kind: "other",
+        media_count: 0,
         model_processing_allowed: true,
         publications: [{
             categories: [{ id: "12", label: "Press Releases", url: null }],

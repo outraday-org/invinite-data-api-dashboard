@@ -1334,6 +1334,8 @@ const newsListSchema = z.object({
     cursor: z.string().optional(),
     earnings: z.enum(["true", "false"]).optional(),
     from: z.string().optional(),
+    /** Only items with media the API serves now (`media_count` > 0). */
+    hasMedia: z.boolean().optional(),
     issuerCategory: z.array(z.string()).optional(),
     issuerTag: z.array(z.string()).optional(),
     kind: z.array(z.string()).optional(),
@@ -1362,6 +1364,7 @@ export const getNewsList = createServerFn({ method: "GET" })
                     cursor: data.cursor,
                     earnings: data.earnings,
                     from: data.from,
+                    has_media: data.hasMedia ? "true" : undefined,
                     issuer_category: listOrUndefined(data.issuerCategory),
                     issuer_tag: listOrUndefined(data.issuerTag),
                     kind: listOrUndefined(data.kind),

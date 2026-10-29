@@ -1,3 +1,4 @@
+import { DownloadIcon } from "lucide-react";
 import * as React from "react";
 
 import type { NewsAsset, NewsAssetDownloadResponse, NewsAttribution, NewsDevelopment, NewsItemResponse } from "@/lib/api/types";
@@ -11,9 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
 import { useNewsAssetDownload, useNewsItem } from "@/lib/api/queries";
 import { formatBytes, formatInstant } from "@/lib/earnings/format";
+import { startDownload } from "@/lib/news/download";
 import {
     CLAIM_STATUS_LABELS,
     edgarLabel,
+    fileTypeLabel,
     NEWS_KIND_LABELS,
     NEWS_TOPIC_LABELS,
     publicationTypeLabel,
@@ -57,56 +60,140 @@ export function AttributionBlock({ attribution }: { attribution: NewsAttribution
     );
 }
 
-/** One image / original file: metadata and credit always; the file only through the API's short-lived URL, on click. */
+/** "PDF · 1.2 MB · 1200 × 800": what the file is before anyone fetches it. */
+function assetFacts(asset: NewsAsset) {
+    return [
+        fileTypeLabel(asset.content_type),
+        asset.byte_size === null ? null : formatBytes(asset.byte_size),
+        asset.width && asset.height ? `${asset.width} × ${asset.height}` : null,
+    ].filter(Boolean).join(" · ");
+}
+
+const NOT_DOWNLOADABLE = "This file cannot be downloaded right now.";
+
+/**
+ * One image / original file: type, size, metadata and credit always; the file only through the API's short-lived URL,
+ * on click. "Download" fetches that URL and saves the file at once (`startDownload`: no second click, the URL kept
+ * nowhere); "Show" previews a displayable image inline; neither permission → the original link only.
+ */
 function AssetRow({ asset, itemId }: { asset: NewsAsset; itemId: string }) {
     const download = useNewsAssetDownload();
 
-    // Held only while this panel is open: the URL is a ≤ 60-s bearer credential, never cached or stored.
-    const [delivered, setDelivered] = React.useState<NewsAssetDownloadResponse | null>(null);
+    // A shown image only, while this panel is open: the URL is a ≤ 60-s bearer credential, never cached or stored.
+    const [preview, setPreview] = React.useState<NewsAssetDownloadResponse | null>(null);
 
-    const permitted = asset.can_display || asset.can_download;
+    const [refused, setRefused] = React.useState(false);
 
     const credit = [asset.credit, asset.copyright_notice].filter(Boolean).join(" · ");
 
-    const image = delivered?.purpose === "display" && delivered.content_type?.startsWith("image/") ? delivered : null;
+    const facts = assetFacts(asset);
+
+    const request = (onDelivered: (delivered: NewsAssetDownloadResponse) => void) => {
+        setRefused(false);
+
+        download.mutate({ assetId: asset.id, id: itemId }, { onSuccess: onDelivered });
+    };
+
+    const onDownload = () => request((delivered) => {
+        // Only an attachment URL is followed: an inline one would replace this page.
+        if (delivered.purpose === "download") startDownload(delivered.url);
+        else setRefused(true);
+
+        download.reset();
+    });
+
+    const onShow = () => request(delivered => setPreview(delivered.content_type?.startsWith("image/") ? delivered : null));
 
     return (
-        <li className="flex flex-col gap-1 rounded-md border p-2 text-xs">
+        <li className="flex flex-col gap-1 rounded-md border p-2 text-xs" data-testid="news-asset">
             <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">{asset.kind}</Badge>
                 <span className="font-medium">{asset.title ?? asset.alt ?? "Untitled"}</span>
-                {asset.byte_size !== null && <span className="text-muted-foreground">{formatBytes(asset.byte_size)}</span>}
+                {facts && <span className="text-muted-foreground">{facts}</span>}
             </div>
             {asset.caption && <div>{asset.caption}</div>}
             {credit && <div className="text-muted-foreground">{`Credit: ${credit}`}</div>}
-            {image
+            {preview && (
+                <figure className="flex flex-col gap-1">
+                    <img alt={asset.alt ?? asset.title ?? ""} className="max-h-80 w-auto self-start rounded border" referrerPolicy="no-referrer" src={preview.url} />
+                    {(preview.credit ?? credit) && <figcaption className="text-muted-foreground">{preview.credit ?? credit}</figcaption>}
+                </figure>
+            )}
+            {asset.can_display || asset.can_download
                 ? (
-                        <figure className="flex flex-col gap-1">
-                            <img alt={asset.alt ?? asset.title ?? ""} className="max-h-80 w-auto self-start rounded border" referrerPolicy="no-referrer" src={image.url} />
-                            {(image.credit ?? credit) && <figcaption className="text-muted-foreground">{image.credit ?? credit}</figcaption>}
-                        </figure>
+                        <div className="flex flex-wrap items-center gap-2">
+                            {asset.can_download && (
+                                <Button disabled={download.isPending} onClick={onDownload} size="sm" type="button" variant="outline">
+                                    <DownloadIcon aria-hidden />
+                                    Download
+                                </Button>
+                            )}
+                            {asset.can_display && !preview && (
+                                <Button disabled={download.isPending} onClick={onShow} size="sm" type="button" variant="outline">
+                                    Show
+                                </Button>
+                            )}
+                            {download.error && <span className="text-destructive">{download.error.message}</span>}
+                            {refused && <span className="text-destructive">{NOT_DOWNLOADABLE}</span>}
+                        </div>
                     )
-                : delivered
-                    ? <a className="underline underline-offset-4" href={delivered.url} {...EXTERNAL}>Open the file (link valid about a minute)</a>
-                    : permitted
-                        ? (
-                                <div className="flex items-center gap-2">
-                                    <Button
-                                        disabled={download.isPending}
-                                        onClick={() => download.mutate({ assetId: asset.id, id: itemId }, { onSuccess: setDelivered })}
-                                        size="sm"
-                                        type="button"
-                                        variant="outline"
-                                    >
-                                        {asset.can_display ? "Show" : "Get file"}
-                                    </Button>
-                                    {download.error && <span className="text-destructive">{download.error.message}</span>}
-                                </div>
-                            )
-                        : asset.original_url && (
-                            <a className="underline underline-offset-4" href={asset.original_url} {...EXTERNAL}>At the source</a>
-                        )}
+                : asset.original_url && (
+                    <a className="underline underline-offset-4" href={asset.original_url} {...EXTERNAL}>At the source</a>
+                )}
         </li>
+    );
+}
+
+// Browsers drop a download that starts while the previous one is still being handed over.
+const DOWNLOAD_ALL_GAP_MS = 400;
+
+/**
+ * "Download all": every file of the item the API lets you download (`can_download`), one after the other, each through
+ * its own fresh ≤ 60-s URL. The browser may ask once to allow several downloads.
+ */
+function DownloadAll({ assets, itemId }: { assets: ReadonlyArray<NewsAsset>; itemId: string }) {
+    const download = useNewsAssetDownload();
+
+    const [failed, setFailed] = React.useState(0);
+
+    const [running, setRunning] = React.useState(false);
+
+    const onClick = async () => {
+        setRunning(true);
+
+        setFailed(0);
+
+        let failures = 0;
+
+        for (const [index, asset] of assets.entries()) {
+            if (index > 0) await new Promise(resolve => setTimeout(resolve, DOWNLOAD_ALL_GAP_MS));
+
+            try {
+                const delivered = await download.mutateAsync({ assetId: asset.id, id: itemId });
+
+                if (delivered.purpose === "download") startDownload(delivered.url);
+                else failures += 1;
+            }
+            catch {
+                failures += 1;
+            }
+        }
+
+        download.reset();
+
+        setFailed(failures);
+
+        setRunning(false);
+    };
+
+    return (
+        <div className="flex items-center gap-2 text-xs">
+            <Button disabled={running} onClick={() => void onClick()} size="sm" type="button" variant="outline">
+                <DownloadIcon aria-hidden />
+                {`Download all (${assets.length})`}
+            </Button>
+            {failed > 0 && <span className="text-destructive">{`${failed} of ${assets.length} could not be downloaded.`}</span>}
+        </div>
     );
 }
 
@@ -171,6 +258,8 @@ export function NewsItemView({
 
     const publishers = publishedBy(data);
 
+    const downloadable = data.assets.filter(asset => asset.can_download);
+
     return (
         <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -209,7 +298,10 @@ export function NewsItemView({
 
             {data.assets.length > 0 && (
                 <section className="flex flex-col gap-2">
-                    <div className="text-sm font-medium">Images and files</div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-sm font-medium">Images and files</div>
+                        {downloadable.length > 1 && <DownloadAll assets={downloadable} itemId={data.id} />}
+                    </div>
                     <ul className="flex flex-col gap-2">
                         {data.assets.map(asset => <AssetRow asset={asset} itemId={data.id} key={asset.id} />)}
                     </ul>
