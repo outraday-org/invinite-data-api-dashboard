@@ -68,7 +68,8 @@ const EVENT_TYPE_OPTIONS: Array<{ label: string; value: EarningsEventType }> = [
     { label: "Other events", value: "other" },
 ];
 
-function FilterSelect<T extends string>({
+/** A labelled `Select` over fixed options (the calendar and News filters). */
+export function FilterSelect<T extends string>({
     className,
     onValueChange,
     options,

@@ -1,8 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { newsroomItem } from "@/lib/news/news-fixtures";
+
 import {
     EARNINGS_FRAME_TYPES,
     liveWsUrl,
+    NEWS_LIVE_CHANNEL,
+    newsSubscribeFrame,
+    parseNewsFrame,
     parseServerFrame,
     subscribeFrame,
     toAssignments,
@@ -225,5 +230,54 @@ describe("client frames and the socket URL", () => {
         expect(liveWsUrl("https://api.data.invinite.com", "k 1")).toBe("wss://api.data.invinite.com/v1/ws?api_key=k+1");
 
         expect(liveWsUrl("http://localhost:3000/", "abc")).toBe("ws://localhost:3000/v1/ws?api_key=abc");
+    });
+});
+
+describe("news.live frames (mirrors IDA types/newsMessages.ts)", () => {
+    const raw = (frame: object) => JSON.stringify(frame);
+
+    it("parses every news server frame by its channel", () => {
+        const frames = [
+            { channel: NEWS_LIVE_CHANNEL, filters: { ciks: [], earnings_only: false, kinds: [], sources: [], tickers: ["NVDA"] }, type: "subscribed" },
+            { channel: NEWS_LIVE_CHANNEL, item: newsroomItem(), type: "news_item" },
+            { channel: NEWS_LIVE_CHANNEL, type: "unsubscribed" },
+            { channel: NEWS_LIVE_CHANNEL, code: "forbidden_tier", message: "news.live needs the STANDARD plan", type: "error" },
+            { channel: NEWS_LIVE_CHANNEL, code: "channel_unavailable", message: "off", type: "error" },
+        ];
+
+        for (const frame of frames) expect(parseNewsFrame(raw(frame)).kind, frame.type).toBe("frame");
+    });
+
+    it("keeps the whole pushed item (a GET /v1/news row)", () => {
+        const parsed = parseNewsFrame(raw({ channel: NEWS_LIVE_CHANNEL, item: newsroomItem(), type: "news_item" }));
+
+        expect(parsed.kind === "frame" && parsed.frame.type === "news_item" && parsed.frame.item).toMatchObject({
+            attribution: { publisher: "NVIDIA Corporation" },
+            publications: [{ publication_type: "press_release" }],
+        });
+    });
+
+    it("leaves earnings frames, filings and pings alone; the earnings parser treats news frames as foreign", () => {
+        expect(parseNewsFrame(raw({ code: "forbidden_tier", message: "PRO", type: "error" })).kind).toBe("other");
+
+        expect(parseNewsFrame(raw({ type: "new_filing" })).kind).toBe("other");
+
+        expect(parseNewsFrame("not json").kind).toBe("other");
+
+        expect(parseNewsFrame(raw({ channel: NEWS_LIVE_CHANNEL, code: "nope", message: "x", type: "error" })).kind).toBe("malformed");
+
+        expect(parseServerFrame(raw({ channel: NEWS_LIVE_CHANNEL, item: newsroomItem(), type: "news_item" })).kind).toBe("other");
+    });
+
+    it("builds the subscribe frame without empty filters (no filter = the whole market)", () => {
+        expect(newsSubscribeFrame()).toStrictEqual({ channel: NEWS_LIVE_CHANNEL, type: "subscribe" });
+
+        expect(newsSubscribeFrame({ earningsOnly: true, kinds: ["guidance"], sources: [], tickers: ["NVDA"] })).toStrictEqual({
+            channel: NEWS_LIVE_CHANNEL,
+            earnings_only: true,
+            kinds: ["guidance"],
+            tickers: ["NVDA"],
+            type: "subscribe",
+        });
     });
 });

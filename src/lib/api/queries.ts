@@ -1,6 +1,6 @@
 import type { InfiniteData, UseQueryOptions } from "@tanstack/react-query";
 
-import { queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { queryOptions, useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -55,6 +55,8 @@ import type {
     InstitutionalTransactionsResponse,
     IposResponse,
     MarketHolidaysResponse,
+    NewsItemResponse,
+    NewsListResponse,
     RatioCategory,
     SegmentedFinancialsSegmentId,
     SplitsResponse,
@@ -62,6 +64,7 @@ import type {
 } from "./types";
 
 import { ApiRequestError, rethrowApiError, retryUnlessApiError } from "./errors";
+import { cursorPageParam, offsetPageParam } from "./page-params";
 import {
     getApiBaseUrl,
     getAsReportedFinancialsPresentation,
@@ -103,6 +106,9 @@ import {
     getInstitutions,
     getIpos,
     getMarketHolidays,
+    getNewsAssetDownload,
+    getNewsItem,
+    getNewsList,
     getSegmentedFinancials,
     getStandardizedFinancials,
     searchCompanies,
@@ -1213,20 +1219,6 @@ const hasEventSelector = (s: EarningsEventSelector) =>
 const selectorKey = (s: EarningsEventSelector) =>
     [s.eventId ?? "", s.identifier ?? "", s.date ?? "", s.year ?? "", s.quarter ?? ""] as const;
 
-/** The `offset` of a top-level `next_url` (as `useInsiderTradesInfinite`), else undefined = last page. */
-function offsetOfNextUrl(nextUrl: null | string | undefined) {
-    if (!nextUrl) return undefined;
-
-    try {
-        const offset = Number(new URL(nextUrl, "http://localhost").searchParams.get("offset"));
-
-        return Number.isNaN(offset) || offset <= 0 ? undefined : offset;
-    }
-    catch {
-        return undefined;
-    }
-}
-
 type EarningsQueryExtras<T> = Pick<
     UseQueryOptions<T, Error, T, ReadonlyArray<unknown>>,
     "gcTime" | "refetchInterval" | "retry"
@@ -1267,10 +1259,16 @@ function useEarningsQuery<T>(options: EarningsQueryExtras<T> & {
     };
 }
 
-function useEarningsInfinite<TPage extends { next_url?: null | string }>(options: {
+/**
+ * The infinite twin of `useEarningsQuery`. Pages by `offset` (`offsetPageParam`, first page 0) unless `pageParamOf`
+ * says otherwise — `/v1/news` pages by cursor (`cursorPageParam`, first page `null`).
+ */
+function useEarningsInfinite<TPage extends { next_url?: null | string }, TParam = number>(options: {
     enabled: boolean;
     errorMessage: null | string;
-    fetchPage: (offset: number, apiKey: string | undefined) => Promise<TPage>;
+    fetchPage: (pageParam: TParam, apiKey: string | undefined) => Promise<TPage>;
+    initialPageParam?: TParam;
+    pageParamOf?: (lastPage: TPage) => TParam | undefined;
     queryKey: ReadonlyArray<unknown>;
     quietStatuses?: ReadonlyArray<number>;
     staleTime: number;
@@ -1279,11 +1277,13 @@ function useEarningsInfinite<TPage extends { next_url?: null | string }>(options
 
     const { enabled, errorMessage, fetchPage, queryKey, quietStatuses, staleTime } = options;
 
-    const result = useInfiniteQuery<TPage, Error, InfiniteData<TPage, number>, ReadonlyArray<unknown>, number>({
+    const pageParamOf = options.pageParamOf ?? (offsetPageParam as (lastPage: TPage) => TParam | undefined);
+
+    const result = useInfiniteQuery<TPage, Error, InfiniteData<TPage, TParam>, ReadonlyArray<unknown>, TParam>({
         enabled: hasHydrated && enabled,
-        getNextPageParam: lastPage => offsetOfNextUrl(lastPage.next_url),
-        initialPageParam: 0,
-        queryFn: ({ pageParam }) => fetchPage(Number(pageParam) || 0, apiKey ?? undefined).catch(rethrowApiError),
+        getNextPageParam: lastPage => pageParamOf(lastPage),
+        initialPageParam: options.initialPageParam ?? (0 as TParam),
+        queryFn: ({ pageParam }) => fetchPage(pageParam as TParam, apiKey ?? undefined).catch(rethrowApiError),
         queryKey: [...queryKey, String(apiKeyUpdatedAt)],
         retry: retryUnlessApiError,
         staleTime,
@@ -1786,6 +1786,88 @@ export function useEarningsLiveStream(input: EarningsEventSelector) {
         retry: false,
         // Never stale: no refetch on window focus / remount (each one would cost 5 credits).
         staleTime: Number.POSITIVE_INFINITY,
+    });
+}
+
+// News (IDA `/v1/news*`, backend earnings tasks/inhouse-news-pipeline task 17)
+
+export type NewsListInput = {
+    earnings?: "false" | "true";
+    from?: string;
+    issuerCategory?: Array<string>;
+    issuerTag?: Array<string>;
+    kind?: Array<string>;
+    limit: number;
+    /** Hold the request (the publisher's CIK is still loading). */
+    paused?: boolean;
+    publicationType?: Array<string>;
+    /** Publisher CIKs ("Company-published"). */
+    publisher?: Array<string>;
+    scope: "company" | "market";
+    source?: Array<string>;
+    ticker: string;
+    to?: string;
+    topic?: Array<string>;
+};
+
+/**
+ * The news feed, newest first, paged by the API's keyset cursor (`next_cursor`: an item published meanwhile never
+ * shifts a page). Status-aware: the News page renders the plan / error state. `scope: "market"` drops the ticker.
+ */
+export function useNewsInfinite(input: NewsListInput) {
+    return useEarningsInfinite<NewsListResponse, null | string>({
+        enabled: !input.paused && (input.scope === "market" || input.ticker.trim().length > 0),
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => {
+            const { paused: _paused, ...query } = input;
+
+            return getNewsList({ data: { ...query, apiKey, cursor: cursor ?? undefined } });
+        },
+        initialPageParam: null,
+        pageParamOf: cursorPageParam,
+        queryKey: [
+            "news",
+            "list",
+            input.scope,
+            input.scope === "market" ? "" : input.ticker,
+            input.publisher?.join(",") ?? "",
+            input.from ?? "",
+            input.to ?? "",
+            input.source?.join(",") ?? "",
+            input.kind?.join(",") ?? "",
+            input.topic?.join(",") ?? "",
+            input.earnings ?? "",
+            input.publicationType?.join(",") ?? "",
+            input.issuerCategory?.join(",") ?? "",
+            input.issuerTag?.join(",") ?? "",
+            input.limit,
+        ],
+        staleTime: EARNINGS_LIST_STALE_MS,
+    });
+}
+
+/** One news item with its text (STANDARD); a null id keeps it idle. Status-aware: 404 / plan are panel states. */
+export function useNewsItem(id: null | string) {
+    return useEarningsQuery<NewsItemResponse>({
+        enabled: Boolean(id),
+        errorMessage: null,
+        load: apiKey => getNewsItem({ data: { apiKey, id: id ?? "" } }),
+        queryKey: ["news", "item", id ?? ""],
+        staleTime: EARNINGS_LIST_STALE_MS,
+    });
+}
+
+/**
+ * A news image / file's short-lived URL (≤ 60 s, a bearer credential): a mutation, so the URL is fetched only on the
+ * user's click and never lands in the query cache; the caller opens it at once and keeps it nowhere.
+ */
+export function useNewsAssetDownload() {
+    const { apiKey } = useApiKey();
+
+    return useMutation({
+        mutationFn: ({ assetId, id }: { assetId: string; id: string }) =>
+            getNewsAssetDownload({ data: { apiKey: apiKey ?? undefined, assetId, id } }).catch(rethrowApiError),
+        retry: false,
     });
 }
 

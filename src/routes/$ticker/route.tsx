@@ -8,6 +8,7 @@ import {
     FolderOpenIcon,
     LayoutDashboardIcon,
     MicIcon,
+    NewspaperIcon,
     SplitIcon,
     UserRoundIcon,
 } from "lucide-react";
@@ -35,6 +36,7 @@ const navItems = [
     { icon: FileTextIcon, label: "Filings", to: "/$ticker/filings" },
     { icon: MicIcon, label: "Earnings Calls", to: "/$ticker/earnings-calls" },
     { icon: FolderOpenIcon, label: "Documents", to: "/$ticker/documents" },
+    { icon: NewspaperIcon, label: "News", to: "/$ticker/news" },
     { icon: BarChart3Icon, label: "Standardized Financials", to: "/$ticker/financials-standardized" },
     { icon: BarChart3Icon, label: "As Reported Financials", to: "/$ticker/financials-as-reported" },
     { icon: BarChart3Icon, label: "CAGR Financials", to: "/$ticker/financials-cagr" },

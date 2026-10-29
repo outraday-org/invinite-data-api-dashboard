@@ -41,6 +41,9 @@ import type {
     InstitutionsResponse,
     IposResponse,
     MarketHolidaysResponse,
+    NewsAssetDownloadResponse,
+    NewsItemResponse,
+    NewsListResponse,
     SegmentedFinancialsResponse,
     SplitsResponse,
     StandardizedFinancialsPresentationResponse,
@@ -1317,6 +1320,89 @@ export const getEarningsLiveStream = createServerFn({ method: "GET" })
 
         const { data: res, error, response } = await api.GET("/v1/earnings-calls/live/stream", {
             params: { query: toSelectorQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+// News (IDA /v1/news*, backend earnings tasks/inhouse-news-pipeline task 17)
+
+const newsListSchema = z.object({
+    apiKey: apiKeySchema,
+    cursor: z.string().optional(),
+    earnings: z.enum(["true", "false"]).optional(),
+    from: z.string().optional(),
+    issuerCategory: z.array(z.string()).optional(),
+    issuerTag: z.array(z.string()).optional(),
+    kind: z.array(z.string()).optional(),
+    limit: z.number().int().min(1).max(200).optional(),
+    publicationType: z.array(z.string()).optional(),
+    /** Publisher CIKs: items the company published itself (a verified issuer publication), not mentions. */
+    publisher: z.array(z.string()).optional(),
+    /** `market` = every company: `ticker` is not sent. */
+    scope: z.enum(["company", "market"]),
+    source: z.array(z.string()).optional(),
+    ticker: z.string().optional(),
+    to: z.string().optional(),
+    topic: z.array(z.string()).optional(),
+});
+
+const listOrUndefined = (values: Array<string> | undefined) => (values?.length ? values : undefined);
+
+export const getNewsList = createServerFn({ method: "GET" })
+    .inputValidator(newsListSchema)
+    .handler(async ({ data }): Promise<NewsListResponse> => {
+        const api = createApiClient(data.apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/news", {
+            params: {
+                query: {
+                    cursor: data.cursor,
+                    earnings: data.earnings,
+                    from: data.from,
+                    issuer_category: listOrUndefined(data.issuerCategory),
+                    issuer_tag: listOrUndefined(data.issuerTag),
+                    kind: listOrUndefined(data.kind),
+                    limit: data.limit,
+                    publication_type: listOrUndefined(data.publicationType),
+                    publisher: listOrUndefined(data.publisher),
+                    source: listOrUndefined(data.source),
+                    ticker: data.scope === "company" && data.ticker ? [data.ticker] : undefined,
+                    to: data.to,
+                    topic: listOrUndefined(data.topic),
+                },
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getNewsItem = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: z.string().uuid() }))
+    .handler(async ({ data }): Promise<NewsItemResponse> => {
+        const api = createApiClient(data.apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/news/{id}", {
+            params: { path: { id: data.id } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** A short-lived (≤ 60 s) URL of one news image / file: asked only on an explicit click, never cached. */
+export const getNewsAssetDownload = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, assetId: z.string().uuid(), id: z.string().uuid() }))
+    .handler(async ({ data }): Promise<NewsAssetDownloadResponse> => {
+        const api = createApiClient(data.apiKey);
+
+        const { data: res, error, response } = await api.GET("/v1/news/{id}/assets/{asset_id}/download", {
+            params: { path: { asset_id: data.assetId, id: data.id } },
         });
 
         if (error) throwApiError(error, response);

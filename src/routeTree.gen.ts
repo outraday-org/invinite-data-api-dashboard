@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as TickerIndexRouteImport } from './routes/$ticker/index'
 import { Route as TickerStockSplitsIndexRouteImport } from './routes/$ticker/stock-splits/index'
 import { Route as TickerSegmentedFinancialsIndexRouteImport } from './routes/$ticker/segmented-financials/index'
+import { Route as TickerNewsIndexRouteImport } from './routes/$ticker/news/index'
 import { Route as TickerMarketHolidaysIndexRouteImport } from './routes/$ticker/market-holidays/index'
 import { Route as TickerIposIndexRouteImport } from './routes/$ticker/ipos/index'
 import { Route as TickerInstitutionsIndexRouteImport } from './routes/$ticker/institutions/index'
@@ -68,6 +69,11 @@ const TickerSegmentedFinancialsIndexRoute =
     path: '/segmented-financials/',
     getParentRoute: () => TickerRouteRoute,
   } as any)
+const TickerNewsIndexRoute = TickerNewsIndexRouteImport.update({
+  id: '/news/',
+  path: '/news/',
+  getParentRoute: () => TickerRouteRoute,
+} as any)
 const TickerMarketHolidaysIndexRoute =
   TickerMarketHolidaysIndexRouteImport.update({
     id: '/market-holidays/',
@@ -174,6 +180,7 @@ export interface FileRoutesByFullPath {
   '/$ticker/institutions': typeof TickerInstitutionsIndexRoute
   '/$ticker/ipos': typeof TickerIposIndexRoute
   '/$ticker/market-holidays': typeof TickerMarketHolidaysIndexRoute
+  '/$ticker/news': typeof TickerNewsIndexRoute
   '/$ticker/segmented-financials': typeof TickerSegmentedFinancialsIndexRoute
   '/$ticker/stock-splits': typeof TickerStockSplitsIndexRoute
   '/$ticker/earnings-calls/$eventId': typeof TickerEarningsCallsEventIdIndexRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/$ticker/institutions': typeof TickerInstitutionsIndexRoute
   '/$ticker/ipos': typeof TickerIposIndexRoute
   '/$ticker/market-holidays': typeof TickerMarketHolidaysIndexRoute
+  '/$ticker/news': typeof TickerNewsIndexRoute
   '/$ticker/segmented-financials': typeof TickerSegmentedFinancialsIndexRoute
   '/$ticker/stock-splits': typeof TickerStockSplitsIndexRoute
   '/$ticker/earnings-calls/$eventId': typeof TickerEarningsCallsEventIdIndexRoute
@@ -222,6 +230,7 @@ export interface FileRoutesById {
   '/$ticker/institutions/': typeof TickerInstitutionsIndexRoute
   '/$ticker/ipos/': typeof TickerIposIndexRoute
   '/$ticker/market-holidays/': typeof TickerMarketHolidaysIndexRoute
+  '/$ticker/news/': typeof TickerNewsIndexRoute
   '/$ticker/segmented-financials/': typeof TickerSegmentedFinancialsIndexRoute
   '/$ticker/stock-splits/': typeof TickerStockSplitsIndexRoute
   '/$ticker/earnings-calls/$eventId/': typeof TickerEarningsCallsEventIdIndexRoute
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/$ticker/institutions'
     | '/$ticker/ipos'
     | '/$ticker/market-holidays'
+    | '/$ticker/news'
     | '/$ticker/segmented-financials'
     | '/$ticker/stock-splits'
     | '/$ticker/earnings-calls/$eventId'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/$ticker/institutions'
     | '/$ticker/ipos'
     | '/$ticker/market-holidays'
+    | '/$ticker/news'
     | '/$ticker/segmented-financials'
     | '/$ticker/stock-splits'
     | '/$ticker/earnings-calls/$eventId'
@@ -295,6 +306,7 @@ export interface FileRouteTypes {
     | '/$ticker/institutions/'
     | '/$ticker/ipos/'
     | '/$ticker/market-holidays/'
+    | '/$ticker/news/'
     | '/$ticker/segmented-financials/'
     | '/$ticker/stock-splits/'
     | '/$ticker/earnings-calls/$eventId/'
@@ -356,6 +368,13 @@ declare module '@tanstack/react-router' {
       path: '/segmented-financials'
       fullPath: '/$ticker/segmented-financials'
       preLoaderRoute: typeof TickerSegmentedFinancialsIndexRouteImport
+      parentRoute: typeof TickerRouteRoute
+    }
+    '/$ticker/news/': {
+      id: '/$ticker/news/'
+      path: '/news'
+      fullPath: '/$ticker/news'
+      preLoaderRoute: typeof TickerNewsIndexRouteImport
       parentRoute: typeof TickerRouteRoute
     }
     '/$ticker/market-holidays/': {
@@ -482,6 +501,7 @@ interface TickerRouteRouteChildren {
   TickerInstitutionsIndexRoute: typeof TickerInstitutionsIndexRoute
   TickerIposIndexRoute: typeof TickerIposIndexRoute
   TickerMarketHolidaysIndexRoute: typeof TickerMarketHolidaysIndexRoute
+  TickerNewsIndexRoute: typeof TickerNewsIndexRoute
   TickerSegmentedFinancialsIndexRoute: typeof TickerSegmentedFinancialsIndexRoute
   TickerStockSplitsIndexRoute: typeof TickerStockSplitsIndexRoute
   TickerEarningsCallsEventIdIndexRoute: typeof TickerEarningsCallsEventIdIndexRoute
@@ -504,6 +524,7 @@ const TickerRouteRouteChildren: TickerRouteRouteChildren = {
   TickerInstitutionsIndexRoute: TickerInstitutionsIndexRoute,
   TickerIposIndexRoute: TickerIposIndexRoute,
   TickerMarketHolidaysIndexRoute: TickerMarketHolidaysIndexRoute,
+  TickerNewsIndexRoute: TickerNewsIndexRoute,
   TickerSegmentedFinancialsIndexRoute: TickerSegmentedFinancialsIndexRoute,
   TickerStockSplitsIndexRoute: TickerStockSplitsIndexRoute,
   TickerEarningsCallsEventIdIndexRoute: TickerEarningsCallsEventIdIndexRoute,

@@ -323,3 +323,117 @@ export function liveWsUrl(baseUrl: string, apiKey: string): string {
 
     return url.toString();
 }
+
+// ── News (`news.live`, backend earnings tasks/inhouse-news-pipeline task 16 / 17) ──────────────────────────────────
+// Mirrors IDA `src/routes/websocket/types/newsMessages.ts` and the spec's `WebSocket*News*` schemas — change both or
+// neither. Every news frame carries `channel: "news.live"`; its `error` / `subscribed` / `unsubscribed` share their
+// `type` with the earnings frames above, so news frames are told apart by `channel`, never parsed as earnings ones.
+
+export const NEWS_LIVE_CHANNEL = "news.live";
+
+export const NEWS_WS_ERROR_CODES = ["bad_message", "forbidden_tier", "channel_unavailable", "unavailable"] as const;
+
+export type NewsWsErrorCode = (typeof NEWS_WS_ERROR_CODES)[number];
+
+const newsChannel = z.literal(NEWS_LIVE_CHANNEL);
+
+export const newsSubscribedFrameSchema = z.object({
+    channel: newsChannel,
+    filters: z.object({
+        ciks: z.array(z.string()),
+        earnings_only: z.boolean(),
+        kinds: z.array(z.string()),
+        sources: z.array(z.string()),
+        tickers: z.array(z.string()),
+    }),
+    type: z.literal("subscribed"),
+});
+
+/**
+ * `news_item`: the same object as a `GET /v1/news` row. Only the fields the page reads are checked; the item is kept
+ * whole (`looseObject`) and typed as `NewsItemPublic` by the hook.
+ */
+export const newsItemFrameSchema = z.object({
+    channel: newsChannel,
+    item: z.looseObject({
+        attribution: z.looseObject({ published_at: z.string(), publisher: z.string(), source_url: z.string() }),
+        id: z.string(),
+        is_earnings_news: z.boolean(),
+        kind: z.string(),
+        publications: z.array(z.looseObject({})),
+        published_at: z.string(),
+        source: z.looseObject({ id: z.string() }),
+        symbols: z.array(z.string()),
+        title: z.string(),
+        topics: z.array(z.string()),
+        url: z.string(),
+    }),
+    type: z.literal("news_item"),
+});
+
+export const newsUnsubscribedFrameSchema = z.object({ channel: newsChannel, type: z.literal("unsubscribed") });
+
+export const newsErrorFrameSchema = z.object({
+    channel: newsChannel,
+    code: z.enum(NEWS_WS_ERROR_CODES),
+    message: z.string(),
+    type: z.literal("error"),
+});
+
+export const newsServerFrameSchema = z.discriminatedUnion("type", [
+    newsSubscribedFrameSchema,
+    newsItemFrameSchema,
+    newsUnsubscribedFrameSchema,
+    newsErrorFrameSchema,
+]);
+
+export type NewsServerFrame = z.infer<typeof newsServerFrameSchema>;
+
+/** One raw socket `message`: a news frame, anything else on the socket (`other`), or a malformed news frame. */
+export type ParsedNewsFrame
+    = | { frame: NewsServerFrame; kind: "frame" }
+        | { kind: "malformed" }
+        | { kind: "other" };
+
+export function parseNewsFrame(data: unknown): ParsedNewsFrame {
+    if (typeof data !== "string") return { kind: "other" };
+
+    let value: unknown;
+
+    try {
+        value = JSON.parse(data);
+    }
+    catch {
+        return { kind: "other" };
+    }
+
+    if (typeof value !== "object" || value === null) return { kind: "other" };
+
+    const record = value as Record<string, unknown>;
+
+    if (record.channel !== NEWS_LIVE_CHANNEL && record.type !== "news_item") return { kind: "other" };
+
+    const parsed = newsServerFrameSchema.safeParse(value);
+
+    return parsed.success ? { frame: parsed.data, kind: "frame" } : { kind: "malformed" };
+}
+
+export type NewsSubscribeOptions = {
+    earningsOnly?: boolean;
+    kinds?: ReadonlyArray<string>;
+    sources?: ReadonlyArray<string>;
+    /** Omitted / empty = the whole market. */
+    tickers?: ReadonlyArray<string>;
+};
+
+/** The `news.live` subscribe frame; an empty filter is left out (no filter = every item). */
+export function newsSubscribeFrame({ earningsOnly, kinds, sources, tickers }: NewsSubscribeOptions = {}) {
+    return {
+        channel: NEWS_LIVE_CHANNEL,
+        type: "subscribe",
+        ...(tickers?.length ? { tickers: [...tickers] } : {}),
+        ...(earningsOnly ? { earnings_only: true } : {}),
+        ...(kinds?.length ? { kinds: [...kinds] } : {}),
+        ...(sources?.length ? { sources: [...sources] } : {}),
+    } as const;
+}
