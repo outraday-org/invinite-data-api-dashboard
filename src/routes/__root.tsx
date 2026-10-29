@@ -12,6 +12,12 @@ import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
 
+// The brand mark (copied from the invinite repo's `public/brand/` + `favicon.ico`). The `?v=` busts the
+// browser's favicon cache, which keeps the old bytes for a redrawn file at the same URL: bump it with the files.
+const BRAND_ICON_VERSION = "99ea9cdc";
+
+const iconHref = (path: string): string => `${path}?v=${BRAND_ICON_VERSION}`;
+
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -29,6 +35,11 @@ export const Route = createRootRoute({
                 href: appCss,
                 rel: "stylesheet",
             },
+            { href: iconHref("/brand/icon.svg"), rel: "icon", type: "image/svg+xml" },
+            { href: iconHref("/brand/icon-32.png"), rel: "icon", sizes: "32x32", type: "image/png" },
+            { href: iconHref("/favicon.ico"), rel: "shortcut icon" },
+            { href: iconHref("/brand/icon-180.png"), rel: "apple-touch-icon", sizes: "180x180" },
+            { href: "/manifest.json", rel: "manifest" },
         ],
         meta: [
             {
