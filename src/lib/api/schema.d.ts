@@ -2036,6 +2036,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/news/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search news
+         * @description Search the headlines, ledes and text of news items (SEC filings and the companies' own newsroom publications) by keywords (default `mode=lexical`) or exact text (`literal`).
+         *
+         *     ### What you get
+         *
+         *     - Up to 8 passages, each with its news item (the `/v1/news` list item, incl. `attribution`), where it matched (`field`: `title`, `lede` or `body`), the text block it is from (`block`, see `/v1/news/{id}/text`) and how it matched (`match`); the response says how much of the searched news is indexed (`coverage`).
+         *
+         *     - Filter by `ticker` / `cik` (mentions, either matches), `publisher`, `kind`, `topic`, `field` and the publication window (`from` / `to`, default the last 365 days).
+         *
+         *     - A source whose owner reserved reuse keeps its headline searchable, never its lede or text; `model_processing_allowed: false` = do not pass the passage to a model.
+         *
+         *     ### Search modes
+         *
+         *     - `lexical` (default): keyword search — English full text with stemming; quoted phrases, `OR` and `-word` work; every word must match; ranked by `ts_rank_cd` (`websearch_to_tsquery`). Finance tokens such as `FY2027`, `10-K`, `Q3` or `EBITDA` match as written.
+         *
+         *     - `literal`: the exact characters of the passage — no stemming, no fuzzy matching, `%` / `_` / `\` match themselves; case-sensitive unless `case_sensitive=false` (only allowed with `mode=literal`; default `true`). A pattern under 3 characters needs `ticker`, `cik` or `publisher`. Newest first; `score` is 0.
+         *
+         *     - `match.spans` mark the matched characters in `text` (zero-based, end-exclusive Unicode code-point offsets); `text` is cut around the first match (`text_truncated`); `match.lexical_rank` is the hit's 1-based rank. Neither mode expands into fuzzy results. Both modes cost the same.
+         *
+         *     ### Coverage
+         *
+         *     - `coverage.completeness` = `complete` (every searched passage is indexed: no hits is a genuine no-result), `partial` (some passages are still being indexed or failed) or `unknown` (nothing of the searched scope is indexed yet, or the counts could not be read) — read it before treating an empty list as "not found".
+         *
+         *     - `coverage.lexical` counts the searched transcripts or documents in the text index (`indexed`, `pending`, `failed`). `reasons` lists why the answer may be incomplete. The counts come from the indexing ledger: a transcript or document whose current version the index has not confirmed counts as `pending`; when they cannot be read, the hits are still returned with `completeness: unknown`, `lexical` null and `coverage_unavailable`.
+         *
+         *     ### Changelog
+         *
+         *     - 2026-10: modes added and the default mode changed from semantic to `lexical`.
+         *
+         *     - 2026-11: modes `semantic` and `hybrid` removed; vector search is gone, pass `mode=lexical` (default) or `literal`.
+         *
+         *     ### Errors
+         *
+         *     - `400` for a `mode=lexical` query of stopwords only (no searchable words), for `case_sensitive` with any mode but `literal`, and for a `mode=literal` pattern under 3 characters without a scope (see Search modes).
+         *
+         *     - `503 search_unavailable` (a search over its time limit — never an empty answer) carries `Retry-After`.
+         *
+         *     - `503 search_disabled` while search is switched off.
+         *
+         *     ### Sources and rights
+         *
+         *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
+         *
+         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
+         *
+         *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["newsSearch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/news/{id}": {
         parameters: {
             query?: never;
@@ -14317,6 +14383,290 @@ export interface operations {
                 };
             };
             500: components["responses"]["InternalServerError"];
+        };
+    };
+    newsSearch: {
+        parameters: {
+            query: {
+                /**
+                 * @description The keywords or phrases (mode=lexical) or exact text (mode=literal) to search for
+                 * @example data center revenue
+                 */
+                q: string;
+                /**
+                 * @description lexical (keywords and phrases, default) or literal (exact characters)
+                 * @example lexical
+                 */
+                mode?: "lexical" | "literal";
+                /**
+                 * @description mode=literal only: "false" matches regardless of case (default "true": case-sensitive)
+                 * @example false
+                 */
+                case_sensitive?: "false" | "true";
+                /**
+                 * @description title = headlines and ledes, body = the item text, any = both
+                 * @example any
+                 */
+                field?: "any" | "body" | "title";
+                /**
+                 * @description Items mentioning these tickers (≤ 20, comma-separated or repeated). `BRK.B` and `BRK-B` both match; responses carry the stored dash spelling. With `cik`, either matches
+                 * @example [
+                 *       "NVDA"
+                 *     ]
+                 */
+                ticker?: Array<string>;
+                /**
+                 * @description Items mentioning these companies by CIK (padded or not, ≤ 20). With `ticker`, either matches
+                 * @example [
+                 *       "1045810"
+                 *     ]
+                 */
+                cik?: Array<string>;
+                /**
+                 * @description Published by these companies (CIK, padded or not; ≤ 20): an item with a verified issuer-newsroom publication of one of them — not a mention, not the item's first source. The CIK namespace is the SEC's
+                 * @example [
+                 *       "1045810"
+                 *     ]
+                 */
+                publisher?: Array<string>;
+                /**
+                 * @description Only these kinds, comma-separated or repeated: earnings_results, results_date, call_announcement, event_announcement, guidance, m_and_a, material_agreement, management_change, dividend, capital_markets, legal_spam, promo, other
+                 * @example [
+                 *       "earnings_results"
+                 *     ]
+                 */
+                kind?: Array<string>;
+                /**
+                 * @description Only these topics (any of them), comma-separated or repeated: product_launch, product_update, availability, partnership, customer_contract, capacity_expansion, regulatory, research, other
+                 * @example [
+                 *       "product_launch"
+                 *     ]
+                 */
+                topic?: Array<string>;
+                /**
+                 * @description Start of the publication window: an ISO 8601 instant or a day (YYYY-MM-DD, from its UTC midnight). Default: `to` minus 365 days
+                 * @example 2026-07-01
+                 */
+                from?: string;
+                /**
+                 * @description End of the publication window: an ISO 8601 instant (exclusive) or a day (inclusive). Default: now. At most 731 days after `from` (400 otherwise)
+                 * @example 2026-10-29
+                 */
+                to?: string;
+                /**
+                 * @description Maximum number of passages (at most 8)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The query as searched */
+                        query: string;
+                        /**
+                         * @description The mode searched
+                         * @enum {string}
+                         */
+                        mode: "lexical" | "literal";
+                        coverage: components["schemas"]["SearchCoverage"];
+                        /** @description Passages, best first */
+                        hits: Array<{
+                            item: {
+                                /**
+                                 * Format: uuid
+                                 * @description Stable item id (a correction is a new item, see supersedes_id)
+                                 */
+                                id: string;
+                                /** @description Headline */
+                                title: string;
+                                /** @description Lede of the text (the publisher's, verbatim); null for an item without readable text or whose publisher reserved reuse */
+                                description: null | string;
+                                /** @description Canonical URL of the item (the first publication) */
+                                url: string;
+                                /**
+                                 * Format: date-time
+                                 * @description Publication time (ISO 8601 UTC)
+                                 */
+                                published_at: string;
+                                /**
+                                 * Format: date-time
+                                 * @description When Invinite first saw it
+                                 */
+                                first_seen_at: string;
+                                /** @description The item's first source */
+                                source: {
+                                    /** @description `edgar` or `ir` (a company newsroom) */
+                                    id: string;
+                                    /** @description Source label */
+                                    name: null | string;
+                                    /** @description The newsroom host of an `ir` source; null otherwise */
+                                    host: null | string;
+                                };
+                                /**
+                                 * @description What the item is about
+                                 * @enum {string}
+                                 */
+                                kind: "call_announcement" | "capital_markets" | "dividend" | "earnings_results" | "event_announcement" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "promo" | "results_date";
+                                /** @description Development topics found in the text */
+                                topics: Array<"availability" | "capacity_expansion" | "customer_contract" | "other" | "partnership" | "product_launch" | "product_update" | "regulatory" | "research">;
+                                /**
+                                 * @description public_record = an SEC filing; issuer = the company's own publication
+                                 * @enum {string}
+                                 */
+                                rights: "issuer" | "public_record";
+                                /** @description Results, results date, call announcement or guidance */
+                                is_earnings_news: boolean;
+                                /** @description The fiscal period an earnings item belongs to; null when none was found */
+                                earnings: null | {
+                                    /** @description Fiscal year */
+                                    fiscal_year: null | number;
+                                    /** @description Fiscal quarter */
+                                    fiscal_quarter: null | number;
+                                    /**
+                                     * Format: date-time
+                                     * @description The results call it announces or follows
+                                     */
+                                    conference_date: null | string;
+                                };
+                                /** @description Tickers mentioned (stored dash spelling, `BRK-B`) */
+                                symbols: Array<string>;
+                                /** @description 10-digit CIKs mentioned */
+                                ciks: Array<string>;
+                                /** @description Text revision (grows when the publisher corrects the text) */
+                                revision: number;
+                                /** @description The older item this one corrects */
+                                supersedes_id: null | string;
+                                /** @description The companies' own verified publications of the item, oldest first (at most 10) */
+                                publications: Array<{
+                                    /** @description The newsroom source (`ir:<host>`) */
+                                    source_id: string;
+                                    publisher: {
+                                        /** @description 10-digit CIK of the publishing company */
+                                        cik: null | string;
+                                        /** @description Ticker of the publishing company */
+                                        symbol: null | string;
+                                        /** @description Name the newsroom publishes under */
+                                        name: null | string;
+                                    };
+                                    /** @description The company's own publication */
+                                    url: string;
+                                    /** @description press_release, company_blog, company_update or unknown */
+                                    publication_type: string;
+                                    /**
+                                     * Format: date-time
+                                     * @description Publication time the newsroom states (else when we first saw it)
+                                     */
+                                    published_at: string;
+                                    /**
+                                     * Format: date-time
+                                     * @description Last modification the newsroom states
+                                     */
+                                    modified_at: null | string;
+                                    /** @description The newsroom's own categories */
+                                    categories: Array<{
+                                        /** @description The newsroom's own id of the label, when it has one */
+                                        id: null | string;
+                                        /** @description The label as the newsroom shows it */
+                                        label: string;
+                                        /** @description The newsroom's page of the label */
+                                        url: null | string;
+                                    }>;
+                                    /** @description The newsroom's own tags */
+                                    tags: Array<{
+                                        /** @description The newsroom's own id of the label, when it has one */
+                                        id: null | string;
+                                        /** @description The label as the newsroom shows it */
+                                        label: string;
+                                        /** @description The newsroom's page of the label */
+                                        url: null | string;
+                                    }>;
+                                }>;
+                                /** @description More than 10 publications exist (the detail lists every sighting) */
+                                publications_truncated: boolean;
+                                /** @description Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models */
+                                model_processing_allowed: boolean;
+                                /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
+                                attribution: {
+                                    /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
+                                    publisher: string;
+                                    /** @description Host of the original URL */
+                                    publisher_host: null | string;
+                                    /** @description The original publication the text was read from */
+                                    source_url: string;
+                                    /**
+                                     * Format: date-time
+                                     * @description Publication time (ISO 8601 UTC)
+                                     */
+                                    published_at: string;
+                                    /**
+                                     * @description public_record = an SEC filing; issuer = the company's own publication
+                                     * @enum {string}
+                                     */
+                                    rights: "issuer" | "public_record";
+                                    /** @description The filing of an SEC item; null otherwise */
+                                    edgar: null | {
+                                        /** @description SEC form type (8-K, 6-K, …) */
+                                        form: null | string;
+                                        /** @description SEC accession number */
+                                        accession: string;
+                                    };
+                                    /**
+                                     * @description The attribution sentence to carry with the text
+                                     * @enum {string}
+                                     */
+                                    statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
+                                };
+                            };
+                            /**
+                             * @description Where it matched: the headline, the lede or a passage of the text
+                             * @enum {string}
+                             */
+                            field: "body" | "lede" | "title";
+                            /** @description Relevance per mode: lexical = ts_rank_cd (4 decimals), literal = 0 (newest first) */
+                            score: number;
+                            match: components["schemas"]["HitMatch"];
+                            /** @description The matched passage (≤ 600 characters, cut on word boundaries around the first match) */
+                            text: string;
+                            /** @description true = text is shorter than the passage */
+                            text_truncated: boolean;
+                            /** @description The text block the passage is from (see /v1/news/{id}/text); null for a headline or lede */
+                            block: null | {
+                                /**
+                                 * Format: uuid
+                                 * @description Block id (`blocks[].block_id` of the text route)
+                                 */
+                                id: string;
+                                /** @description Position of the block in the item's text */
+                                index: number;
+                                /** @description Nearest heading above the block */
+                                heading: null | string;
+                                /** @description Page, when the text has pages */
+                                page: null | number;
+                            };
+                            /** @description Position of the passage among the item's passages (-1 for a headline or lede) */
+                            chunk_index: number;
+                            /** @description false = the publisher reserved text and data mining: do not pass the text to a model */
+                            model_processing_allowed: boolean;
+                        }>;
+                    };
+                };
+            };
+            400: components["responses"]["BadRequestError"];
+            401: components["responses"]["UnauthorizedError"];
+            404: components["responses"]["NotFoundError"];
+            500: components["responses"]["InternalServerError"];
+            503: components["responses"]["ServiceUnavailableError"];
         };
     };
     secFilingsAvailableFormTypes: {
