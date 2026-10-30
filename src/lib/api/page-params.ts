@@ -26,3 +26,8 @@ export function offsetPageParam(lastPage: { next_url?: null | string }) {
 export function cursorPageParam(lastPage: { next_cursor?: null | string }) {
     return lastPage.next_cursor ?? undefined;
 }
+
+/** The first page's parameter: 0 only when the list names none, so a cursor list's `null` stays `null` (never `cursor: 0`). */
+export function firstPageParam<TParam>(initial: TParam | undefined) {
+    return initial === undefined ? (0 as TParam) : initial;
+}

@@ -64,7 +64,7 @@ import type {
 } from "./types";
 
 import { ApiRequestError, rethrowApiError, retryUnlessApiError } from "./errors";
-import { cursorPageParam, offsetPageParam } from "./page-params";
+import { cursorPageParam, firstPageParam, offsetPageParam } from "./page-params";
 import {
     getApiBaseUrl,
     getAsReportedFinancialsPresentation,
@@ -1282,7 +1282,7 @@ function useEarningsInfinite<TPage extends { next_url?: null | string }, TParam 
     const result = useInfiniteQuery<TPage, Error, InfiniteData<TPage, TParam>, ReadonlyArray<unknown>, TParam>({
         enabled: hasHydrated && enabled,
         getNextPageParam: lastPage => pageParamOf(lastPage),
-        initialPageParam: options.initialPageParam ?? (0 as TParam),
+        initialPageParam: firstPageParam(options.initialPageParam),
         queryFn: ({ pageParam }) => fetchPage(pageParam as TParam, apiKey ?? undefined).catch(rethrowApiError),
         queryKey: [...queryKey, String(apiKeyUpdatedAt)],
         retry: retryUnlessApiError,

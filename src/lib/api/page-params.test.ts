@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cursorPageParam, offsetOfNextUrl, offsetPageParam } from "./page-params";
+import { cursorPageParam, firstPageParam, offsetOfNextUrl, offsetPageParam } from "./page-params";
 
 describe("offsetPageParam (the earnings lists' default, unchanged)", () => {
     it("reads the offset of next_url", () => {
@@ -31,5 +31,15 @@ describe("cursorPageParam (/v1/news)", () => {
         expect(cursorPageParam({ next_cursor: null })).toBeUndefined();
 
         expect(cursorPageParam({})).toBeUndefined();
+    });
+});
+
+describe("firstPageParam", () => {
+    it("keeps a cursor list's null: the first /v1/news request never sends cursor 0", () => {
+        expect(firstPageParam<null | string>(null)).toBeNull();
+    });
+
+    it("defaults an offset list to 0", () => {
+        expect(firstPageParam<number>(undefined)).toBe(0);
     });
 });
