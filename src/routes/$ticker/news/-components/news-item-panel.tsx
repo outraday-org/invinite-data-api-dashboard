@@ -398,7 +398,10 @@ export function NewsItemPanel({ id, onClose, onOpen, title }: { id: null | strin
                     <DialogDescription>Published text, shown verbatim with its attribution.</DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="h-[65vh] pr-3">
-                    <NewsItemView data={data} error={error} isLoading={isLoading} onOpen={onOpen} />
+                    {/* p-px: the viewport clips what lies outside it, and a Card's ring-1 does */}
+                    <div className="p-px">
+                        <NewsItemView data={data} error={error} isLoading={isLoading} onOpen={onOpen} />
+                    </div>
                 </ScrollArea>
             </DialogContent>
         </Dialog>
