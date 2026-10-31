@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
 import { useNewsAssetDownload, useNewsItem } from "@/lib/api/queries";
 import { formatBytes, formatInstant } from "@/lib/earnings/format";
+import { prepareArticleHtml } from "@/lib/news/article-html";
 import { startDownload } from "@/lib/news/download";
 import {
     canViewPdf,
@@ -25,6 +26,8 @@ import {
     sourceLabel,
 } from "@/lib/news/labels";
 import { Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
+
+import { ArticleBody } from "./article-body";
 
 const EXTERNAL = { rel: "noopener noreferrer", target: "_blank" } as const;
 
@@ -206,6 +209,33 @@ function AssetRow({ asset, itemId }: { asset: NewsAsset; itemId: string }) {
     );
 }
 
+/**
+ * A stored image through its stable view URL (`view_url`, 24 h, no key): the hero above the article and the gallery of
+ * images the article does not show inline. Caption and credit always go with it.
+ */
+function ImageFigure({ asset, onImageError }: { asset: NewsAsset; onImageError?: () => void }) {
+    const credit = [asset.credit, asset.copyright_notice].filter(Boolean).join(" · ");
+
+    return (
+        <figure className="flex flex-col gap-1 text-xs" data-testid="news-image">
+            <img
+                alt={asset.alt ?? asset.title ?? ""}
+                className="h-auto max-w-full rounded border"
+                height={asset.height ?? undefined}
+                loading="lazy"
+                onError={onImageError}
+                referrerPolicy="no-referrer"
+                src={asset.view_url ?? ""}
+                width={asset.width ?? undefined}
+            />
+            {(asset.caption ?? asset.title) && <figcaption className="text-muted-foreground">{asset.caption ?? asset.title}</figcaption>}
+            {credit && <div className="text-muted-foreground">{`Credit: ${credit}`}</div>}
+        </figure>
+    );
+}
+
+const isImageAsset = (asset: NewsAsset) => asset.kind === "hero_image" || asset.kind === "gallery_image";
+
 // Browsers drop a download that starts while the previous one is still being handed over.
 const DOWNLOAD_ALL_GAP_MS = 400;
 
@@ -303,11 +333,14 @@ export function NewsItemView({
     data,
     error,
     isLoading,
+    onImageError,
     onOpen,
 }: {
     data: NewsItemResponse | null;
     error: unknown;
     isLoading: boolean;
+    /** An image's view URL failed (expired): the panel fetches the item again for fresh ones. */
+    onImageError?: () => void;
     onOpen: (id: string) => void;
 }) {
     if (isTierError(error)) return <Notice badge="STANDARD" title="Your plan does not include news text" />;
@@ -321,6 +354,21 @@ export function NewsItemView({
     const publishers = publishedBy(data);
 
     const downloadable = data.assets.filter(asset => asset.can_download);
+
+    const text = data.content_status === "available" ? (data.body_text ?? "") : "";
+
+    const article = data.content_status === "available" && data.body_html ? prepareArticleHtml(data.body_html) : null;
+
+    // What the article shows inline is not repeated around it.
+    const notInline = data.assets.filter(asset => !article?.inlineAssetIds.has(asset.id));
+
+    const hero = notInline.find(asset => asset.kind === "hero_image" && asset.view_url);
+
+    const below = notInline.filter(asset => asset !== hero);
+
+    const gallery = below.filter(asset => isImageAsset(asset) && asset.view_url);
+
+    const files = below.filter(asset => !gallery.includes(asset));
 
     return (
         <div className="flex flex-col gap-4">
@@ -346,8 +394,10 @@ export function NewsItemView({
 
             <AttributionBlock attribution={data.attribution} />
 
-            {data.content_status === "available" && data.body_text
-                ? <div className="whitespace-pre-wrap leading-relaxed" data-testid="news-body">{data.body_text}</div>
+            {hero && <ImageFigure asset={hero} onImageError={onImageError} />}
+
+            {article || text
+                ? <ArticleBody article={article} onImageError={onImageError} text={text} />
                 : (
                         <Notice title="Headline and link only">
                             No text is served for this item.
@@ -358,15 +408,22 @@ export function NewsItemView({
 
             {data.developments.length > 0 && <Developments developments={data.developments} />}
 
-            {data.assets.length > 0 && (
+            {(below.length > 0 || downloadable.length > 1) && (
                 <section className="flex flex-col gap-2">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <div className="text-sm font-medium">Images and files</div>
                         {downloadable.length > 1 && <DownloadAll assets={downloadable} itemId={data.id} />}
                     </div>
-                    <ul className="flex flex-col gap-2">
-                        {data.assets.map(asset => <AssetRow asset={asset} itemId={data.id} key={asset.id} />)}
-                    </ul>
+                    {gallery.length > 0 && (
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            {gallery.map(asset => <ImageFigure asset={asset} key={asset.id} onImageError={onImageError} />)}
+                        </div>
+                    )}
+                    {files.length > 0 && (
+                        <ul className="flex flex-col gap-2">
+                            {files.map(asset => <AssetRow asset={asset} itemId={data.id} key={asset.id} />)}
+                        </ul>
+                    )}
                 </section>
             )}
 
@@ -388,7 +445,18 @@ export function NewsItemView({
 
 /** `?item=<id>`: the item in a dialog; `id: null` = closed (no request). */
 export function NewsItemPanel({ id, onClose, onOpen, title }: { id: null | string; onClose: () => void; onOpen: (id: string) => void; title?: string }) {
-    const { data, error, isLoading } = useNewsItem(id);
+    const { data, error, isLoading, refetch } = useNewsItem(id);
+
+    // An image error = its view URL expired: fresh URLs once per item, never a loop on a broken image.
+    const [refetchedFor, setRefetchedFor] = React.useState<null | string>(null);
+
+    const onImageError = () => {
+        if (!id || refetchedFor === id) return;
+
+        setRefetchedFor(id);
+
+        void refetch();
+    };
 
     return (
         <Dialog onOpenChange={open => !open && onClose()} open={id !== null}>
@@ -400,7 +468,7 @@ export function NewsItemPanel({ id, onClose, onOpen, title }: { id: null | strin
                 <ScrollArea className="h-[65vh] pr-3">
                     {/* p-px: the viewport clips what lies outside it, and a Card's ring-1 does */}
                     <div className="p-px">
-                        <NewsItemView data={data} error={error} isLoading={isLoading} onOpen={onOpen} />
+                        <NewsItemView data={data} error={error} isLoading={isLoading} onImageError={onImageError} onOpen={onOpen} />
                     </div>
                 </ScrollArea>
             </DialogContent>

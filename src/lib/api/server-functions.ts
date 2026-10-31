@@ -1389,8 +1389,9 @@ export const getNewsItem = createServerFn({ method: "GET" })
     .handler(async ({ data }): Promise<NewsItemResponse> => {
         const api = createApiClient(data.apiKey);
 
+        // Both text forms: body_html renders the article, body_text is the fallback.
         const { data: res, error, response } = await api.GET("/v1/news/{id}", {
-            params: { path: { id: data.id } },
+            params: { path: { id: data.id }, query: { body: "both" } },
         });
 
         if (error) throwApiError(error, response);

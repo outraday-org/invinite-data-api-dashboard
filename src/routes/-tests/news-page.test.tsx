@@ -47,10 +47,36 @@ const pdfAsset = (overrides: Partial<NewsAsset> = {}): NewsAsset => ({
     id: "00000000-0000-4000-8000-0000000000b1",
     kind: "original_pdf",
     original_url: "https://nvidianews.nvidia.com/rubin.pdf",
+    status: "ready",
     title: "Rubin press release",
+    view_url: null,
     width: null,
     ...overrides,
 });
+
+const INLINE_ID = "00000000-0000-4000-8000-0000000000c1";
+
+const GALLERY_ID = "00000000-0000-4000-8000-0000000000c2";
+
+const HERO_ID = "00000000-0000-4000-8000-0000000000c3";
+
+const viewUrl = (id: string) => `https://api.data.invinite.com/v1/news/x/assets/${id}/view?exp=1793530800&sig=s`;
+
+/** A ready, displayable image served through its stable view URL. */
+const imageAsset = (overrides: Partial<NewsAsset> & { id: string }): NewsAsset => pdfAsset({
+    alt: null,
+    can_display: true,
+    can_download: false,
+    content_type: "image/jpeg",
+    kind: "gallery_image",
+    title: null,
+    view_url: viewUrl(overrides.id),
+    ...overrides,
+});
+
+const ARTICLE_HTML = `<h2>Highlights</h2><p>NVIDIA unveiled <a href="https://nvidia.com/rubin">NVIDIA Rubin</a>.</p>
+<figure><img src="${viewUrl(INLINE_ID)}" alt="Rubin" width="1200" height="800" loading="lazy" data-asset-id="${INLINE_ID}"><figcaption>The Rubin GPU</figcaption></figure>
+<table><thead><tr><th>Segment</th><th>Q3</th></tr></thead><tbody><tr><td rowspan="2">Data center</td><td>$51.2B</td></tr><tr><td>+66%</td></tr></tbody></table>`;
 
 /** The download mutation answering `purpose` at once (the server function is not loaded). */
 function mockDelivery(purpose: "display" | "download") {
@@ -230,9 +256,11 @@ describe("NewsItemView", () => {
                         download_url: `/v1/news/${item.id}/assets/a1/download`,
                         height: 800,
                         id: "00000000-0000-4000-8000-0000000000a1",
-                        kind: "image",
+                        kind: "gallery_image",
                         original_url: "https://nvidianews.nvidia.com/rubin.jpg",
+                        status: "ready",
                         title: null,
+                        view_url: null,
                         width: 1200,
                     }],
                     developments: [{
@@ -416,6 +444,126 @@ describe("NewsItemView", () => {
         expect(mutateAsync.mock.calls.map(([vars]) => vars.assetId)).toEqual([pdfAsset().id, second.id]);
 
         expect(mutateAsync.mock.calls.every(([vars]) => vars.purpose === "download")).toBe(true);
+    });
+
+    it("renders body_html as the article: headings, a sideways-scrolling table, inline images with captions, links in a new tab", () => {
+        const item = newsroomItem();
+
+        const inline = imageAsset({ caption: "The Rubin GPU", id: INLINE_ID });
+
+        render(
+            <NewsItemView
+                data={newsDetail(item, { assets: [inline, imageAsset({ caption: "Rubin rack", id: GALLERY_ID })], body_html: ARTICLE_HTML, content_formats: ["text", "html"] })}
+                error={null}
+                isLoading={false}
+                onOpen={() => undefined}
+            />,
+        );
+
+        const body = screen.getByTestId("news-body");
+
+        expect(within(body).getByRole("heading", { level: 2, name: "Highlights" })).toBeTruthy();
+
+        expect(within(body).getByRole("table").parentElement?.className).toBe("article-table");
+
+        expect(body.querySelector("td[rowspan='2']")).not.toBeNull();
+
+        const image = body.querySelector(`img[data-asset-id='${INLINE_ID}']`);
+
+        expect(image?.getAttribute("src")).toBe(viewUrl(INLINE_ID));
+
+        expect(within(body).getByText("The Rubin GPU", { selector: "figcaption" })).toBeTruthy();
+
+        const link = within(body).getByText("NVIDIA Rubin");
+
+        expect(link.getAttribute("target")).toBe("_blank");
+
+        expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+
+        // The inline image is not repeated below; the other one is.
+        const images = screen.getAllByTestId("news-image");
+
+        expect(images).toHaveLength(1);
+
+        expect(within(images[0]).getByText("Rubin rack")).toBeTruthy();
+    });
+
+    it("strips scripts, event handlers and non-https URLs from body_html", () => {
+        render(
+            <NewsItemView
+                data={newsDetail(newsroomItem(), {
+                    body_html: `<p>Text</p><script>window.pwned = 1</script><img src="${viewUrl(INLINE_ID)}" onerror="window.pwned = 1" data-asset-id="${INLINE_ID}"><img src="http://tracker.example/p.gif"><a href="javascript:alert(1)">bad link</a><p style="color:red" class="x" onclick="x()">Styled</p>`,
+                })}
+                error={null}
+                isLoading={false}
+                onOpen={() => undefined}
+            />,
+        );
+
+        const body = screen.getByTestId("news-body");
+
+        expect(body.querySelector("script")).toBeNull();
+
+        expect(body.innerHTML).not.toMatch(/onerror|onclick|style=|class=|javascript:|tracker\.example/);
+
+        expect(body.querySelectorAll("img")).toHaveLength(1);
+
+        expect(within(body).getByText("bad link").hasAttribute("href")).toBe(false);
+    });
+
+    it("renders a text-only item as paragraphs", () => {
+        render(
+            <NewsItemView data={newsDetail(newsroomItem(), { body_text: "First paragraph.\n\nSecond paragraph,\nsame paragraph." })} error={null} isLoading={false} onOpen={() => undefined} />,
+        );
+
+        const paragraphs = screen.getByTestId("news-body").querySelectorAll("p");
+
+        expect([...paragraphs].map(p => p.textContent)).toEqual(["First paragraph.", "Second paragraph,\nsame paragraph."]);
+    });
+
+    it("places the hero above the article, unless the article shows it inline; lists PDFs below", () => {
+        const hero = imageAsset({ caption: "Hero", id: HERO_ID, kind: "hero_image" });
+
+        const view = (bodyHtml: string) => newsDetail(newsroomItem(), { assets: [hero, pdfAsset()], body_html: bodyHtml });
+
+        const { rerender } = render(<NewsItemView data={view("<p>Article</p>")} error={null} isLoading={false} onOpen={() => undefined} />);
+
+        const figure = screen.getByTestId("news-image");
+
+        expect(within(figure).getByText("Hero")).toBeTruthy();
+
+        expect(figure.compareDocumentPosition(screen.getByTestId("news-body")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+        expect(within(screen.getByTestId("news-asset")).getByText("Download")).toBeTruthy();
+
+        rerender(<NewsItemView data={view(`<figure><img src="${viewUrl(HERO_ID)}" data-asset-id="${HERO_ID}"></figure>`)} error={null} isLoading={false} onOpen={() => undefined} />);
+
+        expect(screen.queryByTestId("news-image")).toBeNull();
+
+        expect(screen.getByTestId("news-body").querySelectorAll("img")).toHaveLength(1);
+    });
+
+    it("reports an image error of the article and of the hero (the panel then refetches the item)", () => {
+        const onImageError = vi.fn();
+
+        render(
+            <NewsItemView
+                data={newsDetail(newsroomItem(), {
+                    assets: [imageAsset({ id: HERO_ID, kind: "hero_image" })],
+                    body_html: `<figure><img src="${viewUrl(INLINE_ID)}" data-asset-id="${INLINE_ID}"></figure>`,
+                })}
+                error={null}
+                isLoading={false}
+                onImageError={onImageError}
+                onOpen={() => undefined}
+            />,
+        );
+
+        fireEvent.error(screen.getByTestId("news-body").querySelector("img") as HTMLImageElement);
+
+        fireEvent.error(screen.getByTestId("news-image").querySelector("img") as HTMLImageElement);
+
+        expect(onImageError).toHaveBeenCalledTimes(2);
     });
 
     it("renders 404 and the plan gate as states", () => {

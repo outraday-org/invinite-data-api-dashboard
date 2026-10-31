@@ -4,15 +4,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useEarningsPressRelease } from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
 import { edgarFolderUrl } from "@/lib/earnings/edgar";
+import { paragraphs } from "@/lib/utils";
 
 import type { CallTabProps } from "../call-tabs";
 
 import { MediaState, Notice } from "../media-state";
-
-/** Paragraphs of a plain-text release: blank lines split paragraphs, single newlines stay. */
-function paragraphs(text: string) {
-    return text.split(/\n\s*\n/).map(part => part.trim()).filter(Boolean);
-}
 
 /** Press release tab: title, provenance (origin, trust tier, EDGAR folder), participants and the body text. */
 export function PressReleaseTab({ event, selector }: CallTabProps) {

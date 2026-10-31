@@ -1849,14 +1849,20 @@ export function useNewsInfinite(input: NewsListInput) {
     });
 }
 
-/** One news item with its text (STANDARD); a null id keeps it idle. Status-aware: 404 / plan are panel states. */
+// The image view URLs inside a news item live 24 h: an item cached for longer than half of that is fetched again.
+const NEWS_ITEM_STALE_MS = 12 * 60 * 60 * 1000;
+
+/**
+ * One news item with its text, plain and HTML (STANDARD); a null id keeps it idle. Status-aware: 404 / plan are panel
+ * states. `refetch` renews the image URLs (the panel calls it once on an image error).
+ */
 export function useNewsItem(id: null | string) {
     return useEarningsQuery<NewsItemResponse>({
         enabled: Boolean(id),
         errorMessage: null,
         load: apiKey => getNewsItem({ data: { apiKey, id: id ?? "" } }),
         queryKey: ["news", "item", id ?? ""],
-        staleTime: EARNINGS_LIST_STALE_MS,
+        staleTime: NEWS_ITEM_STALE_MS,
     });
 }
 

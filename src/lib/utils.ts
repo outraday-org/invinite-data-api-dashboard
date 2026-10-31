@@ -7,6 +7,11 @@ export function cn(...inputs: Array<ClassValue>) {
     return twMerge(clsx(inputs));
 }
 
+/** Paragraphs of a plain text (a release, a news body): blank lines split paragraphs, single newlines stay. */
+export function paragraphs(text: string) {
+    return text.split(/\n\s*\n/).map(part => part.trim()).filter(Boolean);
+}
+
 export function formatNumberEn(value: number, options?: Intl.NumberFormatOptions) {
     return new Intl.NumberFormat("en", options).format(value);
 }

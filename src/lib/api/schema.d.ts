@@ -2053,7 +2053,7 @@ export interface paths {
          *
          *     - Up to 8 passages, each with its news item (the `/v1/news` list item, incl. `attribution`), where it matched (`field`: `title`, `lede` or `body`), the text block it is from (`block`, see `/v1/news/{id}/text`) and how it matched (`match`); the response says how much of the searched news is indexed (`coverage`).
          *
-         *     - Filter by `ticker` / `cik` (mentions, either matches), `publisher`, `kind`, `topic`, `field` and the publication window (`from` / `to`, default the last 365 days).
+         *     - Filter by `ticker` / `cik` (mentions, either matches), `publisher`, `publisher_host` (the host of the original URL), `kind`, `topic`, `field` and the publication window (`from` / `to`, default the last 365 days).
          *
          *     - A source whose owner reserved reuse keeps its headline searchable, never its lede or text; `model_processing_allowed: false` = do not pass the passage to a model.
          *
@@ -2113,15 +2113,17 @@ export interface paths {
         };
         /**
          * Get a news item
-         * @description One news item with its full text, the companies it is about, every sighting, its images and original files, and the developments read from it.
+         * @description One news item with its full text (plain and / or HTML), the companies it is about, every sighting, its images and original files, and the developments read from it.
          *
          *     ### What you get
          *
-         *     - `body_text`: the publisher's text of the current revision, verbatim (`content_status: available`); `no_text` = headline and link only.
+         *     - `body` picks the text forms: `text` (default) = `body_text`, the publisher's text of the current revision, verbatim — for search, indexing and models; `html` = `body_html` instead — the same text as sanitized article HTML (headings, paragraphs, lists, tables, quotes, images) for display; `both` = both. `content_formats` says which forms the item has (PDFs and older items: text only); `content_status: no_text` = headline and link only.
          *
-         *     - **Attribution duty:** wherever you show `body_text` or `description`, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` with it (and `attribution.edgar` for a filing), with `attribution.statement`.
+         *     - **Images inside the article:** in `body_html` every stored image is an `<img src>` whose URL is stable for 24 hours and needs no API key (`assets[].view_url`, the same URL); an image Invinite may only link is an "Image at source" link to the publisher; an image that may not be shown is removed. The hero image is not inside the HTML: it is the asset with `kind: hero_image` — place it above the headline. After 24 hours (or on an image error) fetch the item again for fresh URLs.
          *
-         *     - `text_url` serves the same text in citable blocks; `assets[].download_url` mints a short-lived file URL where the publisher's terms allow it.
+         *     - **Attribution duty:** wherever you show `body_text`, `body_html` or `description`, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` with it (and `attribution.edgar` for a filing), with `attribution.statement`.
+         *
+         *     - `text_url` serves the same text in citable blocks with their kind and heading; `assets[].download_url` mints a URL valid ≤ 60 seconds to view (`purpose=display`) or download (`purpose=download`, where `can_download`) a file where the publisher's terms allow it.
          *
          *     - `model_processing_allowed` says whether the text may be processed by AI models (the publisher's machine-readable reservation); API access alone does not authorize forwarding the text into models.
          *
@@ -2192,6 +2194,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/news/{id}/assets/{asset_id}/view": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Show a news image (stable view URL)
+         * @description The stable URL of one news image: what `assets[].view_url` and the `<img src>` of `body_html` point at. Put it straight into an `<img>`; it needs no API key.
+         *
+         *     ### What you get
+         *
+         *     - A `302` redirect to the image itself (a storage link valid ≤ 60 seconds, `Content-Disposition: inline`). Browsers and `curl -L` follow it; never store the target.
+         *
+         *     - The URL is valid for 24 hours from the item response that minted it (never past the publisher's display permission): after that, or on an image error, fetch the item again for fresh URLs.
+         *
+         *     - Every load re-checks the item and the image's display permission: a withdrawn image stops loading within a minute, even through an unexpired URL.
+         *
+         *     - Loading it is not metered: the credits, plan and licence were applied by the `GET /v1/news/{id}` response that minted it. Requests are rate-limited per client IP. Show the asset's `credit` with the image.
+         *
+         *     ### Errors
+         *
+         *     - `403 view_url_expired` for an expired, altered or foreign URL (fetch the item again); `404 asset_unavailable` when the item or image is no longer served; `503 media_unavailable` while image delivery is not configured.
+         *
+         *     ### Sources and rights
+         *
+         *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
+         *
+         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
+         *
+         *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["newsAssetView"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/news/{id}/text": {
         parameters: {
             query?: never;
@@ -2201,11 +2247,11 @@ export interface paths {
         };
         /**
          * Get a news item's text in blocks
-         * @description The text of one news item in stable, citable blocks (paragraphs, list items, table rows), page by page.
+         * @description The text of one news item in stable, citable blocks (headings, paragraphs, lists, tables, quotes, captions), page by page — for search, retrieval and models.
          *
          *     ### What you get
          *
-         *     - Each block carries its stable `block_id`, heading, PDF page and Unicode code-point offsets into the full text; development evidence points at these blocks.
+         *     - Each block carries its stable `block_id`, `kind` (what it is in the article; null = guessed from plain text, as for PDFs), `heading` (the nearest heading above it), PDF page and Unicode code-point offsets into the item's `body_text` (`body_text` sliced at `start_offset`–`end_offset` is the block's text); development evidence points at these blocks.
          *
          *     - `max_chars` bounds a page in code points without ever splitting a block; `has_more`, `next_cursor` and `coverage` say what is left — nothing is cut silently.
          *
@@ -13388,12 +13434,12 @@ export interface operations {
             path: {
                 /**
                  * @description News item id
-                 * @example 4c1d9e62-3b7a-4f2e-8d1c-9e0a7b6c5d4f
+                 * @example 13351ae7-876b-4839-ba2b-78873f6b4e00
                  */
                 id: string;
                 /**
                  * @description Asset id (`assets[].id` of the item)
-                 * @example 7e2f0c19-5a8b-4d3e-9f1a-2b6c8d0e4a7b
+                 * @example 612cd78d-b618-42c6-b3be-ff5c9df1a0f7
                  */
                 asset_id: string;
             };
@@ -13407,6 +13453,18 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "asset_id": "612cd78d-b618-42c6-b3be-ff5c9df1a0f7",
+                     *       "item_id": "13351ae7-876b-4839-ba2b-78873f6b4e00",
+                     *       "purpose": "display",
+                     *       "url": "https://invinite-news-prod.r2.cloudflarestorage.com/earnings_events/news/assets/13351ae7-876b-4839-ba2b-78873f6b4e00/612cd78d-b618-42c6-b3be-ff5c9df1a0f7/ab99180f.jpg?X-Amz-Signature=…",
+                     *       "expires_at": "2026-10-31T11:20:14.699Z",
+                     *       "content_type": "image/jpeg",
+                     *       "byte_size": 238875,
+                     *       "credit": null
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * Format: uuid
@@ -13441,6 +13499,51 @@ export interface operations {
             };
             400: components["responses"]["BadRequestError"];
             401: components["responses"]["UnauthorizedError"];
+            403: components["responses"]["ForbiddenError"];
+            404: components["responses"]["NotFoundError"];
+            500: components["responses"]["InternalServerError"];
+            503: components["responses"]["ServiceUnavailableError"];
+        };
+    };
+    newsAssetView: {
+        parameters: {
+            query: {
+                /**
+                 * @description Expiry (unix seconds), as minted in `view_url`
+                 * @example 1793534400
+                 */
+                exp: string;
+                /**
+                 * @description Signature, as minted in `view_url` (never construct one)
+                 * @example q7pVt3l0YkqzR4n1Xc8uE2bWm9sJf6hLaD5gTiNoQwY
+                 */
+                sig: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description News item id
+                 * @example 13351ae7-876b-4839-ba2b-78873f6b4e00
+                 */
+                id: string;
+                /**
+                 * @description Asset id (`assets[].id` of the item)
+                 * @example 612cd78d-b618-42c6-b3be-ff5c9df1a0f7
+                 */
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Redirect to the image (a storage URL valid ≤ 60 seconds; `Cache-Control: private` for less than that) */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            400: components["responses"]["BadRequestError"];
             403: components["responses"]["ForbiddenError"];
             404: components["responses"]["NotFoundError"];
             500: components["responses"]["InternalServerError"];
@@ -13655,12 +13758,18 @@ export interface operations {
     };
     newsItem: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description Which text forms to return: text = `body_text` (plain, default), html = `body_html` (sanitized HTML with the images inline) instead, both = both
+                 * @example both
+                 */
+                body?: "both" | "html" | "text";
+            };
             header?: never;
             path: {
                 /**
                  * @description News item id
-                 * @example 4c1d9e62-3b7a-4f2e-8d1c-9e0a7b6c5d4f
+                 * @example 13351ae7-876b-4839-ba2b-78873f6b4e00
                  */
                 id: string;
             };
@@ -13674,6 +13783,109 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "id": "13351ae7-876b-4839-ba2b-78873f6b4e00",
+                     *       "title": "Build, test and optimize faster: Arm and GitHub accelerate agentic AI development",
+                     *       "description": "Developers can use AI coding agents to edit code, build, test, and debug within one native Arm development environment. Keeping these tasks on the target architecture can give developers earlier feedback on dependencies, test results, and r…",
+                     *       "url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
+                     *       "published_at": "2026-10-29T16:02:31.000Z",
+                     *       "first_seen_at": "2026-10-30T17:43:54.126Z",
+                     *       "source": {
+                     *         "id": "ir",
+                     *         "name": "Arm Holdings plc American Depositary Shares",
+                     *         "host": "newsroom.arm.com"
+                     *       },
+                     *       "kind": "other",
+                     *       "topics": [],
+                     *       "rights": "issuer",
+                     *       "is_earnings_news": false,
+                     *       "earnings": null,
+                     *       "symbols": [
+                     *         "ARM"
+                     *       ],
+                     *       "ciks": [
+                     *         "0001973239"
+                     *       ],
+                     *       "revision": 1,
+                     *       "supersedes_id": null,
+                     *       "publications": [
+                     *         {
+                     *           "source_id": "ir:newsroom.arm.com",
+                     *           "publisher": {
+                     *             "cik": "0001973239",
+                     *             "symbol": "ARM",
+                     *             "name": "Arm Holdings plc American Depositary Shares"
+                     *           },
+                     *           "url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
+                     *           "publication_type": "company_blog",
+                     *           "published_at": "2026-10-29T16:02:31.000Z",
+                     *           "modified_at": null,
+                     *           "categories": [],
+                     *           "tags": []
+                     *         }
+                     *       ],
+                     *       "publications_truncated": false,
+                     *       "model_processing_allowed": true,
+                     *       "media_count": 3,
+                     *       "attribution": {
+                     *         "publisher": "Arm Holdings plc American Depositary Shares",
+                     *         "publisher_host": "newsroom.arm.com",
+                     *         "source_url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
+                     *         "published_at": "2026-10-29T16:02:31.000Z",
+                     *         "rights": "issuer",
+                     *         "edgar": null,
+                     *         "statement": "Reproduced verbatim from the publisher; © the publisher. Source and date above."
+                     *       },
+                     *       "content_status": "available",
+                     *       "content_formats": [
+                     *         "text"
+                     *       ],
+                     *       "text_url": "https://api.data.invinite.com/v1/news/13351ae7-876b-4839-ba2b-78873f6b4e00/text",
+                     *       "superseded_by": null,
+                     *       "companies": [
+                     *         {
+                     *           "cik": "0001973239",
+                     *           "symbol": "ARM",
+                     *           "match_kind": "cik",
+                     *           "confidence": 0.95
+                     *         }
+                     *       ],
+                     *       "sightings": [
+                     *         {
+                     *           "source_id": "ir:newsroom.arm.com",
+                     *           "url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
+                     *           "seen_at": "2026-10-30T17:43:54.126Z",
+                     *           "published_at_claimed": "2026-10-29T16:02:31.000Z"
+                     *         }
+                     *       ],
+                     *       "assets": [
+                     *         {
+                     *           "id": "a9247c9e-9539-4cd8-9d9c-784be7138839",
+                     *           "kind": "hero_image",
+                     *           "content_type": "image/jpeg",
+                     *           "byte_size": 264095,
+                     *           "width": 1921,
+                     *           "height": 1080,
+                     *           "title": null,
+                     *           "caption": "AI-assisted development on Arm with GitHub Copilot CLI enables native builds, testing, code review, Arm64 CI, and performance optimization.",
+                     *           "alt": "Arm, GitHub, and GitHub Copilot create a connected Arm-native development workflow for building, testing, and optimizing software.",
+                     *           "credit": null,
+                     *           "copyright_notice": null,
+                     *           "original_url": "https://newsroom.arm.com/wp-content/uploads/2026/10/GitHub_Copilot_Arm_Newsroom_image3-1.jpg",
+                     *           "status": "ready",
+                     *           "can_display": true,
+                     *           "can_download": false,
+                     *           "download_url": "https://api.data.invinite.com/v1/news/13351ae7-876b-4839-ba2b-78873f6b4e00/assets/a9247c9e-9539-4cd8-9d9c-784be7138839/download",
+                     *           "view_url": "https://api.data.invinite.com/v1/news/13351ae7-876b-4839-ba2b-78873f6b4e00/assets/a9247c9e-9539-4cd8-9d9c-784be7138839/view?exp=1793530800&sig=…"
+                     *         }
+                     *       ],
+                     *       "developments": [],
+                     *       "body_text": "Developers can use AI coding agents to edit code, build, test, and debug within one native Arm development environment. Keeping these tasks on the target architecture can give developers earlier feedback on dependencies, test results, and r…",
+                     *       "body_html": "<p>Developers can use AI coding agents to edit code, build, test, and debug within one native Arm development environment. Keeping these tasks on the target architecture can give developers earlier feedback on dependencies, test results, an…",
+                     *       "images_truncated": false
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * Format: uuid
@@ -13821,13 +14033,19 @@ export interface operations {
                              */
                             statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
                         };
-                        /** @description The full text of the current revision (verbatim, with `attribution`); null = no readable text */
-                        body_text: null | string;
+                        /** @description With `body=text` (default) or `both`: the full text of the current revision as plain text, verbatim (paragraphs, list items and table rows separated by blank lines) — for search, indexing and models. It is the text of `body_html`'s blocks joined, so the two never differ in words. Null = no readable text */
+                        body_text?: null | string;
+                        /** @description With `body=html` or `both`: the same text as sanitized article HTML for display. Allowed tags: h2, h3, h4, p, ul, ol, li, table, thead, tbody, tr, th, td, blockquote, strong, em, b, i, sup, sub, br, a, figure, figcaption, img; attributes: `a[href rel data-asset-id]` (absolute https links), `img[src alt width height loading data-asset-id]`, `td` / `th` `colspan` / `rowspan`. No class, style, id, script, form or iframe; no h1 (the title is `title`). Images are the item's stored images: `<img src>` is the image's stable view URL (valid 24 hours, see `assets[].view_url`), in a `<figure>` with the asset's caption / credit where one fits; an image Invinite may only link is `<a href="<original_url>" rel="noopener nofollow">Image at source</a>`; an image that may not be shown is removed. Null = no HTML for this item (see `content_formats`) or no readable text */
+                        body_html?: null | string;
+                        /** @description With `body_html`: the article held more than 40 images; the rest were removed (they stay in `assets`) */
+                        images_truncated?: boolean;
                         /**
-                         * @description available = `body_text` holds the text; no_text = headline and link only
+                         * @description available = the item has readable text of the current revision (in the forms `content_formats` lists); no_text = headline and link only
                          * @enum {string}
                          */
                         content_status: "available" | "no_text";
+                        /** @description The text forms this item has: text = `body_text` (every item with text), html = `body_html` (articles read from a web page; PDFs and older items may have text only); empty without text */
+                        content_formats: Array<"html" | "text">;
                         /** @description The text in citable blocks (`/v1/news/{id}/text`); null without text */
                         text_url: null | string;
                         /** @description A newer item that corrects this one (this one stays served) */
@@ -13860,15 +14078,18 @@ export interface operations {
                              */
                             published_at_claimed: null | string;
                         }>;
-                        /** @description Images and original files of the publication */
+                        /** @description Images and original files of the publication, inline or not (an image shown inside `body_html` carries its id there as `data-asset-id`; list the others below the article) */
                         assets: Array<{
                             /**
                              * Format: uuid
-                             * @description Asset id
+                             * @description Asset id (`data-asset-id` of an image shown inside `body_html`)
                              */
                             id: string;
-                            /** @description image, original_pdf, … */
-                            kind: string;
+                            /**
+                             * @description hero_image = the article's lead image (never inside `body_html`: place it above the headline); gallery_image = an image of the article (shown inline where the text has it); original_pdf = the publication's own PDF; attachment = a linked file; archive_link = a linked archive (link only)
+                             * @enum {string}
+                             */
+                            kind: "archive_link" | "attachment" | "gallery_image" | "hero_image" | "original_pdf";
                             /** @description MIME type */
                             content_type: null | string;
                             /** @description Size in bytes */
@@ -13889,12 +14110,19 @@ export interface operations {
                             copyright_notice: null | string;
                             /** @description Where the publisher hosts it (link to it when it may not be shown) */
                             original_url: null | string;
-                            /** @description May be shown (embedded) now */
+                            /**
+                             * @description ready = stored by Invinite (deliverable within its permissions); link_only = known by its link only (the publisher's host: link to `original_url`, never embed it); pending = being fetched; failed / rejected = not stored
+                             * @enum {string}
+                             */
+                            status: "failed" | "link_only" | "pending" | "ready" | "rejected";
+                            /** @description May be shown (embedded) now: use `view_url` (images) or `download_url?purpose=display` */
                             can_display: boolean;
-                            /** @description May be downloaded now */
+                            /** @description May be downloaded (a copy kept) now: `download_url?purpose=download` */
                             can_download: boolean;
-                            /** @description Our authenticated route that mints a short-lived URL; null when neither is allowed */
+                            /** @description Our authenticated route that mints a URL valid ≤ 60 seconds (`purpose=display` inline, `purpose=download` an attachment; a PDF with `can_download` also views inline); null when neither is allowed */
                             download_url: null | string;
+                            /** @description A displayable image (`ready`, `can_display`): a stable URL to put into `<img src>`, no API key, valid 24 hours (never past the display permission) — the same URL `body_html` uses. Refetch the item after that or on an image error. Null otherwise */
+                            view_url: null | string;
                         }>;
                         /** @description Developments read from the text (medium or high confidence, at most 20) */
                         developments: Array<{
@@ -14104,6 +14332,68 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "items": [
+                     *         {
+                     *           "id": "d63e7c6e-ebeb-4f31-9b9f-eb0e0dc48b8b",
+                     *           "title": "A decade in the making: From progress to possibility for PepsiCo’s food and drink portfolio",
+                     *           "description": "How science, consumer insights and years of innovation are helping PepsiCo adapt familiar brands while keeping taste at the center. October 13, 2026 For anyone who has ever opened a bag of Doritos, poured a Pepsi or made a bowl of Quaker oa…",
+                     *           "url": "https://www.pepsico.com/newsroom/stories/2026/a-decade-in-the-making-from-progress-to-possibility-for-pepsicos-food-and-drink-portfolio",
+                     *           "published_at": "2026-10-31T00:13:33.114Z",
+                     *           "first_seen_at": "2026-10-31T00:13:33.114Z",
+                     *           "source": {
+                     *             "id": "ir",
+                     *             "name": "PepsiCo, Inc.",
+                     *             "host": "www.pepsico.com"
+                     *           },
+                     *           "kind": "other",
+                     *           "topics": [],
+                     *           "rights": "issuer",
+                     *           "is_earnings_news": false,
+                     *           "earnings": null,
+                     *           "symbols": [
+                     *             "PEP"
+                     *           ],
+                     *           "ciks": [
+                     *             "0000077476"
+                     *           ],
+                     *           "revision": 1,
+                     *           "supersedes_id": null,
+                     *           "publications": [
+                     *             {
+                     *               "source_id": "ir:www.pepsico.com",
+                     *               "publisher": {
+                     *                 "cik": "0000077476",
+                     *                 "symbol": "PEP",
+                     *                 "name": "PepsiCo, Inc."
+                     *               },
+                     *               "url": "https://www.pepsico.com/newsroom/stories/2026/a-decade-in-the-making-from-progress-to-possibility-for-pepsicos-food-and-drink-portfolio",
+                     *               "publication_type": "company_update",
+                     *               "published_at": "2026-10-31T00:13:33.114Z",
+                     *               "modified_at": null,
+                     *               "categories": [],
+                     *               "tags": []
+                     *             }
+                     *           ],
+                     *           "publications_truncated": false,
+                     *           "model_processing_allowed": true,
+                     *           "media_count": 2,
+                     *           "attribution": {
+                     *             "publisher": "PepsiCo, Inc.",
+                     *             "publisher_host": "www.pepsico.com",
+                     *             "source_url": "https://www.pepsico.com/newsroom/stories/2026/a-decade-in-the-making-from-progress-to-possibility-for-pepsicos-food-and-drink-portfolio",
+                     *             "published_at": "2026-10-31T00:13:33.114Z",
+                     *             "rights": "issuer",
+                     *             "edgar": null,
+                     *             "statement": "Reproduced verbatim from the publisher; © the publisher. Source and date above."
+                     *           }
+                     *         }
+                     *       ],
+                     *       "next_cursor": "WyIyMDI2LTEwLTMwVDEwOjE1OjAwLjAwMDAwMFoiLCJlNjljNzQwNi02MjMzLTQxN2UtOTAzNy00ZjE2YWU5N2U4MGIiXQ",
+                     *       "next_url": "https://api.data.invinite.com/v1/news?from=2026-10-24T11%3A19%3A13.921Z&to=2026-10-31T11%3A19%3A13.921Z&cursor=WyIyMDI2LTEwLTMwVDEwOjE1OjAwLjAwMDAwMFoiLCJlNjljNzQwNi02MjMzLTQxN2UtOTAzNy00ZjE2YWU5N2U4MGIiXQ"
+                     *     }
+                     */
                     "application/json": {
                         items: Array<{
                             /**
@@ -14289,7 +14579,7 @@ export interface operations {
             path: {
                 /**
                  * @description News item id
-                 * @example 4c1d9e62-3b7a-4f2e-8d1c-9e0a7b6c5d4f
+                 * @example 13351ae7-876b-4839-ba2b-78873f6b4e00
                  */
                 id: string;
             };
@@ -14303,6 +14593,43 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "item_id": "13351ae7-876b-4839-ba2b-78873f6b4e00",
+                     *       "revision": 1,
+                     *       "title": "Build, test and optimize faster: Arm and GitHub accelerate agentic AI development",
+                     *       "content_status": "available",
+                     *       "model_processing_allowed": true,
+                     *       "attribution": {
+                     *         "publisher": "Arm Holdings plc American Depositary Shares",
+                     *         "publisher_host": "newsroom.arm.com",
+                     *         "source_url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
+                     *         "published_at": "2026-10-29T16:02:31.000Z",
+                     *         "rights": "issuer",
+                     *         "edgar": null,
+                     *         "statement": "Reproduced verbatim from the publisher; © the publisher. Source and date above."
+                     *       },
+                     *       "blocks": [
+                     *         {
+                     *           "block_id": "b57c4c7e-abaa-8985-af9d-01d7c3bd1ed7",
+                     *           "index": 0,
+                     *           "heading": null,
+                     *           "kind": "paragraph",
+                     *           "page": null,
+                     *           "text": "Developers can use AI coding agents to edit code, build, test, and debug within one native Arm development environment. Keeping these tasks on the target architecture can give developers earlier feedback on dependencies, test results, and r…",
+                     *           "start_offset": 0,
+                     *           "end_offset": 277
+                     *         }
+                     *       ],
+                     *       "coverage": {
+                     *         "blocks_total": 37,
+                     *         "blocks_through": 10
+                     *       },
+                     *       "has_more": true,
+                     *       "next_cursor": "WyIxMzM1MWFlNy04NzZiLTQ4MzktYmEyYi03ODg3M2Y2YjRlMDAiLDEsOV0",
+                     *       "next_url": "https://api.data.invinite.com/v1/news/13351ae7-876b-4839-ba2b-78873f6b4e00/text?cursor=WyIxMzM1MWFlNy04NzZiLTQ4MzktYmEyYi03ODg3M2Y2YjRlMDAiLDEsOV0"
+                     *     }
+                     */
                     "application/json": {
                         /**
                          * Format: uuid
@@ -14314,7 +14641,7 @@ export interface operations {
                         /** @description Headline */
                         title: string;
                         /**
-                         * @description available = `body_text` holds the text; no_text = headline and link only
+                         * @description available = the item has readable text of the current revision (in the forms `content_formats` lists); no_text = headline and link only
                          * @enum {string}
                          */
                         content_status: "available" | "no_text";
@@ -14360,8 +14687,13 @@ export interface operations {
                             block_id: string;
                             /** @description Position in the text (zero-based) */
                             index: number;
-                            /** @description The heading the block sits under */
+                            /** @description The text of the nearest heading above the block (a heading block itself carries the one before it) */
                             heading: null | string;
+                            /**
+                             * @description What the block is in the article: heading, paragraph, list, table (its rows as lines), quote or figure (a caption); null = guessed from plain text (PDFs, older items: a short line without closing punctuation counts as a heading)
+                             * @enum {string|null}
+                             */
+                            kind: "figure" | "heading" | "list" | "paragraph" | "quote" | "table" | null;
                             /** @description Page of a PDF original */
                             page: null | number;
                             /** @description The block's text, verbatim */
@@ -14450,6 +14782,11 @@ export interface operations {
                  *     ]
                  */
                 publisher?: Array<string>;
+                /**
+                 * @description Items whose original URL is on this host (`attribution.publisher_host`, e.g. `nvidianews.nvidia.com` or `www.sec.gov`); exact match, case-insensitive, no wildcard
+                 * @example nvidianews.nvidia.com
+                 */
+                publisher_host?: string;
                 /**
                  * @description Only these kinds, comma-separated or repeated: earnings_results, results_date, call_announcement, event_announcement, guidance, m_and_a, material_agreement, management_change, dividend, capital_markets, legal_spam, promo, other
                  * @example [

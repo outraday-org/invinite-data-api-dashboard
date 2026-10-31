@@ -83,6 +83,7 @@ export function newsDetail(item: NewsItemPublic, overrides: Partial<NewsItemResp
         assets: [],
         body_text: "SANTA CLARA, Calif., Oct. 29, 2026 -- NVIDIA today announced …",
         companies: [{ cik: NVIDIA_CIK, confidence: 1, match_kind: "issuer", symbol: "NVDA" }],
+        content_formats: ["text"],
         content_status: "available",
         developments: [],
         sightings: [{ published_at_claimed: null, seen_at: "2026-10-29T13:03:40.000Z", source_id: item.source.id, url: item.url }],
