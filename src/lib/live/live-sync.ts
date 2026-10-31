@@ -1,9 +1,10 @@
 /**
  * THE SYNC RULE OF A LIVE CALL PLAYER (backend earnings `tasks/inhouse-kyutai-live-quality-2026-10-31` task 5).
  *
- * TWINS: `invinite/admin-dashboard/src/components/earnings-calls/live-sync.ts` and
- * `invinite-data-api-dashboard/src/lib/live/live-sync.ts` hold the same content, the repos share no package.
- * Change both (and their tests). The invinite app's player and the Data API guide state the same rule.
+ * TWINS: `invinite/admin-dashboard/src/components/earnings-calls/live-sync.ts`,
+ * `invinite/src/components/earnings-call-page/live/live-sync.ts` and
+ * `invinite-data-api-dashboard/src/lib/live/live-sync.ts` hold the same content: the three share no package.
+ * Change all three (and their tests). The Data API guide states the same rule.
  *
  * The transcript is released about 8 s + STT latency behind the capture and the audio could play about 6 s behind it,
  * so the text trails the audio. In SYNCED mode the audio is held back to the text:
