@@ -469,12 +469,12 @@ export function NewsItemPanel({ id, onClose, onOpen, title }: { id: null | strin
 
     return (
         <Dialog onOpenChange={open => !open && onClose()} open={id !== null}>
-            <DialogContent className="sm:max-w-3xl">
+            <DialogContent className="sm:max-w-5xl">
                 <DialogHeader>
                     <DialogTitle>{data?.title ?? title ?? "News item"}</DialogTitle>
                     <DialogDescription>Published text, shown verbatim with its attribution.</DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="h-[65vh] pr-3">
+                <ScrollArea className="h-[80vh] pr-3">
                     {/* p-px: the viewport clips what lies outside it, and a Card's ring-1 does */}
                     <div className="p-px">
                         <NewsItemView data={data} error={error} isLoading={isLoading} onImageError={onImageError} onOpen={onOpen} />
