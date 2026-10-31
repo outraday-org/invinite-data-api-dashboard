@@ -42,28 +42,7 @@ export type PlaylistFragment = {
 };
 
 /**
- * The program date at a MEDIA position — what hls.js computes as `playingDate`
- * (`fragment.programDateTime + (currentTime − fragment.start)`), used for the
- * native-HLS path (Safari) that exposes only `getStartDate()` and `currentTime`.
- */
-export function programDateAt(fragments: ReadonlyArray<PlaylistFragment>, mediaTimeSeconds: number): Date | null {
-    for (let index = fragments.length - 1; index >= 0; index -= 1) {
-        const fragment = fragments[index];
-
-        if (mediaTimeSeconds >= fragment.start) {
-            if (fragment.programDateTime === null) return null;
-
-            const offset = Math.min(mediaTimeSeconds - fragment.start, fragment.duration);
-
-            return new Date(fragment.programDateTime + offset * 1000);
-        }
-    }
-
-    return null;
-}
-
-/**
- * The inverse, for "click a turn to hear it" behind the edge: the MEDIA time at
+ * "Click a turn to hear it" behind the edge: the MEDIA time at
  * which the call reaches `callMs`. The fragment whose program date is the last
  * at or before the target holds it; a target inside a gap (a skipped segment, a
  * restart) lands on the next fragment's start rather than inside the previous

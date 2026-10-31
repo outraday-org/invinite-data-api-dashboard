@@ -6,7 +6,6 @@ import {
     activeTurnIndex,
     mediaTimeForCallMs,
     positionToCallMs,
-    programDateAt,
     secondsBehindEdge,
 } from "./position-to-call-ms";
 
@@ -31,17 +30,6 @@ describe("position-to-call-ms", () => {
         expect(positionToCallMs(new Date(T0_MS + 12_345), CALL_T0)).toBe(12_345);
     });
 
-    it("stays on the CALL clock across a skipped segment and a restart (the media timeline is continuous)", () => {
-        // Media 1.5 s → in segment 0 → call 1.5 s.
-        expect(positionToCallMs(programDateAt(FRAGMENTS, 1.5), CALL_T0)).toBe(1_500);
-
-        // Media 2.5 s → segment 2 (after the skipped one) → call 4.5 s, not 2.5 s.
-        expect(positionToCallMs(programDateAt(FRAGMENTS, 2.5), CALL_T0)).toBe(4_500);
-
-        // Media 5 s → after the restart → call 17 s.
-        expect(positionToCallMs(programDateAt(FRAGMENTS, 5), CALL_T0)).toBe(17_000);
-    });
-
     it("gives no position (so no highlight) without playingDate or callT0", () => {
         expect(positionToCallMs(null, CALL_T0)).toBeNull();
 
@@ -50,8 +38,6 @@ describe("position-to-call-ms", () => {
         expect(positionToCallMs(new Date(T0_MS), null)).toBeNull();
 
         expect(activeTurnIndex([{ startMs: 0 }], null)).toBe(-1);
-
-        expect(programDateAt([{ duration: 2, programDateTime: null, start: 0 }], 1)).toBeNull();
     });
 
     it("picks the last turn that started at or before the position", () => {

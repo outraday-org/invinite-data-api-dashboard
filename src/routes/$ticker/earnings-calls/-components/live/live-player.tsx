@@ -124,9 +124,12 @@ export function LivePlayer({
 
     const callMs = positionToCallMs(audio.position.playingDate, callT0);
 
+    // A seek clears `callMs` until the next `timeupdate`: the text stays where the audio last was, never ahead of it.
+    const heardMs = positionToCallMs(audio.position.heardDate, callT0);
+
     const followMode = audio.canJumpToLive && callMs !== null;
 
-    const trackedMs = audio.started && !followMode && audio.phase !== "ended" ? callMs : null;
+    const trackedMs = audio.started && !audio.canJumpToLive && audio.phase !== "ended" ? heardMs : null;
 
     // Synced: every word, partials too, appears when the audio reaches it. Live audio: as released.
     const revealMs = mode === "synced" ? trackedMs : null;
@@ -135,7 +138,8 @@ export function LivePlayer({
 
     const activeIndex = followMode ? activeTurnIndex(turns, callMs) : -1;
 
-    const latestEndMs = allTurns.at(-1)?.endMs ?? null;
+    // Finals only: a partial is not released text.
+    const latestEndMs = newestFinal?.endMs ?? null;
 
     const textBehindS = trackedMs !== null && latestEndMs !== null ? Math.max(0, Math.round((trackedMs - latestEndMs) / 1000)) : null;
 

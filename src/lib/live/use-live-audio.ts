@@ -9,7 +9,7 @@ import { LIVE_STREAM_REFRESH_BEFORE_MS, msUntilRefresh } from "@/lib/earnings/me
 import type { LiveAudioMode } from "./live-sync";
 import type { PlaylistFragment } from "./position-to-call-ms";
 
-import { applyLiveLatency, LIVE_HLS_CONFIG, loadHls, SYNCED_HLS_CONFIG } from "./live-clients";
+import { applyLiveLatency, keepListenerPlace, LIVE_HLS_CONFIG, loadHls, SYNCED_HLS_CONFIG } from "./live-clients";
 import {
     SYNC_MARGIN_MS,
     SYNC_SLOW_RATE,
@@ -59,10 +59,12 @@ export type LiveAudioPosition = {
     readonly edgeBehindS: number;
     /** The program date of the playlist's real end, `null` before it is known. */
     readonly edgeDate: Date | null;
+    /** The last `playingDate` known: a seek clears that one until the next `timeupdate`, the text stays here meanwhile. */
+    readonly heardDate: Date | null;
     readonly playingDate: Date | null;
 };
 
-const IDLE_POSITION: LiveAudioPosition = { behindS: 0, currentTime: 0, edgeBehindS: 0, edgeDate: null, edgeSeconds: null, playingDate: null };
+const IDLE_POSITION: LiveAudioPosition = { behindS: 0, currentTime: 0, edgeBehindS: 0, edgeDate: null, edgeSeconds: null, heardDate: null, playingDate: null };
 
 const BUFFERING_AFTER_MS = 5_000;
 
@@ -73,6 +75,9 @@ const STALL_RESUMED_AFTER_S = 0.5;
 
 /** Within this of the edge counts as "at the edge" for a reload. */
 const AT_EDGE_S = 3;
+
+/** Played this far past a fatal error, it is over: the next one gets its own recovery, not the end of the player. */
+const RECOVERED_AFTER_S = 30;
 
 export type LiveAudioHlsError = { readonly atMs: number; readonly details: string; readonly type: string };
 
@@ -192,6 +197,15 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
 
     const failuresRef = useRef(0);
 
+    /** Where the last fatal error happened. */
+    const failureAtRef = useRef(0);
+
+    /** The newest `start`: a lazy hls.js that lands after an unmount or a newer start stays unused. */
+    const startIdRef = useRef(0);
+
+    /** The listener pressed pause: a reload does not start the audio again and no jump moves it. */
+    const pausedByUserRef = useRef(false);
+
     const modeRef = useRef(mode);
 
     const heldAtBoundaryRef = useRef(false);
@@ -215,6 +229,20 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
     const newestStartMs = newestFinal?.startMs ?? null;
 
     const audioCallMs = positionToCallMs(position.playingDate, callT0);
+
+    const callT0Ref = useRef(callT0);
+
+    const newestStartRef = useRef(newestStartMs);
+
+    const segmentSecondsRef = useRef(stream?.segment_seconds ?? 0);
+
+    useEffect(() => {
+        callT0Ref.current = callT0;
+
+        newestStartRef.current = newestStartMs;
+
+        segmentSecondsRef.current = stream?.segment_seconds ?? segmentSecondsRef.current;
+    }, [callT0, newestStartMs, stream?.segment_seconds]);
 
     const { action: syncAction, targetCallMs } = syncTarget({
         audioCallMs,
@@ -279,8 +307,8 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
 
             hls.startLoad(startPosition);
 
-            // A new source re-attaches the media element, which comes back paused.
-            playMedia(media);
+            // A new source re-attaches the media element, which comes back paused. The listener's own pause stays.
+            if (!pausedByUserRef.current) playMedia(media);
 
             return;
         }
@@ -293,7 +321,7 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
             }, { once: true });
         }
 
-        playMedia(media);
+        if (!pausedByUserRef.current) playMedia(media);
     }, [playMedia]);
 
     /**
@@ -337,6 +365,12 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
 
         if (media === null || url === null) return;
 
+        const startId = startIdRef.current + 1;
+
+        startIdRef.current = startId;
+
+        pausedByUserRef.current = false;
+
         setStarted(true);
 
         setPhase("loading");
@@ -359,10 +393,31 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
 
         void loadHls()
             .then((Hls) => {
+                if (startId !== startIdRef.current) return;
+
                 if (Hls.isSupported()) {
                     const config = mode === "synced" ? SYNCED_HLS_CONFIG : LIVE_HLS_CONFIG;
 
                     const hls = new Hls({ ...config, startPosition: from === "beginning" ? 0 : -1 });
+
+                    if (from === "beginning") keepListenerPlace(hls);
+
+                    // Synced from the edge: hls.js only reads its distance when it starts, so the distance the released
+                    // text stands at now goes in with the first playlist, or the audio starts ahead of the text and sits
+                    // through a long pause right after "Tune in". No text yet: the config's start.
+                    if (mode === "synced" && from === "live") {
+                        hls.once(Hls.Events.LEVEL_LOADED, () => {
+                            const latency = syncLatencyS(positionToCallMs(playlistEnd(media, hls).date, callT0Ref.current), newestStartRef.current);
+
+                            if (latency === null || Math.abs(SYNC_START_LATENCY_S - latency) < 1) return;
+
+                            hls.targetLatency = latency;
+
+                            const measuredStart = hls.liveSyncPosition;
+
+                            if (measuredStart !== null) hls.startLoad(measuredStart);
+                        });
+                    }
 
                     hls.on(Hls.Events.ERROR, (_event, data) => {
                         setHlsErrorCount(count => count + 1);
@@ -388,6 +443,8 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
                         }
 
                         failuresRef.current += 1;
+
+                        failureAtRef.current = media.currentTime;
 
                         // An expired token: ONE fresh URL, resumed at the same place. It counts as
                         // the first failure, so whatever fails next is the end.
@@ -459,18 +516,25 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
             const playingDate = hls?.playingDate
                 ?? (native === null ? null : new Date(native.getTime() + media.currentTime * 1000));
 
-            setPosition({
+            setPosition(current => ({
                 behindS: secondsBehindEdge(edgeSeconds, media.currentTime),
                 currentTime: media.currentTime,
                 edgeBehindS: secondsBehindEdge(end.seconds, media.currentTime),
                 edgeDate: end.date,
                 edgeSeconds,
+                heardDate: playingDate ?? current.heardDate,
                 playingDate,
-            });
+            }));
 
             const stall = stallRef.current;
 
             if (stall !== null && Math.abs(media.currentTime - stall.atTime) > STALL_RESUMED_AFTER_S) endStall();
+
+            if (failuresRef.current > 0 && media.currentTime - failureAtRef.current > RECOVERED_AFTER_S) {
+                failuresRef.current = 0;
+
+                refreshed403Ref.current = false;
+            }
         };
 
         const onPlaying = () => {
@@ -572,6 +636,15 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
     // Synced: behind means the listener seeked there, the sync point itself is not "behind".
     const behindEnough = mode === "synced" ? following : position.behindS > JUMP_TO_LIVE_AFTER_S;
 
+    // Live audio, back at the edge: hls.js's own forward jump applies again (`keepListenerPlace` lifted it for a seek).
+    useEffect(() => {
+        const hls = hlsRef.current;
+
+        if (hls !== null && mode === "live" && !behindEnough) {
+            applyLiveLatency(hls, mode, SYNC_START_LATENCY_S, segmentSecondsRef.current);
+        }
+    }, [behindEnough, mode]);
+
     const effectiveRate = behindEnough ? rate : 1;
 
     const mediaRate = syncAction === "slow" ? SYNC_SLOW_RATE : effectiveRate;
@@ -640,13 +713,13 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
         }
     }, [playMedia, positionTime, started, syncAction]);
 
-    // Far behind the point: forward, once per target (a seek in flight is not repeated).
+    // Far behind the point: forward, once per target (a seek in flight is not repeated). A listener's pause keeps its place.
     const jumpToMs = syncAction === "jump" ? targetCallMs : null;
 
     useEffect(() => {
         const media = audioRef.current;
 
-        if (media !== null && jumpToMs !== null && !media.seeking) seekToCallMs(jumpToMs);
+        if (media !== null && jumpToMs !== null && !media.seeking && !pausedByUserRef.current) seekToCallMs(jumpToMs);
     }, [jumpToMs, seekToCallMs]);
 
     // A mode switch on a running player. To Live: back to the edge, the toggle is the listener's action. To Synced:
@@ -656,7 +729,7 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
 
         const hls = hlsRef.current;
 
-        if (hls !== null) applyLiveLatency(hls, mode, SYNC_START_LATENCY_S);
+        if (hls !== null) applyLiveLatency(hls, mode, SYNC_START_LATENCY_S, segmentSecondsRef.current);
 
         if (media === null || mode !== "live") return;
 
@@ -679,6 +752,8 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
     }, [callT0, mode, newestStartMs]);
 
     useEffect(() => () => {
+        startIdRef.current += 1;
+
         hlsRef.current?.destroy();
 
         hlsRef.current = null;
@@ -709,6 +784,8 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
 
     /** An explicit seek: the rule judges the new position, never the stale one against the target. */
     const markSeeked = () => {
+        if (hlsRef.current !== null) keepListenerPlace(hlsRef.current);
+
         setFollowing(mode === "synced");
 
         setPosition(current => ({ ...current, playingDate: null }));
@@ -740,12 +817,18 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
         if (heldAtBoundaryRef.current) {
             heldAtBoundaryRef.current = false;
 
+            pausedByUserRef.current = true;
+
             setIsPlaying(false);
         }
         else if (media.paused) {
+            pausedByUserRef.current = false;
+
             playMedia(media);
         }
         else {
+            pausedByUserRef.current = true;
+
             media.pause();
         }
     };

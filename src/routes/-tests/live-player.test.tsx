@@ -18,7 +18,7 @@ class FakeHls {
 
     static ErrorTypes = { MEDIA_ERROR: "mediaError" };
 
-    static Events = { ERROR: "hlsError" };
+    static Events = { ERROR: "hlsError", LEVEL_LOADED: "hlsLevelLoaded" };
 
     static instances: Array<FakeHls> = [];
 
@@ -29,6 +29,8 @@ class FakeHls {
     currentLevel = 0;
 
     readonly destroy = vi.fn();
+
+    levelLoaded: (() => void) | undefined;
 
     levels = [{ details: { fragments: [{ duration: 600, programDateTime: T0_MS, start: 0 }] } }];
 
@@ -58,6 +60,10 @@ class FakeHls {
 
     on() {
         return undefined;
+    }
+
+    once(event: string, handler: () => void) {
+        if (event === "hlsLevelLoaded") this.levelLoaded = handler;
     }
 }
 
@@ -369,6 +375,56 @@ describe("the sync modes", () => {
         expect(screen.getByText("Text behind edge")).toBeDefined();
 
         expect(screen.getByText("synced to the transcript", { selector: "dd" })).toBeDefined();
+    });
+
+    it("an unmount while hls.js loads leaves no player behind", async () => {
+        const view = render(player());
+
+        await act(async () => {
+            await Promise.resolve();
+        });
+
+        fireEvent.click(screen.getByRole("button", { name: "Tune in" }));
+
+        view.unmount();
+
+        await act(async () => {
+            await Promise.resolve();
+        });
+
+        expect(FakeHls.instances).toHaveLength(0);
+    });
+
+    it("a Synced start takes its distance from the released text, with the first playlist", async () => {
+        setTranscript([segment(1, 100_000, "the words")]);
+
+        const { hls } = await tuneIn();
+
+        hls.levels = [{ details: { fragments: [{ duration: 130, programDateTime: T0_MS, start: 0 }] } }];
+
+        hls.liveSyncPosition = 98.5;
+
+        act(() => hls.levelLoaded?.());
+
+        expect(hls.targetLatency).toBe(31.5);
+
+        expect(hls.startLoad).toHaveBeenCalledWith(98.5);
+    });
+
+    it("Live audio: From the beginning lifts hls.js's own jump until the audio is back at the edge", async () => {
+        window.localStorage.setItem(LIVE_MODE_STORAGE_KEY, "live");
+
+        const { hls, tick } = await tuneIn("From the beginning");
+
+        expect(hls.config.liveMaxLatencyDuration).toBe(86_400);
+
+        tick(5, 500, 5_000);
+
+        fireEvent.click(await screen.findByRole("button", { name: "Jump to live" }));
+
+        tick(500, 500, 500_000);
+
+        await waitFor(() => expect(hls.config.liveMaxLatencyDuration).toBe(30));
     });
 
     it("storage that refuses costs only the memory", () => {

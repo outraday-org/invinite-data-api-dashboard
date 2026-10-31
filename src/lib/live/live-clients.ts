@@ -21,7 +21,7 @@ export async function loadHls(): Promise<typeof HlsType> {
 /**
  * hls.js config for the live rendition's 2-s segments (the admin console's values, owner
  * decision 2026-10-09): 3 segments (~6 s) behind the edge; past 15 segments (30 s) hls.js
- * jumps forward. `maxLiveSyncPlaybackRate` is inert: hls.js only changes the speed with
+ * jumps forward, unless the listener chose a place back there (`keepListenerPlace`). `maxLiveSyncPlaybackRate` is inert: hls.js only changes the speed with
  * `lowLatencyMode`, so nothing fights the sync rule's 0.9×. The stream has no LL-HLS parts. The live
  * watermark's marker-chain delay (≤ 6 s) is inside the playlist's `PROGRAM-DATE-TIME`, so the
  * transcript sync needs no client-side offset.
@@ -33,10 +33,8 @@ export const LIVE_HLS_CONFIG = {
     maxLiveSyncPlaybackRate: 1.1,
 } as const;
 
-/** What `LIVE_HLS_CONFIG` amounts to in seconds on 2-s segments, for a switch back at runtime. */
-const LIVE_TARGET_LATENCY_S = 6;
-
-const LIVE_MAX_LATENCY_S = 30;
+/** The capture's segment length, for an answer that does not say. */
+const DEFAULT_SEGMENT_SECONDS = 2;
 
 /** No forward jump of hls.js's own in synced mode: a held audio may trail for minutes, `syncTarget` owns the jump. */
 const SYNCED_MAX_LATENCY_S = 86_400;
@@ -53,8 +51,18 @@ export const SYNCED_HLS_CONFIG = {
 } as const;
 
 /** A mode switch on a running hls.js: its distance to the edge and when it jumps by itself. */
-export function applyLiveLatency(hls: HlsType, mode: LiveAudioMode, syncedLatencyS: number): void {
-    hls.targetLatency = mode === "synced" ? syncedLatencyS : LIVE_TARGET_LATENCY_S;
+export function applyLiveLatency(hls: HlsType, mode: LiveAudioMode, syncedLatencyS: number, segmentSeconds: number): void {
+    const seconds = segmentSeconds > 0 ? segmentSeconds : DEFAULT_SEGMENT_SECONDS;
 
-    hls.config.liveMaxLatencyDuration = mode === "synced" ? SYNCED_MAX_LATENCY_S : LIVE_MAX_LATENCY_S;
+    hls.targetLatency = mode === "synced" ? syncedLatencyS : LIVE_HLS_CONFIG.liveSyncDurationCount * seconds;
+
+    hls.config.liveMaxLatencyDuration = mode === "synced" ? SYNCED_MAX_LATENCY_S : LIVE_HLS_CONFIG.liveMaxLatencyDurationCount * seconds;
+}
+
+/**
+ * The listener chose a place behind the edge ("From the beginning", a seek): hls.js's own forward jump would
+ * throw it back at the next playlist update. `applyLiveLatency` puts the jump back.
+ */
+export function keepListenerPlace(hls: HlsType): void {
+    hls.config.liveMaxLatencyDuration = SYNCED_MAX_LATENCY_S;
 }

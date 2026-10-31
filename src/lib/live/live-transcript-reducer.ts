@@ -400,9 +400,9 @@ export function revealedText(text: string, startMs: number, endMs: number, until
  * `startMs` order, is the tail of the last turn when it is the same speaker (or
  * unlabelled), else a turn of its own — so all pieces of the newest seq show.
  *
- * `revealUntilMs` (the live player at the edge, HOVR 2026-10-09): only the words
- * spoken by that call millisecond are shown — the audio plays ~6 s behind the
- * text, so the text is held back to it (`revealedText` per final and per partial
+ * `revealUntilMs` (a live player in Synced mode, HOVR 2026-10-09): only the words
+ * spoken by that call millisecond are shown, so no word, partials included, runs
+ * ahead of the audio (`revealedText` per final and per partial
  * piece; a segment with nothing to show yet opens no turn). Absent = everything.
  */
 export function liveTurns(
