@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useParams, useRouterState } from "@tanstack/react-router";
 import { SearchIcon } from "lucide-react";
 import * as React from "react";
 
@@ -15,6 +15,10 @@ type TickerSearchProps = {
 
 export function TickerSearch({ defaultTicker = "", placeholder = "Search company" }: TickerSearchProps) {
     const navigate = useNavigate();
+
+    const currentTicker = useParams({ select: params => params.ticker, strict: false });
+
+    const pathname = useRouterState({ select: state => state.location.pathname });
 
     const setLastTicker = useTickerStore(state => state.setLastTicker);
 
@@ -126,6 +130,15 @@ export function TickerSearch({ defaultTicker = "", placeholder = "Search company
         const normalizedTicker = ticker.toUpperCase();
 
         setLastTicker(normalizedTicker);
+
+        // stay on the same sidebar item: /<old>/news/… → /<new>/news (deeper paths and search are company-specific)
+        const section = currentTicker ? pathname.split("/")[2] : undefined;
+
+        if (section) {
+            navigate({ href: `/${encodeURIComponent(normalizedTicker)}/${section}` });
+
+            return;
+        }
 
         navigate({ params: { ticker: normalizedTicker }, to: "/$ticker" });
     };
