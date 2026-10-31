@@ -1,5 +1,5 @@
 /**
- * THE SYNC RULE OF A LIVE CALL PLAYER (backend earnings `tasks/inhouse-kyutai-live-quality-2026-10-31` task 5).
+ * THE SYNC RULE OF A LIVE CALL PLAYER (backend earnings `tasks/X-inhouse-kyutai-live-quality-2026-10-31` task 5).
  *
  * TWINS: `invinite/admin-dashboard/src/components/earnings-calls/live-sync.ts`,
  * `invinite/src/components/earnings-call-page/live/live-sync.ts` and
