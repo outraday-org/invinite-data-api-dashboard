@@ -1,13 +1,17 @@
 import { Link } from "@tanstack/react-router";
+import { useState } from "react";
 
 import type { EarningsEventResponse } from "@/lib/api/types";
+import type { LiveAudioMode } from "@/lib/live/live-sync";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { isEarningsEventLiveish, useApiBaseUrl, useEarningsLiveStream, useEarningsPriceAttribution } from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
+import { newestReleasedFinal, parseLiveMode, resolveLiveMode, textBehindEdgeS } from "@/lib/live/live-sync";
 import { liveTurns } from "@/lib/live/live-transcript-reducer";
-import { activeTurnIndex, JUMP_TO_LIVE_AFTER_S, positionToCallMs } from "@/lib/live/position-to-call-ms";
+import { activeTurnIndex, positionToCallMs } from "@/lib/live/position-to-call-ms";
 import { useLiveAudio } from "@/lib/live/use-live-audio";
 import { useLiveTranscript } from "@/lib/live/use-live-transcript";
 
@@ -17,17 +21,41 @@ import { LivePriceChart } from "./live-price-chart";
 import { formatWallTime } from "./live-price-chart-data";
 import { LiveTranscriptView } from "./live-transcript-view";
 
+export const LIVE_MODE_STORAGE_KEY = "invinite-data-api-live-mode";
+
+/** The remembered mode; a refused origin or the server read as none. */
+function readStoredLiveMode(): LiveAudioMode | null {
+    try {
+        return typeof window === "undefined" ? null : parseLiveMode(window.localStorage.getItem(LIVE_MODE_STORAGE_KEY));
+    }
+    catch {
+        return null;
+    }
+}
+
+function writeStoredLiveMode(mode: LiveAudioMode): void {
+    try {
+        if (typeof window !== "undefined") window.localStorage.setItem(LIVE_MODE_STORAGE_KEY, mode);
+    }
+    catch {
+        // The choice holds for this page and is forgotten on reload.
+    }
+}
+
 /**
  * The live player of a call in progress: the live audio (`GET /v1/earnings-calls/live/stream`,
  * hls.js) and the live transcript (`/v1/ws` `earnings-calls.live`), modelled on the admin
  * console's `live-player.tsx`.
  *
  * - Before "Tune in", or without live audio, the transcript runs at the edge as it arrives.
- * - At the edge while the audio plays, the text is SYNCED to it: the audio plays ~6 s behind
- *   the capture, so each word shows once the audio reaches it ("text synced to the audio · N s
- *   held back", `liveTurns`' `revealUntilMs` = `playingDate − call_t0`).
- * - Behind the edge (> 10 s) the transcript follows the audio: the turn being heard is
- *   highlighted and a turn click seeks there. `call_t0` null → no sync, no follow mode.
+ * - Modes (`live-sync.ts`; the text is released ≈ 8 s + STT latency behind the capture). SYNCED, the
+ *   default: the AUDIO is held behind the newest released final (0.9× past it, "waiting for the
+ *   transcript" 3 s past it, a jump forward 20 s behind it) and each word, partials too, shows once the
+ *   audio reaches it (`liveTurns`' `revealUntilMs` = `playingDate − call_t0`). LIVE AUDIO: at the edge,
+ *   the text appends as released ("transcript ≈ N s behind"). Remembered per browser.
+ * - Behind the edge (Live: > 10 s; Synced: after an explicit seek) the transcript follows the audio:
+ *   the turn being heard is highlighted and a turn click seeks there. `call_t0` null → no sync, no
+ *   follow mode.
  *
  * - Between the two, the call's stock (`LivePriceChart`): the price-attribution minute rows so
  *   far (refetched every 60 s while live) then the `price_tick` frames of the same socket, on the
@@ -66,10 +94,27 @@ export function LivePlayer({
         return result.data ?? null;
     };
 
-    // The ref apart from the state: the state is read during render, the ref only by `<audio>`.
-    const { audioRef, ...audio } = useLiveAudio({ refreshStream, stream });
-
     const transcript = useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId: event.event_id });
+
+    const [storedMode, setStoredMode] = useState(readStoredLiveMode);
+
+    // A refused subscription ends the transcript for good: nothing to sync to.
+    const transcriptVisible = transcript.mode !== "error";
+
+    const mode = resolveLiveMode(storedMode, transcriptVisible);
+
+    const chooseMode = (next: LiveAudioMode) => {
+        setStoredMode(next);
+
+        writeStoredLiveMode(next);
+    };
+
+    const newestFinal = newestReleasedFinal(transcript.state.finals);
+
+    const callEnded = transcript.state.ended || transcript.mode === "ended";
+
+    // The ref apart from the state: the state is read during render, the ref only by `<audio>`.
+    const { audioRef, ...audio } = useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stream });
 
     const assignments = transcript.state.speakerNames?.assignments ?? [];
 
@@ -79,20 +124,22 @@ export function LivePlayer({
 
     const callMs = positionToCallMs(audio.position.playingDate, callT0);
 
-    const followMode = audio.started && audio.position.behindS > JUMP_TO_LIVE_AFTER_S && callMs !== null;
+    const followMode = audio.canJumpToLive && callMs !== null;
 
-    // At the edge with a known position the text is held back to the audio.
-    const syncedMs = audio.started && !followMode && audio.phase !== "ended" ? callMs : null;
+    const trackedMs = audio.started && !followMode && audio.phase !== "ended" ? callMs : null;
 
-    const turns = syncedMs === null ? allTurns : liveTurns(transcript.state, assignments, syncedMs);
+    // Synced: every word, partials too, appears when the audio reaches it. Live audio: as released.
+    const revealMs = mode === "synced" ? trackedMs : null;
+
+    const turns = revealMs === null ? allTurns : liveTurns(transcript.state, assignments, revealMs);
 
     const activeIndex = followMode ? activeTurnIndex(turns, callMs) : -1;
 
     const latestEndMs = allTurns.at(-1)?.endMs ?? null;
 
-    const heldBackS = syncedMs !== null && latestEndMs !== null ? Math.max(0, Math.round((latestEndMs - syncedMs) / 1000)) : null;
+    const textBehindS = trackedMs !== null && latestEndMs !== null ? Math.max(0, Math.round((trackedMs - latestEndMs) / 1000)) : null;
 
-    const callEnded = transcript.state.ended || transcript.mode === "ended";
+    const textBehindEdge = textBehindEdgeS(positionToCallMs(audio.position.edgeDate, callT0), newestFinal?.endMs ?? null);
 
     // The price line's backlog: the live minute rows (a 404 = none yet). Settled rows of the
     // post-call run use another reference, so only live rows seed the line.
@@ -143,8 +190,27 @@ export function LivePlayer({
                 )}
 
                 <section aria-label="Live audio" className="flex flex-col gap-2">
+                    {liveAudio && stream?.status === "available" && transcriptVisible && (
+                        <span aria-label="Playback mode" className="inline-flex gap-0.5" role="group">
+                            {(["synced", "live"] as const).map(option => (
+                                <Button
+                                    aria-pressed={mode === option}
+                                    key={option}
+                                    onClick={() => chooseMode(option)}
+                                    size="sm"
+                                    title={option === "synced"
+                                        ? "The audio plays behind the transcript, so each word appears as it is heard"
+                                        : "As live as possible; the transcript follows when it is released"}
+                                    type="button"
+                                    variant={mode === option ? "secondary" : "ghost"}
+                                >
+                                    {option === "synced" ? "Synced" : "Live audio"}
+                                </Button>
+                            ))}
+                        </span>
+                    )}
                     {liveAudio
-                        ? <LiveAudioSection audio={audio} stream={stream} streamError={streamQuery.error} />
+                        ? <LiveAudioSection audio={audio} mode={mode} stream={stream} streamError={streamQuery.error} />
                         : <p className="text-muted-foreground text-sm">No live audio for this call (live transcript below).</p>}
                 </section>
 
@@ -161,13 +227,22 @@ export function LivePlayer({
                         {transcript.reconnecting && <Badge variant="destructive">reconnecting</Badge>}
                         {transcript.stalled && <Badge variant="outline">no data for 60 s</Badge>}
                         {followMode && <Badge variant="secondary">following the audio</Badge>}
-                        {heldBackS !== null && (
-                            <span className="text-muted-foreground text-xs">
-                                text synced to the audio ·
+                        {revealMs !== null && (
+                            <span className="text-muted-foreground text-xs" data-testid="live-sync">
+                                audio synced to the transcript ·
                                 {" "}
-                                {heldBackS}
+                                {Math.round(audio.position.edgeBehindS)}
                                 {" "}
-                                s held back
+                                s behind the edge
+                            </span>
+                        )}
+                        {revealMs === null && textBehindS !== null && (
+                            <span className="text-muted-foreground text-xs" data-testid="live-sync">
+                                transcript ≈
+                                {" "}
+                                {textBehindS}
+                                {" "}
+                                s behind
                             </span>
                         )}
                     </div>
@@ -205,10 +280,16 @@ export function LivePlayer({
                         <dt>Audio</dt>
                         <dd>
                             {audio.phase}
-                            {" · "}
-                            {audio.position.behindS.toFixed(1)}
-                            {" s behind the edge"}
                         </dd>
+                        <dt>Audio behind edge</dt>
+                        <dd>
+                            {audio.position.edgeBehindS.toFixed(1)}
+                            {" s"}
+                        </dd>
+                        <dt>Text behind edge</dt>
+                        <dd>{textBehindEdge === null ? "unknown" : `${textBehindEdge.toFixed(1)} s`}</dd>
+                        <dt>Playback mode</dt>
+                        <dd>{mode === "synced" ? "synced to the transcript" : "live audio"}</dd>
                         <dt>hls.js errors</dt>
                         <dd>
                             {audio.hlsErrorCount}

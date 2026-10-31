@@ -1,5 +1,9 @@
 import type HlsType from "hls.js";
 
+import type { LiveAudioMode } from "./live-sync";
+
+import { SYNC_START_LATENCY_S } from "./live-sync";
+
 /**
  * The live player's third-party client: hls.js, pinned to `1.7.3` (the admin console's
  * version, whose config below was tuned on real calls). Loaded lazily, so pages without a
@@ -17,7 +21,8 @@ export async function loadHls(): Promise<typeof HlsType> {
 /**
  * hls.js config for the live rendition's 2-s segments (the admin console's values, owner
  * decision 2026-10-09): 3 segments (~6 s) behind the edge; past 15 segments (30 s) hls.js
- * jumps forward, in between it catches up at ≤ 1.1×. The stream has no LL-HLS parts. The live
+ * jumps forward. `maxLiveSyncPlaybackRate` is inert: hls.js only changes the speed with
+ * `lowLatencyMode`, so nothing fights the sync rule's 0.9×. The stream has no LL-HLS parts. The live
  * watermark's marker-chain delay (≤ 6 s) is inside the playlist's `PROGRAM-DATE-TIME`, so the
  * transcript sync needs no client-side offset.
  */
@@ -27,3 +32,29 @@ export const LIVE_HLS_CONFIG = {
     lowLatencyMode: false,
     maxLiveSyncPlaybackRate: 1.1,
 } as const;
+
+/** What `LIVE_HLS_CONFIG` amounts to in seconds on 2-s segments, for a switch back at runtime. */
+const LIVE_TARGET_LATENCY_S = 6;
+
+const LIVE_MAX_LATENCY_S = 30;
+
+/** No forward jump of hls.js's own in synced mode: a held audio may trail for minutes, `syncTarget` owns the jump. */
+const SYNCED_MAX_LATENCY_S = 86_400;
+
+/**
+ * Synced mode's config (hls.js refuses `liveSyncDuration` next to `liveSyncDurationCount`, so not a spread): starts
+ * `SYNC_START_LATENCY_S` behind the edge, later moved to the measured distance (`syncLatencyS`).
+ */
+export const SYNCED_HLS_CONFIG = {
+    liveMaxLatencyDuration: SYNCED_MAX_LATENCY_S,
+    liveSyncDuration: SYNC_START_LATENCY_S,
+    lowLatencyMode: false,
+    maxLiveSyncPlaybackRate: 1.1,
+} as const;
+
+/** A mode switch on a running hls.js: its distance to the edge and when it jumps by itself. */
+export function applyLiveLatency(hls: HlsType, mode: LiveAudioMode, syncedLatencyS: number): void {
+    hls.targetLatency = mode === "synced" ? syncedLatencyS : LIVE_TARGET_LATENCY_S;
+
+    hls.config.liveMaxLatencyDuration = mode === "synced" ? SYNCED_MAX_LATENCY_S : LIVE_MAX_LATENCY_S;
+}

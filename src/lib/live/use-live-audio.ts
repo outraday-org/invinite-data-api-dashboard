@@ -6,10 +6,20 @@ import type { EarningsLiveStreamResponse } from "@/lib/api/types";
 
 import { LIVE_STREAM_REFRESH_BEFORE_MS, msUntilRefresh } from "@/lib/earnings/media-timing";
 
+import type { LiveAudioMode } from "./live-sync";
 import type { PlaylistFragment } from "./position-to-call-ms";
 
-import { LIVE_HLS_CONFIG, loadHls } from "./live-clients";
-import { JUMP_TO_LIVE_AFTER_S, mediaTimeForCallMs, secondsBehindEdge } from "./position-to-call-ms";
+import { applyLiveLatency, LIVE_HLS_CONFIG, loadHls, SYNCED_HLS_CONFIG } from "./live-clients";
+import {
+    SYNC_MARGIN_MS,
+    SYNC_SLOW_RATE,
+    SYNC_START_LATENCY_S,
+    SYNC_TEXT_IDLE_MS,
+    syncLatencyS,
+    syncPauseStep,
+    syncTarget,
+} from "./live-sync";
+import { JUMP_TO_LIVE_AFTER_S, mediaTimeForCallMs, positionToCallMs, secondsBehindEdge } from "./position-to-call-ms";
 
 /**
  * The live audio of one call: hls.js on the URL of `GET /v1/earnings-calls/live/stream`
@@ -28,6 +38,14 @@ import { JUMP_TO_LIVE_AFTER_S, mediaTimeForCallMs, secondsBehindEdge } from "./p
  *   the stall began at the edge, else the same place — never a backwards seek).
  * - POSITION: hls.js's `playingDate` (from `#EXT-X-PROGRAM-DATE-TIME`), the live edge and the
  *   distance to it on the MEDIA timeline — never wall-clock arithmetic. Nothing logs the URL.
+ *   `edgeSeconds` / `behindS` are relative to hls.js's sync position; `edgeBehindS` / `edgeDate`
+ *   are the real end of the playlist.
+ * - SYNCED MODE (`live-sync.ts`): the audio is held behind the newest released final: 0.9×, a
+ *   pause past the point, a forward jump far behind it. The element is only ever paused by the
+ *   rule through `heldAtBoundaryRef`, so the listener's own pause stays and the UI still reads
+ *   "playing" during a hold. An explicit seek behind the point makes it `following`, which the
+ *   rule respects until the audio is back. Nothing seeks backwards on its own: in synced mode a
+ *   reload and a stall kick resume where the audio is.
  */
 
 export type LiveAudioPhase = "ended" | "idle" | "loading" | "playing" | "unavailable";
@@ -37,10 +55,14 @@ export type LiveAudioPosition = {
     readonly currentTime: number;
     /** The live edge on the media timeline, `null` before it is known. */
     readonly edgeSeconds: null | number;
+    /** Seconds behind the playlist's real end (`behindS` is behind hls.js's sync position). */
+    readonly edgeBehindS: number;
+    /** The program date of the playlist's real end, `null` before it is known. */
+    readonly edgeDate: Date | null;
     readonly playingDate: Date | null;
 };
 
-const IDLE_POSITION: LiveAudioPosition = { behindS: 0, currentTime: 0, edgeSeconds: null, playingDate: null };
+const IDLE_POSITION: LiveAudioPosition = { behindS: 0, currentTime: 0, edgeBehindS: 0, edgeDate: null, edgeSeconds: null, playingDate: null };
 
 const BUFFERING_AFTER_MS = 5_000;
 
@@ -77,6 +99,32 @@ function mediaEdge(media: HTMLMediaElement, hls: HlsType | null): null | number 
     return ranges.length > 0 ? ranges.end(ranges.length - 1) : null;
 }
 
+/** The playlist's real end: the last fragment under hls.js, else the seekable end. */
+function playlistEnd(media: HTMLMediaElement, hls: HlsType | null): { date: Date | null; seconds: null | number } {
+    if (hls !== null) {
+        const last = hls.levels.at(Math.max(0, hls.currentLevel))?.details?.fragments.at(-1);
+
+        if (last === undefined) return { date: null, seconds: null };
+
+        const programDate = last.programDateTime ?? null;
+
+        return {
+            date: programDate === null ? null : new Date(programDate + last.duration * 1000),
+            seconds: last.start + last.duration,
+        };
+    }
+
+    const ranges = media.seekable;
+
+    if (ranges.length === 0) return { date: null, seconds: null };
+
+    const seconds = ranges.end(ranges.length - 1);
+
+    const native = nativeStartDate(media);
+
+    return { date: native === null ? null : new Date(native.getTime() + seconds * 1000), seconds };
+}
+
 function hlsFragments(hls: HlsType | null): ReadonlyArray<PlaylistFragment> {
     if (hls === null) return [];
 
@@ -98,11 +146,16 @@ function playableUrl(stream: EarningsLiveStreamResponse | null): null | string {
 
 export type UseLiveAudioInput = {
     /** A fresh stream answer (the query's `refetch`); rejects on a failed request. */
+    /** The call is over: the audio plays out, nothing holds it. */
+    callEnded: boolean;
+    mode: LiveAudioMode;
+    /** The newest released FINAL (`newestReleasedFinal`), never a partial. */
+    newestFinal: null | { endMs: number; startMs: number };
     refreshStream: () => Promise<EarningsLiveStreamResponse | null>;
     stream: EarningsLiveStreamResponse | null;
 };
 
-export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
+export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stream }: UseLiveAudioInput) {
     /** The always-mounted `<audio>` (`LivePlayer`); a ref, so effects may drive it. */
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -139,11 +192,47 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
 
     const failuresRef = useRef(0);
 
+    const modeRef = useRef(mode);
+
+    const heldAtBoundaryRef = useRef(false);
+
+    /** An explicit seek in synced mode: the audio stays where the listener put it until it is back at the point. */
+    const [following, setFollowing] = useState(false);
+
+    const [modeSeen, setModeSeen] = useState(mode);
+
+    /** The newest final's end the idle timer fired for. */
+    const [textIdleFor, setTextIdleFor] = useState<null | number>(null);
+
     const url = playableUrl(stream);
 
     const expiresAt = stream?.expires_at ?? null;
 
     const callT0 = stream?.call_t0 ?? null;
+
+    const newestEndMs = newestFinal?.endMs ?? null;
+
+    const newestStartMs = newestFinal?.startMs ?? null;
+
+    const audioCallMs = positionToCallMs(position.playingDate, callT0);
+
+    const { action: syncAction, targetCallMs } = syncTarget({
+        audioCallMs,
+        ended: callEnded || stream?.status === "ended",
+        following,
+        mode,
+        newestReleasedEndMs: newestEndMs,
+        newestReleasedStartMs: newestStartMs,
+        textIdle: newestEndMs !== null && textIdleFor === newestEndMs,
+    });
+
+    if (modeSeen !== mode) {
+        setModeSeen(mode);
+
+        setFollowing(false);
+    }
+
+    if (following && audioCallMs !== null && targetCallMs !== null && audioCallMs >= targetCallMs) setFollowing(false);
 
     const playMedia = useCallback((media: HTMLMediaElement) => {
         media.play().then(
@@ -159,7 +248,8 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
 
         const behind = secondsBehindEdge(mediaEdge(media, hlsRef.current), media.currentTime);
 
-        stallRef.current = { atEdge: behind <= JUMP_TO_LIVE_AFTER_S, atTime: media.currentTime, kicked: false };
+        // Synced: the sync position may be behind the audio, a kick resumes where it is.
+        stallRef.current = { atEdge: modeRef.current === "live" && behind <= JUMP_TO_LIVE_AFTER_S, atTime: media.currentTime, kicked: false };
 
         setStallSince(Date.now());
     }, []);
@@ -206,7 +296,10 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
         playMedia(media);
     }, [playMedia]);
 
-    /** Where a reload resumes: the edge when within `AT_EDGE_S` of it, else the same place. */
+    /**
+     * Where a reload resumes: the edge when within `AT_EDGE_S` of it, else the same place. Synced: the same place,
+     * the sync position may be behind the audio (a position of 0 = nothing played yet).
+     */
     const resumePosition = useCallback(() => {
         const media = audioRef.current;
 
@@ -214,7 +307,7 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
 
         const behind = secondsBehindEdge(mediaEdge(media, hlsRef.current), media.currentTime);
 
-        return behind < AT_EDGE_S ? -1 : media.currentTime;
+        return behind < AT_EDGE_S && (modeRef.current === "live" || media.currentTime <= 0) ? -1 : media.currentTime;
     }, []);
 
     /** Ask for a fresh URL and adopt it at the current position; `ended` / failure → the matching phase. */
@@ -248,6 +341,10 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
 
         setPhase("loading");
 
+        setFollowing(mode === "synced" && from === "beginning");
+
+        heldAtBoundaryRef.current = false;
+
         setStallSince(null);
 
         stallRef.current = null;
@@ -263,7 +360,9 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
         void loadHls()
             .then((Hls) => {
                 if (Hls.isSupported()) {
-                    const hls = new Hls({ ...LIVE_HLS_CONFIG, startPosition: from === "beginning" ? 0 : -1 });
+                    const config = mode === "synced" ? SYNCED_HLS_CONFIG : LIVE_HLS_CONFIG;
+
+                    const hls = new Hls({ ...config, startPosition: from === "beginning" ? 0 : -1 });
 
                     hls.on(Hls.Events.ERROR, (_event, data) => {
                         setHlsErrorCount(count => count + 1);
@@ -340,7 +439,7 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
                 playMedia(media);
             })
             .catch(() => setPhase("unavailable"));
-    }, [beginStall, expiresAt, playMedia, reloadWithFreshUrl, url]);
+    }, [beginStall, expiresAt, mode, playMedia, reloadWithFreshUrl, url]);
 
     // The media element's own events: position, play state, the end.
     useEffect(() => {
@@ -353,6 +452,8 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
 
             const edgeSeconds = mediaEdge(media, hls);
 
+            const end = playlistEnd(media, hls);
+
             const native = hls === null ? nativeStartDate(media) : null;
 
             const playingDate = hls?.playingDate
@@ -361,6 +462,8 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
             setPosition({
                 behindS: secondsBehindEdge(edgeSeconds, media.currentTime),
                 currentTime: media.currentTime,
+                edgeBehindS: secondsBehindEdge(end.seconds, media.currentTime),
+                edgeDate: end.date,
                 edgeSeconds,
                 playingDate,
             });
@@ -383,7 +486,8 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
         const onPause = () => {
             endStall();
 
-            setIsPlaying(false);
+            // A hold at the boundary is not the listener's pause: the player still reads "playing".
+            if (!heldAtBoundaryRef.current) setIsPlaying(false);
         };
 
         const onEnded = () => {
@@ -465,42 +569,21 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
     }, [loadedExpiresAt, reloadWithFreshUrl, started]);
 
     // At the edge the speed is 1×: there is nothing to catch up on.
-    const behindEnough = position.behindS > JUMP_TO_LIVE_AFTER_S;
+    // Synced: behind means the listener seeked there, the sync point itself is not "behind".
+    const behindEnough = mode === "synced" ? following : position.behindS > JUMP_TO_LIVE_AFTER_S;
 
     const effectiveRate = behindEnough ? rate : 1;
+
+    const mediaRate = syncAction === "slow" ? SYNC_SLOW_RATE : effectiveRate;
 
     useEffect(() => {
         const media = audioRef.current;
 
-        if (media !== null && media.playbackRate !== effectiveRate) media.playbackRate = effectiveRate;
-    }, [effectiveRate]);
+        if (media !== null && media.playbackRate !== mediaRate) media.playbackRate = mediaRate;
+    }, [mediaRate]);
 
-    useEffect(() => () => {
-        hlsRef.current?.destroy();
-
-        hlsRef.current = null;
-    }, []);
-
-    const jumpToLive = () => {
-        const media = audioRef.current;
-
-        if (media === null) return;
-
-        const edge = mediaEdge(media, hlsRef.current);
-
-        if (edge !== null) media.currentTime = edge;
-
-        setRate(1);
-    };
-
-    const seekMedia = (seconds: number) => {
-        const media = audioRef.current;
-
-        if (media !== null && Number.isFinite(seconds)) media.currentTime = Math.max(0, seconds);
-    };
-
-    /** Seek to a CALL millisecond (a turn click). No-op without program dates or `call_t0`. */
-    const seekCallMs = (callMs: number) => {
+    /** Seek to a CALL millisecond. No-op without program dates or `call_t0`. */
+    const seekToCallMs = useCallback((callMs: number) => {
         const media = audioRef.current;
 
         if (media === null) return;
@@ -520,6 +603,132 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
         if (native !== null && !Number.isNaN(t0Ms)) {
             media.currentTime = Math.max(0, (t0Ms + callMs - native.getTime()) / 1000);
         }
+    }, [callT0]);
+
+    useEffect(() => {
+        modeRef.current = mode;
+    }, [mode]);
+
+    // No new final for a while: the rule lets go, whatever the reason the text stopped.
+    useEffect(() => {
+        if (newestEndMs === null) return undefined;
+
+        const timer = setTimeout(() => setTextIdleFor(newestEndMs), SYNC_TEXT_IDLE_MS);
+
+        return () => clearTimeout(timer);
+    }, [newestEndMs]);
+
+    // The boundary: pause, and resume only a pause of ours. `positionTime` re-runs it after a listener's play.
+    const positionTime = position.currentTime;
+
+    useEffect(() => {
+        const media = audioRef.current;
+
+        if (media === null || !started) return;
+
+        const step = syncPauseStep(syncAction, { heldAtBoundary: heldAtBoundaryRef.current, paused: media.paused });
+
+        if (step === "pause") {
+            heldAtBoundaryRef.current = true;
+
+            media.pause();
+        }
+        else if (syncAction !== "wait") {
+            heldAtBoundaryRef.current = false;
+
+            if (step === "resume") playMedia(media);
+        }
+    }, [playMedia, positionTime, started, syncAction]);
+
+    // Far behind the point: forward, once per target (a seek in flight is not repeated).
+    const jumpToMs = syncAction === "jump" ? targetCallMs : null;
+
+    useEffect(() => {
+        const media = audioRef.current;
+
+        if (media !== null && jumpToMs !== null && !media.seeking) seekToCallMs(jumpToMs);
+    }, [jumpToMs, seekToCallMs]);
+
+    // A mode switch on a running player. To Live: back to the edge, the toggle is the listener's action. To Synced:
+    // no seek, the rule slows and holds the audio until the text is ahead of it.
+    useEffect(() => {
+        const media = audioRef.current;
+
+        const hls = hlsRef.current;
+
+        if (hls !== null) applyLiveLatency(hls, mode, SYNC_START_LATENCY_S);
+
+        if (media === null || mode !== "live") return;
+
+        const edge = mediaEdge(media, hls);
+
+        if (edge !== null && media.currentTime < edge) media.currentTime = edge;
+    }, [mode]);
+
+    // A new final moves hls.js's sync position to the measured distance: never a seek, only where a kick would go.
+    useEffect(() => {
+        const media = audioRef.current;
+
+        const hls = hlsRef.current;
+
+        if (hls === null || media === null || mode !== "synced") return;
+
+        const latency = syncLatencyS(positionToCallMs(playlistEnd(media, hls).date, callT0), newestStartMs);
+
+        if (latency !== null && Math.abs((hls.targetLatency ?? 0) - latency) >= 1) hls.targetLatency = latency;
+    }, [callT0, mode, newestStartMs]);
+
+    useEffect(() => () => {
+        hlsRef.current?.destroy();
+
+        hlsRef.current = null;
+    }, []);
+
+    const jumpToLive = () => {
+        const media = audioRef.current;
+
+        if (media === null) return;
+
+        setRate(1);
+
+        setFollowing(false);
+
+        setPosition(current => ({ ...current, playingDate: null }));
+
+        // Synced: back to the point, or to hls.js's sync position before there is any text.
+        if (mode === "synced" && newestEndMs !== null) {
+            seekToCallMs(newestEndMs - SYNC_MARGIN_MS);
+
+            return;
+        }
+
+        const edge = mediaEdge(media, hlsRef.current);
+
+        if (edge !== null) media.currentTime = edge;
+    };
+
+    /** An explicit seek: the rule judges the new position, never the stale one against the target. */
+    const markSeeked = () => {
+        setFollowing(mode === "synced");
+
+        setPosition(current => ({ ...current, playingDate: null }));
+    };
+
+    const seekMedia = (seconds: number) => {
+        const media = audioRef.current;
+
+        if (media === null || !Number.isFinite(seconds)) return;
+
+        markSeeked();
+
+        media.currentTime = Math.max(0, seconds);
+    };
+
+    /** Seek to a CALL millisecond (a turn click). No-op without program dates or `call_t0`. */
+    const seekCallMs = (callMs: number) => {
+        markSeeked();
+
+        seekToCallMs(callMs);
     };
 
     const togglePlay = () => {
@@ -527,8 +736,18 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
 
         if (media === null) return;
 
-        if (media.paused) playMedia(media);
-        else media.pause();
+        // Pausing during a hold: already paused, it only stops being ours to resume.
+        if (heldAtBoundaryRef.current) {
+            heldAtBoundaryRef.current = false;
+
+            setIsPlaying(false);
+        }
+        else if (media.paused) {
+            playMedia(media);
+        }
+        else {
+            media.pause();
+        }
     };
 
     return {
@@ -551,6 +770,7 @@ export function useLiveAudio({ refreshStream, stream }: UseLiveAudioInput) {
         start,
         started,
         togglePlay,
+        waitingForText: syncAction === "wait" && isPlaying,
     };
 }
 

@@ -3,6 +3,7 @@ import type * as React from "react";
 import { Pause, Play } from "lucide-react";
 
 import type { EarningsLiveStreamResponse } from "@/lib/api/types";
+import type { LiveAudioMode } from "@/lib/live/live-sync";
 import type { LiveAudio } from "@/lib/live/use-live-audio";
 
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +15,8 @@ import { JUMP_TO_LIVE_AFTER_S } from "@/lib/live/position-to-call-ms";
 const SPEEDS = [1, 1.5, 2] as const;
 
 const LIVE_WAITING_TEXT = "Waiting for audio…";
+
+export const LIVE_WAITING_FOR_TEXT_TEXT = "waiting for the transcript";
 
 const LIVE_AUDIO_TIER_TEXT = "PRO plan required for live audio";
 
@@ -42,15 +45,17 @@ function streamErrorText(error: unknown): string {
 
 /**
  * The live audio controls: Tune in / From the beginning, then play-pause, a seek bar from 0 to
- * the live edge, "Jump to live" past 10 s behind, 1× / 1.5× / 2× only behind the edge, and the
- * buffering pill. The stream's own states come first.
+ * the live edge, "Jump to live" past 10 s behind (Synced: "Back to synced" after a seek), 1× / 1.5× / 2×
+ * only behind, the "waiting for the transcript" and the buffering pill. The stream's own states come first.
  */
 export function LiveAudioSection({
     audio,
+    mode,
     stream,
     streamError,
 }: {
     audio: LiveAudio;
+    mode: LiveAudioMode;
     stream: EarningsLiveStreamResponse | null;
     streamError: unknown;
 }) {
@@ -79,7 +84,10 @@ export function LiveAudioSection({
 
     const edge = Math.max(0, audio.position.edgeSeconds ?? audio.position.currentTime);
 
-    const behind = audio.position.behindS > JUMP_TO_LIVE_AFTER_S;
+    const synced = mode === "synced";
+
+    // Synced: only an explicit seek is "behind"; the sync point itself is not.
+    const behind = synced ? audio.canJumpToLive : audio.position.behindS > JUMP_TO_LIVE_AFTER_S;
 
     return (
         <div className="flex flex-col gap-2">
@@ -103,13 +111,14 @@ export function LiveAudioSection({
                     {formatMs(edge * 1000)}
                 </span>
                 {audio.buffering && <Badge variant="destructive">buffering — reconnecting to the live edge</Badge>}
+                {audio.waitingForText && <Badge data-testid="live-waiting-for-text" role="status" variant="outline">{LIVE_WAITING_FOR_TEXT_TEXT}</Badge>}
                 {audio.canJumpToLive
                     ? (
                             <Button onClick={audio.jumpToLive} size="sm" type="button" variant="outline">
-                                Jump to live
+                                {synced ? "Back to synced" : "Jump to live"}
                             </Button>
                         )
-                    : <Badge variant="secondary">at the live edge</Badge>}
+                    : <Badge variant="secondary">{synced ? "synced to the transcript" : "at the live edge"}</Badge>}
                 <span aria-label="Playback speed" className="inline-flex gap-0.5" role="group">
                     {SPEEDS.map(speed => (
                         <Button
