@@ -538,9 +538,42 @@ describe("NewsItemView", () => {
 
         rerender(<NewsItemView data={view(`<figure><img src="${viewUrl(HERO_ID)}" data-asset-id="${HERO_ID}"></figure>`)} error={null} isLoading={false} onOpen={() => undefined} />);
 
+        // Contract (defect C): an inline hero is shown once, in the article — neither above it nor in the media below.
         expect(screen.queryByTestId("news-image")).toBeNull();
 
         expect(screen.getByTestId("news-body").querySelectorAll("img")).toHaveLength(1);
+
+        expect(screen.getAllByTestId("news-asset")).toHaveLength(1);
+
+        expect(within(screen.getByTestId("news-asset")).queryByText("Hero")).toBeNull();
+    });
+
+    it("keeps a link-only inline image as the API's \"Image at source\" link and does not list it again below", () => {
+        const linkOnly = imageAsset({ caption: "Plant", id: GALLERY_ID, status: "link_only", view_url: null });
+
+        render(
+            <NewsItemView
+                data={newsDetail(newsroomItem(), {
+                    assets: [linkOnly, pdfAsset()],
+                    body_html: `<p>Plant <a href="http://example.com/plant.jpg" rel="noopener nofollow" data-asset-id="${GALLERY_ID}">Image at source</a></p>`,
+                })}
+                error={null}
+                isLoading={false}
+                onOpen={() => undefined}
+            />,
+        );
+
+        const link = within(screen.getByTestId("news-body")).getByText("Image at source");
+
+        expect(link.getAttribute("href")).toBe("http://example.com/plant.jpg");
+
+        expect(link.getAttribute("target")).toBe("_blank");
+
+        expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+
+        expect(screen.getAllByTestId("news-asset")).toHaveLength(1);
+
+        expect(screen.queryByTestId("news-image")).toBeNull();
     });
 
     it("reports an image error of the article and of the hero (the panel then refetches the item)", () => {

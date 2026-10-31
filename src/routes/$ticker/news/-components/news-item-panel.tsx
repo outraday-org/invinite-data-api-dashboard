@@ -343,6 +343,11 @@ export function NewsItemView({
     onImageError?: () => void;
     onOpen: (id: string) => void;
 }) {
+    // Sanitized once per answer (a refetch brings fresh view URLs), not on every render.
+    const bodyHtml = data?.content_status === "available" ? data.body_html : null;
+
+    const article = React.useMemo(() => (bodyHtml ? prepareArticleHtml(bodyHtml) : null), [bodyHtml]);
+
     if (isTierError(error)) return <Notice badge="STANDARD" title="Your plan does not include news text" />;
 
     if (error instanceof ApiRequestError && error.status === 404) return <Notice title="This news item is not available" />;
@@ -356,8 +361,6 @@ export function NewsItemView({
     const downloadable = data.assets.filter(asset => asset.can_download);
 
     const text = data.content_status === "available" ? (data.body_text ?? "") : "";
-
-    const article = data.content_status === "available" && data.body_html ? prepareArticleHtml(data.body_html) : null;
 
     // What the article shows inline is not repeated around it.
     const notInline = data.assets.filter(asset => !article?.inlineAssetIds.has(asset.id));
@@ -447,16 +450,22 @@ export function NewsItemView({
 export function NewsItemPanel({ id, onClose, onOpen, title }: { id: null | string; onClose: () => void; onOpen: (id: string) => void; title?: string }) {
     const { data, error, isLoading, refetch } = useNewsItem(id);
 
-    // An image error = its view URL expired: fresh URLs once per item, never a loop on a broken image.
-    const [refetchedFor, setRefetchedFor] = React.useState<null | string>(null);
+    // An image error = its view URL expired: fresh URLs once per opened item, never a loop on a broken image. A ref,
+    // not state: every image of an expired answer fails in the same tick and must not each start a refetch.
+    const refetchedFor = React.useRef<null | string>(null);
 
-    const onImageError = () => {
-        if (!id || refetchedFor === id) return;
+    // Closing the dialog re-arms it: the same item opened again later may hold expired URLs again.
+    React.useEffect(() => {
+        if (id === null) refetchedFor.current = null;
+    }, [id]);
 
-        setRefetchedFor(id);
+    const onImageError = React.useCallback(() => {
+        if (!id || refetchedFor.current === id) return;
+
+        refetchedFor.current = id;
 
         void refetch();
-    };
+    }, [id, refetch]);
 
     return (
         <Dialog onOpenChange={open => !open && onClose()} open={id !== null}>

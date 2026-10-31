@@ -3,8 +3,9 @@ import type { DOMPurify as Purifier } from "dompurify";
 import createDOMPurify from "dompurify";
 
 /**
- * The API's `body_html` allow-list (backend earnings tasks/inhouse-news-article-layout-2026-10-31 task 1), applied again
- * in the browser: the API sanitizes, this page does not trust that alone.
+ * The API's `body_html` allow-list, applied again in the browser: the API sanitizes, this page does not trust that
+ * alone. A copy of IDA `src/lib/news/html.ts` `ARTICLE_HTML_TAGS` and the attributes its resolved images / links carry
+ * (the pipeline's `extract/article.ts` allow-list plus `img` / "Image at source"); change with IDA.
  */
 const ALLOWED_TAGS = [
     "h2", "h3", "h4", "p", "ul", "ol", "li", "table", "thead", "tbody", "tr", "th", "td", "blockquote",
@@ -14,6 +15,9 @@ const ALLOWED_TAGS = [
 const ALLOWED_ATTR = ["href", "rel", "src", "alt", "width", "height", "loading", "colspan", "rowspan", "data-asset-id"];
 
 const HTTPS = /^https:\/\//i;
+
+// A link may leave for http too (IDA writes a link-only image's original URL, http or https); an image never.
+const HTTP_OR_HTTPS = /^https?:\/\//i;
 
 // The class of the wrapper that lets a wide table scroll sideways (styled in article-body.tsx).
 export const ARTICLE_TABLE_WRAP = "article-table";
@@ -38,7 +42,7 @@ function articlePurifier() {
         }
 
         if (node.tagName === "A") {
-            if (HTTPS.test(node.getAttribute("href") ?? "")) {
+            if (HTTP_OR_HTTPS.test(node.getAttribute("href") ?? "")) {
                 node.setAttribute("target", "_blank");
 
                 node.setAttribute("rel", "noopener noreferrer");
@@ -67,7 +71,7 @@ export function prepareArticleHtml(html: string): ArticleHtml | null {
     if (!instance) return null;
 
     // RETURN_DOM answers the <body> holding the sanitized nodes (typed as a plain Node).
-    const body = instance.sanitize(html, { ALLOW_DATA_ATTR: false, ALLOWED_ATTR, ALLOWED_TAGS, RETURN_DOM: true }) as HTMLElement;
+    const body = instance.sanitize(html, { ALLOW_ARIA_ATTR: false, ALLOW_DATA_ATTR: false, ALLOWED_ATTR, ALLOWED_TAGS, RETURN_DOM: true }) as HTMLElement;
 
     for (const table of body.querySelectorAll("table")) {
         const wrap = window.document.createElement("div");
