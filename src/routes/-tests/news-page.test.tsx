@@ -357,6 +357,26 @@ describe("NewsItemView", () => {
         expect(screen.queryByTestId("news-pdf-viewer")).toBeNull();
     });
 
+    it("shows the item's branded PDF inline through the same viewer, hidden without one", () => {
+        const pdf = { bytes: 184_233, generated_at: "2026-10-30T00:03:11.000Z", pages: 3, sha256: "ab", url: "https://storage.example.com/r1.pdf", version: 1 };
+
+        const { unmount } = render(<NewsItemView data={newsDetail(newsroomItem())} error={null} isLoading={false} onOpen={() => undefined} />);
+
+        expect(screen.queryByTestId("pdf-document")).toBeNull();
+
+        unmount();
+
+        render(<NewsItemView data={newsDetail(newsroomItem(), { pdf })} error={null} isLoading={false} onOpen={() => undefined} />);
+
+        expect(screen.getByTestId("pdf-document").textContent).toContain("3 pages");
+
+        expect(screen.getByText("Open in new tab").closest("a")?.getAttribute("href")).toBe(pdf.url);
+
+        fireEvent.click(screen.getByText("View"));
+
+        expect(screen.getByTestId("news-pdf-viewer").getAttribute("src")).toBe(pdf.url);
+    });
+
     it("opens a PDF in a new tab on a fresh display URL, the tab opened on the click", () => {
         const { mutate } = mockDelivery("display");
 

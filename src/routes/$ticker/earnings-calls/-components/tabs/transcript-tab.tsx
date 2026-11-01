@@ -6,6 +6,7 @@ import type { EarningsEventSelector } from "@/lib/api/queries";
 import type { EarningsTranscriptFormat, EarningsTranscriptVersion } from "@/lib/api/types";
 import type { TranscriptView } from "@/lib/earnings/transcript";
 
+import { PdfDocumentSection } from "@/components/pdf/pdf-inline-viewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -305,6 +306,11 @@ export function TranscriptTab({ onTranscriptJumpHandled, selector, transcriptJum
             {data?.stt_provider === "company_document" && (
                 <div className="text-muted-foreground text-xs">Company-published transcript (no audio timings)</div>
             )}
+
+            <PdfDocumentSection
+                filename={`${data?.event.symbol ?? "earnings-call"}-transcript-v${shownVersion ?? ""}.pdf`}
+                pdf={shownEntry?.pdf}
+            />
 
             <TranscriptBody error={transcript.error} format={format} qaStartMs={data?.qa_start_ms ?? null} view={view} />
 

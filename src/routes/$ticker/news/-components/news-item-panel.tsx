@@ -3,6 +3,7 @@ import * as React from "react";
 
 import type { NewsAsset, NewsAssetDownloadResponse, NewsAttribution, NewsDevelopment, NewsItemResponse } from "@/lib/api/types";
 
+import { PdfDocumentSection, PdfInlineViewer } from "@/components/pdf/pdf-inline-viewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -139,16 +140,7 @@ function AssetRow({ asset, itemId }: { asset: NewsAsset; itemId: string }) {
 
     const viewer = preview && pdf
         ? (
-                <div className="flex flex-col gap-1">
-                    <iframe
-                        className="h-[60vh] w-full rounded border"
-                        data-testid="news-pdf-viewer"
-                        referrerPolicy="no-referrer"
-                        src={preview.url}
-                        title={asset.title ?? "PDF"}
-                    />
-                    <div className="text-muted-foreground">Not showing? Open it in a new tab.</div>
-                </div>
+                <PdfInlineViewer filename={asset.title ?? "PDF"} url={preview.url} />
             )
         : preview && (
             <figure className="flex flex-col gap-1">
@@ -410,6 +402,8 @@ export function NewsItemView({
                     )}
 
             {data.developments.length > 0 && <Developments developments={data.developments} />}
+
+            <PdfDocumentSection filename={`news-${data.id}.pdf`} pdf={data.pdf} />
 
             {(below.length > 0 || downloadable.length > 1) && (
                 <section className="flex flex-col gap-2">

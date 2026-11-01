@@ -86,6 +86,7 @@ export function newsDetail(item: NewsItemPublic, overrides: Partial<NewsItemResp
         content_formats: ["text"],
         content_status: "available",
         developments: [],
+        pdf: null,
         sightings: [{ published_at_claimed: null, seen_at: "2026-10-29T13:03:40.000Z", source_id: item.source.id, url: item.url }],
         superseded_by: null,
         text_url: `/v1/news/${item.id}/text`,

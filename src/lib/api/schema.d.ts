@@ -1009,6 +1009,8 @@ export interface paths {
          *
          *     - `call_t0` is the wall clock of call ms 0: `#EXT-X-PROGRAM-DATE-TIME` minus `call_t0` = the `start_ms` of the live transcript (WebSocket channel `live_channel`).
          *
+         *     - The audio is released as live as possible, a few seconds behind our capture. Transcript segments are released about 8 s after recognition, a quality hold, so the text trails the audio: [Live audio and transcript sync](https://data.invinite.com/docs/live-sync) has the timing and how to play both in sync.
+         *
          *     ### No stream and errors
          *
          *     - `status` `not_started` / `disabled` answer `url: null`.
@@ -1459,6 +1461,10 @@ export interface paths {
          *
          *     - Costs 5 credits; `format=words` is weighted by turn count.
          *
+         *     ### PDF
+         *
+         *     - `pdf` is the branded PDF of the served version: a permanent public URL with its size, page count and hash, or null while none exists. Live versions have none, and a final version gets its PDF shortly after publication.
+         *
          *     ### Choose the call
          *
          *     - By `event_id`, or
@@ -1541,7 +1547,7 @@ export interface paths {
         };
         /**
          * Transcript versions
-         * @description Every published transcript version of one earnings call (`live`, `final`, `corrected`), ascending, without the text.
+         * @description Every published transcript version of one earnings call (`live`, `final`, `corrected`), ascending, without the text, each with its branded PDF (`pdf`, null while none exists).
          *
          *     A final version replaced by the next final (the pipeline's speaker-naming pass) is not a version here and cannot be requested.
          *
@@ -2119,13 +2125,15 @@ export interface paths {
          *
          *     - `body` picks the text forms: `text` (default) = `body_text`, the publisher's text of the current revision, verbatim — for search, indexing and models; `html` = `body_html` instead — the same text as sanitized article HTML (headings, paragraphs, lists, tables, quotes, images) for display; `both` = both. `content_formats` says which forms the item has (PDFs and older items: text only); `content_status: no_text` = headline and link only.
          *
-         *     - **Images inside the article:** in `body_html` every stored image is an `<img src>` whose URL is stable for 24 hours and needs no API key (`assets[].view_url`, the same URL); an image Invinite may only link is an "Image at source" link to the publisher; an image that may not be shown is removed. The hero image is not inside the HTML: it is the asset with `kind: hero_image` — place it above the headline. After 24 hours (or on an image error) fetch the item again for fresh URLs.
+         *     - **Images inside the article:** in `body_html` every stored image is an `<img src>` whose URL is stable for 24 hours and needs no API key (`assets[].view_url`, the same URL); an image Invinite may only link is an "Image at source" link to the publisher; an image that may not be shown is removed. The hero image is the asset with `kind: hero_image` — place it above the headline; it may also appear inline in `body_html`: when its id is a `data-asset-id` of the HTML, skip it above the article. After 24 hours (or on an image error) fetch the item again for fresh URLs.
          *
          *     - **Attribution duty:** wherever you show `body_text`, `body_html` or `description`, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` with it (and `attribution.edgar` for a filing), with `attribution.statement`.
          *
          *     - `text_url` serves the same text in citable blocks with their kind and heading; `assets[].download_url` mints a URL valid ≤ 60 seconds to view (`purpose=display`) or download (`purpose=download`, where `can_download`) a file where the publisher's terms allow it.
          *
          *     - `model_processing_allowed` says whether the text may be processed by AI models (the publisher's machine-readable reservation); API access alone does not authorize forwarding the text into models.
+         *
+         *     - `pdf` is the branded PDF of the current revision in every `body` mode: a permanent public URL with its size, page count and hash, or null while none exists (a new item gets one within minutes; an item without a PDF-eligible text never does). The file carries the attribution on its notice page.
          *
          *     - A corrected item names its successor in `superseded_by` and stays served under its id.
          *
@@ -3101,7 +3109,7 @@ export interface components {
             keyword: string;
             /** @description The live final's seq; null on the final layer */
             seq: null | number;
-            /** @description Offset from the start of the recording */
+            /** @description live: milliseconds from call_t0; final: offset from the start of the recording */
             start_ms: null | number;
             /** @description null on the final layer when the cleaned text has no end timing */
             end_ms: null | number;
@@ -3120,7 +3128,7 @@ export interface components {
              * @enum {string}
              */
             layer: "final" | "live";
-            /** @description live only: relay time inside the API process minus the segment's own end time (excludes the client's network); null when the call's clock is unknown */
+            /** @description live only: relay time inside the API process minus the segment's own end time, so it includes the transcript's release hold of about 8 s (excludes the client's network); null when the call's clock is unknown */
             latency_ms: null | number;
         };
         /** @description A forward-looking guidance number extracted from the live transcript seconds after it was spoken (one frame per metric / period; a restatement repeats it with a higher revision). Sent to every subscription of the call and to all_live subscriptions whose events include guidance_flash. Provisional: the structured guidance of /v1/earnings-calls/extractions replaces it after the call */
@@ -3158,7 +3166,7 @@ export interface components {
             currency: null | string;
             /** @description The verbatim sentence the numbers come from */
             source_sentence: string;
-            /** @description Offset of the sentence from the start of the recording */
+            /** @description Milliseconds of the sentence from call_t0 */
             start_ms: number;
         };
         /** @description One second of the call's stock price while the call is live (≤ 1 per second, only seconds with a trade — hold the last value and draw a missing second as a gap; pre-market and after-hours bars are sparse). Sent only to per-call subscriptions with prices: true. Temporal coincidence, not attribution of cause. The minute rows of /v1/earnings-calls/price-attribution are the backlog for a late join */
@@ -3217,7 +3225,7 @@ export interface components {
             /** Format: uuid */
             subscription_id: string;
         };
-        /** @description One live transcript segment. seq is strictly increasing per call but not contiguous; a partial carries the seq its final will get */
+        /** @description One live transcript segment. seq is strictly increasing per call but not contiguous; a partial carries the seq its final will get. Finals and partials are released about 8 s after recognition, a quality hold (https://data.invinite.com/docs/live-sync) */
         WebSocketTranscriptSegmentEvent: {
             /** @enum {string} */
             type: "transcript_segment";
@@ -3226,8 +3234,9 @@ export interface components {
             /** Format: uuid */
             event_id: string;
             seq: number;
-            /** @description Offset from the start of the recording */
+            /** @description Milliseconds from call_t0 (GET /v1/earnings-calls/live/stream), the audio's clock */
             start_ms: number;
+            /** @description Milliseconds from call_t0 */
             end_ms: number;
             /** @description Provisional diarization label */
             speaker_label: null | string;
@@ -10701,6 +10710,7 @@ export interface operations {
                      *       "word_count": 9372,
                      *       "qa_start_ms": 2298917,
                      *       "format": "speakers",
+                     *       "pdf": null,
                      *       "data": [
                      *         {
                      *           "speaker_label": "spk00",
@@ -10847,6 +10857,30 @@ export interface operations {
                          * @enum {string}
                          */
                         format: "cleaned" | "sections" | "speakers" | "text" | "words";
+                        /**
+                         * PdfDocument
+                         * @description Permanent URL of the branded PDF of this version; shared, immutable, deleted on takedown. Carries the notice page; see /status/licensing → PDF documents. Null = no PDF (not rendered yet, or none for this version)
+                         */
+                        pdf: null | {
+                            /**
+                             * Format: uri
+                             * @description Permanent public URL, shown inline; no API key and no expiry
+                             */
+                            url: string;
+                            /** @description Transcript version or news revision the PDF was rendered from */
+                            version: number;
+                            /** @description SHA-256 of the PDF file (lowercase hex) */
+                            sha256: string;
+                            /** @description File size in bytes */
+                            bytes: number;
+                            /** @description Pages, including the notice page */
+                            pages: number;
+                            /**
+                             * Format: date-time
+                             * @description When the PDF was rendered
+                             */
+                            generated_at: string;
+                        };
                         /** @description text: string. speakers: [{ speaker_label, name, title, role, person_id, start_ms, end_ms, speaker_confidence, text }]. words: speakers + words [{ w, s, e, c }]. sections: { prepared_remarks, questions_and_answers, qa_start_ms }. cleaned: [{ speaker_label, name, title, role, person_id, start_ms, text }] */
                         data: unknown;
                     };
@@ -11061,7 +11095,8 @@ export interface operations {
                      *           "published_at": "2026-10-08T17:34:32.507Z",
                      *           "word_count": 9372,
                      *           "change_note": "naming",
-                     *           "corrected_by": null
+                     *           "corrected_by": null,
+                     *           "pdf": null
                      *         }
                      *       ]
                      *     }
@@ -11094,6 +11129,30 @@ export interface operations {
                             change_note: null | string;
                             /** @description `human` or `system:<stage>` for a corrected version, else null */
                             corrected_by: null | string;
+                            /**
+                             * PdfDocument
+                             * @description Permanent URL of the branded PDF of this version; shared, immutable, deleted on takedown. Carries the notice page; see /status/licensing → PDF documents. Null = no PDF (not rendered yet, or none for this version)
+                             */
+                            pdf: null | {
+                                /**
+                                 * Format: uri
+                                 * @description Permanent public URL, shown inline; no API key and no expiry
+                                 */
+                                url: string;
+                                /** @description Transcript version or news revision the PDF was rendered from */
+                                version: number;
+                                /** @description SHA-256 of the PDF file (lowercase hex) */
+                                sha256: string;
+                                /** @description File size in bytes */
+                                bytes: number;
+                                /** @description Pages, including the notice page */
+                                pages: number;
+                                /**
+                                 * Format: date-time
+                                 * @description When the PDF was rendered
+                                 */
+                                generated_at: string;
+                            };
                         }>;
                     };
                 };
@@ -13883,7 +13942,8 @@ export interface operations {
                      *       "developments": [],
                      *       "body_text": "Developers can use AI coding agents to edit code, build, test, and debug within one native Arm development environment. Keeping these tasks on the target architecture can give developers earlier feedback on dependencies, test results, and r…",
                      *       "body_html": "<p>Developers can use AI coding agents to edit code, build, test, and debug within one native Arm development environment. Keeping these tasks on the target architecture can give developers earlier feedback on dependencies, test results, an…",
-                     *       "images_truncated": false
+                     *       "images_truncated": false,
+                     *       "pdf": null
                      *     }
                      */
                     "application/json": {
@@ -14035,7 +14095,7 @@ export interface operations {
                         };
                         /** @description With `body=text` (default) or `both`: the full text of the current revision as plain text, verbatim (paragraphs, list items and table rows separated by blank lines) — for search, indexing and models. It is the text of `body_html`'s blocks joined, so the two never differ in words. Null = no readable text */
                         body_text?: null | string;
-                        /** @description With `body=html` or `both`: the same text as sanitized article HTML for display. Allowed tags: h2, h3, h4, p, ul, ol, li, table, thead, tbody, tr, th, td, blockquote, strong, em, b, i, sup, sub, br, a, figure, figcaption, img; attributes: `a[href rel data-asset-id]` (absolute https links), `img[src alt width height loading data-asset-id]`, `td` / `th` `colspan` / `rowspan`. No class, style, id, script, form or iframe; no h1 (the title is `title`). Images are the item's stored images: `<img src>` is the image's stable view URL (valid 24 hours, see `assets[].view_url`), in a `<figure>` with the asset's caption / credit where one fits; an image Invinite may only link is `<a href="<original_url>" rel="noopener nofollow">Image at source</a>`; an image that may not be shown is removed. Null = no HTML for this item (see `content_formats`) or no readable text */
+                        /** @description With `body=html` or `both`: the same text as sanitized article HTML for display. Allowed tags: h2, h3, h4, p, ul, ol, li, table, thead, tbody, tr, th, td, blockquote, strong, em, b, i, sup, sub, br, a, figure, figcaption, img; attributes: `a[href rel data-asset-id]` (absolute https links), `img[src alt width height loading data-asset-id]`, `td` / `th` `colspan` / `rowspan`. No class, style, id, script, form or iframe; no h1 (the title is `title`). Images are the item's stored images: `<img src>` is the image's stable view URL (valid 24 hours, see `assets[].view_url`), in a `<figure>` with the asset's caption / credit where one fits; an image Invinite may only link is `<a href="<original_url>" rel="noopener nofollow">Image at source</a>`; an image that may not be shown is removed. The hero image may also appear inline (its `data-asset-id` is then in the HTML): skip it above the article. Null = no HTML for this item (see `content_formats`) or no readable text */
                         body_html?: null | string;
                         /** @description With `body_html`: the article held more than 40 images; the rest were removed (they stay in `assets`) */
                         images_truncated?: boolean;
@@ -14086,7 +14146,7 @@ export interface operations {
                              */
                             id: string;
                             /**
-                             * @description hero_image = the article's lead image (never inside `body_html`: place it above the headline); gallery_image = an image of the article (shown inline where the text has it); original_pdf = the publication's own PDF; attachment = a linked file; archive_link = a linked archive (link only)
+                             * @description hero_image = the article's lead image: place it above the headline, unless its id is a `data-asset-id` inside `body_html` (the article may also show it inline) — then skip it above; gallery_image = an image of the article (shown inline where the text has it); original_pdf = the publication's own PDF; attachment = a linked file; archive_link = a linked archive (link only)
                              * @enum {string}
                              */
                             kind: "archive_link" | "attachment" | "gallery_image" | "hero_image" | "original_pdf";
@@ -14214,6 +14274,30 @@ export interface operations {
                             /** @description Whether the source text may be processed by AI models; API access alone does not authorize forwarding text into models */
                             model_processing_allowed: boolean;
                         }>;
+                        /**
+                         * PdfDocument
+                         * @description Permanent URL of the branded PDF of this version; shared, immutable, deleted on takedown. Carries the notice page; see /status/licensing → PDF documents. Null = no PDF (not rendered yet, or none for this version)
+                         */
+                        pdf: null | {
+                            /**
+                             * Format: uri
+                             * @description Permanent public URL, shown inline; no API key and no expiry
+                             */
+                            url: string;
+                            /** @description Transcript version or news revision the PDF was rendered from */
+                            version: number;
+                            /** @description SHA-256 of the PDF file (lowercase hex) */
+                            sha256: string;
+                            /** @description File size in bytes */
+                            bytes: number;
+                            /** @description Pages, including the notice page */
+                            pages: number;
+                            /**
+                             * Format: date-time
+                             * @description When the PDF was rendered
+                             */
+                            generated_at: string;
+                        };
                     };
                 };
             };
@@ -18098,7 +18182,8 @@ export interface operations {
                      *         "train": "Model training is contract-only.",
                      *         "audio": "Audio files carry a forensic watermark that identifies the recording. Audio is subject to per-company takedown and may not be re-hosted.",
                      *         "sec_data": "Figures and filings originate from SEC EDGAR; the standardisation, mapping and derived metrics are Invinite's.",
-                     *         "news": "Issuer and SEC text is served in full with its attribution; the licensee shows publisher, source URL and date next to it and may forward it unmodified; the resale rule applies."
+                     *         "news": "Issuer and SEC text is served in full with its attribution; the licensee shows publisher, source URL and date next to it and may forward it unmodified; the resale rule applies.",
+                     *         "pdf_documents": "Branded PDFs of transcripts and news items are permanent URLs to one shared file per version. They may be shown, downloaded and forwarded unmodified with the notice page intact; the resale rule applies unchanged. News PDFs reproduce issuer …"
                      *       },
                      *       "rights": [
                      *         "display"
@@ -18170,6 +18255,7 @@ export interface operations {
                             audio: string;
                             sec_data: string;
                             news: string;
+                            pdf_documents: string;
                         };
                         rights: Array<"audio" | "display" | "rag" | "redistribute" | "resell" | "train">;
                         tiers: {
