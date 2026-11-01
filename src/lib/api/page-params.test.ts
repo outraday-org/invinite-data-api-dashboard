@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { cursorPageParam, firstPageParam, offsetOfNextUrl, offsetPageParam } from "./page-params";
+import { firstPageParam, offsetOfNextUrl, offsetPageParam } from "./page-params";
 
 describe("offsetPageParam (the earnings lists' default, unchanged)", () => {
     it("reads the offset of next_url", () => {
@@ -19,18 +19,6 @@ describe("offsetPageParam (the earnings lists' default, unchanged)", () => {
         expect(offsetOfNextUrl("/v1/x?limit=5")).toBeUndefined();
 
         expect(offsetOfNextUrl("/v1/x?offset=abc")).toBeUndefined();
-    });
-});
-
-describe("cursorPageParam (/v1/news)", () => {
-    it("follows next_cursor and ignores next_url's offset", () => {
-        expect(cursorPageParam({ next_cursor: "WyIyMDI2LTEwLTI5Il0" })).toBe("WyIyMDI2LTEwLTI5Il0");
-    });
-
-    it("ends the list on a null / missing cursor", () => {
-        expect(cursorPageParam({ next_cursor: null })).toBeUndefined();
-
-        expect(cursorPageParam({})).toBeUndefined();
     });
 });
 

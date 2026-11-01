@@ -64,7 +64,7 @@ import type {
 } from "./types";
 
 import { ApiRequestError, rethrowApiError, retryUnlessApiError } from "./errors";
-import { cursorPageParam, firstPageParam, offsetPageParam } from "./page-params";
+import { firstPageParam, offsetPageParam } from "./page-params";
 import {
     getApiBaseUrl,
     getAsReportedFinancialsPresentation,
@@ -1261,7 +1261,7 @@ function useEarningsQuery<T>(options: EarningsQueryExtras<T> & {
 
 /**
  * The infinite twin of `useEarningsQuery`. Pages by `offset` (`offsetPageParam`, first page 0) unless `pageParamOf`
- * says otherwise — `/v1/news` pages by cursor (`cursorPageParam`, first page `null`).
+ * says otherwise (`/v1/news` pages by cursor with a pager instead: `useNewsPage`).
  */
 function useEarningsInfinite<TPage extends { next_url?: null | string }, TParam = number>(options: {
     enabled: boolean;
@@ -1813,20 +1813,20 @@ export type NewsListInput = {
 };
 
 /**
- * The news feed, newest first, paged by the API's keyset cursor (`next_cursor`: an item published meanwhile never
- * shifts a page). Status-aware: the News page renders the plan / error state. `scope: "market"` drops the ticker.
+ * One page of the news feed, newest first, at the API's keyset cursor (`null` = the first page; the page's
+ * `next_cursor` is the next one, an item published meanwhile never shifts a page). Without `from` / `to` the API pages
+ * back through the whole history. Status-aware: the News page renders the plan / error state. `scope: "market"` drops
+ * the ticker. A visited page stays cached, so the pager's Previous does not refetch.
  */
-export function useNewsInfinite(input: NewsListInput) {
-    return useEarningsInfinite<NewsListResponse, null | string>({
+export function useNewsPage(input: NewsListInput & { cursor: null | string }) {
+    return useEarningsQuery<NewsListResponse>({
         enabled: !input.paused && (input.scope === "market" || input.ticker.trim().length > 0),
         errorMessage: null,
-        fetchPage: (cursor, apiKey) => {
-            const { paused: _paused, ...query } = input;
+        load: (apiKey) => {
+            const { cursor, paused: _paused, ...query } = input;
 
             return getNewsList({ data: { ...query, apiKey, cursor: cursor ?? undefined } });
         },
-        initialPageParam: null,
-        pageParamOf: cursorPageParam,
         queryKey: [
             "news",
             "list",
@@ -1844,6 +1844,7 @@ export function useNewsInfinite(input: NewsListInput) {
             input.issuerCategory?.join(",") ?? "",
             input.issuerTag?.join(",") ?? "",
             input.limit,
+            input.cursor ?? "",
         ],
         staleTime: EARNINGS_LIST_STALE_MS,
     });

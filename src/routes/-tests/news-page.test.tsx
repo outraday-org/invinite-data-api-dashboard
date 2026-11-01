@@ -21,8 +21,8 @@ vi.mock("@/lib/api/queries", () => ({
     useApiBaseUrl: vi.fn(() => null),
     useCompanyDetails: vi.fn(() => ({ data: null })),
     useNewsAssetDownload: vi.fn(() => ({ error: null, isPending: false, mutate: vi.fn(), mutateAsync: vi.fn(), reset: vi.fn() })),
-    useNewsInfinite: vi.fn(),
     useNewsItem: vi.fn(),
+    useNewsPage: vi.fn(),
 }));
 
 afterEach(() => {
@@ -95,28 +95,25 @@ function mockDelivery(purpose: "display" | "download") {
 
 const pageProps = {
     error: null,
-    hasNextPage: false,
-    isFetchingNextPage: false,
     isLoading: false,
-    onLoadMore: () => undefined,
     onOpen: () => undefined,
+    pager: { hasNext: false, isFetching: false, onNext: () => undefined, onPrevious: () => undefined, page: 1 },
     scopeLabel: "News about NVDA",
 };
 
 describe("NewsPageView", () => {
-    it("lists items with their publisher, source and kind; opens one; loads more by cursor", () => {
+    it("lists items with their publisher, source and kind; opens one; pages on by cursor", () => {
         const onOpen = vi.fn();
 
-        const onLoadMore = vi.fn();
+        const onNext = vi.fn();
 
         render(
             <NewsPageView
                 {...pageProps}
-                hasNextPage
                 items={[newsroomItem(), edgarItem()]}
                 liveIds={new Set([newsroomItem().id])}
-                onLoadMore={onLoadMore}
                 onOpen={onOpen}
+                pager={{ ...pageProps.pager, hasNext: true, onNext }}
             />,
         );
 
@@ -141,9 +138,31 @@ describe("NewsPageView", () => {
 
         expect(onOpen).toHaveBeenCalledWith(edgarItem().id);
 
-        fireEvent.click(screen.getByText("Load more"));
+        const pager = screen.getByTestId("news-pager");
 
-        expect(onLoadMore).toHaveBeenCalledTimes(1);
+        expect(within(pager).getByText("Page 1")).toBeTruthy();
+
+        expect((within(pager).getByText("Previous").closest("button") as HTMLButtonElement).disabled).toBe(true);
+
+        fireEvent.click(within(pager).getByText("Next"));
+
+        expect(onNext).toHaveBeenCalledTimes(1);
+    });
+
+    it("pages back from a later page and ends Next on the last page", () => {
+        const onPrevious = vi.fn();
+
+        render(<NewsPageView {...pageProps} items={[edgarItem()]} pager={{ ...pageProps.pager, onPrevious, page: 3 }} />);
+
+        const pager = screen.getByTestId("news-pager");
+
+        expect(within(pager).getByText("Page 3")).toBeTruthy();
+
+        expect((within(pager).getByText("Next").closest("button") as HTMLButtonElement).disabled).toBe(true);
+
+        fireEvent.click(within(pager).getByText("Previous"));
+
+        expect(onPrevious).toHaveBeenCalledTimes(1);
     });
 
     it("marks an item with media by a paperclip and its count, nothing without", () => {
@@ -167,7 +186,8 @@ describe("NewsPageView", () => {
 
         expect(screen.getByText("No news in this window.")).toBeTruthy();
 
-        expect(screen.queryByText("Load more")).toBeNull();
+        // One page: no pager.
+        expect(screen.queryByTestId("news-pager")).toBeNull();
     });
 
     it("renders the plan gate as a notice, not an error", () => {

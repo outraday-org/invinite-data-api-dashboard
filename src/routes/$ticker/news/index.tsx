@@ -3,6 +3,7 @@ import type * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
+import type { NewsListInput } from "@/lib/api/queries";
 import type { NewsItemPublic } from "@/lib/api/types";
 import type { LiveNewsStop } from "@/lib/live/use-live-news";
 import type { NewsFilters, NewsSearch } from "@/lib/news/labels";
@@ -10,16 +11,17 @@ import type { NewsFilters, NewsSearch } from "@/lib/news/labels";
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { isTierError } from "@/lib/api/errors";
-import { useApiBaseUrl, useCompanyDetails, useNewsInfinite } from "@/lib/api/queries";
+import { useApiBaseUrl, useCompanyDetails, useNewsPage } from "@/lib/api/queries";
 import { useLiveNews } from "@/lib/live/use-live-news";
 import { issuerLabels, matchesNewsFilters, mergeLiveItems, validateNewsSearch } from "@/lib/news/labels";
+import { firstNewsPage, newsPageCursor, newsPageNumber, newsPagerFor, nextNewsPage, previousNewsPage } from "@/lib/news/pager";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import { Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
-import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
 import { NewsFilters as NewsFilterControls } from "./-components/news-filters";
 import { NewsItemPanel } from "./-components/news-item-panel";
 import { NewsLiveToggle } from "./-components/news-live-toggle";
+import { NewsPager } from "./-components/news-pager";
 import { NewsTable } from "./-components/news-table";
 
 export const Route = createFileRoute("/$ticker/news/")({
@@ -41,28 +43,25 @@ export function NewsPageView({
     controls,
     emptyText = "No news in this window.",
     error,
-    hasNextPage,
-    isFetchingNextPage,
     isLoading,
     items,
     liveIds,
     notice,
-    onLoadMore,
     onOpen,
+    pager,
     scopeLabel,
 }: {
     controls?: React.ReactNode;
     /** The empty list's line (the "Has media" filter names itself). */
     emptyText?: string;
     error: unknown;
-    hasNextPage: boolean;
-    isFetchingNextPage: boolean;
     isLoading: boolean;
     items: ReadonlyArray<NewsItemPublic>;
     liveIds?: ReadonlySet<string>;
     notice?: React.ReactNode;
-    onLoadMore: () => void;
     onOpen: (id: string) => void;
+    /** The page shown and its neighbours (`NewsPager`, centred under the table). */
+    pager: React.ComponentProps<typeof NewsPager>;
     scopeLabel: string;
 }) {
     return (
@@ -82,12 +81,15 @@ export function NewsPageView({
             {error
                 ? <ListError error={error} />
                 : (
-                        <ScrollArea className="h-0 grow">
-                            {!isLoading && items.length === 0
-                                ? <div className="text-muted-foreground w-full p-2 text-center text-xs">{emptyText}</div>
-                                : <NewsTable isLoading={isLoading} items={items} liveIds={liveIds} onOpen={onOpen} />}
-                            <LoadMoreButton hasNextPage={hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={onLoadMore} />
-                        </ScrollArea>
+                        <>
+                            {/* Keyed by page: a new page starts at the top of the table. */}
+                            <ScrollArea className="h-0 grow" key={pager.page}>
+                                {!isLoading && items.length === 0
+                                    ? <div className="text-muted-foreground w-full p-2 text-center text-xs">{emptyText}</div>
+                                    : <NewsTable isLoading={isLoading} items={items} liveIds={liveIds} onOpen={onOpen} />}
+                            </ScrollArea>
+                            <NewsPager {...pager} />
+                        </>
                     )}
         </div>
     );
@@ -107,7 +109,7 @@ function NewsPage() {
 
     const publisherCik = search.published ? company?.cik.replace(/^0+/, "") : undefined;
 
-    const list = useNewsInfinite({
+    const listInput: NewsListInput = {
         earnings: search.earnings,
         from: search.from,
         hasMedia: search.media,
@@ -124,9 +126,22 @@ function NewsPage() {
         ticker,
         to: search.to,
         topic: search.topic ? [search.topic] : undefined,
-    });
+    };
 
-    const listed = list.data?.pages.flatMap(page => page.items) ?? [];
+    // Previous / Next over the keyset cursor: the visited cursors stack up; any filter or date change is page 1.
+    const filterKey = JSON.stringify({ ...listInput, paused: undefined });
+
+    const [storedPager, setPager] = useState(() => firstNewsPage(filterKey));
+
+    const pager = newsPagerFor(storedPager, filterKey);
+
+    const page = newsPageNumber(pager);
+
+    const list = useNewsPage({ ...listInput, cursor: newsPageCursor(pager) });
+
+    const listed = list.data?.items ?? [];
+
+    const nextCursor = list.data?.next_cursor ?? null;
 
     const filters: NewsFilters = {
         category: search.category,
@@ -181,7 +196,8 @@ function NewsPage() {
         onStop: onLiveStop,
     });
 
-    const liveItems = live.items.filter(item => matchesNewsFilters(item, filters));
+    // Live items land on top of the newest page only.
+    const liveItems = page === 1 ? live.items.filter(item => matchesNewsFilters(item, filters)) : [];
 
     const items = mergeLiveItems(liveItems, listed);
 
@@ -222,16 +238,22 @@ function NewsPage() {
         <>
             <NewsPageView
                 controls={controls}
-                emptyText={search.media ? "No news with media in this window." : undefined}
+                emptyText={search.media ? "No news with media in this window." : search.from || search.to ? undefined : "No news yet."}
                 error={list.error}
-                hasNextPage={Boolean(list.hasNextPage)}
-                isFetchingNextPage={list.isFetchingNextPage}
                 isLoading={list.isLoading}
                 items={items}
                 liveIds={liveIds}
                 notice={notice}
-                onLoadMore={() => void list.fetchNextPage()}
                 onOpen={openItem}
+                pager={{
+                    hasNext: nextCursor !== null,
+                    isFetching: list.isFetching,
+                    onNext: () => {
+                        if (nextCursor !== null) setPager(nextNewsPage(pager, nextCursor));
+                    },
+                    onPrevious: () => setPager(previousNewsPage(pager)),
+                    page,
+                }}
                 scopeLabel={market ? "Every company" : search.published ? `Published by ${company?.name ?? ticker}` : `News about ${ticker}`}
             />
             <NewsItemPanel
