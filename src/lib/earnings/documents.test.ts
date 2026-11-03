@@ -383,19 +383,19 @@ describe("validateDocumentsSearch", () => {
 
 describe("links", () => {
     it("opens the stored copy, else the source page of a link-only row", () => {
-        expect(documentHref({ source_url: "https://ir.example.com/a", url: "https://r2.example.com/a.pdf?sig=1" }))
-            .toBe("https://r2.example.com/a.pdf?sig=1");
+        expect(documentHref({ source_url: "https://ir.example.com/a", url: "https://storage-prod.invinite.com/event-docs/0123456789abcdef0123456789abcdef/a.pdf" }))
+            .toBe("https://storage-prod.invinite.com/event-docs/0123456789abcdef0123456789abcdef/a.pdf");
 
         expect(documentHref({ source_url: "https://ir.example.com/webcast", url: null })).toBe("https://ir.example.com/webcast");
     });
 
     it("adds #page= only on a PDF with a page", () => {
-        expect(documentPageHref("https://r2.example.com/x/report.PDF?X-Amz-Signature=s", 12))
-            .toBe("https://r2.example.com/x/report.PDF?X-Amz-Signature=s#page=12");
+        expect(documentPageHref("https://storage-prod.invinite.com/x/0123456789abcdef0123456789abcdef/report.PDF?download=1", 12))
+            .toBe("https://storage-prod.invinite.com/x/0123456789abcdef0123456789abcdef/report.PDF?download=1#page=12");
 
-        expect(documentPageHref("https://r2.example.com/x/page.html?sig=s", 3)).toBe("https://r2.example.com/x/page.html?sig=s");
+        expect(documentPageHref("https://storage-prod.invinite.com/x/0123456789abcdef0123456789abcdef/page.html", 3)).toBe("https://storage-prod.invinite.com/x/0123456789abcdef0123456789abcdef/page.html");
 
-        expect(documentPageHref("https://r2.example.com/x/report.pdf", null)).toBe("https://r2.example.com/x/report.pdf");
+        expect(documentPageHref("https://storage-prod.invinite.com/x/0123456789abcdef0123456789abcdef/report.pdf", null)).toBe("https://storage-prod.invinite.com/x/0123456789abcdef0123456789abcdef/report.pdf");
 
         expect(documentPageHref("not a url", 2)).toBe("not a url");
     });

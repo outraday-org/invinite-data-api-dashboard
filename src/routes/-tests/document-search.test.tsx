@@ -56,7 +56,7 @@ const HIT: EarningsDocumentSearchResponse["hits"][number] = {
     text: "Our capital allocation priorities remain investment, dividends and buybacks.",
     text_truncated: false,
     title: "Annual Report 2025",
-    url: "https://r2.example.com/docs/annual-report.pdf?X-Amz-Signature=secret",
+    url: "https://storage-prod.invinite.com/company-docs/0123456789abcdef0123456789abcdef/annual-report.pdf",
     year: 2025,
 };
 
