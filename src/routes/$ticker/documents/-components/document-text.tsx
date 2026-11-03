@@ -21,7 +21,7 @@ function DocumentPages({ documentId }: { documentId: string }) {
         return data.document.pages_url
             ? (
                     <Notice title="The text is too large to show here">
-                        {/* Presigned: a bearer credential, only an href; no referrer. */}
+                        {/* A permanent public URL, only an href; no referrer. */}
                         <a className="underline underline-offset-4" href={data.document.pages_url} rel="noopener noreferrer" target="_blank">
                             Open the per-page text (JSON)
                         </a>

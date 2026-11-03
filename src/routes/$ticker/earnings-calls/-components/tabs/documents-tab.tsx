@@ -12,9 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useEarningsDocumentsInfinite } from "@/lib/api/queries";
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
-import { earliestExpiry } from "@/lib/earnings/documents";
 import { formatBytes } from "@/lib/earnings/format";
-import { useMediaUrl } from "@/lib/earnings/use-media-url";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -98,11 +96,9 @@ export function DocumentsTab({ event, onTabChange, selector }: CallTabProps) {
 
     useLoadAllPages({ ...documentsQuery, hasNextPage: Boolean(documentsQuery.hasNextPage) });
 
-    const { data, error, isLoading, refetch } = documentsQuery;
+    const { data, error, isLoading } = documentsQuery;
 
     const documents = data?.pages.flatMap(page => page.documents) ?? [];
-
-    useMediaUrl({ expiresAt: earliestExpiry(documents), refetch });
 
     const toggleKind = (kind: EarningsDocument["kind"]) =>
         setKinds(current => (current.includes(kind) ? current.filter(k => k !== kind) : [...current, kind]));

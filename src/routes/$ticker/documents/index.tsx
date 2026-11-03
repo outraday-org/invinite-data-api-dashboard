@@ -9,8 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { isTierError } from "@/lib/api/errors";
 import { useEarningsCompanyDocumentsInfinite, useEarningsEventsInfinite } from "@/lib/api/queries";
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
-import { buildDocumentTree, callEntries, earliestExpiry, eventTitleMap, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
-import { useMediaUrl } from "@/lib/earnings/use-media-url";
+import { buildDocumentTree, callEntries, eventTitleMap, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
 import { MediaState, Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
 import { DocumentFilters } from "./-components/document-filters";
@@ -61,7 +60,7 @@ function DocumentsPage() {
 
     useLoadAllPages({ ...events, hasNextPage: Boolean(events.hasNextPage) });
 
-    const { data, error, isLoading, refetch } = library;
+    const { data, error, isLoading } = library;
 
     const documents = React.useMemo(() => data?.pages.flatMap(page => page.documents) ?? [], [data]);
 
@@ -78,9 +77,6 @@ function DocumentsPage() {
     );
 
     const company = data?.pages[0]?.company;
-
-    // Signed links expire: refetch before the earliest one does (as the call Documents tab).
-    useMediaUrl({ expiresAt: earliestExpiry(documents), refetch });
 
     const onFilterChange = (patch: Partial<DocumentsSearch>) => {
         // The text filter updates as you type: replace the history entry instead of adding one per keystroke.

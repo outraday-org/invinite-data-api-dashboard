@@ -48,7 +48,7 @@ vi.mock("@/routes/$ticker/documents/-components/document-search", () => ({ Docum
 
 afterEach(cleanup);
 
-const SIGNED = "https://r2.example.com/docs/annual-report.pdf?X-Amz-Signature=secret";
+const PUBLIC_URL = "https://storage-prod.invinite.com/earnings/ir-documents/0123456789abcdef0123456789abcdef/annual-report.pdf";
 
 const base: EarningsCompanyDocument = {
     bytes: 2_400_000,
@@ -60,7 +60,6 @@ const base: EarningsCompanyDocument = {
     event_date: null,
     event_id: null,
     event_type: null,
-    expires_at: "2026-10-18T12:15:00.000Z",
     group: "reports/2025",
     group_label: "Reports 2025",
     kind: "annual_report",
@@ -68,7 +67,7 @@ const base: EarningsCompanyDocument = {
     origin: "html_page",
     page_url: null,
     pages: 120,
-    pages_url: "https://r2.example.com/docs/annual-report.pdf.pages.json?X-Amz-Signature=secret",
+    pages_url: `${PUBLIC_URL}.pages.json`,
     period: "FY",
     producer: "company",
     section: "annual_reports",
@@ -78,7 +77,7 @@ const base: EarningsCompanyDocument = {
     title: "Annual Report 2025",
     trust_tier: "confirmed_domain",
     updated_at: "2026-10-01T00:00:00.000Z",
-    url: SIGNED,
+    url: PUBLIC_URL,
     year: 2025,
 };
 
@@ -138,7 +137,7 @@ describe("DocumentTree", () => {
         expect(screen.getByText("Annual Report 2024")).toBeInTheDocument();
     });
 
-    it("opens the signed file in a new tab without a referrer and offers its text", () => {
+    it("opens the public file in a new tab without a referrer and offers its text", () => {
         const onShowText = vi.fn();
 
         renderTree([base], onShowText);
@@ -147,7 +146,7 @@ describe("DocumentTree", () => {
 
         const open = within(row).getByRole("link", { name: "Open" });
 
-        expect(open).toHaveAttribute("href", SIGNED);
+        expect(open).toHaveAttribute("href", PUBLIC_URL);
 
         expect(open).toHaveAttribute("rel", "noopener noreferrer");
 

@@ -7,8 +7,6 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useEarningsSlides } from "@/lib/api/queries";
-import { SIGNED_URL_DEFAULT_TTL_MS } from "@/lib/earnings/media-timing";
-import { useMediaUrl } from "@/lib/earnings/use-media-url";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -18,13 +16,11 @@ import { SlideTimeline } from "../slide-timeline";
 // `react-pdf` pulls its CSS and pdf.js; load it only when a deck is shown.
 const PdfViewer = React.lazy(() => import("@/components/pdf/pdf-viewer").then(module => ({ default: module.PdfViewer })));
 
-/** The PDF viewer keeps the URL it opened with (pdf.js holds the document); a refreshed URL would reload it. */
+/** The deck PDF in the lazy pdf.js viewer. */
 function DeckViewer({ url }: { url: string }) {
-    const [openedUrl] = React.useState(url);
-
     return (
         <React.Suspense fallback={<Skeleton className="h-[75vh] w-full" />}>
-            <PdfViewer className="h-[75vh]" url={openedUrl} />
+            <PdfViewer className="h-[75vh]" url={url} />
         </React.Suspense>
     );
 }
@@ -33,19 +29,13 @@ function DeckViewer({ url }: { url: string }) {
  * Slides tab: the deck PDF (unless the slides are captured player images, `origin: "player"`)
  * with a download link, and a page strip of the slide images with their extracted text. Above
  * them the player slides on the audio's clock (`timeline`, `SlideTimeline`), when there are any.
- * Presigned URLs are refreshed before they expire.
+ * Every URL is a permanent public one, used as the API answered it (a failing image shows the
+ * browser's broken image; nothing is refetched).
  */
 export function SlidesTab({ selector }: CallTabProps) {
-    const { data, dataUpdatedAt, error, refetch } = useEarningsSlides({ ...selector, include: "markdown" });
+    const { data, error } = useEarningsSlides({ ...selector, include: "markdown" });
 
     const [openSlide, setOpenSlide] = React.useState<EarningsSlide | null>(null);
-
-    // Slide images carry no expiry of their own; without a deck assume IDA's default lifetime.
-    const expiresAt = data
-        ? data.deck?.expires_at ?? new Date(dataUpdatedAt + SIGNED_URL_DEFAULT_TTL_MS).toISOString()
-        : null;
-
-    const { onMediaError } = useMediaUrl({ expiresAt, refetch });
 
     if (error) return <MediaState error={error} notFound="No slides stored for this call" title="Failed to load the slides" />;
 
@@ -56,12 +46,9 @@ export function SlidesTab({ selector }: CallTabProps) {
 
     if (!deck && slides.length === 0 && timeline.length === 0) return <Notice title="No slides stored for this call" />;
 
-    // Reopened from the refreshed answer so the dialog's image URL is current.
-    const shownSlide = openSlide ? slides.find(slide => slide.page === openSlide.page) ?? openSlide : null;
-
     return (
         <div className="flex flex-col gap-4">
-            {timeline.length > 0 && <SlideTimeline onMediaError={onMediaError} timeline={timeline} />}
+            {timeline.length > 0 && <SlideTimeline timeline={timeline} />}
 
             {deck && (
                 <div className="flex flex-col gap-2">
@@ -83,13 +70,6 @@ export function SlidesTab({ selector }: CallTabProps) {
                         </span>
                         <Badge variant="outline">{deck.origin}</Badge>
                         {deck.trust_tier && <Badge variant="secondary">{deck.trust_tier}</Badge>}
-                        <span className="text-muted-foreground">
-                            Signed link, valid until
-                            {" "}
-                            {new Date(deck.expires_at).toLocaleTimeString()}
-                            {" "}
-                            (renewed automatically)
-                        </span>
                     </div>
                     {deck.origin !== "player" && <DeckViewer url={deck.url} />}
                 </div>
@@ -108,7 +88,6 @@ export function SlidesTab({ selector }: CallTabProps) {
                                 alt={slide.title ?? `Slide ${slide.page}`}
                                 className="aspect-video w-full rounded-sm object-contain bg-muted/30"
                                 loading="lazy"
-                                onError={onMediaError}
                                 src={slide.image_url}
                             />
                             <span className="truncate text-[0.625rem] text-muted-foreground">
@@ -121,28 +100,27 @@ export function SlidesTab({ selector }: CallTabProps) {
                 </div>
             )}
 
-            <Dialog onOpenChange={open => !open && setOpenSlide(null)} open={shownSlide !== null}>
+            <Dialog onOpenChange={open => !open && setOpenSlide(null)} open={openSlide !== null}>
                 <DialogContent className="sm:max-w-4xl">
-                    {shownSlide && (
+                    {openSlide && (
                         <>
                             <DialogHeader>
                                 <DialogTitle>
                                     Slide
                                     {" "}
-                                    {shownSlide.page}
-                                    {shownSlide.title ? ` · ${shownSlide.title}` : ""}
+                                    {openSlide.page}
+                                    {openSlide.title ? ` · ${openSlide.title}` : ""}
                                 </DialogTitle>
                             </DialogHeader>
                             <img
-                                alt={shownSlide.title ?? `Slide ${shownSlide.page}`}
+                                alt={openSlide.title ?? `Slide ${openSlide.page}`}
                                 className="max-h-[60vh] w-full object-contain"
-                                onError={onMediaError}
-                                src={shownSlide.image_url}
+                                src={openSlide.image_url}
                             />
-                            {shownSlide.markdown && (
+                            {openSlide.markdown && (
                                 // Extracted markdown shown as plain text (no markdown renderer in this app).
                                 <div className="max-h-[25vh] overflow-auto whitespace-pre-wrap rounded-md bg-muted/30 p-2">
-                                    {shownSlide.markdown}
+                                    {openSlide.markdown}
                                 </div>
                             )}
                         </>

@@ -75,7 +75,7 @@ function DocumentRow({
                             Show text
                         </button>
                     )}
-                    {/* Presigned: a bearer credential — only ever an href, never router state; no referrer. */}
+                    {/* A permanent public URL — only ever an href, never router state; no referrer. */}
                     <a className={actionClass} href={documentHref(doc)} rel="noopener noreferrer" target="_blank">
                         <ExternalLink className="size-3" />
                         {linkOnly ? "Open page" : "Open"}

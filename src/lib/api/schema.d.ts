@@ -571,19 +571,23 @@ export interface paths {
          *
          *     - Company-published material: displayed as published, not verified facts.
          *
-         *     - Stored files come as signed URLs; `pages_url` is the per-page text (JSON). A link-only row (webcast) has `url` null and `link_status`.
+         *     - `pages_url` is the per-page text (JSON). A link-only row (webcast) has `url` null and `link_status`.
          *
-         *     - Files are served as short-lived signed URLs (see `expires_at`), never proxied; request a fresh response after expiry.
+         *     - Files are served as permanent public URLs (immutable; a new version is a new URL), never proxied; they do not expire.
          *
          *     ### Errors
          *
-         *     - `503 media_unavailable` while media signing is not configured.
+         *     - `503 media_unavailable` while the media base URL (`R2_PUBLIC_URL`) is not configured.
          *
          *     ### Freshness and coverage
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
          *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
+         *
+         *     ### Changelog
+         *
+         *     - 2026-11: media URLs are permanent public URLs; `expires_at` removed.
          *
          *     Minimum tier for display: FREE.
          */
@@ -605,7 +609,7 @@ export interface paths {
         };
         /**
          * Company document by ID
-         * @description One company document by `document_id` (from `/v1/earnings-calls/company-documents` or a document search hit with `table` `company_documents`): signed URLs of the file and its per-page text.
+         * @description One company document by `document_id` (from `/v1/earnings-calls/company-documents` or a document search hit with `table` `company_documents`): permanent public URLs of the file and its per-page text.
          *
          *     ### What you get
          *
@@ -613,17 +617,21 @@ export interface paths {
          *
          *     - Company-published material, not verified facts.
          *
-         *     - Files are served as short-lived signed URLs (see `expires_at`), never proxied; request a fresh response after expiry.
+         *     - Files are served as permanent public URLs (immutable; a new version is a new URL), never proxied; they do not expire.
          *
          *     ### Errors
          *
-         *     - `503 media_unavailable` while media signing is not configured.
+         *     - `503 media_unavailable` while the media base URL (`R2_PUBLIC_URL`) is not configured.
          *
          *     ### Freshness and coverage
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
          *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
+         *
+         *     ### Changelog
+         *
+         *     - 2026-11: media URLs are permanent public URLs; `expires_at` removed.
          *
          *     Minimum tier for display: FREE.
          */
@@ -693,9 +701,9 @@ export interface paths {
          *
          *     ### What you get
          *
-         *     - Stored files come as signed URLs; link-only rows (`sec_filing`) have `url` null and point to EDGAR through `source_url`.
+         *     - Link-only rows (`sec_filing`) have `url` null and point to EDGAR through `source_url`.
          *
-         *     - Files are served as short-lived signed URLs (see `expires_at`), never proxied; request a fresh response after expiry.
+         *     - Files are served as permanent public URLs (immutable; a new version is a new URL), never proxied; they do not expire.
          *
          *     - Each document carries its `trust_tier` and its folder of the company's document tree (`group`, `group_label`, `category`; filter with `category` / `group`). A call's own files sit in its earnings folder, e.g. `earnings/fy2027/q2`.
          *
@@ -707,7 +715,7 @@ export interface paths {
          *
          *     ### Errors
          *
-         *     - `503 media_unavailable` while media signing is not configured.
+         *     - `503 media_unavailable` while the media base URL (`R2_PUBLIC_URL`) is not configured.
          *
          *     ### Choose the call
          *
@@ -722,6 +730,10 @@ export interface paths {
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
          *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
+         *
+         *     ### Changelog
+         *
+         *     - 2026-11: media URLs are permanent public URLs; `expires_at` removed.
          *
          *     Minimum tier for display: FREE.
          */
@@ -747,7 +759,7 @@ export interface paths {
          *
          *     ### What you get
          *
-         *     - Up to 20 passages from company-published documents, with page numbers — not verified facts — and a signed URL of the file (open it at `#page=<page>`).
+         *     - Up to 20 passages from company-published documents, with page numbers — not verified facts — and a permanent public URL of the file (open it at `#page=<page>`).
          *
          *     - Filter by company (`identifier`), kind, IR section, year or table.
          *
@@ -772,6 +784,8 @@ export interface paths {
          *     - 2026-10: modes added and the default mode changed from semantic to `lexical`.
          *
          *     - 2026-11: modes `semantic` and `hybrid` removed; vector search is gone, pass `mode=lexical` (default) or `literal`.
+         *
+         *     - 2026-11: media URLs are permanent public URLs; `expires_at` removed.
          *
          *     ### Errors
          *
@@ -1347,7 +1361,7 @@ export interface paths {
          *
          *     - Up to 8 passages with speaker and `start_ms`, how each matched (`match`) and the index coverage of the search (`coverage`). Cite `event_id` and `start_ms`.
          *
-         *     - On plans that include the audio and slides routes (PRO): `audio_url` opens the recording's permanent URL at the passage (`#t=<seconds>`; null while no recording is available) and `slide.image_url` (a signed URL) shows the slide.
+         *     - On plans that include the audio and slides routes (PRO): `audio_url` opens the recording's permanent URL at the passage (`#t=<seconds>`; null while no recording is available) and `slide.image_url` (a permanent public URL) shows the slide.
          *
          *     ### Event types
          *
@@ -1372,6 +1386,8 @@ export interface paths {
          *     - 2026-10: modes added and the default mode changed from semantic to `lexical`.
          *
          *     - 2026-11: modes `semantic` and `hybrid` removed; vector search is gone, pass `mode=lexical` (default) or `literal`.
+         *
+         *     - 2026-11: `slide.image_url` is a permanent public URL (was a short-lived signed URL).
          *
          *     ### Errors
          *
@@ -1407,11 +1423,11 @@ export interface paths {
         };
         /**
          * Earnings call slides
-         * @description The slide deck of one earnings call (PRO): the deck PDF and each page image as signed URLs, page titles and, with `include=markdown`, each page's text.
+         * @description The slide deck of one earnings call (PRO): the deck PDF and each page image as permanent public URLs, page titles and, with `include=markdown`, each page's text.
          *
          *     ### Files
          *
-         *     - Files are served as short-lived signed URLs (see `expires_at`), never proxied; request a fresh response after expiry.
+         *     - Files are served as permanent public URLs (immutable; a new version is a new URL), never proxied; they do not expire.
          *
          *     - `timeline`: the slides shown in the webcast player, keyed to the call audio (`at_ms` from the start of the recording the audio route serves; the whole call, whatever `pages` asks).
          *
@@ -1419,7 +1435,7 @@ export interface paths {
          *
          *     - `404 slides_unavailable` when no deck is available.
          *
-         *     - `503 media_unavailable` while media signing is not configured.
+         *     - `503 media_unavailable` while the media base URL (`R2_PUBLIC_URL`) is not configured.
          *
          *     ### Choose the call
          *
@@ -1434,6 +1450,10 @@ export interface paths {
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
          *
          *     - Only US earnings calls captured by Invinite are served; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404.
+         *
+         *     ### Changelog
+         *
+         *     - 2026-11: media URLs are permanent public URLs; `expires_at` removed.
          *
          *     Minimum tier for display: FREE.
          */
@@ -3585,13 +3605,13 @@ export interface operations {
                      *       "period": {
                      *         "tier": "pro",
                      *         "included_credits": 4000000,
-                     *         "used_credits": 3828,
+                     *         "used_credits": 5251,
                      *         "resets_at": "2026-11-28T12:43:10.000Z",
                      *         "prepaid_balance_usd": 0
                      *       },
                      *       "daily": [
                      *         {
-                     *           "date": "2026-10-03",
+                     *           "date": "2026-10-05",
                      *           "requests": 0,
                      *           "credits": 0,
                      *           "errors": {
@@ -3605,10 +3625,10 @@ export interface operations {
                      *       ],
                      *       "by_family": [
                      *         {
-                     *           "family": "news",
-                     *           "label": "News",
-                     *           "requests": 33,
-                     *           "credits": 35
+                     *           "family": "earnings_calls",
+                     *           "label": "Earnings Calls",
+                     *           "requests": 199,
+                     *           "credits": 463
                      *         }
                      *       ],
                      *       "by_key": [
@@ -3616,8 +3636,8 @@ export interface operations {
                      *           "caller": "key",
                      *           "label": "test",
                      *           "key_hint": "invd_3f2...a91c",
-                     *           "requests": 56,
-                     *           "credits": 44
+                     *           "requests": 303,
+                     *           "credits": 546
                      *         }
                      *       ],
                      *       "truncated": false
@@ -3761,25 +3781,25 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
-                     *                 "CashAndCashEquivalentsAtCarryingValue": 35934000000,
-                     *                 "MarketableSecuritiesCurrent": 18763000000,
-                     *                 "AccountsReceivableNetCurrent": 39777000000,
-                     *                 "NontradeReceivablesCurrent": 33180000000,
-                     *                 "InventoryNet": 5718000000,
-                     *                 "OtherAssetsCurrent": 14585000000,
-                     *                 "AssetsCurrent": 147957000000,
-                     *                 "MarketableSecuritiesNoncurrent": 77723000000,
-                     *                 "PropertyPlantAndEquipmentNet": 49834000000,
-                     *                 "IntangibleAssetsNetExcludingGoodwillNoncurrent": 11093000000,
-                     *                 "OtherAssetsNoncurrent": 72634000000,
-                     *                 "AssetsNoncurrent": 211284000000
+                     *                 "CashAndCashEquivalentsAtCarryingValue": 36305000000,
+                     *                 "MarketableSecuritiesCurrent": 20417000000,
+                     *                 "AccountsReceivableNetCurrent": 43817000000,
+                     *                 "NontradeReceivablesCurrent": 39896000000,
+                     *                 "InventoryNet": 14541000000,
+                     *                 "OtherAssetsCurrent": 18881000000,
+                     *                 "AssetsCurrent": 173857000000,
+                     *                 "MarketableSecuritiesNoncurrent": 80213000000,
+                     *                 "PropertyPlantAndEquipmentNet": 52084000000,
+                     *                 "IntangibleAssetExcludingGoodwillAfterAccumulatedAmortizationNoncurrent": 20278000000,
+                     *                 "OtherAssetsNoncurrent": 78116000000,
+                     *                 "AssetsNoncurrent": 230691000000
                      *               }
                      *             }
                      *           ],
@@ -3883,84 +3903,84 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
                      *                 "CashAndCashEquivalentsAtCarryingValue": {
-                     *                   "value": 35934000000,
+                     *                   "value": 36305000000,
                      *                   "html_label": "Cash and cash equivalents",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-165"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-157"
                      *                 },
                      *                 "MarketableSecuritiesCurrent": {
-                     *                   "value": 18763000000,
+                     *                   "value": 20417000000,
                      *                   "html_label": "Marketable securities",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-167"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-159"
                      *                 },
                      *                 "AccountsReceivableNetCurrent": {
-                     *                   "value": 39777000000,
+                     *                   "value": 43817000000,
                      *                   "html_label": "Accounts receivable, net",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-169"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-161"
                      *                 },
                      *                 "NontradeReceivablesCurrent": {
-                     *                   "value": 33180000000,
+                     *                   "value": 39896000000,
                      *                   "html_label": "Vendor non-trade receivables",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-171"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-163"
                      *                 },
                      *                 "InventoryNet": {
-                     *                   "value": 5718000000,
+                     *                   "value": 14541000000,
                      *                   "html_label": "Inventories",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-173"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-165"
                      *                 },
                      *                 "OtherAssetsCurrent": {
-                     *                   "value": 14585000000,
+                     *                   "value": 18881000000,
                      *                   "html_label": "Other current assets",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-175"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-167"
                      *                 },
                      *                 "AssetsCurrent": {
-                     *                   "value": 147957000000,
+                     *                   "value": 173857000000,
                      *                   "html_label": "Total current assets",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-177"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-169"
                      *                 },
                      *                 "MarketableSecuritiesNoncurrent": {
-                     *                   "value": 77723000000,
+                     *                   "value": 80213000000,
                      *                   "html_label": "Marketable securities",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-179"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-171"
                      *                 },
                      *                 "PropertyPlantAndEquipmentNet": {
-                     *                   "value": 49834000000,
+                     *                   "value": 52084000000,
                      *                   "html_label": "Property, plant and equipment, net",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-181"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-173"
                      *                 },
-                     *                 "IntangibleAssetsNetExcludingGoodwillNoncurrent": {
-                     *                   "value": 11093000000,
-                     *                   "html_label": "Intangible assets, net",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-183"
+                     *                 "IntangibleAssetExcludingGoodwillAfterAccumulatedAmortizationNoncurrent": {
+                     *                   "value": 20278000000,
+                     *                   "html_label": "Non-current portion of intangible assets",
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-175"
                      *                 },
                      *                 "OtherAssetsNoncurrent": {
-                     *                   "value": 72634000000,
+                     *                   "value": 78116000000,
                      *                   "html_label": "Other non-current assets",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-185"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-177"
                      *                 },
                      *                 "AssetsNoncurrent": {
-                     *                   "value": 211284000000,
+                     *                   "value": 230691000000,
                      *                   "html_label": "Total non-current assets",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-187"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-179"
                      *                 }
                      *               }
                      *             }
@@ -4117,12 +4137,12 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": [
                      *                 {
                      *                   "concept": "AssetsAbstract",
@@ -4138,7 +4158,7 @@ export interface operations {
                      *                           "concept": "CashAndCashEquivalentsAtCarryingValue",
                      *                           "label": "Cash and cash equivalents",
                      *                           "depth": 2,
-                     *                           "value": 35934000000
+                     *                           "value": 36305000000
                      *                         }
                      *                       ]
                      *                     }
@@ -4239,25 +4259,25 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
-                     *                 "NetIncomeLoss": 112010000000,
-                     *                 "DepreciationDepletionAndAmortization": 11698000000,
-                     *                 "ShareBasedCompensation": 12863000000,
-                     *                 "OtherNoncashIncomeExpense": -89000000,
-                     *                 "IncreaseDecreaseInAccountsReceivable": -6682000000,
-                     *                 "IncreaseDecreaseInOtherReceivables": -347000000,
-                     *                 "IncreaseDecreaseInInventories": 1400000000,
-                     *                 "IncreaseDecreaseInOtherOperatingAssets": -9197000000,
-                     *                 "IncreaseDecreaseInAccountsPayable": 902000000,
-                     *                 "IncreaseDecreaseInOtherOperatingLiabilities": -11076000000,
-                     *                 "NetCashProvidedByUsedInOperatingActivities": 111482000000,
-                     *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": -24407000000
+                     *                 "NetIncomeLoss": 132175000000,
+                     *                 "DepreciationDepletionAndAmortization": 13423000000,
+                     *                 "ShareBasedCompensation": 13789000000,
+                     *                 "OtherNoncashIncomeExpense": 568000000,
+                     *                 "IncreaseDecreaseInAccountsReceivable": -3994000000,
+                     *                 "IncreaseDecreaseInOtherReceivables": -6716000000,
+                     *                 "IncreaseDecreaseInInventories": -8905000000,
+                     *                 "IncreaseDecreaseInOtherOperatingAssets": -21117000000,
+                     *                 "IncreaseDecreaseInAccountsPayable": 12171000000,
+                     *                 "IncreaseDecreaseInOtherOperatingLiabilities": 13703000000,
+                     *                 "NetCashProvidedByUsedInOperatingActivities": 145097000000,
+                     *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": -54945000000
                      *               }
                      *             }
                      *           ],
@@ -4361,83 +4381,83 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
                      *                 "NetIncomeLoss": {
-                     *                   "value": 112010000000,
+                     *                   "value": 132175000000,
                      *                   "html_label": "Net income",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-114"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-112"
                      *                 },
                      *                 "DepreciationDepletionAndAmortization": {
-                     *                   "value": 11698000000,
+                     *                   "value": 13423000000,
                      *                   "html_label": "Depreciation and amortization",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-280"
                      *                 },
                      *                 "ShareBasedCompensation": {
-                     *                   "value": 12863000000,
+                     *                   "value": 13789000000,
                      *                   "html_label": "Share-based compensation expense",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-283"
                      *                 },
                      *                 "OtherNoncashIncomeExpense": {
-                     *                   "value": -89000000,
+                     *                   "value": 568000000,
                      *                   "html_label": "Other",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-286"
                      *                 },
                      *                 "IncreaseDecreaseInAccountsReceivable": {
-                     *                   "value": -6682000000,
+                     *                   "value": -3994000000,
                      *                   "html_label": "Accounts receivable, net",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-289"
                      *                 },
                      *                 "IncreaseDecreaseInOtherReceivables": {
-                     *                   "value": -347000000,
+                     *                   "value": -6716000000,
                      *                   "html_label": "Vendor non-trade receivables",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-292"
                      *                 },
                      *                 "IncreaseDecreaseInInventories": {
-                     *                   "value": 1400000000,
+                     *                   "value": -8905000000,
                      *                   "html_label": "Inventories",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-295"
                      *                 },
                      *                 "IncreaseDecreaseInOtherOperatingAssets": {
-                     *                   "value": -9197000000,
+                     *                   "value": -21117000000,
                      *                   "html_label": "Other current and non-current assets",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-298"
                      *                 },
                      *                 "IncreaseDecreaseInAccountsPayable": {
-                     *                   "value": 902000000,
+                     *                   "value": 12171000000,
                      *                   "html_label": "Accounts payable",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-301"
                      *                 },
                      *                 "IncreaseDecreaseInOtherOperatingLiabilities": {
-                     *                   "value": -11076000000,
+                     *                   "value": 13703000000,
                      *                   "html_label": "Other current and non-current liabilities",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-304"
                      *                 },
                      *                 "NetCashProvidedByUsedInOperatingActivities": {
-                     *                   "value": 111482000000,
+                     *                   "value": 145097000000,
                      *                   "html_label": "Cash generated by operating activities",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-307"
                      *                 },
                      *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": {
-                     *                   "value": -24407000000,
+                     *                   "value": -54945000000,
                      *                   "html_label": "Purchases of marketable securities",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-310"
                      *                 }
                      *               }
@@ -4595,12 +4615,12 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": [
                      *                 {
                      *                   "concept": "NetCashProvidedByUsedInOperatingActivitiesContinuingOperationsAbstract",
@@ -4611,7 +4631,7 @@ export interface operations {
                      *                       "concept": "NetIncomeLoss",
                      *                       "label": "Net income",
                      *                       "depth": 1,
-                     *                       "value": 112010000000
+                     *                       "value": 132175000000
                      *                     }
                      *                   ]
                      *                 }
@@ -4710,28 +4730,28 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
-                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": 416161000000,
-                     *                 "CostOfGoodsAndServicesSold": 220960000000,
-                     *                 "GrossProfit": 195201000000,
-                     *                 "ResearchAndDevelopmentExpense": 34550000000,
-                     *                 "SellingGeneralAndAdministrativeExpense": 27601000000,
-                     *                 "OperatingExpenses": 62151000000,
-                     *                 "OperatingIncomeLoss": 133050000000,
-                     *                 "NonoperatingIncomeExpense": -321000000,
-                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": 132729000000,
-                     *                 "IncomeTaxExpenseBenefit": 20719000000,
-                     *                 "NetIncomeLoss": 112010000000,
-                     *                 "EarningsPerShareBasic": 7.49,
-                     *                 "EarningsPerShareDiluted": 7.46,
-                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": 14948500000,
-                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": 15004697000
+                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": 478834000000,
+                     *                 "CostOfGoodsAndServicesSold": 245232000000,
+                     *                 "GrossProfit": 233602000000,
+                     *                 "ResearchAndDevelopmentExpense": 45765000000,
+                     *                 "SellingGeneralAndAdministrativeExpense": 29774000000,
+                     *                 "OperatingExpenses": 75539000000,
+                     *                 "OperatingIncomeLoss": 158063000000,
+                     *                 "NonoperatingIncomeExpense": 1174000000,
+                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": 159237000000,
+                     *                 "IncomeTaxExpenseBenefit": 27062000000,
+                     *                 "NetIncomeLoss": 132175000000,
+                     *                 "EarningsPerShareBasic": 9.01,
+                     *                 "EarningsPerShareDiluted": 8.98,
+                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": 14661935000,
+                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": 14720306000
                      *               }
                      *             }
                      *           ],
@@ -4835,102 +4855,102 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
                      *                 "RevenueFromContractWithCustomerExcludingAssessedTax": {
-                     *                   "value": 416161000000,
+                     *                   "value": 478834000000,
                      *                   "html_label": "Net sales",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-78"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-76"
                      *                 },
                      *                 "CostOfGoodsAndServicesSold": {
-                     *                   "value": 220960000000,
+                     *                   "value": 245232000000,
                      *                   "html_label": "Cost of sales",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-87"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-85"
                      *                 },
                      *                 "GrossProfit": {
-                     *                   "value": 195201000000,
+                     *                   "value": 233602000000,
                      *                   "html_label": "Gross margin",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-90"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-88"
                      *                 },
                      *                 "ResearchAndDevelopmentExpense": {
-                     *                   "value": 34550000000,
+                     *                   "value": 45765000000,
                      *                   "html_label": "Research and development",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-93"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-91"
                      *                 },
                      *                 "SellingGeneralAndAdministrativeExpense": {
-                     *                   "value": 27601000000,
+                     *                   "value": 29774000000,
                      *                   "html_label": "Selling, general and administrative",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-96"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-94"
                      *                 },
                      *                 "OperatingExpenses": {
-                     *                   "value": 62151000000,
+                     *                   "value": 75539000000,
                      *                   "html_label": "Total operating expenses",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-99"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-97"
                      *                 },
                      *                 "OperatingIncomeLoss": {
-                     *                   "value": 133050000000,
+                     *                   "value": 158063000000,
                      *                   "html_label": "Operating income",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-102"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-100"
                      *                 },
                      *                 "NonoperatingIncomeExpense": {
-                     *                   "value": -321000000,
+                     *                   "value": 1174000000,
                      *                   "html_label": "Other income/(expense), net",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-105"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-103"
                      *                 },
                      *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {
-                     *                   "value": 132729000000,
+                     *                   "value": 159237000000,
                      *                   "html_label": "Income before provision for income taxes",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-108"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-106"
                      *                 },
                      *                 "IncomeTaxExpenseBenefit": {
-                     *                   "value": 20719000000,
+                     *                   "value": 27062000000,
                      *                   "html_label": "Provision for income taxes",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-111"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-109"
                      *                 },
                      *                 "NetIncomeLoss": {
-                     *                   "value": 112010000000,
+                     *                   "value": 132175000000,
                      *                   "html_label": "Net income",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-114"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-112"
                      *                 },
                      *                 "EarningsPerShareBasic": {
-                     *                   "value": 7.49,
+                     *                   "value": 9.01,
                      *                   "html_label": "Basic (in dollars per share)",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-117"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-115"
                      *                 },
                      *                 "EarningsPerShareDiluted": {
-                     *                   "value": 7.46,
+                     *                   "value": 8.98,
                      *                   "html_label": "Diluted (in dollars per share)",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-120"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-118"
                      *                 },
                      *                 "WeightedAverageNumberOfSharesOutstandingBasic": {
-                     *                   "value": 14948500000,
+                     *                   "value": 14661935000,
                      *                   "html_label": "Basic (in shares)",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-123"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-121"
                      *                 },
                      *                 "WeightedAverageNumberOfDilutedSharesOutstanding": {
-                     *                   "value": 15004697000,
+                     *                   "value": 14720306000,
                      *                   "html_label": "Diluted (in shares)",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-126"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-124"
                      *                 }
                      *               }
                      *             }
@@ -5087,18 +5107,18 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": [
                      *                 {
                      *                   "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
                      *                   "label": "Net sales",
                      *                   "depth": 0,
-                     *                   "value": 416161000000
+                     *                   "value": 478834000000
                      *                 }
                      *               ]
                      *             }
@@ -5188,62 +5208,62 @@ export interface operations {
                      *         {
                      *           "ticker": "AAPL",
                      *           "cik": "0000320193",
-                     *           "fiscal_year": 2025,
+                     *           "fiscal_year": 2026,
                      *           "fiscal_quarter": 4,
-                     *           "calendar_year": 2025,
+                     *           "calendar_year": 2026,
                      *           "calendar_quarter": 3,
                      *           "fiscal_period_type": "annual",
-                     *           "period_end": "2025-09-27",
+                     *           "period_end": "2026-09-26",
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": {
-                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": 416161000000,
-                     *                 "CostOfGoodsAndServicesSold": 220960000000,
-                     *                 "GrossProfit": 195201000000,
-                     *                 "ResearchAndDevelopmentExpense": 34550000000,
-                     *                 "SellingGeneralAndAdministrativeExpense": 27601000000,
-                     *                 "OperatingExpenses": 62151000000,
-                     *                 "OperatingIncomeLoss": 133050000000,
-                     *                 "NonoperatingIncomeExpense": -321000000,
-                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": 132729000000,
-                     *                 "IncomeTaxExpenseBenefit": 20719000000,
-                     *                 "NetIncomeLoss": 112010000000,
-                     *                 "EarningsPerShareBasic": 7.49,
-                     *                 "EarningsPerShareDiluted": 7.46,
-                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": 14948500000,
-                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": 15004697000
+                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": 478834000000,
+                     *                 "CostOfGoodsAndServicesSold": 245232000000,
+                     *                 "GrossProfit": 233602000000,
+                     *                 "ResearchAndDevelopmentExpense": 45765000000,
+                     *                 "SellingGeneralAndAdministrativeExpense": 29774000000,
+                     *                 "OperatingExpenses": 75539000000,
+                     *                 "OperatingIncomeLoss": 158063000000,
+                     *                 "NonoperatingIncomeExpense": 1174000000,
+                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": 159237000000,
+                     *                 "IncomeTaxExpenseBenefit": 27062000000,
+                     *                 "NetIncomeLoss": 132175000000,
+                     *                 "EarningsPerShareBasic": 9.01,
+                     *                 "EarningsPerShareDiluted": 8.98,
+                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": 14661935000,
+                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": 14720306000
                      *               }
                      *             },
                      *             "balance_sheet": {
                      *               "facts": {
-                     *                 "CashAndCashEquivalentsAtCarryingValue": 35934000000,
-                     *                 "MarketableSecuritiesCurrent": 18763000000,
-                     *                 "AccountsReceivableNetCurrent": 39777000000,
-                     *                 "NontradeReceivablesCurrent": 33180000000,
-                     *                 "InventoryNet": 5718000000,
-                     *                 "OtherAssetsCurrent": 14585000000,
-                     *                 "AssetsCurrent": 147957000000,
-                     *                 "MarketableSecuritiesNoncurrent": 77723000000,
-                     *                 "PropertyPlantAndEquipmentNet": 49834000000,
-                     *                 "IntangibleAssetsNetExcludingGoodwillNoncurrent": 11093000000,
-                     *                 "OtherAssetsNoncurrent": 72634000000,
-                     *                 "AssetsNoncurrent": 211284000000
+                     *                 "CashAndCashEquivalentsAtCarryingValue": 36305000000,
+                     *                 "MarketableSecuritiesCurrent": 20417000000,
+                     *                 "AccountsReceivableNetCurrent": 43817000000,
+                     *                 "NontradeReceivablesCurrent": 39896000000,
+                     *                 "InventoryNet": 14541000000,
+                     *                 "OtherAssetsCurrent": 18881000000,
+                     *                 "AssetsCurrent": 173857000000,
+                     *                 "MarketableSecuritiesNoncurrent": 80213000000,
+                     *                 "PropertyPlantAndEquipmentNet": 52084000000,
+                     *                 "IntangibleAssetExcludingGoodwillAfterAccumulatedAmortizationNoncurrent": 20278000000,
+                     *                 "OtherAssetsNoncurrent": 78116000000,
+                     *                 "AssetsNoncurrent": 230691000000
                      *               }
                      *             },
                      *             "cash_flow_statement": {
                      *               "facts": {
-                     *                 "NetIncomeLoss": 112010000000,
-                     *                 "DepreciationDepletionAndAmortization": 11698000000,
-                     *                 "ShareBasedCompensation": 12863000000,
-                     *                 "OtherNoncashIncomeExpense": -89000000,
-                     *                 "IncreaseDecreaseInAccountsReceivable": -6682000000,
-                     *                 "IncreaseDecreaseInOtherReceivables": -347000000,
-                     *                 "IncreaseDecreaseInInventories": 1400000000,
-                     *                 "IncreaseDecreaseInOtherOperatingAssets": -9197000000,
-                     *                 "IncreaseDecreaseInAccountsPayable": 902000000,
-                     *                 "IncreaseDecreaseInOtherOperatingLiabilities": -11076000000,
-                     *                 "NetCashProvidedByUsedInOperatingActivities": 111482000000,
-                     *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": -24407000000
+                     *                 "NetIncomeLoss": 132175000000,
+                     *                 "DepreciationDepletionAndAmortization": 13423000000,
+                     *                 "ShareBasedCompensation": 13789000000,
+                     *                 "OtherNoncashIncomeExpense": 568000000,
+                     *                 "IncreaseDecreaseInAccountsReceivable": -3994000000,
+                     *                 "IncreaseDecreaseInOtherReceivables": -6716000000,
+                     *                 "IncreaseDecreaseInInventories": -8905000000,
+                     *                 "IncreaseDecreaseInOtherOperatingAssets": -21117000000,
+                     *                 "IncreaseDecreaseInAccountsPayable": 12171000000,
+                     *                 "IncreaseDecreaseInOtherOperatingLiabilities": 13703000000,
+                     *                 "NetCashProvidedByUsedInOperatingActivities": 145097000000,
+                     *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": -54945000000
                      *               }
                      *             }
                      *           }
@@ -5356,255 +5376,255 @@ export interface operations {
                      *         {
                      *           "ticker": "AAPL",
                      *           "cik": "0000320193",
-                     *           "fiscal_year": 2025,
+                     *           "fiscal_year": 2026,
                      *           "fiscal_quarter": 4,
-                     *           "calendar_year": 2025,
+                     *           "calendar_year": 2026,
                      *           "calendar_quarter": 3,
                      *           "fiscal_period_type": "annual",
-                     *           "period_end": "2025-09-27",
+                     *           "period_end": "2026-09-26",
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": {
                      *                 "RevenueFromContractWithCustomerExcludingAssessedTax": {
-                     *                   "value": 416161000000,
+                     *                   "value": 478834000000,
                      *                   "html_label": "Net sales",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-78"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-76"
                      *                 },
                      *                 "CostOfGoodsAndServicesSold": {
-                     *                   "value": 220960000000,
+                     *                   "value": 245232000000,
                      *                   "html_label": "Cost of sales",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-87"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-85"
                      *                 },
                      *                 "GrossProfit": {
-                     *                   "value": 195201000000,
+                     *                   "value": 233602000000,
                      *                   "html_label": "Gross margin",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-90"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-88"
                      *                 },
                      *                 "ResearchAndDevelopmentExpense": {
-                     *                   "value": 34550000000,
+                     *                   "value": 45765000000,
                      *                   "html_label": "Research and development",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-93"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-91"
                      *                 },
                      *                 "SellingGeneralAndAdministrativeExpense": {
-                     *                   "value": 27601000000,
+                     *                   "value": 29774000000,
                      *                   "html_label": "Selling, general and administrative",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-96"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-94"
                      *                 },
                      *                 "OperatingExpenses": {
-                     *                   "value": 62151000000,
+                     *                   "value": 75539000000,
                      *                   "html_label": "Total operating expenses",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-99"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-97"
                      *                 },
                      *                 "OperatingIncomeLoss": {
-                     *                   "value": 133050000000,
+                     *                   "value": 158063000000,
                      *                   "html_label": "Operating income",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-102"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-100"
                      *                 },
                      *                 "NonoperatingIncomeExpense": {
-                     *                   "value": -321000000,
+                     *                   "value": 1174000000,
                      *                   "html_label": "Other income/(expense), net",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-105"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-103"
                      *                 },
                      *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {
-                     *                   "value": 132729000000,
+                     *                   "value": 159237000000,
                      *                   "html_label": "Income before provision for income taxes",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-108"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-106"
                      *                 },
                      *                 "IncomeTaxExpenseBenefit": {
-                     *                   "value": 20719000000,
+                     *                   "value": 27062000000,
                      *                   "html_label": "Provision for income taxes",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-111"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-109"
                      *                 },
                      *                 "NetIncomeLoss": {
-                     *                   "value": 112010000000,
+                     *                   "value": 132175000000,
                      *                   "html_label": "Net income",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-114"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-112"
                      *                 },
                      *                 "EarningsPerShareBasic": {
-                     *                   "value": 7.49,
+                     *                   "value": 9.01,
                      *                   "html_label": "Basic (in dollars per share)",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-117"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-115"
                      *                 },
                      *                 "EarningsPerShareDiluted": {
-                     *                   "value": 7.46,
+                     *                   "value": 8.98,
                      *                   "html_label": "Diluted (in dollars per share)",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-120"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-118"
                      *                 },
                      *                 "WeightedAverageNumberOfSharesOutstandingBasic": {
-                     *                   "value": 14948500000,
+                     *                   "value": 14661935000,
                      *                   "html_label": "Basic (in shares)",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-123"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-121"
                      *                 },
                      *                 "WeightedAverageNumberOfDilutedSharesOutstanding": {
-                     *                   "value": 15004697000,
+                     *                   "value": 14720306000,
                      *                   "html_label": "Diluted (in shares)",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-126"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-124"
                      *                 }
                      *               }
                      *             },
                      *             "balance_sheet": {
                      *               "facts": {
                      *                 "CashAndCashEquivalentsAtCarryingValue": {
-                     *                   "value": 35934000000,
+                     *                   "value": 36305000000,
                      *                   "html_label": "Cash and cash equivalents",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-165"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-157"
                      *                 },
                      *                 "MarketableSecuritiesCurrent": {
-                     *                   "value": 18763000000,
+                     *                   "value": 20417000000,
                      *                   "html_label": "Marketable securities",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-167"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-159"
                      *                 },
                      *                 "AccountsReceivableNetCurrent": {
-                     *                   "value": 39777000000,
+                     *                   "value": 43817000000,
                      *                   "html_label": "Accounts receivable, net",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-169"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-161"
                      *                 },
                      *                 "NontradeReceivablesCurrent": {
-                     *                   "value": 33180000000,
+                     *                   "value": 39896000000,
                      *                   "html_label": "Vendor non-trade receivables",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-171"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-163"
                      *                 },
                      *                 "InventoryNet": {
-                     *                   "value": 5718000000,
+                     *                   "value": 14541000000,
                      *                   "html_label": "Inventories",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-173"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-165"
                      *                 },
                      *                 "OtherAssetsCurrent": {
-                     *                   "value": 14585000000,
+                     *                   "value": 18881000000,
                      *                   "html_label": "Other current assets",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-175"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-167"
                      *                 },
                      *                 "AssetsCurrent": {
-                     *                   "value": 147957000000,
+                     *                   "value": 173857000000,
                      *                   "html_label": "Total current assets",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-177"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-169"
                      *                 },
                      *                 "MarketableSecuritiesNoncurrent": {
-                     *                   "value": 77723000000,
+                     *                   "value": 80213000000,
                      *                   "html_label": "Marketable securities",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-179"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-171"
                      *                 },
                      *                 "PropertyPlantAndEquipmentNet": {
-                     *                   "value": 49834000000,
+                     *                   "value": 52084000000,
                      *                   "html_label": "Property, plant and equipment, net",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-181"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-173"
                      *                 },
-                     *                 "IntangibleAssetsNetExcludingGoodwillNoncurrent": {
-                     *                   "value": 11093000000,
-                     *                   "html_label": "Intangible assets, net",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-183"
+                     *                 "IntangibleAssetExcludingGoodwillAfterAccumulatedAmortizationNoncurrent": {
+                     *                   "value": 20278000000,
+                     *                   "html_label": "Non-current portion of intangible assets",
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-175"
                      *                 },
                      *                 "OtherAssetsNoncurrent": {
-                     *                   "value": 72634000000,
+                     *                   "value": 78116000000,
                      *                   "html_label": "Other non-current assets",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-185"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-177"
                      *                 },
                      *                 "AssetsNoncurrent": {
-                     *                   "value": 211284000000,
+                     *                   "value": 230691000000,
                      *                   "html_label": "Total non-current assets",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-187"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-179"
                      *                 }
                      *               }
                      *             },
                      *             "cash_flow_statement": {
                      *               "facts": {
                      *                 "NetIncomeLoss": {
-                     *                   "value": 112010000000,
+                     *                   "value": 132175000000,
                      *                   "html_label": "Net income",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-114"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-112"
                      *                 },
                      *                 "DepreciationDepletionAndAmortization": {
-                     *                   "value": 11698000000,
+                     *                   "value": 13423000000,
                      *                   "html_label": "Depreciation and amortization",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-280"
                      *                 },
                      *                 "ShareBasedCompensation": {
-                     *                   "value": 12863000000,
+                     *                   "value": 13789000000,
                      *                   "html_label": "Share-based compensation expense",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-283"
                      *                 },
                      *                 "OtherNoncashIncomeExpense": {
-                     *                   "value": -89000000,
+                     *                   "value": 568000000,
                      *                   "html_label": "Other",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-286"
                      *                 },
                      *                 "IncreaseDecreaseInAccountsReceivable": {
-                     *                   "value": -6682000000,
+                     *                   "value": -3994000000,
                      *                   "html_label": "Accounts receivable, net",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-289"
                      *                 },
                      *                 "IncreaseDecreaseInOtherReceivables": {
-                     *                   "value": -347000000,
+                     *                   "value": -6716000000,
                      *                   "html_label": "Vendor non-trade receivables",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-292"
                      *                 },
                      *                 "IncreaseDecreaseInInventories": {
-                     *                   "value": 1400000000,
+                     *                   "value": -8905000000,
                      *                   "html_label": "Inventories",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-295"
                      *                 },
                      *                 "IncreaseDecreaseInOtherOperatingAssets": {
-                     *                   "value": -9197000000,
+                     *                   "value": -21117000000,
                      *                   "html_label": "Other current and non-current assets",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-298"
                      *                 },
                      *                 "IncreaseDecreaseInAccountsPayable": {
-                     *                   "value": 902000000,
+                     *                   "value": 12171000000,
                      *                   "html_label": "Accounts payable",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-301"
                      *                 },
                      *                 "IncreaseDecreaseInOtherOperatingLiabilities": {
-                     *                   "value": -11076000000,
+                     *                   "value": 13703000000,
                      *                   "html_label": "Other current and non-current liabilities",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-304"
                      *                 },
                      *                 "NetCashProvidedByUsedInOperatingActivities": {
-                     *                   "value": 111482000000,
+                     *                   "value": 145097000000,
                      *                   "html_label": "Cash generated by operating activities",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-307"
                      *                 },
                      *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": {
-                     *                   "value": -24407000000,
+                     *                   "value": -54945000000,
                      *                   "html_label": "Purchases of marketable securities",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-310"
                      *                 }
                      *               }
@@ -5885,12 +5905,12 @@ export interface operations {
                      *         {
                      *           "ticker": "AAPL",
                      *           "cik": "0000320193",
-                     *           "fiscal_year": 2025,
+                     *           "fiscal_year": 2026,
                      *           "fiscal_quarter": 4,
-                     *           "calendar_year": 2025,
+                     *           "calendar_year": 2026,
                      *           "calendar_quarter": 3,
                      *           "fiscal_period_type": "annual",
-                     *           "period_end": "2025-09-27",
+                     *           "period_end": "2026-09-26",
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": [
@@ -5898,7 +5918,7 @@ export interface operations {
                      *                   "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
                      *                   "label": "Net sales",
                      *                   "depth": 0,
-                     *                   "value": 416161000000
+                     *                   "value": 478834000000
                      *                 }
                      *               ]
                      *             },
@@ -5918,7 +5938,7 @@ export interface operations {
                      *                           "concept": "CashAndCashEquivalentsAtCarryingValue",
                      *                           "label": "Cash and cash equivalents",
                      *                           "depth": 2,
-                     *                           "value": 35934000000
+                     *                           "value": 36305000000
                      *                         }
                      *                       ]
                      *                     }
@@ -5937,7 +5957,7 @@ export interface operations {
                      *                       "concept": "NetIncomeLoss",
                      *                       "label": "Net income",
                      *                       "depth": 1,
-                     *                       "value": 112010000000
+                     *                       "value": 132175000000
                      *                     }
                      *                   ]
                      *                 }
@@ -6017,7 +6037,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "count": 6217,
+                     *       "count": 6222,
                      *       "companies": [
                      *         {
                      *           "cik": "0001090872",
@@ -6090,12 +6110,12 @@ export interface operations {
                      *           "is_delisted": false,
                      *           "list_date": "1980-12-12",
                      *           "employees": 166000,
-                     *           "market_cap": 5092055343800,
+                     *           "market_cap": 4937502977600,
                      *           "shares_outstanding": 14594180000,
                      *           "insider_own_pct": 0.06,
                      *           "insider_own_shares": 9337764,
-                     *           "inst_own_pct": 62.74,
-                     *           "inst_own_shares": 9157104824,
+                     *           "inst_own_pct": 62.81,
+                     *           "inst_own_shares": 9167252708,
                      *           "short_float_pct": 0.9,
                      *           "short_float_shares": 131591865,
                      *           "homepage_url": "https://www.apple.com",
@@ -6255,13 +6275,13 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "dividends": [
                      *             {
-                     *               "ex_dividend_date": "2026-08-10",
-                     *               "declaration_date": "2026-07-30",
+                     *               "ex_dividend_date": "2026-11-12",
+                     *               "declaration_date": "2026-11-02",
                      *               "cash_amount": 0.27,
                      *               "dividend_type": "CD",
                      *               "frequency": 4,
-                     *               "pay_date": "2026-08-13",
-                     *               "record_date": "2026-08-10"
+                     *               "pay_date": "2026-11-16",
+                     *               "record_date": "2026-11-12"
                      *             }
                      *           ],
                      *           "next_url": "https://api.data.invinite.com/v1/company/dividends?identifier=AAPL&offset=40&limit=40"
@@ -6362,10 +6382,10 @@ export interface operations {
                      *           "periods": [
                      *             {
                      *               "fiscal_year": 2026,
-                     *               "fiscal_quarter": 3,
+                     *               "fiscal_quarter": 4,
                      *               "calendar_year": 2026,
-                     *               "calendar_quarter": 2,
-                     *               "period_end": "2026-06-27"
+                     *               "calendar_quarter": 3,
+                     *               "period_end": "2026-09-26"
                      *             }
                      *           ],
                      *           "next_url": "https://api.data.invinite.com/v1/company/fiscal-periods?identifier=AAPL&offset=40&limit=40"
@@ -6441,7 +6461,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "count": 752,
+                     *       "count": 753,
                      *       "companies": [
                      *         {
                      *           "cik": "0000320193",
@@ -6826,41 +6846,41 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "from": "2026-11-01",
-                     *       "to": "2026-11-15",
+                     *       "from": "2026-11-03",
+                     *       "to": "2026-11-17",
                      *       "events": [
                      *         {
-                     *           "event_id": "e648ae53-56f7-45fe-9b69-fb54efad212a",
+                     *           "event_id": "7d6c54cc-675a-4f92-9e55-ee61e984a774",
                      *           "source": "us",
-                     *           "cik": "0000889132",
-                     *           "symbol": "PKX",
-                     *           "company_name": "POSCO Holdings Inc. American Depositary Shares (Each representing 1/4th of a share of Common Stock)",
+                     *           "cik": "0002002473",
+                     *           "symbol": "BOW",
+                     *           "company_name": "Bowhead Specialty Holdings Inc.",
                      *           "exchange": "NYSE",
                      *           "event_type": "earnings_call",
                      *           "event_title": null,
                      *           "fiscal_year": 2026,
                      *           "fiscal_quarter": 3,
-                     *           "scheduled_at": "2026-11-02T06:00:00.000Z",
+                     *           "scheduled_at": "2026-11-03T00:00:00.000Z",
                      *           "tz": "America/New_York",
-                     *           "date_status": "confirmed",
-                     *           "call_time_source": "edgar",
-                     *           "call_time_confidence": "high",
-                     *           "session": "bmo",
+                     *           "date_status": "unconfirmed",
+                     *           "call_time_source": null,
+                     *           "call_time_confidence": null,
+                     *           "session": null,
                      *           "started_at": null,
                      *           "ended_at": null,
-                     *           "results_released_at": "2026-10-20T10:02:09.000Z",
-                     *           "capture_status": "pending",
+                     *           "results_released_at": "2026-11-03T13:08:01.000Z",
+                     *           "capture_status": "expired",
                      *           "reschedule_count": 0,
                      *           "has_transcript": false,
                      *           "has_audio": false,
                      *           "has_slides": false,
-                     *           "has_press_release": false,
+                     *           "has_press_release": true,
                      *           "has_documents": false,
                      *           "webcast_url": null,
                      *           "video": null
                      *         }
                      *       ],
-                     *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/calendar?offset=100&limit=100&from=2026-11-01&to=2026-11-15"
+                     *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/calendar?offset=100&limit=100&from=2026-11-03&to=2026-11-17"
                      *     }
                      */
                     "application/json": {
@@ -7054,7 +7074,6 @@ export interface operations {
                      *         "link_status": "live",
                      *         "url": null,
                      *         "pages_url": null,
-                     *         "expires_at": null,
                      *         "created_at": "2026-10-16T19:06:46.674Z",
                      *         "updated_at": "2026-10-16T20:49:35.743Z"
                      *       }
@@ -7157,15 +7176,10 @@ export interface operations {
                              * @enum {string|null}
                              */
                             link_status: "expired" | "live" | null;
-                            /** @description Signed download URL; null for a link-only row (use source_url) */
+                            /** @description Permanent public download URL; null for a link-only row (use source_url) */
                             url: null | string;
-                            /** @description Signed URL of the per-page text (JSON); null before the text was extracted */
+                            /** @description Permanent public URL of the per-page text (JSON); null before the text was extracted */
                             pages_url: null | string;
-                            /**
-                             * Format: date-time
-                             * @description When the signed URLs stop working
-                             */
-                            expires_at: null | string;
                             /**
                              * Format: date-time
                              * @description When we first stored the document
@@ -7313,9 +7327,8 @@ export interface operations {
                      *           "bytes": 212393,
                      *           "pages": null,
                      *           "link_status": null,
-                     *           "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/reports/2026/air-india.htm?X-Amz-Signature=…",
-                     *           "pages_url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/reports/2026/text/air-india.htm.pages.json?X-Amz-Signature=…",
-                     *           "expires_at": "2026-11-01T16:57:14.011Z",
+                     *           "url": "https://storage-prod.invinite.com/earnings_events/us/789019/reports/2026/air-india.htm",
+                     *           "pages_url": "https://storage-prod.invinite.com/earnings_events/us/789019/reports/2026/text/air-india.htm.pages.json",
                      *           "created_at": "2026-10-30T21:33:59.538Z",
                      *           "updated_at": "2026-10-31T18:27:09.495Z"
                      *         }
@@ -7421,15 +7434,10 @@ export interface operations {
                              * @enum {string|null}
                              */
                             link_status: "expired" | "live" | null;
-                            /** @description Signed download URL; null for a link-only row (use source_url) */
+                            /** @description Permanent public download URL; null for a link-only row (use source_url) */
                             url: null | string;
-                            /** @description Signed URL of the per-page text (JSON); null before the text was extracted */
+                            /** @description Permanent public URL of the per-page text (JSON); null before the text was extracted */
                             pages_url: null | string;
-                            /**
-                             * Format: date-time
-                             * @description When the signed URLs stop working
-                             */
-                            expires_at: null | string;
                             /**
                              * Format: date-time
                              * @description When we first stored the document
@@ -7762,8 +7770,7 @@ export interface operations {
                      *           "source_label": null,
                      *           "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/OutlookFY27Q1",
                      *           "accession_number": null,
-                     *           "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-cfo-commentary.pdf?X-Amz-Signature=…",
-                     *           "expires_at": "2026-11-01T16:57:13.792Z",
+                     *           "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-cfo-commentary.pdf",
                      *           "content_type": "application/pdf",
                      *           "bytes": 487074,
                      *           "pages": 6,
@@ -7824,13 +7831,8 @@ export interface operations {
                             source_url: string;
                             /** @description SEC accession number (EDGAR documents) */
                             accession_number: null | string;
-                            /** @description Signed download URL; null for link-only rows (sec_filing) or a failed download: use source_url */
+                            /** @description Permanent public download URL; null for link-only rows (sec_filing) or a failed download: use source_url */
                             url: null | string;
-                            /**
-                             * Format: date-time
-                             * @description When url stops working
-                             */
-                            expires_at: null | string;
                             /** @description MIME type */
                             content_type: null | string;
                             /** @description File size */
@@ -7978,8 +7980,7 @@ export interface operations {
                      *           "group": "reports/2025",
                      *           "group_label": "Reports 2025",
                      *           "category": "reports",
-                     *           "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/reports/2025/2025-proxy-statement.pdf?X-Amz-Signature=…",
-                     *           "expires_at": "2026-11-01T16:57:14.796Z"
+                     *           "url": "https://storage-prod.invinite.com/earnings_events/us/789019/reports/2025/2025-proxy-statement.pdf"
                      *         }
                      *       ]
                      *     }
@@ -8046,13 +8047,8 @@ export interface operations {
                              * @enum {string|null}
                              */
                             category: "earnings" | "esg" | "events" | "governance" | "other" | "presentations" | "reports" | "shareholder" | null;
-                            /** @description Signed URL of the stored file; null for a link-only row */
+                            /** @description Permanent public URL of the stored file; null for a link-only row */
                             url: null | string;
-                            /**
-                             * Format: date-time
-                             * @description When url stops working
-                             */
-                            expires_at: null | string;
                         }>;
                     };
                 };
@@ -9420,7 +9416,7 @@ export interface operations {
                      *       "participants": [
                      *         {
                      *           "speaker_label": "spk00",
-                     *           "person_id": "a402b882-300f-4241-8368-f62dff516b0d",
+                     *           "person_id": "6682be14-22ff-45d6-820e-c0018cdfc35f",
                      *           "name": "Operator",
                      *           "title": null,
                      *           "firm": null,
@@ -10390,7 +10386,7 @@ export interface operations {
                      *           "chunk_index": 92,
                      *           "text": "And Satya, with the strong growth of the Azure AI platform offering, can you give us color on what's driving that? Is it, again, enterprise? Is it digitally native? Obviously, it's a mix of both. But any color that shows the ramp of that en…",
                      *           "text_truncated": false,
-                     *           "score": 4.0702,
+                     *           "score": 4.0714,
                      *           "match": {
                      *             "type": "lexical",
                      *             "lexical_rank": 1,
@@ -10468,7 +10464,7 @@ export interface operations {
                             slide: null | {
                                 /** @description 1-based page of the deck */
                                 page: number;
-                                /** @description Signed page image URL; null without the PRO plan or without an image */
+                                /** @description Permanent public page image URL; null without the PRO plan or without an image */
                                 image_url: null | string;
                             };
                         }>;
@@ -10549,8 +10545,7 @@ export interface operations {
                      *         "conference_date": "2026-07-29T00:00:00.000Z"
                      *       },
                      *       "deck": {
-                     *         "url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-earnings-presentation.pdf?X-Amz-Signature=…",
-                     *         "expires_at": "2026-11-01T16:57:13.560Z",
+                     *         "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-earnings-presentation.pdf",
                      *         "pages": 23,
                      *         "origin": "ir_page",
                      *         "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/SlidesFY26Q4.pptx",
@@ -10560,7 +10555,7 @@ export interface operations {
                      *         {
                      *           "page": 1,
                      *           "title": null,
-                     *           "image_url": "https://invinite-prod.r2.cloudflarestorage.com/earnings_events/us/789019/earnings/fy2026/q4/slides/q4-fy2026-earnings-presentation/page-001.webp?X-Amz-Signature=…"
+                     *           "image_url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/slides/q4-fy2026-earnings-presentation/page-001.webp"
                      *         }
                      *       ],
                      *       "timeline": []
@@ -10585,13 +10580,8 @@ export interface operations {
                         };
                         /** @description The deck PDF; null for slides captured from the webcast player (page images only) */
                         deck: null | {
-                            /** @description Signed download URL; a bearer credential, do not share or cache */
+                            /** @description Permanent public URL of the deck PDF */
                             url: string;
-                            /**
-                             * Format: date-time
-                             * @description When the signed URL stops working
-                             */
-                            expires_at: string;
                             /** @description Page count; null = unknown */
                             pages: null | number;
                             /** @description Where the deck was found */
@@ -10610,7 +10600,7 @@ export interface operations {
                             page: number;
                             /** @description Slide title */
                             title: null | string;
-                            /** @description Signed URL of the page image (same expiry as the deck) */
+                            /** @description Permanent public URL of the page image */
                             image_url: string;
                             /** @description Page text (only with include=markdown) */
                             markdown?: null | string;
@@ -10619,7 +10609,7 @@ export interface operations {
                         timeline: Array<{
                             /** @description When the slide appeared, in ms from the start of the event's audio file */
                             at_ms: number;
-                            /** @description Signed URL of the slide screenshot (same expiry as the deck) */
+                            /** @description Permanent public URL of the slide screenshot */
                             image_url: string;
                         }>;
                     };
@@ -10733,14 +10723,21 @@ export interface operations {
                      *       "word_count": 9372,
                      *       "qa_start_ms": 2298917,
                      *       "format": "speakers",
-                     *       "pdf": null,
+                     *       "pdf": {
+                     *         "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v6.pdf",
+                     *         "version": 6,
+                     *         "sha256": "50159713ebd76f19e01b323ed7ccc53eb194148c533f2ed644118f8c09b6ba52",
+                     *         "bytes": 80417,
+                     *         "pages": 14,
+                     *         "generated_at": "2026-11-01T23:39:36.048Z"
+                     *       },
                      *       "data": [
                      *         {
                      *           "speaker_label": "spk00",
                      *           "name": "Operator",
                      *           "title": null,
                      *           "role": "operator",
-                     *           "person_id": "a402b882-300f-4241-8368-f62dff516b0d",
+                     *           "person_id": "6682be14-22ff-45d6-820e-c0018cdfc35f",
                      *           "start_ms": 800,
                      *           "end_ms": 24977,
                      *           "speaker_confidence": 1,
@@ -11119,7 +11116,14 @@ export interface operations {
                      *           "word_count": 9372,
                      *           "change_note": "naming",
                      *           "corrected_by": null,
-                     *           "pdf": null
+                     *           "pdf": {
+                     *             "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v3.pdf",
+                     *             "version": 3,
+                     *             "sha256": "e1d777843ae18c33e86254260d18f58bfe65bb33cff758323b8f1763342076a5",
+                     *             "bytes": 80285,
+                     *             "pages": 14,
+                     *             "generated_at": "2026-11-01T23:42:38.503Z"
+                     *           }
                      *         }
                      *       ]
                      *     }
@@ -11843,69 +11847,69 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
                      *                 "3": {
-                     *                   "cagr_total_assets": 0.61,
-                     *                   "cagr_total_revenue": 1.81,
-                     *                   "cagr_cash_from_operating_activities": -3,
-                     *                   "cagr_total_liabilities": -1.86,
-                     *                   "cagr_cash_from_investing_activities": -56.04,
-                     *                   "cagr_gross_profit": 4.56,
-                     *                   "cagr_cash_from_financing_activities": 2.91,
-                     *                   "cagr_ebitda": 3.5,
-                     *                   "cagr_total_equity": 13.32,
-                     *                   "cagr_shareholders_equity": 13.32,
-                     *                   "cagr_operating_income_ebit": 3.66,
-                     *                   "cagr_free_cash_flow": -3.95,
-                     *                   "cagr_dividend_per_share": 4.07,
-                     *                   "cagr_ebt": 3.68,
-                     *                   "cagr_net_income": 3.92,
-                     *                   "cagr_basic_eps": 6.79,
-                     *                   "cagr_diluted_eps": 6.88
+                     *                   "cagr_total_revenue": 7.7,
+                     *                   "cagr_cash_from_operating_activities": 9.49,
+                     *                   "cagr_total_assets": 4.69,
+                     *                   "cagr_cash_from_investing_activities": -16.46,
+                     *                   "cagr_total_liabilities": 0.23,
+                     *                   "cagr_gross_profit": 11.36,
+                     *                   "cagr_total_equity": 21.73,
+                     *                   "cagr_cash_from_financing_activities": 5.52,
+                     *                   "cagr_ebitda": 9.01,
+                     *                   "cagr_shareholders_equity": 21.73,
+                     *                   "cagr_operating_income_ebit": 11.41,
+                     *                   "cagr_free_cash_flow": 10.96,
+                     *                   "cagr_ebt": 11.87,
+                     *                   "cagr_dividend_per_share": 3.96,
+                     *                   "cagr_net_income": 10.87,
+                     *                   "cagr_basic_eps": 13.51,
+                     *                   "cagr_diluted_eps": 13.57
                      *                 },
                      *                 "5": {
-                     *                   "cagr_total_assets": 2.09,
-                     *                   "cagr_total_revenue": 8.68,
-                     *                   "cagr_cash_from_operating_activities": 6.68,
-                     *                   "cagr_cash_from_investing_activities": 4.19,
-                     *                   "cagr_gross_profit": 13.21,
-                     *                   "cagr_total_liabilities": 2,
-                     *                   "cagr_cash_from_financing_activities": 6.81,
-                     *                   "cagr_ebitda": 13.35,
-                     *                   "cagr_total_equity": 2.45,
-                     *                   "cagr_shareholders_equity": 2.45,
-                     *                   "cagr_operating_income_ebit": 14.95,
-                     *                   "cagr_free_cash_flow": 6.13,
-                     *                   "cagr_ebt": 14.62,
-                     *                   "cagr_dividend_per_share": 4.92,
-                     *                   "cagr_net_income": 14.3,
-                     *                   "cagr_basic_eps": 17.74,
-                     *                   "cagr_diluted_eps": 17.86
+                     *                   "cagr_total_assets": 2.88,
+                     *                   "cagr_cash_from_operating_activities": 6.88,
+                     *                   "cagr_total_revenue": 5.53,
+                     *                   "cagr_total_liabilities": 0.31,
+                     *                   "cagr_gross_profit": 8.86,
+                     *                   "cagr_cash_from_investing_activities": 3.51,
+                     *                   "cagr_ebitda": 6.27,
+                     *                   "cagr_total_equity": 12.18,
+                     *                   "cagr_cash_from_financing_activities": 6.42,
+                     *                   "cagr_shareholders_equity": 12.18,
+                     *                   "cagr_operating_income_ebit": 7.73,
+                     *                   "cagr_free_cash_flow": 7.92,
+                     *                   "cagr_dividend_per_share": 4.36,
+                     *                   "cagr_ebt": 7.83,
+                     *                   "cagr_net_income": 6.9,
+                     *                   "cagr_basic_eps": 9.71,
+                     *                   "cagr_diluted_eps": 9.87
                      *                 },
                      *                 "10": {
-                     *                   "cagr_total_assets": 2.15,
-                     *                   "cagr_total_revenue": 5.94,
-                     *                   "cagr_cash_from_operating_activities": 3.21,
-                     *                   "cagr_cash_from_investing_activities": -16.57,
-                     *                   "cagr_total_liabilities": 5.25,
-                     *                   "cagr_gross_profit": 7.62,
-                     *                   "cagr_ebitda": 7.15,
-                     *                   "cagr_cash_from_financing_activities": 21.15,
-                     *                   "cagr_total_equity": -4.7,
-                     *                   "cagr_free_cash_flow": 3.5,
-                     *                   "cagr_shareholders_equity": -4.7,
-                     *                   "cagr_operating_income_ebit": 6.45,
-                     *                   "cagr_dividend_per_share": 7.46,
-                     *                   "cagr_ebt": 6.23,
-                     *                   "cagr_net_income": 7.69,
-                     *                   "cagr_basic_eps": 12.43,
-                     *                   "cagr_diluted_eps": 12.46
+                     *                   "cagr_total_revenue": 8.3,
+                     *                   "cagr_total_assets": 2.32,
+                     *                   "cagr_cash_from_operating_activities": 8.22,
+                     *                   "cagr_total_liabilities": 4.22,
+                     *                   "cagr_gross_profit": 10.73,
+                     *                   "cagr_cash_from_investing_activities": -9.32,
+                     *                   "cagr_total_equity": -1.34,
+                     *                   "cagr_cash_from_financing_activities": 20.06,
+                     *                   "cagr_ebitda": 10.23,
+                     *                   "cagr_operating_income_ebit": 10.17,
+                     *                   "cagr_shareholders_equity": -1.34,
+                     *                   "cagr_free_cash_flow": 9.87,
+                     *                   "cagr_dividend_per_share": 6.97,
+                     *                   "cagr_ebt": 10,
+                     *                   "cagr_net_income": 11.21,
+                     *                   "cagr_basic_eps": 15.75,
+                     *                   "cagr_diluted_eps": 15.76
                      *                 }
                      *               }
                      *             }
@@ -12015,31 +12019,31 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
                      *                 "year_over_year": {
-                     *                   "growth_cash_from_operating_activities": -5.73,
-                     *                   "growth_total_revenue": 6.43,
-                     *                   "growth_total_assets": -1.57,
-                     *                   "growth_cash_from_investing_activities": 417.72,
-                     *                   "growth_total_liabilities": -7.31,
-                     *                   "growth_gross_profit": 8.04,
-                     *                   "growth_total_equity": 29.47,
-                     *                   "growth_ebitda": 7.49,
-                     *                   "growth_cash_from_financing_activities": -1.06,
-                     *                   "growth_shareholders_equity": 29.47,
-                     *                   "growth_operating_income_ebit": 7.98,
-                     *                   "growth_free_cash_flow": -9.23,
-                     *                   "growth_ebt": 7.49,
-                     *                   "growth_dividend_per_share": 3.91,
-                     *                   "growth_net_income": 19.5,
-                     *                   "growth_basic_eps": 22.59,
-                     *                   "growth_diluted_eps": 22.7
+                     *                   "growth_cash_from_operating_activities": 30.15,
+                     *                   "growth_total_revenue": 15.06,
+                     *                   "growth_total_assets": 12.61,
+                     *                   "growth_cash_from_investing_activities": -213.72,
+                     *                   "growth_total_liabilities": 2.43,
+                     *                   "growth_gross_profit": 19.67,
+                     *                   "growth_total_equity": 52.03,
+                     *                   "growth_ebitda": 19.17,
+                     *                   "growth_cash_from_financing_activities": 5.6,
+                     *                   "growth_shareholders_equity": 52.03,
+                     *                   "growth_operating_income_ebit": 18.8,
+                     *                   "growth_free_cash_flow": 37.75,
+                     *                   "growth_ebt": 19.97,
+                     *                   "growth_dividend_per_share": 3.94,
+                     *                   "growth_net_income": 18,
+                     *                   "growth_basic_eps": 20.29,
+                     *                   "growth_diluted_eps": 20.38
                      *                 }
                      *               }
                      *             }
@@ -12149,39 +12153,39 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
                      *                 "solvency": {
-                     *                   "ratio_debt_to_assets_ratio": 0.27,
-                     *                   "ratio_debt_to_equity_ratio": 1.34,
-                     *                   "ratio_long_term_debt_to_total_assets_ratio": 0.22,
-                     *                   "ratio_long_term_debt_to_total_equity_ratio": 1.06
+                     *                   "ratio_debt_to_assets_ratio": 0.2,
+                     *                   "ratio_debt_to_equity_ratio": 0.73,
+                     *                   "ratio_long_term_debt_to_total_assets_ratio": 0.17,
+                     *                   "ratio_long_term_debt_to_total_equity_ratio": 0.61
                      *                 },
                      *                 "profitability": {
-                     *                   "ratio_return_on_assets_pct": 31.18,
-                     *                   "ratio_return_on_equity_pct": 151.91,
-                     *                   "ratio_return_on_invested_capital_pct": 95.4,
-                     *                   "ratio_gross_margin_pct": 46.91,
-                     *                   "ratio_operating_margin_pct": 31.97,
-                     *                   "ratio_ebitda_margin_pct": 34.78,
-                     *                   "ratio_net_margin_pct": 26.92
+                     *                   "ratio_return_on_assets_pct": 32.67,
+                     *                   "ratio_return_on_equity_pct": 117.92,
+                     *                   "ratio_return_on_invested_capital_pct": 95.82,
+                     *                   "ratio_gross_margin_pct": 48.79,
+                     *                   "ratio_operating_margin_pct": 33.01,
+                     *                   "ratio_ebitda_margin_pct": 34.03,
+                     *                   "ratio_net_margin_pct": 27.6
                      *                 },
                      *                 "liquidity": {
-                     *                   "ratio_quick_ratio": 0.57,
-                     *                   "ratio_current_ratio": 0.89,
-                     *                   "ratio_inventory_turnover": 38.64,
-                     *                   "ratio_asset_turnover": 1.16
+                     *                   "ratio_quick_ratio": 0.59,
+                     *                   "ratio_current_ratio": 1.02,
+                     *                   "ratio_inventory_turnover": 16.86,
+                     *                   "ratio_asset_turnover": 1.18
                      *                 },
                      *                 "valuation": {
-                     *                   "ratio_price_to_earnings_ratio": 33.69,
-                     *                   "ratio_price_to_sales_ratio": 9.07,
-                     *                   "ratio_price_to_cash_flow_ratio": 33.85,
-                     *                   "ratio_price_to_book_ratio": 51.18
+                     *                   "ratio_price_to_earnings_ratio": 37.5,
+                     *                   "ratio_price_to_sales_ratio": 10.35,
+                     *                   "ratio_price_to_cash_flow_ratio": 34.16,
+                     *                   "ratio_price_to_book_ratio": 44.22
                      *                 }
                      *               }
                      *             }
@@ -12255,7 +12259,7 @@ export interface operations {
                     /**
                      * @example {
                      *       "status": "ok",
-                     *       "timestamp": "2026-11-01T16:41:51.123Z"
+                     *       "timestamp": "2026-11-03T19:38:41.738Z"
                      *     }
                      */
                     "application/json": {
@@ -12987,14 +12991,14 @@ export interface operations {
                      *           "listing_date": "2026-10-30",
                      *           "announced_date": "2026-10-09",
                      *           "currency_code": "USD",
-                     *           "final_issue_price": null,
+                     *           "final_issue_price": 19,
                      *           "highest_offer_price": 21,
-                     *           "ipo_status": "new",
+                     *           "ipo_status": "history",
                      *           "isin": "US68348G1022",
                      *           "issue_end_date": null,
                      *           "issue_start_date": null,
                      *           "issuer_name": "OPay Ltd.",
-                     *           "last_updated": "2026-10-30T00:00:00.000Z",
+                     *           "last_updated": "2026-11-02T00:00:00.000Z",
                      *           "lot_size": 100,
                      *           "lowest_offer_price": 19,
                      *           "max_shares_offered": 16000000,
@@ -13004,12 +13008,12 @@ export interface operations {
                      *           "security_type": "ADRC",
                      *           "shares_outstanding": null,
                      *           "ticker": "OPAY",
-                     *           "total_offer_size": 336000000,
+                     *           "total_offer_size": 304000000,
                      *           "us_code": "68348G102",
                      *           "registration": {
                      *             "cik": "0002103076",
                      *             "track_key": "333-299385",
-                     *             "stage": "effective",
+                     *             "stage": "trading",
                      *             "final_offer_price": null
                      *           }
                      *         }
@@ -13162,21 +13166,21 @@ export interface operations {
                      * @example {
                      *       "registrations": [
                      *         {
-                     *           "cik": "0002108121",
-                     *           "company_name": "Ionetix Corp / DE /",
-                     *           "track_key": "333-298160",
+                     *           "cik": "0002158764",
+                     *           "company_name": "Ja-Lika Corp",
+                     *           "track_key": "333-299767",
                      *           "form_family": "S-1",
-                     *           "stage": "registered",
+                     *           "stage": "price_range",
                      *           "is_spac": false,
                      *           "proposed_symbols": null,
                      *           "exchange": null,
-                     *           "price_range_low": null,
-                     *           "price_range_high": null,
-                     *           "shares_offered": null,
+                     *           "price_range_low": "0.0600",
+                     *           "price_range_high": "0.0600",
+                     *           "shares_offered": 4000000,
                      *           "final_offer_price": null,
                      *           "final_shares_offered": null,
-                     *           "first_public_at": "2026-10-30T21:23:29.000Z",
-                     *           "price_range_at": null,
+                     *           "first_public_at": "2026-11-02T21:53:21.000Z",
+                     *           "price_range_at": "2026-11-02T21:53:21.000Z",
                      *           "exchange_approved_at": null,
                      *           "effective_at": null,
                      *           "priced_at": null,
@@ -13185,12 +13189,12 @@ export interface operations {
                      *           "massive": null,
                      *           "filings": [
                      *             {
-                     *               "accession_number": "0001213900-26-114512",
-                     *               "form_type": "S-1/A",
+                     *               "accession_number": "0001171520-26-000318",
+                     *               "form_type": "S-1",
                      *               "signal": "registration",
-                     *               "filed_at": "2026-10-30T21:23:29.000Z",
-                     *               "filing_date": "2026-10-30",
-                     *               "html_url": "https://storage-prod.invinite.com/filing_htmls/2108121_0001213900-26-114512_S-1/A_2026-10-30.html"
+                     *               "filed_at": "2026-11-02T21:53:21.000Z",
+                     *               "filing_date": "2026-11-02",
+                     *               "html_url": "https://storage-prod.invinite.com/filing_htmls/2158764_0001171520-26-000318_S-1_2026-11-02.html"
                      *             }
                      *           ]
                      *         }
@@ -13526,7 +13530,7 @@ export interface operations {
                      *       "item_id": "13351ae7-876b-4839-ba2b-78873f6b4e00",
                      *       "purpose": "display",
                      *       "url": "https://invinite-news-prod.r2.cloudflarestorage.com/earnings_events/news/assets/13351ae7-876b-4839-ba2b-78873f6b4e00/612cd78d-b618-42c6-b3be-ff5c9df1a0f7/ab99180f.jpg?X-Amz-Signature=…",
-                     *       "expires_at": "2026-11-01T16:43:17.261Z",
+                     *       "expires_at": "2026-11-03T19:40:06.757Z",
                      *       "content_type": "image/jpeg",
                      *       "byte_size": 238875,
                      *       "credit": null
@@ -13860,7 +13864,7 @@ export interface operations {
                      *       "first_seen_at": "2026-10-30T17:43:54.126Z",
                      *       "source": {
                      *         "id": "ir",
-                     *         "name": "Arm Holdings plc American Depositary Shares",
+                     *         "name": "Arm Holdings plc",
                      *         "host": "newsroom.arm.com"
                      *       },
                      *       "kind": "other",
@@ -13882,7 +13886,7 @@ export interface operations {
                      *           "publisher": {
                      *             "cik": "0001973239",
                      *             "symbol": "ARM",
-                     *             "name": "Arm Holdings plc American Depositary Shares"
+                     *             "name": "Arm Holdings plc"
                      *           },
                      *           "url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
                      *           "publication_type": "company_blog",
@@ -13896,7 +13900,7 @@ export interface operations {
                      *       "model_processing_allowed": true,
                      *       "media_count": 3,
                      *       "attribution": {
-                     *         "publisher": "Arm Holdings plc American Depositary Shares",
+                     *         "publisher": "Arm Holdings plc",
                      *         "publisher_host": "newsroom.arm.com",
                      *         "source_url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
                      *         "published_at": "2026-10-29T16:02:31.000Z",
@@ -13944,17 +13948,17 @@ export interface operations {
                      *           "can_display": true,
                      *           "can_download": false,
                      *           "download_url": "https://api.data.invinite.com/v1/news/13351ae7-876b-4839-ba2b-78873f6b4e00/assets/a9247c9e-9539-4cd8-9d9c-784be7138839/download",
-                     *           "view_url": "https://api.data.invinite.com/v1/news/13351ae7-876b-4839-ba2b-78873f6b4e00/assets/a9247c9e-9539-4cd8-9d9c-784be7138839/view?exp=1793635200&sig=…"
+                     *           "view_url": "https://api.data.invinite.com/v1/news/13351ae7-876b-4839-ba2b-78873f6b4e00/assets/a9247c9e-9539-4cd8-9d9c-784be7138839/view?exp=1793818800&sig=…"
                      *         }
                      *       ],
                      *       "developments": [],
                      *       "pdf": {
-                     *         "url": "https://storage-prod.invinite.com/earnings_events/news/us/1973239/2026-10-29/13351ae7-876b-4839-ba2b-78873f6b4e00/r1-ce05e9bd.pdf",
+                     *         "url": "https://storage-prod.invinite.com/earnings_events/news/us/1973239/2026-10-29/13351ae7-876b-4839-ba2b-78873f6b4e00/r1-ce05e9bd-t5.pdf",
                      *         "version": 1,
-                     *         "sha256": "49382d4d963797da8edff046f1be2b0efd3171af3cbe3f79751fbbf32c0bfa9c",
-                     *         "bytes": 725653,
-                     *         "pages": 5,
-                     *         "generated_at": "2026-11-01T15:23:08.403Z"
+                     *         "sha256": "3e3abef592e53ae5945b29a051cc8160c29fedc5551dd8ae9e01de9ba39cbd9a",
+                     *         "bytes": 251228,
+                     *         "pages": 6,
+                     *         "generated_at": "2026-11-02T05:37:17.361Z"
                      *       },
                      *       "body_text": "Developers can use AI coding agents to edit code, build, test, and debug within one native Arm development environment. Keeping these tasks on the target architecture can give developers earlier feedback on dependencies, test results, and r…",
                      *       "body_html": "<p>Developers can use AI coding agents to edit code, build, test, and debug within one native Arm development environment. Keeping these tasks on the target architecture can give developers earlier feedback on dependencies, test results, an…",
@@ -14435,16 +14439,16 @@ export interface operations {
                      * @example {
                      *       "items": [
                      *         {
-                     *           "id": "20158adf-213e-441d-acf6-ba10954b71d1",
-                     *           "title": "TotalEnergies Strengthens Cooperation with PETRONAS SONANGOL and OIL INDIA LIMITED to Reduce Methane Emissions",
-                     *           "description": "Paris, November 1, 2026 – On the occasion of the meeting of the Oil and Gas Decarbonization Charter (OGDC) member companies in Abu Dhabi, TotalEnergies highlights its cooperation with National Oil & Gas Companies to reduce methane emissions…",
-                     *           "url": "https://totalenergies.com/newsroom/totalenergies-strengthens-cooperation-with-petronas-sonangol-and-oil-india-limited-to-reduce-methane-emissions/?lang=eng",
-                     *           "published_at": "2026-11-01T12:00:00.000Z",
-                     *           "first_seen_at": "2026-11-01T08:06:37.935Z",
+                     *           "id": "a3e22c57-1e1e-47ad-821b-a88a0152878e",
+                     *           "title": "Pfizer Announces Positive Top-Line Results from Phase 3 Study of Hemophilia B Gene Therapy Candidate",
+                     *           "description": null,
+                     *           "url": "https://www.pfizer.com/news/press-release/press-release-detail/pfizer-announces-positive-top-line-results-phase-3-study",
+                     *           "published_at": "2026-11-03T18:30:31.992Z",
+                     *           "first_seen_at": "2026-11-03T18:30:31.992Z",
                      *           "source": {
                      *             "id": "ir",
-                     *             "name": "TotalEnergies SE",
-                     *             "host": "totalenergies.com"
+                     *             "name": "Pfizer Inc.",
+                     *             "host": "www.pfizer.com"
                      *           },
                      *           "kind": "other",
                      *           "topics": [],
@@ -14452,45 +14456,45 @@ export interface operations {
                      *           "is_earnings_news": false,
                      *           "earnings": null,
                      *           "symbols": [
-                     *             "TTE"
+                     *             "PFE"
                      *           ],
                      *           "ciks": [
-                     *             "0000879764"
+                     *             "0000078003"
                      *           ],
-                     *           "revision": 2,
+                     *           "revision": 1,
                      *           "supersedes_id": null,
                      *           "publications": [
                      *             {
-                     *               "source_id": "ir:totalenergies.com",
+                     *               "source_id": "ir:www.pfizer.com",
                      *               "publisher": {
-                     *                 "cik": "0000879764",
-                     *                 "symbol": "TTE",
-                     *                 "name": "TotalEnergies"
+                     *                 "cik": "0000078003",
+                     *                 "symbol": "PFE",
+                     *                 "name": "Pfizer Inc."
                      *               },
-                     *               "url": "https://totalenergies.com/newsroom/totalenergies-strengthens-cooperation-with-petronas-sonangol-and-oil-india-limited-to-reduce-methane-emissions/?lang=eng",
-                     *               "publication_type": "press_release",
-                     *               "published_at": "2026-11-01T12:00:00.000Z",
-                     *               "modified_at": "2026-11-01T07:11:02.000Z",
+                     *               "url": "https://www.pfizer.com/news/press-release/press-release-detail/pfizer-announces-positive-top-line-results-phase-3-study",
+                     *               "publication_type": "unknown",
+                     *               "published_at": "2026-11-03T18:30:31.992Z",
+                     *               "modified_at": null,
                      *               "categories": [],
                      *               "tags": []
                      *             }
                      *           ],
                      *           "publications_truncated": false,
                      *           "model_processing_allowed": true,
-                     *           "media_count": 1,
+                     *           "media_count": 0,
                      *           "attribution": {
-                     *             "publisher": "TotalEnergies",
-                     *             "publisher_host": "totalenergies.com",
-                     *             "source_url": "https://totalenergies.com/newsroom/totalenergies-strengthens-cooperation-with-petronas-sonangol-and-oil-india-limited-to-reduce-methane-emissions/?lang=eng",
-                     *             "published_at": "2026-11-01T12:00:00.000Z",
+                     *             "publisher": "Pfizer Inc.",
+                     *             "publisher_host": "www.pfizer.com",
+                     *             "source_url": "https://www.pfizer.com/news/press-release/press-release-detail/pfizer-announces-positive-top-line-results-phase-3-study",
+                     *             "published_at": "2026-11-03T18:30:31.992Z",
                      *             "rights": "issuer",
                      *             "edgar": null,
                      *             "statement": "Reproduced verbatim from the publisher; © the publisher. Source and date above."
                      *           }
                      *         }
                      *       ],
-                     *       "next_cursor": "WyIyMDI2LTEwLTMwVDEyOjAwOjAwLjAwMDAwMFoiLCI4ZGIyZmQyMi03MTA0LTQ3OGQtOTQ1My0xOTBjNWU4ZDM0YTciXQ",
-                     *       "next_url": "https://api.data.invinite.com/v1/news?cursor=WyIyMDI2LTEwLTMwVDEyOjAwOjAwLjAwMDAwMFoiLCI4ZGIyZmQyMi03MTA0LTQ3OGQtOTQ1My0xOTBjNWU4ZDM0YTciXQ"
+                     *       "next_cursor": "WyIyMDI2LTExLTAzVDEyOjAwOjAwLjAwMDAwMFoiLCIyNGU4OGZlMC02MDA5LTQ0NzAtODhlMi1iNGE3OTg0YTk1ZmQiXQ",
+                     *       "next_url": "https://api.data.invinite.com/v1/news?cursor=WyIyMDI2LTExLTAzVDEyOjAwOjAwLjAwMDAwMFoiLCIyNGU4OGZlMC02MDA5LTQ0NzAtODhlMi1iNGE3OTg0YTk1ZmQiXQ"
                      *     }
                      */
                     "application/json": {
@@ -14700,7 +14704,7 @@ export interface operations {
                      *       "content_status": "available",
                      *       "model_processing_allowed": true,
                      *       "attribution": {
-                     *         "publisher": "Arm Holdings plc American Depositary Shares",
+                     *         "publisher": "Arm Holdings plc",
                      *         "publisher_host": "newsroom.arm.com",
                      *         "source_url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
                      *         "published_at": "2026-10-29T16:02:31.000Z",
@@ -15217,16 +15221,16 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "filings": [
                      *             {
-                     *               "accession_number": "0001140361-26-041201",
-                     *               "calendar_quarter": 4,
+                     *               "accession_number": "0000320193-26-000026",
+                     *               "calendar_quarter": 3,
                      *               "calendar_year": 2026,
                      *               "cik": "0000320193",
-                     *               "filing_date": "2026-10-29",
-                     *               "fiscal_quarter": null,
-                     *               "fiscal_year": null,
-                     *               "form_type": "4",
-                     *               "html_url": "https://storage-prod.invinite.com/filing_htmls/320193_0001140361-26-041201_4_2026-10-29.html",
-                     *               "period_end": "2026-10-27",
+                     *               "filing_date": "2026-11-03",
+                     *               "fiscal_quarter": 4,
+                     *               "fiscal_year": 2026,
+                     *               "form_type": "10-K",
+                     *               "html_url": "https://storage-prod.invinite.com/filing_htmls/320193_0000320193-26-000026_10-K_2026-11-03.html",
+                     *               "period_end": "2026-09-26",
                      *               "proposed_symbols": null
                      *             }
                      *           ],
@@ -15318,7 +15322,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "text": "Apple’s principal risk factors, as disclosed in its **2025 Form 10-K** and subsequent 2026 filings, are:\n\n- **Macroeconomic and international exposure:** Apple has substantial sales outside the United States and depends on global economic c…",
+                     *       "text": "Apple’s main risk factors, as disclosed in its SEC filings for CIK **0000320193** and ticker **AAPL**, are:\n\n- **Intense competition and rapid technological change.** Apple operates in highly competitive markets with short product cycles, a…",
                      *       "sources": [
                      *         {
                      *           "cik": "0000320193",
@@ -15545,19 +15549,27 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
+                     *                 "is_research_and_development_expenses": [
+                     *                   {
+                     *                     "value": 0,
+                     *                     "segment_id": "seg_research_and_development_expenses_business_segment",
+                     *                     "axis": "StatementBusinessSegmentsAxis",
+                     *                     "member": "EuropeSegmentMember"
+                     *                   }
+                     *                 ],
                      *                 "is_revenue_from_contract_with_customer": [
                      *                   {
-                     *                     "value": 64377000000,
-                     *                     "segment_id": "seg_revenue_geographic",
-                     *                     "axis": "StatementGeographicalAxis",
-                     *                     "member": "CN"
+                     *                     "value": 82378000000,
+                     *                     "segment_id": "seg_revenue_business_segment",
+                     *                     "axis": "StatementBusinessSegmentsAxis",
+                     *                     "member": "GreaterChinaSegmentMember"
                      *                   }
                      *                 ]
                      *               }
@@ -15675,28 +15687,47 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
-                     *                 "is_revenue_from_contract_with_customer": [
+                     *                 "is_research_and_development_expenses": [
                      *                   {
-                     *                     "value": 64377000000,
-                     *                     "segment_id": "seg_revenue_geographic",
+                     *                     "value": 0,
+                     *                     "segment_id": "seg_research_and_development_expenses_business_segment",
                      *                     "segment": {
                      *                       "0": {
-                     *                         "dimension": "srt:StatementGeographicalAxis",
-                     *                         "value": "country:CN"
+                     *                         "dimension": "us-gaap:StatementBusinessSegmentsAxis",
+                     *                         "value": "aapl:EuropeSegmentMember"
                      *                       }
                      *                     },
-                     *                     "axis": "StatementGeographicalAxis",
-                     *                     "member": "CN",
+                     *                     "axis": "StatementBusinessSegmentsAxis",
+                     *                     "member": "EuropeSegmentMember",
+                     *                     "metric": "ResearchAndDevelopmentExpense",
+                     *                     "accession_number": "0000320193-26-000026",
+                     *                     "html_tag_id": null,
+                     *                     "html_label": "Research and development",
+                     *                     "unit": "usd"
+                     *                   }
+                     *                 ],
+                     *                 "is_revenue_from_contract_with_customer": [
+                     *                   {
+                     *                     "value": 82378000000,
+                     *                     "segment_id": "seg_revenue_business_segment",
+                     *                     "segment": {
+                     *                       "0": {
+                     *                         "dimension": "us-gaap:StatementBusinessSegmentsAxis",
+                     *                         "value": "aapl:GreaterChinaSegmentMember"
+                     *                       }
+                     *                     },
+                     *                     "axis": "StatementBusinessSegmentsAxis",
+                     *                     "member": "GreaterChinaSegmentMember",
                      *                     "metric": "RevenueFromContractWithCustomerExcludingAssessedTax",
-                     *                     "accession_number": "0000320193-25-000079",
-                     *                     "html_tag_id": "f-1018",
+                     *                     "accession_number": "0000320193-26-000026",
+                     *                     "html_tag_id": "f-1086",
                      *                     "html_label": "Net sales",
                      *                     "unit": "usd"
                      *                   }
@@ -15825,25 +15856,25 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
-                     *                 "bs_total_assets": 359241000000,
-                     *                 "bs_total_current_assets": 147957000000,
-                     *                 "bs_cash_and_cash_equivalents_and_st_investments": 54697000000,
-                     *                 "bs_cash_and_cash_equivalents": 35934000000,
-                     *                 "bs_short_term_investments": 18763000000,
-                     *                 "bs_total_receivables_current": 72957000000,
-                     *                 "bs_accounts_and_financing_receivable_current": 39777000000,
-                     *                 "bs_accounts_receivable_current": 39777000000,
-                     *                 "bs_nontrade_receivables_current": 33180000000,
+                     *                 "bs_total_assets": 404548000000,
+                     *                 "bs_total_current_assets": 173857000000,
+                     *                 "bs_cash_and_cash_equivalents_and_st_investments": 56722000000,
+                     *                 "bs_cash_and_cash_equivalents": 36305000000,
+                     *                 "bs_short_term_investments": 20417000000,
+                     *                 "bs_total_receivables_current": 83713000000,
+                     *                 "bs_accounts_and_financing_receivable_current": 43817000000,
+                     *                 "bs_accounts_receivable_current": 43817000000,
+                     *                 "bs_nontrade_receivables_current": 39896000000,
                      *                 "bs_other_receivables_current": 0,
-                     *                 "bs_inventory_current": 5718000000,
-                     *                 "bs_other_current_assets": 14585000000
+                     *                 "bs_inventory_current": 14541000000,
+                     *                 "bs_other_current_assets": 18881000000
                      *               }
                      *             }
                      *           ],
@@ -15950,83 +15981,83 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
                      *                 "bs_total_assets": {
-                     *                   "value": 359241000000,
+                     *                   "value": 404548000000,
                      *                   "parent_id": null,
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-189"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-181"
                      *                 },
                      *                 "bs_total_current_assets": {
-                     *                   "value": 147957000000,
+                     *                   "value": 173857000000,
                      *                   "parent_id": "bs_total_assets",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-177"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-169"
                      *                 },
                      *                 "bs_cash_and_cash_equivalents_and_st_investments": {
-                     *                   "value": 54697000000,
+                     *                   "value": 56722000000,
                      *                   "parent_id": "bs_total_current_assets",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "bs_cash_and_cash_equivalents": {
-                     *                   "value": 35934000000,
+                     *                   "value": 36305000000,
                      *                   "parent_id": "bs_cash_and_cash_equivalents_and_st_investments",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-165"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-157"
                      *                 },
                      *                 "bs_short_term_investments": {
-                     *                   "value": 18763000000,
+                     *                   "value": 20417000000,
                      *                   "parent_id": "bs_cash_and_cash_equivalents_and_st_investments",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "bs_total_receivables_current": {
-                     *                   "value": 72957000000,
+                     *                   "value": 83713000000,
                      *                   "parent_id": "bs_total_current_assets",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "bs_accounts_and_financing_receivable_current": {
-                     *                   "value": 39777000000,
+                     *                   "value": 43817000000,
                      *                   "parent_id": "bs_total_receivables_current",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "bs_accounts_receivable_current": {
-                     *                   "value": 39777000000,
+                     *                   "value": 43817000000,
                      *                   "parent_id": "bs_accounts_and_financing_receivable_current",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-169"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-161"
                      *                 },
                      *                 "bs_nontrade_receivables_current": {
-                     *                   "value": 33180000000,
+                     *                   "value": 39896000000,
                      *                   "parent_id": "bs_total_receivables_current",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-171"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-163"
                      *                 },
                      *                 "bs_other_receivables_current": {
                      *                   "value": 0,
                      *                   "parent_id": "bs_total_receivables_current",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "bs_inventory_current": {
-                     *                   "value": 5718000000,
+                     *                   "value": 14541000000,
                      *                   "parent_id": "bs_total_current_assets",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "bs_other_current_assets": {
-                     *                   "value": 14585000000,
+                     *                   "value": 18881000000,
                      *                   "parent_id": "bs_total_current_assets",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 }
                      *               }
@@ -16193,28 +16224,28 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": [
                      *                 {
                      *                   "metric_id": "bs_total_assets",
-                     *                   "value": 359241000000,
+                     *                   "value": 404548000000,
                      *                   "children": [
                      *                     {
                      *                       "metric_id": "bs_total_current_assets",
-                     *                       "value": 147957000000,
+                     *                       "value": 173857000000,
                      *                       "children": [
                      *                         {
                      *                           "metric_id": "bs_cash_and_cash_equivalents_and_st_investments",
-                     *                           "value": 54697000000,
+                     *                           "value": 56722000000,
                      *                           "children": [
                      *                             {
                      *                               "metric_id": "bs_cash_and_cash_equivalents",
-                     *                               "value": 35934000000
+                     *                               "value": 36305000000
                      *                             }
                      *                           ]
                      *                         }
@@ -16321,25 +16352,25 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
-                     *                 "cfs_cash_from_operating_activities": 111482000000,
-                     *                 "cfs_income_incl_noncontrolling_interest": 112010000000,
-                     *                 "cfs_adjustments_to_reconcile_net_income_to_cash": 21190000000,
-                     *                 "cfs_depreciation_depletion_and_amortization": 11698000000,
-                     *                 "cfs_employee_benefit_and_share_based_compensation": 12863000000,
-                     *                 "cfs_shared_based_compensation": 12863000000,
-                     *                 "cfs_deferred_income_taxes": -3282000000,
-                     *                 "cfs_other_noncash_income_expense": -89000000,
+                     *                 "cfs_cash_from_operating_activities": 145097000000,
+                     *                 "cfs_income_incl_noncontrolling_interest": 132175000000,
+                     *                 "cfs_adjustments_to_reconcile_net_income_to_cash": 29059000000,
+                     *                 "cfs_depreciation_depletion_and_amortization": 13423000000,
+                     *                 "cfs_employee_benefit_and_share_based_compensation": 13789000000,
+                     *                 "cfs_shared_based_compensation": 13789000000,
+                     *                 "cfs_deferred_income_taxes": 1279000000,
+                     *                 "cfs_other_noncash_income_expense": 568000000,
                      *                 "cfs_other_adjustments_to_net_income": 0,
-                     *                 "cfs_changes_in_operating_capital": -25000000000,
-                     *                 "cfs_changes_in_operating_assets": -14826000000,
-                     *                 "cfs_changes_in_receivables": -7029000000
+                     *                 "cfs_changes_in_operating_capital": -14858000000,
+                     *                 "cfs_changes_in_operating_assets": -40732000000,
+                     *                 "cfs_changes_in_receivables": -10710000000
                      *               }
                      *             }
                      *           ],
@@ -16446,83 +16477,83 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
                      *                 "cfs_cash_from_operating_activities": {
-                     *                   "value": 111482000000,
+                     *                   "value": 145097000000,
                      *                   "parent_id": null,
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-307"
                      *                 },
                      *                 "cfs_income_incl_noncontrolling_interest": {
-                     *                   "value": 112010000000,
+                     *                   "value": 132175000000,
                      *                   "parent_id": "cfs_cash_from_operating_activities",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_adjustments_to_reconcile_net_income_to_cash": {
-                     *                   "value": 21190000000,
+                     *                   "value": 29059000000,
                      *                   "parent_id": "cfs_cash_from_operating_activities",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_depreciation_depletion_and_amortization": {
-                     *                   "value": 11698000000,
+                     *                   "value": 13423000000,
                      *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-280"
                      *                 },
                      *                 "cfs_employee_benefit_and_share_based_compensation": {
-                     *                   "value": 12863000000,
+                     *                   "value": 13789000000,
                      *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_shared_based_compensation": {
-                     *                   "value": 12863000000,
+                     *                   "value": 13789000000,
                      *                   "parent_id": "cfs_employee_benefit_and_share_based_compensation",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-283"
                      *                 },
                      *                 "cfs_deferred_income_taxes": {
-                     *                   "value": -3282000000,
+                     *                   "value": 1279000000,
                      *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_other_noncash_income_expense": {
-                     *                   "value": -89000000,
+                     *                   "value": 568000000,
                      *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-286"
                      *                 },
                      *                 "cfs_other_adjustments_to_net_income": {
                      *                   "value": 0,
                      *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_changes_in_operating_capital": {
-                     *                   "value": -25000000000,
+                     *                   "value": -14858000000,
                      *                   "parent_id": "cfs_cash_from_operating_activities",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_changes_in_operating_assets": {
-                     *                   "value": -14826000000,
+                     *                   "value": -40732000000,
                      *                   "parent_id": "cfs_changes_in_operating_capital",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_changes_in_receivables": {
-                     *                   "value": -7029000000,
+                     *                   "value": -10710000000,
                      *                   "parent_id": "cfs_changes_in_operating_assets",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 }
                      *               }
@@ -16689,20 +16720,20 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": [
                      *                 {
                      *                   "metric_id": "cfs_cash_from_operating_activities",
-                     *                   "value": 111482000000,
+                     *                   "value": 145097000000,
                      *                   "children": [
                      *                     {
                      *                       "metric_id": "cfs_income_incl_noncontrolling_interest",
-                     *                       "value": 112010000000
+                     *                       "value": 132175000000
                      *                     }
                      *                   ]
                      *                 }
@@ -16805,25 +16836,25 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
-                     *                 "is_total_revenue": 416161000000,
-                     *                 "is_revenue_from_contract_with_customer": 416161000000,
-                     *                 "is_cost_of_revenue": 220960000000,
-                     *                 "is_cost_of_product_and_service_sold": 220960000000,
+                     *                 "is_total_revenue": 478834000000,
+                     *                 "is_revenue_from_contract_with_customer": 478834000000,
+                     *                 "is_cost_of_revenue": 245232000000,
+                     *                 "is_cost_of_product_and_service_sold": 245232000000,
                      *                 "is_other_cost_of_revenue": 0,
-                     *                 "is_gross_profit": 195201000000,
-                     *                 "is_operating_expenses": 62151000000,
-                     *                 "is_operating_costs_and_expenses": 34550000000,
-                     *                 "is_research_and_development_expenses": 34550000000,
+                     *                 "is_gross_profit": 233602000000,
+                     *                 "is_operating_expenses": 75539000000,
+                     *                 "is_operating_costs_and_expenses": 50665000000,
+                     *                 "is_research_and_development_expenses": 45765000000,
+                     *                 "is_depreciation_and_amortization_expenses": 4900000000,
                      *                 "is_other_operating_costs_and_expenses": 0,
-                     *                 "is_selling_general_and_administrative_expenses": 27601000000,
-                     *                 "is_selling_and_marketing_expenses": 19524000000
+                     *                 "is_selling_general_and_administrative_expenses": 29774000000
                      *               }
                      *             }
                      *           ],
@@ -16930,84 +16961,84 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": {
                      *                 "is_total_revenue": {
-                     *                   "value": 416161000000,
+                     *                   "value": 478834000000,
                      *                   "parent_id": null,
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "is_revenue_from_contract_with_customer": {
-                     *                   "value": 416161000000,
+                     *                   "value": 478834000000,
                      *                   "parent_id": "is_total_revenue",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-78"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-76"
                      *                 },
                      *                 "is_cost_of_revenue": {
-                     *                   "value": 220960000000,
+                     *                   "value": 245232000000,
                      *                   "parent_id": null,
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "is_cost_of_product_and_service_sold": {
-                     *                   "value": 220960000000,
+                     *                   "value": 245232000000,
                      *                   "parent_id": "is_cost_of_revenue",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-87"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-85"
                      *                 },
                      *                 "is_other_cost_of_revenue": {
                      *                   "value": 0,
                      *                   "parent_id": "is_cost_of_revenue",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "is_gross_profit": {
-                     *                   "value": 195201000000,
+                     *                   "value": 233602000000,
                      *                   "parent_id": null,
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-90"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-88"
                      *                 },
                      *                 "is_operating_expenses": {
-                     *                   "value": 62151000000,
+                     *                   "value": 75539000000,
                      *                   "parent_id": null,
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-99"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-97"
                      *                 },
                      *                 "is_operating_costs_and_expenses": {
-                     *                   "value": 34550000000,
+                     *                   "value": 50665000000,
                      *                   "parent_id": "is_operating_expenses",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "is_research_and_development_expenses": {
-                     *                   "value": 34550000000,
+                     *                   "value": 45765000000,
                      *                   "parent_id": "is_operating_costs_and_expenses",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-93"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-91"
+                     *                 },
+                     *                 "is_depreciation_and_amortization_expenses": {
+                     *                   "value": 4900000000,
+                     *                   "parent_id": "is_operating_costs_and_expenses",
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": null
                      *                 },
                      *                 "is_other_operating_costs_and_expenses": {
                      *                   "value": 0,
                      *                   "parent_id": "is_operating_costs_and_expenses",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "is_selling_general_and_administrative_expenses": {
-                     *                   "value": 27601000000,
+                     *                   "value": 29774000000,
                      *                   "parent_id": "is_operating_expenses",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-96"
-                     *                 },
-                     *                 "is_selling_and_marketing_expenses": {
-                     *                   "value": 19524000000,
-                     *                   "parent_id": "is_selling_general_and_administrative_expenses",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-1035"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-94"
                      *                 }
                      *               }
                      *             }
@@ -17173,20 +17204,20 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "periods": [
                      *             {
-                     *               "fiscal_year": 2025,
+                     *               "fiscal_year": 2026,
                      *               "fiscal_quarter": 4,
-                     *               "calendar_year": 2025,
+                     *               "calendar_year": 2026,
                      *               "calendar_quarter": 3,
                      *               "fiscal_period_type": "annual",
-                     *               "period_end": "2025-09-27",
+                     *               "period_end": "2026-09-26",
                      *               "facts": [
                      *                 {
                      *                   "metric_id": "is_total_revenue",
-                     *                   "value": 416161000000,
+                     *                   "value": 478834000000,
                      *                   "children": [
                      *                     {
                      *                       "metric_id": "is_revenue_from_contract_with_customer",
-                     *                       "value": 416161000000
+                     *                       "value": 478834000000
                      *                     }
                      *                   ]
                      *                 }
@@ -17282,59 +17313,59 @@ export interface operations {
                      *         {
                      *           "ticker": "AAPL",
                      *           "cik": "0000320193",
-                     *           "fiscal_year": 2025,
+                     *           "fiscal_year": 2026,
                      *           "fiscal_quarter": 4,
-                     *           "calendar_year": 2025,
+                     *           "calendar_year": 2026,
                      *           "calendar_quarter": 3,
                      *           "fiscal_period_type": "annual",
-                     *           "period_end": "2025-09-27",
+                     *           "period_end": "2026-09-26",
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": {
-                     *                 "is_total_revenue": 416161000000,
-                     *                 "is_revenue_from_contract_with_customer": 416161000000,
-                     *                 "is_cost_of_revenue": 220960000000,
-                     *                 "is_cost_of_product_and_service_sold": 220960000000,
+                     *                 "is_total_revenue": 478834000000,
+                     *                 "is_revenue_from_contract_with_customer": 478834000000,
+                     *                 "is_cost_of_revenue": 245232000000,
+                     *                 "is_cost_of_product_and_service_sold": 245232000000,
                      *                 "is_other_cost_of_revenue": 0,
-                     *                 "is_gross_profit": 195201000000,
-                     *                 "is_operating_expenses": 62151000000,
-                     *                 "is_operating_costs_and_expenses": 34550000000,
-                     *                 "is_research_and_development_expenses": 34550000000,
+                     *                 "is_gross_profit": 233602000000,
+                     *                 "is_operating_expenses": 75539000000,
+                     *                 "is_operating_costs_and_expenses": 50665000000,
+                     *                 "is_research_and_development_expenses": 45765000000,
+                     *                 "is_depreciation_and_amortization_expenses": 4900000000,
                      *                 "is_other_operating_costs_and_expenses": 0,
-                     *                 "is_selling_general_and_administrative_expenses": 27601000000,
-                     *                 "is_selling_and_marketing_expenses": 19524000000
+                     *                 "is_selling_general_and_administrative_expenses": 29774000000
                      *               }
                      *             },
                      *             "balance_sheet": {
                      *               "facts": {
-                     *                 "bs_total_assets": 359241000000,
-                     *                 "bs_total_current_assets": 147957000000,
-                     *                 "bs_cash_and_cash_equivalents_and_st_investments": 54697000000,
-                     *                 "bs_cash_and_cash_equivalents": 35934000000,
-                     *                 "bs_short_term_investments": 18763000000,
-                     *                 "bs_total_receivables_current": 72957000000,
-                     *                 "bs_accounts_and_financing_receivable_current": 39777000000,
-                     *                 "bs_accounts_receivable_current": 39777000000,
-                     *                 "bs_nontrade_receivables_current": 33180000000,
+                     *                 "bs_total_assets": 404548000000,
+                     *                 "bs_total_current_assets": 173857000000,
+                     *                 "bs_cash_and_cash_equivalents_and_st_investments": 56722000000,
+                     *                 "bs_cash_and_cash_equivalents": 36305000000,
+                     *                 "bs_short_term_investments": 20417000000,
+                     *                 "bs_total_receivables_current": 83713000000,
+                     *                 "bs_accounts_and_financing_receivable_current": 43817000000,
+                     *                 "bs_accounts_receivable_current": 43817000000,
+                     *                 "bs_nontrade_receivables_current": 39896000000,
                      *                 "bs_other_receivables_current": 0,
-                     *                 "bs_inventory_current": 5718000000,
-                     *                 "bs_other_current_assets": 14585000000
+                     *                 "bs_inventory_current": 14541000000,
+                     *                 "bs_other_current_assets": 18881000000
                      *               }
                      *             },
                      *             "cash_flow_statement": {
                      *               "facts": {
-                     *                 "cfs_cash_from_operating_activities": 111482000000,
-                     *                 "cfs_income_incl_noncontrolling_interest": 112010000000,
-                     *                 "cfs_adjustments_to_reconcile_net_income_to_cash": 21190000000,
-                     *                 "cfs_depreciation_depletion_and_amortization": 11698000000,
-                     *                 "cfs_employee_benefit_and_share_based_compensation": 12863000000,
-                     *                 "cfs_shared_based_compensation": 12863000000,
-                     *                 "cfs_deferred_income_taxes": -3282000000,
-                     *                 "cfs_other_noncash_income_expense": -89000000,
+                     *                 "cfs_cash_from_operating_activities": 145097000000,
+                     *                 "cfs_income_incl_noncontrolling_interest": 132175000000,
+                     *                 "cfs_adjustments_to_reconcile_net_income_to_cash": 29059000000,
+                     *                 "cfs_depreciation_depletion_and_amortization": 13423000000,
+                     *                 "cfs_employee_benefit_and_share_based_compensation": 13789000000,
+                     *                 "cfs_shared_based_compensation": 13789000000,
+                     *                 "cfs_deferred_income_taxes": 1279000000,
+                     *                 "cfs_other_noncash_income_expense": 568000000,
                      *                 "cfs_other_adjustments_to_net_income": 0,
-                     *                 "cfs_changes_in_operating_capital": -25000000000,
-                     *                 "cfs_changes_in_operating_assets": -14826000000,
-                     *                 "cfs_changes_in_receivables": -7029000000
+                     *                 "cfs_changes_in_operating_capital": -14858000000,
+                     *                 "cfs_changes_in_operating_assets": -40732000000,
+                     *                 "cfs_changes_in_receivables": -10710000000
                      *               }
                      *             }
                      *           }
@@ -17447,161 +17478,161 @@ export interface operations {
                      *         {
                      *           "ticker": "AAPL",
                      *           "cik": "0000320193",
-                     *           "fiscal_year": 2025,
+                     *           "fiscal_year": 2026,
                      *           "fiscal_quarter": 4,
-                     *           "calendar_year": 2025,
+                     *           "calendar_year": 2026,
                      *           "calendar_quarter": 3,
                      *           "fiscal_period_type": "annual",
-                     *           "period_end": "2025-09-27",
+                     *           "period_end": "2026-09-26",
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": {
                      *                 "is_total_revenue": {
-                     *                   "value": 416161000000,
+                     *                   "value": 478834000000,
                      *                   "parent_id": null,
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "is_revenue_from_contract_with_customer": {
-                     *                   "value": 416161000000,
+                     *                   "value": 478834000000,
                      *                   "parent_id": "is_total_revenue",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-78"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-76"
                      *                 },
                      *                 "is_cost_of_revenue": {
-                     *                   "value": 220960000000,
+                     *                   "value": 245232000000,
                      *                   "parent_id": null,
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "is_cost_of_product_and_service_sold": {
-                     *                   "value": 220960000000,
+                     *                   "value": 245232000000,
                      *                   "parent_id": "is_cost_of_revenue",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-87"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-85"
                      *                 },
                      *                 "is_other_cost_of_revenue": {
                      *                   "value": 0,
                      *                   "parent_id": "is_cost_of_revenue",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "is_gross_profit": {
-                     *                   "value": 195201000000,
+                     *                   "value": 233602000000,
                      *                   "parent_id": null,
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-90"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-88"
                      *                 },
                      *                 "is_operating_expenses": {
-                     *                   "value": 62151000000,
+                     *                   "value": 75539000000,
                      *                   "parent_id": null,
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-99"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-97"
                      *                 },
                      *                 "is_operating_costs_and_expenses": {
-                     *                   "value": 34550000000,
+                     *                   "value": 50665000000,
                      *                   "parent_id": "is_operating_expenses",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "is_research_and_development_expenses": {
-                     *                   "value": 34550000000,
+                     *                   "value": 45765000000,
                      *                   "parent_id": "is_operating_costs_and_expenses",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-93"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-91"
+                     *                 },
+                     *                 "is_depreciation_and_amortization_expenses": {
+                     *                   "value": 4900000000,
+                     *                   "parent_id": "is_operating_costs_and_expenses",
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": null
                      *                 },
                      *                 "is_other_operating_costs_and_expenses": {
                      *                   "value": 0,
                      *                   "parent_id": "is_operating_costs_and_expenses",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "is_selling_general_and_administrative_expenses": {
-                     *                   "value": 27601000000,
+                     *                   "value": 29774000000,
                      *                   "parent_id": "is_operating_expenses",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-96"
-                     *                 },
-                     *                 "is_selling_and_marketing_expenses": {
-                     *                   "value": 19524000000,
-                     *                   "parent_id": "is_selling_general_and_administrative_expenses",
-                     *                   "accession_number": "0000320193-25-000079",
-                     *                   "html_tag_id": "f-1035"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-94"
                      *                 }
                      *               }
                      *             },
                      *             "balance_sheet": {
                      *               "facts": {
                      *                 "bs_total_assets": {
-                     *                   "value": 359241000000,
+                     *                   "value": 404548000000,
                      *                   "parent_id": null,
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-189"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-181"
                      *                 },
                      *                 "bs_total_current_assets": {
-                     *                   "value": 147957000000,
+                     *                   "value": 173857000000,
                      *                   "parent_id": "bs_total_assets",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-177"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-169"
                      *                 },
                      *                 "bs_cash_and_cash_equivalents_and_st_investments": {
-                     *                   "value": 54697000000,
+                     *                   "value": 56722000000,
                      *                   "parent_id": "bs_total_current_assets",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "bs_cash_and_cash_equivalents": {
-                     *                   "value": 35934000000,
+                     *                   "value": 36305000000,
                      *                   "parent_id": "bs_cash_and_cash_equivalents_and_st_investments",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-165"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-157"
                      *                 },
                      *                 "bs_short_term_investments": {
-                     *                   "value": 18763000000,
+                     *                   "value": 20417000000,
                      *                   "parent_id": "bs_cash_and_cash_equivalents_and_st_investments",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "bs_total_receivables_current": {
-                     *                   "value": 72957000000,
+                     *                   "value": 83713000000,
                      *                   "parent_id": "bs_total_current_assets",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "bs_accounts_and_financing_receivable_current": {
-                     *                   "value": 39777000000,
+                     *                   "value": 43817000000,
                      *                   "parent_id": "bs_total_receivables_current",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "bs_accounts_receivable_current": {
-                     *                   "value": 39777000000,
+                     *                   "value": 43817000000,
                      *                   "parent_id": "bs_accounts_and_financing_receivable_current",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-169"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-161"
                      *                 },
                      *                 "bs_nontrade_receivables_current": {
-                     *                   "value": 33180000000,
+                     *                   "value": 39896000000,
                      *                   "parent_id": "bs_total_receivables_current",
-                     *                   "accession_number": "0000320193-26-000020",
-                     *                   "html_tag_id": "f-171"
+                     *                   "accession_number": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-163"
                      *                 },
                      *                 "bs_other_receivables_current": {
                      *                   "value": 0,
                      *                   "parent_id": "bs_total_receivables_current",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "bs_inventory_current": {
-                     *                   "value": 5718000000,
+                     *                   "value": 14541000000,
                      *                   "parent_id": "bs_total_current_assets",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "bs_other_current_assets": {
-                     *                   "value": 14585000000,
+                     *                   "value": 18881000000,
                      *                   "parent_id": "bs_total_current_assets",
-                     *                   "accession_number": "0000320193-26-000020",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 }
                      *               }
@@ -17609,75 +17640,75 @@ export interface operations {
                      *             "cash_flow_statement": {
                      *               "facts": {
                      *                 "cfs_cash_from_operating_activities": {
-                     *                   "value": 111482000000,
+                     *                   "value": 145097000000,
                      *                   "parent_id": null,
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-307"
                      *                 },
                      *                 "cfs_income_incl_noncontrolling_interest": {
-                     *                   "value": 112010000000,
+                     *                   "value": 132175000000,
                      *                   "parent_id": "cfs_cash_from_operating_activities",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_adjustments_to_reconcile_net_income_to_cash": {
-                     *                   "value": 21190000000,
+                     *                   "value": 29059000000,
                      *                   "parent_id": "cfs_cash_from_operating_activities",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_depreciation_depletion_and_amortization": {
-                     *                   "value": 11698000000,
+                     *                   "value": 13423000000,
                      *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-280"
                      *                 },
                      *                 "cfs_employee_benefit_and_share_based_compensation": {
-                     *                   "value": 12863000000,
+                     *                   "value": 13789000000,
                      *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_shared_based_compensation": {
-                     *                   "value": 12863000000,
+                     *                   "value": 13789000000,
                      *                   "parent_id": "cfs_employee_benefit_and_share_based_compensation",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-283"
                      *                 },
                      *                 "cfs_deferred_income_taxes": {
-                     *                   "value": -3282000000,
+                     *                   "value": 1279000000,
                      *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_other_noncash_income_expense": {
-                     *                   "value": -89000000,
+                     *                   "value": 568000000,
                      *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-286"
                      *                 },
                      *                 "cfs_other_adjustments_to_net_income": {
                      *                   "value": 0,
                      *                   "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_changes_in_operating_capital": {
-                     *                   "value": -25000000000,
+                     *                   "value": -14858000000,
                      *                   "parent_id": "cfs_cash_from_operating_activities",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_changes_in_operating_assets": {
-                     *                   "value": -14826000000,
+                     *                   "value": -40732000000,
                      *                   "parent_id": "cfs_changes_in_operating_capital",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 },
                      *                 "cfs_changes_in_receivables": {
-                     *                   "value": -7029000000,
+                     *                   "value": -10710000000,
                      *                   "parent_id": "cfs_changes_in_operating_assets",
-                     *                   "accession_number": "0000320193-25-000079",
+                     *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": null
                      *                 }
                      *               }
@@ -17976,22 +18007,22 @@ export interface operations {
                      *         {
                      *           "ticker": "AAPL",
                      *           "cik": "0000320193",
-                     *           "fiscal_year": 2025,
+                     *           "fiscal_year": 2026,
                      *           "fiscal_quarter": 4,
-                     *           "calendar_year": 2025,
+                     *           "calendar_year": 2026,
                      *           "calendar_quarter": 3,
                      *           "fiscal_period_type": "annual",
-                     *           "period_end": "2025-09-27",
+                     *           "period_end": "2026-09-26",
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": [
                      *                 {
                      *                   "metric_id": "is_total_revenue",
-                     *                   "value": 416161000000,
+                     *                   "value": 478834000000,
                      *                   "children": [
                      *                     {
                      *                       "metric_id": "is_revenue_from_contract_with_customer",
-                     *                       "value": 416161000000
+                     *                       "value": 478834000000
                      *                     }
                      *                   ]
                      *                 }
@@ -18001,19 +18032,19 @@ export interface operations {
                      *               "facts": [
                      *                 {
                      *                   "metric_id": "bs_total_assets",
-                     *                   "value": 359241000000,
+                     *                   "value": 404548000000,
                      *                   "children": [
                      *                     {
                      *                       "metric_id": "bs_total_current_assets",
-                     *                       "value": 147957000000,
+                     *                       "value": 173857000000,
                      *                       "children": [
                      *                         {
                      *                           "metric_id": "bs_cash_and_cash_equivalents_and_st_investments",
-                     *                           "value": 54697000000,
+                     *                           "value": 56722000000,
                      *                           "children": [
                      *                             {
                      *                               "metric_id": "bs_cash_and_cash_equivalents",
-                     *                               "value": 35934000000
+                     *                               "value": 36305000000
                      *                             }
                      *                           ]
                      *                         }
@@ -18027,11 +18058,11 @@ export interface operations {
                      *               "facts": [
                      *                 {
                      *                   "metric_id": "cfs_cash_from_operating_activities",
-                     *                   "value": 111482000000,
+                     *                   "value": 145097000000,
                      *                   "children": [
                      *                     {
                      *                       "metric_id": "cfs_income_incl_noncontrolling_interest",
-                     *                       "value": 112010000000
+                     *                       "value": 132175000000
                      *                     }
                      *                   ]
                      *                 }
@@ -18111,21 +18142,21 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "generated_at": "2026-11-01T16:42:25.713Z",
+                     *       "generated_at": "2026-11-03T19:39:14.552Z",
                      *       "services": [
                      *         {
                      *           "family": "company",
-                     *           "status": "operational",
-                     *           "uptime_7d": 0.993,
-                     *           "uptime_30d": 0.989,
-                     *           "uptime_90d": 0.989
+                     *           "status": "outage",
+                     *           "uptime_7d": 0.975,
+                     *           "uptime_30d": 0.983,
+                     *           "uptime_90d": 0.983
                      *         }
                      *       ],
                      *       "universe": {
-                     *         "companies": 6214,
+                     *         "companies": 6219,
                      *         "earnings_calls": {
                      *           "scope": "all",
-                     *           "companies": 5545
+                     *           "companies": 5547
                      *         }
                      *       }
                      *     }
@@ -18250,10 +18281,10 @@ export interface operations {
                      *         }
                      *       ],
                      *       "universe": {
-                     *         "companies": 6214,
+                     *         "companies": 6219,
                      *         "earnings_calls": {
                      *           "scope": "all",
-                     *           "companies": 5545
+                     *           "companies": 5547
                      *         }
                      *       }
                      *     }

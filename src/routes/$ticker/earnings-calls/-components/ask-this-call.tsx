@@ -131,7 +131,7 @@ function SlideLink({ slide }: { slide: EarningsSearchHit["slide"] }) {
     if (!slide.image_url) return <span className="text-muted-foreground">{`Slide ${slide.page}`}</span>;
 
     return (
-        // Presigned: a bearer credential, never in the router search; no referrer.
+        // A permanent public URL, never in the router search; no referrer.
         <a className={linkClass} href={slide.image_url} rel="noopener noreferrer" target="_blank">
             <ImageIcon className="size-3" />
             {`Open slide ${slide.page}`}

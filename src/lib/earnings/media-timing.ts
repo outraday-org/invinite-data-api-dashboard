@@ -1,17 +1,12 @@
 /**
- * Refresh rules of presigned media URLs (ported from the admin console's `media-timing.ts`).
- * `expiresAt: null` is a URL that never expires: used as is, never refetched. A presigned one
- * is refetched shortly before it expires; the audio player keeps its position across the swap.
+ * Refresh rules of the live-stream URL (ported from the admin console's `media-timing.ts`).
+ * Slides, the slide timeline, documents and audio are permanent public URLs and never refreshed;
+ * only the live stream's token-signed URL expires. `expiresAt: null` is a URL that never expires:
+ * used as is, never refetched. The live player keeps its position across the swap.
  */
-
-/** A presigned media URL (audio, slides, documents) is re-asked this long before it expires. */
-export const MEDIA_URL_REFRESH_BEFORE_MS = 2 * 60_000;
 
 /** The live-stream URL (task 8) is re-asked this long before it expires. */
 export const LIVE_STREAM_REFRESH_BEFORE_MS = 5 * 60_000;
-
-/** IDA's default signed-URL lifetime (`EARNINGS_SIGNED_URL_TTL_SECONDS`), for answers without `expires_at`. */
-export const SIGNED_URL_DEFAULT_TTL_MS = 15 * 60_000;
 
 /**
  * Whether an expiring URL must be fetched again now. `null` or an unreadable timestamp never

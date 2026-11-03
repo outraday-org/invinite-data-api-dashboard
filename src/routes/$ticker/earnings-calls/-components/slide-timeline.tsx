@@ -16,13 +16,7 @@ import { useCallAudio, useCallPlayback } from "./audio-context";
  * the call from it (the first click loads the recording). Without a recording (`has_audio`
  * false) it is a plain carousel.
  */
-export function SlideTimeline({
-    onMediaError,
-    timeline,
-}: {
-    onMediaError: () => void;
-    timeline: Array<EarningsSlideTimelineEntry>;
-}) {
+export function SlideTimeline({ timeline }: { timeline: Array<EarningsSlideTimelineEntry> }) {
     const { loaded, seekMs } = useCallAudio();
 
     const { positionMs } = useCallPlayback();
@@ -50,7 +44,6 @@ export function SlideTimeline({
         <SlideTimelineView
             following={following}
             index={index}
-            onMediaError={onMediaError}
             onShow={show}
             seekMs={seekMs}
             timeline={timeline}
@@ -61,14 +54,12 @@ export function SlideTimeline({
 const SlideTimelineView = React.memo(function SlideTimelineView({
     following,
     index,
-    onMediaError,
     onShow,
     seekMs,
     timeline,
 }: {
     following: boolean;
     index: number;
-    onMediaError: () => void;
     onShow: (next: number) => void;
     seekMs: ((ms: number) => void) | null;
     timeline: Array<EarningsSlideTimelineEntry>;
@@ -81,7 +72,6 @@ const SlideTimelineView = React.memo(function SlideTimelineView({
         <img
             alt={alt}
             className="aspect-video w-full rounded-sm object-contain bg-muted/30"
-            onError={onMediaError}
             src={slide.image_url}
         />
     );

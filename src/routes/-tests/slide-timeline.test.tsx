@@ -19,17 +19,16 @@ vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
     useCallPlayback: () => ({ durationMs: null, playing: true, positionMs: audio.positionMs }),
 }));
 
-// The Slides tab's request, stubbed: an answer of an IDA released before `timeline`.
+// The Slides tab's request, stubbed: an answer of an IDA released before `timeline`, with a
+// player deck (no PDF viewer) on a permanent public URL.
 vi.mock("@/lib/api/queries", () => ({
     useEarningsSlides: () => ({
         data: {
-            deck: null,
+            deck: { origin: "player", pages: 1, trust_tier: null, url: "https://storage-prod.invinite.com/slides/t/deck.pdf" },
             event: {},
-            slides: [{ image_url: "https://r2.example/page-1.webp", markdown: null, page: 1, title: "Cover" }],
+            slides: [{ image_url: "https://storage-prod.invinite.com/slides/t/page-1.webp", markdown: null, page: 1, title: "Cover" }],
         },
-        dataUpdatedAt: 0,
         error: null,
-        refetch: () => {},
     }),
 }));
 
@@ -61,7 +60,7 @@ describe("SlideTimeline", () => {
 
         audio.positionMs = 129_999;
 
-        render(<SlideTimeline onMediaError={() => {}} timeline={TIMELINE} />);
+        render(<SlideTimeline timeline={TIMELINE} />);
 
         expect(shownImage()).toBe(TIMELINE[1].image_url);
 
@@ -77,7 +76,7 @@ describe("SlideTimeline", () => {
 
         audio.positionMs = 140_000;
 
-        render(<SlideTimeline onMediaError={() => {}} timeline={TIMELINE} />);
+        render(<SlideTimeline timeline={TIMELINE} />);
 
         fireEvent.click(screen.getByRole("button", { name: "Play from 2:10" }));
 
@@ -93,7 +92,7 @@ describe("SlideTimeline", () => {
 
         audio.seekMs = seekMs;
 
-        render(<SlideTimeline onMediaError={() => {}} timeline={TIMELINE} />);
+        render(<SlideTimeline timeline={TIMELINE} />);
 
         fireEvent.click(screen.getByRole("button", { name: "Next slide" }));
 
@@ -107,7 +106,7 @@ describe("SlideTimeline", () => {
     });
 
     it("is a plain carousel without audio", () => {
-        render(<SlideTimeline onMediaError={() => {}} timeline={TIMELINE} />);
+        render(<SlideTimeline timeline={TIMELINE} />);
 
         expect(screen.queryByRole("button", { name: /Play from/ })).toBeNull();
 
@@ -121,7 +120,7 @@ describe("SlideTimeline", () => {
     });
 
     it("renders nothing for an empty timeline", () => {
-        const { container } = render(<SlideTimeline onMediaError={() => {}} timeline={[]} />);
+        const { container } = render(<SlideTimeline timeline={[]} />);
 
         expect(container).toBeEmptyDOMElement();
     });
@@ -136,5 +135,18 @@ describe("SlidesTab", () => {
         expect(screen.getByRole("img", { name: "Cover" })).toBeInTheDocument();
 
         expect(screen.queryByText("Webcast slides")).toBeNull();
+    });
+
+    it("shows the stored public URLs as they are, with no expiry text", () => {
+        const props = { selector: { eventId: "e1" } } as CallTabProps;
+
+        render(<SlidesTab {...props} />);
+
+        expect(screen.getByRole("img", { name: "Cover" })).toHaveAttribute(
+            "src",
+            "https://storage-prod.invinite.com/slides/t/page-1.webp",
+        );
+
+        expect(screen.queryByText(/signed link|valid until|renewed automatically/i)).toBeNull();
     });
 });

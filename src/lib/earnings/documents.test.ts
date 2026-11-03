@@ -12,7 +12,6 @@ import {
     defaultOpenKeys,
     documentHref,
     documentPageHref,
-    earliestExpiry,
     eventTitleMap,
     filterCallEntries,
     folderLabel,
@@ -399,16 +398,6 @@ describe("links", () => {
         expect(documentPageHref("https://r2.example.com/x/report.pdf", null)).toBe("https://r2.example.com/x/report.pdf");
 
         expect(documentPageHref("not a url", 2)).toBe("not a url");
-    });
-
-    it("finds the earliest expiry", () => {
-        expect(earliestExpiry([{ expires_at: null }])).toBeNull();
-
-        expect(earliestExpiry([
-            { expires_at: "2026-10-18T12:15:00Z" },
-            { expires_at: null },
-            { expires_at: "2026-10-18T12:05:00Z" },
-        ])).toBe("2026-10-18T12:05:00Z");
     });
 });
 

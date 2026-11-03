@@ -510,12 +510,12 @@ export function allKeys(tree: ReadonlyArray<TreeNode<unknown>>): Array<string> {
     return tree.flatMap(node => [node.key, ...allKeys(node.children)]);
 }
 
-/** Where a row opens: the stored copy (signed), else the page it was found on (a link-only webcast row). */
+/** Where a row opens: the stored copy (a permanent public URL), else the page it was found on (a link-only webcast row). */
 export function documentHref(doc: Pick<EarningsCompanyDocument, "source_url" | "url">) {
     return doc.url ?? doc.source_url;
 }
 
-/** A search hit's file at its page: `#page=<n>` only on a PDF (the signed URL's path ends in `.pdf`). */
+/** A search hit's file at its page: `#page=<n>` only on a PDF (the public URL's path ends in `.pdf`). */
 export function documentPageHref(url: string, page: null | number) {
     if (page === null) return url;
 
@@ -525,13 +525,6 @@ export function documentPageHref(url: string, page: null | number) {
     catch {
         return url;
     }
-}
-
-/** The earliest expiry among the loaded presigned links (one refetch renews every page). */
-export function earliestExpiry(documents: ReadonlyArray<{ expires_at: null | string }>) {
-    const expiries = documents.map(doc => doc.expires_at).filter((at): at is string => at !== null);
-
-    return expiries.length > 0 ? expiries.reduce((a, b) => (Date.parse(a) <= Date.parse(b) ? a : b)) : null;
 }
 
 export type DocumentPage = { n: number; text: string; title: null | string };

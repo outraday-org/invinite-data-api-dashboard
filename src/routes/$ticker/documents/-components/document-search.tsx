@@ -63,7 +63,7 @@ function DocumentHitCard({ hit, mode, query }: { hit: EarningsDocumentSearchHit;
             <div className="flex flex-wrap items-center gap-3">
                 {hit.url
                     ? (
-                            // Presigned: a bearer credential, only an href; no referrer.
+                            // A permanent public URL, only an href; no referrer.
                             <a className={linkClass} href={documentPageHref(hit.url, hit.page)} rel="noopener noreferrer" target="_blank">
                                 <ExternalLink className="size-3" />
                                 {hit.page === null ? "Open document" : "Open page"}
