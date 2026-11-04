@@ -306,6 +306,51 @@ describe("Documents page", () => {
         expect(within(docRow).queryByText("Event")).toBeNull();
     });
 
+    it("dates a call's SEC filing by its EDGAR filing date, else its fiscal period; a muted Call link, no chip", () => {
+        const filing: EarningsCompanyDocument = {
+            ...CALL_DOCUMENT,
+            bytes: null,
+            content_type: null,
+            document_id: "00000000-0000-4000-8000-000000000005",
+            filing_date: "2026-09-03",
+            kind: "sec_filing",
+            origin: "edgar_filing",
+            pages: null,
+            source_url: "https://www.sec.gov/Archives/edgar/data/1/000000000126000001/acme-20260731.htm",
+            title: "Q2 FY2027 Form 10-Q",
+            url: null,
+        };
+
+        const undated: EarningsCompanyDocument = {
+            ...filing,
+            document_id: "00000000-0000-4000-8000-000000000006",
+            filing_date: null,
+            title: "Q2 FY2027 Form 10-Q (copy)",
+        };
+
+        mockLists(infinite([documentsPage([CALL_DOCUMENT, filing, undated, ...DOCUMENTS])]));
+
+        render(<DocumentsPage />);
+
+        const row = document.querySelector<HTMLElement>(`li[data-document-id="${filing.document_id}"]`)!;
+
+        expect(within(row).getByText("2026-09-03")).toHaveAttribute("title", "Filed on EDGAR");
+
+        // Never the call's day (2026-08-26).
+        expect(within(row).queryByText("2026-08-26")).toBeNull();
+
+        const call = within(row).getByText("Call");
+
+        // A plain action link, not the "Call" badge (a span inside the link) the other call documents carry.
+        expect(call.tagName).toBe("A");
+
+        expect(call).toHaveAttribute("data-search", JSON.stringify({ tab: "documents" }));
+
+        const undatedRow = document.querySelector<HTMLElement>(`li[data-document-id="${undated.document_id}"]`)!;
+
+        expect(within(undatedRow).getByText("Q2 2027")).toBeInTheDocument();
+    });
+
     it("filters by ?q=: opens the deep match, hides the rest, says when nothing matches", () => {
         mockLists(infinite([documentsPage([CALL_DOCUMENT, ...DOCUMENTS])]));
 

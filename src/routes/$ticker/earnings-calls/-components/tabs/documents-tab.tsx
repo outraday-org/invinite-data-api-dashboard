@@ -39,6 +39,47 @@ function documentHref(doc: EarningsDocument) {
     return doc.url ?? doc.source_url;
 }
 
+/** The call's SEC filing links (10-Q / 10-K), shown apart under "Filings": they are no call material. */
+function FilingsTable({ filings }: { filings: Array<EarningsDocument> }) {
+    return (
+        <section aria-label="Filings" className="flex flex-col gap-1">
+            <h3 className="text-sm font-medium">Filings</h3>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Filed</TableHead>
+                        <TableHead>Accession</TableHead>
+                        <TableHead />
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {filings.map(doc => (
+                        <TableRow key={doc.document_id}>
+                            <TableCell className="max-w-xs truncate">{doc.title ?? "Untitled"}</TableCell>
+                            <TableCell className="tabular-nums">{doc.filing_date ?? "—"}</TableCell>
+                            <TableCell className="text-muted-foreground tabular-nums">{doc.accession_number ?? "—"}</TableCell>
+                            <TableCell>
+                                <div className="flex items-center justify-end">
+                                    <a
+                                        className="inline-flex items-center gap-1 underline underline-offset-4"
+                                        href={documentHref(doc)}
+                                        rel="noopener noreferrer"
+                                        target="_blank"
+                                    >
+                                        <ExternalLink className="size-3" />
+                                        EDGAR
+                                    </a>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </section>
+    );
+}
+
 const TEXT_LOOKUP_LIMIT = 100;
 
 /** "Show text": re-asks the document's kind with `include=body` and shows that row's text. */
@@ -98,7 +139,11 @@ export function DocumentsTab({ event, onTabChange, selector }: CallTabProps) {
 
     const { data, error, isLoading } = documentsQuery;
 
-    const documents = data?.pages.flatMap(page => page.documents) ?? [];
+    const rows = data?.pages.flatMap(page => page.documents) ?? [];
+
+    const documents = rows.filter(doc => doc.kind !== "sec_filing");
+
+    const filings = rows.filter(doc => doc.kind === "sec_filing");
 
     const toggleKind = (kind: EarningsDocument["kind"]) =>
         setKinds(current => (current.includes(kind) ? current.filter(k => k !== kind) : [...current, kind]));
@@ -190,9 +235,15 @@ export function DocumentsTab({ event, onTabChange, selector }: CallTabProps) {
 
                             {!isLoading && documents.length === 0 && (
                                 <div className="text-muted-foreground w-full p-2 text-center text-xs">
-                                    {kinds.length > 0 ? "No documents of these kinds." : "No documents stored for this call."}
+                                    {kinds.length > 0
+                                        ? "No documents of these kinds."
+                                        : filings.length > 0
+                                            ? "No other documents stored for this call."
+                                            : "No documents stored for this call."}
                                 </div>
                             )}
+
+                            {filings.length > 0 && <FilingsTable filings={filings} />}
                         </>
                     )}
 
