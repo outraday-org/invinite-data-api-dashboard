@@ -80,6 +80,20 @@ describe("NoTranscriptNotice", () => {
     });
 });
 
+describe("Notice card edge", () => {
+    // A ring paints outside the box, so the call page's scroll viewport clipped the card's left edge; a real border
+    // stays inside it, flush with the audio player's.
+    it("draws its edge as a border, not an outside ring", () => {
+        render(<NoTranscriptNotice captureStatus="pending" />);
+
+        const card = screen.getByRole("status");
+
+        expect(card).toHaveClass("border");
+
+        expect(card.className).not.toMatch(/(^|\s)ring-1(\s|$)/);
+    });
+});
+
 describe("CallTabs without a transcript", () => {
     it.each(DERIVED_TABS)("shows the notice on %s and never mounts the tab", (tab) => {
         renderTab(eventOf({}), tab);

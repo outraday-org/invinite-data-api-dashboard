@@ -51,8 +51,10 @@ function DocumentRow({
 
     const Icon = linkOnly ? Link2 : FileText;
 
-    // A call's SEC filing is no call material: a muted "Call" action instead of the chip.
-    const filing = doc.source === "call" && doc.kind === "sec_filing";
+    // A call-sourced document gets no chip: a muted "Call" action (→ the call's Documents tab) in the actions column.
+    const callEventId = doc.source === "call" ? doc.event_id : null;
+
+    const filing = doc.kind === "sec_filing";
 
     return (
         <li className={`${rowClass} group`} data-document-id={doc.document_id}>
@@ -60,11 +62,6 @@ function DocumentRow({
             <Icon className="text-muted-foreground size-3.5 shrink-0" />
             <span className="min-w-0 truncate" title={doc.title ?? undefined}>{doc.title ?? "Untitled"}</span>
             <Badge className="font-normal" variant="outline">{documentKindLabel(doc.kind)}</Badge>
-            {doc.source === "call" && !filing && doc.event_id && (
-                <CallLink aria-label="Call documents" eventId={doc.event_id} tab="documents" ticker={ticker}>
-                    <Badge variant="secondary">Call</Badge>
-                </CallLink>
-            )}
             {doc.link_status === "expired" && <Badge variant="secondary">replay expired</Badge>}
             <div className="text-muted-foreground ml-auto flex shrink-0 items-center gap-3 pl-3 text-xs tabular-nums">
                 <span className="w-20" title={filing && doc.filing_date ? "Filed on EDGAR" : undefined}>
@@ -73,8 +70,8 @@ function DocumentRow({
                 <span className="hidden w-12 text-right sm:inline">{doc.pages !== null ? `${doc.pages} pp.` : ""}</span>
                 <span className="hidden w-16 text-right sm:inline">{doc.bytes !== null ? formatBytes(doc.bytes) : ""}</span>
                 <div className="flex w-36 items-center justify-end gap-2.5">
-                    {filing && doc.event_id && (
-                        <CallLink aria-label="Call documents" className={actionClass} eventId={doc.event_id} tab="documents" ticker={ticker}>
+                    {callEventId && (
+                        <CallLink aria-label="Call documents" className={actionClass} eventId={callEventId} tab="documents" ticker={ticker}>
                             Call
                         </CallLink>
                     )}

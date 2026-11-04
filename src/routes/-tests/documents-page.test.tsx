@@ -293,7 +293,7 @@ describe("Documents page", () => {
         // No slides on this call: no link to an empty tab.
         expect(within(callRow).queryByText("Slides")).toBeNull();
 
-        // The call row comes first in its folder, then the call's documents (a "Call" badge → its Documents tab).
+        // The call row comes first in its folder, then the call's documents (a muted "Call" action → its Documents tab).
         const rows = [...quarter.querySelectorAll<HTMLElement>("li[data-event-id], li[data-document-id]")];
 
         expect(rows.map(row => row.getAttribute("data-event-id") ?? row.getAttribute("data-document-id")))
@@ -301,7 +301,14 @@ describe("Documents page", () => {
 
         const docRow = rows[1];
 
-        expect(within(docRow).getByText("Call").closest("a")).toHaveAttribute("href", callHref);
+        // No chip on any call document: the plain "Call" action link in the actions column, not a badge.
+        const call = within(docRow).getByText("Call");
+
+        expect(call.tagName).toBe("A");
+
+        expect(call).toHaveAttribute("href", callHref);
+
+        expect(call).toHaveAttribute("data-search", JSON.stringify({ tab: "documents" }));
 
         expect(within(docRow).queryByText("Event")).toBeNull();
     });
@@ -341,7 +348,7 @@ describe("Documents page", () => {
 
         const call = within(row).getByText("Call");
 
-        // A plain action link, not the "Call" badge (a span inside the link) the other call documents carry.
+        // A plain action link, like every call document's.
         expect(call.tagName).toBe("A");
 
         expect(call).toHaveAttribute("data-search", JSON.stringify({ tab: "documents" }));
