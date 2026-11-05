@@ -529,6 +529,8 @@ export interface paths {
          * Earnings call calendar
          * @description Upcoming and past earnings calls of all covered US companies in a window of days (default today + 14 days, at most 92). Each day is a calendar day in New York time (America/New_York); a call without a confirmed time is listed on its announced date. `event_type=all` returns every event type.
          *
+         *     Each event carries `calendar` (appended 2026-11): the results release (`report`: day, BMO / AMC from the results filing's acceptance, the filing) and the call (`call`: status, day, time and how good it is, the stating source) kept apart, the event `status` (reported, confirmed, announced, estimated, postponed, cancelled) beside `date_status`, and coverage `warnings`. `date_kind=report` selects the window on the report day; `calendar_status` filters on `calendar.status`.
+         *
          *     ### Freshness and coverage
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
@@ -2398,6 +2400,726 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/sec/datasets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC dataset releases
+         * @description The active release of each SEC dataset the store loads (Financial Statement and Notes, 13F, company facts): period, release hash, publication and load times — the identity every dataset row cites. Separate from document coverage (`held_through`).
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secDatasets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/documents/{accession}/{filename}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC document (current version)
+         * @description One document of a filing as canonical text: the current version is resolved ONCE and every block, neighbor, footnote and figure comes from that version (`version.version_id`; cite it, or reread it with `GET /v1/sec/versions/{version_id}`). Select by `blocks`, physical `pages` or an exact `printed` label (a repeated label is `ambiguous` with every candidate until `printed_occurrence` picks one). Blocks carry `citation` (version, block, physical page, printed label), section paths, tables with composed headers / unit / scale, footnote links. `source.url` is the original's permanent public URL.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for rag: STANDARD.
+         */
+        get: operations["secDocument"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/exports/financial-metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Request an annual metric export
+         * @description The universe-wide export of one standardized metric for one fiscal year (every covered company), as an immutable versioned file: `ready` with its manifest (rows, bytes, SHA-256, schema, coverage, source boundary, rule lineage) and the `download` route, else its state (`pending` while the current set has not published it). No forward-fill: a company without the value has no row.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secExportsFinancialMetrics"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/exports/{export_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Metric export manifest
+         * @description One export's manifest (immutable): rows, bytes, SHA-256, schema, coverage, rule lineage and the `download` route.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/exports/{export_id}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download a metric export
+         * @description The export file itself: gzip-compressed CSV, verified against its SHA-256 before the first byte (`X-Content-SHA256`), `Content-Disposition` names the file. The one byte stream of the family (exports live in a private bucket); billed once per download.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secExportFile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/filers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Find SEC filers
+         * @description Find SEC filers by (former) name, stated ticker or a form they filed. A filer is any SEC party: an operating company, a pre-IPO issuer without a ticker, a fund manager filing 13F without an exchange. Tickers and exchanges are the SEC filing's statements (`ticker_authority: sec_statement_only`), never a listing.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFilers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/filers/{cik}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC filer
+         * @description One filer: names (with former names and their dates), stated tickers / exchanges as SEC evidence, reviewed successors and what the store serves for it (`scope.permissions`). A pre-IPO issuer or SPAC has no stated ticker; its proposed symbols are on `GET /v1/sec/filers/{cik}/lifecycle`.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFiler"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/filers/{cik}/coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC filer document coverage
+         * @description How much of one filer's document history the store holds: `held_through` (the contiguous bound — the day before the oldest required document not yet held), required / held / pending counts and the holes, for a window back from `since` (default 365 days, at most 3 years).
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFilerCoverage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/filers/{cik}/lifecycle": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC issuer lifecycle
+         * @description One issuer's lifecycle: phase (pre-IPO, listed SPAC, listed operating, former listed), registration tracks with their proposed symbols (`symbol_authority: proposed_only`), the verified listing, successions (followed only on request, `traverse`) and separate readiness per family (identity, lifecycle, listing, documents, financials, coverage).
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFilerLifecycle"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/filings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC filings of a filer
+         * @description One filer's SEC filings, newest first: form, filing / report date, acceptance (null when SEC never stated it), 8-K items, primary document, the filer's roles. `identifier` is a ticker (a ticker the filer stated to the SEC) or a CIK — a CIK also finds a pre-IPO issuer or a fund manager without a ticker. `form_facet` lists every form the filer filed with its count (whatever the page's filters); OTC / ABS filings are never listed and are counted in `withheld`. Open a filing's documents with `GET /v1/sec/filings/{accession}`.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFilings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/filings/{accession}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC filing and its documents
+         * @description One filing with its document manifest: every document with its role, MIME type, true (uncompressed) size, stored size, readiness and the permanent public URL of the original (`source.url`), the current canonical version id per document, the parties and typed relations. A 13F information table names its structured route (`/holdings`) instead of a body URL.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFiling"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/filings/{accession}/facts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC dataset facts of a filing
+         * @description The XBRL facts SEC's own datasets (Financial Statement and Notes) publish for one filing, as released (`release`: dataset, period, hash), exact decimal strings. Raw source rows — the standardized statements are `GET /v1/sec/financials/{cik}/statements/{statement}`.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFilingFacts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/filings/{accession}/holdings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Holdings of a 13F filing
+         * @description The information table of one 13F filing as SEC's 13F dataset released it, in pages (`summary` first: row count and value). Values are the manager-reported values (the 2023-01-03 dollar rule applied).
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFilingHoldings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/filings/{accession}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC dataset text notes of a filing
+         * @description The text facts (notes, policies) SEC's Financial Statement and Notes dataset publishes for one filing, as released.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFilingNotes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/filings/{accession}/review-chain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC review chain of a filing
+         * @description The bounded SEC review graph around one filing: letters and responses (nodes, with whether the store holds them), confirmed edges (unconfirmed ones listed, never followed), text / PDF twins and what the graph cannot claim (`completeness`).
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFilingReviewChain"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/filings/{accession}/review-relations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC review relations of a filing
+         * @description The SEC comment-letter relations from or to one filing (UPLOAD / CORRESP letters, the filings they review, text / PDF twins), with their status, exact quotes and candidates. `history=true` adds superseded observations.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFilingReviewRelations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/financials/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Standardization rule catalog
+         * @description The versioned rule catalog behind the standardized statements (`catalog_version`, rules per metric): which XBRL concepts and formulas produce each standardized metric.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFinancialsCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/financials/facts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Explain a standardized fact
+         * @description One standardized fact explained: its value, the applied rule (only from a matching receipt; a current-catalog candidate is labelled apart), its source facts with original and annotated places, the bounded formula walk (several operands for a formula value) and quality flags.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFinancialsFact"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/financials/{cik}/statements/{statement}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Standardized statement with provenance
+         * @description A company's standardized statement cells (the values of `/v1/standardized/*`, unchanged) with their provenance: the applied rule from a matching receipt (`recorded`; `stale` / `legacy_unrecorded` / `not_observed` otherwise — never reconstructed), the source facts and their places. Values are exact decimal strings.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secFinancialsStatement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/holdings/deltas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Position changes in a security (13F)
+         * @description Quarter-over-quarter changes of every manager's reported position in one security (new, added, reduced, sold out), each against the manager's own prior report.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secHoldingsDeltas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/holdings/form-filers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Filers of an SEC form
+         * @description Every filer of one SEC form (e.g. all 13F-HR managers), with or without a ticker or exchange, by name or CIK.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secHoldingsFormFilers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/holdings/holders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Institutional holders of a security (13F)
+         * @description Every 13F manager reporting a security for one quarter (all public 13F filers, historical; one row per manager report as filed, never a cross-manager sum), with how the CUSIP / symbol / issuer resolved (`identity`), the reconciled coverage boundary and the counting policy. Amendments and restatements follow `counting_policy`.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secHoldingsHolders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/holdings/managers/{cik}/portfolio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Portfolio of a 13F manager
+         * @description One 13F manager's reported positions for a quarter — any public 13F filer, with or without an exchange listing of its own.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secHoldingsManagerPortfolio"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/issuers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List SEC issuers
+         * @description Eligible SEC issuers by name, lifecycle phase, a form they filed or when they first became public — a research list of issuers, not an asset search. Several name candidates set `ambiguous`.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secIssuers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/issuers/ipo-pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * IPO-pending SEC issuers
+         * @description Issuers with an open IPO track ("Pre-IPO, proposed XYZ (exchange)"): one row per issuer track with the proposed symbols the registration names (`symbol_authority: proposed_only` — never a listing), SPAC flag and a profile when enriched. The registration-filing calendar stays `GET /v1/ipos/registrations`.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secIssuersIpoPending"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search SEC documents
+         * @description Find passages in SEC documents, with citations: `mode=lexical` (default; keywords and quoted phrases, English stemming, ranked) or `mode=literal` (the exact characters; `case_sensitive=false` folds case). The earnings search contract: every hit carries `match` (`type`, `lexical_rank`, `spans` = code-point offsets into `text`), `document_spans` (offsets into the document text and each block), the cited blocks with neighbors and footnotes, and `citation` (version, block, the original's permanent URL). `coverage` says how complete the answer is: `forms_indexed` / `years_indexed` state the index policy; empty hits with `completeness: complete` is a genuine no-result, anything else is not. A stale or expired cursor answers 409 `restart_required`.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for rag: STANDARD.
+         */
+        get: operations["secSearch"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/versions/{version_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC document version
+         * @description One immutable document version by id (an old cited version stays readable): the same selectors and blocks as `GET /v1/sec/documents/{accession}/{filename}`, never mixed with a newer version.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for rag: STANDARD.
+         */
+        get: operations["secDocumentVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/versions/{version_id}/fact-places": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * XBRL fact places in a document version
+         * @description Where each XBRL fact of a pinned version sits: the original place (native id, block / table row / column), the annotated-rendition anchors and the PDF box as separate fields; a fact without a place keeps its typed status (`hidden`, `not_in_document`, `derived` with its operands, `unmatched`, `ambiguous`).
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secDocumentFactPlaces"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/versions/{version_id}/figures/{block_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * SEC document figure
+         * @description One figure of a pinned version: its caption / alt text, citation and the permanent public URL of the image (`image.url`).
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for display: FREE.
+         */
+        get: operations["secDocumentFigure"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/sec/versions/{version_id}/sections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sections of an SEC document version
+         * @description The section outline of a pinned version: `legacy` sections keep the section ids of `GET /v1/sec-filings/sections` (`legacy_section_key`, e.g. `part_i-item_1a`) where a proven correspondence exists, `generic` sections cover every other heading. Each section lists its block spans and `blocks` selectors: read a section with `GET /v1/sec/versions/{version_id}?blocks=<selector>`.
+         *
+         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
+         *
+         *     Minimum tier for rag: STANDARD.
+         */
+        get: operations["secDocumentSections"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/segmented-financials": {
         parameters: {
             query?: never;
@@ -2996,6 +3718,68 @@ export interface components {
             source: null | string;
             /** @description The ticker and issuer name are also on the Massive IPO calendar (GET /v1/ipos) — a hint, not an identity */
             ipo_calendar_match: boolean;
+        };
+        /**
+         * SecReadiness
+         * @description The typed state of the answer's subject: ready / partial (200), pending (202, retry later, not billed), excluded (403), unknown (404), failed (424), not_ready (503: the capability is not switched on). Extra named fields (`detail`) may follow.
+         */
+        SecReadiness: {
+            /**
+             * @description The state
+             * @enum {string}
+             */
+            status: "excluded" | "failed" | "not_ready" | "partial" | "pending" | "ready" | "unknown";
+            /** @description Stable snake_case reason code; null when ready */
+            reason: null | string;
+            /** @description true = the backend can still obtain it (wait and retry) */
+            recoverable: boolean;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * SecStoreError
+         * @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow.
+         */
+        SecStoreError: {
+            /** @description The state or refusal */
+            error: string;
+            /** @description One sentence */
+            message: string;
+            /** @description Stable snake_case reason */
+            code?: null | string;
+            readiness?: components["schemas"]["SecReadiness"];
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * SecSearchCoverage
+         * @description How much of the searched SEC scope the text index covers (the earnings search vocabulary). `forms_indexed` / `years_indexed` / `indexed_since` state the index policy; documents of other forms are counted in `lexical.not_indexed_by_policy` (by design, not a gap). For exactly one `cik`, `held` / `mirror` say how much of the filer's history is held (`held_through`).
+         */
+        SecSearchCoverage: {
+            /**
+             * @description complete = no hits is a genuine no-result; partial / unknown = the answer may be incomplete
+             * @enum {string}
+             */
+            completeness: "complete" | "partial" | "unknown";
+            /** @description The text index over the scope; null when nothing was searched (excluded / not indexed by policy) */
+            lexical: null | ({
+                /** @description ready / partial / not_ready */
+                state?: string;
+                /** @description Documents of the scope searchable now */
+                indexed?: number;
+                /** @description Not indexed yet */
+                pending?: number;
+                /** @description Indexing failed */
+                failed?: number;
+            } & {
+                [key: string]: unknown;
+            });
+            /** @description Why the answer may be incomplete: not_projected, projection_failed, not_published, not_held, held_not_verified, candidate_cap_reached, scan_budget_reached, scope_needs_review, scope_not_current, form_not_indexed, older_than_index_window, no_forms_indexed, held_gap, search_provider_not_registered, search_projection_empty, search_timeout, scope_excluded, documents_not_held */
+            reasons: Array<string>;
+            /** @description The indexed form policy (`10-K*` = the form and its /A) */
+            forms_indexed?: Array<string> | null;
+        } & {
+            [key: string]: unknown;
         };
         /** @description A new SEC filing, the same fields as a GET /v1/sec-filings/filings row plus `ticker`. Until 2026-10 the frame forwarded the upstream camelCase envelope (`schemaVersion`, `eventKey`, `filing.accessionNumber`, …) instead of this documented shape; it now is exactly this object */
         WebSocketFiling: {
@@ -6831,6 +7615,18 @@ export interface operations {
                  * @example 0
                  */
                 offset?: number;
+                /**
+                 * @description Which day `from` / `to` select: `call` (the default: the call day, as described above) or `report` (the results release day, `calendar.report.date`; ordered by it)
+                 * @example call
+                 */
+                date_kind?: "call" | "report";
+                /**
+                 * @description Filter by `calendar.status` (repeatable), applied beside `status`
+                 * @example [
+                 *       "confirmed"
+                 *     ]
+                 */
+                calendar_status?: Array<"announced" | "cancelled" | "confirmed" | "estimated" | "postponed" | "reported">;
             };
             header?: never;
             path?: never;
@@ -7000,6 +7796,95 @@ export interface operations {
                                 thumbnail_url: null | string;
                                 /** @description false = the owner disabled or restricted embedding (link `url`); null = not checked yet */
                                 embeddable: boolean | null;
+                            };
+                            /** @description The calendar semantics of the event (appended 2026-11): the report (results release) and the call kept apart, the event status beside `date_status`, citations and coverage warnings — as the customer view computes them. A report date can exist without a call; a call time is never inferred from the release or the filing acceptance. */
+                            calendar?: {
+                                /**
+                                 * @description Event status, most decisive first: cancelled, postponed, reported (results out), confirmed (first-party time), announced (first-party date), estimated
+                                 * @enum {string|null}
+                                 */
+                                status: "announced" | "cancelled" | "confirmed" | "estimated" | "postponed" | "reported" | null;
+                                /** @description The call (null fields when no call is expected) */
+                                call: {
+                                    /**
+                                     * @description Call status: the event statuses without reported, plus held, no_call, expired, not_expected (a non-call issuer)
+                                     * @enum {string|null}
+                                     */
+                                    status: "announced" | "cancelled" | "confirmed" | "estimated" | "expired" | "held" | "no_call" | "not_expected" | "postponed" | null;
+                                    /**
+                                     * Format: date
+                                     * @description Call day (YYYY-MM-DD; New York day of a timed call)
+                                     */
+                                    date: null | string;
+                                    /**
+                                     * Format: date-time
+                                     * @description Call start (ISO 8601 UTC); null for a date-only call or a filing-time stand-in
+                                     */
+                                    at: null | string;
+                                    /**
+                                     * @description How good `at` is
+                                     * @enum {string|null}
+                                     */
+                                    time_quality: "date_only" | "estimate" | "first_party" | "first_party_low" | "none" | "provisional" | "vendor" | null;
+                                    /**
+                                     * @description Where the call date comes from
+                                     * @enum {string|null}
+                                     */
+                                    date_basis: "estimate" | "first_party" | "none" | "provisional" | "vendor" | null;
+                                    /** @description The observation that states the date / time */
+                                    source: {
+                                        /** @description Source type (wire, edgar, ir_feed, ir_page, vendor, …) */
+                                        type: null | string;
+                                        /** @description A citable URL or accession; null for a vendor row */
+                                        ref: null | string;
+                                        /**
+                                         * Format: date-time
+                                         * @description When it was observed
+                                         */
+                                        observed_at: null | string;
+                                        /** @description The zone the time was stated in */
+                                        tz: null | string;
+                                        /** @description true = the zone was inferred, not stated */
+                                        tz_inferred: boolean | null;
+                                    } | null;
+                                };
+                                /** @description The results release */
+                                report: {
+                                    /**
+                                     * Format: date
+                                     * @description Report day (New York); null before the results
+                                     */
+                                    date: null | string;
+                                    /**
+                                     * @description bmo (before 09:30 New York) / amc (from 16:00) from the results filing's acceptance, unknown otherwise; exact is reserved for a stated release time
+                                     * @enum {string|null}
+                                     */
+                                    time_kind: "amc" | "bmo" | "exact" | "unknown" | null;
+                                    /**
+                                     * @description filing_acceptance (the results filing's acceptance) or none
+                                     * @enum {string|null}
+                                     */
+                                    quality: "filing_acceptance" | "none" | null;
+                                    /** @description The results filing */
+                                    source: null | {
+                                        /** @description Accession number */
+                                        accession: null | string;
+                                        /** @description Form (8-K, 6-K, …) */
+                                        form: null | string;
+                                        /**
+                                         * Format: date-time
+                                         * @description EDGAR acceptance
+                                         */
+                                        accepted_at: null | string;
+                                    };
+                                };
+                                /**
+                                 * @description stated / inferred / unknown fiscal year and quarter
+                                 * @enum {string|null}
+                                 */
+                                fiscal_period_quality: "inferred" | "stated" | "unknown" | null;
+                                /** @description Coverage warnings, in a fixed order */
+                                warnings: Array<"call_suppressed_non_call_issuer" | "call_time_filing_stand_in" | "call_time_low_confidence" | "call_time_provisional" | "call_time_vendor" | "date_only_call" | "estimate_expired" | "fiscal_period_inferred" | "fiscal_period_unknown" | "report_time_from_filing_acceptance">;
                             };
                         }>;
                     };
@@ -15160,6 +16045,3000 @@ export interface operations {
             503: components["responses"]["ServiceUnavailableError"];
         };
     };
+    secDatasets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The active dataset releases */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Datasets */
+                        datasets?: {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The active dataset releases */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Datasets */
+                        datasets?: {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secDocument: {
+        parameters: {
+            query?: {
+                /**
+                 * @description A block id or range (`b00107` or `b00107-b00244`; a section's `blocks` selector)
+                 * @example b00107-b00244
+                 */
+                blocks?: string;
+                /**
+                 * @description Physical page ordinals (`3` or `3-5`)
+                 * @example 1-3
+                 */
+                pages?: string;
+                /**
+                 * @description An exact printed page label (`F-7`, `iv`, `12`): compared as the string printed, never as a number
+                 * @example 17
+                 */
+                printed?: string;
+                /**
+                 * @description Which page carrying a repeated printed label (1-based, page order)
+                 * @example 1
+                 */
+                printed_occurrence?: number;
+                /**
+                 * @description Widen the selection by this many blocks on each side (same version)
+                 * @example 1
+                 */
+                neighbors?: number;
+                /**
+                 * @description Add the footnote blocks the selection links to (same version) (`true` or `false`)
+                 * @example true
+                 */
+                footnotes?: "false" | "true";
+                /**
+                 * @description At most this many blocks (1-1000); the answer names the next block when cut
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Accession number, dashed (0000320193-26-000026) or 18 digits
+                 * @example 0000320193-26-000026
+                 */
+                accession: string;
+                /**
+                 * @description The document's file name in the filing (a manifest's `filename`)
+                 * @example aapl-20260926.htm
+                 */
+                filename: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One pinned document version (selected blocks) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Blocks */
+                        blocks?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Footnotes */
+                        footnotes?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Pages */
+                        pages?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Quality */
+                        quality?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Selection */
+                        selection?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Source */
+                        source?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Toc */
+                        toc?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Version */
+                        version?: null | {
+                            [key: string]: unknown;
+                        };
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One pinned document version (selected blocks) */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Blocks */
+                        blocks?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Footnotes */
+                        footnotes?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Pages */
+                        pages?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Quality */
+                        quality?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Selection */
+                        selection?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Source */
+                        source?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Toc */
+                        toc?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Version */
+                        version?: null | {
+                            [key: string]: unknown;
+                        };
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secDocumentFactPlaces: {
+        parameters: {
+            query?: {
+                /**
+                 * @description One fact id
+                 * @example 320193|is_total_revenue|annual|2026|4
+                 */
+                fact_id?: string;
+                /**
+                 * @description Places of this status only
+                 * @example exact
+                 */
+                status?: "ambiguous" | "derived" | "exact" | "hidden" | "not_in_document" | "unmatched";
+                /**
+                 * @description Opaque cursor of the previous page (`next_cursor`; follow `next_url`). Bound to the other filters.
+                 * @example MTIz
+                 */
+                cursor?: string;
+                /**
+                 * @description Places per page (1-500, default 100)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description An immutable document version (`version.version_id` of a document read, a search hit's citation)
+                 * @example 8be0b759-1a9d-5f89-8308-bd86185f5e1f
+                 */
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of fact places */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Counts */
+                        counts?: {
+                            [key: string]: unknown;
+                        };
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Places */
+                        places?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Resolverversion */
+                        resolver_version?: null | string;
+                        /** @description Versionid */
+                        version_id?: string;
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One page of fact places */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Counts */
+                        counts?: {
+                            [key: string]: unknown;
+                        };
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Places */
+                        places?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Resolverversion */
+                        resolver_version?: null | string;
+                        /** @description Versionid */
+                        version_id?: string;
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secDocumentFigure: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description An immutable document version (`version.version_id` of a document read, a search hit's citation)
+                 * @example 8be0b759-1a9d-5f89-8308-bd86185f5e1f
+                 */
+                version_id: string;
+                /**
+                 * @description The figure's block id (`b00042`)
+                 * @example b00107
+                 */
+                block_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One figure */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Citation */
+                        citation?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Figure */
+                        figure?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Image */
+                        image?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Versionid */
+                        version_id?: null | string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One figure */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Citation */
+                        citation?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Figure */
+                        figure?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Image */
+                        image?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Versionid */
+                        version_id?: null | string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secDocumentSections: {
+        parameters: {
+            query?: {
+                /**
+                 * @description One outline only
+                 * @example legacy
+                 */
+                outline?: "generic" | "legacy";
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description An immutable document version (`version.version_id` of a document read, a search hit's citation)
+                 * @example 8be0b759-1a9d-5f89-8308-bd86185f5e1f
+                 */
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One version's section outline */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Accession */
+                        accession?: null | string;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Filename */
+                        filename?: null | string;
+                        /** @description Projectionversion */
+                        projection_version?: null | string;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Sections in outline order */
+                        sections?: Array<{
+                            /**
+                             * @description legacy = the existing section ids; generic = other headings
+                             * @enum {string}
+                             */
+                            outline?: "generic" | "legacy";
+                            /** @description Position in its outline */
+                            ordinal?: number;
+                            /** @description The section id of the legacy sections route (null for generic) */
+                            legacy_section_key?: null | string;
+                            /** @description Part heading */
+                            part?: null | string;
+                            /** @description Item number */
+                            item_id?: null | string;
+                            /** @description Heading */
+                            title?: string;
+                            /** @description `blocks` selectors of the section's spans */
+                            blocks?: Array<string>;
+                            /** @description `{from, to}` block ids */
+                            block_spans?: Array<{
+                                [key: string]: unknown;
+                            }>;
+                        } & {
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Versionid */
+                        version_id?: null | string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One version's section outline */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Accession */
+                        accession?: null | string;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Filename */
+                        filename?: null | string;
+                        /** @description Projectionversion */
+                        projection_version?: null | string;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Sections in outline order */
+                        sections?: Array<{
+                            /**
+                             * @description legacy = the existing section ids; generic = other headings
+                             * @enum {string}
+                             */
+                            outline?: "generic" | "legacy";
+                            /** @description Position in its outline */
+                            ordinal?: number;
+                            /** @description The section id of the legacy sections route (null for generic) */
+                            legacy_section_key?: null | string;
+                            /** @description Part heading */
+                            part?: null | string;
+                            /** @description Item number */
+                            item_id?: null | string;
+                            /** @description Heading */
+                            title?: string;
+                            /** @description `blocks` selectors of the section's spans */
+                            blocks?: Array<string>;
+                            /** @description `{from, to}` block ids */
+                            block_spans?: Array<{
+                                [key: string]: unknown;
+                            }>;
+                        } & {
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Versionid */
+                        version_id?: null | string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secDocumentVersion: {
+        parameters: {
+            query?: {
+                /**
+                 * @description A block id or range (`b00107` or `b00107-b00244`; a section's `blocks` selector)
+                 * @example b00107-b00244
+                 */
+                blocks?: string;
+                /**
+                 * @description Physical page ordinals (`3` or `3-5`)
+                 * @example 1-3
+                 */
+                pages?: string;
+                /**
+                 * @description An exact printed page label (`F-7`, `iv`, `12`): compared as the string printed, never as a number
+                 * @example 17
+                 */
+                printed?: string;
+                /**
+                 * @description Which page carrying a repeated printed label (1-based, page order)
+                 * @example 1
+                 */
+                printed_occurrence?: number;
+                /**
+                 * @description Widen the selection by this many blocks on each side (same version)
+                 * @example 1
+                 */
+                neighbors?: number;
+                /**
+                 * @description Add the footnote blocks the selection links to (same version) (`true` or `false`)
+                 * @example true
+                 */
+                footnotes?: "false" | "true";
+                /**
+                 * @description At most this many blocks (1-1000); the answer names the next block when cut
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description An immutable document version (`version.version_id` of a document read, a search hit's citation)
+                 * @example 8be0b759-1a9d-5f89-8308-bd86185f5e1f
+                 */
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One pinned document version (selected blocks) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Blocks */
+                        blocks?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Footnotes */
+                        footnotes?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Pages */
+                        pages?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Quality */
+                        quality?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Selection */
+                        selection?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Source */
+                        source?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Toc */
+                        toc?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Version */
+                        version?: null | {
+                            [key: string]: unknown;
+                        };
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One pinned document version (selected blocks) */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Blocks */
+                        blocks?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Footnotes */
+                        footnotes?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Pages */
+                        pages?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Quality */
+                        quality?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Selection */
+                        selection?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Source */
+                        source?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Toc */
+                        toc?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Version */
+                        version?: null | {
+                            [key: string]: unknown;
+                        };
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Export id
+                 * @example 6a7350b9-df18-517b-b553-96601b1e0508
+                 */
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One export's manifest */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One export's manifest */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secExportFile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Export id
+                 * @example 6a7350b9-df18-517b-b553-96601b1e0508
+                 */
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The export file (application/gzip) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/gzip": string;
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secExportsFinancialMetrics: {
+        parameters: {
+            query: {
+                /**
+                 * @description Standardized metric
+                 * @example is_total_revenue
+                 */
+                metric_id: string;
+                /**
+                 * @description Fiscal year
+                 * @example 2025
+                 */
+                fiscal_year: number;
+                /**
+                 * @description Period type (default annual)
+                 * @example annual
+                 */
+                period_type?: "annual" | "quarterly" | "ttm" | "ytd";
+                /**
+                 * @description standardized (default) or raw values
+                 * @example standardized
+                 */
+                mode?: "raw" | "standardized";
+                /**
+                 * @description A past export generation (point in time)
+                 * @example g20261104T031000Z-1a2b3c4d
+                 */
+                generation?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The export's state and manifest */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The export's state and manifest */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFiler: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description SEC CIK of the filer (any zero padding)
+                 * @example 320193
+                 */
+                cik: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One filer */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Filer */
+                        filer?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Formernames */
+                        former_names?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Scope */
+                        scope?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Successors */
+                        successors?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Tickerevidence */
+                        ticker_evidence?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One filer */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Filer */
+                        filer?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Formernames */
+                        former_names?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Scope */
+                        scope?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Successors */
+                        successors?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Tickerevidence */
+                        ticker_evidence?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFilerCoverage: {
+        parameters: {
+            query?: {
+                /**
+                 * @description First filing day of the window (YYYY-MM-DD, at most 3 years back)
+                 * @example 2025-11-01
+                 */
+                since?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description SEC CIK of the filer (any zero padding)
+                 * @example 320193
+                 */
+                cik: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One filer's document coverage */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Cik */
+                        cik?: string;
+                        /** @description Coverage */
+                        coverage?: null | {
+                            [key: string]: unknown;
+                        };
+                        /**
+                         * Format: date-time
+                         * @description Coverageobservedat
+                         */
+                        coverage_observed_at?: null | string;
+                        /** @description Coveragesource */
+                        coverage_source?: null | string;
+                        /** @description Indexed */
+                        indexed?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Manifest */
+                        manifest?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One filer's document coverage */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Cik */
+                        cik?: string;
+                        /** @description Coverage */
+                        coverage?: null | {
+                            [key: string]: unknown;
+                        };
+                        /**
+                         * Format: date-time
+                         * @description Coverageobservedat
+                         */
+                        coverage_observed_at?: null | string;
+                        /** @description Coveragesource */
+                        coverage_source?: null | string;
+                        /** @description Indexed */
+                        indexed?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Manifest */
+                        manifest?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFilerLifecycle: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Follow verified legal successions in this direction
+                 * @example successors
+                 */
+                traverse?: "predecessors" | "successors";
+                /**
+                 * @description At most this many successions (1-5, default 3)
+                 * @example 3
+                 */
+                max_hops?: number;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description SEC CIK of the issuer (any zero padding)
+                 * @example 320193
+                 */
+                cik: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One issuer's lifecycle */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Cik */
+                        cik?: null | string;
+                        /** @description Cik10 */
+                        cik10?: null | string;
+                        /** @description Decision */
+                        decision?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Evidence */
+                        evidence?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Families */
+                        families?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Ipopending */
+                        ipo_pending?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Issuer */
+                        issuer?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Listing */
+                        listing?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Names */
+                        names?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Pendingactions */
+                        pending_actions?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Registrationtracks */
+                        registration_tracks?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Successions */
+                        successions?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Warnings */
+                        warnings?: Array<string>;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One issuer's lifecycle */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Cik */
+                        cik?: null | string;
+                        /** @description Cik10 */
+                        cik10?: null | string;
+                        /** @description Decision */
+                        decision?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Evidence */
+                        evidence?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Families */
+                        families?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Ipopending */
+                        ipo_pending?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Issuer */
+                        issuer?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Listing */
+                        listing?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Names */
+                        names?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Pendingactions */
+                        pending_actions?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Registrationtracks */
+                        registration_tracks?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Successions */
+                        successions?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Warnings */
+                        warnings?: Array<string>;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFilers: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Name or former name (substring)
+                 * @example Apple
+                 */
+                name?: string;
+                /**
+                 * @description A ticker the filer stated to the SEC
+                 * @example AAPL
+                 */
+                ticker?: string;
+                /**
+                 * @description A form type the filer filed (exact, e.g. 13F-HR)
+                 * @example 13F-HR
+                 */
+                form?: string;
+                /**
+                 * @description Matches (1-50, default 20)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Filers matching the filters, name order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Limit */
+                        limit?: number;
+                        /** @description Matching filers */
+                        matches?: Array<{
+                            /** @description CIK (no zero padding) */
+                            cik?: string;
+                            /** @description Current SEC name */
+                            name?: null | string;
+                            /** @description SEC entity type */
+                            entity_type?: null | string;
+                            /** @description SIC code */
+                            sic?: null | string;
+                            /** @description Tickers the filer states (evidence, not a listing) */
+                            stated_tickers?: Array<string>;
+                            /** @description What the store serves for this filer */
+                            scope?: {
+                                [key: string]: unknown;
+                            };
+                        } & {
+                            [key: string]: unknown;
+                        }>;
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Filers matching the filters, name order */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Limit */
+                        limit?: number;
+                        /** @description Matching filers */
+                        matches?: Array<{
+                            /** @description CIK (no zero padding) */
+                            cik?: string;
+                            /** @description Current SEC name */
+                            name?: null | string;
+                            /** @description SEC entity type */
+                            entity_type?: null | string;
+                            /** @description SIC code */
+                            sic?: null | string;
+                            /** @description Tickers the filer states (evidence, not a listing) */
+                            stated_tickers?: Array<string>;
+                            /** @description What the store serves for this filer */
+                            scope?: {
+                                [key: string]: unknown;
+                            };
+                        } & {
+                            [key: string]: unknown;
+                        }>;
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFiling: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Accession number, dashed (0000320193-26-000026) or 18 digits
+                 * @example 0000320193-26-000026
+                 */
+                accession: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One filing's document manifest */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Documents */
+                        documents?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Filing */
+                        filing?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Parties */
+                        parties?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Recovery */
+                        recovery?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Relations */
+                        relations?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Source */
+                        source?: null | {
+                            [key: string]: unknown;
+                        };
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One filing's document manifest */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Documents */
+                        documents?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Filing */
+                        filing?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Parties */
+                        parties?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Recovery */
+                        recovery?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Relations */
+                        relations?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Source */
+                        source?: null | {
+                            [key: string]: unknown;
+                        };
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFilingFacts: {
+        parameters: {
+            query?: {
+                /**
+                 * @description One XBRL tag (e.g. Revenues)
+                 * @example Revenues
+                 */
+                tag?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Accession number, dashed (0000320193-26-000026) or 18 digits
+                 * @example 0000320193-26-000026
+                 */
+                accession: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dataset facts of one filing */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Accession */
+                        accession?: string;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Datasetfacts */
+                        dataset_facts?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Release */
+                        release?: null | {
+                            [key: string]: unknown;
+                        };
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Dataset facts of one filing */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Accession */
+                        accession?: string;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Datasetfacts */
+                        dataset_facts?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Release */
+                        release?: null | {
+                            [key: string]: unknown;
+                        };
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFilingHoldings: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Row key of the previous page (`next_after`; follow `next_url`)
+                 * @example 0
+                 */
+                after?: number;
+                /**
+                 * @description Positions per page (1-1000, default 500)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Accession number, dashed (0000320193-26-000026) or 18 digits
+                 * @example 0000320193-26-000026
+                 */
+                accession: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of a 13F information table */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Accession */
+                        accession?: string;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Nextafter */
+                        next_after?: null | number;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Rows */
+                        rows?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Summary */
+                        summary?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One page of a 13F information table */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Accession */
+                        accession?: string;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Nextafter */
+                        next_after?: null | number;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Rows */
+                        rows?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Summary */
+                        summary?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFilingNotes: {
+        parameters: {
+            query?: {
+                /**
+                 * @description One XBRL tag
+                 * @example Revenues
+                 */
+                tag?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Accession number, dashed (0000320193-26-000026) or 18 digits
+                 * @example 0000320193-26-000026
+                 */
+                accession: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dataset text facts of one filing */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Accession */
+                        accession?: string;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Datasetfacts */
+                        dataset_facts?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Release */
+                        release?: null | {
+                            [key: string]: unknown;
+                        };
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Dataset text facts of one filing */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Accession */
+                        accession?: string;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Datasetfacts */
+                        dataset_facts?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Release */
+                        release?: null | {
+                            [key: string]: unknown;
+                        };
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFilingReviewChain: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Hops from the filing (1-6, default 3)
+                 * @example 3
+                 */
+                max_depth?: number;
+                /**
+                 * @description Nodes at most (1-100, default 25)
+                 * @example 25
+                 */
+                max_nodes?: number;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Accession number, dashed (0000320193-26-000026) or 18 digits
+                 * @example 0000320193-26-000026
+                 */
+                accession: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One filing's review graph */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Accession */
+                        accession?: string;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Completeness */
+                        completeness?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Edges */
+                        edges?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Nodes */
+                        nodes?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Resolverversion */
+                        resolver_version?: null | string;
+                        /** @description Twins */
+                        twins?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One filing's review graph */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Accession */
+                        accession?: string;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Completeness */
+                        completeness?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Edges */
+                        edges?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Nodes */
+                        nodes?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Resolverversion */
+                        resolver_version?: null | string;
+                        /** @description Twins */
+                        twins?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFilingReviewRelations: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Relations from, to or both (default both)
+                 * @example both
+                 */
+                direction?: "both" | "from" | "to";
+                /**
+                 * @description One relation kind
+                 * @example responds_to
+                 */
+                kind?: "continues_review" | "responds_to" | "reviews_filing" | "text_twin_of";
+                /**
+                 * @description Add superseded observations (`true` or `false`)
+                 * @example false
+                 */
+                history?: "false" | "true";
+                /**
+                 * @description Opaque cursor of the previous page (`next_cursor`; follow `next_url`). Bound to the other filters.
+                 * @example MTIz
+                 */
+                cursor?: string;
+                /**
+                 * @description Relations per page (1-200, default 100)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Accession number, dashed (0000320193-26-000026) or 18 digits
+                 * @example 0000320193-26-000026
+                 */
+                accession: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of review relations */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Accession */
+                        accession?: string;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Relations */
+                        relations?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Resolution */
+                        resolution?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Resolverversion */
+                        resolver_version?: null | string;
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One page of review relations */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Accession */
+                        accession?: string;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Relations */
+                        relations?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Resolution */
+                        resolution?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Resolverversion */
+                        resolver_version?: null | string;
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFilings: {
+        parameters: {
+            query: {
+                /**
+                 * @description A ticker the filer stated to the SEC, or a CIK (a CIK also finds a pre-IPO issuer)
+                 * @example AAPL
+                 */
+                identifier: string;
+                /**
+                 * @description Form types, a comma list (e.g. `10-K,10-K/A`)
+                 * @example 10-K,10-K/A
+                 */
+                form?: string;
+                /**
+                 * @description First filing day (YYYY-MM-DD)
+                 * @example 2025-01-01
+                 */
+                filed_from?: string;
+                /**
+                 * @description Last filing day (YYYY-MM-DD)
+                 * @example 2026-11-05
+                 */
+                filed_to?: string;
+                /**
+                 * @description By filing date (default desc)
+                 * @example desc
+                 */
+                order?: "asc" | "desc";
+                /**
+                 * @description Opaque cursor of the previous page (`next_cursor`; follow `next_url`). Bound to the other filters.
+                 * @example eyJ2IjoxLCJhZnRlciI6WyIyMDI1LTEwLTMxIiwiMDAwMDMyMDE5My0yNS0wMDAwNzkiXSwiZiI6Ijg1NzNiMDg0ZjEyNzVjMjMifQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Filings per page (1-100, default 50)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of a filer's filings */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Cik */
+                        cik?: null | string;
+                        /** @description Filer */
+                        filer?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Filings, newest first */
+                        filings?: Array<{
+                            /** @description Accession number (dashed) */
+                            accession?: string;
+                            /** @description SEC form type */
+                            form?: string;
+                            /**
+                             * Format: date
+                             * @description SEC filing date
+                             */
+                            filing_date?: null | string;
+                            /**
+                             * Format: date
+                             * @description Period of report
+                             */
+                            report_date?: null | string;
+                            /**
+                             * Format: date-time
+                             * @description EDGAR acceptance; null when no source stated it (never the filing date)
+                             */
+                            accepted_at?: null | string;
+                            /** @description 8-K items */
+                            items?: Array<string> | null;
+                            /** @description File name of the primary document */
+                            primary_document?: null | string;
+                            /** @description The filer's roles on the filing (filer, issuer, filed_by, …) */
+                            roles?: Array<string>;
+                            /** @description The filing's EDGAR index page */
+                            edgar_index_url?: string;
+                        } & {
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Every form the filer filed (served filings), with count and newest filing date */
+                        form_facet?: Array<{
+                            /** @description SEC form type */
+                            form?: string;
+                            /** @description Filings of this form */
+                            count?: number;
+                            /**
+                             * Format: date
+                             * @description Newest filing date
+                             */
+                            newest_filing_date?: null | string;
+                        } & {
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Withheld */
+                        withheld?: {
+                            [key: string]: unknown;
+                        };
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One page of a filer's filings */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Cik */
+                        cik?: null | string;
+                        /** @description Filer */
+                        filer?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Filings, newest first */
+                        filings?: Array<{
+                            /** @description Accession number (dashed) */
+                            accession?: string;
+                            /** @description SEC form type */
+                            form?: string;
+                            /**
+                             * Format: date
+                             * @description SEC filing date
+                             */
+                            filing_date?: null | string;
+                            /**
+                             * Format: date
+                             * @description Period of report
+                             */
+                            report_date?: null | string;
+                            /**
+                             * Format: date-time
+                             * @description EDGAR acceptance; null when no source stated it (never the filing date)
+                             */
+                            accepted_at?: null | string;
+                            /** @description 8-K items */
+                            items?: Array<string> | null;
+                            /** @description File name of the primary document */
+                            primary_document?: null | string;
+                            /** @description The filer's roles on the filing (filer, issuer, filed_by, …) */
+                            roles?: Array<string>;
+                            /** @description The filing's EDGAR index page */
+                            edgar_index_url?: string;
+                        } & {
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Every form the filer filed (served filings), with count and newest filing date */
+                        form_facet?: Array<{
+                            /** @description SEC form type */
+                            form?: string;
+                            /** @description Filings of this form */
+                            count?: number;
+                            /**
+                             * Format: date
+                             * @description Newest filing date
+                             */
+                            newest_filing_date?: null | string;
+                        } & {
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Withheld */
+                        withheld?: {
+                            [key: string]: unknown;
+                        };
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
     secFilingsAvailableFormTypes: {
         parameters: {
             query?: {
@@ -15521,6 +19400,1822 @@ export interface operations {
             401: components["responses"]["UnauthorizedError"];
             404: components["responses"]["NotFoundError"];
             500: components["responses"]["InternalServerError"];
+        };
+    };
+    secFinancialsCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description One statement
+                 * @example income_statement
+                 */
+                statement?: "balance_sheet" | "cash_flow_statement" | "income_statement";
+                /**
+                 * @description One standardized metric
+                 * @example is_total_revenue
+                 */
+                metric_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The rule catalog */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description The rule catalog */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFinancialsFact: {
+        parameters: {
+            query: {
+                /**
+                 * @description Fact id `cik|metric_id|period type|fiscal year|fiscal quarter` (the `id` of a standardized row)
+                 * @example 320193|is_total_revenue|annual|2026|4
+                 */
+                id: string;
+                /**
+                 * @description Formula depth (1-6, default 4)
+                 * @example 3
+                 */
+                max_depth?: number;
+                /**
+                 * @description Formula members at most (1-200, default 64)
+                 * @example 64
+                 */
+                max_members?: number;
+                /**
+                 * @description Resolve the source facts' places (default true) (`true` or `false`)
+                 * @example true
+                 */
+                places?: "false" | "true";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One explained fact */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One explained fact */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secFinancialsStatement: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Period type (default annual)
+                 * @example annual
+                 */
+                period_type?: "annual" | "quarterly" | "ttm" | "ytd";
+                /**
+                 * @description First fiscal year
+                 * @example 2022
+                 */
+                fiscal_year_from?: number;
+                /**
+                 * @description Last fiscal year
+                 * @example 2026
+                 */
+                fiscal_year_to?: number;
+                /**
+                 * @description Standardized metrics, a comma list
+                 * @example is_total_revenue,is_net_income
+                 */
+                metric_id?: string;
+                /**
+                 * @description Add facts that did not win a cell (`true` or `false`)
+                 * @example false
+                 */
+                other_evidence?: "false" | "true";
+                /**
+                 * @description Cells at most (1-5000, default 2000)
+                 * @example 200
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description CIK of the company
+                 * @example 320193
+                 */
+                cik: string;
+                /**
+                 * @description The statement
+                 * @example income_statement
+                 */
+                statement: "balance_sheet" | "cash_flow_statement" | "income_statement";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One statement with provenance */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One statement with provenance */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secHoldingsDeltas: {
+        parameters: {
+            query: {
+                /**
+                 * @description The 13F report quarter end (YYYY-MM-DD)
+                 * @example 2026-06-30
+                 */
+                period_end: string;
+                /**
+                 * @description The quarter compared with (default the previous quarter)
+                 * @example 2026-03-31
+                 */
+                prior_period_end?: string;
+                /**
+                 * @description Security CUSIP
+                 * @example 037833100
+                 */
+                cusip?: string;
+                /**
+                 * @description Ticker symbol
+                 * @example AAPL
+                 */
+                symbol?: string;
+                /**
+                 * @description Issuer CIK
+                 * @example 320193
+                 */
+                issuer_cik?: string;
+                /**
+                 * @description `shareholder` (common / ordinary shares) or `all` (also options, notes, …; default shareholder)
+                 * @example shareholder
+                 */
+                instruments?: "all" | "shareholder";
+                /**
+                 * @description Read every row as of this instant (`pinned_at` of a previous page keeps pages consistent)
+                 * @example 2026-11-05T00:00:00Z
+                 */
+                pinned_at?: string;
+                /**
+                 * @description Opaque cursor of the previous page (`next_cursor`; follow `next_url`). Bound to the other filters.
+                 * @example eyJ2IjoxLCJhZnRlciI6WyIyMDI1LTEwLTMxIiwiMDAwMDMyMDE5My0yNS0wMDAwNzkiXSwiZiI6Ijg1NzNiMDg0ZjEyNzVjMjMifQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Rows per page (1-200, default 50)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of position changes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Countingpolicy */
+                        counting_policy?: null | string;
+                        /** @description Coverage */
+                        coverage?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Detail */
+                        detail?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Disclosurelimitations */
+                        disclosure_limitations?: Array<string>;
+                        /** @description Identity */
+                        identity?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Pagestatus */
+                        page_status?: null | string;
+                        /**
+                         * Format: date-time
+                         * @description Pinnedat
+                         */
+                        pinned_at?: null | string;
+                        /** @description Policyversion */
+                        policy_version?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Rows */
+                        rows?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Scope */
+                        scope?: null | string;
+                        /** @description Snapshotchanged */
+                        snapshot_changed?: boolean | null;
+                        /** @description Valuesemantics */
+                        value_semantics?: null | string;
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One page of position changes */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Countingpolicy */
+                        counting_policy?: null | string;
+                        /** @description Coverage */
+                        coverage?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Detail */
+                        detail?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Disclosurelimitations */
+                        disclosure_limitations?: Array<string>;
+                        /** @description Identity */
+                        identity?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Pagestatus */
+                        page_status?: null | string;
+                        /**
+                         * Format: date-time
+                         * @description Pinnedat
+                         */
+                        pinned_at?: null | string;
+                        /** @description Policyversion */
+                        policy_version?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Rows */
+                        rows?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Scope */
+                        scope?: null | string;
+                        /** @description Snapshotchanged */
+                        snapshot_changed?: boolean | null;
+                        /** @description Valuesemantics */
+                        value_semantics?: null | string;
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secHoldingsFormFilers: {
+        parameters: {
+            query: {
+                /**
+                 * @description The form type (e.g. 13F-HR)
+                 * @example 13F-HR
+                 */
+                form: string;
+                /**
+                 * @description Only this exact form (not its amendments) (`true` or `false`)
+                 * @example false
+                 */
+                exact?: "false" | "true";
+                /**
+                 * @description Filer name (substring)
+                 * @example Berkshire
+                 */
+                name?: string;
+                /**
+                 * @description One filer CIK
+                 * @example 1067983
+                 */
+                cik?: string;
+                /**
+                 * @description Opaque cursor of the previous page (`next_cursor`; follow `next_url`). Bound to the other filters.
+                 * @example eyJ2IjoxLCJhZnRlciI6WyIyMDI1LTEwLTMxIiwiMDAwMDMyMDE5My0yNS0wMDAwNzkiXSwiZiI6Ijg1NzNiMDg0ZjEyNzVjMjMifQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Rows per page (1-200, default 50)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of form filers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Countingpolicy */
+                        counting_policy?: null | string;
+                        /** @description Coverage */
+                        coverage?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Detail */
+                        detail?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Disclosurelimitations */
+                        disclosure_limitations?: Array<string>;
+                        /** @description Identity */
+                        identity?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Pagestatus */
+                        page_status?: null | string;
+                        /**
+                         * Format: date-time
+                         * @description Pinnedat
+                         */
+                        pinned_at?: null | string;
+                        /** @description Policyversion */
+                        policy_version?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Rows */
+                        rows?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Scope */
+                        scope?: null | string;
+                        /** @description Snapshotchanged */
+                        snapshot_changed?: boolean | null;
+                        /** @description Valuesemantics */
+                        value_semantics?: null | string;
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One page of form filers */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Countingpolicy */
+                        counting_policy?: null | string;
+                        /** @description Coverage */
+                        coverage?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Detail */
+                        detail?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Disclosurelimitations */
+                        disclosure_limitations?: Array<string>;
+                        /** @description Identity */
+                        identity?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Pagestatus */
+                        page_status?: null | string;
+                        /**
+                         * Format: date-time
+                         * @description Pinnedat
+                         */
+                        pinned_at?: null | string;
+                        /** @description Policyversion */
+                        policy_version?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Rows */
+                        rows?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Scope */
+                        scope?: null | string;
+                        /** @description Snapshotchanged */
+                        snapshot_changed?: boolean | null;
+                        /** @description Valuesemantics */
+                        value_semantics?: null | string;
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secHoldingsHolders: {
+        parameters: {
+            query: {
+                /**
+                 * @description The 13F report quarter end (YYYY-MM-DD)
+                 * @example 2026-06-30
+                 */
+                period_end: string;
+                /**
+                 * @description Security CUSIP
+                 * @example 037833100
+                 */
+                cusip?: string;
+                /**
+                 * @description Ticker symbol
+                 * @example AAPL
+                 */
+                symbol?: string;
+                /**
+                 * @description Issuer CIK
+                 * @example 320193
+                 */
+                issuer_cik?: string;
+                /**
+                 * @description `shareholder` (common / ordinary shares) or `all` (also options, notes, …; default shareholder)
+                 * @example shareholder
+                 */
+                instruments?: "all" | "shareholder";
+                /**
+                 * @description Read every row as of this instant (`pinned_at` of a previous page keeps pages consistent)
+                 * @example 2026-11-05T00:00:00Z
+                 */
+                pinned_at?: string;
+                /**
+                 * @description Opaque cursor of the previous page (`next_cursor`; follow `next_url`). Bound to the other filters.
+                 * @example eyJ2IjoxLCJhZnRlciI6WyIyMDI1LTEwLTMxIiwiMDAwMDMyMDE5My0yNS0wMDAwNzkiXSwiZiI6Ijg1NzNiMDg0ZjEyNzVjMjMifQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Rows per page (1-200, default 50)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of 13F holders */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Countingpolicy */
+                        counting_policy?: null | string;
+                        /** @description Coverage */
+                        coverage?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Detail */
+                        detail?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Disclosurelimitations */
+                        disclosure_limitations?: Array<string>;
+                        /** @description Identity */
+                        identity?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Pagestatus */
+                        page_status?: null | string;
+                        /**
+                         * Format: date-time
+                         * @description Pinnedat
+                         */
+                        pinned_at?: null | string;
+                        /** @description Policyversion */
+                        policy_version?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Rows */
+                        rows?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Scope */
+                        scope?: null | string;
+                        /** @description Snapshotchanged */
+                        snapshot_changed?: boolean | null;
+                        /** @description Valuesemantics */
+                        value_semantics?: null | string;
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One page of 13F holders */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Countingpolicy */
+                        counting_policy?: null | string;
+                        /** @description Coverage */
+                        coverage?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Detail */
+                        detail?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Disclosurelimitations */
+                        disclosure_limitations?: Array<string>;
+                        /** @description Identity */
+                        identity?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Pagestatus */
+                        page_status?: null | string;
+                        /**
+                         * Format: date-time
+                         * @description Pinnedat
+                         */
+                        pinned_at?: null | string;
+                        /** @description Policyversion */
+                        policy_version?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Rows */
+                        rows?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Scope */
+                        scope?: null | string;
+                        /** @description Snapshotchanged */
+                        snapshot_changed?: boolean | null;
+                        /** @description Valuesemantics */
+                        value_semantics?: null | string;
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secHoldingsManagerPortfolio: {
+        parameters: {
+            query: {
+                /**
+                 * @description The 13F report quarter end (YYYY-MM-DD)
+                 * @example 2026-06-30
+                 */
+                period_end: string;
+                /**
+                 * @description `shareholder` (common / ordinary shares) or `all` (also options, notes, …; default all)
+                 * @example shareholder
+                 */
+                instruments?: "all" | "shareholder";
+                /**
+                 * @description Read every row as of this instant (`pinned_at` of a previous page keeps pages consistent)
+                 * @example 2026-11-05T00:00:00Z
+                 */
+                pinned_at?: string;
+                /**
+                 * @description Opaque cursor of the previous page (`next_cursor`; follow `next_url`). Bound to the other filters.
+                 * @example eyJ2IjoxLCJhZnRlciI6WyIyMDI1LTEwLTMxIiwiMDAwMDMyMDE5My0yNS0wMDAwNzkiXSwiZiI6Ijg1NzNiMDg0ZjEyNzVjMjMifQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Rows per page (1-200, default 50)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description CIK of the 13F manager
+                 * @example 1067983
+                 */
+                cik: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of a manager's portfolio */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Countingpolicy */
+                        counting_policy?: null | string;
+                        /** @description Coverage */
+                        coverage?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Detail */
+                        detail?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Disclosurelimitations */
+                        disclosure_limitations?: Array<string>;
+                        /** @description Identity */
+                        identity?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Pagestatus */
+                        page_status?: null | string;
+                        /**
+                         * Format: date-time
+                         * @description Pinnedat
+                         */
+                        pinned_at?: null | string;
+                        /** @description Policyversion */
+                        policy_version?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Rows */
+                        rows?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Scope */
+                        scope?: null | string;
+                        /** @description Snapshotchanged */
+                        snapshot_changed?: boolean | null;
+                        /** @description Valuesemantics */
+                        value_semantics?: null | string;
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One page of a manager's portfolio */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Countingpolicy */
+                        counting_policy?: null | string;
+                        /** @description Coverage */
+                        coverage?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Detail */
+                        detail?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Disclosurelimitations */
+                        disclosure_limitations?: Array<string>;
+                        /** @description Identity */
+                        identity?: null | {
+                            [key: string]: unknown;
+                        };
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Pagestatus */
+                        page_status?: null | string;
+                        /**
+                         * Format: date-time
+                         * @description Pinnedat
+                         */
+                        pinned_at?: null | string;
+                        /** @description Policyversion */
+                        policy_version?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description Rows */
+                        rows?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Scope */
+                        scope?: null | string;
+                        /** @description Snapshotchanged */
+                        snapshot_changed?: boolean | null;
+                        /** @description Valuesemantics */
+                        value_semantics?: null | string;
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secIssuers: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Name (substring)
+                 * @example Iambic
+                 */
+                query?: string;
+                /**
+                 * @description Lifecycle phase
+                 * @example public_preipo
+                 */
+                phase?: "former_listed" | "listed_operating" | "listed_spac" | "observed" | "public_preipo" | "unresolved";
+                /**
+                 * @description A form type the issuer filed
+                 * @example S-1
+                 */
+                form?: string;
+                /**
+                 * @description First public sighting on or after (YYYY-MM-DD)
+                 * @example 2026-01-01
+                 */
+                public_seen_from?: string;
+                /**
+                 * @description First public sighting on or before (YYYY-MM-DD)
+                 * @example 2026-10-31
+                 */
+                public_seen_to?: string;
+                /**
+                 * @description Opaque cursor of the previous page (`next_cursor`; follow `next_url`). Bound to the other filters.
+                 * @example eyJ2IjoxLCJhZnRlciI6WyIyMDI1LTEwLTMxIiwiMDAwMDMyMDE5My0yNS0wMDAwNzkiXSwiZiI6Ijg1NzNiMDg0ZjEyNzVjMjMifQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Issuers per page (1-100, default 20)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of issuers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Ambiguous */
+                        ambiguous?: boolean;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Issuers */
+                        issuers?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One page of issuers */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description Ambiguous */
+                        ambiguous?: boolean;
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Issuers */
+                        issuers?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secIssuersIpoPending: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Name (substring)
+                 * @example Iambic
+                 */
+                query?: string;
+                /**
+                 * @description Opaque cursor of the previous page (`next_cursor`; follow `next_url`). Bound to the other filters.
+                 * @example eyJ2IjoxLCJhZnRlciI6WyIyMDI1LTEwLTMxIiwiMDAwMDMyMDE5My0yNS0wMDAwNzkiXSwiZiI6Ijg1NzNiMDg0ZjEyNzVjMjMifQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Entries per page (1-100, default 20)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of IPO-pending issuers */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Entries */
+                        entries?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description One page of IPO-pending issuers */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        /** @description Entries */
+                        entries?: Array<{
+                            [key: string]: unknown;
+                        }>;
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+        };
+    };
+    secSearch: {
+        parameters: {
+            query: {
+                /**
+                 * @description Keywords / a quoted phrase (lexical) or the exact text (literal)
+                 * @example supply chain concentration
+                 */
+                q: string;
+                /**
+                 * @description `lexical` (default) or `literal`
+                 * @example lexical
+                 */
+                mode?: "lexical" | "literal";
+                /**
+                 * @description Literal only: `false` folds case (default case-sensitive)
+                 * @example false
+                 */
+                case_sensitive?: "false" | "true";
+                /**
+                 * @description Filer CIKs, a comma list
+                 * @example 320193
+                 */
+                cik?: string;
+                /**
+                 * @description A company entity id (all its CIKs)
+                 * @example 1
+                 */
+                entity_id?: number;
+                /**
+                 * @description Widen `cik` / `entity_id` over reviewed legal successors (`true` or `false`)
+                 * @example false
+                 */
+                successors?: "false" | "true";
+                /**
+                 * @description Accession numbers, a comma list
+                 * @example 0000320193-26-000026
+                 */
+                accession?: string;
+                /**
+                 * @description Document version ids, a comma list
+                 * @example 8be0b759-1a9d-5f89-8308-bd86185f5e1f
+                 */
+                version_id?: string;
+                /**
+                 * @description Form types, a comma list
+                 * @example 10-K
+                 */
+                form?: string;
+                /**
+                 * @description Document file names, a comma list
+                 * @example aapl-20260926.htm
+                 */
+                filename?: string;
+                /**
+                 * @description 8-K items, a comma list (e.g. 2.02)
+                 * @example 2.02
+                 */
+                item?: string;
+                /**
+                 * @description Exhibit types, a comma list (e.g. EX-99.1)
+                 * @example EX-99.1
+                 */
+                exhibit_type?: string;
+                /**
+                 * @description First filing day (YYYY-MM-DD)
+                 * @example 2025-01-01
+                 */
+                filed_from?: string;
+                /**
+                 * @description Last filing day (YYYY-MM-DD)
+                 * @example 2026-11-05
+                 */
+                filed_to?: string;
+                /**
+                 * @description Opaque cursor of the previous page (`next_cursor`; follow `next_url`). Bound to the other filters.
+                 * @example eyJ2IjoxLCJhZnRlciI6WyIyMDI1LTEwLTMxIiwiMDAwMDMyMDE5My0yNS0wMDAwNzkiXSwiZiI6Ijg1NzNiMDg0ZjEyNzVjMjMifQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Hits per page (1-50, default 20)
+                 * @example 5
+                 */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ranked, cited passages and the coverage of the searched scope */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        coverage?: components["schemas"]["SecSearchCoverage"];
+                        /** @description Hits, best first (literal: newest filing first) */
+                        hits?: Array<{
+                            [key: string]: unknown;
+                        } & {
+                            /**
+                             * Format: uuid
+                             * @description The cited document version
+                             */
+                            version_id?: string;
+                            /** @description Accession number */
+                            accession?: string;
+                            /** @description Document file name */
+                            filename?: string;
+                            /** @description Form type */
+                            form?: string;
+                            /**
+                             * Format: date
+                             * @description SEC filing date
+                             */
+                            filing_date?: null | string;
+                            /** @description The whole search unit (≤ 4,000 code points) */
+                            text?: string;
+                            /** @description Lexical rank (ts_rank_cd); 0 for literal */
+                            score?: number;
+                            match?: components["schemas"]["HitMatch"];
+                            /** @description Each span in document-text and block offsets (code points) */
+                            document_spans?: Array<{
+                                [key: string]: unknown;
+                            }>;
+                            /** @description version_id, block, document route and the original's permanent `source.url` */
+                            citation?: {
+                                [key: string]: unknown;
+                            };
+                        }>;
+                        /**
+                         * @description Mode
+                         * @enum {string|null}
+                         */
+                        mode?: "lexical" | "literal" | null;
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Ranked, cited passages and the coverage of the searched scope */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The backend contract version (`secdoors.v1`) */
+                        api_schema: string;
+                        coverage?: components["schemas"]["SecSearchCoverage"];
+                        /** @description Hits, best first (literal: newest filing first) */
+                        hits?: Array<{
+                            [key: string]: unknown;
+                        } & {
+                            /**
+                             * Format: uuid
+                             * @description The cited document version
+                             */
+                            version_id?: string;
+                            /** @description Accession number */
+                            accession?: string;
+                            /** @description Document file name */
+                            filename?: string;
+                            /** @description Form type */
+                            form?: string;
+                            /**
+                             * Format: date
+                             * @description SEC filing date
+                             */
+                            filing_date?: null | string;
+                            /** @description The whole search unit (≤ 4,000 code points) */
+                            text?: string;
+                            /** @description Lexical rank (ts_rank_cd); 0 for literal */
+                            score?: number;
+                            match?: components["schemas"]["HitMatch"];
+                            /** @description Each span in document-text and block offsets (code points) */
+                            document_spans?: Array<{
+                                [key: string]: unknown;
+                            }>;
+                            /** @description version_id, block, document route and the original's permanent `source.url` */
+                            citation?: {
+                                [key: string]: unknown;
+                            };
+                        }>;
+                        /**
+                         * @description Mode
+                         * @enum {string|null}
+                         */
+                        mode?: "lexical" | "literal" | null;
+                        /** @description Nextcursor */
+                        next_cursor?: null | string;
+                        /** @description Provider */
+                        provider?: null | {
+                            [key: string]: unknown;
+                        };
+                        readiness: components["schemas"]["SecReadiness"];
+                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
+                        next_url?: string;
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            401: components["responses"]["UnauthorizedError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            424: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
+            500: components["responses"]["InternalServerError"];
+            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecStoreError"];
+                };
+            };
         };
     };
     segmentedFinancials: {
