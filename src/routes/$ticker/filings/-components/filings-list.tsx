@@ -14,6 +14,7 @@ export function FilingsList({
     isLoading,
     onFetchNextPage,
     onOpenHtml,
+    onOpenSecDocuments,
     onSortToggle,
     sortDirection,
 }: {
@@ -23,6 +24,7 @@ export function FilingsList({
     isFetchingNextPage: boolean;
     onFetchNextPage: () => void;
     onOpenHtml: (filing: Filing, url: string) => void;
+    onOpenSecDocuments?: (filing: Filing) => void;
     sortDirection: "asc" | "desc";
     onSortToggle: () => void;
 }) {
@@ -37,6 +39,7 @@ export function FilingsList({
                             filing={filing}
                             key={filing.accession_number}
                             onOpenHtml={url => onOpenHtml(filing, url)}
+                            onOpenSecDocuments={onOpenSecDocuments ? () => onOpenSecDocuments(filing) : undefined}
                         />
                     ))}
                 </div>

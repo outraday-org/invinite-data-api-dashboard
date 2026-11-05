@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 
 import { ApiKeyInlineField } from "@/components/api-key/api-key-inline";
+import { SecFilerLookup } from "@/components/sec/sec-filer-lookup";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { dataApiDashboardUrl } from "@/lib/app-url";
@@ -110,6 +111,18 @@ function IndexPage() {
             <Card className="border-border/60">
                 <CardContent>
                     <ApiKeyInlineField />
+                </CardContent>
+            </Card>
+
+            <Card className="border-border/60">
+                <CardHeader>
+                    <CardTitle>SEC filers</CardTitle>
+                    <CardDescription>
+                        Any SEC filer by CIK or name — including pre-IPO issuers, SPACs and 13F managers without a ticker.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <SecFilerLookup />
                 </CardContent>
             </Card>
 

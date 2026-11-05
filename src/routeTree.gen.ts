@@ -14,6 +14,7 @@ import { Route as LicensingRouteImport } from './routes/licensing'
 import { Route as TickerRouteRouteImport } from './routes/$ticker/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TickerIndexRouteImport } from './routes/$ticker/index'
+import { Route as SecCikRouteImport } from './routes/sec/$cik'
 import { Route as TickerStockSplitsIndexRouteImport } from './routes/$ticker/stock-splits/index'
 import { Route as TickerSegmentedFinancialsIndexRouteImport } from './routes/$ticker/segmented-financials/index'
 import { Route as TickerNewsIndexRouteImport } from './routes/$ticker/news/index'
@@ -57,6 +58,11 @@ const TickerIndexRoute = TickerIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => TickerRouteRoute,
+} as any)
+const SecCikRoute = SecCikRouteImport.update({
+  id: '/sec/$cik',
+  path: '/sec/$cik',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const TickerStockSplitsIndexRoute = TickerStockSplitsIndexRouteImport.update({
   id: '/stock-splits/',
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/$ticker': typeof TickerRouteRouteWithChildren
   '/licensing': typeof LicensingRoute
   '/status': typeof StatusRoute
+  '/sec/$cik': typeof SecCikRoute
   '/$ticker/': typeof TickerIndexRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
   '/$ticker/documents': typeof TickerDocumentsIndexRoute
@@ -189,6 +196,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/licensing': typeof LicensingRoute
   '/status': typeof StatusRoute
+  '/sec/$cik': typeof SecCikRoute
   '/$ticker': typeof TickerIndexRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
   '/$ticker/documents': typeof TickerDocumentsIndexRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/$ticker': typeof TickerRouteRouteWithChildren
   '/licensing': typeof LicensingRoute
   '/status': typeof StatusRoute
+  '/sec/$cik': typeof SecCikRoute
   '/$ticker/': typeof TickerIndexRoute
   '/$ticker/dividends/': typeof TickerDividendsIndexRoute
   '/$ticker/documents/': typeof TickerDocumentsIndexRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/$ticker'
     | '/licensing'
     | '/status'
+    | '/sec/$cik'
     | '/$ticker/'
     | '/$ticker/dividends'
     | '/$ticker/documents'
@@ -266,6 +276,7 @@ export interface FileRouteTypes {
     | '/'
     | '/licensing'
     | '/status'
+    | '/sec/$cik'
     | '/$ticker'
     | '/$ticker/dividends'
     | '/$ticker/documents'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/$ticker'
     | '/licensing'
     | '/status'
+    | '/sec/$cik'
     | '/$ticker/'
     | '/$ticker/dividends/'
     | '/$ticker/documents/'
@@ -317,6 +329,7 @@ export interface RootRouteChildren {
   TickerRouteRoute: typeof TickerRouteRouteWithChildren
   LicensingRoute: typeof LicensingRoute
   StatusRoute: typeof StatusRoute
+  SecCikRoute: typeof SecCikRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -355,6 +368,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$ticker/'
       preLoaderRoute: typeof TickerIndexRouteImport
       parentRoute: typeof TickerRouteRoute
+    }
+    '/sec/$cik': {
+      id: '/sec/$cik'
+      path: '/sec/$cik'
+      fullPath: '/sec/$cik'
+      preLoaderRoute: typeof SecCikRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/$ticker/stock-splits/': {
       id: '/$ticker/stock-splits/'
@@ -539,6 +559,7 @@ const rootRouteChildren: RootRouteChildren = {
   TickerRouteRoute: TickerRouteRouteWithChildren,
   LicensingRoute: LicensingRoute,
   StatusRoute: StatusRoute,
+  SecCikRoute: SecCikRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

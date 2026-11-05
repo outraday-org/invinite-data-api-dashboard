@@ -1,13 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 
+import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 import type { EarningsCompanyDocument } from "@/lib/api/types";
 import type { DocumentsSearch } from "@/lib/earnings/documents";
 
+import { SecFilingSearch } from "@/components/sec/sec-filing-search";
+import { SecSourceDialog } from "@/components/sec/sec-source-panel";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isTierError } from "@/lib/api/errors";
-import { useEarningsCompanyDocumentsInfinite, useEarningsEventsInfinite } from "@/lib/api/queries";
+import { useCompanyDetails, useEarningsCompanyDocumentsInfinite, useEarningsEventsInfinite } from "@/lib/api/queries";
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
 import { buildDocumentTree, callEntries, eventTitleMap, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
 import { MediaState, Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
@@ -34,6 +38,30 @@ function LibraryError({ error }: { error: unknown }) {
     return <MediaState error={error} notFound="No earnings-call coverage for this company" title="Failed to load the documents" />;
 }
 
+/** The search sources: the company's own documents (`/documents/search`) or its SEC filings (`/v1/sec/search`). */
+const SEARCH_SOURCES = [
+    { label: "Company documents", value: "company" },
+    { label: "SEC filings", value: "sec" },
+] as const;
+
+type SearchSource = (typeof SEARCH_SOURCES)[number]["value"];
+
+/** SEC filing search scoped to the company's CIK (from the company details the layout already loads). */
+function SecFilingsSource({ ticker }: { ticker: string }) {
+    const [target, setTarget] = React.useState<null | SecPanelTarget>(null);
+
+    const { data } = useCompanyDetails(ticker);
+
+    const cik = data?.companies[0]?.cik.replace(/^0+/, "") ?? null;
+
+    return (
+        <>
+            <SecFilingSearch cik={cik || null} onOpen={setTarget} />
+            <SecSourceDialog onClose={() => setTarget(null)} target={target} />
+        </>
+    );
+}
+
 function DocumentsPage() {
     const { ticker } = Route.useParams();
 
@@ -42,6 +70,8 @@ function DocumentsPage() {
     const navigate = Route.useNavigate();
 
     const [textOf, setTextOf] = React.useState<EarningsCompanyDocument | null>(null);
+
+    const [searchSource, setSearchSource] = React.useState<SearchSource>("company");
 
     const library = useEarningsCompanyDocumentsInfinite({
         category: search.category ? [search.category] : undefined,
@@ -100,7 +130,23 @@ function DocumentsPage() {
 
             <ScrollArea className="h-0 grow">
                 <div className="flex flex-col gap-4 pr-3">
-                    <DocumentSearch identifier={ticker} />
+                    <div className="flex flex-col gap-1">
+                        <div aria-label="Search source" className="flex items-center gap-1" role="group">
+                            {SEARCH_SOURCES.map(source => (
+                                <Button
+                                    aria-pressed={searchSource === source.value}
+                                    key={source.value}
+                                    onClick={() => setSearchSource(source.value)}
+                                    size="xs"
+                                    type="button"
+                                    variant={searchSource === source.value ? "secondary" : "outline"}
+                                >
+                                    {source.label}
+                                </Button>
+                            ))}
+                        </div>
+                        {searchSource === "company" ? <DocumentSearch identifier={ticker} /> : <SecFilingsSource ticker={ticker} />}
+                    </div>
 
                     <section className="flex flex-col gap-2">
                         <div className="flex flex-wrap items-center justify-between gap-2">

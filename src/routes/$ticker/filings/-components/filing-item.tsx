@@ -6,9 +6,12 @@ import { formatEnDateTime } from "@/lib/date";
 export function FilingItem({
     filing,
     onOpenHtml,
+    onOpenSecDocuments,
 }: {
     filing: Filing;
     onOpenHtml: (url: string) => void;
+    /** Opens the SEC document store's documents of this accession (the source panel); the HTML link stays. */
+    onOpenSecDocuments?: () => void;
 }) {
     return (
         <>
@@ -49,6 +52,16 @@ export function FilingItem({
                         : (
                                 <span className="w-12" />
                             )}
+                    {onOpenSecDocuments && (
+                        <button
+                            className="text-primary cursor-pointer hover:underline inline-flex justify-start leading-none"
+                            onClick={onOpenSecDocuments}
+                            title="Documents of this filing in the SEC document store"
+                            type="button"
+                        >
+                            Documents
+                        </button>
+                    )}
                 </div>
 
                 <div className="text-muted-foreground text-xs sm:text-right pr-2">

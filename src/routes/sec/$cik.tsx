@@ -1,0 +1,94 @@
+import { createFileRoute } from "@tanstack/react-router";
+import * as React from "react";
+
+import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
+
+import { SecFilerHeader, SecFilingsView, SecLifecycleView, SecPortfolioView } from "@/components/sec/sec-filer-views";
+import { SecSourceDialog } from "@/components/sec/sec-source-panel";
+import { Button } from "@/components/ui/button";
+import { NotFound } from "@/components/ui/not-found";
+import { useSecFiler, useSecFilerLifecycle, useSecFilingsInfinite, useSecManagerPortfolio } from "@/lib/api/queries";
+import { latest13fPeriodEnd } from "@/lib/sec/source";
+
+/**
+ * One SEC filer by CIK — outside `$ticker` on purpose: a pre-IPO issuer, a SPAC or a 13F manager without an exchange
+ * listing has no ticker, and none is invented (no asset row, no fake `$ticker`). Reached from the landing page's filer
+ * lookup (`/v1/sec/filers`).
+ */
+export const Route = createFileRoute("/sec/$cik")({
+    component: SecFilerPage,
+});
+
+const FILINGS_PAGE = 40;
+
+const MANAGER_FORMS = new Set(["13F-HR", "13F-HR/A", "13F-NT", "13F-NT/A"]);
+
+function SecFilerPage() {
+    const { cik: rawCik } = Route.useParams();
+
+    const cik = /^\d{1,10}$/.test(rawCik) ? String(Number(rawCik)) : "";
+
+    const [form, setForm] = React.useState<null | string>(null);
+
+    const [target, setTarget] = React.useState<null | SecPanelTarget>(null);
+
+    // The 13F portfolio costs a request: asked on a click, for the newest quarter whose reports are due.
+    const [period, setPeriod] = React.useState<null | string>(null);
+
+    const filer = useSecFiler(cik);
+
+    const lifecycle = useSecFilerLifecycle(cik);
+
+    const filings = useSecFilingsInfinite({ form: form ?? undefined, identifier: cik, limit: FILINGS_PAGE });
+
+    const portfolio = useSecManagerPortfolio(cik, period);
+
+    if (!cik) return <NotFound />;
+
+    const facet = filings.data?.pages[0]?.form_facet ?? [];
+
+    const isManager = facet.some(entry => entry.form !== undefined && MANAGER_FORMS.has(entry.form));
+
+    return (
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 lg:px-8">
+            <SecFilerHeader cik={cik} data={filer.data} error={filer.error} isLoading={filer.isLoading} />
+
+            <section className="flex flex-col gap-2">
+                <div className="font-medium">Lifecycle</div>
+                <SecLifecycleView data={lifecycle.data} error={lifecycle.error} isLoading={lifecycle.isLoading} />
+            </section>
+
+            {isManager && (
+                <section className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                        <div className="font-medium">13F portfolio</div>
+                        {!period && (
+                            <Button onClick={() => setPeriod(latest13fPeriodEnd(new Date()))} size="xs" type="button" variant="outline">
+                                Load the latest quarter
+                            </Button>
+                        )}
+                        {period && <span className="text-muted-foreground text-xs">{`Period ending ${period}`}</span>}
+                    </div>
+                    <SecPortfolioView data={portfolio.data} error={portfolio.error} isLoading={portfolio.isLoading} />
+                </section>
+            )}
+
+            <section className="flex flex-col gap-2">
+                <div className="font-medium">Filings</div>
+                <SecFilingsView
+                    error={filings.error}
+                    form={form}
+                    hasNextPage={Boolean(filings.hasNextPage)}
+                    isFetchingNextPage={filings.isFetchingNextPage}
+                    isLoading={filings.isLoading}
+                    onFormChange={setForm}
+                    onMore={() => void filings.fetchNextPage()}
+                    onOpen={setTarget}
+                    pages={filings.data?.pages ?? []}
+                />
+            </section>
+
+            <SecSourceDialog onClose={() => setTarget(null)} target={target} />
+        </div>
+    );
+}

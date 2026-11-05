@@ -62,7 +62,8 @@ function RootLayout() {
         select: state => state.location.pathname,
     });
 
-    const showSidebarTrigger = pathname !== "/";
+    // The tickerless SEC filer page (`/sec/$cik`) has no company sidebar.
+    const showSidebarTrigger = pathname !== "/" && !pathname.startsWith("/sec/");
 
     return (
         <>

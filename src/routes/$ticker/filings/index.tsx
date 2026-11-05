@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 
+import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
+
+import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { ErrorState } from "@/components/ui/error-state";
 import { useAvailableFormTypes, useFilingsInfinite } from "@/lib/api/queries";
 
@@ -28,6 +31,9 @@ function FilingsPage() {
         fiscalQuarter: null | number;
         fiscalYear: null | number;
     }>(null);
+
+    // Additive (task 7 switches the list itself to `/v1/sec/filings`): the SEC store's documents of one accession.
+    const [secTarget, setSecTarget] = React.useState<null | SecPanelTarget>(null);
 
     // Fetch available form types for this identifier (ticker or CIK)
     const {
@@ -91,6 +97,11 @@ function FilingsPage() {
                         url,
                     });
                 }}
+                onOpenSecDocuments={filing => setSecTarget({
+                    accession: filing.accession_number,
+                    kind: "filing",
+                    title: `${ticker} · ${filing.form_type} · ${filing.accession_number}`,
+                })}
                 onSortToggle={() => setSortDirection(prev => (prev === "desc" ? "asc" : "desc"))}
                 sortDirection={sortDirection}
             />
@@ -106,6 +117,8 @@ function FilingsPage() {
                 }}
                 ticker={ticker}
             />
+
+            <SecSourceDialog onClose={() => setSecTarget(null)} target={secTarget} />
 
             <FilingsHeader
                 availableFormTypes={availableFormTypes}

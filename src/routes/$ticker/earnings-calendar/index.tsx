@@ -12,8 +12,8 @@ import { useEarningsCalendarInfinite } from "@/lib/api/queries";
 import { calendarWindow, eventLabel, isCallToday, SESSION_LABELS } from "@/lib/earnings/format";
 import { AvailabilityIcons } from "@/routes/$ticker/earnings-calls/-components/availability-icons";
 import { CalendarFilters, DATE_STATUSES, validateCalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
+import { CalendarCallCell, CalendarReportCell, CalendarStatusBadge } from "@/routes/$ticker/earnings-calls/-components/calendar-semantics";
 import { CallStatusBadge } from "@/routes/$ticker/earnings-calls/-components/call-status-badge";
-import { CallTime } from "@/routes/$ticker/earnings-calls/-components/call-time";
 import { EventLink } from "@/routes/$ticker/earnings-calls/-components/event-link";
 import { EventTypeBadge } from "@/routes/$ticker/earnings-calls/-components/event-type-badge";
 import { EventVideoLink } from "@/routes/$ticker/earnings-calls/-components/event-video";
@@ -45,6 +45,8 @@ function EarningsCalendarPage() {
         isFetchingNextPage,
         isLoading,
     } = useEarningsCalendarInfinite({
+        calendarStatus: search.calendarStatus ? [search.calendarStatus] : undefined,
+        dateKind: search.dateKind,
         eventType: search.eventType,
         from: range.from,
         limit: 50,
@@ -63,9 +65,14 @@ function EarningsCalendarPage() {
     const columns = React.useMemo<Array<ColumnDef<EarningsEvent>>>(
         () => [
             {
-                cell: ({ row }) => <CallTime event={row.original} />,
-                header: "Date / time",
+                cell: ({ row }) => <CalendarCallCell event={row.original} />,
+                header: "Call",
                 id: "scheduled_at",
+            },
+            {
+                cell: ({ row }) => <CalendarReportCell calendar={row.original.calendar} />,
+                header: "Report",
+                id: "report",
             },
             {
                 cell: ({ row }) => (
@@ -97,7 +104,12 @@ function EarningsCalendarPage() {
                 id: "session",
             },
             {
-                cell: ({ row }) => <CallStatusBadge event={row.original} />,
+                cell: ({ row }) => (
+                    <div className="flex flex-wrap items-center gap-1">
+                        <CallStatusBadge event={row.original} />
+                        <CalendarStatusBadge calendar={row.original.calendar} />
+                    </div>
+                ),
                 header: "Status",
                 id: "status",
             },
@@ -128,7 +140,8 @@ function EarningsCalendarPage() {
                     <div className="text-muted-foreground text-sm">
                         Calls of all covered US companies by New York day. Estimated = a vendor or
                         history estimate, unconfirmed = a first-party date without a time,
-                        confirmed = a first-party start time.
+                        confirmed = a first-party start time. The report (results release) is shown apart from
+                        the call: its day and before open / after close come from the results filing&apos;s acceptance.
                     </div>
                 </div>
                 <CalendarFilters
@@ -161,7 +174,7 @@ function EarningsCalendarPage() {
 
                                 {!isLoading && events.length === 0 && (
                                     <div className="text-muted-foreground w-full text-center text-xs p-2">
-                                        No calls in this window.
+                                        {search.dateKind === "report" ? "No reports in this window." : "No calls in this window."}
                                     </div>
                                 )}
                             </ScrollArea>

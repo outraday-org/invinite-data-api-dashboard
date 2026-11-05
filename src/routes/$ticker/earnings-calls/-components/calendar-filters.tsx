@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-import type { EarningsDateStatus, EarningsEventType, EarningsSession } from "@/lib/api/types";
+import type {
+    EarningsCalendarDateKind,
+    EarningsCalendarStatus,
+    EarningsDateStatus,
+    EarningsEventType,
+    EarningsSession,
+} from "@/lib/api/types";
 
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
@@ -25,9 +31,24 @@ const EVENT_TYPES = [
     "all",
 ] as const satisfies ReadonlyArray<EarningsEventType>;
 
+/** `calendar.status`, most decisive first (the API's order). */
+export const CALENDAR_STATUSES = [
+    "cancelled",
+    "postponed",
+    "reported",
+    "confirmed",
+    "announced",
+    "estimated",
+] as const satisfies ReadonlyArray<EarningsCalendarStatus>;
+
+const DATE_KINDS = ["call", "report"] as const satisfies ReadonlyArray<EarningsCalendarDateKind>;
+
 // Every field optional: a bare `/$ticker/earnings-calendar` link means "around today";
 // an invalid value falls back to its default instead of failing the route.
 const calendarSearchSchema = z.object({
+    // Omitted = the API defaults (call day, every calendar status): the calendar behaves as before.
+    calendarStatus: z.enum(CALENDAR_STATUSES).optional().catch(undefined),
+    dateKind: z.enum(DATE_KINDS).optional().catch(undefined),
     eventType: z.enum(EVENT_TYPES).optional().catch(undefined),
     from: z.iso.date().optional().catch(undefined),
     session: z.enum(SESSIONS).optional().catch(undefined),
@@ -66,6 +87,21 @@ const EVENT_TYPE_OPTIONS: Array<{ label: string; value: EarningsEventType }> = [
     { label: "Conferences", value: "conference" },
     { label: "AGMs", value: "agm" },
     { label: "Other events", value: "other" },
+];
+
+const DATE_KIND_OPTIONS: Array<{ label: string; value: EarningsCalendarDateKind }> = [
+    { label: "By call day", value: "call" },
+    { label: "By report day", value: "report" },
+];
+
+const CALENDAR_STATUS_OPTIONS: Array<{ label: string; value: "all" | EarningsCalendarStatus }> = [
+    { label: "Any event status", value: "all" },
+    { label: "Reported", value: "reported" },
+    { label: "Confirmed", value: "confirmed" },
+    { label: "Announced", value: "announced" },
+    { label: "Estimated", value: "estimated" },
+    { label: "Postponed", value: "postponed" },
+    { label: "Cancelled", value: "cancelled" },
 ];
 
 /** A labelled `Select` over fixed options (the calendar and News filters). */
@@ -143,6 +179,18 @@ export function CalendarFilters({
                 onValueChange={value => onChange({ eventType: value === "earnings_call" ? undefined : value })}
                 options={EVENT_TYPE_OPTIONS}
                 value={search.eventType ?? "earnings_call"}
+            />
+            <FilterSelect
+                className="w-[150px]"
+                onValueChange={value => onChange({ dateKind: value === "call" ? undefined : value })}
+                options={DATE_KIND_OPTIONS}
+                value={search.dateKind ?? "call"}
+            />
+            <FilterSelect
+                className="w-[170px]"
+                onValueChange={value => onChange({ calendarStatus: value === "all" ? undefined : value })}
+                options={CALENDAR_STATUS_OPTIONS}
+                value={search.calendarStatus ?? "all"}
             />
         </div>
     );
