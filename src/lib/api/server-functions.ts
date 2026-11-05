@@ -44,6 +44,17 @@ import type {
     NewsAssetDownloadResponse,
     NewsItemResponse,
     NewsListResponse,
+    SecDocumentResponse,
+    SecExportResponse,
+    SecFigureResponse,
+    SecFilerResponse,
+    SecFilersResponse,
+    SecFilingManifestResponse,
+    SecFilingsResponse,
+    SecLifecycleResponse,
+    SecManagerPortfolioResponse,
+    SecSearchResponse,
+    SecSectionsResponse,
     SegmentedFinancialsResponse,
     SplitsResponse,
     StandardizedFinancialsPresentationResponse,
@@ -771,6 +782,9 @@ const selectorInputSchema = eventSelectorSchema.extend({ apiKey: apiKeySchema })
 
 const earningsCalendarSchema = z.object({
     apiKey: apiKeySchema,
+    // `calendar` filters (2026-11): which day `from` / `to` select, and `calendar.status`. Omitted = the API defaults.
+    calendarStatus: z.array(z.enum(["cancelled", "postponed", "reported", "confirmed", "announced", "estimated"])).optional(),
+    dateKind: z.enum(["call", "report"]).optional(),
     eventType: z.enum(["earnings_call", "investor_day", "conference", "agm", "other", "all"]).optional(),
     exchange: z.string().optional(),
     from: z.string().optional(),
@@ -785,13 +799,15 @@ const earningsCalendarSchema = z.object({
 export const getEarningsCalendar = createServerFn({ method: "GET" })
     .inputValidator(earningsCalendarSchema)
     .handler(async ({ data }): Promise<EarningsCalendarResponse> => {
-        const { apiKey, eventType, exchange, from, limit, offset, session, sort, status, to } = data;
+        const { apiKey, calendarStatus, dateKind, eventType, exchange, from, limit, offset, session, sort, status, to } = data;
 
         const api = createApiClient(apiKey);
 
         const { data: res, error, response } = await api.GET("/v1/earnings-calls/calendar", {
             params: {
                 query: {
+                    calendar_status: calendarStatus?.length ? calendarStatus : undefined,
+                    date_kind: dateKind,
                     event_type: eventType,
                     exchange,
                     from,
@@ -1423,3 +1439,272 @@ export const getNewsAssetDownload = createServerFn({ method: "GET" })
 // The API base URL (not a secret) for the browser's own WebSocket to `/v1/ws` (task 8).
 export const getApiBaseUrl = createServerFn({ method: "GET" })
     .handler((): { url: string } => ({ url: env.INVINITE_DATA_API_URL }));
+
+// SEC document store (`/v1/sec/*`, STANDARD; 1 credit, search 100). 200 = ready / partial, 202 = pending (the same
+// body, `readiness.status: "pending"`, not billed), 403 excluded / 404 unknown / 424 failed / 503 not_ready / 400 /
+// 409 restart_required = `ApiRequestError` (`code` = the state, `reason` = the store's reason). Every nested object
+// is JSON typed `unknown` by the spec (see `SecJson` in types.ts). The `/sec/v1/...` routes inside the answers
+// (`documents_route`, `canonical.route`) are the store's own paths: never followed, the public calls are built here.
+
+const cikSchema = z.string().trim().regex(/^\d{1,10}$/);
+
+const cursorSchema = z.string().min(1).optional();
+
+const secFilersSchema = z.object({
+    apiKey: apiKeySchema,
+    limit: z.number().int().min(1).max(100).optional(),
+    name: z.string().trim().min(1).optional(),
+    ticker: z.string().trim().min(1).optional(),
+});
+
+export const getSecFilers = createServerFn({ method: "GET" })
+    .inputValidator(secFilersSchema)
+    .handler(async ({ data }): Promise<SecFilersResponse> => {
+        const { apiKey, limit, name, ticker } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/sec/filers", {
+            params: { query: { limit, name, ticker } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as SecFilersResponse;
+    });
+
+const secCikSchema = z.object({ apiKey: apiKeySchema, cik: cikSchema });
+
+export const getSecFiler = createServerFn({ method: "GET" })
+    .inputValidator(secCikSchema)
+    .handler(async ({ data }): Promise<SecFilerResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/sec/filers/{cik}", {
+            params: { path: { cik: data.cik } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as SecFilerResponse;
+    });
+
+export const getSecFilerLifecycle = createServerFn({ method: "GET" })
+    .inputValidator(secCikSchema)
+    .handler(async ({ data }): Promise<SecLifecycleResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/sec/filers/{cik}/lifecycle", {
+            params: { path: { cik: data.cik } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as SecLifecycleResponse;
+    });
+
+const secFilingsSchema = z.object({
+    apiKey: apiKeySchema,
+    cursor: cursorSchema,
+    form: z.string().trim().min(1).optional(),
+    identifier: z.string().trim().min(1),
+    limit: z.number().int().min(1).max(100).optional(),
+    order: z.enum(["desc", "asc"]).optional(),
+});
+
+export const getSecFilings = createServerFn({ method: "GET" })
+    .inputValidator(secFilingsSchema)
+    .handler(async ({ data }): Promise<SecFilingsResponse> => {
+        const { apiKey, cursor, form, identifier, limit, order } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/sec/filings", {
+            params: { query: { cursor, form, identifier, limit, order } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as SecFilingsResponse;
+    });
+
+const accessionSchema = z.string().trim().regex(/^(\d{10}-\d{2}-\d{6}|\d{18})$/);
+
+export const getSecFilingManifest = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema }))
+    .handler(async ({ data }): Promise<SecFilingManifestResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/sec/filings/{accession}", {
+            params: { path: { accession: data.accession } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as SecFilingManifestResponse;
+    });
+
+// A block selection of one pinned version (`blocks` = `b00107` or `b00107-b00244`; `limit` ≤ 1000).
+const blockSelectionSchema = z.object({
+    blocks: z.string().regex(/^b\d+(-b\d+)?$/).optional(),
+    footnotes: z.boolean().optional(),
+    limit: z.number().int().min(1).max(1000).optional(),
+    neighbors: z.number().int().min(0).max(50).optional(),
+});
+
+type BlockSelection = z.infer<typeof blockSelectionSchema>;
+
+const toBlockQuery = (selection: BlockSelection) => ({
+    blocks: selection.blocks,
+    footnotes: selection.footnotes === undefined ? undefined : selection.footnotes ? "true" as const : "false" as const,
+    limit: selection.limit,
+    neighbors: selection.neighbors,
+});
+
+/** A document of a filing by accession + filename: the store pins its head version (`version.version_id`). */
+export const getSecDocument = createServerFn({ method: "GET" })
+    .inputValidator(blockSelectionSchema.extend({
+        accession: accessionSchema,
+        apiKey: apiKeySchema,
+        filename: z.string().trim().min(1).max(255),
+    }))
+    .handler(async ({ data }): Promise<SecDocumentResponse> => {
+        const { accession, apiKey, filename } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/sec/documents/{accession}/{filename}", {
+            params: { path: { accession, filename }, query: toBlockQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as SecDocumentResponse;
+    });
+
+const versionIdSchema = z.uuid();
+
+/** One immutable version (a citation's `version_id`): every block / neighbour / footnote stays in that version. */
+export const getSecVersion = createServerFn({ method: "GET" })
+    .inputValidator(blockSelectionSchema.extend({ apiKey: apiKeySchema, versionId: versionIdSchema }))
+    .handler(async ({ data }): Promise<SecDocumentResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/sec/versions/{version_id}", {
+            params: { path: { version_id: data.versionId }, query: toBlockQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as SecDocumentResponse;
+    });
+
+export const getSecFigure = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, blockId: z.string().regex(/^b\d+$/), versionId: versionIdSchema }))
+    .handler(async ({ data }): Promise<SecFigureResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/sec/versions/{version_id}/figures/{block_id}", {
+            params: { path: { block_id: data.blockId, version_id: data.versionId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as SecFigureResponse;
+    });
+
+export const getSecSections = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, outline: z.enum(["legacy", "generic"]).optional(), versionId: versionIdSchema }))
+    .handler(async ({ data }): Promise<SecSectionsResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/sec/versions/{version_id}/sections", {
+            params: { path: { version_id: data.versionId }, query: { outline: data.outline } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as SecSectionsResponse;
+    });
+
+const secSearchSchema = z.object({
+    apiKey: apiKeySchema,
+    caseSensitive: caseSensitiveSchema.optional(),
+    cik: z.string().trim().regex(/^\d{1,10}(,\d{1,10})*$/).optional(),
+    cursor: cursorSchema,
+    form: z.string().trim().min(1).optional(),
+    limit: z.number().int().min(1).max(50).optional(),
+    mode: searchModeSchema.optional(),
+    q: z.string().trim().min(1).max(500),
+});
+
+/** Ranked, cited passages (100 credits). `case_sensitive` is sent with `mode=literal` only (else the API answers 400). */
+export const getSecSearch = createServerFn({ method: "GET" })
+    .inputValidator(secSearchSchema)
+    .handler(async ({ data }): Promise<SecSearchResponse> => {
+        const { apiKey, caseSensitive, cik, cursor, form, limit, mode, q } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/sec/search", {
+            params: {
+                query: {
+                    case_sensitive: mode === "literal" ? caseSensitive : undefined,
+                    cik,
+                    cursor,
+                    form,
+                    limit,
+                    mode,
+                    q,
+                },
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as SecSearchResponse;
+    });
+
+const exportIdSchema = z.string().trim().regex(/^[\w.:-]{1,200}$/);
+
+export const getSecExport = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, exportId: exportIdSchema }))
+    .handler(async ({ data }): Promise<SecExportResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/sec/exports/{export_id}", {
+            params: { path: { export_id: data.exportId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as SecExportResponse;
+    });
+
+/** The largest export file the dashboard hands to the browser (base64 over the server-function boundary). */
+export const SEC_EXPORT_FILE_MAX_BYTES = 25 * 1024 * 1024;
+
+export type SecExportFile = { base64: string; contentType: string; filename: string; sha256: null | string; sizeBytes: number };
+
+/**
+ * A key-authorized export file: fetched here with the key, handed to the browser as bytes (never a URL carrying the
+ * key). Over `SEC_EXPORT_FILE_MAX_BYTES` → `413 too_large` (the CLI's `sec export-file` streams any size).
+ */
+export const getSecExportFile = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, exportId: exportIdSchema }))
+    .handler(async ({ data }): Promise<SecExportFile> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/sec/exports/{export_id}/file", {
+            params: { path: { export_id: data.exportId } },
+            parseAs: "arrayBuffer",
+        });
+
+        if (error) throwApiError(error, response);
+
+        if (res.byteLength > SEC_EXPORT_FILE_MAX_BYTES) {
+            throwApiError({ error: "too_large", message: "This export is too large for the dashboard; download it with the CLI (sec export-file)." }, new Response(null, { status: 413 }));
+        }
+
+        return {
+            base64: Buffer.from(res).toString("base64"),
+            contentType: response.headers.get("content-type") ?? "application/gzip",
+            filename: `${data.exportId}.csv.gz`,
+            sha256: response.headers.get("x-content-sha256"),
+            sizeBytes: res.byteLength,
+        };
+    });
+
+/** A 13F manager's portfolio page (research holdings): provenance = `pinned_at`, `coverage`, `page_status`. */
+export const getSecManagerPortfolio = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        cik: cikSchema,
+        limit: z.number().int().min(1).max(200).optional(),
+        periodEnd: z.iso.date(),
+    }))
+    .handler(async ({ data }): Promise<SecManagerPortfolioResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/sec/holdings/managers/{cik}/portfolio", {
+            params: { path: { cik: data.cik }, query: { limit: data.limit, period_end: data.periodEnd } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as SecManagerPortfolioResponse;
+    });

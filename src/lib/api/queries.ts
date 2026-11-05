@@ -12,7 +12,9 @@ import type {
     CagrPeriodYears,
     DividendsResponse,
     EarningsAudioResponse,
+    EarningsCalendarDateKind,
     EarningsCalendarResponse,
+    EarningsCalendarStatus,
     EarningsCompanyDocumentResponse,
     EarningsCompanyDocumentsResponse,
     EarningsDateStatus,
@@ -58,6 +60,19 @@ import type {
     NewsItemResponse,
     NewsListResponse,
     RatioCategory,
+    SecDocumentResponse,
+    SecExportResponse,
+    SecFigureResponse,
+    SecFilerResponse,
+    SecFilersResponse,
+    SecFilingManifestResponse,
+    SecFilingsOrder,
+    SecFilingsResponse,
+    SecLifecycleResponse,
+    SecManagerPortfolioResponse,
+    SecSearchMode,
+    SecSearchResponse,
+    SecSectionsResponse,
     SegmentedFinancialsSegmentId,
     SplitsResponse,
     StatementType,
@@ -109,6 +124,19 @@ import {
     getNewsAssetDownload,
     getNewsItem,
     getNewsList,
+    getSecDocument,
+    getSecExport,
+    getSecExportFile,
+    getSecFigure,
+    getSecFiler,
+    getSecFilerLifecycle,
+    getSecFilers,
+    getSecFilingManifest,
+    getSecFilings,
+    getSecManagerPortfolio,
+    getSecSearch,
+    getSecSections,
+    getSecVersion,
     getSegmentedFinancials,
     getStandardizedFinancials,
     searchCompanies,
@@ -1298,6 +1326,8 @@ function useEarningsInfinite<TPage extends { next_url?: null | string }, TParam 
 }
 
 type EarningsCalendarInfiniteInput = {
+    calendarStatus?: Array<EarningsCalendarStatus>;
+    dateKind?: EarningsCalendarDateKind;
     eventType?: EarningsEventType;
     exchange?: string;
     from?: string;
@@ -1322,6 +1352,8 @@ export function useEarningsCalendarInfinite(input: EarningsCalendarInfiniteInput
             input.session ?? "",
             input.exchange ?? "",
             input.eventType ?? "",
+            input.dateKind ?? "",
+            input.calendarStatus?.join(",") ?? "",
             input.sort ?? "",
             input.limit,
         ],
@@ -1891,4 +1923,198 @@ export function useApiBaseUrl() {
     });
 
     return result.data?.url ?? null;
+}
+
+// SEC document store (`/v1/sec/*`). Every hook is status-aware (`errorMessage: null`, no toast): the readiness
+// states are page states (`SecReadinessNotice`), never an empty result. A `202 pending` answer is asked again every
+// 30 s (not billed) until the store has it.
+
+const SEC_STALE_MS = 10 * 60 * 1000;
+
+const SEC_PENDING_REFETCH_MS = 30 * 1000;
+
+const refetchWhilePending = (query: { state: { data?: { readiness: { status: string } } } }) =>
+    query.state.data?.readiness.status === "pending" ? SEC_PENDING_REFETCH_MS : false;
+
+const nextCursorOf = (lastPage: { next_cursor?: null | string }) => lastPage.next_cursor ?? undefined;
+
+/** CIK / name lookup (`/v1/sec/filers`): idle until `name` (≥ 2 characters) or `ticker` is set. */
+export function useSecFilers(input: { limit?: number; name?: string; ticker?: string }) {
+    const name = input.name?.trim() ?? "";
+
+    const ticker = input.ticker?.trim() ?? "";
+
+    return useEarningsQuery<SecFilersResponse>({
+        enabled: name.length >= 2 || ticker.length > 0,
+        errorMessage: null,
+        load: apiKey => getSecFilers({ data: { apiKey, limit: input.limit, name: name || undefined, ticker: ticker || undefined } }),
+        queryKey: ["sec", "filers", name, ticker, input.limit ?? ""],
+        refetchInterval: refetchWhilePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export function useSecFiler(cik: string) {
+    return useEarningsQuery<SecFilerResponse>({
+        enabled: cik.length > 0,
+        errorMessage: null,
+        load: apiKey => getSecFiler({ data: { apiKey, cik } }),
+        queryKey: ["sec", "filer", cik],
+        refetchInterval: refetchWhilePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export function useSecFilerLifecycle(cik: string) {
+    return useEarningsQuery<SecLifecycleResponse>({
+        enabled: cik.length > 0,
+        errorMessage: null,
+        load: apiKey => getSecFilerLifecycle({ data: { apiKey, cik } }),
+        queryKey: ["sec", "lifecycle", cik],
+        refetchInterval: refetchWhilePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** One filer's filings (ticker or CIK), newest first by default, one page per `next_cursor`. */
+export function useSecFilingsInfinite(input: { form?: string; identifier: string; limit?: number; order?: SecFilingsOrder }) {
+    return useEarningsInfinite<SecFilingsResponse, null | string>({
+        enabled: input.identifier.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getSecFilings({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        initialPageParam: null,
+        pageParamOf: nextCursorOf,
+        queryKey: ["sec", "filings", input.identifier, input.form ?? "", input.order ?? "", input.limit ?? ""],
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** A filing's document manifest; idle for a null accession (the panel is closed). */
+export function useSecFilingManifest(accession: null | string) {
+    return useEarningsQuery<SecFilingManifestResponse>({
+        enabled: Boolean(accession),
+        errorMessage: null,
+        load: apiKey => getSecFilingManifest({ data: { accession: accession ?? "", apiKey } }),
+        queryKey: ["sec", "filing", accession ?? ""],
+        refetchInterval: refetchWhilePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+type SecBlockSelection = { blocks?: string; footnotes?: boolean; limit?: number; neighbors?: number };
+
+/** What the reader shows: a document of a filing (its head version) or one pinned version (a citation). */
+export type SecDocumentTarget
+    = | { accession: string; filename: string; kind: "document" }
+        | { kind: "version"; versionId: string };
+
+const selectionKey = (s: SecBlockSelection) => [s.blocks ?? "", s.footnotes ?? "", s.limit ?? "", s.neighbors ?? ""] as const;
+
+/** The selected blocks of a document / version; idle for a null target. */
+export function useSecDocumentBlocks(target: null | SecDocumentTarget, selection: SecBlockSelection) {
+    return useEarningsQuery<SecDocumentResponse>({
+        enabled: target !== null,
+        errorMessage: null,
+        load: (apiKey) => {
+            if (target?.kind === "version") return getSecVersion({ data: { ...selection, apiKey, versionId: target.versionId } });
+
+            return getSecDocument({ data: { ...selection, accession: target?.accession ?? "", apiKey, filename: target?.filename ?? "" } });
+        },
+        queryKey: [
+            "sec",
+            "blocks",
+            target?.kind ?? "",
+            target?.kind === "version" ? target.versionId : `${target?.accession ?? ""}/${target?.filename ?? ""}`,
+            ...selectionKey(selection),
+        ],
+        refetchInterval: refetchWhilePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** A figure of a pinned version (`image.url` = its permanent public image, or null). */
+export function useSecFigure(target: null | { blockId: string; versionId: string }) {
+    return useEarningsQuery<SecFigureResponse>({
+        enabled: target !== null,
+        errorMessage: null,
+        load: apiKey => getSecFigure({ data: { apiKey, blockId: target?.blockId ?? "", versionId: target?.versionId ?? "" } }),
+        queryKey: ["sec", "figure", target?.versionId ?? "", target?.blockId ?? ""],
+        refetchInterval: refetchWhilePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export function useSecSections(versionId: null | string) {
+    return useEarningsQuery<SecSectionsResponse>({
+        enabled: Boolean(versionId),
+        errorMessage: null,
+        load: apiKey => getSecSections({ data: { apiKey, versionId: versionId ?? "" } }),
+        queryKey: ["sec", "sections", versionId ?? ""],
+        refetchInterval: refetchWhilePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export type SecSearchInput = {
+    caseSensitive?: EarningsSearchCaseSensitive;
+    cik?: string;
+    form?: string;
+    limit?: number;
+    mode: SecSearchMode;
+    q: string;
+};
+
+/** SEC filing search (100 credits a page): runs once `q` is set (on submit); "More results" follows `next_cursor`. */
+export function useSecSearchInfinite(input: SecSearchInput) {
+    return useEarningsInfinite<SecSearchResponse, null | string>({
+        enabled: input.q.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getSecSearch({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        initialPageParam: null,
+        pageParamOf: nextCursorOf,
+        queryKey: [
+            "sec",
+            "search",
+            input.q,
+            input.mode,
+            input.mode === "literal" ? input.caseSensitive ?? "" : "",
+            input.cik ?? "",
+            input.form ?? "",
+            input.limit ?? "",
+        ],
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export function useSecExport(exportId: null | string) {
+    return useEarningsQuery<SecExportResponse>({
+        enabled: Boolean(exportId),
+        errorMessage: null,
+        load: apiKey => getSecExport({ data: { apiKey, exportId: exportId ?? "" } }),
+        queryKey: ["sec", "export", exportId ?? ""],
+        refetchInterval: refetchWhilePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** The export file as bytes from the server function (the key never reaches a URL); a MUTATION, run on a click. */
+export function useSecExportFileDownload() {
+    const apiKey = useApiKeyStore(s => s.apiKey);
+
+    return useMutation({
+        mutationFn: (exportId: string) => getSecExportFile({ data: { apiKey: apiKey ?? undefined, exportId } }).catch(rethrowApiError),
+        retry: false,
+    });
+}
+
+/** A 13F manager's portfolio page for one period end; idle for a null period (the CIK page asks on a click). */
+export function useSecManagerPortfolio(cik: string, periodEnd: null | string) {
+    return useEarningsQuery<SecManagerPortfolioResponse>({
+        enabled: Boolean(periodEnd) && cik.length > 0,
+        errorMessage: null,
+        load: apiKey => getSecManagerPortfolio({ data: { apiKey, cik, limit: 25, periodEnd: periodEnd ?? "" } }),
+        queryKey: ["sec", "portfolio", cik, periodEnd ?? ""],
+        refetchInterval: refetchWhilePending,
+        staleTime: SEC_STALE_MS,
+    });
 }

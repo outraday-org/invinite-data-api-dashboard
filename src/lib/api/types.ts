@@ -185,6 +185,45 @@ export type NewsAsset = NewsItemResponse["assets"][number];
 export type NewsSighting = NewsItemResponse["sightings"][number];
 export type NewsQuery = ApiQuery<"/v1/news">;
 
+// SEC document store (IDA `/v1/sec/*`, backend delivery-integration task 2). Most nested objects are typed
+// `{ [key: string]: unknown }` by the spec (`additionalProperties`); `SecJson` narrows every `unknown` to `JsonValue`
+// so a server function may return them. The panel reads them through the guards of `src/lib/sec/source.ts`.
+type SecJson<T> = unknown extends T
+    ? JsonValue
+    : T extends ReadonlyArray<infer TItem>
+        ? Array<SecJson<TItem>>
+        : T extends object
+            ? { [TKey in keyof T]: SecJson<T[TKey]> }
+            : T;
+
+export type SecFilersResponse = SecJson<ApiResponse<"/v1/sec/filers", "get">>;
+export type SecFilerResponse = SecJson<ApiResponse<"/v1/sec/filers/{cik}", "get">>;
+export type SecLifecycleResponse = SecJson<ApiResponse<"/v1/sec/filers/{cik}/lifecycle", "get">>;
+export type SecFilingsResponse = SecJson<ApiResponse<"/v1/sec/filings", "get">>;
+export type SecFilingManifestResponse = SecJson<ApiResponse<"/v1/sec/filings/{accession}", "get">>;
+/** `/v1/sec/documents/{accession}/{filename}` and `/v1/sec/versions/{version_id}` answer the same body. */
+export type SecDocumentResponse = SecJson<ApiResponse<"/v1/sec/versions/{version_id}", "get">>;
+export type SecFigureResponse = SecJson<ApiResponse<"/v1/sec/versions/{version_id}/figures/{block_id}", "get">>;
+export type SecSectionsResponse = SecJson<ApiResponse<"/v1/sec/versions/{version_id}/sections", "get">>;
+export type SecSearchResponse = SecJson<ApiResponse<"/v1/sec/search", "get">>;
+export type SecExportResponse = SecJson<ApiResponse<"/v1/sec/exports/{export_id}", "get">>;
+export type SecManagerPortfolioResponse = SecJson<ApiResponse<"/v1/sec/holdings/managers/{cik}/portfolio", "get">>;
+
+export type SecReadiness = SecFilingsResponse["readiness"];
+export type SecReadinessStatus = SecReadiness["status"];
+export type SecFilerMatch = NonNullable<SecFilersResponse["matches"]>[number];
+export type SecFilingRow = NonNullable<SecFilingsResponse["filings"]>[number];
+export type SecFormFacet = NonNullable<SecFilingsResponse["form_facet"]>[number];
+export type SecSearchHit = NonNullable<SecSearchResponse["hits"]>[number];
+export type SecSearchCoverage = NonNullable<SecSearchResponse["coverage"]>;
+export type SecSearchMode = NonNullable<ApiQuery<"/v1/sec/search">["mode"]>;
+export type SecFilingsOrder = NonNullable<ApiQuery<"/v1/sec/filings">["order"]>;
+
+// Earnings calendar semantics (`calendar` of every calendar event, appended 2026-11)
+export type EarningsCalendarSemantics = NonNullable<EarningsEvent["calendar"]>;
+export type EarningsCalendarStatus = NonNullable<EarningsCalendarSemantics["status"]>;
+export type EarningsCalendarDateKind = NonNullable<ApiQuery<"/v1/earnings-calls/calendar">["date_kind"]>;
+
 // Query parameter types
 export type FiscalPeriodType = "annual" | "quarterly" | "ttm" | "ytd";
 

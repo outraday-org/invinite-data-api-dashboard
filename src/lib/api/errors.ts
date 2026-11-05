@@ -10,14 +10,23 @@
  * and the client side recovers the class with `fromSerialized`.
  */
 export type ApiErrorBody = {
+    /** The SEC store's reason (`SecStoreError.code`, e.g. `search_provider_not_registered`); absent elsewhere. */
+    code?: string;
     error: string;
     message: string;
+    /** The SEC store's typed readiness of a refused answer (403 excluded / 404 unknown / 424 failed / 503 not_ready). */
+    readiness?: ApiErrorReadiness;
 };
+
+export type ApiErrorReadiness = { reason: null | string; status: string };
 
 export class ApiRequestError extends Error {
     body: ApiErrorBody;
 
     code: string;
+
+    /** `body.code`: the reason behind the state (`/v1/sec/*`), else null. */
+    reason: null | string;
 
     status: number;
 
@@ -30,6 +39,8 @@ export class ApiRequestError extends Error {
 
         this.code = body.error;
 
+        this.reason = body.code ?? null;
+
         this.body = body;
     }
 }
@@ -41,7 +52,23 @@ function toErrorBody(value: unknown, status: number): ApiErrorBody {
 
     const message = typeof record.message === "string" ? record.message : `Request failed with status ${status}`;
 
-    return { error, message };
+    const body: ApiErrorBody = { error, message };
+
+    if (typeof record.code === "string") body.code = record.code;
+
+    const readiness = toReadiness(record.readiness);
+
+    if (readiness) body.readiness = readiness;
+
+    return body;
+}
+
+function toReadiness(value: unknown): ApiErrorReadiness | null {
+    if (typeof value !== "object" || value === null || !("status" in value) || typeof value.status !== "string") return null;
+
+    const reason = "reason" in value && typeof value.reason === "string" ? value.reason : null;
+
+    return { reason, status: value.status };
 }
 
 /** Throws an openapi-fetch `error` body as an `ApiRequestError` carrying the response status. */
@@ -63,7 +90,7 @@ export function fromSerialized(value: unknown): ApiRequestError | null {
 
     const message = typeof record.message === "string" && record.message.length > 0 ? record.message : body.message;
 
-    return new ApiRequestError(record.status, { error: record.code, message });
+    return new ApiRequestError(record.status, { ...body, error: record.code, message });
 }
 
 /** `.catch` handler of the status-aware hooks: rethrows as `ApiRequestError` when possible. */

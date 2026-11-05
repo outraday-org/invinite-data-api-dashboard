@@ -1,24 +1,9 @@
-import type * as React from "react";
-
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
+import { Notice } from "@/components/ui/notice";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
 
-/** A muted, non-error card: an expected state ("not enabled", "not available", "coming soon"). */
-export function Notice({ badge, children, title }: { badge?: string; children?: React.ReactNode; title: string }) {
-    return (
-        <Card className="border-muted-foreground/20" role="status" size="sm">
-            <CardHeader className="gap-2">
-                <div className="flex items-center gap-2">
-                    {badge && <Badge variant="outline">{badge}</Badge>}
-                    <CardTitle className="text-sm">{title}</CardTitle>
-                </div>
-            </CardHeader>
-            {children && <CardContent className="text-muted-foreground">{children}</CardContent>}
-        </Card>
-    );
-}
+// Lifted to `src/components/ui/notice.tsx` (the SEC views use it too); re-exported for the existing importers.
+export { Notice };
 
 export const NO_TRANSCRIPT_TITLE = "No transcript yet";
 
