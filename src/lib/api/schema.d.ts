@@ -1899,6 +1899,8 @@ export interface paths {
          *
          *     `GET /v1/ipos` is a different source: the Massive IPO calendar, keyed by ticker, whose rows usually appear only near pricing. A registration shows up weeks earlier. `massive` holds the Massive row matched to a registration (by ticker and issuer name), `proposed_symbols[].ipo_calendar_match` flags a proposed ticker that is on that calendar, and each `GET /v1/ipos` row links back through `registration`.
          *
+         *     `ipo_pending` carries the issuer lifecycle's IPO-pending entry of the same track (proposed symbols, profile, logo); `pending=true` lists only tracks with an open one. Issuers that are IPO-pending without an S-1 / F-1 registration track are on `GET /v1/sec/issuers?phase=public_preipo`.
+         *
          *     Pre-IPO companies have no ticker yet: read their filings with `GET /v1/sec-filings/filings?identifier=<cik>`.
          *
          *     Minimum tier for redistribute: PRO.
@@ -2968,30 +2970,6 @@ export interface paths {
          *     Minimum tier for display: FREE.
          */
         get: operations["secIssuers"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/sec/issuers/ipo-pending": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * IPO-pending SEC issuers
-         * @description Issuers with an open IPO track ("Pre-IPO, proposed XYZ (exchange)"): one row per issuer track with the proposed symbols the registration names (`symbol_authority: proposed_only` — never a listing), SPAC flag and a profile when enriched. The registration-filing calendar stays `GET /v1/ipos/registrations`.
-         *
-         *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
-         *
-         *     Minimum tier for display: FREE.
-         */
-        get: operations["secIssuersIpoPending"];
         put?: never;
         post?: never;
         delete?: never;
@@ -14036,6 +14014,11 @@ export interface operations {
                  */
                 is_spac?: "false" | "true";
                 /**
+                 * @description true = tracks with an open IPO-pending entry (`ipo_pending.status` open), false = tracks without one. Default: both
+                 * @example true
+                 */
+                pending?: "false" | "true";
+                /**
                  * @description Sort direction by first_public_at
                  * @example desc
                  */
@@ -14211,6 +14194,46 @@ export interface operations {
                                 /** @description URL to the archived filing HTML; null when the filing is not archived */
                                 html_url: null | string;
                             }>;
+                            /** @description The issuer lifecycle's IPO-pending entry of this registration ("Pre-IPO, proposed XYZ (exchange)"), matched by CIK and track; null when the track has none. Proposed symbols stay attributes, never a listing */
+                            ipo_pending?: null | {
+                                /** @description open (the issuer is still pre-IPO on this track) or closed */
+                                status: string;
+                                /** @description What opened the entry: exchange_approval (8-A12B / exchange certification) or ipo_calendar_match */
+                                open_reason: string;
+                                /**
+                                 * Format: date-time
+                                 * @description When the entry opened (ISO 8601 UTC)
+                                 */
+                                opened_at: string;
+                                /**
+                                 * Format: date-time
+                                 * @description When the entry closed (ISO 8601 UTC)
+                                 */
+                                closed_at: null | string;
+                                /** @description Why the entry closed (listed, withdrawn, …) */
+                                close_reason: null | string;
+                                /** @description Exchange the entry names */
+                                exchange: null | string;
+                                /** @description Issuer profile when enriched (FMP profile by CIK); only the fields present are listed */
+                                profile: null | {
+                                    company_name?: string;
+                                    website?: string;
+                                    industry?: string;
+                                    sector?: string;
+                                    country?: string;
+                                    ceo?: string;
+                                    full_time_employees?: number;
+                                    /** @description First 600 characters */
+                                    description?: string;
+                                };
+                                /** @description Permanent public logo URL when enriched */
+                                logo_url: null | string;
+                                /**
+                                 * @description Whether the profile lookup ran
+                                 * @enum {string}
+                                 */
+                                enrichment: "enriched" | "pending";
+                            };
                         }>;
                         /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
                         next_url?: string;
@@ -20733,143 +20756,6 @@ export interface operations {
                         api_schema: string;
                         /** @description Issuers */
                         issuers?: Array<{
-                            [key: string]: unknown;
-                        }>;
-                        /** @description Nextcursor */
-                        next_cursor?: null | string;
-                        /** @description Provider */
-                        provider?: null | {
-                            [key: string]: unknown;
-                        };
-                        readiness: components["schemas"]["SecReadiness"];
-                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
-                        next_url?: string;
-                    } & {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SecStoreError"];
-                };
-            };
-            401: components["responses"]["UnauthorizedError"];
-            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SecStoreError"];
-                };
-            };
-            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SecStoreError"];
-                };
-            };
-            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SecStoreError"];
-                };
-            };
-            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
-            424: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SecStoreError"];
-                };
-            };
-            500: components["responses"]["InternalServerError"];
-            /** @description `error` = the readiness state (excluded / unknown / failed / not_ready) or the refusal (`Bad Request`, `restart_required`, `too_large`, `upstream_unavailable`); `code` = the reason; `readiness` = the backend's typed answer when there was one (absent for a refused request). Fields of the answer's subject (e.g. `filing`) may follow. */
-            503: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SecStoreError"];
-                };
-            };
-        };
-    };
-    secIssuersIpoPending: {
-        parameters: {
-            query?: {
-                /**
-                 * @description Name (substring)
-                 * @example Iambic
-                 */
-                query?: string;
-                /**
-                 * @description Opaque cursor of the previous page (`next_cursor`; follow `next_url`). Bound to the other filters.
-                 * @example eyJ2IjoxLCJhZnRlciI6WyIyMDI1LTEwLTMxIiwiMDAwMDMyMDE5My0yNS0wMDAwNzkiXSwiZiI6Ijg1NzNiMDg0ZjEyNzVjMjMifQ
-                 */
-                cursor?: string;
-                /**
-                 * @description Entries per page (1-100, default 20)
-                 * @example 5
-                 */
-                limit?: number;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description One page of IPO-pending issuers */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description The backend contract version (`secdoors.v1`) */
-                        api_schema: string;
-                        /** @description Entries */
-                        entries?: Array<{
-                            [key: string]: unknown;
-                        }>;
-                        /** @description Nextcursor */
-                        next_cursor?: null | string;
-                        /** @description Provider */
-                        provider?: null | {
-                            [key: string]: unknown;
-                        };
-                        readiness: components["schemas"]["SecReadiness"];
-                        /** @description URL of the next page (same filters, the next cursor). Omitted on the last page. */
-                        next_url?: string;
-                    } & {
-                        [key: string]: unknown;
-                    };
-                };
-            };
-            /** @description One page of IPO-pending issuers */
-            202: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description The backend contract version (`secdoors.v1`) */
-                        api_schema: string;
-                        /** @description Entries */
-                        entries?: Array<{
                             [key: string]: unknown;
                         }>;
                         /** @description Nextcursor */
