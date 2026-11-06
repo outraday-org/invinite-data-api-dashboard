@@ -1,6 +1,12 @@
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
+
+import type { SecFilingManifestResponse } from "@/lib/api/types";
+import type { FilingListRow } from "@/lib/sec/parity";
 
 import { HtmlViewer } from "@/components/html/html-viewer";
+import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
+import { NO_PUBLIC_COPY } from "@/components/sec/sec-source-panel";
+import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
@@ -8,25 +14,86 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useSecFilingManifest } from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
+import { primaryDocumentOf } from "@/lib/sec/parity";
+import { toManifestDocuments } from "@/lib/sec/source";
+
+import { fiscalPeriodLabel } from "./filing-item";
+
+/** The filing whose primary document the dialog shows. */
+export type FilingHtmlTarget = FilingListRow & { ticker: string };
+
+/** The primary document's permanent public URL of a manifest; null = no public copy yet. */
+export function primaryDocumentUrl(data: null | SecFilingManifestResponse, primaryFilename: null | string) {
+    if (!data) return null;
+
+    const doc = primaryDocumentOf(toManifestDocuments(data.documents), primaryFilename);
+
+    return doc && !doc.tooLarge ? doc.publicUrl : null;
+}
+
+/**
+ * The HTML view's body (pure): the primary document of the manifest at its permanent public URL, the manifest's
+ * honest state while it loads / is pending / failed, or "No public copy yet" with the documents reader instead.
+ */
+export function FilingHtmlBody({
+    data,
+    error,
+    isLoading,
+    onOpenDocuments,
+    primaryFilename,
+    title,
+}: {
+    data: null | SecFilingManifestResponse;
+    error: unknown;
+    isLoading: boolean;
+    onOpenDocuments: () => void;
+    primaryFilename: null | string;
+    title: string;
+}) {
+    if (error) return <SecReadinessNotice error={error} title="Failed to load the filing" />;
+
+    if (isLoading && !data) return <Skeleton className="h-full w-full" />;
+
+    if (!data) return null;
+
+    const url = primaryDocumentUrl(data, primaryFilename);
+
+    if (url) return <HtmlViewer className="h-full" title={title} url={url} />;
+
+    return (
+        <div className="flex flex-col items-start gap-3">
+            <SecReadinessNotice readiness={data.readiness} />
+            <div className="text-muted-foreground text-sm">{NO_PUBLIC_COPY}</div>
+            <Button onClick={onOpenDocuments} size="sm" type="button" variant="outline">
+                <FileText />
+                Read in the SEC document store
+            </Button>
+        </div>
+    );
+}
 
 export function HtmlDialog({
     dialog,
     onOpenChange,
+    onOpenDocuments,
     ticker,
 }: {
-    dialog: null | {
-        url: string;
-        ticker: string;
-        formType: string;
-        accessionNumber: string;
-        filingDate: string;
-        fiscalQuarter: null | number;
-        fiscalYear: null | number;
-    };
+    dialog: FilingHtmlTarget | null;
     ticker: string;
     onOpenChange: (open: boolean) => void;
+    /** Opens the filing in the SEC source panel (its documents and readable versions). */
+    onOpenDocuments: (filing: FilingHtmlTarget) => void;
 }) {
+    // Loaded only while the dialog is open (a null accession keeps the query idle).
+    const manifest = useSecFilingManifest(dialog?.accessionNumber ?? null);
+
+    const url = primaryDocumentUrl(manifest.data, dialog?.primaryDocument ?? null);
+
+    const period = dialog ? fiscalPeriodLabel(dialog) : null;
+
     return (
         <Dialog
             onOpenChange={onOpenChange}
@@ -42,27 +109,21 @@ export function HtmlDialog({
                                         <span className="truncate">{dialog?.ticker ?? ticker}</span>
                                         <span className="text-muted-foreground">•</span>
                                         <span className="truncate">{dialog?.formType ?? "HTML"}</span>
-                                        {dialog?.fiscalQuarter && dialog.fiscalYear
+                                        {period
                                             ? (
                                                     <>
                                                         <span className="text-muted-foreground">•</span>
-                                                        <span className="truncate">
-                                                            Q
-                                                            {dialog.fiscalQuarter}
-                                                            {" "}
-                                                            FY
-                                                            {String(dialog.fiscalYear).slice(-2).padStart(2, "0")}
-                                                        </span>
+                                                        <span className="truncate">{period}</span>
                                                     </>
                                                 )
                                             : null}
                                     </div>
                                 </div>
-                                {dialog?.url && (
+                                {url && (
                                     <a
                                         className="text-primary flex items-center gap-1 hover:underline text-xs font-normal shrink-0"
-                                        href={dialog.url}
-                                        rel="noreferrer"
+                                        href={url}
+                                        rel="noopener noreferrer"
                                         target="_blank"
                                     >
                                         Open in new tab
@@ -91,11 +152,16 @@ export function HtmlDialog({
                     </div>
 
                     <div className="px-4 pb-4 min-h-0 grow">
-                        {dialog?.url
-                            ? (
-                                    <HtmlViewer className="h-full" title={`${dialog.ticker} ${dialog.formType}`} url={dialog.url} />
-                                )
-                            : null}
+                        {dialog && (
+                            <FilingHtmlBody
+                                data={manifest.data}
+                                error={manifest.error}
+                                isLoading={manifest.isLoading}
+                                onOpenDocuments={() => onOpenDocuments(dialog)}
+                                primaryFilename={dialog.primaryDocument}
+                                title={`${dialog.ticker} ${dialog.formType}`}
+                            />
+                        )}
                     </div>
                 </div>
             </DialogContent>

@@ -1,4 +1,4 @@
-import type { Filing } from "@/lib/api/types";
+import type { FilingListRow } from "@/lib/sec/parity";
 
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -18,13 +18,13 @@ export function FilingsList({
     onSortToggle,
     sortDirection,
 }: {
-    displayFilings: Array<Filing>;
+    displayFilings: ReadonlyArray<FilingListRow>;
     isLoading: boolean;
     hasNextPage: boolean;
     isFetchingNextPage: boolean;
     onFetchNextPage: () => void;
-    onOpenHtml: (filing: Filing, url: string) => void;
-    onOpenSecDocuments?: (filing: Filing) => void;
+    onOpenHtml: (filing: FilingListRow) => void;
+    onOpenSecDocuments?: (filing: FilingListRow) => void;
     sortDirection: "asc" | "desc";
     onSortToggle: () => void;
 }) {
@@ -37,8 +37,8 @@ export function FilingsList({
                     {displayFilings.map(filing => (
                         <FilingItem
                             filing={filing}
-                            key={filing.accession_number}
-                            onOpenHtml={url => onOpenHtml(filing, url)}
+                            key={filing.accessionNumber}
+                            onOpenHtml={() => onOpenHtml(filing)}
                             onOpenSecDocuments={onOpenSecDocuments ? () => onOpenSecDocuments(filing) : undefined}
                         />
                     ))}

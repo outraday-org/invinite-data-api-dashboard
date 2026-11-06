@@ -1,57 +1,47 @@
-import type { Filing } from "@/lib/api/types";
+import type { FilingListRow } from "@/lib/sec/parity";
 
 import { Separator } from "@/components/ui/separator";
 import { formatEnDateTime } from "@/lib/date";
+
+/** "Q4 FY26" when the fiscal period is known, else null. */
+export function fiscalPeriodLabel(period: { fiscalQuarter: null | number; fiscalYear: null | number }) {
+    if (!period.fiscalQuarter || !period.fiscalYear) return null;
+
+    return `Q${period.fiscalQuarter} FY${String(period.fiscalYear).slice(-2).padStart(2, "0")}`;
+}
 
 export function FilingItem({
     filing,
     onOpenHtml,
     onOpenSecDocuments,
 }: {
-    filing: Filing;
-    onOpenHtml: (url: string) => void;
+    filing: FilingListRow;
+    /** Opens the HTML view; the primary document's public URL is loaded then (never prefetched per row). */
+    onOpenHtml: () => void;
     /** Opens the SEC document store's documents of this accession (the source panel); the HTML link stays. */
     onOpenSecDocuments?: () => void;
 }) {
     return (
         <>
             <div className="grid gap-x-6 gap-y-1 sm:grid-cols-5 sm:items-center">
-                <div className="text-sm font-semibold">{filing.form_type}</div>
+                <div className="text-sm font-semibold">{filing.formType}</div>
 
                 <div className="text-muted-foreground text-xs min-w-0 truncate">
-                    {filing.accession_number}
+                    {filing.accessionNumber}
                 </div>
 
                 <div className="text-muted-foreground text-xs min-w-0 truncate">
-                    {filing.fiscal_quarter && filing.fiscal_year
-                        ? (
-                                <>
-                                    Q
-                                    {filing.fiscal_quarter}
-                                    {" "}
-                                    FY
-                                    {String(filing.fiscal_year).slice(-2).padStart(2, "0")}
-                                </>
-                            )
-                        : (
-                                "—"
-                            )}
+                    {fiscalPeriodLabel(filing) ?? filing.periodEnd ?? "—"}
                 </div>
 
                 <div className="flex items-center justify-start gap-x-3 text-xs">
-                    {filing.html_url
-                        ? (
-                                <button
-                                    className="text-primary cursor-pointer hover:underline inline-flex w-12 justify-start leading-none"
-                                    onClick={() => onOpenHtml(filing.html_url!)}
-                                    type="button"
-                                >
-                                    HTML
-                                </button>
-                            )
-                        : (
-                                <span className="w-12" />
-                            )}
+                    <button
+                        className="text-primary cursor-pointer hover:underline inline-flex w-12 justify-start leading-none"
+                        onClick={onOpenHtml}
+                        type="button"
+                    >
+                        HTML
+                    </button>
                     {onOpenSecDocuments && (
                         <button
                             className="text-primary cursor-pointer hover:underline inline-flex justify-start leading-none"
@@ -65,7 +55,7 @@ export function FilingItem({
                 </div>
 
                 <div className="text-muted-foreground text-xs sm:text-right pr-2">
-                    {formatEnDateTime(filing.filing_date, { hideTime: true })}
+                    {formatEnDateTime(filing.filingDate, { hideTime: true })}
                 </div>
             </div>
             <Separator />

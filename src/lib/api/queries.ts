@@ -10,6 +10,7 @@ import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import type {
     CagrPeriodYears,
+    CompanyFiscalPeriod,
     DividendsResponse,
     EarningsAudioResponse,
     EarningsCalendarDateKind,
@@ -49,7 +50,6 @@ import type {
     EarningsTranscriptFormat,
     EarningsTranscriptResponse,
     EarningsTranscriptVersionsResponse,
-    FilingsResponse,
     FiscalPeriodType,
     GrowthType,
     InsiderTradesResponse,
@@ -83,9 +83,9 @@ import { firstPageParam, offsetPageParam } from "./page-params";
 import {
     getApiBaseUrl,
     getAsReportedFinancialsPresentation,
-    getAvailableFormTypes,
     getCompanyDetails,
     getCompanyDividends,
+    getCompanyFiscalPeriods,
     getCompanySplits,
     getEarningsAudio,
     getEarningsCalendar,
@@ -111,7 +111,6 @@ import {
     getEarningsTranscript,
     getEarningsTranscriptDiff,
     getEarningsTranscriptVersions,
-    getFilings,
     getFinancialCagr,
     getFinancialGrowth,
     getFinancialRatios,
@@ -173,33 +172,6 @@ export const companyDetailsOptions = (identifier: string) =>
         staleTime: 5 * 60 * 1000,
     });
 
-type FilingsQueryInput = {
-    formType?: string;
-    identifier: string;
-    limit?: number;
-    offset?: number;
-    sort?: "asc" | "desc";
-};
-
-export const filingsOptions = (input: FilingsQueryInput) =>
-    queryOptions({
-        enabled: input.identifier.trim().length > 0,
-        queryFn: () => getFilings({ data: input }),
-        queryKey: [
-            "filings",
-            input.identifier,
-            input.formType ?? "all",
-            input.sort ?? "desc",
-            input.limit ?? 40,
-            input.offset ?? 0,
-        ],
-        staleTime: 10 * 60 * 1000,
-    });
-
-type AvailableFormTypesInput = {
-    identifier: string;
-};
-
 type DividendsQueryInput = {
     endDate?: string;
     identifier: string;
@@ -208,14 +180,6 @@ type DividendsQueryInput = {
     sort?: "asc" | "desc";
     startDate?: string;
 };
-
-export const availableFormTypesOptions = (input: AvailableFormTypesInput) =>
-    queryOptions({
-        enabled: input.identifier.trim().length > 0,
-        queryFn: () => getAvailableFormTypes({ data: input }),
-        queryKey: ["filings", "available-form-types", input.identifier],
-        staleTime: 10 * 60 * 1000,
-    });
 
 type SplitsQueryInput = {
     identifier: string;
@@ -526,52 +490,6 @@ export function useCompanyDetails(identifier: string) {
     };
 }
 
-export function useFilings(input: FilingsQueryInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const result = useQuery(
-        queryOptions({
-            ...filingsOptions(input),
-            enabled: hasHydrated && input.identifier.trim().length > 0,
-            queryFn: () =>
-                getFilings({ data: { ...input, apiKey: apiKey ?? undefined } }),
-            queryKey: [...filingsOptions(input).queryKey, String(apiKeyUpdatedAt)],
-        }),
-    );
-
-    useErrorToast(result.error, "Failed to load filings");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useAvailableFormTypes(input: AvailableFormTypesInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const result = useQuery(
-        queryOptions({
-            ...availableFormTypesOptions(input),
-            enabled: hasHydrated && input.identifier.trim().length > 0,
-            queryFn: () =>
-                getAvailableFormTypes({ data: { ...input, apiKey: apiKey ?? undefined } }),
-            queryKey: [...availableFormTypesOptions(input).queryKey, String(apiKeyUpdatedAt)],
-        }),
-    );
-
-    useErrorToast(result.error, "Failed to load form types");
-
-    return {
-        ...result,
-        data: result.data,
-    };
-}
-
-type FilingsInfiniteInput = Omit<FilingsQueryInput, "offset"> & {
-    limit: number;
-};
-
 type DividendsInfiniteInput = Omit<DividendsQueryInput, "offset"> & {
     limit: number;
 };
@@ -599,70 +517,6 @@ type IposInfiniteInput = Omit<IposQueryInput, "offset"> & {
 type MarketHolidaysInfiniteInput = Omit<MarketHolidaysQueryInput, "offset"> & {
     limit: number;
 };
-
-export function useFilingsInfinite(input: FilingsInfiniteInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const queryKey = [
-        "filings",
-        "infinite",
-        input.identifier,
-        input.formType ?? "all",
-        input.sort ?? "desc",
-        input.limit,
-        String(apiKeyUpdatedAt),
-    ] as const;
-
-    const result = useInfiniteQuery<
-        FilingsResponse,
-        Error,
-        InfiniteData<FilingsResponse, number>,
-        typeof queryKey,
-        number
-    >({
-        enabled: hasHydrated && input.identifier.trim().length > 0,
-        getNextPageParam: (lastPage: FilingsResponse) => {
-            const nextUrl = lastPage.companies[0]?.next_url;
-
-            if (!nextUrl) return undefined;
-
-            let nextOffset: null | number = null;
-
-            try {
-                const parsed = new URL(nextUrl, "http://localhost");
-
-                const offsetParam = parsed.searchParams.get("offset");
-
-                if (offsetParam) nextOffset = Number(offsetParam);
-            }
-            catch {
-                nextOffset = null;
-            }
-
-            if (nextOffset === null || Number.isNaN(nextOffset)) return undefined;
-
-            return nextOffset;
-        },
-        initialPageParam: 0,
-        queryFn: ({ pageParam }) =>
-            getFilings({
-                data: {
-                    ...input,
-                    apiKey: apiKey ?? undefined,
-                    offset: Number(pageParam) || 0,
-                },
-            }),
-        queryKey,
-        staleTime: 10 * 60 * 1000,
-    });
-
-    useErrorToast(result.error, "Failed to load filings");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
 
 export function useDividendsInfinite(input: DividendsInfiniteInput) {
     const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
@@ -1985,6 +1839,17 @@ export function useSecFilingsInfinite(input: { form?: string; identifier: string
         initialPageParam: null,
         pageParamOf: nextCursorOf,
         queryKey: ["sec", "filings", input.identifier, input.form ?? "", input.order ?? "", input.limit ?? ""],
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** Every fiscal period of a company, once per identifier: labels `/v1/sec/filings` rows by `report_date`. */
+export function useCompanyFiscalPeriods(identifier: string) {
+    return useEarningsQuery<Array<CompanyFiscalPeriod>>({
+        enabled: identifier.trim().length > 0,
+        errorMessage: null,
+        load: apiKey => getCompanyFiscalPeriods({ data: { apiKey, identifier } }),
+        queryKey: ["company", "fiscal-periods", identifier],
         staleTime: SEC_STALE_MS,
     });
 }

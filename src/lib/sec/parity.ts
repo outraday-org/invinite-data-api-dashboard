@@ -1,39 +1,72 @@
 /**
- * Capability parity of the legacy dashboard SEC calls with their `/v1/sec/*` replacements (backend
- * delivery-integration task 2's parity table). Task 7 switches `$ticker/filings` from `getFilings` /
- * `getAvailableFormTypes` to `/v1/sec/filings` + `form_facet` through these mappings; until then they prove the
- * replacement carries every field the legacy list shows (`src/lib/sec/parity.test.ts`).
+ * The `$ticker/filings` list on `/v1/sec/*` (backend delivery-integration task 7; the field mapping of task 2's
+ * capability-parity table, which replaced the retired legacy filings family):
+ * - a row: `accession`→accession number, `form`→form type, `filing_date`, `report_date`→period end;
+ * - fiscal / calendar year + quarter: the `/v1/company/fiscal-periods` period whose `period_end` = `report_date`;
+ * - the form-type picker: `form_facet[].form`;
+ * - the HTML view: the manifest's primary document `source.url` (permanent public URL), loaded when a row is opened.
  */
-import type { Filing, SecFilingRow, SecFormFacet } from "@/lib/api/types";
+import type { CompanyFiscalPeriod, SecFilingRow, SecFormFacet } from "@/lib/api/types";
+import type { SecManifestDocument } from "@/lib/sec/source";
 
-/** The legacy row fields `/v1/sec/filings` answers directly (fiscal / calendar periods come from `period_end`). */
-export type LegacyFilingCore = Pick<Filing, "accession_number" | "filing_date" | "form_type"> & { period_end: null | string };
+export type FilingListRow = {
+    accessionNumber: string;
+    calendarQuarter: null | number;
+    calendarYear: null | number;
+    /** The EDGAR index page: an outbound link only. */
+    edgarIndexUrl: null | string;
+    filingDate: string;
+    fiscalQuarter: null | number;
+    fiscalYear: null | number;
+    formType: string;
+    /** `report_date`; null = the filing states no period (never a made-up one). */
+    periodEnd: null | string;
+    /** The primary document's filename as the filings list states it (null = not stated yet). */
+    primaryDocument: null | string;
+};
 
-/** `accession`→`accession_number`, `form`→`form_type`, `filing_date`, `report_date`→`period_end`; null = not mappable. */
-export function secFilingAsLegacyRow(row: SecFilingRow): LegacyFilingCore | null {
+/** The company's fiscal periods by `period_end` (YYYY-MM-DD). */
+export function fiscalPeriodIndex(periods: ReadonlyArray<CompanyFiscalPeriod>): ReadonlyMap<string, CompanyFiscalPeriod> {
+    return new Map(periods.map(period => [period.period_end.slice(0, 10), period]));
+}
+
+/** One `/v1/sec/filings` row as the list shows it; null = not listable (no accession / form / filing date). */
+export function toFilingListRow(row: SecFilingRow, periods: ReadonlyMap<string, CompanyFiscalPeriod>): FilingListRow | null {
     if (!row.accession || !row.form || !row.filing_date) return null;
 
+    const periodEnd = row.report_date ? row.report_date.slice(0, 10) : null;
+
+    const period = periodEnd ? periods.get(periodEnd) : undefined;
+
     return {
-        accession_number: row.accession,
-        filing_date: row.filing_date,
-        form_type: row.form,
-        period_end: row.report_date ?? null,
+        accessionNumber: row.accession,
+        calendarQuarter: period?.calendar_quarter ?? null,
+        calendarYear: period?.calendar_year ?? null,
+        edgarIndexUrl: row.edgar_index_url?.startsWith("https://www.sec.gov/") ? row.edgar_index_url : null,
+        filingDate: row.filing_date,
+        fiscalQuarter: period?.fiscal_quarter ?? null,
+        fiscalYear: period?.fiscal_year ?? null,
+        formType: row.form,
+        periodEnd,
+        primaryDocument: row.primary_document ?? null,
     };
 }
 
-/** The legacy row restricted to the fields the replacement carries (the legacy `filing_date` is a timestamp). */
-export function legacyFilingCore(filing: Filing): LegacyFilingCore {
-    return {
-        accession_number: filing.accession_number,
-        filing_date: filing.filing_date.slice(0, 10),
-        form_type: filing.form_type,
-        period_end: filing.period_end ? filing.period_end.slice(0, 10) : null,
-    };
+/** The form-type picker's options: `form_facet[].form`, in the facet's order. */
+export function formTypesOfFacet(facet: ReadonlyArray<SecFormFacet> | undefined): Array<string> {
+    return (facet ?? []).flatMap(entry => (entry.form ? [entry.form] : []));
 }
 
-/** The legacy form types the facet lacks (empty = the legacy set ⊆ `form_facet[].form`). */
-export function formsMissingFromFacet(legacyForms: ReadonlyArray<string>, facet: ReadonlyArray<SecFormFacet>) {
-    const forms = new Set(facet.flatMap(entry => (entry.form ? [entry.form] : [])));
+/** The forms of `forms` the facet lacks (empty = `forms` ⊆ `form_facet[].form`). */
+export function formsMissingFromFacet(forms: ReadonlyArray<string>, facet: ReadonlyArray<SecFormFacet>) {
+    const present = new Set(formTypesOfFacet(facet));
 
-    return legacyForms.filter(form => !forms.has(form));
+    return forms.filter(form => !present.has(form));
+}
+
+/** The filing's primary document of its manifest: role `primary`, else the filename the filings row names. */
+export function primaryDocumentOf(documents: ReadonlyArray<SecManifestDocument>, primaryFilename: null | string) {
+    return documents.find(doc => doc.role === "primary")
+        ?? (primaryFilename ? documents.find(doc => doc.filename === primaryFilename) : undefined)
+        ?? null;
 }

@@ -3,8 +3,8 @@ import { z } from "zod";
 
 import type {
     AsReportedFinancialsPresentationResponse,
-    AvailableFormTypesResponse,
     CompanyDetailsResponse,
+    CompanyFiscalPeriod,
     CompanySearchResponse,
     DividendsResponse,
     EarningsAudioResponse,
@@ -31,7 +31,6 @@ import type {
     EarningsTranscriptDiffResponse,
     EarningsTranscriptResponse,
     EarningsTranscriptVersionsResponse,
-    FilingsResponse,
     FinancialCagrResponse,
     FinancialGrowthResponse,
     FinancialRatiosResponse,
@@ -440,67 +439,45 @@ export const getMarketHolidays = createServerFn({ method: "GET" })
         return res;
     });
 
-const filingsSchema = z.object({
+const fiscalPeriodsSchema = z.object({
     apiKey: apiKeySchema,
-    formType: z.string().optional(),
-    identifier: z.string(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
+    identifier: z.string().trim().min(1),
 });
 
-export const getFilings = createServerFn({ method: "GET" })
-    .inputValidator(filingsSchema)
-    .handler(async ({ data }): Promise<FilingsResponse> => {
-        const {
-            apiKey,
-            formType,
-            identifier,
-            limit = 40,
-            offset = 0,
-            sort = "desc",
-        } = data;
+/** Pages `/v1/company/fiscal-periods` stops after this many pages (100 periods each: 25 years of quarters ×4). */
+const FISCAL_PERIOD_MAX_PAGES = 10;
 
-        const api = createApiClient(apiKey);
+/**
+ * Every fiscal period of a company (`/v1/company/fiscal-periods`, all pages): the filings list labels a row's
+ * `report_date` with its fiscal / calendar quarter by `period_end`. A company the financial data does not cover (a
+ * pre-IPO CIK, 404) has none → [].
+ */
+export const getCompanyFiscalPeriods = createServerFn({ method: "GET" })
+    .inputValidator(fiscalPeriodsSchema)
+    .handler(async ({ data }): Promise<Array<CompanyFiscalPeriod>> => {
+        const api = createApiClient(data.apiKey);
 
-        const { data: res, error } = await api.GET("/v1/sec-filings/filings", {
-            params: {
-                query: {
-                    form_type: formType,
-                    identifier,
-                    limit,
-                    offset,
-                    sort,
-                },
-            },
-        });
+        const periods: Array<CompanyFiscalPeriod> = [];
 
-        if (error) throw error;
+        for (let page = 0; page < FISCAL_PERIOD_MAX_PAGES; page++) {
+            const { data: res, error, response } = await api.GET("/v1/company/fiscal-periods", {
+                params: { query: { identifier: data.identifier, limit: 100, offset: page * 100, sort: "desc" } },
+            });
 
-        return res;
-    });
+            if (response.status === 404) return periods;
 
-const availableFormTypesSchema = z.object({
-    apiKey: apiKeySchema,
-    identifier: z.string().optional(),
-});
+            if (error) throwApiError(error, response);
 
-export const getAvailableFormTypes = createServerFn({ method: "GET" })
-    .inputValidator(availableFormTypesSchema)
-    .handler(async ({ data }): Promise<AvailableFormTypesResponse> => {
-        const { apiKey, identifier } = data;
+            const company = res.companies.at(0);
 
-        const api = createApiClient(apiKey);
+            if (!company) break;
 
-        const { data: res } = await api.GET("/v1/sec-filings/available-form-types", {
-            params: { query: { identifier } },
-        });
+            periods.push(...company.periods);
 
-        if (!res) {
-            throw new Error("Failed to load available form types");
+            if (!company.next_url) break;
         }
 
-        return res;
+        return periods;
     });
 
 const financialsSchema = z.object({

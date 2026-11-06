@@ -2,10 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
+import type { SecFilingsResponse } from "@/lib/api/types";
 
+import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
-import { ErrorState } from "@/components/ui/error-state";
-import { useAvailableFormTypes, useFilingsInfinite } from "@/lib/api/queries";
+import { useCompanyFiscalPeriods, useSecFilingsInfinite } from "@/lib/api/queries";
+import { fiscalPeriodIndex, formTypesOfFacet, toFilingListRow } from "@/lib/sec/parity";
+
+import type { FilingHtmlTarget } from "./-components/html-dialog";
 
 import { FilingsHeader } from "./-components/filings-header";
 import { FilingsList } from "./-components/filings-list";
@@ -15,6 +19,9 @@ export const Route = createFileRoute("/$ticker/filings/")({
     component: FilingsPage,
 });
 
+/** Filings per page of `/v1/sec/filings` (one page per `next_cursor`). */
+const FILINGS_PAGE = 40;
+
 function FilingsPage() {
     const { ticker } = Route.useParams();
 
@@ -22,29 +29,12 @@ function FilingsPage() {
 
     const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("desc");
 
-    const [htmlDialog, setHtmlDialog] = React.useState<null | {
-        url: string;
-        ticker: string;
-        formType: string;
-        accessionNumber: string;
-        filingDate: string;
-        fiscalQuarter: null | number;
-        fiscalYear: null | number;
-    }>(null);
+    const [htmlDialog, setHtmlDialog] = React.useState<FilingHtmlTarget | null>(null);
 
-    // Additive (task 7 switches the list itself to `/v1/sec/filings`): the SEC store's documents of one accession.
+    // The SEC store's documents of one accession (the source panel).
     const [secTarget, setSecTarget] = React.useState<null | SecPanelTarget>(null);
 
-    // Fetch available form types for this identifier (ticker or CIK)
-    const {
-        data: availableFormTypesData,
-        error: errorFormTypes,
-        isLoading: loadingFormTypes,
-    } = useAvailableFormTypes({
-        identifier: ticker,
-    });
-
-    // Fetch filings paginated (offset-based) when filter is applied
+    // `/v1/sec/filings` (ticker or CIK), newest first by default, one page per `next_cursor`.
     const {
         data: pagedData,
         error: errorPaged,
@@ -52,59 +42,66 @@ function FilingsPage() {
         hasNextPage,
         isFetchingNextPage,
         isLoading: loadingPaged,
-    } = useFilingsInfinite({
-        formType: formTypeFilter ?? undefined,
+    } = useSecFilingsInfinite({
+        form: formTypeFilter ?? undefined,
         identifier: ticker,
-        limit: 40,
-        sort: sortDirection,
+        limit: FILINGS_PAGE,
+        order: sortDirection,
     });
 
+    // Fiscal / calendar quarters by `report_date` = `period_end` (one request set per company, never per row).
+    const { data: fiscalPeriods } = useCompanyFiscalPeriods(ticker);
+
+    const periods = React.useMemo(() => fiscalPeriodIndex(fiscalPeriods ?? []), [fiscalPeriods]);
+
+    const pages: ReadonlyArray<SecFilingsResponse> = React.useMemo(() => pagedData?.pages ?? [], [pagedData]);
+
     const displayFilings = React.useMemo(
-        () => pagedData?.pages.flatMap(page => page.companies[0]?.filings ?? []) ?? [],
-        [pagedData],
+        () => pages.flatMap(page => (page.filings ?? []).flatMap((row) => {
+            const filing = toFilingListRow(row, periods);
+
+            return filing ? [filing] : [];
+        })),
+        [pages, periods],
     );
 
-    const availableFormTypes = React.useMemo(
-        () => availableFormTypesData?.form_types ?? [],
-        [availableFormTypesData],
-    );
+    // The form-type picker = the filer's `form_facet`; the last one seen stays while a filtered list loads.
+    const facetForms = React.useMemo(() => formTypesOfFacet(pages.at(0)?.form_facet), [pages]);
 
-    const isLoading = loadingFormTypes || loadingPaged;
+    const [availableFormTypes, setAvailableFormTypes] = React.useState<{ forms: Array<string>; ticker: string }>({ forms: [], ticker });
 
-    const error = errorFormTypes ?? errorPaged;
+    React.useEffect(() => {
+        if (facetForms.length > 0) setAvailableFormTypes({ forms: facetForms, ticker });
+    }, [facetForms, ticker]);
+
+    const formTypes = availableFormTypes.ticker === ticker ? availableFormTypes.forms : [];
 
     let content: React.ReactNode;
 
-    if (error) {
-        content = <ErrorState error={error} title="Failed to load filings" />;
+    if (errorPaged && pages.length === 0) {
+        content = <SecReadinessNotice error={errorPaged} title="Failed to load filings" />;
     }
     else {
         content = (
-            <FilingsList
-                displayFilings={displayFilings}
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                isLoading={isLoading}
-                onFetchNextPage={() => fetchNextPage()}
-                onOpenHtml={(filing, url) => {
-                    setHtmlDialog({
-                        accessionNumber: filing.accession_number,
-                        filingDate: filing.filing_date,
-                        fiscalQuarter: filing.fiscal_quarter,
-                        fiscalYear: filing.fiscal_year,
-                        formType: filing.form_type,
-                        ticker,
-                        url,
-                    });
-                }}
-                onOpenSecDocuments={filing => setSecTarget({
-                    accession: filing.accession_number,
-                    kind: "filing",
-                    title: `${ticker} · ${filing.form_type} · ${filing.accession_number}`,
-                })}
-                onSortToggle={() => setSortDirection(prev => (prev === "desc" ? "asc" : "desc"))}
-                sortDirection={sortDirection}
-            />
+            <>
+                <SecReadinessNotice readiness={pages.at(-1)?.readiness} />
+                <FilingsList
+                    displayFilings={displayFilings}
+                    hasNextPage={hasNextPage}
+                    isFetchingNextPage={isFetchingNextPage}
+                    isLoading={loadingPaged}
+                    onFetchNextPage={() => fetchNextPage()}
+                    onOpenHtml={filing => setHtmlDialog({ ...filing, ticker })}
+                    onOpenSecDocuments={filing => setSecTarget({
+                        accession: filing.accessionNumber,
+                        kind: "filing",
+                        title: `${ticker} · ${filing.formType} · ${filing.accessionNumber}`,
+                    })}
+                    onSortToggle={() => setSortDirection(prev => (prev === "desc" ? "asc" : "desc"))}
+                    sortDirection={sortDirection}
+                />
+                {errorPaged ? <SecReadinessNotice error={errorPaged} title="Failed to load more filings" /> : null}
+            </>
         );
     }
 
@@ -115,15 +112,24 @@ function FilingsPage() {
                 onOpenChange={(open) => {
                     if (!open) setHtmlDialog(null);
                 }}
+                onOpenDocuments={(filing) => {
+                    setHtmlDialog(null);
+
+                    setSecTarget({
+                        accession: filing.accessionNumber,
+                        kind: "filing",
+                        title: `${filing.ticker} · ${filing.formType} · ${filing.accessionNumber}`,
+                    });
+                }}
                 ticker={ticker}
             />
 
             <SecSourceDialog onClose={() => setSecTarget(null)} target={secTarget} />
 
             <FilingsHeader
-                availableFormTypes={availableFormTypes}
+                availableFormTypes={formTypes}
                 formTypeFilter={formTypeFilter}
-                loadingFormTypes={loadingFormTypes}
+                loadingFormTypes={loadingPaged && formTypes.length === 0}
                 onFormTypeChange={val => setFormTypeFilter(val === "all" ? null : val)}
                 sortDirection={sortDirection}
             />
