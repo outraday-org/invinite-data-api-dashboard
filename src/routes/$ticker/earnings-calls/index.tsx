@@ -89,7 +89,7 @@ function EarningsCallsPage() {
                 id: "fiscal_period",
             },
             {
-                cell: ({ row }) => <CallTime event={row.original} />,
+                cell: ({ row }) => <CallTime event={row.original} reserveCaption />,
                 header: "Date / time",
                 id: "scheduled_at",
             },
