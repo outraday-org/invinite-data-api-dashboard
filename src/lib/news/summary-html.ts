@@ -26,11 +26,16 @@ function summaryPurifier() {
     return instance;
 }
 
-/** `summary_html` sanitized for display; null without a DOM (SSR: the caller renders `summary_text`). */
+/**
+ * `summary_html` sanitized for display; null without a DOM (SSR) or when nothing visible survives the allow-list — the
+ * caller then renders `summary_text`.
+ */
 export function prepareSummaryHtml(html: string): null | string {
     const instance = summaryPurifier();
 
     if (!instance) return null;
 
-    return instance.sanitize(html, { ALLOW_ARIA_ATTR: false, ALLOW_DATA_ATTR: false, ALLOWED_ATTR: [], ALLOWED_TAGS });
+    const clean = instance.sanitize(html, { ALLOW_ARIA_ATTR: false, ALLOW_DATA_ATTR: false, ALLOWED_ATTR: [], ALLOWED_TAGS });
+
+    return clean.trim() === "" ? null : clean;
 }

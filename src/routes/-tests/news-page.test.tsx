@@ -251,6 +251,14 @@ describe("NewsItemView", () => {
         expect([...paragraphs].map(p => p.textContent)).toEqual(SUMMARY_TEXT.split("\n\n"));
     });
 
+    it("falls back to summary_text when nothing of summary_html survives the allow-list", () => {
+        render(<NewsItemView data={newsDetail(newsroomItem(), { summary_html: "<script>window.pwned = 1</script><img src=\"x\">" })} error={null} isLoading={false} onOpen={() => undefined} />);
+
+        const paragraphs = screen.getByTestId("news-summary").querySelectorAll("p");
+
+        expect([...paragraphs].map(p => p.textContent)).toEqual(SUMMARY_TEXT.split("\n\n"));
+    });
+
     it("shows headline-and-link only, never an empty text block, for an item without a summary", () => {
         const item = newsroomItem();
 
@@ -328,6 +336,6 @@ describe("NewsItemView", () => {
 
         rerender(<NewsItemView data={null} error={new ApiRequestError(403, { error: "Forbidden", message: "x" })} isLoading={false} onOpen={() => undefined} />);
 
-        expect(screen.getByText("Your plan does not include news text")).toBeTruthy();
+        expect(screen.getByText("Your plan does not include news summaries")).toBeTruthy();
     });
 });

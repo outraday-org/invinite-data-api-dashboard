@@ -115,7 +115,7 @@ export function NewsItemView({
     // Sanitized once per answer, not on every render.
     const html = React.useMemo(() => (summaryHtml ? prepareSummaryHtml(summaryHtml) : null), [summaryHtml]);
 
-    if (isTierError(error)) return <Notice badge="STANDARD" title="Your plan does not include news text" />;
+    if (isTierError(error)) return <Notice badge="STANDARD" title="Your plan does not include news summaries" />;
 
     if (error instanceof ApiRequestError && error.status === 404) return <Notice title="This news item is not available" />;
 
