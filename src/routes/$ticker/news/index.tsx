@@ -52,7 +52,7 @@ export function NewsPageView({
     scopeLabel,
 }: {
     controls?: React.ReactNode;
-    /** The empty list's line (the "Has media" filter names itself). */
+    /** The empty list's line. */
     emptyText?: string;
     error: unknown;
     isLoading: boolean;
@@ -112,7 +112,6 @@ function NewsPage() {
     const listInput: NewsListInput = {
         earnings: search.earnings,
         from: search.from,
-        hasMedia: search.media,
         issuerCategory: search.category ? [search.category] : undefined,
         issuerTag: search.tag ? [search.tag] : undefined,
         kind: search.kind ? [search.kind] : undefined,
@@ -146,7 +145,6 @@ function NewsPage() {
     const filters: NewsFilters = {
         category: search.category,
         earnings: search.earnings,
-        hasMedia: search.media,
         kind: search.kind,
         publicationType: search.pubType,
         publisherCik,
@@ -185,7 +183,7 @@ function NewsPage() {
         apiKeyUpdatedAt,
         baseUrl,
         enabled: search.live === true,
-        // What the socket filters; topic, publisher, publication type and media are re-checked below.
+        // What the socket filters; topic, publisher and publication type are re-checked below.
         filters: {
             earningsOnly: search.earnings === "true",
             kinds: search.kind ? [search.kind] : undefined,
@@ -238,7 +236,7 @@ function NewsPage() {
         <>
             <NewsPageView
                 controls={controls}
-                emptyText={search.media ? "No news with media in this window." : search.from || search.to ? undefined : "No news yet."}
+                emptyText={search.from || search.to ? undefined : "No news yet."}
                 error={list.error}
                 isLoading={list.isLoading}
                 items={items}

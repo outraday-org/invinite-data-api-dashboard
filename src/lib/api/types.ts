@@ -173,14 +173,12 @@ export type EarningsLiveStreamStatus = EarningsLiveStreamResponse["status"];
 // News (IDA /v1/news*)
 export type NewsListResponse = ApiResponse<"/v1/news", "get">;
 export type NewsItemResponse = ApiResponse<"/v1/news/{id}", "get">;
-export type NewsAssetDownloadResponse = ApiResponse<"/v1/news/{id}/assets/{asset_id}/download", "get">;
 /** A `GET /v1/news` row; also the `item` of a `news.live` `news_item` frame. */
 export type NewsItemPublic = NewsListResponse["items"][number];
 export type NewsAttribution = NewsItemPublic["attribution"];
 export type NewsPublication = NewsItemPublic["publications"][number];
 export type NewsKind = NewsItemPublic["kind"];
 export type NewsDevelopment = NewsItemResponse["developments"][number];
-export type NewsAsset = NewsItemResponse["assets"][number];
 export type NewsSighting = NewsItemResponse["sightings"][number];
 export type NewsQuery = ApiQuery<"/v1/news">;
 

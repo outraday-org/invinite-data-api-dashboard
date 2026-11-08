@@ -14,7 +14,7 @@ export function newsroomItem(overrides: Partial<NewsItemPublic> = {}): NewsItemP
             publisher_host: "nvidianews.nvidia.com",
             rights: "issuer",
             source_url: "https://nvidianews.nvidia.com/news/nvidia-announces-rubin",
-            statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.",
+            statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.",
         },
         ciks: [NVIDIA_CIK],
         description: "NVIDIA today announced Rubin.",
@@ -23,7 +23,6 @@ export function newsroomItem(overrides: Partial<NewsItemPublic> = {}): NewsItemP
         id: "4c1d9e62-3b7a-4f2e-8d1c-9e0a7b6c5d4f",
         is_earnings_news: false,
         kind: "other",
-        media_count: 0,
         model_processing_allowed: true,
         publications: [{
             categories: [{ id: "12", label: "Press Releases", url: null }],
@@ -40,6 +39,7 @@ export function newsroomItem(overrides: Partial<NewsItemPublic> = {}): NewsItemP
         revision: 1,
         rights: "issuer",
         source: { host: "nvidianews.nvidia.com", id: "ir:nvidianews.nvidia.com", name: "NVIDIA Newsroom" },
+        summary_words: 180,
         supersedes_id: null,
         symbols: ["NVDA"],
         title: "NVIDIA Announces Rubin Platform",
@@ -59,7 +59,7 @@ export function edgarItem(overrides: Partial<NewsItemPublic> = {}): NewsItemPubl
             publisher_host: null,
             rights: "public_record",
             source_url: "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000123/0001045810-26-000123-index.htm",
-            statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.",
+            statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.",
         },
         description: null,
         id: "7d2e1f00-0000-4000-8000-000000000002",
@@ -76,18 +76,24 @@ export function edgarItem(overrides: Partial<NewsItemPublic> = {}): NewsItemPubl
     });
 }
 
-/** `GET /v1/news/{id}` of `item` (text available unless overridden). */
+/** Invinite's summary of the Rubin release, as the API renders it (`summary_text` blocks, `summary_html` from them). */
+export const SUMMARY_TEXT = "NVIDIA introduced Rubin, its next data-center platform.\n\nAvailability\n\nPartners can order systems from the second half of 2027.\n\n• Six new chips\n• One rack-scale system";
+
+export const SUMMARY_HTML = "<p>NVIDIA introduced Rubin, its next data-center platform.</p><h2>Availability</h2><p>Partners can order systems from the second half of 2027.</p><ul><li>Six new chips</li><li>One rack-scale system</li></ul>";
+
+/** `GET /v1/news/{id}` of `item` (summary available unless overridden). */
 export function newsDetail(item: NewsItemPublic, overrides: Partial<NewsItemResponse> = {}): NewsItemResponse {
     return {
         ...item,
-        assets: [],
-        body_text: "SANTA CLARA, Calif., Oct. 29, 2026 -- NVIDIA today announced …",
         companies: [{ cik: NVIDIA_CIK, confidence: 1, match_kind: "issuer", symbol: "NVDA" }],
-        content_formats: ["text"],
         content_status: "available",
         developments: [],
         pdf: null,
         sightings: [{ published_at_claimed: null, seen_at: "2026-10-29T13:03:40.000Z", source_id: item.source.id, url: item.url }],
+        source_words: 260,
+        summarized_at: "2026-10-29T13:10:00.000Z",
+        summary_html: SUMMARY_HTML,
+        summary_text: SUMMARY_TEXT,
         superseded_by: null,
         text_url: `/v1/news/${item.id}/text`,
         ...overrides,

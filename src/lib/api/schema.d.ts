@@ -531,6 +531,8 @@ export interface paths {
          *
          *     Each event carries `calendar` (appended 2026-11): the results release (`report`: day, BMO / AMC from the results filing's acceptance, the filing) and the call (`call`: status, day, time and how good it is, the stating source) kept apart, the event `status` (reported, confirmed, announced, estimated, postponed, cancelled) beside `date_status`, and coverage `warnings`. `date_kind=report` selects the window on the report day; `calendar_status` filters on `calendar.status`.
          *
+         *     Expired rows (`capture_status` `expired`: an estimate that never became a call, a duplicate, a non-call issuer; `expired_reason` says which) are a final status and omitted unless `include_expired=true` (appended 2026-11).
+         *
          *     ### Freshness and coverage
          *
          *     - Data is replicated from the capture pipeline with a lag of about a minute.
@@ -854,6 +856,8 @@ export interface paths {
          * @description Event history of one US company (ticker or CIK): every event type unless `event_type` narrows it.
          *
          *     An out-of-scope company answers `covered: false`.
+         *
+         *     Expired calendar rows (`capture_status` `expired`, see `expired_reason`) are omitted unless `include_expired=true` (appended 2026-11).
          *
          *     ### Freshness and coverage
          *
@@ -1987,11 +1991,9 @@ export interface paths {
          *
          *     ### What you get
          *
-         *     - Headline, lede, publication time, canonical URL, first source, kind, topics, the companies mentioned (`symbols`, `ciks`) and the companies' own publications of the item.
+         *     - Headline, lede (Invinite's), publication time, canonical URL, first source, kind, topics, the companies mentioned (`symbols`, `ciks`) and the companies' own publications of the item.
          *
-         *     - Every item carries `attribution`; the full text is on `GET /v1/news/{id}`.
-         *
-         *     - `media_count` = the item's media you can get now (original PDFs, images); `has_media=true` lists only those items, and `GET /v1/news/{id}` lists the files with their `download_url`.
+         *     - Every item carries `attribution`; Invinite's summary of the publication is on `GET /v1/news/{id}` (`summary_words` = its length, null = the item has none: headline and link only).
          *
          *     ### Filters
          *
@@ -2013,7 +2015,7 @@ export interface paths {
          *
          *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
          *
-         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
+         *     - The text is Invinite's own summary of the publication (a complete rewording that keeps the facts); the publisher's text and media are never served. Wherever you show it, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may not resell it.
          *
          *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
          *
@@ -2041,11 +2043,11 @@ export interface paths {
          *
          *     ### What you get
          *
-         *     - Each development cites the source: `evidence[]` quotes the publisher's exact words with block pointers into `GET /v1/news/{id}/text`, and `item` names the publication with its `attribution`.
+         *     - Each development names the publication it was read from: `item` with its `attribution` (open `source_url` for the publisher's own words; `GET /v1/news/{id}` has Invinite's summary).
          *
-         *     - `title` and `summary` are model-derived (`derived: true`); the quotes are the source. A claim is what the text says, never a verified fact or a lasting relationship.
+         *     - `title` and `summary` are model-derived (`derived: true`). A claim is what the publication says, never a verified fact or a lasting relationship.
          *
-         *     - Only medium- and high-confidence developments of each item's current text.
+         *     - Only medium- and high-confidence developments of each item's current revision.
          *
          *     ### Pagination
          *
@@ -2061,7 +2063,7 @@ export interface paths {
          *
          *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
          *
-         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
+         *     - The text is Invinite's own summary of the publication (a complete rewording that keeps the facts); the publisher's text and media are never served. Wherever you show it, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may not resell it.
          *
          *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
          *
@@ -2085,15 +2087,15 @@ export interface paths {
         };
         /**
          * Search news
-         * @description Search the headlines, ledes and text of news items (SEC filings and the companies' own newsroom publications) by keywords (default `mode=lexical`) or exact text (`literal`).
+         * @description Search the headlines, ledes and summaries of news items (SEC filings and the companies' own newsroom publications) by keywords (default `mode=lexical`) or exact text (`literal`). Ledes and summaries are Invinite's wording of the publication; the publisher's text is not searched.
          *
          *     ### What you get
          *
-         *     - Up to 8 passages, each with its news item (the `/v1/news` list item, incl. `attribution`), where it matched (`field`: `title`, `lede` or `body`), the text block it is from (`block`, see `/v1/news/{id}/text`) and how it matched (`match`); the response says how much of the searched news is indexed (`coverage`).
+         *     - Up to 8 passages, each with its news item (the `/v1/news` list item, incl. `attribution`), where it matched (`field`: `title`, `lede` or `summary`), the summary block it is from (`block`, see `/v1/news/{id}/text`) and how it matched (`match`); the response says how much of the searched news is indexed (`coverage`).
          *
          *     - Filter by `ticker` / `cik` (mentions, either matches), `publisher`, `publisher_host` (the host of the original URL), `kind`, `topic`, `field` and the publication window (`from` / `to`, default the last 365 days).
          *
-         *     - A source whose owner reserved reuse keeps its headline searchable, never its lede or text; `model_processing_allowed: false` = do not pass the passage to a model.
+         *     - A source whose owner reserved reuse keeps its headline searchable, never a lede or summary.
          *
          *     ### Search modes
          *
@@ -2127,7 +2129,7 @@ export interface paths {
          *
          *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
          *
-         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
+         *     - The text is Invinite's own summary of the publication (a complete rewording that keeps the facts); the publisher's text and media are never served. Wherever you show it, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may not resell it.
          *
          *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
          *
@@ -2151,21 +2153,19 @@ export interface paths {
         };
         /**
          * Get a news item
-         * @description One news item with its full text (plain and / or HTML), the companies it is about, every sighting, its images and original files, and the developments read from it.
+         * @description One news item with Invinite's summary of the publication, the companies it is about, every sighting and the developments read from it.
          *
          *     ### What you get
          *
-         *     - `body` picks the text forms: `text` (default) = `body_text`, the publisher's text of the current revision, verbatim — for search, indexing and models; `html` = `body_html` instead — the same text as sanitized article HTML (headings, paragraphs, lists, tables, quotes, images) for display; `both` = both. `content_formats` says which forms the item has (PDFs and older items: text only); `content_status: no_text` = headline and link only.
+         *     - `summary_text` / `summary_html`: a long summary written by Invinite — a complete rewording that keeps the facts (figures, names, dates), never the publisher's text. `summary_text` is plain text for reading, search, indexing and models; `summary_html` the same blocks as HTML (`h2`, `p`, `ul`) for display. `summary_words` / `source_words` give its length against the publication's; `summarized_at` when it was written.
          *
-         *     - **Images inside the article:** in `body_html` every stored image is an `<img src>` whose URL is stable for 24 hours and needs no API key (`assets[].view_url`, the same URL); an image Invinite may only link is an "Image at source" link to the publisher; an image that may not be shown is removed. The hero image is the asset with `kind: hero_image` — place it above the headline; it may also appear inline in `body_html`: when its id is a `data-asset-id` of the HTML, skip it above the article. After 24 hours (or on an image error) fetch the item again for fresh URLs.
+         *     - `content_status: no_text` = headline and link only: an item published before summaries started, a metadata-only item, or a source whose owner reserved reuse. Open `attribution.source_url` for the publisher's own words.
          *
-         *     - **Attribution duty:** wherever you show `body_text`, `body_html` or `description`, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` with it (and `attribution.edgar` for a filing), with `attribution.statement`.
+         *     - **Attribution duty:** wherever you show the summary or `description`, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` with it (and `attribution.edgar` for a filing), with `attribution.statement`.
          *
-         *     - `text_url` serves the same text in citable blocks with their kind and heading; `assets[].download_url` mints a URL valid ≤ 60 seconds to view (`purpose=display`) or download (`purpose=download`, where `can_download`) a file where the publisher's terms allow it.
+         *     - `text_url` serves the same summary in blocks with their kind and heading; search hits cite those blocks.
          *
-         *     - `model_processing_allowed` says whether the text may be processed by AI models (the publisher's machine-readable reservation); API access alone does not authorize forwarding the text into models.
-         *
-         *     - `pdf` is the branded PDF of the current revision in every `body` mode: a permanent public URL with its size, page count and hash, or null while none exists (a new item gets one within minutes; an item without a PDF-eligible text never does). The file carries the attribution on its notice page.
+         *     - `pdf` is the branded PDF of the summary: a permanent public URL with its size, page count and hash, or null while none exists (a summarised item gets one within minutes). The file carries the attribution on its notice page.
          *
          *     - A corrected item names its successor in `superseded_by` and stays served under its id.
          *
@@ -2177,99 +2177,13 @@ export interface paths {
          *
          *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
          *
-         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
+         *     - The text is Invinite's own summary of the publication (a complete rewording that keeps the facts); the publisher's text and media are never served. Wherever you show it, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may not resell it.
          *
          *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
          *
          *     Minimum tier for display: FREE.
          */
         get: operations["newsItem"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/news/{id}/assets/{asset_id}/download": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get a short-lived URL of a news image or file
-         * @description A short-lived URL of one image or original file of a news item, where the publisher's terms allow delivering it.
-         *
-         *     ### What you get
-         *
-         *     - `url` works for at most 60 seconds (never past the permission it rests on): fetch the file at once and never store or share the URL. `purpose` says whether it may be embedded (`display`) or downloaded (`download`).
-         *
-         *     - `purpose=display` asks for an inline URL (`Content-Disposition: inline`, the file's own `Content-Type`), `purpose=download` for an attachment; without it, download wins when both are allowed. Display is allowed for an asset with `can_display`, and for a PDF with `can_download` (inline viewing of a downloadable original: a browser's PDF viewer renders it); a purpose the asset does not allow is `403 asset_unavailable`.
-         *
-         *     - Show `credit` with the file. Files are bound to the item: the asset id must be one of the item's `assets[]`.
-         *
-         *     ### Errors
-         *
-         *     - `404` for an unknown or no longer served item or asset; `403 asset_unavailable` when the file may not be delivered (link to `original_url`); `503 media_unavailable` while file delivery is not configured.
-         *
-         *     ### Sources and rights
-         *
-         *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
-         *
-         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
-         *
-         *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
-         *
-         *     Minimum tier for display: FREE.
-         */
-        get: operations["newsAssetDownload"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/news/{id}/assets/{asset_id}/view": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Show a news image (stable view URL)
-         * @description The stable URL of one news image: what `assets[].view_url` and the `<img src>` of `body_html` point at. Put it straight into an `<img>`; it needs no API key.
-         *
-         *     ### What you get
-         *
-         *     - A `302` redirect to the image itself (a storage link valid ≤ 60 seconds, `Content-Disposition: inline`). Browsers and `curl -L` follow it; never store the target.
-         *
-         *     - The URL is valid for 24 hours from the item response that minted it (never past the publisher's display permission): after that, or on an image error, fetch the item again for fresh URLs.
-         *
-         *     - Every load re-checks the item and the image's display permission: a withdrawn image stops loading within a minute, even through an unexpired URL.
-         *
-         *     - Loading it is not metered: the credits, plan and licence were applied by the `GET /v1/news/{id}` response that minted it. Requests are rate-limited per client IP. Show the asset's `credit` with the image.
-         *
-         *     ### Errors
-         *
-         *     - `403 view_url_expired` for an expired, altered or foreign URL (fetch the item again); `404 asset_unavailable` when the item or image is no longer served; `503 media_unavailable` while image delivery is not configured.
-         *
-         *     ### Sources and rights
-         *
-         *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
-         *
-         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
-         *
-         *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
-         *
-         *     Minimum tier for display: FREE.
-         */
-        get: operations["newsAssetView"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2286,18 +2200,18 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get a news item's text in blocks
-         * @description The text of one news item in stable, citable blocks (headings, paragraphs, lists, tables, quotes, captions), page by page — for search, retrieval and models.
+         * Get a news item's summary in blocks
+         * @description Invinite's summary of one news item in stable blocks (headings, paragraphs, lists), page by page — for retrieval, citation and models.
          *
          *     ### What you get
          *
-         *     - Each block carries its stable `block_id`, `kind` (what it is in the article; null = guessed from plain text, as for PDFs), `heading` (the nearest heading above it), PDF page and Unicode code-point offsets into the item's `body_text` (`body_text` sliced at `start_offset`–`end_offset` is the block's text); development evidence points at these blocks.
+         *     - Each block carries its stable `block_id`, `kind` and `heading` (the section heading it sits under); its text joined in order is the detail's `summary_text`. Search hits point at these blocks (`block.id`).
          *
          *     - `max_chars` bounds a page in code points without ever splitting a block; `has_more`, `next_cursor` and `coverage` say what is left — nothing is cut silently.
          *
-         *     - A cursor belongs to one text revision: after a correction it answers `409 revision_changed`; restart without `cursor`.
+         *     - A cursor belongs to one revision: after a correction it answers `409 revision_changed`; restart without `cursor`.
          *
-         *     - An item without readable text answers `content_status: no_text` with no blocks. Show `attribution` with the text.
+         *     - An item without a summary answers `content_status: no_text` with no blocks. Show `attribution` with the text.
          *
          *     ### Errors
          *
@@ -2307,7 +2221,7 @@ export interface paths {
          *
          *     - Items come from SEC EDGAR filings (`rights: public_record`) and the companies' own newsrooms (`rights: issuer`); wire services are never a source.
          *
-         *     - Issuer and SEC text is served in full with its attribution: wherever you show the text, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may forward the text unmodified; you may not resell it.
+         *     - The text is Invinite's own summary of the publication (a complete rewording that keeps the facts); the publisher's text and media are never served. Wherever you show it, show `attribution.publisher`, `attribution.source_url` and `attribution.published_at` next to it (and the EDGAR form and accession for a filing). You may not resell it.
          *
          *     - A company that opted out, and a source whose owner reserved reuse, are not served (a reserved source keeps its headline, without text).
          *
@@ -2907,7 +2821,7 @@ export interface paths {
         };
         /**
          * Search SEC documents
-         * @description Find passages in SEC documents, with citations: `mode=lexical` (default; keywords and quoted phrases, English stemming, ranked) or `mode=literal` (the exact characters; `case_sensitive=false` folds case). The earnings search contract: every hit carries `match` (`type`, `lexical_rank`, `spans` = code-point offsets into `text`), `document_spans` (offsets into the document text and each block), the cited blocks with neighbors and footnotes, and `citation` (version, block, the original's permanent URL). `coverage` says how complete the answer is: `forms_indexed` / `years_indexed` state the index policy; empty hits with `completeness: complete` is a genuine no-result, anything else is not. A stale or expired cursor answers 409 `restart_required`.
+         * @description Find passages in SEC documents, with citations: `mode=lexical` (default; keywords and quoted phrases, English stemming, ranked) or `mode=literal` (the exact characters; `case_sensitive=false` folds case). The earnings search contract: every hit carries `match` (`type`, `lexical_rank`, `spans` = code-point offsets into `text`), `document_spans` (offsets into the document text and each block), the cited blocks with neighbors and footnotes, and `citation` (version, block, the original's permanent URL). `coverage` says how complete the answer is: `forms_indexed` / `years_indexed` state the index policy; empty hits with `completeness: complete` is a genuine no-result, anything else is not. A search without a filer, entity or accession filter (no filter at all, or only `form` and / or `filed_from` / `filed_to`) reads at most `coverage.matches.cap` (300) matching passages of its forms and dates, newest filings first (`coverage.matches.order` `newest_first`: every match filed since `complete_since`, then older ones from `window_from` on): when more match, `readiness` is `partial` / `too_many_matches`, `coverage.matches` states how many passages were examined, that the total is unknown (`total: null`, `total_at_least`) and the filing dates the examined passages span, and `coverage.hint` says how to get complete results (add a filer, entity or accession filter; a narrower form or date range helps while it matches fewer than `cap`); the hits returned are still ranked and cited. A search with `cik`, `entity_id` or `accession` is never capped and gives complete results. The first search for a very common term after a backend restart can take about half a second longer (cold index pages). A capped search costs the same 100 credits (hits are returned). A stale or expired cursor answers 409 `restart_required`.
          *
          *     Read from Invinite's SEC document store: every answer carries `readiness` (`ready` / `partial` 200, `pending` 202 — retry later, not billed — `excluded` 403, `unknown` 404, `failed` 424, `not_ready` 503 while the capability is switched off). Originals, figures and PDFs are permanent public URLs; nothing is fetched from SEC on request.
          *
@@ -3672,10 +3586,56 @@ export interface components {
             } & {
                 [key: string]: unknown;
             });
-            /** @description Why the answer may be incomplete: not_projected, projection_failed, not_published, not_held, held_not_verified, candidate_cap_reached, scan_budget_reached, scope_needs_review, scope_not_current, form_not_indexed, older_than_index_window, no_forms_indexed, held_gap, search_provider_not_registered, search_projection_empty, search_timeout, scope_excluded, documents_not_held */
+            /** @description Why the answer may be incomplete: not_projected, projection_failed, not_published, not_held, held_not_verified, too_many_matches, candidate_cap_reached, scan_budget_reached, scope_needs_review, scope_not_current, form_not_indexed, older_than_index_window, no_forms_indexed, held_gap, search_provider_not_registered, search_projection_empty, search_timeout, scope_excluded, documents_not_held */
             reasons: Array<string>;
             /** @description The indexed form policy (`10-K*` = the form and its /A) */
             forms_indexed?: Array<string> | null;
+            /** @description The selectivity cap of a search without a filer, entity or accession filter (no filter at all, or only `form` and / or `filed_from` / `filed_to`): at most `cap` matching passages are read from the index, newest filings first (`order`), then ranked and cited. null when the search names a `cik`, `entity_id` or `accession` (never capped: those give complete results) */
+            matches?: null | ({
+                /** @description true = more passages match than were examined: the answer is partial (`too_many_matches`) */
+                capped: boolean;
+                /** @description The most matching passages a search without a filer, entity or accession filter reads (300) */
+                cap: number;
+                /** @description Matching passages read from the index (at most `cap`) */
+                examined: number;
+                /** @description Of them, passages in searchable documents: the set the hits are ranked from */
+                examined_in_scope: number;
+                /** @description Every matching passage when not capped; null when capped (the total is unknown) */
+                total: null | number;
+                /** @description When capped: the total is at least this (cap + 1); never an estimate. null when not capped */
+                total_at_least: null | number;
+                /**
+                 * @description Which passages were examined: `newest_first` = every match filed since `complete_since`, then older ones from `window_from` on in index order; `index_order` = the first ones the index returned (older servers). Treat an unknown value as "not stated": the SDKs keep it as a string
+                 * @enum {string}
+                 */
+                order: "index_order" | "newest_first";
+                /**
+                 * Format: date
+                 * @description `newest_first` only: every matching passage filed on or after this date was examined; null when even the newest window (7 days) holds more than `cap` matches, or when not capped
+                 */
+                complete_since?: null | string;
+                /**
+                 * Format: date
+                 * @description `newest_first` only: the older passages examined (in index order, up to `cap`) were filed on or after this date; null = any date, or when not capped
+                 */
+                window_from?: null | string;
+                /**
+                 * Format: date
+                 * @description Earliest filing date among the examined passages in searchable documents
+                 */
+                filed_from: null | string;
+                /**
+                 * Format: date
+                 * @description Latest filing date among the examined passages in searchable documents
+                 */
+                filed_to: null | string;
+                /** @description The filters to add for a complete answer: filer (`cik`), entity (`entity_id`), form (`form`), filed_from / filed_to (`filed_from` / `filed_to`), accession (`accession`). A search already filtered by form / date lists only `filer`, `entity`, `accession` (a form or date filter is itself capped while it matches more than `cap`) */
+                narrow_with: Array<string>;
+            } & {
+                [key: string]: unknown;
+            });
+            /** @description What to do for a complete answer (set when `matches.capped`; null otherwise) */
+            hint?: null | string;
         } & {
             [key: string]: unknown;
         };
@@ -4092,7 +4052,7 @@ export interface components {
                 id: string;
                 /** @description Headline */
                 title: string;
-                /** @description Lede of the text (the publisher's, verbatim); null for an item without readable text or whose publisher reserved reuse */
+                /** @description Lede: one or two sentences written by Invinite with the summary (never the publisher's words); null for an item without a summary (title-only, metadata-only) or whose publisher reserved reuse */
                 description: null | string;
                 /** @description Canonical URL of the item (the first publication) */
                 url: string;
@@ -4145,7 +4105,7 @@ export interface components {
                 symbols: Array<string>;
                 /** @description 10-digit CIKs mentioned */
                 ciks: Array<string>;
-                /** @description Text revision (grows when the publisher corrects the text) */
+                /** @description Revision of the publication (grows when the publisher corrects it) */
                 revision: number;
                 /** @description The older item this one corrects */
                 supersedes_id: null | string;
@@ -4196,17 +4156,17 @@ export interface components {
                 }>;
                 /** @description More than 10 publications exist (the detail lists every sighting) */
                 publications_truncated: boolean;
-                /** @description Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models */
+                /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
                 model_processing_allowed: boolean;
-                /** @description Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable) */
-                media_count: number;
-                /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
+                /** @description Words of the item's summary (`GET /v1/news/{id}` serves it); null for an item without one (title-only, metadata-only or a reserved source) */
+                summary_words: null | number;
+                /** @description Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text) */
                 attribution: {
-                    /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
+                    /** @description Publisher of the summarised publication: the company, or SEC EDGAR for a filing */
                     publisher: string;
                     /** @description Host of the original URL */
                     publisher_host: null | string;
-                    /** @description The original publication the text was read from */
+                    /** @description The original publication the summary was written from */
                     source_url: string;
                     /**
                      * Format: date-time
@@ -4229,7 +4189,7 @@ export interface components {
                      * @description The attribution sentence to carry with the text
                      * @enum {string}
                      */
-                    statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
+                    statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
                 };
             };
         };
@@ -4287,13 +4247,13 @@ export interface operations {
                      *       "period": {
                      *         "tier": "pro",
                      *         "included_credits": 4000000,
-                     *         "used_credits": 5701,
+                     *         "used_credits": 61148,
                      *         "resets_at": "2026-11-28T12:43:10.000Z",
                      *         "prepaid_balance_usd": 0
                      *       },
                      *       "daily": [
                      *         {
-                     *           "date": "2026-10-06",
+                     *           "date": "2026-10-10",
                      *           "requests": 0,
                      *           "credits": 0,
                      *           "errors": {
@@ -4309,8 +4269,8 @@ export interface operations {
                      *         {
                      *           "family": "earnings_calls",
                      *           "label": "Earnings Calls",
-                     *           "requests": 199,
-                     *           "credits": 463
+                     *           "requests": 200,
+                     *           "credits": 464
                      *         }
                      *       ],
                      *       "by_key": [
@@ -4318,8 +4278,8 @@ export interface operations {
                      *           "caller": "key",
                      *           "label": "test",
                      *           "key_hint": "invd_3f2...a91c",
-                     *           "requests": 303,
-                     *           "credits": 546
+                     *           "requests": 317,
+                     *           "credits": 548
                      *         }
                      *       ],
                      *       "truncated": false
@@ -6719,7 +6679,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "count": 6222,
+                     *       "count": 6228,
                      *       "companies": [
                      *         {
                      *           "cik": "0001090872",
@@ -6791,13 +6751,13 @@ export interface operations {
                      *           "composite_figi": "BBG000B9XRY4",
                      *           "is_delisted": false,
                      *           "list_date": "1980-12-12",
-                     *           "employees": 166000,
-                     *           "market_cap": 4937502977600,
+                     *           "employees": 167000,
+                     *           "market_cap": 5001541078940,
                      *           "shares_outstanding": 14594180000,
                      *           "insider_own_pct": 0.06,
-                     *           "insider_own_shares": 9337764,
-                     *           "inst_own_pct": 62.81,
-                     *           "inst_own_shares": 9166674998,
+                     *           "insider_own_shares": 9335365,
+                     *           "inst_own_pct": 62.82,
+                     *           "inst_own_shares": 9168782400,
                      *           "short_float_pct": 0.9,
                      *           "short_float_shares": 131591865,
                      *           "homepage_url": "https://www.apple.com",
@@ -7143,7 +7103,7 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "count": 753,
+                     *       "count": 754,
                      *       "companies": [
                      *         {
                      *           "cik": "0000320193",
@@ -7525,6 +7485,11 @@ export interface operations {
                  *     ]
                  */
                 calendar_status?: Array<"announced" | "cancelled" | "confirmed" | "estimated" | "postponed" | "reported">;
+                /**
+                 * @description Expired calendar rows (an estimate that never became a call, a duplicate, a non-call issuer; see `expired_reason`) are omitted unless true. Default: false
+                 * @example false
+                 */
+                include_expired?: "false" | "true";
             };
             header?: never;
             path?: never;
@@ -7540,41 +7505,41 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "from": "2026-11-04",
-                     *       "to": "2026-11-18",
+                     *       "from": "2026-11-08",
+                     *       "to": "2026-11-22",
                      *       "events": [
                      *         {
-                     *           "event_id": "b14afa83-608c-4963-b9d8-ff8c89ebbdd3",
+                     *           "event_id": "6cee4232-cc97-45ce-b1f4-010f5cc80fed",
                      *           "source": "us",
-                     *           "cik": "0001804745",
-                     *           "symbol": "DRVN",
-                     *           "company_name": "Driven Brands Holdings Inc. Common Stock",
-                     *           "exchange": "NASDAQ",
+                     *           "cik": "0001966287",
+                     *           "symbol": "GFR",
+                     *           "company_name": "Greenfire Resources Ltd.",
+                     *           "exchange": "NYSE",
                      *           "event_type": "earnings_call",
                      *           "event_title": null,
                      *           "fiscal_year": 2026,
                      *           "fiscal_quarter": 3,
-                     *           "scheduled_at": "2026-11-04T00:00:00.000Z",
-                     *           "tz": "America/New_York",
-                     *           "date_status": "postponed",
+                     *           "scheduled_at": "2026-11-09T00:00:00.000Z",
+                     *           "tz": "America/Edmonton",
+                     *           "date_status": "confirmed",
                      *           "call_time_source": null,
                      *           "call_time_confidence": null,
                      *           "session": null,
                      *           "started_at": null,
                      *           "ended_at": null,
-                     *           "results_released_at": "2026-11-03T13:08:28.000Z",
+                     *           "results_released_at": null,
                      *           "capture_status": "pending",
-                     *           "reschedule_count": 0,
+                     *           "reschedule_count": 1,
                      *           "has_transcript": false,
                      *           "has_audio": false,
                      *           "has_slides": false,
-                     *           "has_press_release": true,
+                     *           "has_press_release": false,
                      *           "has_documents": false,
                      *           "webcast_url": null,
                      *           "video": null
                      *         }
                      *       ],
-                     *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/calendar?offset=100&limit=100&from=2026-11-04&to=2026-11-18"
+                     *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/calendar?offset=100&limit=100&from=2026-11-08&to=2026-11-22"
                      *     }
                      */
                     "application/json": {
@@ -7659,6 +7624,11 @@ export interface operations {
                             results_released_at: null | string;
                             /** @description Capture state of the call */
                             capture_status: string;
+                            /**
+                             * @description Why the calendar row expired, set only while `capture_status` is `expired` (a final status: an estimate that never became a call, a duplicate, a non-call issuer, …); null otherwise. Appended 2026-11
+                             * @enum {string|null}
+                             */
+                            expired_reason?: "agent_different_date" | "agent_no_call" | "agent_no_webcast" | "date_passed" | "duplicate" | "early_results_filing" | "inactive_company" | "never_planned" | "non_call_issuer" | "release_names_no_call" | "superseded_by_reschedule" | "superseded_estimate" | null;
                             /** @description How often the call was rescheduled */
                             reschedule_count: number;
                             /** @description A transcript is available */
@@ -8091,34 +8061,34 @@ export interface operations {
                      *       },
                      *       "documents": [
                      *         {
-                     *           "document_id": "f3cdd1e0-ccba-4b6c-9075-a640a2633d2b",
+                     *           "document_id": "065c2cc6-51f2-4cfb-be36-477de01fe6dc",
                      *           "source": "company",
-                     *           "section": "annual_reports",
-                     *           "kind": "annual_report",
+                     *           "section": "esg",
+                     *           "kind": "esg_report",
                      *           "year": 2026,
                      *           "period": "FY",
-                     *           "group": "reports/2026",
-                     *           "group_label": "Reports 2026",
-                     *           "category": "reports",
+                     *           "group": "esg/2026",
+                     *           "group_label": "ESG 2026",
+                     *           "category": "esg",
                      *           "event_id": null,
                      *           "event_type": null,
                      *           "event_date": null,
-                     *           "title": "Air India",
-                     *           "source_label": "Air India",
-                     *           "source_url": "https://microsoft.com/en/customers/story/26047-air-india-azure-openai-in-foundry-models",
-                     *           "page_url": "https://www.microsoft.com/investor/reports/ar26/index.html",
-                     *           "origin": "html_page",
+                     *           "title": "2026 Environmental Sustainability Data Factsheet",
+                     *           "source_label": null,
+                     *           "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/microsoft/msc/documents/presentations/CSR/2026-Microsoft-Environmental-Data-Fact-Sheet-PDF.pdf",
+                     *           "page_url": "https://www.microsoft.com/en-us/corporate-responsibility/reports-hub",
+                     *           "origin": "agent",
                      *           "producer": null,
                      *           "confidence": "medium",
                      *           "trust_tier": "confirmed_domain",
-                     *           "content_type": "text/html; charset=utf-8",
-                     *           "bytes": 212393,
-                     *           "pages": null,
+                     *           "content_type": "application/pdf",
+                     *           "bytes": 3912081,
+                     *           "pages": 28,
                      *           "link_status": null,
-                     *           "url": "https://storage-prod.invinite.com/earnings_events/us/789019/reports/2026/air-india.htm",
-                     *           "pages_url": "https://storage-prod.invinite.com/earnings_events/us/789019/reports/2026/text/air-india.htm.pages.json",
-                     *           "created_at": "2026-10-30T21:33:59.538Z",
-                     *           "updated_at": "2026-10-31T18:27:09.495Z"
+                     *           "url": "https://storage-prod.invinite.com/earnings_events/us/789019/esg/2026/2026-environmental-sustainability-data-factsheet.pdf",
+                     *           "pages_url": "https://storage-prod.invinite.com/earnings_events/us/789019/esg/2026/text/2026-environmental-sustainability-data-factsheet.pdf.pages.json",
+                     *           "created_at": "2026-10-14T07:39:24.133Z",
+                     *           "updated_at": "2026-10-21T19:15:32.574Z"
                      *         }
                      *       ],
                      *       "next_url": "https://api.data.invinite.com/v1/earnings-calls/company-documents?identifier=MSFT&offset=50&limit=50"
@@ -8740,8 +8710,8 @@ export interface operations {
                      *         "completeness": "partial",
                      *         "lexical": {
                      *           "state": "partial",
-                     *           "indexed": 486,
-                     *           "pending": 23,
+                     *           "indexed": 570,
+                     *           "pending": 26,
                      *           "failed": 0
                      *         },
                      *         "reasons": [
@@ -8750,36 +8720,36 @@ export interface operations {
                      *       },
                      *       "hits": [
                      *         {
-                     *           "score": 0.1403,
+                     *           "score": 0.1837,
                      *           "match": {
                      *             "type": "lexical",
                      *             "lexical_rank": 1,
                      *             "spans": [
                      *               {
-                     *                 "start": 25,
-                     *                 "end": 30
+                     *                 "start": 329,
+                     *                 "end": 334
                      *               }
                      *             ]
                      *           },
-                     *           "document_id": "bd3ef3aa-751a-40e8-9a1a-98af4602dcee",
-                     *           "table": "company_documents",
-                     *           "event_id": null,
+                     *           "document_id": "fd90c509-a44e-4733-8211-a77f53cbee64",
+                     *           "table": "event_documents",
+                     *           "event_id": "5645673f-1310-46ce-841a-5b131c6df860",
                      *           "cik": "0000789019",
                      *           "symbol": "MSFT",
-                     *           "kind": "proxy_statement",
-                     *           "section": "proxy",
-                     *           "year": 2025,
-                     *           "period": "FY",
-                     *           "page": 45,
+                     *           "kind": "company_transcript",
+                     *           "section": null,
+                     *           "year": 2019,
+                     *           "period": "Q2",
+                     *           "page": 17,
                      *           "heading": null,
-                     *           "chunk_index": 1174,
-                     *           "text": "FY24 PSA Metrics Weights Azure and Other Cloud Services Revenue Growth 35% Microsoft Cloud Revenue Growth, excluding Azure and Other Cloud Services 35% Search and News Advertising Revenue (ex TAC) Growth 10% Xbox Content and Services Revenu…",
+                     *           "chunk_index": 126,
+                     *           "text": "rs are making, some of that's on sort of credits that they have to consume. I'm not sure if you're willing to give us sort of a gross kind of trajectory as you look out forward, but I think there's a lot of investor interest in terms of how…",
                      *           "text_truncated": false,
-                     *           "title": "2025 Proxy Statement",
-                     *           "group": "reports/2025",
-                     *           "group_label": "Reports 2025",
-                     *           "category": "reports",
-                     *           "url": "https://storage-prod.invinite.com/earnings_events/us/789019/reports/2025/2025-proxy-statement.pdf"
+                     *           "title": "Microsoft FY 2019 Second Quarter Earnings Conference Call",
+                     *           "group": "earnings/fy2019/q2",
+                     *           "group_label": "Q2 FY2019",
+                     *           "category": "earnings",
+                     *           "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2019/q2/microsoft-fy-2019-second-quarter-earnings-conference-call.pdf"
                      *         }
                      *       ]
                      *     }
@@ -8997,6 +8967,11 @@ export interface operations {
                         results_released_at: null | string;
                         /** @description Capture state of the call */
                         capture_status: string;
+                        /**
+                         * @description Why the calendar row expired, set only while `capture_status` is `expired` (a final status: an estimate that never became a call, a duplicate, a non-call issuer, …); null otherwise. Appended 2026-11
+                         * @enum {string|null}
+                         */
+                        expired_reason?: "agent_different_date" | "agent_no_call" | "agent_no_webcast" | "date_passed" | "duplicate" | "early_results_filing" | "inactive_company" | "never_planned" | "non_call_issuer" | "release_names_no_call" | "superseded_by_reschedule" | "superseded_estimate" | null;
                         /** @description How often the call was rescheduled */
                         reschedule_count: number;
                         /** @description A transcript is available */
@@ -9108,6 +9083,11 @@ export interface operations {
                  * @example 0
                  */
                 offset?: number;
+                /**
+                 * @description Expired calendar rows (an estimate that never became a call, a duplicate, a non-call issuer; see `expired_reason`) are omitted unless true. Default: false
+                 * @example false
+                 */
+                include_expired?: "false" | "true";
             };
             header?: never;
             path?: never;
@@ -9239,6 +9219,11 @@ export interface operations {
                             results_released_at: null | string;
                             /** @description Capture state of the call */
                             capture_status: string;
+                            /**
+                             * @description Why the calendar row expired, set only while `capture_status` is `expired` (a final status: an estimate that never became a call, a duplicate, a non-call issuer, …); null otherwise. Appended 2026-11
+                             * @enum {string|null}
+                             */
+                            expired_reason?: "agent_different_date" | "agent_no_call" | "agent_no_webcast" | "date_passed" | "duplicate" | "early_results_filing" | "inactive_company" | "never_planned" | "non_call_issuer" | "release_names_no_call" | "superseded_by_reschedule" | "superseded_estimate" | null;
                             /** @description How often the call was rescheduled */
                             reschedule_count: number;
                             /** @description A transcript is available */
@@ -9882,6 +9867,11 @@ export interface operations {
                             results_released_at: null | string;
                             /** @description Capture state of the call */
                             capture_status: string;
+                            /**
+                             * @description Why the calendar row expired, set only while `capture_status` is `expired` (a final status: an estimate that never became a call, a duplicate, a non-call issuer, …); null otherwise. Appended 2026-11
+                             * @enum {string|null}
+                             */
+                            expired_reason?: "agent_different_date" | "agent_no_call" | "agent_no_webcast" | "date_passed" | "duplicate" | "early_results_filing" | "inactive_company" | "never_planned" | "non_call_issuer" | "release_names_no_call" | "superseded_by_reschedule" | "superseded_estimate" | null;
                             /** @description How often the call was rescheduled */
                             reschedule_count: number;
                             /** @description A transcript is available */
@@ -11614,6 +11604,11 @@ export interface operations {
                             results_released_at: null | string;
                             /** @description Capture state of the call */
                             capture_status: string;
+                            /**
+                             * @description Why the calendar row expired, set only while `capture_status` is `expired` (a final status: an estimate that never became a call, a duplicate, a non-call issuer, …); null otherwise. Appended 2026-11
+                             * @enum {string|null}
+                             */
+                            expired_reason?: "agent_different_date" | "agent_no_call" | "agent_no_webcast" | "date_passed" | "duplicate" | "early_results_filing" | "inactive_company" | "never_planned" | "non_call_issuer" | "release_names_no_call" | "superseded_by_reschedule" | "superseded_estimate" | null;
                             /** @description How often the call was rescheduled */
                             reschedule_count: number;
                             /** @description A transcript is available */
@@ -13058,7 +13053,7 @@ export interface operations {
                     /**
                      * @example {
                      *       "status": "ok",
-                     *       "timestamp": "2026-11-04T09:39:43.755Z"
+                     *       "timestamp": "2026-11-08T12:01:37.982Z"
                      *     }
                      */
                     "application/json": {
@@ -13134,10 +13129,10 @@ export interface operations {
                      *       "cik": "0000320193",
                      *       "transactions": [
                      *         {
-                     *           "id": "581ec101dee778aa40d27e76f6d08911:b1aa665297043dd3556f:0",
-                     *           "accession_number": "0001140361-26-041201",
+                     *           "id": "2d6993a157cabb83110415f6d3cca3f4:a2d0149c7e5bd4696684:0",
+                     *           "accession_number": "0001140361-26-042149",
                      *           "cik": "0000320193",
-                     *           "filed_at": "2026-10-29T22:30:14.000Z",
+                     *           "filed_at": "2026-11-05T23:30:13.000Z",
                      *           "reporting_person_name": "Newstead Jennifer",
                      *           "reporting_person_is_director": false,
                      *           "reporting_person_is_officer": true,
@@ -13147,13 +13142,13 @@ export interface operations {
                      *           "acquired_disposed": "D",
                      *           "coding_code": "S",
                      *           "shares": 2399,
-                     *           "share_price": 343.36,
-                     *           "total": 823721,
-                     *           "shares_owned_following_transaction": 32396,
-                     *           "period_of_report": "2026-10-27",
+                     *           "share_price": 325.75,
+                     *           "total": 781475,
+                     *           "shares_owned_following_transaction": 29997,
+                     *           "period_of_report": "2026-11-03",
                      *           "reporting_person_officer_title": "SVP, GC and Government Affairs",
                      *           "reporting_person_other_text": null,
-                     *           "shares_owned_before_transaction": 34795
+                     *           "shares_owned_before_transaction": 32396
                      *         }
                      *       ]
                      *     }
@@ -13787,34 +13782,29 @@ export interface operations {
                      * @example {
                      *       "ipos": [
                      *         {
-                     *           "listing_date": "2026-10-30",
-                     *           "announced_date": "2026-10-09",
+                     *           "listing_date": "2026-11-12",
+                     *           "announced_date": "2026-10-21",
                      *           "currency_code": "USD",
-                     *           "final_issue_price": 19,
-                     *           "highest_offer_price": 21,
-                     *           "ipo_status": "history",
-                     *           "isin": "US68348G1022",
+                     *           "final_issue_price": null,
+                     *           "highest_offer_price": 13,
+                     *           "ipo_status": "pending",
+                     *           "isin": null,
                      *           "issue_end_date": null,
                      *           "issue_start_date": null,
-                     *           "issuer_name": "OPay Ltd.",
-                     *           "last_updated": "2026-11-02T00:00:00.000Z",
+                     *           "issuer_name": "Rezera Inc.",
+                     *           "last_updated": "2026-11-06T00:00:00.000Z",
                      *           "lot_size": 100,
-                     *           "lowest_offer_price": 19,
-                     *           "max_shares_offered": 16000000,
+                     *           "lowest_offer_price": 11,
+                     *           "max_shares_offered": 16666667,
                      *           "min_shares_offered": null,
-                     *           "primary_exchange": "XNYS",
-                     *           "security_description": "ADR",
-                     *           "security_type": "ADRC",
-                     *           "shares_outstanding": null,
-                     *           "ticker": "OPAY",
-                     *           "total_offer_size": 304000000,
-                     *           "us_code": "68348G102",
-                     *           "registration": {
-                     *             "cik": "0002103076",
-                     *             "track_key": "333-299385",
-                     *             "stage": "trading",
-                     *             "final_offer_price": null
-                     *           }
+                     *           "primary_exchange": "XNAS",
+                     *           "security_description": "Ordinary Shares",
+                     *           "security_type": "CS",
+                     *           "shares_outstanding": 20776793,
+                     *           "ticker": "RZRA",
+                     *           "total_offer_size": 216666671,
+                     *           "us_code": null,
+                     *           "registration": null
                      *         }
                      *       ],
                      *       "next_url": "https://api.data.invinite.com/v1/ipos?offset=100&limit=100"
@@ -13970,21 +13960,29 @@ export interface operations {
                      * @example {
                      *       "registrations": [
                      *         {
-                     *           "cik": "0002158764",
-                     *           "company_name": "Ja-Lika Corp",
-                     *           "track_key": "333-299767",
+                     *           "cik": "0002156369",
+                     *           "company_name": "Hifortune Holdings Inc",
+                     *           "track_key": "333-299903",
                      *           "form_family": "S-1",
                      *           "stage": "price_range",
                      *           "is_spac": false,
-                     *           "proposed_symbols": null,
+                     *           "proposed_symbols": [
+                     *             {
+                     *               "symbol": "HFRT",
+                     *               "exchange": null,
+                     *               "security_class": "common",
+                     *               "source": "regex",
+                     *               "ipo_calendar_match": false
+                     *             }
+                     *           ],
                      *           "exchange": null,
-                     *           "price_range_low": "0.0600",
-                     *           "price_range_high": "0.0600",
-                     *           "shares_offered": 4000000,
+                     *           "price_range_low": "1.0000",
+                     *           "price_range_high": "1.0000",
+                     *           "shares_offered": 1200000,
                      *           "final_offer_price": null,
                      *           "final_shares_offered": null,
-                     *           "first_public_at": "2026-11-02T21:53:21.000Z",
-                     *           "price_range_at": "2026-11-02T21:53:21.000Z",
+                     *           "first_public_at": "2026-11-06T22:00:45.000Z",
+                     *           "price_range_at": "2026-11-06T22:00:45.000Z",
                      *           "exchange_approved_at": null,
                      *           "effective_at": null,
                      *           "priced_at": null,
@@ -13993,14 +13991,15 @@ export interface operations {
                      *           "massive": null,
                      *           "filings": [
                      *             {
-                     *               "accession_number": "0001171520-26-000318",
+                     *               "accession_number": "0001185185-26-005243",
                      *               "form_type": "S-1",
                      *               "signal": "registration",
-                     *               "filed_at": "2026-11-02T21:53:21.000Z",
-                     *               "filing_date": "2026-11-02",
-                     *               "html_url": "https://storage-prod.invinite.com/filing_htmls/2158764_0001171520-26-000318_S-1_2026-11-02.html"
+                     *               "filed_at": "2026-11-06T22:00:45.000Z",
+                     *               "filing_date": "2026-11-06",
+                     *               "html_url": "https://storage-prod.invinite.com/filing_htmls/00b2d956f74f1db2d046ff043aea1056/2156369_0001185185-26-005243_S-1_2026-11-06.html"
                      *             }
-                     *           ]
+                     *           ],
+                     *           "ipo_pending": null
                      *         }
                      *       ]
                      *     }
@@ -14336,135 +14335,6 @@ export interface operations {
             500: components["responses"]["InternalServerError"];
         };
     };
-    newsAssetDownload: {
-        parameters: {
-            query?: {
-                /**
-                 * @description display = an inline URL (an image with `can_display`, or a PDF with `can_download`: viewed in the browser); download = an attachment (`can_download`). Omitted: download when allowed, else display
-                 * @example display
-                 */
-                purpose?: "display" | "download";
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description News item id
-                 * @example 13351ae7-876b-4839-ba2b-78873f6b4e00
-                 */
-                id: string;
-                /**
-                 * @description Asset id (`assets[].id` of the item)
-                 * @example 612cd78d-b618-42c6-b3be-ff5c9df1a0f7
-                 */
-                asset_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Default Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "asset_id": "612cd78d-b618-42c6-b3be-ff5c9df1a0f7",
-                     *       "item_id": "13351ae7-876b-4839-ba2b-78873f6b4e00",
-                     *       "purpose": "display",
-                     *       "url": "https://invinite-news-prod.r2.cloudflarestorage.com/earnings_events/news/assets/13351ae7-876b-4839-ba2b-78873f6b4e00/612cd78d-b618-42c6-b3be-ff5c9df1a0f7/ab99180f.jpg?X-Amz-Signature=…",
-                     *       "expires_at": "2026-11-04T09:41:12.172Z",
-                     *       "content_type": "image/jpeg",
-                     *       "byte_size": 238875,
-                     *       "credit": null
-                     *     }
-                     */
-                    "application/json": {
-                        /**
-                         * Format: uuid
-                         * @description Asset id
-                         */
-                        asset_id: string;
-                        /**
-                         * Format: uuid
-                         * @description News item id
-                         */
-                        item_id: string;
-                        /**
-                         * @description What the URL may be used for
-                         * @enum {string}
-                         */
-                        purpose: "display" | "download";
-                        /** @description Short-lived URL of the file (fetch it within `expires_at`; never store it) */
-                        url: string;
-                        /**
-                         * Format: date-time
-                         * @description When the URL stops working (at most 60 seconds)
-                         */
-                        expires_at: string;
-                        /** @description MIME type */
-                        content_type: null | string;
-                        /** @description Size in bytes */
-                        byte_size: null | number;
-                        /** @description Credit line to show with it */
-                        credit: null | string;
-                    };
-                };
-            };
-            400: components["responses"]["BadRequestError"];
-            401: components["responses"]["UnauthorizedError"];
-            403: components["responses"]["ForbiddenError"];
-            404: components["responses"]["NotFoundError"];
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailableError"];
-        };
-    };
-    newsAssetView: {
-        parameters: {
-            query: {
-                /**
-                 * @description Expiry (unix seconds), as minted in `view_url`
-                 * @example 1793534400
-                 */
-                exp: string;
-                /**
-                 * @description Signature, as minted in `view_url` (never construct one)
-                 * @example q7pVt3l0YkqzR4n1Xc8uE2bWm9sJf6hLaD5gTiNoQwY
-                 */
-                sig: string;
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description News item id
-                 * @example 13351ae7-876b-4839-ba2b-78873f6b4e00
-                 */
-                id: string;
-                /**
-                 * @description Asset id (`assets[].id` of the item)
-                 * @example 612cd78d-b618-42c6-b3be-ff5c9df1a0f7
-                 */
-                asset_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Redirect to the image (a storage URL valid ≤ 60 seconds; `Cache-Control: private` for less than that) */
-            302: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            400: components["responses"]["BadRequestError"];
-            403: components["responses"]["ForbiddenError"];
-            404: components["responses"]["NotFoundError"];
-            500: components["responses"]["InternalServerError"];
-            503: components["responses"]["ServiceUnavailableError"];
-        };
-    };
     newsDevelopments: {
         parameters: {
             query?: {
@@ -14542,7 +14412,7 @@ export interface operations {
                              * @description The news item it was read from
                              */
                             item_id: string;
-                            /** @description Text revision it was read from */
+                            /** @description Revision of the publication it was read from */
                             revision: number;
                             /**
                              * @description Topic
@@ -14551,7 +14421,7 @@ export interface operations {
                             topic: "availability" | "capacity_expansion" | "customer_contract" | "partnership" | "product_launch" | "product_update" | "regulatory" | "research";
                             /** @description Short title (model-derived; see `derived`) */
                             title: string;
-                            /** @description Summary (model-derived; the quotes in `evidence` are the source words) */
+                            /** @description Summary (model-derived; see `derived`) */
                             summary: string;
                             /**
                              * @description Always true: title and summary are derived by a model, not the publisher's words
@@ -14594,7 +14464,7 @@ export interface operations {
                              */
                             date_precision: "day" | "month" | "quarter" | "unknown" | "year";
                             /**
-                             * @description What the cited text says happened
+                             * @description What the publication says happened
                              * @enum {string}
                              */
                             claim_status: "announced" | "available" | "cancelled" | "completed" | "planned" | "unknown";
@@ -14603,21 +14473,7 @@ export interface operations {
                              * @enum {string}
                              */
                             confidence: "high" | "medium";
-                            /** @description Citations into the item's text blocks */
-                            evidence: Array<{
-                                /**
-                                 * Format: uuid
-                                 * @description Block of the item's text (see /v1/news/{id}/text)
-                                 */
-                                block_id: string;
-                                /** @description Start in the block (Unicode code points, zero-based) */
-                                start: number;
-                                /** @description End in the block (exclusive) */
-                                end: number;
-                                /** @description The exact source words */
-                                quote: string;
-                            }>;
-                            /** @description Whether the source text may be processed by AI models; API access alone does not authorize forwarding text into models */
+                            /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
                             model_processing_allowed: boolean;
                             /** @description The news item the development cites */
                             item: {
@@ -14625,13 +14481,13 @@ export interface operations {
                                 title: string;
                                 /** @description Canonical URL */
                                 url: string;
-                                /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
+                                /** @description Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text) */
                                 attribution: {
-                                    /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
+                                    /** @description Publisher of the summarised publication: the company, or SEC EDGAR for a filing */
                                     publisher: string;
                                     /** @description Host of the original URL */
                                     publisher_host: null | string;
-                                    /** @description The original publication the text was read from */
+                                    /** @description The original publication the summary was written from */
                                     source_url: string;
                                     /**
                                      * Format: date-time
@@ -14654,7 +14510,7 @@ export interface operations {
                                      * @description The attribution sentence to carry with the text
                                      * @enum {string}
                                      */
-                                    statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
+                                    statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
                                 };
                             };
                         }>;
@@ -14673,18 +14529,12 @@ export interface operations {
     };
     newsItem: {
         parameters: {
-            query?: {
-                /**
-                 * @description Which text forms to return: text = `body_text` (plain, default), html = `body_html` (sanitized HTML with the images inline) instead, both = both
-                 * @example both
-                 */
-                body?: "both" | "html" | "text";
-            };
+            query?: never;
             header?: never;
             path: {
                 /**
                  * @description News item id
-                 * @example 13351ae7-876b-4839-ba2b-78873f6b4e00
+                 * @example 06304274-da4a-400e-9d5c-fb4ce04f01c9
                  */
                 id: string;
             };
@@ -14700,41 +14550,45 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "id": "13351ae7-876b-4839-ba2b-78873f6b4e00",
-                     *       "title": "Build, test and optimize faster: Arm and GitHub accelerate agentic AI development",
-                     *       "description": "Developers can use AI coding agents to edit code, build, test, and debug within one native Arm development environment. Keeping these tasks on the target architecture can give developers earlier feedback on dependencies, test results, and r…",
-                     *       "url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
-                     *       "published_at": "2026-10-29T16:02:31.000Z",
-                     *       "first_seen_at": "2026-10-30T17:43:54.126Z",
+                     *       "id": "06304274-da4a-400e-9d5c-fb4ce04f01c9",
+                     *       "title": "McDONALD'S REPORTS THIRD QUARTER 2026 RESULTS",
+                     *       "description": "McDonald's Corporation reported third-quarter 2026 results for the period ended September 30, 2026, with 1.5% comparable-sales growth, higher operating income and diluted earnings per share of $3.51.",
+                     *       "url": "https://www.sec.gov/Archives/edgar/data/63908/000006390826000080/exhibit991-9302026.htm",
+                     *       "published_at": "2026-11-04T12:00:00.000Z",
+                     *       "first_seen_at": "2026-11-04T12:02:16.503Z",
                      *       "source": {
-                     *         "id": "ir",
-                     *         "name": "Arm Holdings plc",
-                     *         "host": "newsroom.arm.com"
+                     *         "id": "edgar",
+                     *         "name": "SEC EDGAR",
+                     *         "host": null
                      *       },
-                     *       "kind": "other",
+                     *       "kind": "earnings_results",
                      *       "topics": [],
-                     *       "rights": "issuer",
-                     *       "is_earnings_news": false,
-                     *       "earnings": null,
+                     *       "rights": "public_record",
+                     *       "is_earnings_news": true,
+                     *       "earnings": {
+                     *         "fiscal_year": 2026,
+                     *         "fiscal_quarter": 3,
+                     *         "conference_date": "2026-11-04T13:30:00.000Z"
+                     *       },
                      *       "symbols": [
-                     *         "ARM"
+                     *         "MCD"
                      *       ],
                      *       "ciks": [
-                     *         "0001973239"
+                     *         "0000063908"
                      *       ],
                      *       "revision": 1,
                      *       "supersedes_id": null,
                      *       "publications": [
                      *         {
-                     *           "source_id": "ir:newsroom.arm.com",
+                     *           "source_id": "ir:corporate.mcdonalds.com",
                      *           "publisher": {
-                     *             "cik": "0001973239",
-                     *             "symbol": "ARM",
-                     *             "name": "Arm Holdings plc"
+                     *             "cik": "0000063908",
+                     *             "symbol": "MCD",
+                     *             "name": "McDonald's Corporation"
                      *           },
-                     *           "url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
-                     *           "publication_type": "company_blog",
-                     *           "published_at": "2026-10-29T16:02:31.000Z",
+                     *           "url": "https://corporate.mcdonalds.com/content/mcdonalds/corpmcd/our-stories/article/Q3-2026-results.html",
+                     *           "publication_type": "press_release",
+                     *           "published_at": "2026-11-04T12:00:00.000Z",
                      *           "modified_at": null,
                      *           "categories": [],
                      *           "tags": []
@@ -14742,71 +14596,51 @@ export interface operations {
                      *       ],
                      *       "publications_truncated": false,
                      *       "model_processing_allowed": true,
-                     *       "media_count": 3,
+                     *       "summary_words": 1278,
                      *       "attribution": {
-                     *         "publisher": "Arm Holdings plc",
-                     *         "publisher_host": "newsroom.arm.com",
-                     *         "source_url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
-                     *         "published_at": "2026-10-29T16:02:31.000Z",
-                     *         "rights": "issuer",
-                     *         "edgar": null,
-                     *         "statement": "Reproduced verbatim from the publisher; © the publisher. Source and date above."
+                     *         "publisher": "SEC EDGAR",
+                     *         "publisher_host": "www.sec.gov",
+                     *         "source_url": "https://www.sec.gov/Archives/edgar/data/63908/000006390826000080/exhibit991-9302026.htm",
+                     *         "published_at": "2026-11-04T12:00:00.000Z",
+                     *         "rights": "public_record",
+                     *         "edgar": {
+                     *           "form": "8-K",
+                     *           "accession": "0000063908-26-000080"
+                     *         },
+                     *         "statement": "Summary written by Invinite from the publication above; not the publisher's text. Source and date above."
                      *       },
+                     *       "summary_text": "Global Systemwide sales grew 4% to more than $38 billion in the quarter. Loyalty-member purchases across 70 markets totaled $41 billion over the trailing twelve-month period and exceeded $11 billion in the quarter. Consolidated operating in…",
+                     *       "summary_html": "<p>Global Systemwide sales grew 4% to more than $38 billion in the quarter. Loyalty-member purchases across 70 markets totaled $41 billion over the trailing twelve-month period and exceeded $11 billion in the quarter. Consolidated operating…",
+                     *       "source_words": 2019,
+                     *       "summarized_at": "2026-11-08T11:53:28.772Z",
                      *       "content_status": "available",
-                     *       "content_formats": [
-                     *         "text"
-                     *       ],
-                     *       "text_url": "https://api.data.invinite.com/v1/news/13351ae7-876b-4839-ba2b-78873f6b4e00/text",
+                     *       "text_url": "https://api.data.invinite.com/v1/news/06304274-da4a-400e-9d5c-fb4ce04f01c9/text",
                      *       "superseded_by": null,
                      *       "companies": [
                      *         {
-                     *           "cik": "0001973239",
-                     *           "symbol": "ARM",
-                     *           "match_kind": "cik",
-                     *           "confidence": 0.95
+                     *           "cik": "0000063908",
+                     *           "symbol": "MCD",
+                     *           "match_kind": "filer",
+                     *           "confidence": 1
                      *         }
                      *       ],
                      *       "sightings": [
                      *         {
-                     *           "source_id": "ir:newsroom.arm.com",
-                     *           "url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
-                     *           "seen_at": "2026-10-30T17:43:54.126Z",
-                     *           "published_at_claimed": "2026-10-29T16:02:31.000Z"
-                     *         }
-                     *       ],
-                     *       "assets": [
-                     *         {
-                     *           "id": "a9247c9e-9539-4cd8-9d9c-784be7138839",
-                     *           "kind": "hero_image",
-                     *           "content_type": "image/jpeg",
-                     *           "byte_size": 264095,
-                     *           "width": 1921,
-                     *           "height": 1080,
-                     *           "title": null,
-                     *           "caption": "AI-assisted development on Arm with GitHub Copilot CLI enables native builds, testing, code review, Arm64 CI, and performance optimization.",
-                     *           "alt": "Arm, GitHub, and GitHub Copilot create a connected Arm-native development workflow for building, testing, and optimizing software.",
-                     *           "credit": null,
-                     *           "copyright_notice": null,
-                     *           "original_url": "https://newsroom.arm.com/wp-content/uploads/2026/10/GitHub_Copilot_Arm_Newsroom_image3-1.jpg",
-                     *           "status": "ready",
-                     *           "can_display": true,
-                     *           "can_download": false,
-                     *           "download_url": "https://api.data.invinite.com/v1/news/13351ae7-876b-4839-ba2b-78873f6b4e00/assets/a9247c9e-9539-4cd8-9d9c-784be7138839/download",
-                     *           "view_url": "https://api.data.invinite.com/v1/news/13351ae7-876b-4839-ba2b-78873f6b4e00/assets/a9247c9e-9539-4cd8-9d9c-784be7138839/view?exp=1793869200&sig=…"
+                     *           "source_id": "edgar",
+                     *           "url": "https://www.sec.gov/Archives/edgar/data/63908/000006390826000080/exhibit991-9302026.htm",
+                     *           "seen_at": "2026-11-04T12:02:16.503Z",
+                     *           "published_at_claimed": "2026-11-04T12:01:40.000Z"
                      *         }
                      *       ],
                      *       "developments": [],
                      *       "pdf": {
-                     *         "url": "https://storage-prod.invinite.com/earnings_events/news/us/1973239/2026-10-29/13351ae7-876b-4839-ba2b-78873f6b4e00/r1-ce05e9bd-t5.pdf",
+                     *         "url": "https://storage-prod.invinite.com/earnings_events/news/us/63908/08c86854a426827937f1062c90f5e260/MCD-2026-11-04-mcdonald-s-reports-third-quarter-2026-results.pdf",
                      *         "version": 1,
-                     *         "sha256": "3e3abef592e53ae5945b29a051cc8160c29fedc5551dd8ae9e01de9ba39cbd9a",
-                     *         "bytes": 251228,
-                     *         "pages": 6,
-                     *         "generated_at": "2026-11-02T05:37:17.361Z"
-                     *       },
-                     *       "body_text": "Developers can use AI coding agents to edit code, build, test, and debug within one native Arm development environment. Keeping these tasks on the target architecture can give developers earlier feedback on dependencies, test results, and r…",
-                     *       "body_html": "<p>Developers can use AI coding agents to edit code, build, test, and debug within one native Arm development environment. Keeping these tasks on the target architecture can give developers earlier feedback on dependencies, test results, an…",
-                     *       "images_truncated": false
+                     *         "sha256": "b7661694ca034a0bc2a93b8d72e682080a766499f46cca6b0fdd5d16a9bb1efa",
+                     *         "bytes": 27975,
+                     *         "pages": 5,
+                     *         "generated_at": "2026-11-08T12:00:56.268Z"
+                     *       }
                      *     }
                      */
                     "application/json": {
@@ -14817,7 +14651,7 @@ export interface operations {
                         id: string;
                         /** @description Headline */
                         title: string;
-                        /** @description Lede of the text (the publisher's, verbatim); null for an item without readable text or whose publisher reserved reuse */
+                        /** @description Lede: one or two sentences written by Invinite with the summary (never the publisher's words); null for an item without a summary (title-only, metadata-only) or whose publisher reserved reuse */
                         description: null | string;
                         /** @description Canonical URL of the item (the first publication) */
                         url: string;
@@ -14870,7 +14704,7 @@ export interface operations {
                         symbols: Array<string>;
                         /** @description 10-digit CIKs mentioned */
                         ciks: Array<string>;
-                        /** @description Text revision (grows when the publisher corrects the text) */
+                        /** @description Revision of the publication (grows when the publisher corrects it) */
                         revision: number;
                         /** @description The older item this one corrects */
                         supersedes_id: null | string;
@@ -14921,17 +14755,17 @@ export interface operations {
                         }>;
                         /** @description More than 10 publications exist (the detail lists every sighting) */
                         publications_truncated: boolean;
-                        /** @description Whether the source text may be processed by AI models; API access alone does not authorize forwarding text into models */
+                        /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
                         model_processing_allowed: boolean;
-                        /** @description Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable) */
-                        media_count: number;
-                        /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
+                        /** @description Words of the item's summary (`GET /v1/news/{id}` serves it); null for an item without one (title-only, metadata-only or a reserved source) */
+                        summary_words: null | number;
+                        /** @description Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text) */
                         attribution: {
-                            /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
+                            /** @description Publisher of the summarised publication: the company, or SEC EDGAR for a filing */
                             publisher: string;
                             /** @description Host of the original URL */
                             publisher_host: null | string;
-                            /** @description The original publication the text was read from */
+                            /** @description The original publication the summary was written from */
                             source_url: string;
                             /**
                              * Format: date-time
@@ -14954,22 +14788,25 @@ export interface operations {
                              * @description The attribution sentence to carry with the text
                              * @enum {string}
                              */
-                            statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
+                            statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
                         };
-                        /** @description With `body=text` (default) or `both`: the full text of the current revision as plain text, verbatim (paragraphs, list items and table rows separated by blank lines) — for search, indexing and models. It is the text of `body_html`'s blocks joined, so the two never differ in words. Null = no readable text */
-                        body_text?: null | string;
-                        /** @description With `body=html` or `both`: the same text as sanitized article HTML for display. Allowed tags: h2, h3, h4, p, ul, ol, li, table, thead, tbody, tr, th, td, blockquote, strong, em, b, i, sup, sub, br, a, figure, figcaption, img; attributes: `a[href rel data-asset-id]` (absolute https links), `img[src alt width height loading data-asset-id]`, `td` / `th` `colspan` / `rowspan`. No class, style, id, script, form or iframe; no h1 (the title is `title`). Images are the item's stored images: `<img src>` is the image's stable view URL (valid 24 hours, see `assets[].view_url`), in a `<figure>` with the asset's caption / credit where one fits; an image Invinite may only link is `<a href="<original_url>" rel="noopener nofollow">Image at source</a>`; an image that may not be shown is removed. The hero image may also appear inline (its `data-asset-id` is then in the HTML): skip it above the article. Null = no HTML for this item (see `content_formats`) or no readable text */
-                        body_html?: null | string;
-                        /** @description With `body_html`: the article held more than 40 images; the rest were removed (they stay in `assets`) */
-                        images_truncated?: boolean;
+                        /** @description Invinite's summary of the publication as plain text: a long, complete rewording that keeps every fact (headings on their own line, list items prefixed `• `, blocks separated by blank lines) — for reading, search, indexing and models. It is the text of `summary_html`'s blocks joined, and of `text_url`'s blocks. Null when `content_status` is `no_text` */
+                        summary_text: null | string;
+                        /** @description The same summary as HTML for display: `h2` headings, `p` paragraphs and `ul` / `li` lists with escaped text only (no links, images, attributes, scripts or styles; no h1 — the title is `title`). Null when `content_status` is `no_text` */
+                        summary_html: null | string;
+                        /** @description Words of the publisher's text the summary was written from; null without a summary */
+                        source_words: null | number;
                         /**
-                         * @description available = the item has readable text of the current revision (in the forms `content_formats` lists); no_text = headline and link only
+                         * Format: date-time
+                         * @description When the current summary was written; null without a summary
+                         */
+                        summarized_at: null | string;
+                        /**
+                         * @description available = the item has a summary of its current revision (`summary_text`, `summary_html`, `text_url`); no_text = headline and link only (an item published before summaries started, a metadata-only item, or a source whose owner reserved reuse)
                          * @enum {string}
                          */
                         content_status: "available" | "no_text";
-                        /** @description The text forms this item has: text = `body_text` (every item with text), html = `body_html` (articles read from a web page; PDFs and older items may have text only); empty without text */
-                        content_formats: Array<"html" | "text">;
-                        /** @description The text in citable blocks (`/v1/news/{id}/text`); null without text */
+                        /** @description The summary in blocks (`/v1/news/{id}/text`); null without a summary */
                         text_url: null | string;
                         /** @description A newer item that corrects this one (this one stays served) */
                         superseded_by: null | string;
@@ -15001,53 +14838,7 @@ export interface operations {
                              */
                             published_at_claimed: null | string;
                         }>;
-                        /** @description Images and original files of the publication, inline or not (an image shown inside `body_html` carries its id there as `data-asset-id`; list the others below the article) */
-                        assets: Array<{
-                            /**
-                             * Format: uuid
-                             * @description Asset id (`data-asset-id` of an image shown inside `body_html`)
-                             */
-                            id: string;
-                            /**
-                             * @description hero_image = the article's lead image: place it above the headline, unless its id is a `data-asset-id` inside `body_html` (the article may also show it inline) — then skip it above; gallery_image = an image of the article (shown inline where the text has it); original_pdf = the publication's own PDF; attachment = a linked file; archive_link = a linked archive (link only)
-                             * @enum {string}
-                             */
-                            kind: "archive_link" | "attachment" | "gallery_image" | "hero_image" | "original_pdf";
-                            /** @description MIME type */
-                            content_type: null | string;
-                            /** @description Size in bytes */
-                            byte_size: null | number;
-                            /** @description Image width (px) */
-                            width: null | number;
-                            /** @description Image height (px) */
-                            height: null | number;
-                            /** @description Title the publisher gave it */
-                            title: null | string;
-                            /** @description Caption */
-                            caption: null | string;
-                            /** @description Alt text */
-                            alt: null | string;
-                            /** @description Credit line to show with it */
-                            credit: null | string;
-                            /** @description Copyright notice */
-                            copyright_notice: null | string;
-                            /** @description Where the publisher hosts it (link to it when it may not be shown) */
-                            original_url: null | string;
-                            /**
-                             * @description ready = stored by Invinite (deliverable within its permissions); link_only = known by its link only (the publisher's host: link to `original_url`, never embed it); pending = being fetched; failed / rejected = not stored
-                             * @enum {string}
-                             */
-                            status: "failed" | "link_only" | "pending" | "ready" | "rejected";
-                            /** @description May be shown (embedded) now: use `view_url` (images) or `download_url?purpose=display` */
-                            can_display: boolean;
-                            /** @description May be downloaded (a copy kept) now: `download_url?purpose=download` */
-                            can_download: boolean;
-                            /** @description Our authenticated route that mints a URL valid ≤ 60 seconds (`purpose=display` inline, `purpose=download` an attachment; a PDF with `can_download` also views inline); null when neither is allowed */
-                            download_url: null | string;
-                            /** @description A displayable image (`ready`, `can_display`): a stable URL to put into `<img src>`, no API key, valid 24 hours (never past the display permission) — the same URL `body_html` uses. Refetch the item after that or on an image error. Null otherwise */
-                            view_url: null | string;
-                        }>;
-                        /** @description Developments read from the text (medium or high confidence, at most 20) */
+                        /** @description Developments read from the publication (medium or high confidence, at most 20) */
                         developments: Array<{
                             /**
                              * Format: uuid
@@ -15059,7 +14850,7 @@ export interface operations {
                              * @description The news item it was read from
                              */
                             item_id: string;
-                            /** @description Text revision it was read from */
+                            /** @description Revision of the publication it was read from */
                             revision: number;
                             /**
                              * @description Topic
@@ -15068,7 +14859,7 @@ export interface operations {
                             topic: "availability" | "capacity_expansion" | "customer_contract" | "partnership" | "product_launch" | "product_update" | "regulatory" | "research";
                             /** @description Short title (model-derived; see `derived`) */
                             title: string;
-                            /** @description Summary (model-derived; the quotes in `evidence` are the source words) */
+                            /** @description Summary (model-derived; see `derived`) */
                             summary: string;
                             /**
                              * @description Always true: title and summary are derived by a model, not the publisher's words
@@ -15111,7 +14902,7 @@ export interface operations {
                              */
                             date_precision: "day" | "month" | "quarter" | "unknown" | "year";
                             /**
-                             * @description What the cited text says happened
+                             * @description What the publication says happened
                              * @enum {string}
                              */
                             claim_status: "announced" | "available" | "cancelled" | "completed" | "planned" | "unknown";
@@ -15120,21 +14911,7 @@ export interface operations {
                              * @enum {string}
                              */
                             confidence: "high" | "medium";
-                            /** @description Citations into the item's text blocks */
-                            evidence: Array<{
-                                /**
-                                 * Format: uuid
-                                 * @description Block of the item's text (see /v1/news/{id}/text)
-                                 */
-                                block_id: string;
-                                /** @description Start in the block (Unicode code points, zero-based) */
-                                start: number;
-                                /** @description End in the block (exclusive) */
-                                end: number;
-                                /** @description The exact source words */
-                                quote: string;
-                            }>;
-                            /** @description Whether the source text may be processed by AI models; API access alone does not authorize forwarding text into models */
+                            /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
                             model_processing_allowed: boolean;
                         }>;
                         /**
@@ -15224,11 +15001,6 @@ export interface operations {
                  */
                 earnings?: "false" | "true";
                 /**
-                 * @description true = only items with media you can get now (`media_count` > 0: an original PDF or image to show or download); false = items without
-                 * @example true
-                 */
-                has_media?: "false" | "true";
-                /**
                  * @description Published by these companies (CIK, padded or not; ≤ 20): an item with a verified issuer-newsroom publication of one of them — not a mention, not the item's first source. The CIK namespace is the SEC's
                  * @example [
                  *       "1045810"
@@ -15283,74 +15055,62 @@ export interface operations {
                      * @example {
                      *       "items": [
                      *         {
-                     *           "id": "004c0de7-8573-4658-a07b-3bca84dee74c",
-                     *           "title": "Dutch Ministry of Defense Chooses SAP Sovereign Cloud: A Milestone for European Defense Readiness",
-                     *           "description": "Digital sovereignty is essential to Europe’s defense readiness. It gives armed forces the freedom to act, the ability to adapt, and the confidence to embrace new technologies.",
-                     *           "url": "https://news.sap.com/2026/11/dutch-ministry-of-defense-chooses-sap-sovereign-cloud/",
-                     *           "published_at": "2026-11-04T08:00:00.000Z",
-                     *           "first_seen_at": "2026-11-04T08:17:00.640Z",
+                     *           "id": "1fe2ffac-9c4c-4438-9f3f-8922a2e82a76",
+                     *           "title": "Johnson & Johnson announces ICOTYDE® (icotrokinra) delivers significant improvement in psoriatic arthritis disease activity among biologic-naive patients with once-daily targeted oral peptide",
+                     *           "description": null,
+                     *           "url": "https://investor.jnj.com/investor-news/news-details/2026/Johnson--Johnson-announces-ICOTYDE-icotrokinra-delivers-significant-improvement-in-psoriatic-arthritis-disease-activity-among-biologic-naive-patients-with-once-daily-targeted-oral-pep…",
+                     *           "published_at": "2026-11-07T15:03:00.000Z",
+                     *           "first_seen_at": "2026-11-07T15:06:38.617Z",
                      *           "source": {
                      *             "id": "ir",
-                     *             "name": "SAP SE",
-                     *             "host": "news.sap.com"
+                     *             "name": "Johnson & Johnson",
+                     *             "host": "investor.jnj.com"
                      *           },
-                     *           "kind": "material_agreement",
+                     *           "kind": "other",
                      *           "topics": [],
                      *           "rights": "issuer",
                      *           "is_earnings_news": false,
                      *           "earnings": null,
                      *           "symbols": [
-                     *             "SAP"
+                     *             "JNJ"
                      *           ],
                      *           "ciks": [
-                     *             "0001000184"
+                     *             "0000200406"
                      *           ],
                      *           "revision": 2,
                      *           "supersedes_id": null,
                      *           "publications": [
                      *             {
-                     *               "source_id": "ir:news.sap.com",
+                     *               "source_id": "ir:investor.jnj.com",
                      *               "publisher": {
-                     *                 "cik": "0001000184",
-                     *                 "symbol": "SAP",
-                     *                 "name": "SAP SE"
+                     *                 "cik": "0000200406",
+                     *                 "symbol": "JNJ",
+                     *                 "name": "Johnson & Johnson"
                      *               },
-                     *               "url": "https://news.sap.com/2026/11/dutch-ministry-of-defense-chooses-sap-sovereign-cloud/",
+                     *               "url": "https://investor.jnj.com/investor-news/news-details/2026/Johnson--Johnson-announces-ICOTYDE-icotrokinra-delivers-significant-improvement-in-psoriatic-arthritis-disease-activity-among-biologic-naive-patients-with-once-daily-targeted-oral-pep…",
                      *               "publication_type": "press_release",
-                     *               "published_at": "2026-11-04T08:00:00.000Z",
+                     *               "published_at": "2026-11-07T15:03:00.000Z",
                      *               "modified_at": null,
-                     *               "categories": [
-                     *                 {
-                     *                   "id": null,
-                     *                   "label": "Cloud",
-                     *                   "url": null
-                     *                 }
-                     *               ],
-                     *               "tags": [
-                     *                 {
-                     *                   "id": null,
-                     *                   "label": "Customer story",
-                     *                   "url": null
-                     *                 }
-                     *               ]
+                     *               "categories": [],
+                     *               "tags": []
                      *             }
                      *           ],
                      *           "publications_truncated": false,
                      *           "model_processing_allowed": true,
-                     *           "media_count": 0,
+                     *           "summary_words": null,
                      *           "attribution": {
-                     *             "publisher": "SAP SE",
-                     *             "publisher_host": "news.sap.com",
-                     *             "source_url": "https://news.sap.com/2026/11/dutch-ministry-of-defense-chooses-sap-sovereign-cloud/",
-                     *             "published_at": "2026-11-04T08:00:00.000Z",
+                     *             "publisher": "Johnson & Johnson",
+                     *             "publisher_host": "www.investor.jnj.com",
+                     *             "source_url": "https://www.investor.jnj.com/investor-news/news-details/2026/Johnson--Johnson-announces-ICOTYDE-icotrokinra-delivers-significant-improvement-in-psoriatic-arthritis-disease-activity-among-biologic-naive-patients-with-once-daily-targeted-oral…",
+                     *             "published_at": "2026-11-07T15:03:00.000Z",
                      *             "rights": "issuer",
                      *             "edgar": null,
-                     *             "statement": "Reproduced verbatim from the publisher; © the publisher. Source and date above."
+                     *             "statement": "Summary written by Invinite from the publication above; not the publisher's text. Source and date above."
                      *           }
                      *         }
                      *       ],
-                     *       "next_cursor": "WyIyMDI2LTExLTA0VDAyOjAwOjEwLjkxNDAwMFoiLCIxMTc1ZWI4YS05YzE2LTQ3ZjAtOWRiZi02M2NhYjZmMWNhNWUiXQ",
-                     *       "next_url": "https://api.data.invinite.com/v1/news?cursor=WyIyMDI2LTExLTA0VDAyOjAwOjEwLjkxNDAwMFoiLCIxMTc1ZWI4YS05YzE2LTQ3ZjAtOWRiZi02M2NhYjZmMWNhNWUiXQ"
+                     *       "next_cursor": "WyIyMDI2LTExLTA1VDE2OjAwOjAwLjAwMDAwMFoiLCIwN2FhYzg2YS0xMTRhLTQ0NTUtYTQzYi05MjhmMDQ1NDA4NmMiXQ",
+                     *       "next_url": "https://api.data.invinite.com/v1/news?cursor=WyIyMDI2LTExLTA1VDE2OjAwOjAwLjAwMDAwMFoiLCIwN2FhYzg2YS0xMTRhLTQ0NTUtYTQzYi05MjhmMDQ1NDA4NmMiXQ"
                      *     }
                      */
                     "application/json": {
@@ -15362,7 +15122,7 @@ export interface operations {
                             id: string;
                             /** @description Headline */
                             title: string;
-                            /** @description Lede of the text (the publisher's, verbatim); null for an item without readable text or whose publisher reserved reuse */
+                            /** @description Lede: one or two sentences written by Invinite with the summary (never the publisher's words); null for an item without a summary (title-only, metadata-only) or whose publisher reserved reuse */
                             description: null | string;
                             /** @description Canonical URL of the item (the first publication) */
                             url: string;
@@ -15415,7 +15175,7 @@ export interface operations {
                             symbols: Array<string>;
                             /** @description 10-digit CIKs mentioned */
                             ciks: Array<string>;
-                            /** @description Text revision (grows when the publisher corrects the text) */
+                            /** @description Revision of the publication (grows when the publisher corrects it) */
                             revision: number;
                             /** @description The older item this one corrects */
                             supersedes_id: null | string;
@@ -15466,17 +15226,17 @@ export interface operations {
                             }>;
                             /** @description More than 10 publications exist (the detail lists every sighting) */
                             publications_truncated: boolean;
-                            /** @description Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models */
+                            /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
                             model_processing_allowed: boolean;
-                            /** @description Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable) */
-                            media_count: number;
-                            /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
+                            /** @description Words of the item's summary (`GET /v1/news/{id}` serves it); null for an item without one (title-only, metadata-only or a reserved source) */
+                            summary_words: null | number;
+                            /** @description Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text) */
                             attribution: {
-                                /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
+                                /** @description Publisher of the summarised publication: the company, or SEC EDGAR for a filing */
                                 publisher: string;
                                 /** @description Host of the original URL */
                                 publisher_host: null | string;
-                                /** @description The original publication the text was read from */
+                                /** @description The original publication the summary was written from */
                                 source_url: string;
                                 /**
                                  * Format: date-time
@@ -15499,7 +15259,7 @@ export interface operations {
                                  * @description The attribution sentence to carry with the text
                                  * @enum {string}
                                  */
-                                statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
+                                statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
                             };
                         }>;
                         /** @description Cursor of the next page; null on the last page */
@@ -15524,7 +15284,7 @@ export interface operations {
                  */
                 limit?: number;
                 /**
-                 * @description Unicode code points per page; a block is never split (the minimum is the largest block)
+                 * @description Unicode code points per page; a block is never split (the minimum is larger than any block)
                  * @example 12000
                  */
                 max_chars?: number;
@@ -15538,7 +15298,7 @@ export interface operations {
             path: {
                 /**
                  * @description News item id
-                 * @example 13351ae7-876b-4839-ba2b-78873f6b4e00
+                 * @example 06304274-da4a-400e-9d5c-fb4ce04f01c9
                  */
                 id: string;
             };
@@ -15554,39 +15314,39 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "item_id": "13351ae7-876b-4839-ba2b-78873f6b4e00",
+                     *       "item_id": "06304274-da4a-400e-9d5c-fb4ce04f01c9",
                      *       "revision": 1,
-                     *       "title": "Build, test and optimize faster: Arm and GitHub accelerate agentic AI development",
+                     *       "title": "McDONALD'S REPORTS THIRD QUARTER 2026 RESULTS",
                      *       "content_status": "available",
                      *       "model_processing_allowed": true,
                      *       "attribution": {
-                     *         "publisher": "Arm Holdings plc",
-                     *         "publisher_host": "newsroom.arm.com",
-                     *         "source_url": "https://newsroom.arm.com/blog/arm-github-accelerate-agentic-ai-development",
-                     *         "published_at": "2026-10-29T16:02:31.000Z",
-                     *         "rights": "issuer",
-                     *         "edgar": null,
-                     *         "statement": "Reproduced verbatim from the publisher; © the publisher. Source and date above."
+                     *         "publisher": "SEC EDGAR",
+                     *         "publisher_host": "www.sec.gov",
+                     *         "source_url": "https://www.sec.gov/Archives/edgar/data/63908/000006390826000080/exhibit991-9302026.htm",
+                     *         "published_at": "2026-11-04T12:00:00.000Z",
+                     *         "rights": "public_record",
+                     *         "edgar": {
+                     *           "form": "8-K",
+                     *           "accession": "0000063908-26-000080"
+                     *         },
+                     *         "statement": "Summary written by Invinite from the publication above; not the publisher's text. Source and date above."
                      *       },
                      *       "blocks": [
                      *         {
-                     *           "block_id": "b57c4c7e-abaa-8985-af9d-01d7c3bd1ed7",
+                     *           "block_id": "7476f31f-742d-8dc7-885a-c3702a316557",
                      *           "index": 0,
                      *           "heading": null,
                      *           "kind": "paragraph",
-                     *           "page": null,
-                     *           "text": "Developers can use AI coding agents to edit code, build, test, and debug within one native Arm development environment. Keeping these tasks on the target architecture can give developers earlier feedback on dependencies, test results, and r…",
-                     *           "start_offset": 0,
-                     *           "end_offset": 277
+                     *           "text": "Global Systemwide sales grew 4% to more than $38 billion in the quarter. Loyalty-member purchases across 70 markets totaled $41 billion over the trailing twelve-month period and exceeded $11 billion in the quarter. Consolidated operating in…"
                      *         }
                      *       ],
                      *       "coverage": {
-                     *         "blocks_total": 37,
+                     *         "blocks_total": 18,
                      *         "blocks_through": 10
                      *       },
                      *       "has_more": true,
-                     *       "next_cursor": "WyIxMzM1MWFlNy04NzZiLTQ4MzktYmEyYi03ODg3M2Y2YjRlMDAiLDEsOV0",
-                     *       "next_url": "https://api.data.invinite.com/v1/news/13351ae7-876b-4839-ba2b-78873f6b4e00/text?cursor=WyIxMzM1MWFlNy04NzZiLTQ4MzktYmEyYi03ODg3M2Y2YjRlMDAiLDEsOV0"
+                     *       "next_cursor": "WyIwNjMwNDI3NC1kYTRhLTQwMGUtOWQ1Yy1mYjRjZTA0ZjAxYzkiLDEsOV0",
+                     *       "next_url": "https://api.data.invinite.com/v1/news/06304274-da4a-400e-9d5c-fb4ce04f01c9/text?cursor=WyIwNjMwNDI3NC1kYTRhLTQwMGUtOWQ1Yy1mYjRjZTA0ZjAxYzkiLDEsOV0"
                      *     }
                      */
                     "application/json": {
@@ -15595,24 +15355,24 @@ export interface operations {
                          * @description News item id
                          */
                         item_id: string;
-                        /** @description The text revision every block belongs to */
+                        /** @description The revision every block's summary was written from */
                         revision: number;
                         /** @description Headline */
                         title: string;
                         /**
-                         * @description available = the item has readable text of the current revision (in the forms `content_formats` lists); no_text = headline and link only
+                         * @description available = the item has a summary of its current revision (`summary_text`, `summary_html`, `text_url`); no_text = headline and link only (an item published before summaries started, a metadata-only item, or a source whose owner reserved reuse)
                          * @enum {string}
                          */
                         content_status: "available" | "no_text";
-                        /** @description Whether the source text may be processed by AI models; API access alone does not authorize forwarding text into models */
+                        /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
                         model_processing_allowed: boolean;
-                        /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
+                        /** @description Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text) */
                         attribution: {
-                            /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
+                            /** @description Publisher of the summarised publication: the company, or SEC EDGAR for a filing */
                             publisher: string;
                             /** @description Host of the original URL */
                             publisher_host: null | string;
-                            /** @description The original publication the text was read from */
+                            /** @description The original publication the summary was written from */
                             source_url: string;
                             /**
                              * Format: date-time
@@ -15635,35 +15395,29 @@ export interface operations {
                              * @description The attribution sentence to carry with the text
                              * @enum {string}
                              */
-                            statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
+                            statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
                         };
                         /** @description Blocks of this page, in order */
                         blocks: Array<{
                             /**
                              * Format: uuid
-                             * @description Stable block id (evidence pointers cite it)
+                             * @description Stable block id of the summary (search hits cite it as `block.id`)
                              */
                             block_id: string;
-                            /** @description Position in the text (zero-based) */
+                            /** @description Position in the summary (zero-based) */
                             index: number;
-                            /** @description The text of the nearest heading above the block (a heading block itself carries the one before it) */
+                            /** @description The text of the section heading the block sits under (null for a heading block and for blocks before the first heading) */
                             heading: null | string;
                             /**
-                             * @description What the block is in the article: heading, paragraph, list, table (its rows as lines), quote or figure (a caption); null = guessed from plain text (PDFs, older items: a short line without closing punctuation counts as a heading)
+                             * @description heading = a section heading, paragraph, list (its items on separate lines, each prefixed `• `); null = a kind this API version does not know
                              * @enum {string|null}
                              */
-                            kind: "figure" | "heading" | "list" | "paragraph" | "quote" | "table" | null;
-                            /** @description Page of a PDF original */
-                            page: null | number;
-                            /** @description The block's text, verbatim */
+                            kind: "heading" | "list" | "paragraph" | null;
+                            /** @description The block's text (Invinite's wording) */
                             text: string;
-                            /** @description Start in the full text (Unicode code points) */
-                            start_offset: number;
-                            /** @description End in the full text (exclusive) */
-                            end_offset: number;
                         }>;
                         coverage: {
-                            /** @description Blocks of the revision */
+                            /** @description Blocks of the summary */
                             blocks_total: number;
                             /** @description Blocks served up to and including this page */
                             blocks_through: number;
@@ -15680,7 +15434,7 @@ export interface operations {
             400: components["responses"]["BadRequestError"];
             401: components["responses"]["UnauthorizedError"];
             404: components["responses"]["NotFoundError"];
-            /** @description Conflict - the text changed since the cursor was issued (`revision_changed`): restart without `cursor` */
+            /** @description Conflict - the publication was revised since the cursor was issued (`revision_changed`): restart without `cursor` */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -15716,10 +15470,10 @@ export interface operations {
                  */
                 case_sensitive?: "false" | "true";
                 /**
-                 * @description title = headlines and ledes, body = the item text, any = both
+                 * @description title = headlines, lede = the ledes, summary = the summaries, any = every field
                  * @example any
                  */
-                field?: "any" | "body" | "title";
+                field?: "any" | "lede" | "summary" | "title";
                 /**
                  * @description Items mentioning these tickers (≤ 20, comma-separated or repeated). `BRK.B` and `BRK-B` both match; responses carry the stored dash spelling. With `cik`, either matches
                  * @example [
@@ -15807,7 +15561,7 @@ export interface operations {
                                 id: string;
                                 /** @description Headline */
                                 title: string;
-                                /** @description Lede of the text (the publisher's, verbatim); null for an item without readable text or whose publisher reserved reuse */
+                                /** @description Lede: one or two sentences written by Invinite with the summary (never the publisher's words); null for an item without a summary (title-only, metadata-only) or whose publisher reserved reuse */
                                 description: null | string;
                                 /** @description Canonical URL of the item (the first publication) */
                                 url: string;
@@ -15860,7 +15614,7 @@ export interface operations {
                                 symbols: Array<string>;
                                 /** @description 10-digit CIKs mentioned */
                                 ciks: Array<string>;
-                                /** @description Text revision (grows when the publisher corrects the text) */
+                                /** @description Revision of the publication (grows when the publisher corrects it) */
                                 revision: number;
                                 /** @description The older item this one corrects */
                                 supersedes_id: null | string;
@@ -15911,17 +15665,17 @@ export interface operations {
                                 }>;
                                 /** @description More than 10 publications exist (the detail lists every sighting) */
                                 publications_truncated: boolean;
-                                /** @description Whether the publisher's text (lede, body) may be processed by AI models; API access alone does not authorize forwarding text into models */
+                                /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
                                 model_processing_allowed: boolean;
-                                /** @description Media of the item you can get now: the assets `GET /v1/news/{id}` lists with a `download_url` (displayable or downloadable) */
-                                media_count: number;
-                                /** @description Who published the text, where and when (show publisher, source URL and date wherever you show the text) */
+                                /** @description Words of the item's summary (`GET /v1/news/{id}` serves it); null for an item without one (title-only, metadata-only or a reserved source) */
+                                summary_words: null | number;
+                                /** @description Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text) */
                                 attribution: {
-                                    /** @description Publisher (and © holder) of the text: the company, or SEC EDGAR for a filing */
+                                    /** @description Publisher of the summarised publication: the company, or SEC EDGAR for a filing */
                                     publisher: string;
                                     /** @description Host of the original URL */
                                     publisher_host: null | string;
-                                    /** @description The original publication the text was read from */
+                                    /** @description The original publication the summary was written from */
                                     source_url: string;
                                     /**
                                      * Format: date-time
@@ -15944,14 +15698,14 @@ export interface operations {
                                      * @description The attribution sentence to carry with the text
                                      * @enum {string}
                                      */
-                                    statement: "Reproduced verbatim from the publisher; © the publisher. Source and date above.";
+                                    statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
                                 };
                             };
                             /**
-                             * @description Where it matched: the headline, the lede or a passage of the text
+                             * @description Where it matched: the headline, the lede or a passage of the summary
                              * @enum {string}
                              */
-                            field: "body" | "lede" | "title";
+                            field: "lede" | "summary" | "title";
                             /** @description Relevance per mode: lexical = ts_rank_cd (4 decimals), literal = 0 (newest first) */
                             score: number;
                             match: components["schemas"]["HitMatch"];
@@ -15959,23 +15713,21 @@ export interface operations {
                             text: string;
                             /** @description true = text is shorter than the passage */
                             text_truncated: boolean;
-                            /** @description The text block the passage is from (see /v1/news/{id}/text); null for a headline or lede */
+                            /** @description The summary block the passage is from (see /v1/news/{id}/text); null for a headline or lede */
                             block: null | {
                                 /**
                                  * Format: uuid
                                  * @description Block id (`blocks[].block_id` of the text route)
                                  */
                                 id: string;
-                                /** @description Position of the block in the item's text */
+                                /** @description Position of the block in the item's summary */
                                 index: number;
-                                /** @description Nearest heading above the block */
+                                /** @description The section heading the block sits under */
                                 heading: null | string;
-                                /** @description Page, when the text has pages */
-                                page: null | number;
                             };
                             /** @description Position of the passage among the item's passages (-1 for a headline or lede) */
                             chunk_index: number;
-                            /** @description false = the publisher reserved text and data mining: do not pass the text to a model */
+                            /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
                             model_processing_allowed: boolean;
                         }>;
                     };
@@ -16003,6 +15755,57 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "ready",
+                     *         "reason": null,
+                     *         "recoverable": false
+                     *       },
+                     *       "datasets": {
+                     *         "fsn": {
+                     *           "active_releases": 12,
+                     *           "covered_from": "2025-11-01",
+                     *           "covered_through": "2026-10-31",
+                     *           "latest_published_at": "2026-11-04T15:10:02Z",
+                     *           "releases": [
+                     *             {
+                     *               "period_key": "2026_03",
+                     *               "sha256": "d1c1711e6cee2f197fb91879521da178329d1c1ed369f9086aa501aff45f83d4",
+                     *               "coverage_start": "2026-03-01",
+                     *               "coverage_end": "2026-03-31",
+                     *               "published_at": "2026-04-07T11:50:37Z",
+                     *               "size_bytes": 307533198
+                     *             }
+                     *           ]
+                     *         },
+                     *         "f13": {
+                     *           "active_releases": 20,
+                     *           "covered_from": "2021-10-01",
+                     *           "covered_through": "2026-08-31",
+                     *           "latest_published_at": "2026-09-14T16:43:16Z",
+                     *           "releases": [
+                     *             {
+                     *               "period_key": "01sep2025-30nov2025",
+                     *               "sha256": "7753ae28988c076baeb30a94656622ff0b3c5f55c90078d9d69fc14ba3d3b682",
+                     *               "coverage_start": "2025-09-01",
+                     *               "coverage_end": "2025-11-30",
+                     *               "published_at": "2025-12-03T14:31:02Z",
+                     *               "size_bytes": 85618099
+                     *             }
+                     *           ]
+                     *         },
+                     *         "companyfacts": {
+                     *           "active_releases": 0,
+                     *           "covered_from": null,
+                     *           "covered_through": null,
+                     *           "latest_published_at": null,
+                     *           "releases": []
+                     *         }
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -16146,6 +15949,150 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "ready",
+                     *         "reason": null,
+                     *         "recoverable": false
+                     *       },
+                     *       "blocks": [
+                     *         {
+                     *           "anchor": {
+                     *             "annotated_id": null,
+                     *             "html_id": null,
+                     *             "ids": [
+                     *               "ie59c230427654e04baa2d272b23a8a12_1"
+                     *             ],
+                     *             "line": null,
+                     *             "xpath": "/html/body/div[5]"
+                     *           },
+                     *           "footnote_links": [],
+                     *           "footnote_refs": [],
+                     *           "heading_level": 5,
+                     *           "heading_source": "style",
+                     *           "id": "b00001",
+                     *           "kind": "heading",
+                     *           "neighbors": {
+                     *             "next": "b00002",
+                     *             "prev": null
+                     *           },
+                     *           "page": {
+                     *             "ordinal": 1,
+                     *             "printed": null
+                     *           },
+                     *           "page_end": null,
+                     *           "section_path": [],
+                     *           "text": "UNITED STATES",
+                     *           "xbrl": [],
+                     *           "citation": {
+                     *             "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                     *             "block_id": "b00001",
+                     *             "page": 1,
+                     *             "printed": null,
+                     *             "page_end": null,
+                     *             "printed_end": null
+                     *           }
+                     *         }
+                     *       ],
+                     *       "footnotes": [],
+                     *       "pages": [
+                     *         {
+                     *           "block_ids": [
+                     *             "b00001"
+                     *           ],
+                     *           "ordinal": 1,
+                     *           "printed": null,
+                     *           "printed_source": null
+                     *         }
+                     *       ],
+                     *       "quality": {
+                     *         "decoding": "ascii",
+                     *         "footnote_marks": {
+                     *           "ambiguous": 0,
+                     *           "resolved": 7,
+                     *           "unresolved": 0
+                     *         },
+                     *         "headerless_tables": 10,
+                     *         "multi_page_tables": 0,
+                     *         "page_break_rule": "css",
+                     *         "page_breaks": {
+                     *           "collapsed": 0,
+                     *           "hr": 0,
+                     *           "page_tag": 0,
+                     *           "style": 64
+                     *         },
+                     *         "pages": 65,
+                     *         "pages_vs_contents": 0,
+                     *         "printed_labels": {
+                     *           "absent": 2,
+                     *           "accepted": 63
+                     *         },
+                     *         "printed_labels_trusted": true,
+                     *         "table_continuations": 4,
+                     *         "toc": {
+                     *           "agree": 37,
+                     *           "disagree": 0,
+                     *           "no_page_in_toc": 4,
+                     *           "no_printed_label": 0,
+                     *           "unresolved_target": 0
+                     *         }
+                     *       },
+                     *       "selection": {
+                     *         "pinned_from": "head",
+                     *         "status": "ok",
+                     *         "reason": null,
+                     *         "first_ordinal": 1,
+                     *         "last_ordinal": 200,
+                     *         "truncated": true,
+                     *         "next_block": "b00201",
+                     *         "candidates": [],
+                     *         "normalization": "ws1"
+                     *       },
+                     *       "source": {
+                     *         "accession": "0000320193-26-000026",
+                     *         "filename": "aapl-20260926.htm",
+                     *         "cik": "0000320193",
+                     *         "form_type": "10-K",
+                     *         "role": "primary",
+                     *         "doc_type": "10-K",
+                     *         "content_sha256": "bc6e71908b83b5260b23271176e4b8b709094670cb0f3bd8a9a44a9c91df8cbb",
+                     *         "source_snapshot_id": 2100,
+                     *         "source_revision": "7f8876dc1991bba867b2c7bc",
+                     *         "source_reconstruction": "normalized",
+                     *         "accepted_at": "2026-11-03T13:05:15Z",
+                     *         "accepted_source": "hdr_sgml",
+                     *         "sec_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000026/aapl-20260926.htm",
+                     *         "anchor_kind": "native"
+                     *       },
+                     *       "toc": [
+                     *         {
+                     *           "block_id": "b00046",
+                     *           "check": "no_page_in_toc",
+                     *           "observed_printed": "1",
+                     *           "page": null,
+                     *           "resolved_by": "anchor",
+                     *           "target_id": "ie59c230427654e04baa2d272b23a8a12_10",
+                     *           "title": "Part I"
+                     *         }
+                     *       ],
+                     *       "version": {
+                     *         "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                     *         "status": "published",
+                     *         "is_head": true,
+                     *         "schema_version": "invinite.doc.v1",
+                     *         "extractor_version": "h1",
+                     *         "extractor_generation": 1,
+                     *         "media_kind": "html",
+                     *         "canonical_sha256": "1a5080d66b9ca5da8092f703b989aac11764cd2f2fbbbb1127c078f25a1ab50c",
+                     *         "canonical_size_bytes": 1140013,
+                     *         "block_count": 730,
+                     *         "page_count": 65,
+                     *         "published_at": "2026-11-03T17:44:33.530134Z"
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -16334,6 +16281,64 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "ready",
+                     *         "reason": null,
+                     *         "recoverable": false
+                     *       },
+                     *       "counts": {
+                     *         "derived": 337,
+                     *         "exact": 1134,
+                     *         "hidden": 10
+                     *       },
+                     *       "next_cursor": "116cb934-f7aa-5c40-a989-68b82ac10806",
+                     *       "places": [
+                     *         {
+                     *           "alias_id": "005d3da8-13d6-5dea-8d39-0d450cabf400",
+                     *           "fact_id": "320193|OperatingIncomeLoss|2025-09-28T00:00:00|2026-09-26T00:00:00|-|{\"explicitMember\": {\"$t\": \"us-gaap:CorporateNonSegmentMember\", \"dimension\": \"srt:ConsolidationItemsAxis\"}}",
+                     *           "status": "exact",
+                     *           "method": "concept+dimensions+period+unit+value",
+                     *           "candidate_count": 1,
+                     *           "primary": true,
+                     *           "value_check": "equal",
+                     *           "reason": null,
+                     *           "operands": [],
+                     *           "original": {
+                     *             "filename": "aapl-20260926.htm",
+                     *             "source_sha256": "bc6e71908b83b5260b23271176e4b8b709094670cb0f3bd8a9a44a9c91df8cbb",
+                     *             "native_id": "f-1124",
+                     *             "xpath": "/html/body/ix:continuation[21]/ix:nonnumeric[2]/div[2]/table/tr[9]/td[23]/span/ix:nonfraction",
+                     *             "block_id": "b00624",
+                     *             "xbrl_ordinal": 41,
+                     *             "table_row": 8,
+                     *             "table_column": 34,
+                     *             "place_key": "f-1124"
+                     *           },
+                     *           "annotated": [
+                     *             {
+                     *               "legacy_anchor": "f-1124",
+                     *               "status": "recorded",
+                     *               "rendition_sha256": "f3071d0af50082eac48a057fc6b320a7194c01aa09f2ed4e5bcc8b7ef54c86a1",
+                     *               "rendition_url": "https://storage-prod.invinite.com/filing_htmls/320193_0000320193-26-000026_10-K_2026-11-03.html",
+                     *               "legacy_anchor_is_native": true
+                     *             }
+                     *           ],
+                     *           "pdf": null
+                     *         }
+                     *       ],
+                     *       "provider": {
+                     *         "slot": "fact_places",
+                     *         "status": "ready",
+                     *         "version": "fact-places/1"
+                     *       },
+                     *       "resolver_version": "places-v2",
+                     *       "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                     *       "next_url": "https://api.data.invinite.com/v1/sec/versions/8be0b759-1a9d-5f89-8308-bd86185f5e1f/fact-places?cursor=116cb934-f7aa-5c40-a989-68b82ac10806"
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -16610,6 +16615,40 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "ready",
+                     *         "reason": null,
+                     *         "recoverable": false
+                     *       },
+                     *       "accession": "0000320193-26-000026",
+                     *       "filename": "aapl-20260926.htm",
+                     *       "projection_version": "lp1",
+                     *       "sections": [
+                     *         {
+                     *           "outline": "legacy",
+                     *           "ordinal": 1,
+                     *           "legacy_section_key": "part_i-item_1",
+                     *           "part": "Part I",
+                     *           "item_id": "Item 1.",
+                     *           "title": "Item 1. Business",
+                     *           "blocks": [
+                     *             "b00049-b00106"
+                     *           ],
+                     *           "block_spans": [
+                     *             {
+                     *               "from": "b00049",
+                     *               "to": "b00106"
+                     *             }
+                     *           ],
+                     *           "comparison_state": "richer_format"
+                     *         }
+                     *       ],
+                     *       "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f"
+                     *     }
+                     */
                     "application/json": {
                         /** @description Accession */
                         accession?: null | string;
@@ -16808,6 +16847,150 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "ready",
+                     *         "reason": null,
+                     *         "recoverable": false
+                     *       },
+                     *       "blocks": [
+                     *         {
+                     *           "anchor": {
+                     *             "annotated_id": null,
+                     *             "html_id": null,
+                     *             "ids": [
+                     *               "ie59c230427654e04baa2d272b23a8a12_1"
+                     *             ],
+                     *             "line": null,
+                     *             "xpath": "/html/body/div[5]"
+                     *           },
+                     *           "footnote_links": [],
+                     *           "footnote_refs": [],
+                     *           "heading_level": 5,
+                     *           "heading_source": "style",
+                     *           "id": "b00001",
+                     *           "kind": "heading",
+                     *           "neighbors": {
+                     *             "next": "b00002",
+                     *             "prev": null
+                     *           },
+                     *           "page": {
+                     *             "ordinal": 1,
+                     *             "printed": null
+                     *           },
+                     *           "page_end": null,
+                     *           "section_path": [],
+                     *           "text": "UNITED STATES",
+                     *           "xbrl": [],
+                     *           "citation": {
+                     *             "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                     *             "block_id": "b00001",
+                     *             "page": 1,
+                     *             "printed": null,
+                     *             "page_end": null,
+                     *             "printed_end": null
+                     *           }
+                     *         }
+                     *       ],
+                     *       "footnotes": [],
+                     *       "pages": [
+                     *         {
+                     *           "block_ids": [
+                     *             "b00001"
+                     *           ],
+                     *           "ordinal": 1,
+                     *           "printed": null,
+                     *           "printed_source": null
+                     *         }
+                     *       ],
+                     *       "quality": {
+                     *         "decoding": "ascii",
+                     *         "footnote_marks": {
+                     *           "ambiguous": 0,
+                     *           "resolved": 7,
+                     *           "unresolved": 0
+                     *         },
+                     *         "headerless_tables": 10,
+                     *         "multi_page_tables": 0,
+                     *         "page_break_rule": "css",
+                     *         "page_breaks": {
+                     *           "collapsed": 0,
+                     *           "hr": 0,
+                     *           "page_tag": 0,
+                     *           "style": 64
+                     *         },
+                     *         "pages": 65,
+                     *         "pages_vs_contents": 0,
+                     *         "printed_labels": {
+                     *           "absent": 2,
+                     *           "accepted": 63
+                     *         },
+                     *         "printed_labels_trusted": true,
+                     *         "table_continuations": 4,
+                     *         "toc": {
+                     *           "agree": 37,
+                     *           "disagree": 0,
+                     *           "no_page_in_toc": 4,
+                     *           "no_printed_label": 0,
+                     *           "unresolved_target": 0
+                     *         }
+                     *       },
+                     *       "selection": {
+                     *         "pinned_from": "version",
+                     *         "status": "ok",
+                     *         "reason": null,
+                     *         "first_ordinal": 1,
+                     *         "last_ordinal": 200,
+                     *         "truncated": true,
+                     *         "next_block": "b00201",
+                     *         "candidates": [],
+                     *         "normalization": "ws1"
+                     *       },
+                     *       "source": {
+                     *         "accession": "0000320193-26-000026",
+                     *         "filename": "aapl-20260926.htm",
+                     *         "cik": "0000320193",
+                     *         "form_type": "10-K",
+                     *         "role": "primary",
+                     *         "doc_type": "10-K",
+                     *         "content_sha256": "bc6e71908b83b5260b23271176e4b8b709094670cb0f3bd8a9a44a9c91df8cbb",
+                     *         "source_snapshot_id": 2100,
+                     *         "source_revision": "7f8876dc1991bba867b2c7bc",
+                     *         "source_reconstruction": "normalized",
+                     *         "accepted_at": "2026-11-03T13:05:15Z",
+                     *         "accepted_source": "hdr_sgml",
+                     *         "sec_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000026/aapl-20260926.htm",
+                     *         "anchor_kind": "native"
+                     *       },
+                     *       "toc": [
+                     *         {
+                     *           "block_id": "b00046",
+                     *           "check": "no_page_in_toc",
+                     *           "observed_printed": "1",
+                     *           "page": null,
+                     *           "resolved_by": "anchor",
+                     *           "target_id": "ie59c230427654e04baa2d272b23a8a12_10",
+                     *           "title": "Part I"
+                     *         }
+                     *       ],
+                     *       "version": {
+                     *         "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                     *         "status": "published",
+                     *         "is_head": null,
+                     *         "schema_version": "invinite.doc.v1",
+                     *         "extractor_version": "h1",
+                     *         "extractor_generation": 1,
+                     *         "media_kind": "html",
+                     *         "canonical_sha256": "1a5080d66b9ca5da8092f703b989aac11764cd2f2fbbbb1127c078f25a1ab50c",
+                     *         "canonical_size_bytes": 1140013,
+                     *         "block_count": 730,
+                     *         "page_count": 65,
+                     *         "published_at": "2026-11-03T17:44:33.530134Z"
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -17281,6 +17464,74 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "ready",
+                     *         "reason": null,
+                     *         "recoverable": false
+                     *       },
+                     *       "filer": {
+                     *         "cik": "320193",
+                     *         "cik10": "0000320193",
+                     *         "name": "Apple Inc.",
+                     *         "entity_type": "operating",
+                     *         "sic": "3571",
+                     *         "sic_description": "Electronic Computers",
+                     *         "filer_category": "Large accelerated filer",
+                     *         "fiscal_year_end": "0926",
+                     *         "stated_tickers": [
+                     *           "AAPL"
+                     *         ],
+                     *         "stated_exchanges": [
+                     *           "Nasdaq"
+                     *         ],
+                     *         "ticker_authority": "sec_statement_only"
+                     *       },
+                     *       "former_names": [
+                     *         {
+                     *           "cik": "320193",
+                     *           "name": "APPLE COMPUTER INC",
+                     *           "valid_from": "1994-01-26",
+                     *           "valid_to": "2007-01-04"
+                     *         }
+                     *       ],
+                     *       "scope": {
+                     *         "status": "eligible",
+                     *         "reason": "us_market_listed",
+                     *         "revision": 1,
+                     *         "permissions": {
+                     *           "metadata": {
+                     *             "reason": "source_index",
+                     *             "status": "eligible"
+                     *           },
+                     *           "research_13f": {
+                     *             "reason": "research_filing_evidence",
+                     *             "status": "eligible"
+                     *           },
+                     *           "equity_document": {
+                     *             "reason": "us_market_listed",
+                     *             "status": "eligible"
+                     *           },
+                     *           "expensive_processing": {
+                     *             "reason": "legacy_gate_not_evaluated",
+                     *             "status": "needs_review"
+                     *           }
+                     *         }
+                     *       },
+                     *       "successors": [],
+                     *       "ticker_evidence": [
+                     *         {
+                     *           "cik": "320193",
+                     *           "ticker": "AAPL",
+                     *           "exchange": "Nasdaq",
+                     *           "first_seen_on": "2026-11-03",
+                     *           "last_seen_on": "2026-11-07"
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -17421,6 +17672,58 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "partial",
+                     *         "reason": "holes_in_window",
+                     *         "recoverable": true
+                     *       },
+                     *       "cik": "320193",
+                     *       "coverage": {
+                     *         "since": "2025-11-08",
+                     *         "held_through": "2025-11-11",
+                     *         "held_through_basis": "first_gap",
+                     *         "source_bound": "2026-11-07",
+                     *         "accessions": 92,
+                     *         "required": 92,
+                     *         "excluded": 0,
+                     *         "mirrored": 8,
+                     *         "held": 7,
+                     *         "pending": 85,
+                     *         "holes": [
+                     *           {
+                     *             "accession": "0001631982-25-000011",
+                     *             "form": "4",
+                     *             "filing_date": "2025-11-12",
+                     *             "state": "not_mirrored"
+                     *           }
+                     *         ],
+                     *         "holes_truncated": true,
+                     *         "oldest_pending": {
+                     *           "accession": "0001631982-25-000011",
+                     *           "filing_date": "2025-11-12",
+                     *           "age_seconds": null
+                     *         },
+                     *         "unknown_acceptance": 84,
+                     *         "lag_seconds": {
+                     *           "p50": 47826,
+                     *           "p90": 8471111,
+                     *           "max": 8510076
+                     *         },
+                     *         "pending_age_max_seconds": 217902,
+                     *         "window_truncated": false
+                     *       },
+                     *       "coverage_observed_at": null,
+                     *       "coverage_source": "on_read",
+                     *       "indexed": {
+                     *         "submissions_loaded_at": "2026-11-07T11:41:30.374873Z",
+                     *         "last_socket_sighting_at": "2026-11-07T06:07:18.318980Z"
+                     *       },
+                     *       "manifest": null
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -17913,6 +18216,92 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "ready",
+                     *         "reason": null,
+                     *         "recoverable": false,
+                     *         "required_documents": 1,
+                     *         "other_documents_without_text": 93
+                     *       },
+                     *       "documents": [
+                     *         {
+                     *           "filename": "aapl-20260926.htm",
+                     *           "sequence": 1,
+                     *           "doc_type": "10-K",
+                     *           "description": "10-K",
+                     *           "role": "primary",
+                     *           "availability": "stored",
+                     *           "quarantine_reason": null,
+                     *           "reconstruction": "normalized",
+                     *           "sha256": "bc6e71908b83b5260b23271176e4b8b709094670cb0f3bd8a9a44a9c91df8cbb",
+                     *           "size_bytes": 1650003,
+                     *           "stored_size_bytes": 123599,
+                     *           "stored_content_encoding": "gzip",
+                     *           "declared_size_bytes": 1650003,
+                     *           "mime_type": "text/html",
+                     *           "cap_bytes": 67108864,
+                     *           "too_large": false,
+                     *           "structured_route": null,
+                     *           "canonical": {
+                     *             "status": "published",
+                     *             "reason": null,
+                     *             "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                     *             "text_ready": true,
+                     *             "visual_ready": true,
+                     *             "route": "/sec/v1/documents/8be0b759-1a9d-5f89-8308-bd86185f5e1f"
+                     *           },
+                     *           "source": {
+                     *             "url": "https://storage-prod.invinite.com/sec/4765d5384d6b2195ff48ff775f9244f9/aapl-20260926.htm"
+                     *           }
+                     *         }
+                     *       ],
+                     *       "filing": {
+                     *         "accession": "0000320193-26-000026",
+                     *         "form": "10-K",
+                     *         "filing_date": "2026-11-03",
+                     *         "report_date": "2026-09-26",
+                     *         "accepted_at": "2026-11-03T13:05:15Z",
+                     *         "accepted_source": "hdr_sgml",
+                     *         "primary_document": "aapl-20260926.htm",
+                     *         "is_xbrl": true,
+                     *         "is_inline_xbrl": true,
+                     *         "mirror_scope": {
+                     *           "status": "eligible",
+                     *           "reason": "eligible_party"
+                     *         }
+                     *       },
+                     *       "parties": [
+                     *         {
+                     *           "accession": "0000320193-26-000026",
+                     *           "cik": "320193",
+                     *           "role": "filer",
+                     *           "party_name": "Apple Inc.",
+                     *           "source": "header"
+                     *         }
+                     *       ],
+                     *       "relations": [
+                     *         {
+                     *           "from": "0000320193-26-000026-xbrl.zip",
+                     *           "to": "aapl-20260926.htm",
+                     *           "relation": "xbrl_of"
+                     *         }
+                     *       ],
+                     *       "source": {
+                     *         "storage_cik": "320193",
+                     *         "snapshot_id": 2100,
+                     *         "source_revision": "7f8876dc1991bba867b2c7bc",
+                     *         "source_kind": "submission_txt",
+                     *         "reconstruction": "normalized",
+                     *         "status": "complete",
+                     *         "incomplete_reasons": [],
+                     *         "declared_document_count": 105,
+                     *         "recorded_at": "2026-11-03T17:43:58.423832Z"
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -18780,6 +19169,63 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "ready",
+                     *         "reason": null,
+                     *         "recoverable": false
+                     *       },
+                     *       "cik": "320193",
+                     *       "filer": {
+                     *         "cik": "320193",
+                     *         "cik10": "0000320193",
+                     *         "name": "Apple Inc.",
+                     *         "stated_tickers": [
+                     *           "AAPL"
+                     *         ],
+                     *         "ticker_authority": "sec_statement_only"
+                     *       },
+                     *       "filings": [
+                     *         {
+                     *           "accession": "0001140361-26-042505",
+                     *           "form": "424B2",
+                     *           "filing_date": "2026-11-06",
+                     *           "report_date": null,
+                     *           "accepted_at": "2026-11-06T21:30:47Z",
+                     *           "items": null,
+                     *           "primary_document": "ny20084621x2_424b2.htm",
+                     *           "roles": [
+                     *             "filer"
+                     *           ],
+                     *           "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/320193/000114036126042505/0001140361-26-042505-index.htm",
+                     *           "accepted_source": "hdr_sgml",
+                     *           "primary_document_description": "424B2",
+                     *           "is_xbrl": true,
+                     *           "is_inline_xbrl": true,
+                     *           "mirror_scope": {
+                     *             "status": "eligible",
+                     *             "reason": "eligible_party"
+                     *           },
+                     *           "documents_route": "/sec/v1/filings/0001140361-26-042505/documents"
+                     *         }
+                     *       ],
+                     *       "form_facet": [
+                     *         {
+                     *           "form": "10-K",
+                     *           "count": 31,
+                     *           "newest_filing_date": "2026-11-03"
+                     *         }
+                     *       ],
+                     *       "next_cursor": "eyJ2IjoxLCJhZnRlciI6WyIyMDI2LTA1LTA1IiwiMDAwMTk1MDA0Ny0yNi0wMDQwNDQiXSwiZiI6Ijg1NzNiMDg0ZjEyNzVjMjMifQ",
+                     *       "withheld": {
+                     *         "excluded": 0,
+                     *         "needs_review": 0
+                     *       },
+                     *       "next_url": "https://api.data.invinite.com/v1/sec/filings?identifier=AAPL&cursor=eyJ2IjoxLCJhZnRlciI6WyIyMDI2LTA1LTA1IiwiMDAwMTk1MDA0Ny0yNi0wMDQwNDQiXSwiZiI6Ijg1NzNiMDg0ZjEyNzVjMjMifQ"
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -19008,6 +19454,51 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "ready",
+                     *         "reason": null,
+                     *         "recoverable": false
+                     *       },
+                     *       "provider": {
+                     *         "slot": "financial_statements",
+                     *         "status": "ready",
+                     *         "version": "financial-statements/1"
+                     *       },
+                     *       "catalog_version": "fsc1-d8deb51088dffa2e",
+                     *       "catalog_checksum": "d8deb51088dffa2ea4fb2e80f7f8a88781466c7269bc5acf988ffa1c95a2a2ff",
+                     *       "rules": [
+                     *         {
+                     *           "rule_id": "r_483ce5879cf3f9a2aa16c845",
+                     *           "metric_id": "is_income_from_continuing_operations",
+                     *           "metric_name": "Income (Loss) from Continuing Operations",
+                     *           "statement": "income_statement",
+                     *           "statement_restriction": "StatementsOfIncome",
+                     *           "unit": "usd",
+                     *           "hierarchy": {
+                     *             "depth": 4,
+                     *             "parent": "is_income_incl_noncontrolling_interest",
+                     *             "sibling_order": 1,
+                     *             "global_order": 41
+                     *           },
+                     *           "kind": "alias",
+                     *           "evaluation_order": 0,
+                     *           "ordered_alias_position": 0,
+                     *           "declared_taxonomy": "us_gaap",
+                     *           "alias_role": "primary",
+                     *           "declared_alias": "IncomeLossFromContinuingOperationsIncludingPortionAttributableToNoncontrollingInterest",
+                     *           "formula_definition": null,
+                     *           "required_operands": [],
+                     *           "sign_policy": "as_reported",
+                     *           "notes": "",
+                     *           "observed_since": null,
+                     *           "historical_effective_since": null
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -19263,6 +19754,73 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "ready",
+                     *         "reason": null,
+                     *         "recoverable": false
+                     *       },
+                     *       "provider": {
+                     *         "slot": "financial_statements",
+                     *         "status": "ready",
+                     *         "version": "financial-statements/1"
+                     *       },
+                     *       "cik": "320193",
+                     *       "statement": "income_statement",
+                     *       "fiscal_period_type": "annual",
+                     *       "catalog_version": "fsc1-d8deb51088dffa2e",
+                     *       "cells": [
+                     *         {
+                     *           "id": "320193|is_total_revenue|annual|2008|4",
+                     *           "metric_id": "is_total_revenue",
+                     *           "value": "37491000000",
+                     *           "unit": "usd",
+                     *           "fiscal_period_type": "annual",
+                     *           "fiscal_year": 2008,
+                     *           "fiscal_quarter": 4,
+                     *           "calendar_year": 2008,
+                     *           "calendar_quarter": 3,
+                     *           "start_date": "2007-09-30T00:00:00",
+                     *           "end_date": "2008-09-27T00:00:00",
+                     *           "instant_date": null,
+                     *           "hierarchy": {
+                     *             "depth": 1,
+                     *             "parent_id": null,
+                     *             "sibling_order": 1,
+                     *             "global_order": 1
+                     *           },
+                     *           "source": "xbrl",
+                     *           "is_preliminary": false,
+                     *           "xbrl_tag": null,
+                     *           "accession": "0001193125-10-238044",
+                     *           "annotated_anchor": null,
+                     *           "formula": {
+                     *             "formula_str": "320193|is_revenue_from_contract_with_customer|annual|2008|4",
+                     *             "member_count": 1
+                     *           },
+                     *           "evidence": {
+                     *             "kind": "derived",
+                     *             "basis": "stored_row"
+                     *           },
+                     *           "provenance": {
+                     *             "status": "legacy_unrecorded"
+                     *           }
+                     *         }
+                     *       ],
+                     *       "provenance_counts": {
+                     *         "legacy_unrecorded": 651
+                     *       },
+                     *       "other_evidence": [],
+                     *       "truncated": false,
+                     *       "raw_notes": {
+                     *         "surface": "/sec/v1/filings/{accession}/notes",
+                     *         "residency": "SEC_BULK_FSN_POSTGRES_YEARS window in Postgres, older releases archived",
+                     *         "archived_only_is_missing_metric": false
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -19619,6 +20177,84 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "ready",
+                     *         "reason": null,
+                     *         "recoverable": false
+                     *       },
+                     *       "counting_policy": "per-manager-as-reported/v1",
+                     *       "coverage": {
+                     *         "coverage_state": "complete",
+                     *         "reporting_period": null,
+                     *         "discovered": 0,
+                     *         "processed": 0,
+                     *         "pending": 0,
+                     *         "failed": 0,
+                     *         "excluded": 0,
+                     *         "awaiting_bulk": 0,
+                     *         "discovered_through": null,
+                     *         "processed_through": null,
+                     *         "live_frontier": null,
+                     *         "oldest_unprocessed_accepted_at": null,
+                     *         "source_releases": [],
+                     *         "computed_at": null
+                     *       },
+                     *       "detail": {
+                     *         "form_family": "13F-HR",
+                     *         "exact_form": null,
+                     *         "roles_counted": [
+                     *           "filer"
+                     *         ],
+                     *         "truncated": false,
+                     *         "match_cap": null
+                     *       },
+                     *       "disclosure_limitations": [
+                     *         "confidential_treatment_omitted_positions_not_reported"
+                     *       ],
+                     *       "identity": null,
+                     *       "next_cursor": "eyJ2IjoxLCJxIjoiYjdiYzBhMGFhNjEwN2FmMjQ5MjE3Y2UyIiwicCI6IjIwMjYtMTEtMDhUMTI6MDI6MDAuMDQxOTI2KzAwOjAwIiwiayI6WyIyNzYyOTM2NDk0MDQiLCIyMDI2LTA4LTE0IiwiMTI3MzA4NyIsIjIwMjYtMTEtMDhUMTA6NTA6NDQuNDY2NTEyKzAwOjAwIl19",
+                     *       "page_status": "ok",
+                     *       "pinned_at": "2026-11-08T12:02:00.041926Z",
+                     *       "policy_version": "research-holdings-reads/v1",
+                     *       "provider": {
+                     *         "slot": "research_holdings",
+                     *         "status": "ready",
+                     *         "version": "research-holdings-doors/1"
+                     *       },
+                     *       "rows": [
+                     *         {
+                     *           "cik": "2012383",
+                     *           "name": "BlackRock, Inc.",
+                     *           "matched_name": "BlackRock, Inc.",
+                     *           "former_names": [
+                     *             [
+                     *               "BlackRock Funding, Inc. /DE"
+                     *             ]
+                     *           ],
+                     *           "form_family": "13F-HR",
+                     *           "forms": [
+                     *             [
+                     *               "13F-HR"
+                     *             ]
+                     *           ],
+                     *           "filing_count": 8,
+                     *           "last_filed_at": "2026-08-07",
+                     *           "latest_reported_value_usd": "6729538649155",
+                     *           "latest_reported_period": "2026-06-30",
+                     *           "value_status": "reported",
+                     *           "source_generation": 76,
+                     *           "coverage_state": "complete"
+                     *         }
+                     *       ],
+                     *       "scope": "all_public_13f",
+                     *       "snapshot_changed": false,
+                     *       "value_semantics": "manager_reported_13f_value_not_total_aum",
+                     *       "next_url": "https://api.data.invinite.com/v1/sec/holdings/form-filers?form=13F-HR&cursor=eyJ2IjoxLCJxIjoiYjdiYzBhMGFhNjEwN2FmMjQ5MjE3Y2UyIiwicCI6IjIwMjYtMTEtMDhUMTI6MDI6MDAuMDQxOTI2KzAwOjAwIiwiayI6WyIyNzYyOTM2NDk0MDQiLCIyMDI2LTA4LTE0IiwiMTI3MzA4NyIsIjI…"
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -20058,6 +20694,85 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "partial",
+                     *         "reason": "coverage_partial",
+                     *         "recoverable": false
+                     *       },
+                     *       "counting_policy": "per-manager-as-reported/v1",
+                     *       "coverage": {
+                     *         "coverage_state": "partial",
+                     *         "reporting_period": "2026-06-30",
+                     *         "discovered": 11076,
+                     *         "processed": 7034,
+                     *         "pending": 0,
+                     *         "failed": 0,
+                     *         "excluded": 0,
+                     *         "awaiting_bulk": 58,
+                     *         "discovered_through": "2026-11-06",
+                     *         "processed_through": "2026-10-09",
+                     *         "live_frontier": "2026-10-09T20:15:03Z",
+                     *         "oldest_unprocessed_accepted_at": "2026-11-02T20:59:32Z",
+                     *         "source_releases": [
+                     *           {
+                     *             "period_key": "01jun2026-31aug2026",
+                     *             "release_id": 80,
+                     *             "coverage_end": "2026-08-31",
+                     *             "published_at": "2026-09-14T16:43:16Z",
+                     *             "coverage_start": "2026-06-01"
+                     *           }
+                     *         ],
+                     *         "computed_at": "2026-11-08T11:50:00.030503Z"
+                     *       },
+                     *       "detail": {
+                     *         "snapshot_id": "310697b9-130d-5118-b17e-7299824d9b65",
+                     *         "revision_digest": "d504b455635d13105ac193a10b13e58ceab2cfccc53195ade4de286174cf0b57",
+                     *         "completion_status": "complete",
+                     *         "position_count": 29,
+                     *         "reported_value_total_usd": "299253556246",
+                     *         "accessions": [
+                     *           "0001193125-26-352200"
+                     *         ],
+                     *         "flags": [],
+                     *         "published_at": "2026-11-05T01:09:14.924989Z"
+                     *       },
+                     *       "disclosure_limitations": [
+                     *         "confidential_treatment_omitted_positions_not_reported"
+                     *       ],
+                     *       "identity": null,
+                     *       "next_cursor": null,
+                     *       "page_status": "ok",
+                     *       "pinned_at": "2026-11-08T12:01:59.672336Z",
+                     *       "policy_version": "research-holdings-reads/v1",
+                     *       "provider": {
+                     *         "slot": "research_holdings",
+                     *         "status": "ready",
+                     *         "version": "research-holdings-doors/1"
+                     *       },
+                     *       "rows": [
+                     *         {
+                     *           "manager_cik": "1067983",
+                     *           "manager_name": "Berkshire Hathaway Inc",
+                     *           "period_end": "2026-06-30",
+                     *           "position_key": "037833100|position|SH",
+                     *           "cusip": "037833100",
+                     *           "cusip_as_filed": "037833100",
+                     *           "issuer_name": "APPLE INC",
+                     *           "title_of_class": "COM",
+                     *           "issuer_cik": "320193",
+                     *           "issuer_status": "resolved",
+                     *           "instrument": "position",
+                     *           "amount_type": "SH"
+                     *         }
+                     *       ],
+                     *       "scope": "all_public_13f",
+                     *       "snapshot_changed": false,
+                     *       "value_semantics": "manager_reported_13f_value_not_total_aum"
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -20483,6 +21198,230 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "api_schema": "secdoors.v1",
+                     *       "readiness": {
+                     *         "status": "partial",
+                     *         "reason": "too_many_matches",
+                     *         "recoverable": false
+                     *       },
+                     *       "coverage": {
+                     *         "completeness": "partial",
+                     *         "lexical": {
+                     *           "state": "partial",
+                     *           "indexed": 18820,
+                     *           "pending": 1,
+                     *           "failed": 0,
+                     *           "excluded": 0,
+                     *           "needs_review": 0,
+                     *           "scope_not_current": 0,
+                     *           "not_published": 62,
+                     *           "not_held": null,
+                     *           "not_indexed_by_policy": 8741,
+                     *           "counted_at": "2026-11-08T12:01:07.743849Z"
+                     *         },
+                     *         "reasons": [
+                     *           "too_many_matches"
+                     *         ],
+                     *         "forms_indexed": [
+                     *           "10-K*"
+                     *         ],
+                     *         "matches": {
+                     *           "capped": true,
+                     *           "cap": 300,
+                     *           "examined": 300,
+                     *           "examined_in_scope": 299,
+                     *           "total": null,
+                     *           "total_at_least": 301,
+                     *           "order": "newest_first",
+                     *           "filed_from": "2026-03-02",
+                     *           "filed_to": "2026-11-06",
+                     *           "narrow_with": [
+                     *             "filer"
+                     *           ],
+                     *           "complete_since": "2026-10-09",
+                     *           "window_from": "2025-11-08"
+                     *         },
+                     *         "hint": "More than 300 passages match this query across all filers. These hits are ranked among 300 examined passages, newest filings first: every matching passage filed since 2026-10-09, plus passages filed from 2025-11-08 on (index order within th…",
+                     *         "projection_version": "fs1.english",
+                     *         "years_indexed": null,
+                     *         "indexed_since": null,
+                     *         "window": {
+                     *           "filed_from": null,
+                     *           "filed_to": null
+                     *         },
+                     *         "discovery": {
+                     *           "submissions_loaded_at": "2026-11-07T11:41:30.374873Z",
+                     *           "last_socket_sighting_at": "2026-11-07T06:07:18.318980Z"
+                     *         },
+                     *         "mirror": null,
+                     *         "held": null,
+                     *         "held_scope": "single_filer_only"
+                     *       },
+                     *       "hits": [
+                     *         {
+                     *           "version_id": "af82694e-4fc2-50b7-abaf-ea6aefda66ef",
+                     *           "accession": "0001493152-26-049646",
+                     *           "filename": "form20-f.htm",
+                     *           "form": "20-F",
+                     *           "filing_date": "2026-11-02",
+                     *           "text": "center connections, and similar restrictions could be introduced in the Nordic markets in the future. Furthermore, data centers are subject to increasing environmental regulation, including ESG requirements, heat reuse obligations, water co…",
+                     *           "score": 0.19111039,
+                     *           "match": {
+                     *             "type": "lexical",
+                     *             "lexical_rank": 1,
+                     *             "spans": [
+                     *               {
+                     *                 "start": 2439,
+                     *                 "end": 2445
+                     *               }
+                     *             ]
+                     *           },
+                     *           "document_spans": [
+                     *             {
+                     *               "start": 2439,
+                     *               "end": 2445,
+                     *               "document_start": 62241,
+                     *               "document_end": 62247,
+                     *               "blocks": [
+                     *                 {
+                     *                   "block_id": "b00188",
+                     *                   "start": 18,
+                     *                   "end": 24
+                     *                 }
+                     *               ]
+                     *             }
+                     *           ],
+                     *           "citation": {
+                     *             "version_id": "af82694e-4fc2-50b7-abaf-ea6aefda66ef",
+                     *             "accession": "0001493152-26-049646",
+                     *             "filename": "form20-f.htm",
+                     *             "document_route": "/sec/v1/documents/af82694e-4fc2-50b7-abaf-ea6aefda66ef",
+                     *             "anchor_kind": "native",
+                     *             "source": {
+                     *               "url": "https://storage-prod.invinite.com/sec/dd7d13d2fcd95ad601b74ca2e0a8717a/form20-f.htm"
+                     *             }
+                     *           },
+                     *           "projection_version": "fs1.english",
+                     *           "unit_id": 16,
+                     *           "filer": {
+                     *             "cik": "1681348",
+                     *             "role": "filer",
+                     *             "name": "VivoPower PLC",
+                     *             "name_as_filed": "VivoPower PLC"
+                     *           },
+                     *           "filers": [
+                     *             {
+                     *               "cik": "1681348",
+                     *               "role": "filer",
+                     *               "name": "VivoPower PLC",
+                     *               "name_as_filed": "VivoPower PLC"
+                     *             }
+                     *           ],
+                     *           "version": {
+                     *             "schema_version": "invinite.doc.v1",
+                     *             "extractor_version": "h1",
+                     *             "content_sha256": "a8d76e2f78059ec2c36b158c0095a7b8e91ad948249fc1c7e2aa58a74ff44dbb",
+                     *             "canonical_sha256": "2af9c99ce273618395c9cfe8f07ef87dc5c216e449079de843db0b0720b4d59e",
+                     *             "source_snapshot_id": 25,
+                     *             "doc_type": "20-F"
+                     *           },
+                     *           "text_document_start": 59802,
+                     *           "snippet": {
+                     *             "text": " failure, could result in regulatory scrutiny, fines, claims, restrictions on operations, loss of tenant confidence and reputational damage, which could have a material adverse effect on the Group’s business, financial condition, results of…",
+                     *             "start": 2142,
+                     *             "text_truncated": true
+                     *           },
+                     *           "cited": [
+                     *             {
+                     *               "block_id": "b00188",
+                     *               "ordinal": 188,
+                     *               "kind": "paragraph",
+                     *               "text": "We are exposed to supply chain concentration risk in respect of critical hardware and equipment.",
+                     *               "section_path": [
+                     *                 "PART I"
+                     *               ],
+                     *               "page": {
+                     *                 "ordinal": 12,
+                     *                 "printed": null
+                     *               },
+                     *               "anchor": {
+                     *                 "ids": [],
+                     *                 "line": null,
+                     *                 "xpath": "/html/body/p[287]",
+                     *                 "html_id": null,
+                     *                 "annotated_id": null
+                     *               },
+                     *               "neighbors": {
+                     *                 "prev": "b00187",
+                     *                 "next": "b00189"
+                     *               },
+                     *               "footnote_links": [],
+                     *               "figure": null,
+                     *               "document_start": 62223,
+                     *               "document_end": 62319,
+                     *               "text_start": 0,
+                     *               "text_truncated": false,
+                     *               "citation": {
+                     *                 "version_id": "af82694e-4fc2-50b7-abaf-ea6aefda66ef",
+                     *                 "block_id": "b00188",
+                     *                 "page": 12,
+                     *                 "printed": null
+                     *               }
+                     *             }
+                     *           ],
+                     *           "neighbors": [
+                     *             {
+                     *               "block_id": "b00187",
+                     *               "ordinal": 187,
+                     *               "kind": "paragraph",
+                     *               "text": "The Group operates data center infrastructure that may be classified as critical infrastructure or essential services under applicable national security and digital resilience frameworks. As the Group’s facilities are designed to host AI wo…",
+                     *               "section_path": [
+                     *                 "PART I"
+                     *               ],
+                     *               "page": {
+                     *                 "ordinal": 12,
+                     *                 "printed": null
+                     *               },
+                     *               "anchor": {
+                     *                 "ids": [],
+                     *                 "line": null,
+                     *                 "xpath": "/html/body/p[285]",
+                     *                 "html_id": null,
+                     *                 "annotated_id": null
+                     *               },
+                     *               "neighbors": {
+                     *                 "prev": "b00186",
+                     *                 "next": "b00188"
+                     *               },
+                     *               "footnote_links": [],
+                     *               "figure": null,
+                     *               "document_start": 60584,
+                     *               "document_end": 62222,
+                     *               "text_start": 0,
+                     *               "text_truncated": false,
+                     *               "citation": {
+                     *                 "version_id": "af82694e-4fc2-50b7-abaf-ea6aefda66ef",
+                     *                 "block_id": "b00187",
+                     *                 "page": 12,
+                     *                 "printed": null
+                     *               }
+                     *             }
+                     *           ],
+                     *           "footnotes": []
+                     *         }
+                     *       ],
+                     *       "mode": "lexical",
+                     *       "next_cursor": "eyJ2IjoxLCJmIjoiZTVhNjcxN2QyOTQyYzI0MmIwNTAyOGYxNWExNGM1N2UiLCJkIjoiNjk2MTc3MTU4NDEwMjIzNTE0OSIsInQiOjE3OTQxMzkzMTksImsiOlswLjAxOTYwNzg0NCwiMjAyNi0xMS0wNSIsIjAxZjYyOGM0LTlhMDYtNWQ1Yi05M2FlLWIyNjNlOTYyM2I0YyIsMTBdfQ",
+                     *       "provider": {
+                     *         "slot": "search",
+                     *         "status": "ready",
+                     *         "version": "filing-search/1"
+                     *       },
+                     *       "next_url": "https://api.data.invinite.com/v1/sec/search?q=supply+chain+concentration&cursor=eyJ2IjoxLCJmIjoiZTVhNjcxN2QyOTQyYzI0MmIwNTAyOGYxNWExNGM1N2UiLCJkIjoiNjk2MTc3MTU4NDEwMjIzNTE0OSIsInQiOjE3OTQxMzkzMTksImsiOlswLjAxOTYwNzg0NCwiMjAyNi0xMS0wNSIsIjAx…"
+                     *     }
+                     */
                     "application/json": {
                         /** @description The backend contract version (`secdoors.v1`) */
                         api_schema: string;
@@ -20727,15 +21666,15 @@ export interface operations {
                      *                     "value": 0,
                      *                     "segment_id": "seg_research_and_development_expenses_business_segment",
                      *                     "axis": "StatementBusinessSegmentsAxis",
-                     *                     "member": "EuropeSegmentMember"
+                     *                     "member": "AmericasSegmentMember"
                      *                   }
                      *                 ],
                      *                 "is_revenue_from_contract_with_customer": [
                      *                   {
-                     *                     "value": 82378000000,
+                     *                     "value": 30908000000,
                      *                     "segment_id": "seg_revenue_business_segment",
                      *                     "axis": "StatementBusinessSegmentsAxis",
-                     *                     "member": "GreaterChinaSegmentMember"
+                     *                     "member": "JapanSegmentMember"
                      *                   }
                      *                 ]
                      *               }
@@ -20867,11 +21806,11 @@ export interface operations {
                      *                     "segment": {
                      *                       "0": {
                      *                         "dimension": "us-gaap:StatementBusinessSegmentsAxis",
-                     *                         "value": "aapl:EuropeSegmentMember"
+                     *                         "value": "aapl:AmericasSegmentMember"
                      *                       }
                      *                     },
                      *                     "axis": "StatementBusinessSegmentsAxis",
-                     *                     "member": "EuropeSegmentMember",
+                     *                     "member": "AmericasSegmentMember",
                      *                     "metric": "ResearchAndDevelopmentExpense",
                      *                     "accession_number": "0000320193-26-000026",
                      *                     "html_tag_id": null,
@@ -20881,19 +21820,19 @@ export interface operations {
                      *                 ],
                      *                 "is_revenue_from_contract_with_customer": [
                      *                   {
-                     *                     "value": 82378000000,
+                     *                     "value": 30908000000,
                      *                     "segment_id": "seg_revenue_business_segment",
                      *                     "segment": {
                      *                       "0": {
                      *                         "dimension": "us-gaap:StatementBusinessSegmentsAxis",
-                     *                         "value": "aapl:GreaterChinaSegmentMember"
+                     *                         "value": "aapl:JapanSegmentMember"
                      *                       }
                      *                     },
                      *                     "axis": "StatementBusinessSegmentsAxis",
-                     *                     "member": "GreaterChinaSegmentMember",
+                     *                     "member": "JapanSegmentMember",
                      *                     "metric": "RevenueFromContractWithCustomerExcludingAssessedTax",
                      *                     "accession_number": "0000320193-26-000026",
-                     *                     "html_tag_id": "f-1086",
+                     *                     "html_tag_id": "f-1087",
                      *                     "html_label": "Net sales",
                      *                     "unit": "usd"
                      *                   }
@@ -23308,21 +24247,21 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "generated_at": "2026-11-04T09:40:19.989Z",
+                     *       "generated_at": "2026-11-08T12:02:03.701Z",
                      *       "services": [
                      *         {
                      *           "family": "company",
-                     *           "status": "outage",
-                     *           "uptime_7d": 0.961,
-                     *           "uptime_30d": 0.983,
-                     *           "uptime_90d": 0.983
+                     *           "status": "operational",
+                     *           "uptime_7d": 0.956,
+                     *           "uptime_30d": 0.985,
+                     *           "uptime_90d": 0.985
                      *         }
                      *       ],
                      *       "universe": {
-                     *         "companies": 6219,
+                     *         "companies": 6225,
                      *         "earnings_calls": {
                      *           "scope": "all",
-                     *           "companies": 5547
+                     *           "companies": 5535
                      *         }
                      *       }
                      *     }
@@ -23394,8 +24333,8 @@ export interface operations {
                      *         "train": "Model training is contract-only.",
                      *         "audio": "Audio files carry a forensic watermark that identifies the recording. Audio is subject to per-company takedown and may not be re-hosted.",
                      *         "sec_data": "Figures and filings originate from SEC EDGAR; the standardisation, mapping and derived metrics are Invinite's.",
-                     *         "news": "Issuer and SEC text is served in full with its attribution; the licensee shows publisher, source URL and date next to it and may forward it unmodified; the resale rule applies.",
-                     *         "pdf_documents": "Branded PDFs of transcripts and news items are permanent URLs to one shared file per version. They may be shown, downloaded and forwarded unmodified with the notice page intact; the resale rule applies unchanged. News PDFs reproduce issuer …"
+                     *         "news": "News text is Invinite's own summary of the issuer's or the SEC's publication (the publisher's text and media are never served); the licensee shows the attribution (publisher, source URL and date) next to it; the resale rule applies.",
+                     *         "pdf_documents": "Branded PDFs of transcripts and news items are permanent URLs to one shared file per version. They may be shown, downloaded and forwarded unmodified with the notice page intact; the resale rule applies unchanged. News PDFs carry Invinite's …"
                      *       },
                      *       "rights": [
                      *         "display"
@@ -23447,10 +24386,10 @@ export interface operations {
                      *         }
                      *       ],
                      *       "universe": {
-                     *         "companies": 6219,
+                     *         "companies": 6225,
                      *         "earnings_calls": {
                      *           "scope": "all",
-                     *           "companies": 5547
+                     *           "companies": 5535
                      *         }
                      *       }
                      *     }

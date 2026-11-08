@@ -120,7 +120,6 @@ import {
     getInstitutions,
     getIpos,
     getMarketHolidays,
-    getNewsAssetDownload,
     getNewsItem,
     getNewsList,
     getSecDocument,
@@ -1680,8 +1679,6 @@ export function useEarningsLiveStream(input: EarningsEventSelector) {
 export type NewsListInput = {
     earnings?: "false" | "true";
     from?: string;
-    /** Only items with media (`has_media=true`). */
-    hasMedia?: boolean;
     issuerCategory?: Array<string>;
     issuerTag?: Array<string>;
     kind?: Array<string>;
@@ -1725,7 +1722,6 @@ export function useNewsPage(input: NewsListInput & { cursor: null | string }) {
             input.kind?.join(",") ?? "",
             input.topic?.join(",") ?? "",
             input.earnings ?? "",
-            input.hasMedia ? "media" : "",
             input.publicationType?.join(",") ?? "",
             input.issuerCategory?.join(",") ?? "",
             input.issuerTag?.join(",") ?? "",
@@ -1736,12 +1732,9 @@ export function useNewsPage(input: NewsListInput & { cursor: null | string }) {
     });
 }
 
-// The image view URLs inside a news item live 24 h: an item cached for longer than half of that is fetched again.
-const NEWS_ITEM_STALE_MS = 12 * 60 * 60 * 1000;
-
 /**
- * One news item with its text, plain and HTML (STANDARD); a null id keeps it idle. Status-aware: 404 / plan are panel
- * states. `refetch` renews the image URLs (the panel calls it once on an image error).
+ * One news item with Invinite's summary, plain and HTML (STANDARD); a null id keeps it idle. Status-aware: 404 / plan
+ * are panel states.
  */
 export function useNewsItem(id: null | string) {
     return useEarningsQuery<NewsItemResponse>({
@@ -1749,21 +1742,7 @@ export function useNewsItem(id: null | string) {
         errorMessage: null,
         load: apiKey => getNewsItem({ data: { apiKey, id: id ?? "" } }),
         queryKey: ["news", "item", id ?? ""],
-        staleTime: NEWS_ITEM_STALE_MS,
-    });
-}
-
-/**
- * A news image / file's short-lived URL (≤ 60 s, a bearer credential): a mutation, so the URL is fetched only on the
- * user's click and never lands in the query cache; the caller opens it at once and keeps it nowhere.
- */
-export function useNewsAssetDownload() {
-    const { apiKey } = useApiKey();
-
-    return useMutation({
-        mutationFn: ({ assetId, id, purpose }: { assetId: string; id: string; purpose: "display" | "download" }) =>
-            getNewsAssetDownload({ data: { apiKey: apiKey ?? undefined, assetId, id, purpose } }).catch(rethrowApiError),
-        retry: false,
+        staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }
 

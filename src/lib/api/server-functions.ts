@@ -40,7 +40,6 @@ import type {
     InstitutionsResponse,
     IposResponse,
     MarketHolidaysResponse,
-    NewsAssetDownloadResponse,
     NewsItemResponse,
     NewsListResponse,
     SecDocumentResponse,
@@ -1327,8 +1326,6 @@ const newsListSchema = z.object({
     cursor: z.string().optional(),
     earnings: z.enum(["true", "false"]).optional(),
     from: z.string().optional(),
-    /** Only items with media the API serves now (`media_count` > 0). */
-    hasMedia: z.boolean().optional(),
     issuerCategory: z.array(z.string()).optional(),
     issuerTag: z.array(z.string()).optional(),
     kind: z.array(z.string()).optional(),
@@ -1357,7 +1354,6 @@ export const getNewsList = createServerFn({ method: "GET" })
                     cursor: data.cursor,
                     earnings: data.earnings,
                     from: data.from,
-                    has_media: data.hasMedia ? "true" : undefined,
                     issuer_category: listOrUndefined(data.issuerCategory),
                     issuer_tag: listOrUndefined(data.issuerTag),
                     kind: listOrUndefined(data.kind),
@@ -1382,30 +1378,8 @@ export const getNewsItem = createServerFn({ method: "GET" })
     .handler(async ({ data }): Promise<NewsItemResponse> => {
         const api = createApiClient(data.apiKey);
 
-        // Both text forms: body_html renders the article, body_text is the fallback.
         const { data: res, error, response } = await api.GET("/v1/news/{id}", {
-            params: { path: { id: data.id }, query: { body: "both" } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-/** A short-lived (≤ 60 s) URL of one news image / file: asked only on an explicit click, never cached. */
-export const getNewsAssetDownload = createServerFn({ method: "GET" })
-    .inputValidator(z.object({
-        apiKey: apiKeySchema,
-        assetId: z.string().uuid(),
-        id: z.string().uuid(),
-        /** `display` = an inline URL (an image, or a PDF viewed in the browser); `download` = an attachment. */
-        purpose: z.enum(["display", "download"]),
-    }))
-    .handler(async ({ data }): Promise<NewsAssetDownloadResponse> => {
-        const api = createApiClient(data.apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/news/{id}/assets/{asset_id}/download", {
-            params: { path: { asset_id: data.assetId, id: data.id }, query: { purpose: data.purpose } },
+            params: { path: { id: data.id } },
         });
 
         if (error) throwApiError(error, response);

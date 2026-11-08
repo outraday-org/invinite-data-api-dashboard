@@ -1,41 +1,37 @@
-import { DownloadIcon, ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
 
-import type { NewsAsset, NewsAssetDownloadResponse, NewsAttribution, NewsDevelopment, NewsItemResponse } from "@/lib/api/types";
+import type { NewsAttribution, NewsDevelopment, NewsItemResponse } from "@/lib/api/types";
 
-import { PdfDocumentSection, PdfInlineViewer } from "@/components/pdf/pdf-inline-viewer";
+import { PdfDocumentSection } from "@/components/pdf/pdf-inline-viewer";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
-import { useNewsAssetDownload, useNewsItem } from "@/lib/api/queries";
-import { formatBytes, formatInstant } from "@/lib/earnings/format";
-import { prepareArticleHtml } from "@/lib/news/article-html";
-import { startDownload } from "@/lib/news/download";
+import { useNewsItem } from "@/lib/api/queries";
+import { formatInstant } from "@/lib/earnings/format";
 import {
-    canViewPdf,
     CLAIM_STATUS_LABELS,
     edgarLabel,
-    fileTypeLabel,
     NEWS_KIND_LABELS,
     NEWS_TOPIC_LABELS,
     publicationTypeLabel,
     publishedBy,
     sourceLabel,
 } from "@/lib/news/labels";
+import { prepareSummaryHtml } from "@/lib/news/summary-html";
 import { Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
-import { ArticleBody } from "./article-body";
+import { SummaryBody } from "./summary-body";
 
 const EXTERNAL = { rel: "noopener noreferrer", target: "_blank" } as const;
 
 /**
  * The attribution block (D26: backend earnings tasks/inhouse-news-pipeline README), rendered ABOVE every text this
- * dashboard shows: publisher, original link, publication date, the API's verbatim statement, the © holder of an
- * issuer text and an SEC filing's form + accession. This is the reference rendering other consumers copy.
+ * dashboard shows: publisher, original link, publication date, the API's statement (the text below is Invinite's
+ * summary, not the publisher's), the © holder of an issuer publication and an SEC filing's form + accession. This is
+ * the reference rendering other consumers copy.
  */
 export function AttributionBlock({ attribution }: { attribution: NewsAttribution }) {
     const edgar = edgarLabel(attribution.edgar);
@@ -65,229 +61,13 @@ export function AttributionBlock({ attribution }: { attribution: NewsAttribution
     );
 }
 
-/** "PDF · 1.2 MB · 1200 × 800": what the file is before anyone fetches it. */
-function assetFacts(asset: NewsAsset) {
-    return [
-        fileTypeLabel(asset.content_type),
-        asset.byte_size === null ? null : formatBytes(asset.byte_size),
-        asset.width && asset.height ? `${asset.width} × ${asset.height}` : null,
-    ].filter(Boolean).join(" · ");
-}
-
-const NOT_DOWNLOADABLE = "This file cannot be downloaded right now.";
-
-/** Opens a fresh inline URL in a new tab: the tab is opened on the click (no popup block), then pointed at the file. */
-function useOpenInNewTab(assetId: string, itemId: string) {
-    const download = useNewsAssetDownload();
-
-    const open = () => {
-        const tab = window.open("", "_blank");
-
-        if (tab) tab.opener = null;
-
-        download.mutate({ assetId, id: itemId, purpose: "display" }, {
-            onError: () => tab?.close(),
-            onSuccess: (delivered) => {
-                if (tab) tab.location.href = delivered.url;
-
-                download.reset();
-            },
-        });
-    };
-
-    return { error: download.error, isPending: download.isPending, open };
-}
-
-/**
- * One image / original file: type, size, metadata and credit always; the file only through the API's short-lived URL,
- * on click. "View" shows a PDF inline in the panel (`purpose=display`: the browser's PDF viewer, with "Open in new
- * tab"); "Show" previews a displayable image; "Download" (`purpose=download`) saves the file at once (`startDownload`:
- * no second click, the URL kept nowhere); neither permission → the original link only. A viewed / shown URL lives
- * only in this row's state while the panel is open (the frame has loaded the bytes; it is never cached or stored).
- */
-function AssetRow({ asset, itemId }: { asset: NewsAsset; itemId: string }) {
-    const download = useNewsAssetDownload();
-
-    const newTab = useOpenInNewTab(asset.id, itemId);
-
-    const [preview, setPreview] = React.useState<NewsAssetDownloadResponse | null>(null);
-
-    const [refused, setRefused] = React.useState(false);
-
-    const credit = [asset.credit, asset.copyright_notice].filter(Boolean).join(" · ");
-
-    const facts = assetFacts(asset);
-
-    const pdf = canViewPdf(asset);
-
-    const request = (purpose: "display" | "download", onDelivered: (delivered: NewsAssetDownloadResponse) => void) => {
-        setRefused(false);
-
-        download.mutate({ assetId: asset.id, id: itemId, purpose }, { onSuccess: onDelivered });
-    };
-
-    const onDownload = () => request("download", (delivered) => {
-        // Only an attachment URL is followed: an inline one would replace this page.
-        if (delivered.purpose === "download") startDownload(delivered.url);
-        else setRefused(true);
-
-        download.reset();
-    });
-
-    const onShow = () => request("display", delivered => setPreview(delivered.purpose === "display" ? delivered : null));
-
-    const busy = download.isPending || newTab.isPending;
-
-    const viewer = preview && pdf
-        ? (
-                <PdfInlineViewer filename={asset.title ?? "PDF"} url={preview.url} />
-            )
-        : preview && (
-            <figure className="flex flex-col gap-1">
-                <img alt={asset.alt ?? asset.title ?? ""} className="max-h-80 w-auto self-start rounded border" referrerPolicy="no-referrer" src={preview.url} />
-                {(preview.credit ?? credit) && <figcaption className="text-muted-foreground">{preview.credit ?? credit}</figcaption>}
-            </figure>
-        );
-
-    return (
-        <li className="flex flex-col gap-1 rounded-md border p-2 text-xs" data-testid="news-asset">
-            <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="outline">{asset.kind}</Badge>
-                <span className="font-medium">{asset.title ?? asset.alt ?? "Untitled"}</span>
-                {facts && <span className="text-muted-foreground">{facts}</span>}
-            </div>
-            {asset.caption && <div>{asset.caption}</div>}
-            {credit && <div className="text-muted-foreground">{`Credit: ${credit}`}</div>}
-            {viewer}
-            {asset.can_display || asset.can_download
-                ? (
-                        <div className="flex flex-wrap items-center gap-2">
-                            {pdf && (preview
-                                ? (
-                                        <Button onClick={() => setPreview(null)} size="sm" type="button" variant="outline">
-                                            Hide
-                                        </Button>
-                                    )
-                                : (
-                                        <Button disabled={busy} onClick={onShow} size="sm" type="button" variant="outline">
-                                            View
-                                        </Button>
-                                    ))}
-                            {pdf && (
-                                <Button disabled={busy} onClick={newTab.open} size="sm" type="button" variant="outline">
-                                    <ExternalLinkIcon aria-hidden />
-                                    Open in new tab
-                                </Button>
-                            )}
-                            {asset.can_download && (
-                                <Button disabled={busy} onClick={onDownload} size="sm" type="button" variant="outline">
-                                    <DownloadIcon aria-hidden />
-                                    Download
-                                </Button>
-                            )}
-                            {asset.can_display && !pdf && !preview && (
-                                <Button disabled={busy} onClick={onShow} size="sm" type="button" variant="outline">
-                                    Show
-                                </Button>
-                            )}
-                            {(download.error ?? newTab.error) && <span className="text-destructive">{(download.error ?? newTab.error)?.message}</span>}
-                            {refused && <span className="text-destructive">{NOT_DOWNLOADABLE}</span>}
-                        </div>
-                    )
-                : asset.original_url && (
-                    <a className="underline underline-offset-4" href={asset.original_url} {...EXTERNAL}>At the source</a>
-                )}
-        </li>
-    );
-}
-
-/**
- * A stored image through its stable view URL (`view_url`, 24 h, no key): the hero above the article and the gallery of
- * images the article does not show inline. Caption and credit always go with it.
- */
-function ImageFigure({ asset, onImageError }: { asset: NewsAsset; onImageError?: () => void }) {
-    const credit = [asset.credit, asset.copyright_notice].filter(Boolean).join(" · ");
-
-    return (
-        <figure className="flex flex-col gap-1 text-xs" data-testid="news-image">
-            <img
-                alt={asset.alt ?? asset.title ?? ""}
-                className="h-auto max-w-full rounded border"
-                height={asset.height ?? undefined}
-                loading="lazy"
-                onError={onImageError}
-                referrerPolicy="no-referrer"
-                src={asset.view_url ?? ""}
-                width={asset.width ?? undefined}
-            />
-            {(asset.caption ?? asset.title) && <figcaption className="text-muted-foreground">{asset.caption ?? asset.title}</figcaption>}
-            {credit && <div className="text-muted-foreground">{`Credit: ${credit}`}</div>}
-        </figure>
-    );
-}
-
-const isImageAsset = (asset: NewsAsset) => asset.kind === "hero_image" || asset.kind === "gallery_image";
-
-// Browsers drop a download that starts while the previous one is still being handed over.
-const DOWNLOAD_ALL_GAP_MS = 400;
-
-/**
- * "Download all": every file of the item the API lets you download (`can_download`), one after the other, each through
- * its own fresh ≤ 60-s URL. The browser may ask once to allow several downloads.
- */
-function DownloadAll({ assets, itemId }: { assets: ReadonlyArray<NewsAsset>; itemId: string }) {
-    const download = useNewsAssetDownload();
-
-    const [failed, setFailed] = React.useState(0);
-
-    const [running, setRunning] = React.useState(false);
-
-    const onClick = async () => {
-        setRunning(true);
-
-        setFailed(0);
-
-        let failures = 0;
-
-        for (const [index, asset] of assets.entries()) {
-            if (index > 0) await new Promise(resolve => setTimeout(resolve, DOWNLOAD_ALL_GAP_MS));
-
-            try {
-                const delivered = await download.mutateAsync({ assetId: asset.id, id: itemId, purpose: "download" });
-
-                if (delivered.purpose === "download") startDownload(delivered.url);
-                else failures += 1;
-            }
-            catch {
-                failures += 1;
-            }
-        }
-
-        download.reset();
-
-        setFailed(failures);
-
-        setRunning(false);
-    };
-
-    return (
-        <div className="flex items-center gap-2 text-xs">
-            <Button disabled={running} onClick={() => void onClick()} size="sm" type="button" variant="outline">
-                <DownloadIcon aria-hidden />
-                {`Download all (${assets.length})`}
-            </Button>
-            {failed > 0 && <span className="text-destructive">{`${failed} of ${assets.length} could not be downloaded.`}</span>}
-        </div>
-    );
-}
-
-/** AI-read developments, each with its claim status (a planned launch is labelled planned) and its cited quotes. */
+/** AI-read developments, each with its claim status (a planned launch is labelled planned). */
 function Developments({ developments }: { developments: ReadonlyArray<NewsDevelopment> }) {
     return (
         <section className="flex flex-col gap-2">
             <div className="text-sm font-medium">AI-extracted developments</div>
             <div className="text-muted-foreground text-xs">
-                Read by a model from the text above: what the publisher announced, with the quotes it rests on — not verified facts.
+                Read by a model from the publication: what the publisher announced — not verified facts.
             </div>
             <ul className="flex flex-col gap-2">
                 {developments.map(development => (
@@ -308,11 +88,6 @@ function Developments({ developments }: { developments: ReadonlyArray<NewsDevelo
                         {development.effective_date_text && (
                             <div className="text-muted-foreground">{`When: ${development.effective_date_text}`}</div>
                         )}
-                        {development.evidence.map(evidence => (
-                            <blockquote className="border-l-2 pl-2 italic" key={`${evidence.block_id}:${evidence.start}`}>
-                                {evidence.quote}
-                            </blockquote>
-                        ))}
                     </li>
                 ))}
             </ul>
@@ -320,25 +95,25 @@ function Developments({ developments }: { developments: ReadonlyArray<NewsDevelo
     );
 }
 
-/** The item panel's body (pure: tested in `src/routes/-tests/news-page.test.tsx`). */
+/**
+ * The item panel's body (pure: tested in `src/routes/-tests/news-page.test.tsx`): the header (kind, source, publisher,
+ * the attribution block with date and source link) → the lede → Invinite's summary → developments → the branded PDF.
+ */
 export function NewsItemView({
     data,
     error,
     isLoading,
-    onImageError,
     onOpen,
 }: {
     data: NewsItemResponse | null;
     error: unknown;
     isLoading: boolean;
-    /** An image's view URL failed (expired): the panel fetches the item again for fresh ones. */
-    onImageError?: () => void;
     onOpen: (id: string) => void;
 }) {
-    // Sanitized once per answer (a refetch brings fresh view URLs), not on every render.
-    const bodyHtml = data?.content_status === "available" ? data.body_html : null;
+    const summaryHtml = data?.content_status === "available" ? data.summary_html : null;
 
-    const article = React.useMemo(() => (bodyHtml ? prepareArticleHtml(bodyHtml) : null), [bodyHtml]);
+    // Sanitized once per answer, not on every render.
+    const html = React.useMemo(() => (summaryHtml ? prepareSummaryHtml(summaryHtml) : null), [summaryHtml]);
 
     if (isTierError(error)) return <Notice badge="STANDARD" title="Your plan does not include news text" />;
 
@@ -350,20 +125,7 @@ export function NewsItemView({
 
     const publishers = publishedBy(data);
 
-    const downloadable = data.assets.filter(asset => asset.can_download);
-
-    const text = data.content_status === "available" ? (data.body_text ?? "") : "";
-
-    // What the article shows inline is not repeated around it.
-    const notInline = data.assets.filter(asset => !article?.inlineAssetIds.has(asset.id));
-
-    const hero = notInline.find(asset => asset.kind === "hero_image" && asset.view_url);
-
-    const below = notInline.filter(asset => asset !== hero);
-
-    const gallery = below.filter(asset => isImageAsset(asset) && asset.view_url);
-
-    const files = below.filter(asset => !gallery.includes(asset));
+    const text = data.content_status === "available" ? (data.summary_text ?? "") : "";
 
     return (
         <div className="flex flex-col gap-4">
@@ -389,13 +151,22 @@ export function NewsItemView({
 
             <AttributionBlock attribution={data.attribution} />
 
-            {hero && <ImageFigure asset={hero} onImageError={onImageError} />}
+            {data.description && <p className="text-sm font-medium" data-testid="news-lede">{data.description}</p>}
 
-            {article || text
-                ? <ArticleBody article={article} onImageError={onImageError} text={text} />
+            {html || text
+                ? (
+                        <section className="flex flex-col gap-1">
+                            {data.summary_words !== null && data.source_words !== null && (
+                                <div className="text-muted-foreground text-xs">
+                                    {`Summary by Invinite · ${data.summary_words.toLocaleString("en-US")} of ${data.source_words.toLocaleString("en-US")} words`}
+                                </div>
+                            )}
+                            <SummaryBody html={html} text={text} />
+                        </section>
+                    )
                 : (
                         <Notice title="Headline and link only">
-                            No text is served for this item.
+                            No summary is served for this item.
                             {" "}
                             <a className="underline underline-offset-4" href={data.attribution.source_url} {...EXTERNAL}>Open at source</a>
                         </Notice>
@@ -404,25 +175,6 @@ export function NewsItemView({
             {data.developments.length > 0 && <Developments developments={data.developments} />}
 
             <PdfDocumentSection filename={`news-${data.id}.pdf`} pdf={data.pdf} />
-
-            {(below.length > 0 || downloadable.length > 1) && (
-                <section className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-sm font-medium">Images and files</div>
-                        {downloadable.length > 1 && <DownloadAll assets={downloadable} itemId={data.id} />}
-                    </div>
-                    {gallery.length > 0 && (
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                            {gallery.map(asset => <ImageFigure asset={asset} key={asset.id} onImageError={onImageError} />)}
-                        </div>
-                    )}
-                    {files.length > 0 && (
-                        <ul className="flex flex-col gap-2">
-                            {files.map(asset => <AssetRow asset={asset} itemId={data.id} key={asset.id} />)}
-                        </ul>
-                    )}
-                </section>
-            )}
 
             <section className="flex flex-col gap-1 text-xs">
                 <div className="text-sm font-medium">Seen on</div>
@@ -442,36 +194,19 @@ export function NewsItemView({
 
 /** `?item=<id>`: the item in a dialog; `id: null` = closed (no request). */
 export function NewsItemPanel({ id, onClose, onOpen, title }: { id: null | string; onClose: () => void; onOpen: (id: string) => void; title?: string }) {
-    const { data, error, isLoading, refetch } = useNewsItem(id);
-
-    // An image error = its view URL expired: fresh URLs once per opened item, never a loop on a broken image. A ref,
-    // not state: every image of an expired answer fails in the same tick and must not each start a refetch.
-    const refetchedFor = React.useRef<null | string>(null);
-
-    // Closing the dialog re-arms it: the same item opened again later may hold expired URLs again.
-    React.useEffect(() => {
-        if (id === null) refetchedFor.current = null;
-    }, [id]);
-
-    const onImageError = React.useCallback(() => {
-        if (!id || refetchedFor.current === id) return;
-
-        refetchedFor.current = id;
-
-        void refetch();
-    }, [id, refetch]);
+    const { data, error, isLoading } = useNewsItem(id);
 
     return (
         <Dialog onOpenChange={open => !open && onClose()} open={id !== null}>
             <DialogContent className="sm:max-w-5xl">
                 <DialogHeader>
                     <DialogTitle>{data?.title ?? title ?? "News item"}</DialogTitle>
-                    <DialogDescription>Published text, shown verbatim with its attribution.</DialogDescription>
+                    <DialogDescription>Invinite&apos;s summary of the announcement</DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="h-[80vh] pr-3">
                     {/* p-px: the viewport clips what lies outside it, and a Card's ring-1 does */}
                     <div className="p-px">
-                        <NewsItemView data={data} error={error} isLoading={isLoading} onImageError={onImageError} onOpen={onOpen} />
+                        <NewsItemView data={data} error={error} isLoading={isLoading} onOpen={onOpen} />
                     </div>
                 </ScrollArea>
             </DialogContent>
