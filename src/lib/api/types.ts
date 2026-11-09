@@ -13,24 +13,10 @@ type ApiQuery<TPath extends keyof paths>
 // Response types derived from schema
 export type CompanySearchResponse = ApiResponse<"/v1/company/search", "get">;
 export type CompanyDetailsResponse = ApiResponse<"/v1/company/details", "get">;
-export type InsiderTradesResponse = ApiResponse<"/v1/insider-trades", "get">;
-export type IposResponse = ApiResponse<"/v1/ipos", "get">;
 export type CompanyFiscalPeriodsResponse = ApiResponse<"/v1/company/fiscal-periods", "get">;
 export type FinancialRatiosResponse = ApiResponse<"/v1/financial-metrics/ratios", "get">;
 export type FinancialGrowthResponse = ApiResponse<"/v1/financial-metrics/growth", "get">;
 export type FinancialCagrResponse = ApiResponse<"/v1/financial-metrics/cagr", "get">;
-export type InstitutionalTransactionsResponse = ApiResponse<
-    "/v1/institutional-ownership/transactions",
-    "get"
->;
-export type InstitutionalHoldingsResponse = ApiResponse<
-    "/v1/institutional-ownership/holdings-by-company",
-    "get"
->;
-export type InstitutionsResponse = ApiResponse<
-    "/v1/institutional-ownership/institutions",
-    "get"
->;
 
 // All 3 statement endpoints have the same response structure
 export type StandardizedFinancialsResponse = ApiResponse<"/v1/standardized/income-statement", "get">;
@@ -47,12 +33,7 @@ export type SegmentedFinancialsResponse = ApiResponse<"/v1/segmented-financials"
 // Derived entity types
 export type Company = CompanySearchResponse["companies"][number];
 export type CompanyDetails = CompanyDetailsResponse["companies"][number];
-export type InsiderTrade = InsiderTradesResponse["transactions"][number];
-export type Ipo = IposResponse["ipos"][number];
 export type CompanyFiscalPeriod = CompanyFiscalPeriodsResponse["companies"][number]["periods"][number];
-export type InstitutionalTransaction = InstitutionalTransactionsResponse["transactions"][number];
-export type InstitutionalHolding = InstitutionalHoldingsResponse["holdings"][number];
-export type Institution = InstitutionsResponse["institutions"][number];
 export type FinancialPeriod
     = StandardizedFinancialsPresentationResponse["companies"][number]["periods"][number];
 export type PresentationFinancialPeriod
@@ -115,8 +96,6 @@ export type SecManagerPortfolioResponse = SecJson<ApiResponse<"/v1/sec/holdings/
 export type SecReadiness = SecFilingsResponse["readiness"];
 export type SecReadinessStatus = SecReadiness["status"];
 export type SecFilerMatch = NonNullable<SecFilersResponse["matches"]>[number];
-export type SecFilingRow = NonNullable<SecFilingsResponse["filings"]>[number];
-export type SecFormFacet = NonNullable<SecFilingsResponse["form_facet"]>[number];
 export type SecSearchHit = NonNullable<SecSearchResponse["hits"]>[number];
 export type SecSearchCoverage = NonNullable<SecSearchResponse["coverage"]>;
 export type SecSearchMode = NonNullable<ApiQuery<"/v1/sec/search">["mode"]>;
@@ -147,6 +126,42 @@ export type V2MarketHolidaysSort = NonNullable<ApiQuery<"/v2/market-holidays">["
 export type V2CompanyExpand = "coverage";
 /** `GET /v2/filers/{cik}?expand=` values. */
 export type V2FilerExpand = "former_names" | "lifecycle" | "proposed_symbols" | "successors";
+
+// Data API v2 SEC family (`/v2/filings*`, `/v2/document-versions/*`, `/v2/holdings`, `/v2/holding-changes`,
+// `/v2/insider-trades*`, `/v2/ipos*`, backend tasks/data-api-v2 task 6). Readiness is `meta.coverage.state` on a 200
+// (`data: []` while pending); 403 `excluded` / 404 `not_covered` / 503 `unavailable` are problems.
+export type V2FilingsResponse = ApiResponse<"/v2/filings", "get">;
+/** `parties` / `relations` are free JSON in the spec: narrowed to `JsonValue`. */
+export type V2FilingDetailResponse = SecJson<ApiResponse<"/v2/filings/{accession}", "get">>;
+/** The canonical document content (blocks / pages / footnotes / toc / quality) is free JSON: narrowed to `JsonValue`. */
+export type V2DocumentVersionResponse = SecJson<ApiResponse<"/v2/document-versions/{version_id}", "get">>;
+export type V2DocumentFigureResponse = SecJson<ApiResponse<"/v2/document-versions/{version_id}/figures/{block_id}", "get">>;
+export type V2HoldingsResponse = ApiResponse<"/v2/holdings", "get">;
+export type V2HoldingChangesResponse = ApiResponse<"/v2/holding-changes", "get">;
+export type V2InsiderTradesResponse = ApiResponse<"/v2/insider-trades", "get">;
+export type V2IposResponse = ApiResponse<"/v2/ipos", "get">;
+
+export type V2Filing = V2FilingsResponse["data"][number];
+export type V2FilingDetail = V2FilingDetailResponse;
+export type V2FilingDocument = NonNullable<V2FilingDetail["documents"]>[number];
+export type V2FormFacet = NonNullable<V2FilingsResponse["meta"]["form_facet"]>[number];
+/** `report_date` is in the contract but a 400 until the door sorts by it: only `filed_at` is sent. */
+export type V2FilingsSort = Extract<NonNullable<ApiQuery<"/v2/filings">["sort"]>, "-filed_at" | "filed_at">;
+/** `GET /v2/filings/{accession}?expand=` values. */
+export type V2FilingExpand = "documents" | "parties" | "relations";
+export type V2Holding = V2HoldingsResponse["data"][number];
+export type V2HoldingChange = V2HoldingChangesResponse["data"][number];
+export type V2HoldingChangeType = V2HoldingChange["type"];
+export type V2HoldingsInstruments = NonNullable<ApiQuery<"/v2/holdings">["instruments"]>;
+export type V2InsiderTrade = V2InsiderTradesResponse["data"][number];
+export type V2InsiderSide = V2InsiderTrade["side"];
+export type V2Ipo = V2IposResponse["data"][number];
+export type V2IpoStage = V2Ipo["stage"];
+export type V2IposSort = NonNullable<ApiQuery<"/v2/ipos">["sort"]>;
+/** `meta.coverage` of a v2 list: `pending` (data empty, still filling) / `partial` / `complete`. */
+export type V2MetaCoverage = NonNullable<V2HoldingsResponse["meta"]["coverage"]>;
+/** `meta.source`: the documented provenance (dataset release, document version, accession, fetch time). */
+export type V2MetaSource = NonNullable<V2HoldingsResponse["meta"]["source"]>;
 
 // Data API v2 events family (`/v2/events*`, `/v2/guidance`, `/v2/kpis`, `/v2/investor-documents*`, `/v2/search/*`,
 // backend tasks/data-api-v2 task 7). Every per-event read names the event by id (no selector, no offset).

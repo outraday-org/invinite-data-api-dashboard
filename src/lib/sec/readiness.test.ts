@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { ApiRequestError, fromSerialized } from "@/lib/api/errors";
 
-import { coverageReasonText, isGenuineEmpty, reasonText, secAnswerState, secErrorState } from "./readiness";
+import { coverageReasonText, isGenuineEmpty, isV2GenuineEmpty, reasonText, secAnswerState, secErrorState, v2CoverageState } from "./readiness";
 import { SEC_LIFECYCLE_NOT_READY_BODY } from "./sec-fixtures";
 
 const secError = (status: number, error: string, code: string) =>
@@ -73,5 +73,45 @@ describe("answers and empties", () => {
         expect(coverageReasonText("held_gap")).toMatch(/gaps/);
 
         expect(coverageReasonText("brand_new_reason")).toBe("Results may be incomplete");
+    });
+});
+
+describe("v2 (task 6): meta.coverage on a 200, problems for refusals", () => {
+    it("pending and partial are states (with `through` as the detail); complete or no coverage render the rows", () => {
+        expect(v2CoverageState({ state: "pending" })).toEqual({ kind: "readiness", message: null, reason: null, status: "pending" });
+
+        expect(v2CoverageState({ state: "partial", through: "2026-09-30" }))
+            .toEqual({ kind: "readiness", message: "Complete through 2026-09-30", reason: null, status: "partial" });
+
+        expect(v2CoverageState({ state: "complete", through: "2026-09-30" })).toBeNull();
+
+        expect(v2CoverageState(undefined)).toBeNull();
+    });
+
+    it("an empty v2 list is genuine only with complete (or unstated) coverage", () => {
+        expect(isV2GenuineEmpty({ state: "complete" })).toBe(true);
+
+        expect(isV2GenuineEmpty(undefined)).toBe(true);
+
+        expect(isV2GenuineEmpty({ state: "pending" })).toBe(false);
+
+        expect(isV2GenuineEmpty({ state: "partial" })).toBe(false);
+    });
+
+    // Problems as `ApiRequestError` reads them: `error` = the problem `code`, `message` = `detail`.
+    const problem = (status: number, code: string, detail: string) => new ApiRequestError(status, { error: code, message: detail, requestId: "req_1" });
+
+    it.each([
+        [403, "excluded", "excluded"],
+        [404, "not_covered", "unknown"],
+        [503, "unavailable", "not_ready"],
+    ])("%i %s is the %s readiness state, the problem detail its message", (status, code, state) => {
+        expect(secErrorState(problem(status, code, "detail words"))).toEqual({ kind: "readiness", message: "detail words", reason: null, status: state });
+    });
+
+    it("the v2 plan gate (403 plan_required) is the tier state; a 400 problem is a refusal", () => {
+        expect(secErrorState(problem(403, "plan_required", "PRO"))).toEqual({ kind: "tier" });
+
+        expect(secErrorState(problem(400, "unknown_parameter", "Unknown parameter: offset"))).toEqual({ kind: "bad_request", message: "Unknown parameter: offset" });
     });
 });

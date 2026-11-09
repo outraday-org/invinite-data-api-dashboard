@@ -2,19 +2,23 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { SecDocumentResponse, SecFigureResponse } from "@/lib/api/types";
+import type { SecDocumentResponse, SecFigureResponse, V2DocumentFigureResponse } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
-import { NO_PUBLIC_COPY, SecBlocksView, SecFigureView, SecManifestView } from "@/components/sec/sec-source-panel";
+import { NO_PUBLIC_COPY, SecBlocksView, SecFigureView, SecManifestView, V2FilingDocumentsView } from "@/components/sec/sec-source-panel";
 import { ApiRequestError } from "@/lib/api/errors";
 import { SEC_DOCUMENT, SEC_MANIFEST } from "@/lib/sec/sec-fixtures";
 import { isRecord } from "@/lib/sec/source";
+import { V2_DOCUMENT_VERSION, V2_FILING_10K } from "@/lib/sec/v2-fixtures";
 
 // The views are rendered with their data directly: keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
     useSecDocumentBlocks: vi.fn(),
     useSecFigure: vi.fn(),
     useSecFilingManifest: vi.fn(),
+    useV2DocumentFigure: vi.fn(),
+    useV2DocumentVersion: vi.fn(),
+    useV2Filing: vi.fn(),
 }));
 
 afterEach(cleanup);
@@ -246,5 +250,77 @@ describe("SecReadinessNotice", () => {
         render(<SecReadinessNotice error={new ApiRequestError(403, { error: "Forbidden", message: "x" })} />);
 
         expect(screen.getByText("STANDARD")).toBeInTheDocument();
+    });
+});
+
+describe("v2 filing documents (`/v2/filings/{accession}?expand=documents`)", () => {
+    it("lists filename, EDGAR type, description, the public copy or 'No public copy yet', and Read only with a current version", () => {
+        const onRead = vi.fn();
+
+        render(<V2FilingDocumentsView data={V2_FILING_10K} error={null} isLoading={false} onRead={onRead} selectedFilename={null} />);
+
+        const primary = screen.getByText("aapl-20260926.htm").closest("tr")!;
+
+        expect(within(primary).getByRole("link", { name: /Original/ })).toHaveAttribute("href", expect.stringMatching(/^https:\/\/storage\.invinite\.com\/sec\//));
+
+        fireEvent.click(within(primary).getByRole("button", { name: /Read/ }));
+
+        expect(onRead).toHaveBeenCalledWith(expect.objectContaining({ currentVersionId: "8be0b759-1a9d-5f89-8308-bd86185f5e1f" }));
+
+        const exhibit = screen.getByText("a10-kexhibit4109262026.htm").closest("tr")!;
+
+        expect(within(exhibit).getByText(NO_PUBLIC_COPY)).toBeInTheDocument();
+
+        const schema = screen.getByText("aapl-20260926.xsd").closest("tr")!;
+
+        expect(within(schema).queryByRole("button")).toBeNull();
+
+        expect(within(schema).getByText("No readable version")).toBeInTheDocument();
+
+        expect(screen.getByRole("link", { name: /EDGAR index/ })).toHaveAttribute("href", expect.stringMatching(/^https:\/\/www\.sec\.gov\//));
+    });
+
+    it("a v2 problem (404 not_covered) is a state, not an empty list", () => {
+        const problem = new ApiRequestError(404, { error: "not_covered", message: "This filing is not in the SEC store" });
+
+        render(<V2FilingDocumentsView data={null} error={problem} isLoading={false} onRead={noop} selectedFilename={null} />);
+
+        expect(screen.getByText("Not known to the SEC store")).toBeInTheDocument();
+
+        expect(screen.getByText("This filing is not in the SEC store")).toBeInTheDocument();
+    });
+});
+
+describe("SecBlocksView over a v2 document version", () => {
+    it("reads version.id, the EDGAR source.url and pages inside the version", () => {
+        const onSelect = vi.fn();
+
+        render(<SecBlocksView data={V2_DOCUMENT_VERSION} error={null} isLoading={false} onSelect={onSelect} renderFigure={() => null} />);
+
+        expect(screen.getByText("Version 8be0b759-1a9d-5f89-8308-bd86185f5e1f")).toBeInTheDocument();
+
+        expect(screen.getByText("65 pages")).toBeInTheDocument();
+
+        expect(screen.getByRole("link", { name: /View on EDGAR/ })).toHaveAttribute("href", expect.stringMatching(/^https:\/\/www\.sec\.gov\//));
+
+        fireEvent.click(screen.getByRole("button", { name: /Next blocks/ }));
+
+        expect(onSelect).toHaveBeenLastCalledWith("b00003-b9999999");
+    });
+
+    it("an empty v2 selection says so (no readiness on v2: an answer is ready)", () => {
+        render(<SecBlocksView data={{ ...V2_DOCUMENT_VERSION, blocks: [] }} error={null} isLoading={false} onSelect={noop} renderFigure={() => null} />);
+
+        expect(screen.getByText("No blocks in this selection.")).toBeInTheDocument();
+    });
+
+    it("a v2 figure without an image: 'The image has no public copy yet'", () => {
+        const figure: V2DocumentFigureResponse = { citation: {}, figure: { alt: "Chart" }, image: null, version_id: "8be0b759-1a9d-5f89-8308-bd86185f5e1f" };
+
+        render(<SecFigureView data={figure} error={null} isLoading={false} />);
+
+        expect(screen.queryByRole("img")).toBeNull();
+
+        expect(screen.getByText("The image has no public copy yet")).toBeInTheDocument();
     });
 });

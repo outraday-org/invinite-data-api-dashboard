@@ -13,10 +13,6 @@ import type {
     CompanyFiscalPeriod,
     FiscalPeriodType,
     GrowthType,
-    InsiderTradesResponse,
-    InstitutionalHoldingsResponse,
-    InstitutionalTransactionsResponse,
-    IposResponse,
     RatioCategory,
     SearchMode,
     SecDocumentResponse,
@@ -40,6 +36,8 @@ import type {
     V2DateKind,
     V2DividendsResponse,
     V2DividendsSort,
+    V2DocumentFigureResponse,
+    V2DocumentVersionResponse,
     V2Event,
     V2EventComparisonResponse,
     V2EventsResponse,
@@ -49,13 +47,25 @@ import type {
     V2EventType,
     V2FilerExpand,
     V2FilerResponse,
+    V2FilingDetailResponse,
+    V2FilingExpand,
+    V2FilingsResponse,
+    V2FilingsSort,
     V2GuidanceBasis,
     V2GuidancePeriodKind,
     V2GuidanceResponse,
+    V2HoldingChangesResponse,
+    V2HoldingsInstruments,
+    V2HoldingsResponse,
+    V2InsiderSide,
+    V2InsiderTradesResponse,
     V2InvestorDocumentResponse,
     V2InvestorDocumentSearchResponse,
     V2InvestorDocumentsResponse,
     V2InvestorDocumentsSort,
+    V2IposResponse,
+    V2IposSort,
+    V2IpoStage,
     V2KpisResponse,
     V2LiveAudioResponse,
     V2MarketHolidaysResponse,
@@ -92,11 +102,6 @@ import {
     getFinancialCagr,
     getFinancialGrowth,
     getFinancialRatios,
-    getInsiderTrades,
-    getInstitutionalHoldingsByCompany,
-    getInstitutionalTransactions,
-    getInstitutions,
-    getIpos,
     getSecDocument,
     getSecExport,
     getSecExportFile,
@@ -114,15 +119,23 @@ import {
     getV2Audio,
     getV2Company,
     getV2Dividends,
+    getV2DocumentFigure,
+    getV2DocumentVersion,
     getV2Event,
     getV2EventComparison,
     getV2Events,
     getV2EventStats,
     getV2Filer,
+    getV2Filing,
+    getV2Filings,
     getV2Guidance,
+    getV2HoldingChanges,
+    getV2Holdings,
+    getV2InsiderTrades,
     getV2InvestorDocument,
     getV2InvestorDocuments,
     getV2InvestorDocumentSearch,
+    getV2Ipos,
     getV2Kpis,
     getV2LiveAudio,
     getV2MarketHolidays,
@@ -173,65 +186,6 @@ export const companyDetailsOptions = (identifier: string) =>
         queryFn: () => getCompanyDetails({ data: { identifier } }),
         queryKey: ["company", "details", identifier],
         staleTime: 5 * 60 * 1000,
-    });
-
-type InsiderTradesQueryInput = {
-    acquiredDisposed?: "A" | "D";
-    endDate?: string;
-    identifier: string;
-    limit?: number;
-    offset?: number;
-    sort?: "asc" | "desc";
-    startDate?: string;
-};
-
-type InstitutionalTransactionsQueryInput = {
-    calendarQuarter?: number;
-    calendarYear?: number;
-    endDate?: string;
-    identifier: string;
-    limit?: number;
-    offset?: number;
-    sort?: "asc" | "desc";
-    startDate?: string;
-    type?: "added" | "new_buy" | "reduced" | "sold_out";
-};
-
-type InstitutionalHoldingsQueryInput = {
-    identifier: string;
-    limit?: number;
-    minValue?: number;
-    offset?: number;
-    sort?: "asc" | "desc";
-};
-
-type InstitutionsQueryInput = {
-    ciks?: string;
-    limit?: number;
-    offset?: number;
-    sort?: "asc" | "desc";
-};
-
-type IposQueryInput = {
-    endDate?: string;
-    limit?: number;
-    offset?: number;
-    sort?: "asc" | "desc";
-    startDate?: string;
-};
-
-export const iposOptions = (input: IposQueryInput) =>
-    queryOptions({
-        queryFn: () => getIpos({ data: input }),
-        queryKey: [
-            "ipos",
-            input.startDate ?? "all",
-            input.endDate ?? "all",
-            input.sort ?? "desc",
-            input.limit ?? 40,
-            input.offset ?? 0,
-        ],
-        staleTime: 10 * 60 * 1000,
     });
 
 type StandardizedFinancialsInput = {
@@ -441,294 +395,6 @@ export function useCompanyDetails(identifier: string) {
     };
 }
 
-type InsiderTradesInfiniteInput = Omit<InsiderTradesQueryInput, "offset"> & {
-    limit: number;
-};
-
-type InstitutionalTransactionsInfiniteInput = Omit<InstitutionalTransactionsQueryInput, "offset"> & {
-    limit: number;
-};
-
-type InstitutionalHoldingsInfiniteInput = Omit<InstitutionalHoldingsQueryInput, "offset"> & {
-    limit: number;
-};
-
-type IposInfiniteInput = Omit<IposQueryInput, "offset"> & {
-    limit: number;
-};
-
-export function useInsiderTradesInfinite(input: InsiderTradesInfiniteInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const queryKey = [
-        "insider-trades",
-        "infinite",
-        input.identifier,
-        input.acquiredDisposed ?? "all",
-        input.startDate ?? "all",
-        input.endDate ?? "all",
-        input.sort ?? "desc",
-        input.limit,
-        String(apiKeyUpdatedAt),
-    ] as const;
-
-    const result = useInfiniteQuery<
-        InsiderTradesResponse,
-        Error,
-        InfiniteData<InsiderTradesResponse, number>,
-        typeof queryKey,
-        number
-    >({
-        enabled: hasHydrated && input.identifier.trim().length > 0,
-        getNextPageParam: (lastPage: InsiderTradesResponse) => {
-            const nextUrl = lastPage.next_url;
-
-            if (!nextUrl) return undefined;
-
-            let nextOffset: null | number = null;
-
-            try {
-                const parsed = new URL(nextUrl, "http://localhost");
-
-                const offsetParam = parsed.searchParams.get("offset");
-
-                if (offsetParam) nextOffset = Number(offsetParam);
-            }
-            catch {
-                nextOffset = null;
-            }
-
-            if (nextOffset === null || Number.isNaN(nextOffset)) return undefined;
-
-            return nextOffset;
-        },
-        initialPageParam: 0,
-        queryFn: ({ pageParam }) =>
-            getInsiderTrades({
-                data: {
-                    ...input,
-                    apiKey: apiKey ?? undefined,
-                    offset: Number(pageParam) || 0,
-                },
-            }),
-        queryKey,
-        staleTime: 10 * 60 * 1000,
-    });
-
-    useErrorToast(result.error, "Failed to load insider trades");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useInstitutionalTransactionsInfinite(input: InstitutionalTransactionsInfiniteInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const queryKey = [
-        "institutional-transactions",
-        "infinite",
-        input.identifier,
-        input.type ?? "all",
-        input.calendarYear ?? "all",
-        input.calendarQuarter ?? "all",
-        input.startDate ?? "all",
-        input.endDate ?? "all",
-        input.sort ?? "desc",
-        input.limit,
-        String(apiKeyUpdatedAt),
-    ] as const;
-
-    const result = useInfiniteQuery<
-        InstitutionalTransactionsResponse,
-        Error,
-        InfiniteData<InstitutionalTransactionsResponse, number>,
-        typeof queryKey,
-        number
-    >({
-        enabled: hasHydrated && input.identifier.trim().length > 0,
-        getNextPageParam: (lastPage: InstitutionalTransactionsResponse) => {
-            const nextUrl = lastPage.next_url;
-
-            if (!nextUrl) return undefined;
-
-            let nextOffset: null | number = null;
-
-            try {
-                const parsed = new URL(nextUrl, "http://localhost");
-
-                const offsetParam = parsed.searchParams.get("offset");
-
-                if (offsetParam) nextOffset = Number(offsetParam);
-            }
-            catch {
-                nextOffset = null;
-            }
-
-            if (nextOffset === null || Number.isNaN(nextOffset)) return undefined;
-
-            return nextOffset;
-        },
-        initialPageParam: 0,
-        queryFn: ({ pageParam }) =>
-            getInstitutionalTransactions({
-                data: {
-                    ...input,
-                    apiKey: apiKey ?? undefined,
-                    offset: Number(pageParam) || 0,
-                },
-            }),
-        queryKey,
-        staleTime: 10 * 60 * 1000,
-    });
-
-    useErrorToast(result.error, "Failed to load institutional transactions");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useInstitutionalHoldingsInfinite(input: InstitutionalHoldingsInfiniteInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const queryKey = [
-        "institutional-holdings",
-        "infinite",
-        input.identifier,
-        input.minValue ?? "all",
-        input.sort ?? "desc",
-        input.limit,
-        String(apiKeyUpdatedAt),
-    ] as const;
-
-    const result = useInfiniteQuery<
-        InstitutionalHoldingsResponse,
-        Error,
-        InfiniteData<InstitutionalHoldingsResponse, number>,
-        typeof queryKey,
-        number
-    >({
-        enabled: hasHydrated && input.identifier.trim().length > 0,
-        getNextPageParam: (lastPage: InstitutionalHoldingsResponse) => {
-            const nextUrl = lastPage.next_url;
-
-            if (!nextUrl) return undefined;
-
-            let nextOffset: null | number = null;
-
-            try {
-                const parsed = new URL(nextUrl, "http://localhost");
-
-                const offsetParam = parsed.searchParams.get("offset");
-
-                if (offsetParam) nextOffset = Number(offsetParam);
-            }
-            catch {
-                nextOffset = null;
-            }
-
-            if (nextOffset === null || Number.isNaN(nextOffset)) return undefined;
-
-            return nextOffset;
-        },
-        initialPageParam: 0,
-        queryFn: ({ pageParam }) =>
-            getInstitutionalHoldingsByCompany({
-                data: {
-                    ...input,
-                    apiKey: apiKey ?? undefined,
-                    offset: Number(pageParam) || 0,
-                },
-            }),
-        queryKey,
-        staleTime: 10 * 60 * 1000,
-    });
-
-    useErrorToast(result.error, "Failed to load institutional ownership");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useInstitutions(input: InstitutionsQueryInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const result = useQuery(
-        queryOptions({
-            enabled: hasHydrated && Boolean(input.ciks?.trim()),
-            queryFn: () => getInstitutions({ data: { ...input, apiKey: apiKey ?? undefined } }),
-            queryKey: [
-                "institutions",
-                input.ciks ?? "all",
-                input.sort ?? "asc",
-                input.limit ?? 100,
-                input.offset ?? 0,
-                String(apiKeyUpdatedAt),
-            ],
-            staleTime: 10 * 60 * 1000,
-        }),
-    );
-
-    useErrorToast(result.error, "Failed to load institutions");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useIposInfinite(input: IposInfiniteInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const queryKey = [
-        "ipos",
-        "infinite",
-        input.startDate ?? "all",
-        input.endDate ?? "all",
-        input.sort ?? "desc",
-        input.limit,
-        String(apiKeyUpdatedAt),
-    ] as const;
-
-    const result = useInfiniteQuery<
-        IposResponse,
-        Error,
-        InfiniteData<IposResponse, number>,
-        typeof queryKey,
-        number
-    >({
-        enabled: hasHydrated,
-        getNextPageParam: (lastPage, allPages) => {
-            if (lastPage.ipos.length < input.limit) return undefined;
-
-            return allPages.length * input.limit;
-        },
-        initialPageParam: 0,
-        queryFn: ({ pageParam }) =>
-            getIpos({
-                data: {
-                    ...input,
-                    apiKey: apiKey ?? undefined,
-                    offset: Number(pageParam) || 0,
-                },
-            }),
-        queryKey,
-        staleTime: 10 * 60 * 1000,
-    });
-
-    useErrorToast(result.error, "Failed to load IPOs");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
 export function useStandardizedFinancials(input: StandardizedFinancialsInput) {
     const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
 
@@ -919,11 +585,13 @@ function useEarningsInfinite<TPage extends { next_cursor?: null | string }>(opti
     fetchPage: (cursor: null | string, apiKey: string | undefined) => Promise<TPage>;
     queryKey: ReadonlyArray<unknown>;
     quietStatuses?: ReadonlyArray<number>;
+    /** Asked again while the loaded pages say so (e.g. `meta.coverage.state` pending: `refetchWhileCoveragePending`). */
+    refetchInterval?: (query: { state: { data?: InfiniteData<TPage, null | string> } }) => false | number;
     staleTime: number;
 }) {
     const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
 
-    const { enabled, errorMessage, fetchPage, queryKey, quietStatuses, staleTime } = options;
+    const { enabled, errorMessage, fetchPage, queryKey, quietStatuses, refetchInterval, staleTime } = options;
 
     const result = useInfiniteQuery<TPage, Error, InfiniteData<TPage, null | string>, ReadonlyArray<unknown>, null | string>({
         enabled: hasHydrated && enabled,
@@ -931,6 +599,7 @@ function useEarningsInfinite<TPage extends { next_cursor?: null | string }>(opti
         initialPageParam: null,
         queryFn: ({ pageParam }) => fetchPage(pageParam, apiKey ?? undefined).catch(rethrowApiError),
         queryKey: [...queryKey, String(apiKeyUpdatedAt)],
+        refetchInterval,
         retry: retryUnlessApiError,
         staleTime,
     });
@@ -1695,5 +1364,180 @@ export function useV2InvestorDocumentSearch(input: V2InvestorDocumentSearchInput
             input.limit ?? "",
         ],
         staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+// SEC family on v2 (`/v2/filings*`, `/v2/document-versions/*`, `/v2/holdings`, `/v2/holding-changes`,
+// `/v2/insider-trades`, `/v2/ipos`, backend tasks/data-api-v2 task 6). Every hook is status-aware (`errorMessage:
+// null`): 403 `excluded` / 404 `not_covered` / 503 `unavailable` and the plan gate are page states
+// (`SecReadinessNotice`, `secErrorState`). A list whose first page says `meta.coverage.state: pending` (`data: []`)
+// is asked again every 30 s until the store has it.
+
+/** 30 s while the first loaded page's `meta.coverage.state` is `pending`, else no refetch. */
+export function refetchWhileCoveragePending<TPage extends { meta: { coverage?: { state: string } } }>(
+    query: { state: { data?: InfiniteData<TPage, null | string> } },
+) {
+    return query.state.data?.pages.at(0)?.meta.coverage?.state === "pending" ? SEC_PENDING_REFETCH_MS : false;
+}
+
+export type V2FilingsInput = {
+    company: string;
+    /** Forms (any of). */
+    form?: Array<string>;
+    /** Day (`YYYY-MM-DD`, UTC): `filed_at.gte` its midnight. */
+    from?: string;
+    limit?: number;
+    sort?: V2FilingsSort;
+    /** Day (`YYYY-MM-DD`, UTC), inclusive: `filed_at.lt` the next midnight. */
+    to?: string;
+};
+
+/** A company's filings by cursor; `meta.form_facet` of the first page = the form picker. */
+export function useV2FilingsInfinite(input: V2FilingsInput) {
+    return useEarningsInfinite<V2FilingsResponse>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2Filings({
+            data: {
+                apiKey,
+                company: input.company,
+                cursor: cursor ?? undefined,
+                filedAtGte: input.from ? dayStartInstant(input.from) : undefined,
+                filedAtLt: input.to ? dayStartInstant(input.to, true) : undefined,
+                form: input.form,
+                limit: input.limit,
+                sort: input.sort,
+            },
+        }),
+        queryKey: ["v2", "filings", input.company, key(input.form), input.from ?? "", input.to ?? "", input.sort ?? "", input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** One filing's manifest with its expansions; idle for a null accession (the dialog is closed). */
+export function useV2Filing(accession: null | string, expand: ReadonlyArray<V2FilingExpand> = []) {
+    return useEarningsQuery<V2FilingDetailResponse>({
+        enabled: Boolean(accession),
+        errorMessage: null,
+        load: apiKey => getV2Filing({ data: { accession: accession ?? "", apiKey, expand: [...expand] } }),
+        queryKey: ["v2", "filing", accession ?? "", key(expand)],
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export type V2BlockSelection = { blocks?: string; footnotes?: boolean; neighbors?: number };
+
+/** The selected blocks of one document version; idle for a null version id. */
+export function useV2DocumentVersion(versionId: null | string, selection: V2BlockSelection) {
+    return useEarningsQuery<V2DocumentVersionResponse>({
+        enabled: Boolean(versionId),
+        errorMessage: null,
+        load: apiKey => getV2DocumentVersion({ data: { ...selection, apiKey, versionId: versionId ?? "" } }),
+        queryKey: ["v2", "document-version", versionId ?? "", selection.blocks ?? "", selection.footnotes ?? "", selection.neighbors ?? ""],
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** A figure of a document version (`image.url` = its permanent public image, or null). */
+export function useV2DocumentFigure(target: null | { blockId: string; versionId: string }) {
+    return useEarningsQuery<V2DocumentFigureResponse>({
+        enabled: target !== null,
+        errorMessage: null,
+        load: apiKey => getV2DocumentFigure({ data: { apiKey, blockId: target?.blockId ?? "", versionId: target?.versionId ?? "" } }),
+        queryKey: ["v2", "document-figure", target?.versionId ?? "", target?.blockId ?? ""],
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export type V2HoldingsInput = {
+    accession?: string;
+    company?: string;
+    /** Manager CIK(s), comma list. */
+    filer?: string;
+    instruments?: V2HoldingsInstruments;
+    limit?: number;
+    /** Quarter end (`YYYY-MM-DD`); omitted = the server's newest quarter whose 13F deadline passed. */
+    periodEnd?: string;
+};
+
+/** 13F positions by cursor; exactly one of `company` / `filer` / `accession` (none or several keeps it idle). */
+export function useV2HoldingsInfinite(input: V2HoldingsInput) {
+    const scopes = [input.company, input.filer, input.accession].filter(value => value && value.trim().length > 0);
+
+    return useEarningsInfinite<V2HoldingsResponse>({
+        enabled: scopes.length === 1,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2Holdings({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: [
+            "v2",
+            "holdings",
+            input.company ?? "",
+            input.filer ?? "",
+            input.accession ?? "",
+            input.periodEnd ?? "",
+            input.instruments ?? "",
+            input.limit ?? "",
+        ],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** A company's proven 13F position changes vs the prior quarter, by cursor (`period_end` omitted = the server's default). */
+export function useV2HoldingChangesInfinite(input: { company: string; limit?: number; periodEnd?: string }) {
+    return useEarningsInfinite<V2HoldingChangesResponse>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2HoldingChanges({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "holding-changes", input.company, input.periodEnd ?? "", input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export type V2InsiderTradesInput = {
+    company: string;
+    /** Day (`YYYY-MM-DD`, UTC): `filed_at.gte` its midnight. */
+    from?: string;
+    limit?: number;
+    side?: V2InsiderSide;
+    /** Day (`YYYY-MM-DD`, UTC), inclusive: `filed_at.lt` the next midnight. */
+    to?: string;
+};
+
+/** A company's insider trades, newest filed first, by cursor. A 404 `not_covered` (none ever stored) is a page state. */
+export function useV2InsiderTradesInfinite(input: V2InsiderTradesInput) {
+    return useEarningsInfinite<V2InsiderTradesResponse>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2InsiderTrades({
+            data: {
+                apiKey,
+                company: input.company,
+                cursor: cursor ?? undefined,
+                filedAtGte: input.from ? dayStartInstant(input.from) : undefined,
+                filedAtLt: input.to ? dayStartInstant(input.to, true) : undefined,
+                limit: input.limit,
+                side: input.side,
+            },
+        }),
+        queryKey: ["v2", "insider-trades", input.company, input.side ?? "", input.from ?? "", input.to ?? "", input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export type V2IposInput = { company?: string; limit?: number; sort?: V2IposSort; stage?: Array<V2IpoStage> };
+
+/** Offerings by cursor (one row per offering: registration track + listing-calendar row). */
+export function useV2IposInfinite(input: V2IposInput) {
+    return useEarningsInfinite<V2IposResponse>({
+        enabled: true,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2Ipos({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "ipos", input.company ?? "", key(input.stage), input.sort ?? "", input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
     });
 }

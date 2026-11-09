@@ -2,12 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
-import type { SecFilingsResponse } from "@/lib/api/types";
+import type { V2FilingsResponse } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
-import { useCompanyFiscalPeriods, useSecFilingsInfinite } from "@/lib/api/queries";
+import { useCompanyFiscalPeriods, useV2FilingsInfinite } from "@/lib/api/queries";
 import { fiscalPeriodIndex, formTypesOfFacet, toFilingListRow } from "@/lib/sec/parity";
+import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 
 import type { FilingHtmlTarget } from "./-components/html-dialog";
 
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/$ticker/filings/")({
     component: FilingsPage,
 });
 
-/** Filings per page of `/v1/sec/filings` (one page per `next_cursor`). */
+/** Filings per page of `/v2/filings` (one page per `next_cursor`). */
 const FILINGS_PAGE = 40;
 
 function FilingsPage() {
@@ -34,7 +35,7 @@ function FilingsPage() {
     // The SEC store's documents of one accession (the source panel).
     const [secTarget, setSecTarget] = React.useState<null | SecPanelTarget>(null);
 
-    // `/v1/sec/filings` (ticker or CIK), newest first by default, one page per `next_cursor`.
+    // `/v2/filings?company=<ticker>`, newest filed first by default (`-filed_at`), one page per `next_cursor`.
     const {
         data: pagedData,
         error: errorPaged,
@@ -42,11 +43,11 @@ function FilingsPage() {
         hasNextPage,
         isFetchingNextPage,
         isLoading: loadingPaged,
-    } = useSecFilingsInfinite({
-        form: formTypeFilter ?? undefined,
-        identifier: ticker,
+    } = useV2FilingsInfinite({
+        company: ticker,
+        form: formTypeFilter ? [formTypeFilter] : undefined,
         limit: FILINGS_PAGE,
-        order: sortDirection,
+        sort: sortDirection === "desc" ? "-filed_at" : "filed_at",
     });
 
     // Fiscal / calendar quarters by `report_date` = `period_end` (one request set per company, never per row).
@@ -54,10 +55,10 @@ function FilingsPage() {
 
     const periods = React.useMemo(() => fiscalPeriodIndex(fiscalPeriods ?? []), [fiscalPeriods]);
 
-    const pages: ReadonlyArray<SecFilingsResponse> = React.useMemo(() => pagedData?.pages ?? [], [pagedData]);
+    const pages: ReadonlyArray<V2FilingsResponse> = React.useMemo(() => pagedData?.pages ?? [], [pagedData]);
 
     const displayFilings = React.useMemo(
-        () => pages.flatMap(page => (page.filings ?? []).flatMap((row) => {
+        () => pages.flatMap(page => page.data.flatMap((row) => {
             const filing = toFilingListRow(row, periods);
 
             return filing ? [filing] : [];
@@ -65,8 +66,8 @@ function FilingsPage() {
         [pages, periods],
     );
 
-    // The form-type picker = the filer's `form_facet`; the last one seen stays while a filtered list loads.
-    const facetForms = React.useMemo(() => formTypesOfFacet(pages.at(0)?.form_facet), [pages]);
+    // The form-type picker = the company's `meta.form_facet`; the last one seen stays while a filtered list loads.
+    const facetForms = React.useMemo(() => formTypesOfFacet(pages.at(0)?.meta.form_facet), [pages]);
 
     const [availableFormTypes, setAvailableFormTypes] = React.useState<{ forms: Array<string>; ticker: string }>({ forms: [], ticker });
 
@@ -84,9 +85,10 @@ function FilingsPage() {
     else {
         content = (
             <>
-                <SecReadinessNotice readiness={pages.at(-1)?.readiness} />
+                <SecReadinessNotice coverage={pages.at(0)?.meta.coverage} />
                 <FilingsList
                     displayFilings={displayFilings}
+                    emptyIsGenuine={isV2GenuineEmpty(pages.at(0)?.meta.coverage)}
                     hasNextPage={hasNextPage}
                     isFetchingNextPage={isFetchingNextPage}
                     isLoading={loadingPaged}
@@ -94,7 +96,7 @@ function FilingsPage() {
                     onOpenHtml={filing => setHtmlDialog({ ...filing, ticker })}
                     onOpenSecDocuments={filing => setSecTarget({
                         accession: filing.accessionNumber,
-                        kind: "filing",
+                        kind: "v2-filing",
                         title: `${ticker} · ${filing.formType} · ${filing.accessionNumber}`,
                     })}
                     onSortToggle={() => setSortDirection(prev => (prev === "desc" ? "asc" : "desc"))}
@@ -117,7 +119,7 @@ function FilingsPage() {
 
                     setSecTarget({
                         accession: filing.accessionNumber,
-                        kind: "filing",
+                        kind: "v2-filing",
                         title: `${filing.ticker} · ${filing.formType} · ${filing.accessionNumber}`,
                     });
                 }}

@@ -3,7 +3,15 @@
  * parameter is a 400 `unknown_parameter`, so an unset one is never sent), the `expand` lists and the company
  * coverage's words.
  */
-import type { V2CompanyCoverage, V2CompanyExpand, V2EventExpand, V2FilerExpand, V2SlidesInclude } from "./types";
+import type {
+    V2CompanyCoverage,
+    V2CompanyExpand,
+    V2EventExpand,
+    V2FilerExpand,
+    V2FilingExpand,
+    V2IpoStage,
+    V2SlidesInclude,
+} from "./types";
 
 export const V2_COMPANY_EXPANDS = ["coverage"] as const satisfies ReadonlyArray<V2CompanyExpand>;
 
@@ -18,6 +26,27 @@ export const V2_FILER_EXPANDS = [
     "former_names",
     "successors",
 ] as const satisfies ReadonlyArray<V2FilerExpand>;
+
+/** `GET /v2/filings/{accession}?expand=`. */
+export const V2_FILING_EXPANDS = ["documents", "parties", "relations"] as const satisfies ReadonlyArray<V2FilingExpand>;
+
+/** The offering stages of `GET /v2/ipos` (`stage=`), in lifecycle order; compile-time exhaustive over the contract enum. */
+export const V2_IPO_STAGES = [
+    "announced",
+    "registered",
+    "price_range",
+    "exchange_approved",
+    "effective",
+    "priced",
+    "trading",
+    "postponed",
+    "withdrawn",
+] as const satisfies ReadonlyArray<V2IpoStage>;
+
+type MissingIpoStage = Exclude<V2IpoStage, (typeof V2_IPO_STAGES)[number]>;
+
+// A stage added to the contract fails here until it gets its place in the list.
+export const V2_IPO_STAGES_COMPLETE: MissingIpoStage extends never ? true : never = true;
 
 /** The query without its unset (`undefined`) parameters: only what the caller set reaches the API. */
 export function v2Query<TQuery extends Record<string, unknown>>(query: TQuery): TQuery {

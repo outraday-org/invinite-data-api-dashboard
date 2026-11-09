@@ -1,10 +1,14 @@
 /**
- * The readiness / error states of `/v1/sec/*`, classified once for every SEC view. The API answers 200 ready /
+ * The readiness / error states of the SEC views, classified once. v2 (`/v2/filings*`, holdings, insider trades, IPOs,
+ * document versions; backend tasks/data-api-v2 task 6): a 200 carries `meta.coverage.state` (`pending` with
+ * `data: []`, `partial`, `complete`) — `v2CoverageState` —, and the refusals are problems: 403 `excluded`, 404
+ * `not_covered`, 503 `unavailable` (`V2_PROBLEM_STATUS`). v1 (`/v1/sec/*`, the `/sec/$cik` page and the documents
+ * search): The API answers 200 ready /
  * partial, 202 pending (the route body), 403 excluded / 404 unknown / 424 failed / 503 not_ready (`SecStoreError`),
  * 400 refusals, 409 `restart_required` (a stale cursor) and 413 `too_large`; the REST plan gate is `403 Forbidden`.
  * None of these is an empty result: "no results" is only a ready answer (and, for search, complete coverage).
  */
-import type { SecReadinessStatus, SecSearchCoverage } from "@/lib/api/types";
+import type { SecReadinessStatus, SecSearchCoverage, V2MetaCoverage } from "@/lib/api/types";
 
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
 
@@ -32,13 +36,23 @@ export type SecState
         | { kind: "tier" }
         | { kind: "too_large"; message: string };
 
-/** The state of a failed `/v1/sec/*` request (an `ApiRequestError` revived by the hooks). */
+/**
+ * The v2 problem codes of the SEC family as readiness states: 403 `excluded` keeps its name, 404 `not_covered` = not
+ * known to the store, 503 `unavailable` = an outage or a provider switched off (the problem's `detail` says which).
+ */
+export const V2_PROBLEM_STATUS: Readonly<Partial<Record<string, SecReadinessStatus>>> = {
+    excluded: "excluded",
+    not_covered: "unknown",
+    unavailable: "not_ready",
+};
+
+/** The state of a failed SEC request, v1 or v2 (an `ApiRequestError` revived by the hooks). */
 export function secErrorState(error: unknown): SecState {
     if (isTierError(error)) return { kind: "tier" };
 
     if (!(error instanceof ApiRequestError)) return { error, kind: "error" };
 
-    const status = error.body.readiness?.status ?? error.code;
+    const status = error.body.readiness?.status ?? V2_PROBLEM_STATUS[error.code] ?? error.code;
 
     if (isReadinessStatus(status)) {
         return { kind: "readiness", message: error.message, reason: error.reason ?? error.body.readiness?.reason ?? null, status };
@@ -58,6 +72,23 @@ export function secAnswerState(readiness: { reason: null | string; status: SecRe
     if (readiness.status === "ready") return null;
 
     return { kind: "readiness", message: null, reason: readiness.reason, status: readiness.status };
+}
+
+/**
+ * The state of a v2 200 by its `meta.coverage`: `pending` (the store is still filling this scope; `data` is empty) and
+ * `partial` (more rows are coming) are states, `complete` / no coverage = render the rows as they are (null).
+ */
+export function v2CoverageState(coverage: null | Pick<V2MetaCoverage, "state" | "through"> | undefined): null | SecState {
+    if (!coverage || coverage.state === "complete") return null;
+
+    const through = coverage.through ? `Complete through ${coverage.through}` : null;
+
+    return { kind: "readiness", message: through, reason: null, status: coverage.state };
+}
+
+/** A v2 list's "no rows" is genuine only when its coverage is complete (or not stated). */
+export function isV2GenuineEmpty(coverage: null | Pick<V2MetaCoverage, "state"> | undefined) {
+    return !coverage || coverage.state === "complete";
 }
 
 export const READINESS_TEXT: Record<SecReadinessStatus, { badge: string; title: string }> = {

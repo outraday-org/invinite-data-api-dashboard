@@ -1634,7 +1634,7 @@
             "type": "array",
             "description": "With `expand=proposed_symbols`",
             "items": {
-              "$ref": "#/components/schemas/ProposedSymbol"
+              "$ref": "#/components/schemas/ProposedTicker"
             },
             "nullable": true
           },
@@ -1695,6 +1695,43 @@
           }
         },
         "title": "FilerDetail"
+      },
+      "ProposedTicker": {
+        "type": "object",
+        "description": "A ticker the registration statement says the issuer applied, intends or was approved to list under",
+        "required": [
+          "symbol",
+          "exchange",
+          "security_class",
+          "source",
+          "ipo_calendar_match"
+        ],
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Proposed ticker, upper case (`ABCD.WS` for warrants)"
+          },
+          "exchange": {
+            "type": "string",
+            "nullable": true,
+            "description": "Exchange as an ISO 10383 MIC (`XNAS`, `XNYS`, `XASE`, `ARCX`, `BATS`); null when the prospectus names none or the name has no MIC mapping"
+          },
+          "security_class": {
+            "type": "string",
+            "nullable": true,
+            "description": "common, ads, units, warrants, rights, preferred or other"
+          },
+          "source": {
+            "type": "string",
+            "nullable": true,
+            "description": "How it was read: regex or llm"
+          },
+          "ipo_calendar_match": {
+            "type": "boolean",
+            "description": "The ticker and issuer name are also on the listing calendar (`sources.listing` of GET /v2/ipos) — a hint, not an identity"
+          }
+        },
+        "title": "ProposedTicker"
       },
       "Person": {
         "type": "object",
@@ -2244,6 +2281,1761 @@
           }
         },
         "title": "MappingRule"
+      },
+      "Filing": {
+        "type": "object",
+        "description": "One SEC filing",
+        "required": [
+          "accession",
+          "company",
+          "form",
+          "filing_date",
+          "report_date",
+          "filed_at",
+          "items",
+          "primary_document",
+          "roles",
+          "edgar_index_url"
+        ],
+        "properties": {
+          "accession": {
+            "type": "string",
+            "description": "Accession number",
+            "example": "0000320193-26-000026"
+          },
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "form": {
+            "type": "string",
+            "description": "Form",
+            "example": "10-K"
+          },
+          "filing_date": {
+            "type": "string",
+            "description": "Filing date",
+            "format": "date"
+          },
+          "report_date": {
+            "type": "string",
+            "description": "Period of report",
+            "format": "date",
+            "nullable": true
+          },
+          "filed_at": {
+            "type": "string",
+            "description": "EDGAR acceptance time",
+            "format": "date-time",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "description": "8-K items",
+            "items": {
+              "type": "string"
+            }
+          },
+          "primary_document": {
+            "type": "string",
+            "description": "Primary document file name",
+            "nullable": true
+          },
+          "roles": {
+            "type": "array",
+            "description": "The company's roles on the filing (filer, subject, …)",
+            "items": {
+              "type": "string"
+            }
+          },
+          "edgar_index_url": {
+            "type": "string",
+            "description": "EDGAR index page"
+          }
+        },
+        "title": "Filing"
+      },
+      "FilingDetail": {
+        "type": "object",
+        "description": "One SEC filing's manifest",
+        "required": [
+          "accession",
+          "company",
+          "form",
+          "filing_date",
+          "report_date",
+          "filed_at",
+          "items",
+          "edgar_index_url"
+        ],
+        "properties": {
+          "accession": {
+            "type": "string",
+            "description": "Accession number",
+            "example": "0000320193-26-000026"
+          },
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "form": {
+            "type": "string",
+            "description": "Form"
+          },
+          "filing_date": {
+            "type": "string",
+            "description": "Filing date",
+            "format": "date"
+          },
+          "report_date": {
+            "type": "string",
+            "description": "Period of report",
+            "format": "date",
+            "nullable": true
+          },
+          "filed_at": {
+            "type": "string",
+            "description": "EDGAR acceptance time",
+            "format": "date-time",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "description": "8-K items",
+            "items": {
+              "type": "string"
+            }
+          },
+          "edgar_index_url": {
+            "type": "string",
+            "description": "EDGAR index page"
+          },
+          "documents": {
+            "type": "array",
+            "description": "With `expand=documents`",
+            "items": {
+              "$ref": "#/components/schemas/FilingDocument"
+            },
+            "nullable": true
+          },
+          "parties": {
+            "type": "array",
+            "description": "With `expand=parties`",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "A party (filer, subject, filed-by)"
+            },
+            "nullable": true
+          },
+          "relations": {
+            "type": "array",
+            "description": "With `expand=relations`",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "A related filing"
+            },
+            "nullable": true
+          }
+        },
+        "title": "FilingDetail"
+      },
+      "FilingDocument": {
+        "type": "object",
+        "description": "One document of a filing",
+        "required": [
+          "filename",
+          "type",
+          "description",
+          "current_version_id",
+          "source_url"
+        ],
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "File name"
+          },
+          "type": {
+            "type": "string",
+            "description": "EDGAR document type",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "description": "Description",
+            "nullable": true
+          },
+          "current_version_id": {
+            "type": "string",
+            "description": "The document version serving its content (`GET /v2/document-versions/{id}`)",
+            "nullable": true
+          },
+          "source_url": {
+            "type": "string",
+            "description": "Permanent public URL of the original",
+            "nullable": true
+          }
+        },
+        "title": "FilingDocument"
+      },
+      "FilingFact": {
+        "type": "object",
+        "description": "One numeric fact of a filing (SEC financial statement data sets)",
+        "required": [
+          "tag",
+          "value",
+          "unit",
+          "decimals",
+          "period_start",
+          "period_end",
+          "instant",
+          "dimensions"
+        ],
+        "properties": {
+          "tag": {
+            "type": "string",
+            "description": "XBRL concept",
+            "example": "us-gaap:Revenues"
+          },
+          "value": {
+            "type": "number",
+            "description": "Value as filed (unscaled); null when the filing states the fact as nil",
+            "nullable": true
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit",
+            "nullable": true
+          },
+          "decimals": {
+            "type": "integer",
+            "description": "XBRL decimals",
+            "nullable": true
+          },
+          "period_start": {
+            "type": "string",
+            "description": "Start of a duration",
+            "format": "date",
+            "nullable": true
+          },
+          "period_end": {
+            "type": "string",
+            "description": "End of a duration",
+            "format": "date",
+            "nullable": true
+          },
+          "instant": {
+            "type": "string",
+            "description": "Instant",
+            "format": "date",
+            "nullable": true
+          },
+          "dimensions": {
+            "type": "array",
+            "description": "Axis / member pairs; empty = consolidated",
+            "items": {
+              "$ref": "#/components/schemas/Dimension"
+            }
+          }
+        },
+        "title": "FilingFact"
+      },
+      "Dimension": {
+        "type": "object",
+        "description": "One axis / member pair",
+        "required": [
+          "axis",
+          "member"
+        ],
+        "properties": {
+          "axis": {
+            "type": "string",
+            "description": "XBRL axis",
+            "example": "srt:ProductOrServiceAxis"
+          },
+          "member": {
+            "type": "string",
+            "description": "XBRL member",
+            "example": "us-gaap:ProductMember"
+          }
+        },
+        "title": "Dimension"
+      },
+      "FilingNote": {
+        "type": "object",
+        "description": "One text fact of a filing",
+        "required": [
+          "tag",
+          "text",
+          "period_end",
+          "dimensions"
+        ],
+        "properties": {
+          "tag": {
+            "type": "string",
+            "description": "XBRL text-block concept"
+          },
+          "text": {
+            "type": "string",
+            "description": "Text"
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Period end",
+            "format": "date",
+            "nullable": true
+          },
+          "dimensions": {
+            "type": "array",
+            "description": "Axis / member pairs",
+            "items": {
+              "$ref": "#/components/schemas/Dimension"
+            }
+          }
+        },
+        "title": "FilingNote"
+      },
+      "ReviewChain": {
+        "type": "object",
+        "description": "The comment-letter graph around a filing",
+        "required": [
+          "accession",
+          "nodes",
+          "edges",
+          "twins",
+          "completeness"
+        ],
+        "properties": {
+          "accession": {
+            "type": "string",
+            "description": "The filing the chain starts at"
+          },
+          "nodes": {
+            "type": "array",
+            "description": "Filings",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "A filing in the chain"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "description": "Relations",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "A relation between two nodes"
+            }
+          },
+          "twins": {
+            "type": "array",
+            "description": "Twins",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Twin filings"
+            }
+          },
+          "completeness": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Whether the chain was cut by max_depth / max_nodes"
+          }
+        },
+        "title": "ReviewChain"
+      },
+      "FilingSearchHit": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The cited document version"
+          },
+          "accession": {
+            "type": "string",
+            "description": "Accession number"
+          },
+          "filename": {
+            "type": "string",
+            "description": "Document file name"
+          },
+          "form": {
+            "type": "string",
+            "description": "Form type"
+          },
+          "filing_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "SEC filing date"
+          },
+          "text": {
+            "type": "string",
+            "description": "The whole search unit (≤ 4,000 code points)"
+          },
+          "score": {
+            "type": "number",
+            "description": "Lexical rank (ts_rank_cd); 0 for literal"
+          },
+          "match": {
+            "$ref": "#/components/schemas/HitMatch"
+          },
+          "document_spans": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "Each span in document-text and block offsets (code points)"
+          },
+          "citation": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "version_id, accession, filename and the original’s permanent `source.url`"
+          }
+        },
+        "title": "FilingSearchHit"
+      },
+      "FilingSearchCoverage": {
+        "type": "object",
+        "required": [
+          "completeness",
+          "lexical",
+          "reasons"
+        ],
+        "additionalProperties": true,
+        "description": "How much of the searched SEC scope the text index covers (the earnings search vocabulary). `forms_indexed` / `years_indexed` / `indexed_since` state the index policy; documents of other forms are counted in `lexical.not_indexed_by_policy` (by design, not a gap). For exactly one `cik`, `held` / `mirror` say how much of the filer's history is held (`held_through`).",
+        "properties": {
+          "completeness": {
+            "type": "string",
+            "enum": [
+              "complete",
+              "partial",
+              "unknown"
+            ],
+            "description": "complete = no hits is a genuine no-result; partial / unknown = the answer may be incomplete"
+          },
+          "lexical": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "The text index over the scope; null when nothing was searched (excluded / not indexed by policy)",
+            "properties": {
+              "state": {
+                "type": "string",
+                "description": "ready / partial / not_ready"
+              },
+              "indexed": {
+                "type": "integer",
+                "description": "Documents of the scope searchable now"
+              },
+              "pending": {
+                "type": "integer",
+                "description": "Not indexed yet"
+              },
+              "failed": {
+                "type": "integer",
+                "description": "Indexing failed"
+              }
+            }
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Why the answer may be incomplete: not_projected, projection_failed, not_published, not_held, held_not_verified, too_many_matches, candidate_cap_reached, scan_budget_reached, scope_needs_review, scope_not_current, form_not_indexed, older_than_index_window, no_forms_indexed, held_gap, search_provider_not_registered, search_projection_empty, search_timeout, scope_excluded, documents_not_held"
+          },
+          "forms_indexed": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string"
+            },
+            "description": "The indexed form policy (`10-K*` = the form and its /A)"
+          },
+          "matches": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "The selectivity cap of a search without a company filter (no filter at all, or only `form` and / or `filed_at`): at most `cap` matching passages are read from the index, newest filings first (`order`), then ranked and cited. null when the search names a `company` (never capped: that gives complete results)",
+            "required": [
+              "capped",
+              "cap",
+              "examined",
+              "examined_in_scope",
+              "total",
+              "total_at_least",
+              "order",
+              "filed_from",
+              "filed_to",
+              "narrow_with"
+            ],
+            "properties": {
+              "capped": {
+                "type": "boolean",
+                "description": "true = more passages match than were examined: the answer is partial (`too_many_matches`)"
+              },
+              "cap": {
+                "type": "integer",
+                "description": "The most matching passages a search without a company filter reads (300)"
+              },
+              "examined": {
+                "type": "integer",
+                "description": "Matching passages read from the index (at most `cap`)"
+              },
+              "examined_in_scope": {
+                "type": "integer",
+                "description": "Of them, passages in searchable documents: the set the hits are ranked from"
+              },
+              "total": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Every matching passage when not capped; null when capped (the total is unknown)"
+              },
+              "total_at_least": {
+                "type": "integer",
+                "nullable": true,
+                "description": "When capped: the total is at least this (cap + 1); never an estimate. null when not capped"
+              },
+              "order": {
+                "type": "string",
+                "enum": [
+                  "newest_first",
+                  "index_order"
+                ],
+                "description": "Which passages were examined: `newest_first` = every match filed since `complete_since`, then older ones from `window_from` on in index order; `index_order` = the first ones the index returned (older servers). Treat an unknown value as \"not stated\": the SDKs keep it as a string"
+              },
+              "complete_since": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "`newest_first` only: every matching passage filed on or after this date was examined; null when even the newest window (7 days) holds more than `cap` matches, or when not capped"
+              },
+              "window_from": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "`newest_first` only: the older passages examined (in index order, up to `cap`) were filed on or after this date; null = any date, or when not capped"
+              },
+              "filed_from": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Earliest filing date among the examined passages in searchable documents"
+              },
+              "filed_to": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Latest filing date among the examined passages in searchable documents"
+              },
+              "narrow_with": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "The filters to add for a complete answer: filer (`company`), form (`form`), filing date (`filed_at`). A search already filtered by form / date lists only `company` (a form or date filter is itself capped while it matches more than `cap`)"
+              }
+            }
+          },
+          "hint": {
+            "type": "string",
+            "nullable": true,
+            "description": "What to do for a complete answer (set when `matches.capped`; null otherwise)"
+          }
+        },
+        "title": "FilingSearchCoverage"
+      },
+      "Dataset": {
+        "type": "object",
+        "description": "One SEC dataset release the filings routes serve",
+        "required": [
+          "dataset",
+          "release",
+          "released_at",
+          "forms"
+        ],
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "Dataset",
+            "example": "financial_statements"
+          },
+          "release": {
+            "type": "string",
+            "description": "Newest release served",
+            "example": "2026q3"
+          },
+          "released_at": {
+            "type": "string",
+            "description": "Release date",
+            "format": "date",
+            "nullable": true
+          },
+          "forms": {
+            "type": "array",
+            "description": "Forms it covers",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "title": "Dataset"
+      },
+      "DocumentVersion": {
+        "type": "object",
+        "description": "One immutable document version",
+        "required": [
+          "version",
+          "source",
+          "quality",
+          "selection",
+          "toc",
+          "blocks",
+          "pages",
+          "footnotes"
+        ],
+        "properties": {
+          "version": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "The version: id, accession, filename, sha256, created_at"
+          },
+          "source": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Original URL and content type"
+          },
+          "quality": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Extraction quality"
+          },
+          "selection": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "What `blocks` / `pages` / `printed` / `neighbors` selected"
+          },
+          "toc": {
+            "type": "array",
+            "description": "Table of contents",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "A table-of-contents entry"
+            }
+          },
+          "blocks": {
+            "type": "array",
+            "description": "Blocks",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "A content block"
+            }
+          },
+          "pages": {
+            "type": "array",
+            "description": "Pages",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "A page"
+            }
+          },
+          "footnotes": {
+            "type": "array",
+            "description": "Footnotes",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "A footnote"
+            }
+          }
+        },
+        "title": "DocumentVersion"
+      },
+      "DocumentSection": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "outline": {
+            "type": "string",
+            "enum": [
+              "legacy",
+              "generic"
+            ],
+            "description": "legacy = the existing section ids; generic = other headings"
+          },
+          "ordinal": {
+            "type": "integer",
+            "description": "Position in its outline"
+          },
+          "legacy_section_key": {
+            "type": "string",
+            "nullable": true,
+            "description": "The section id of the legacy sections route (null for generic)"
+          },
+          "part": {
+            "type": "string",
+            "nullable": true,
+            "description": "Part heading"
+          },
+          "item_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Item number"
+          },
+          "title": {
+            "type": "string",
+            "description": "Heading"
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "`blocks` selectors of the section's spans"
+          },
+          "block_spans": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "`{from, to}` block ids"
+          }
+        },
+        "title": "DocumentSection"
+      },
+      "DocumentFigure": {
+        "type": "object",
+        "description": "One figure of a document version",
+        "required": [
+          "version_id",
+          "figure",
+          "image",
+          "citation"
+        ],
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "description": "Document version"
+          },
+          "figure": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "The figure block"
+          },
+          "image": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Permanent image URL and size",
+            "nullable": true
+          },
+          "citation": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Where the figure sits in the document"
+          }
+        },
+        "title": "DocumentFigure"
+      },
+      "FactPlace": {
+        "type": "object",
+        "description": "Where one fact appears in one document version (PRO)",
+        "required": [
+          "fact_id",
+          "document_version",
+          "concept",
+          "status",
+          "html_tag_id",
+          "xpath",
+          "block_id",
+          "xbrl_ordinal",
+          "table_row",
+          "table_col",
+          "page",
+          "pdf_box",
+          "source_sha256",
+          "legacy_id",
+          "rendition_url"
+        ],
+        "properties": {
+          "fact_id": {
+            "type": "string",
+            "description": "Standardized fact placed, when the place belongs to one",
+            "nullable": true
+          },
+          "document_version": {
+            "type": "string",
+            "description": "Document version id"
+          },
+          "concept": {
+            "type": "string",
+            "description": "XBRL concept"
+          },
+          "status": {
+            "type": "string",
+            "description": "Typed placement status",
+            "enum": [
+              "placed",
+              "hidden",
+              "not_in_document",
+              "derived",
+              "unmatched"
+            ]
+          },
+          "html_tag_id": {
+            "type": "string",
+            "description": "The native `ix:` element id verbatim",
+            "nullable": true
+          },
+          "xpath": {
+            "type": "string",
+            "description": "XPath of the element",
+            "nullable": true
+          },
+          "block_id": {
+            "type": "string",
+            "description": "Block holding the value",
+            "nullable": true
+          },
+          "xbrl_ordinal": {
+            "type": "integer",
+            "description": "Ordinal of the fact in the instance",
+            "nullable": true
+          },
+          "table_row": {
+            "type": "integer",
+            "description": "Row in its table",
+            "nullable": true
+          },
+          "table_col": {
+            "type": "integer",
+            "description": "Column in its table",
+            "nullable": true
+          },
+          "page": {
+            "type": "integer",
+            "description": "Page",
+            "nullable": true
+          },
+          "pdf_box": {
+            "type": "array",
+            "description": "x0, y0, x1, y1 on the page",
+            "items": {
+              "type": "number"
+            },
+            "nullable": true
+          },
+          "source_sha256": {
+            "type": "string",
+            "description": "SHA-256 of the source document",
+            "nullable": true
+          },
+          "legacy_id": {
+            "type": "string",
+            "description": "Annotated-rendition alias",
+            "nullable": true
+          },
+          "rendition_url": {
+            "type": "string",
+            "description": "Annotated rendition URL",
+            "nullable": true
+          }
+        },
+        "title": "FactPlace"
+      },
+      "Holding": {
+        "type": "object",
+        "required": [
+          "accession_number",
+          "calendar_quarter",
+          "calendar_year",
+          "cik_institution",
+          "cusip_company",
+          "dollar_value",
+          "filing_date",
+          "link_to_filing_details",
+          "period_end",
+          "shares_or_principal_amount",
+          "shares_or_principal_amount_type"
+        ],
+        "properties": {
+          "accession_number": {
+            "type": "string",
+            "description": "SEC filing accession number"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter (1-4)"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year"
+          },
+          "cik_company": {
+            "type": "string",
+            "nullable": true,
+            "description": "Company CIK"
+          },
+          "name_company": {
+            "type": "string",
+            "nullable": true,
+            "description": "Company name"
+          },
+          "ticker_company": {
+            "type": "string",
+            "nullable": true,
+            "description": "Company ticker symbol"
+          },
+          "cusip_company": {
+            "type": "string",
+            "description": "Company CUSIP"
+          },
+          "cik_institution": {
+            "type": "string",
+            "description": "Institution CIK"
+          },
+          "name_institution": {
+            "type": "string",
+            "nullable": true,
+            "description": "Institution name"
+          },
+          "dollar_value": {
+            "type": "number",
+            "description": "Position market value in USD; null when the filer stated none",
+            "nullable": true
+          },
+          "filing_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Filing date (YYYY-MM-DD); null when the filing is undated in the store",
+            "nullable": true
+          },
+          "investment_discretion": {
+            "type": "string",
+            "nullable": true,
+            "description": "Investment discretion type"
+          },
+          "link_to_filing_details": {
+            "type": "string",
+            "description": "URL to SEC filing details"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "description": "Period end date (YYYY-MM-DD)"
+          },
+          "put_call": {
+            "type": "string",
+            "nullable": true,
+            "description": "Option type if applicable"
+          },
+          "shares_or_principal_amount": {
+            "type": "number",
+            "description": "Shares or principal amount; null when the filer stated none",
+            "nullable": true
+          },
+          "shares_or_principal_amount_type": {
+            "type": "string",
+            "description": "Type of position amount"
+          },
+          "voting_authority_none": {
+            "type": "number",
+            "nullable": true,
+            "description": "Votes with no authority"
+          },
+          "voting_authority_shared": {
+            "type": "number",
+            "nullable": true,
+            "description": "Votes with shared authority"
+          },
+          "voting_authority_sole": {
+            "type": "number",
+            "nullable": true,
+            "description": "Votes with sole authority"
+          }
+        },
+        "title": "Holding"
+      },
+      "HoldingChange": {
+        "type": "object",
+        "required": [
+          "cik_institution",
+          "cusip_company",
+          "type",
+          "change_dollar_value",
+          "change_shares_or_principal_amount_absolute",
+          "change_shares_or_principal_amount_percent",
+          "shares_or_principal_amount_new",
+          "shares_or_principal_amount_old",
+          "accession_number",
+          "calendar_quarter",
+          "calendar_year",
+          "dollar_value",
+          "filing_date",
+          "period_end",
+          "shares_or_principal_amount_type"
+        ],
+        "properties": {
+          "cik_institution": {
+            "type": "string",
+            "description": "Institution CIK"
+          },
+          "name_institution": {
+            "type": "string",
+            "nullable": true,
+            "description": "Institution name"
+          },
+          "cik_company": {
+            "type": "string",
+            "nullable": true,
+            "description": "Company CIK"
+          },
+          "name_company": {
+            "type": "string",
+            "nullable": true,
+            "description": "Company name"
+          },
+          "ticker_company": {
+            "type": "string",
+            "nullable": true,
+            "description": "Company ticker symbol"
+          },
+          "cusip_company": {
+            "type": "string",
+            "description": "Company CUSIP"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "new",
+              "added",
+              "reduced",
+              "sold_out",
+              "unchanged"
+            ],
+            "description": "Change type: new (a position the prior complete snapshot did not hold), added, reduced, sold_out, unchanged (served only when `type` asks for it)"
+          },
+          "change_dollar_value": {
+            "type": "number",
+            "description": "Change in dollar value"
+          },
+          "change_shares_or_principal_amount_absolute": {
+            "type": "number",
+            "description": "Absolute change in shares or principal"
+          },
+          "change_shares_or_principal_amount_percent": {
+            "type": "number",
+            "description": "Change over the prior position as a fraction (0.05 = +5 %); +1 for a new position, −1 for a sold-out one"
+          },
+          "shares_or_principal_amount_new": {
+            "type": "number",
+            "description": "New position size"
+          },
+          "shares_or_principal_amount_old": {
+            "type": "number",
+            "description": "Prior position size"
+          },
+          "accession_number": {
+            "type": "string",
+            "description": "SEC filing accession number"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter (1-4)"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year"
+          },
+          "dollar_value": {
+            "type": "number",
+            "description": "Position market value in USD"
+          },
+          "filing_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Filing date (YYYY-MM-DD); null when the store does not state it for a position change",
+            "nullable": true
+          },
+          "investment_discretion": {
+            "type": "string",
+            "nullable": true,
+            "description": "Investment discretion type"
+          },
+          "period_end": {
+            "type": "string",
+            "format": "date",
+            "description": "Period end date (YYYY-MM-DD)"
+          },
+          "put_call": {
+            "type": "string",
+            "nullable": true,
+            "description": "Option type if applicable"
+          },
+          "shares_or_principal_amount_type": {
+            "type": "string",
+            "description": "Type of position amount"
+          },
+          "voting_authority_none": {
+            "type": "number",
+            "nullable": true,
+            "description": "Votes with no authority"
+          },
+          "voting_authority_shared": {
+            "type": "number",
+            "nullable": true,
+            "description": "Votes with shared authority"
+          },
+          "voting_authority_sole": {
+            "type": "number",
+            "nullable": true,
+            "description": "Votes with sole authority"
+          }
+        },
+        "title": "HoldingChange"
+      },
+      "InsiderTrade": {
+        "type": "object",
+        "required": [
+          "id",
+          "accession_number",
+          "cik",
+          "filed_at",
+          "reporting_person_name",
+          "reporting_person_is_director",
+          "reporting_person_is_officer",
+          "reporting_person_is_ten_percent_owner",
+          "reporting_person_is_other",
+          "security_title",
+          "acquired_disposed",
+          "coding_code",
+          "shares",
+          "share_price",
+          "total",
+          "shares_owned_following_transaction",
+          "side"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Internal transaction ID"
+          },
+          "accession_number": {
+            "type": "string",
+            "description": "SEC filing accession number"
+          },
+          "cik": {
+            "type": "string",
+            "description": "CIK of the company"
+          },
+          "filed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Filing time (ISO 8601, UTC)"
+          },
+          "period_of_report": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Period of report (YYYY-MM-DD)"
+          },
+          "reporting_person_name": {
+            "type": "string",
+            "description": "Name of the reporting insider"
+          },
+          "reporting_person_is_director": {
+            "type": "boolean",
+            "description": "Insider is a director"
+          },
+          "reporting_person_is_officer": {
+            "type": "boolean",
+            "description": "Insider is an officer"
+          },
+          "reporting_person_is_ten_percent_owner": {
+            "type": "boolean",
+            "description": "Insider owns 10%+"
+          },
+          "reporting_person_is_other": {
+            "type": "boolean",
+            "description": "Insider flagged as other"
+          },
+          "reporting_person_officer_title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Officer title as reported (e.g. Chief Executive Officer)"
+          },
+          "reporting_person_other_text": {
+            "type": "string",
+            "nullable": true,
+            "description": "Other role description"
+          },
+          "security_title": {
+            "type": "string",
+            "description": "Security title"
+          },
+          "acquired_disposed": {
+            "type": "string",
+            "description": "A for acquisition, D for disposition"
+          },
+          "coding_code": {
+            "type": "string",
+            "description": "SEC transaction code"
+          },
+          "shares": {
+            "type": "number",
+            "description": "Number of shares traded"
+          },
+          "share_price": {
+            "type": "number",
+            "nullable": true,
+            "description": "Price per share (null when the filing states none, e.g. a gift or grant)"
+          },
+          "total": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total transaction value (null when the filing states no price)"
+          },
+          "shares_owned_following_transaction": {
+            "type": "number",
+            "description": "Shares held after the transaction"
+          },
+          "shares_owned_before_transaction": {
+            "type": "number",
+            "nullable": true,
+            "description": "Shares held before the transaction"
+          },
+          "side": {
+            "type": "string",
+            "description": "buy = acquired (A), sell = disposed (D)",
+            "enum": [
+              "buy",
+              "sell"
+            ]
+          }
+        },
+        "title": "InsiderTrade"
+      },
+      "Ipo": {
+        "type": "object",
+        "description": "One offering",
+        "required": [
+          "ipo_id",
+          "company",
+          "issuer_name",
+          "stage",
+          "is_spac",
+          "exchange",
+          "proposed_symbols",
+          "price_range_low",
+          "price_range_high",
+          "final_price",
+          "shares_offered",
+          "total_offer_size",
+          "currency",
+          "listing_date",
+          "sources"
+        ],
+        "properties": {
+          "ipo_id": {
+            "type": "string",
+            "description": "Offering id",
+            "example": "ipo_0001234567_s1_1"
+          },
+          "company": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyRef"
+              }
+            ],
+            "nullable": true
+          },
+          "issuer_name": {
+            "type": "string",
+            "description": "Issuer"
+          },
+          "stage": {
+            "type": "string",
+            "description": "One vocabulary for registration stages and the calendar status",
+            "enum": [
+              "registered",
+              "price_range",
+              "exchange_approved",
+              "effective",
+              "priced",
+              "trading",
+              "withdrawn",
+              "announced",
+              "postponed"
+            ]
+          },
+          "is_spac": {
+            "type": "boolean",
+            "description": "Blank-check company"
+          },
+          "exchange": {
+            "type": "string",
+            "description": "Exchange (MIC)",
+            "example": "XNAS",
+            "nullable": true
+          },
+          "proposed_symbols": {
+            "type": "array",
+            "description": "Proposed tickers",
+            "items": {
+              "type": "string"
+            }
+          },
+          "price_range_low": {
+            "type": "number",
+            "description": "Low end of the range",
+            "nullable": true
+          },
+          "price_range_high": {
+            "type": "number",
+            "description": "High end of the range",
+            "nullable": true
+          },
+          "final_price": {
+            "type": "number",
+            "description": "Final offer price",
+            "nullable": true
+          },
+          "shares_offered": {
+            "type": "integer",
+            "description": "Shares offered",
+            "nullable": true
+          },
+          "total_offer_size": {
+            "type": "number",
+            "description": "Offer size",
+            "nullable": true
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency",
+            "example": "USD",
+            "nullable": true
+          },
+          "listing_date": {
+            "type": "string",
+            "description": "First trading day",
+            "format": "date",
+            "nullable": true
+          },
+          "sources": {
+            "type": "object",
+            "description": "The registration track (SEC) and the listing-calendar row of the same offering",
+            "required": [
+              "registration",
+              "listing"
+            ],
+            "properties": {
+              "registration": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/IpoRegistration"
+                  }
+                ],
+                "nullable": true
+              },
+              "listing": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/IpoListing"
+                  }
+                ],
+                "nullable": true
+              }
+            }
+          }
+        },
+        "title": "Ipo"
+      },
+      "IpoRegistration": {
+        "type": "object",
+        "required": [
+          "cik",
+          "company_name",
+          "track_key",
+          "form_family",
+          "stage",
+          "is_spac",
+          "proposed_symbols",
+          "exchange",
+          "price_range_low",
+          "price_range_high",
+          "shares_offered",
+          "final_offer_price",
+          "final_shares_offered",
+          "first_public_at",
+          "price_range_at",
+          "exchange_approved_at",
+          "effective_at",
+          "priced_at",
+          "withdrawn_at",
+          "first_trade_date",
+          "filings"
+        ],
+        "properties": {
+          "cik": {
+            "type": "string",
+            "description": "10-digit CIK of the issuer"
+          },
+          "company_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Issuer name (SEC)"
+          },
+          "track_key": {
+            "type": "string",
+            "description": "The registration: its Securities Act file number (333-…), else the accession of its first registration statement"
+          },
+          "form_family": {
+            "type": "string",
+            "enum": [
+              "S-1",
+              "F-1"
+            ],
+            "description": "S-1 (domestic) or F-1 (foreign issuer)"
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "registered",
+              "price_range",
+              "exchange_approved",
+              "effective",
+              "priced",
+              "trading",
+              "withdrawn"
+            ],
+            "description": "registered → price_range (an amendment states the range) → exchange_approved (8-A12B / exchange certification) → effective (SEC EFFECT) → priced (final prospectus 424B4 / 424B1) → trading (a listing appeared); withdrawn (RW) ends a track"
+          },
+          "is_spac": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Blank-check company (\"blank check company\" on the cover or SIC 6770)"
+          },
+          "proposed_symbols": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ProposedTicker"
+            },
+            "description": "Tickers the registration statement proposes (S-1, S-1/A, F-1, F-1/A only). null = not a registration form (or not read), [] = none found"
+          },
+          "exchange": {
+            "type": "string",
+            "nullable": true,
+            "description": "Exchange the issuer applied to, as an ISO 10383 MIC (`XNAS`, `XNYS`, `XASE`, `ARCX`, `BATS`); null when none is named or the name has no MIC mapping"
+          },
+          "price_range_low": {
+            "type": "string",
+            "nullable": true,
+            "description": "Low end of the price range per share, ADS or unit (decimal string)"
+          },
+          "price_range_high": {
+            "type": "string",
+            "nullable": true,
+            "description": "High end of the price range (decimal string)"
+          },
+          "shares_offered": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Shares offered at the price range"
+          },
+          "final_offer_price": {
+            "type": "string",
+            "nullable": true,
+            "description": "Final offering price (final prospectus) (decimal string)"
+          },
+          "final_shares_offered": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Shares sold at the final price"
+          },
+          "first_public_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "SEC acceptance time of the first public registration statement (ISO 8601 UTC)"
+          },
+          "price_range_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the price range was first filed (ISO 8601 UTC)"
+          },
+          "exchange_approved_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the exchange approval was filed (ISO 8601 UTC)"
+          },
+          "effective_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the registration became effective (ISO 8601 UTC)"
+          },
+          "priced_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the final prospectus was filed (ISO 8601 UTC)"
+          },
+          "withdrawn_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the withdrawal was filed (ISO 8601 UTC)"
+          },
+          "first_trade_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "First trading day of the listing (YYYY-MM-DD); set at stage trading"
+          },
+          "filings": {
+            "type": "array",
+            "description": "The filings that moved this registration, in the order they were applied",
+            "items": {
+              "type": "object",
+              "required": [
+                "accession_number",
+                "form_type",
+                "signal",
+                "filed_at",
+                "filing_date",
+                "html_url"
+              ],
+              "properties": {
+                "accession_number": {
+                  "type": "string",
+                  "description": "SEC accession number"
+                },
+                "form_type": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "SEC form type (S-1, S-1/A, F-1, F-1/A, 8-A12B, CERT, EFFECT, 424B4, 424B1, RW)"
+                },
+                "signal": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "What the filing meant for the registration: registration, exchange_approval, effective, priced or withdrawn"
+                },
+                "filed_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "nullable": true,
+                  "description": "SEC acceptance time (ISO 8601 UTC)"
+                },
+                "filing_date": {
+                  "type": "string",
+                  "format": "date",
+                  "nullable": true,
+                  "description": "Filing date (YYYY-MM-DD); null when the filing is not archived"
+                },
+                "html_url": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "URL to the archived filing HTML; null when the filing is not archived"
+                }
+              }
+            }
+          },
+          "ipo_pending": {
+            "type": "object",
+            "nullable": true,
+            "description": "The issuer lifecycle's IPO-pending entry of this registration (\"Pre-IPO, proposed XYZ (exchange)\"), matched by CIK and track; null when the track has none. Proposed symbols stay attributes, never a listing",
+            "required": [
+              "status",
+              "open_reason",
+              "opened_at",
+              "closed_at",
+              "close_reason",
+              "exchange"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "description": "open (the issuer is still pre-IPO on this track) or closed"
+              },
+              "open_reason": {
+                "type": "string",
+                "description": "What opened the entry: exchange_approval (8-A12B / exchange certification) or ipo_calendar_match"
+              },
+              "opened_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the entry opened (ISO 8601 UTC)"
+              },
+              "closed_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "When the entry closed (ISO 8601 UTC)"
+              },
+              "close_reason": {
+                "type": "string",
+                "nullable": true,
+                "description": "Why the entry closed (listed, withdrawn, …)"
+              },
+              "exchange": {
+                "type": "string",
+                "nullable": true,
+                "description": "Exchange the entry names, as an ISO 10383 MIC; null when none is named or the name has no MIC mapping"
+              }
+            }
+          }
+        },
+        "title": "IpoRegistration"
+      },
+      "IpoListing": {
+        "type": "object",
+        "properties": {
+          "listing_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "IPO listing date (YYYY-MM-DD); null when Massive has no value"
+          },
+          "announced_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "IPO announcement date (YYYY-MM-DD); null when Massive has no value"
+          },
+          "currency_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Currency code (e.g., USD); null when Massive has no value"
+          },
+          "final_issue_price": {
+            "type": "number",
+            "nullable": true,
+            "description": "Final issue price; null when Massive has no value"
+          },
+          "highest_offer_price": {
+            "type": "number",
+            "nullable": true,
+            "description": "Highest offer price; null when Massive has no value"
+          },
+          "ipo_status": {
+            "type": "string",
+            "description": "IPO status"
+          },
+          "isin": {
+            "type": "string",
+            "nullable": true,
+            "description": "ISIN identifier; null when Massive has no value"
+          },
+          "issue_end_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Issue end date (YYYY-MM-DD); null when Massive has no value"
+          },
+          "issue_start_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Issue start date (YYYY-MM-DD); null when Massive has no value"
+          },
+          "issuer_name": {
+            "type": "string",
+            "description": "Issuer name"
+          },
+          "last_updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Last update of the row (ISO 8601, UTC)"
+          },
+          "lot_size": {
+            "type": "number",
+            "nullable": true,
+            "description": "Lot size; null when Massive has no value"
+          },
+          "lowest_offer_price": {
+            "type": "number",
+            "nullable": true,
+            "description": "Lowest offer price; null when Massive has no value"
+          },
+          "max_shares_offered": {
+            "type": "number",
+            "nullable": true,
+            "description": "Maximum shares offered; null when Massive has no value"
+          },
+          "min_shares_offered": {
+            "type": "number",
+            "nullable": true,
+            "description": "Minimum shares offered; null when Massive has no value"
+          },
+          "primary_exchange": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary exchange; null when Massive has no value"
+          },
+          "security_description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Security description; null when Massive has no value"
+          },
+          "security_type": {
+            "type": "string",
+            "description": "Security type"
+          },
+          "shares_outstanding": {
+            "type": "number",
+            "nullable": true,
+            "description": "Shares outstanding; null when Massive has no value"
+          },
+          "ticker": {
+            "type": "string",
+            "description": "Ticker symbol"
+          },
+          "total_offer_size": {
+            "type": "number",
+            "nullable": true,
+            "description": "Total offer size; null when Massive has no value"
+          },
+          "us_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "CUSIP; null when Massive has no value"
+          }
+        },
+        "required": [
+          "listing_date",
+          "announced_date",
+          "currency_code",
+          "final_issue_price",
+          "highest_offer_price",
+          "ipo_status",
+          "isin",
+          "issue_end_date",
+          "issue_start_date",
+          "issuer_name",
+          "last_updated",
+          "lot_size",
+          "lowest_offer_price",
+          "max_shares_offered",
+          "min_shares_offered",
+          "primary_exchange",
+          "security_description",
+          "security_type",
+          "shares_outstanding",
+          "ticker",
+          "total_offer_size",
+          "us_code"
+        ],
+        "title": "IpoListing"
       },
       "Event": {
         "type": "object",
@@ -10380,7 +12172,7 @@
                       "cik": "0000320193",
                       "ticker": "AAPL",
                       "name": "Apple Inc.",
-                      "logo_url": "https://storage-prod.invinite.com/company_logos/AAPL.png"
+                      "logo_url": "https://storage.invinite.com/company_logos/AAPL.png"
                     }
                   ],
                   "next_url": "https://api.data.invinite.com/v1/company/search?query=apple&offset=10&limit=10"
@@ -10739,7 +12531,7 @@
                       "short_float_shares": 131591865,
                       "homepage_url": "https://www.apple.com",
                       "investor_relations_url": "https://www.apple.com",
-                      "logo_url": "https://storage-prod.invinite.com/company_logos/AAPL.png",
+                      "logo_url": "https://storage.invinite.com/company_logos/AAPL.png",
                       "brand_colors": [
                         "#000000"
                       ],
@@ -22381,7 +24173,7 @@
                           "signal": "registration",
                           "filed_at": "2026-11-06T22:00:45.000Z",
                           "filing_date": "2026-11-06",
-                          "html_url": "https://storage-prod.invinite.com/filing_htmls/00b2d956f74f1db2d046ff043aea1056/2156369_0001185185-26-005243_S-1_2026-11-06.html"
+                          "html_url": "https://storage.invinite.com/filing_htmls/00b2d956f74f1db2d046ff043aea1056/2156369_0001185185-26-005243_S-1_2026-11-06.html"
                         }
                       ],
                       "ipo_pending": null
@@ -26844,7 +28636,7 @@
                   "qa_start_ms": 2298917,
                   "format": "speakers",
                   "pdf": {
-                    "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v6.pdf",
+                    "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v6.pdf",
                     "version": 6,
                     "sha256": "50159713ebd76f19e01b323ed7ccc53eb194148c533f2ed644118f8c09b6ba52",
                     "bytes": 80417,
@@ -27153,7 +28945,7 @@
                       "change_note": "naming",
                       "corrected_by": null,
                       "pdf": {
-                        "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v3.pdf",
+                        "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v3.pdf",
                         "version": 3,
                         "sha256": "e1d777843ae18c33e86254260d18f58bfe65bb33cff758323b8f1763342076a5",
                         "bytes": 80285,
@@ -31571,7 +33363,7 @@
                     "symbol": "MSFT",
                     "conference_date": "2026-07-29T00:00:00.000Z"
                   },
-                  "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/audio/q4-fy2026-earnings-call-510kqr.mp3",
+                  "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/audio/q4-fy2026-earnings-call-510kqr.mp3",
                   "duration_seconds": 3919,
                   "bytes": 31350117,
                   "codec": "mp3",
@@ -31871,7 +33663,7 @@
                     "conference_date": "2026-07-29T00:00:00.000Z"
                   },
                   "deck": {
-                    "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-earnings-presentation.pdf",
+                    "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-earnings-presentation.pdf",
                     "pages": 23,
                     "origin": "ir_page",
                     "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/SlidesFY26Q4.pptx",
@@ -31881,7 +33673,7 @@
                     {
                       "page": 1,
                       "title": null,
-                      "image_url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/slides/q4-fy2026-earnings-presentation/page-001.webp"
+                      "image_url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/slides/q4-fy2026-earnings-presentation/page-001.webp"
                     }
                   ],
                   "timeline": []
@@ -32313,7 +34105,7 @@
                       "source_label": null,
                       "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/OutlookFY27Q1",
                       "accession_number": null,
-                      "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-cfo-commentary.pdf",
+                      "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-cfo-commentary.pdf",
                       "content_type": "application/pdf",
                       "bytes": 487074,
                       "pages": 6,
@@ -32900,8 +34692,8 @@
                       "bytes": 3912081,
                       "pages": 28,
                       "link_status": null,
-                      "url": "https://storage-prod.invinite.com/earnings_events/us/789019/esg/2026/2026-environmental-sustainability-data-factsheet.pdf",
-                      "pages_url": "https://storage-prod.invinite.com/earnings_events/us/789019/esg/2026/text/2026-environmental-sustainability-data-factsheet.pdf.pages.json",
+                      "url": "https://storage.invinite.com/earnings_events/us/789019/esg/2026/2026-environmental-sustainability-data-factsheet.pdf",
+                      "pages_url": "https://storage.invinite.com/earnings_events/us/789019/esg/2026/text/2026-environmental-sustainability-data-factsheet.pdf.pages.json",
                       "created_at": "2026-10-14T07:39:24.133Z",
                       "updated_at": "2026-10-21T19:15:32.574Z"
                     }
@@ -33734,7 +35526,7 @@
                       "group": "earnings/fy2019/q2",
                       "group_label": "Q2 FY2019",
                       "category": "earnings",
-                      "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2019/q2/microsoft-fy-2019-second-quarter-earnings-conference-call.pdf"
+                      "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2019/q2/microsoft-fy-2019-second-quarter-earnings-conference-call.pdf"
                     }
                   ]
                 }
@@ -34149,7 +35941,7 @@
                           }
                         ]
                       },
-                      "audio_url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2027/q1/audio/q1-fy2027-earnings-call-q0szpq.mp3#t=2409",
+                      "audio_url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2027/q1/audio/q1-fy2027-earnings-call-q0szpq.mp3#t=2409",
                       "slide": null
                     }
                   ]
@@ -37540,7 +39332,7 @@
                   ],
                   "developments": [],
                   "pdf": {
-                    "url": "https://storage-prod.invinite.com/earnings_events/news/us/63908/08c86854a426827937f1062c90f5e260/MCD-2026-11-04-mcdonald-s-reports-third-quarter-2026-results.pdf",
+                    "url": "https://storage.invinite.com/earnings_events/news/us/63908/08c86854a426827937f1062c90f5e260/MCD-2026-11-04-mcdonald-s-reports-third-quarter-2026-results.pdf",
                     "version": 1,
                     "sha256": "b7661694ca034a0bc2a93b8d72e682080a766499f46cca6b0fdd5d16a9bb1efa",
                     "bytes": 27975,
@@ -40785,7 +42577,7 @@
                         "route": "/sec/v1/documents/8be0b759-1a9d-5f89-8308-bd86185f5e1f"
                       },
                       "source": {
-                        "url": "https://storage-prod.invinite.com/sec/4765d5384d6b2195ff48ff775f9244f9/aapl-20260926.htm"
+                        "url": "https://storage.invinite.com/sec/4765d5384d6b2195ff48ff775f9244f9/aapl-20260926.htm"
                       }
                     }
                   ],
@@ -43527,7 +45319,7 @@
                           "legacy_anchor": "f-1124",
                           "status": "recorded",
                           "rendition_sha256": "f3071d0af50082eac48a057fc6b320a7194c01aa09f2ed4e5bcc8b7ef54c86a1",
-                          "rendition_url": "https://storage-prod.invinite.com/filing_htmls/320193_0000320193-26-000026_10-K_2026-11-03.html",
+                          "rendition_url": "https://storage.invinite.com/filing_htmls/320193_0000320193-26-000026_10-K_2026-11-03.html",
                           "legacy_anchor_is_native": true
                         }
                       ],
@@ -44458,7 +46250,7 @@
                         "document_route": "/sec/v1/documents/af82694e-4fc2-50b7-abaf-ea6aefda66ef",
                         "anchor_kind": "native",
                         "source": {
-                          "url": "https://storage-prod.invinite.com/sec/dd7d13d2fcd95ad601b74ca2e0a8717a/form20-f.htm"
+                          "url": "https://storage.invinite.com/sec/dd7d13d2fcd95ad601b74ca2e0a8717a/form20-f.htm"
                         }
                       },
                       "projection_version": "fs1.english",
@@ -52810,6 +54602,3553 @@
         "x-example-params": []
       }
     },
+    "/v2/filings": {
+      "get": {
+        "operationId": "listFilings",
+        "summary": "List filings",
+        "tags": [
+          "Filings"
+        ],
+        "description": "A company’s SEC filings by filing date (newest first by default). Several companies are read one after another: all filings of the first company in the request’s order, then the next; `meta.form_facet` sums the forms of the companies read on the page. `items` is applied to the store’s pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "form",
+            "required": false,
+            "description": "Forms, comma list",
+            "example": "10-K"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "items",
+            "required": false,
+            "description": "8-K items, comma list",
+            "example": "2.02"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "filed_at.gte",
+            "required": false,
+            "description": "`filed_at` on or after this value",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "filed_at.gt",
+            "required": false,
+            "description": "`filed_at` after this value",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "filed_at.lte",
+            "required": false,
+            "description": "`filed_at` on or before this value",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "filed_at.lt",
+            "required": false,
+            "description": "`filed_at` before this value",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "filed_at",
+                "-filed_at"
+              ],
+              "default": "-filed_at"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending): `filed_at` only; the id tiebreaker is always appended. Default `-filed_at`",
+            "example": "-filed_at"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of Filing rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/Filing"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        },
+                        "form_facet": {
+                          "type": "array",
+                          "description": "Forms of the company's filings with counts",
+                          "items": {
+                            "type": "object",
+                            "description": "One form",
+                            "required": [
+                              "form",
+                              "count",
+                              "newest_filing_date"
+                            ],
+                            "properties": {
+                              "form": {
+                                "type": "string",
+                                "description": "Form"
+                              },
+                              "count": {
+                                "type": "integer",
+                                "description": "Filings"
+                              },
+                              "newest_filing_date": {
+                                "type": "string",
+                                "description": "Newest",
+                                "format": "date",
+                                "nullable": true
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, max-age=300",
+        "x-cli": {
+          "group": "filings",
+          "action": "list",
+          "positional": "company",
+          "flags": {
+            "form": "f",
+            "limit": "l"
+          },
+          "columns": [
+            "filing_date",
+            "form",
+            "accession",
+            "report_date",
+            "primary_document"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/filings/{accession}": {
+      "get": {
+        "operationId": "getFiling",
+        "summary": "Get a filing",
+        "tags": [
+          "Filings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(documents|parties|relations)(,(documents|parties|relations))*$"
+            },
+            "in": "query",
+            "name": "expand",
+            "required": false,
+            "description": "Optional objects to include: `documents`, `parties`, `relations` (comma list)",
+            "example": "documents"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "accession",
+            "required": true,
+            "description": "Accession number",
+            "example": "0000320193-26-000026"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FilingDetail"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, max-age=300",
+        "x-cli": {
+          "group": "filings",
+          "action": "get",
+          "positional": "accession",
+          "flags": {},
+          "columns": [
+            "accession",
+            "form",
+            "filing_date"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/filings/{accession}/facts": {
+      "get": {
+        "operationId": "listFilingFacts",
+        "summary": "List a filing's numeric facts",
+        "tags": [
+          "Filings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "tag",
+            "required": false,
+            "description": "Concepts, comma list",
+            "example": "us-gaap:Revenues"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "accession",
+            "required": true,
+            "description": "Accession number",
+            "example": "0000320193-26-000026"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of FilingFact rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/FilingFact"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, max-age=300",
+        "x-cli": {
+          "group": "filings",
+          "action": "facts",
+          "positional": "accession",
+          "flags": {
+            "tag": "t",
+            "limit": "l"
+          },
+          "columns": [
+            "tag",
+            "value",
+            "unit",
+            "period_end"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/filings/{accession}/notes": {
+      "get": {
+        "operationId": "listFilingNotes",
+        "summary": "List a filing's text facts",
+        "tags": [
+          "Filings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "tag",
+            "required": false,
+            "description": "Concepts, comma list",
+            "example": "us-gaap:RevenueRecognitionPolicyTextBlock"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "accession",
+            "required": true,
+            "description": "Accession number",
+            "example": "0000320193-26-000026"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of FilingNote rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/FilingNote"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, max-age=300",
+        "x-cli": {
+          "group": "filings",
+          "action": "notes",
+          "positional": "accession",
+          "flags": {
+            "tag": "t",
+            "limit": "l"
+          },
+          "columns": [
+            "tag",
+            "period_end"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/filings/{accession}/review-chain": {
+      "get": {
+        "operationId": "getReviewChain",
+        "summary": "Get a filing's review chain",
+        "tags": [
+          "Filings"
+        ],
+        "description": "The comment-letter graph around a filing (UPLOAD / CORRESP and the filings they review). `max_depth=1` lists the filing’s direct relations (`direction`: `down` = relations the filing makes, `up` = relations pointing at it); deeper reads follow confirmed relations up to `max_depth` hops and at most 100 nodes. `completeness` names what was cut or is still unresolved; a filing whose letters are not resolved yet answers its own node only. 503 `unavailable` only while the review store is switched off.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6,
+              "default": 1
+            },
+            "in": "query",
+            "name": "max_depth",
+            "required": false,
+            "description": "Hops (1 = direct relations)",
+            "example": 1
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 100
+            },
+            "in": "query",
+            "name": "max_nodes",
+            "required": false,
+            "description": "Node cap",
+            "example": 100
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "both",
+                "up",
+                "down"
+              ],
+              "default": "both"
+            },
+            "in": "query",
+            "name": "direction",
+            "required": false,
+            "description": "Direction",
+            "example": "both"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "description": "Relation kinds, comma list",
+            "example": "comment_letter"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "accession",
+            "required": true,
+            "description": "Accession number",
+            "example": "0000320193-26-000026"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewChain"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, max-age=300",
+        "x-cli": {
+          "group": "filings",
+          "action": "review-chain",
+          "positional": "accession",
+          "flags": {
+            "max_depth": "d"
+          }
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/search/filings": {
+      "get": {
+        "operationId": "searchFilings",
+        "summary": "Search filings",
+        "tags": [
+          "Filings"
+        ],
+        "description": "Ranked passages from SEC documents with citations (`mode=lexical` by default: keywords and quoted phrases, English stemming; `literal` for the exact characters). Each request reads one page of the index: `limit` above 50 answers 50 hits and a `next_cursor`; `match.lexical_rank` counts on across pages. `meta.index` says how complete the answer is: empty `data` with `completeness: complete` is a genuine no-result, anything else is not. A search without `company=` reads at most `meta.index.matches.cap` matching passages, newest filings first; `meta.index.hint` says how to narrow it.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "description": "Query",
+            "example": "supply chain risk"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "lexical",
+                "literal"
+              ],
+              "default": "lexical"
+            },
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "description": "lexical = ranked words; literal = exact phrase",
+            "example": "lexical"
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "in": "query",
+            "name": "case_sensitive",
+            "required": false,
+            "description": "literal mode only",
+            "example": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": false,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "form",
+            "required": false,
+            "description": "Forms, comma list",
+            "example": "10-K"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "item",
+            "required": false,
+            "description": "Section ids, comma list",
+            "example": "1A"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "filed_at.gte",
+            "required": false,
+            "description": "`filed_at` on or after this value",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "filed_at.gt",
+            "required": false,
+            "description": "`filed_at` after this value",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "filed_at.lte",
+            "required": false,
+            "description": "`filed_at` on or before this value",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "filed_at.lt",
+            "required": false,
+            "description": "`filed_at` before this value",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of FilingSearchHit rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/FilingSearchHit"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        },
+                        "query": {
+                          "type": "string",
+                          "description": "The query"
+                        },
+                        "mode": {
+                          "type": "string",
+                          "description": "Mode",
+                          "enum": [
+                            "lexical",
+                            "literal"
+                          ]
+                        },
+                        "index": {
+                          "$ref": "#/components/schemas/FilingSearchCoverage"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-tier": "standard",
+        "x-credits": 100,
+        "x-license": "rag",
+        "x-cache-control": "no-store",
+        "x-cli": {
+          "group": "search",
+          "action": "filings",
+          "positional": "q",
+          "flags": {
+            "company": "c",
+            "form": "f",
+            "limit": "l"
+          },
+          "columns": [
+            "filing_date",
+            "form",
+            "accession",
+            "score"
+          ]
+        },
+        "x-example-params": [
+          "company"
+        ]
+      }
+    },
+    "/v2/datasets": {
+      "get": {
+        "operationId": "listDatasets",
+        "summary": "List SEC dataset releases",
+        "tags": [
+          "Filings"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of Dataset rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/Dataset"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "public, max-age=86400",
+        "x-cli": {
+          "group": "filings",
+          "action": "datasets",
+          "flags": {},
+          "columns": [
+            "dataset",
+            "release",
+            "released_at"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/document-versions/{version_id}": {
+      "get": {
+        "operationId": "getDocumentVersion",
+        "summary": "Get a document version",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "blocks",
+            "required": false,
+            "description": "Block ids or ranges (`b12-b40`)",
+            "example": "b1-b20"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "pages",
+            "required": false,
+            "description": "Page numbers or ranges",
+            "example": "1-3"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "printed",
+            "required": false,
+            "description": "Printed page labels",
+            "example": "F-1"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20,
+              "default": 0
+            },
+            "in": "query",
+            "name": "neighbors",
+            "required": false,
+            "description": "Blocks around each selected one",
+            "example": 0
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "in": "query",
+            "name": "footnotes",
+            "required": false,
+            "description": "Include footnotes of selected blocks",
+            "example": false
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "description": "Document version id",
+            "example": "dv_01JCA8XK"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentVersion"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "rag",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "documents",
+          "action": "get",
+          "positional": "version_id",
+          "flags": {
+            "pages": "p"
+          }
+        },
+        "x-example-params": [
+          "pages"
+        ]
+      }
+    },
+    "/v2/document-versions/{version_id}/sections": {
+      "get": {
+        "operationId": "listDocumentSections",
+        "summary": "List a document version's sections",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "legacy",
+                "generic"
+              ],
+              "default": "generic"
+            },
+            "in": "query",
+            "name": "outline",
+            "required": false,
+            "description": "Outline",
+            "example": "generic"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "description": "Document version id",
+            "example": "dv_01JCA8XK"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of DocumentSection rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/DocumentSection"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "rag",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "documents",
+          "action": "sections",
+          "positional": "version_id",
+          "flags": {
+            "outline": "o"
+          },
+          "columns": [
+            "ordinal",
+            "item_id",
+            "title"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/document-versions/{version_id}/figures/{block_id}": {
+      "get": {
+        "operationId": "getDocumentFigure",
+        "summary": "Get a figure",
+        "tags": [
+          "Documents"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "version_id",
+            "required": true,
+            "description": "Document version id",
+            "example": "dv_01JCA8XK"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "block_id",
+            "required": true,
+            "description": "Figure block id",
+            "example": "b57"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentFigure"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "documents",
+          "action": "figure",
+          "positional": "version_id",
+          "flags": {}
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/fact-places": {
+      "get": {
+        "operationId": "listFactPlaces",
+        "summary": "List where facts appear in a document",
+        "tags": [
+          "Documents"
+        ],
+        "description": "Where facts sit in a document version: the inline-XBRL element id (`html_tag_id`), XPath, block, table cell, page box and the annotated-rendition link, with a typed `status`. Filter from either end: `document_version=` (every fact place of that version, in the store’s order) or `fact=` (the places of one standardized fact’s source facts); one of the two is required. A `fact=` whose source places are not resolved yet reads `meta.coverage.state: partial`. A `status` list the store cannot answer in one read is applied to its pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "document_version",
+            "required": false,
+            "description": "Document version id",
+            "example": "dv_01JCA8XK"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fact",
+            "required": false,
+            "description": "Standardized fact id",
+            "example": "0000320193|is_total_revenue|annual|2026|4"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(placed|hidden|not_in_document|derived|unmatched)(,(placed|hidden|not_in_document|derived|unmatched))*$"
+            },
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "description": "Placement status — any of `placed`, `hidden`, `not_in_document`, `derived`, `unmatched`, comma-separated",
+            "example": "placed"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of FactPlace rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/FactPlace"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-tier": "pro",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "documents",
+          "action": "fact-places",
+          "flags": {
+            "document_version": "d",
+            "fact": "f",
+            "limit": "l"
+          },
+          "columns": [
+            "concept",
+            "status",
+            "page",
+            "html_tag_id"
+          ]
+        },
+        "x-example-params": [
+          "document_version"
+        ]
+      }
+    },
+    "/v2/holdings": {
+      "get": {
+        "operationId": "listHoldings",
+        "summary": "List 13F holdings",
+        "tags": [
+          "Holdings"
+        ],
+        "description": "13F positions: by issuer (`company=`), by manager (`filer=`, the manager’s effective snapshot, amendments applied) or by filing (`accession=`, the filing’s information-table lines); exactly one of the three. `period_end` defaults to the newest quarter end whose 13F deadline (45 days) has passed. Order: dollar value, descending (`company=`, `filer=`), the filing’s line order (`accession=`); several companies or managers are read one after another.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": false,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "filer",
+            "required": false,
+            "description": "Manager CIK, comma list",
+            "example": "0000102909"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "accession",
+            "required": false,
+            "description": "13F filing",
+            "example": "0000950123-26-008512"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "period_end",
+            "required": false,
+            "description": "Quarter end",
+            "example": "2026-06-30"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "shares",
+                "all"
+              ],
+              "default": "shares"
+            },
+            "in": "query",
+            "name": "instruments",
+            "required": false,
+            "description": "shares = common shares only; all = incl. options and principal amounts",
+            "example": "shares"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "-dollar_value"
+              ],
+              "default": "-dollar_value"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field: `-dollar_value` (the only order the store serves); the id tiebreaker is always appended",
+            "example": "-dollar_value"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 1 000 on 13F rows)",
+            "example": 100
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of Holding rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/Holding"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        },
+                        "pinned_at": {
+                          "type": "string",
+                          "description": "Research snapshot the page reads",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "counting": {
+                          "type": "string",
+                          "description": "How positions are counted (documented rule)",
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=300",
+        "x-cli": {
+          "group": "holdings",
+          "action": "list",
+          "positional": "company",
+          "flags": {
+            "filer": "F",
+            "period_end": "p",
+            "limit": "l"
+          },
+          "columns": [
+            "name_institution",
+            "ticker_company",
+            "shares_or_principal_amount",
+            "dollar_value",
+            "period_end"
+          ]
+        },
+        "x-example-params": [
+          "company"
+        ]
+      }
+    },
+    "/v2/holding-changes": {
+      "get": {
+        "operationId": "listHoldingChanges",
+        "summary": "List 13F position changes",
+        "tags": [
+          "Holdings"
+        ],
+        "description": "Quarter-over-quarter 13F position changes between `prior_period_end` (default: the quarter before) and `period_end` (default: the newest quarter end whose 13F deadline has passed). `company=` lists every manager’s change of that issuer, `filer=` every change of that manager, both together that manager’s change of the issuer; several values are read one after another. Rows are ordered by manager CIK, then position. Only changes the store can prove are listed: a position whose prior snapshot is missing or incomplete is left out and the page reads `meta.coverage.state: partial`. The store names the issuer of a change by CUSIP only: `name_company` is null, and with `filer=` alone `cik_company` and `ticker_company` are null too (`cusip_company` identifies the security). `type` and the left-out positions are applied to the store’s pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": false,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "filer",
+            "required": false,
+            "description": "Manager CIK, comma list",
+            "example": "0000102909"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "period_end",
+            "required": false,
+            "description": "Quarter end",
+            "example": "2026-06-30"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "prior_period_end",
+            "required": false,
+            "description": "Quarter compared against (default the previous one)",
+            "example": "2026-03-31"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(new|added|reduced|sold_out|unchanged)(,(new|added|reduced|sold_out|unchanged))*$"
+            },
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "description": "Change types — any of `new`, `added`, `reduced`, `sold_out`, `unchanged`, comma-separated. Without `type` every change but `unchanged` is listed",
+            "example": "new"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 1 000 on 13F rows)",
+            "example": 100
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of HoldingChange rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/HoldingChange"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=300",
+        "x-cli": {
+          "group": "holdings",
+          "action": "changes",
+          "positional": "company",
+          "flags": {
+            "filer": "F",
+            "period_end": "p",
+            "type": "t",
+            "limit": "l"
+          },
+          "columns": [
+            "name_institution",
+            "type",
+            "change_dollar_value",
+            "period_end"
+          ]
+        },
+        "x-example-params": [
+          "company"
+        ]
+      }
+    },
+    "/v2/insider-trades": {
+      "get": {
+        "operationId": "listInsiderTrades",
+        "summary": "List insider trades",
+        "tags": [
+          "Insider trades"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "buy",
+                "sell"
+              ]
+            },
+            "in": "query",
+            "name": "side",
+            "required": false,
+            "description": "buy = acquired, sell = disposed",
+            "example": "buy"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "filed_at.gte",
+            "required": false,
+            "description": "`filed_at` on or after this value",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "filed_at.gt",
+            "required": false,
+            "description": "`filed_at` after this value",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "filed_at.lte",
+            "required": false,
+            "description": "`filed_at` on or before this value",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "filed_at.lt",
+            "required": false,
+            "description": "`filed_at` before this value",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "filed_at",
+                "-filed_at"
+              ],
+              "default": "-filed_at"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-filed_at`",
+            "example": "-filed_at"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of InsiderTrade rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/InsiderTrade"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=300",
+        "x-cli": {
+          "group": "insider-trades",
+          "action": "list",
+          "positional": "company",
+          "flags": {
+            "side": "s",
+            "limit": "l"
+          },
+          "columns": [
+            "filed_at",
+            "reporting_person_name",
+            "side",
+            "shares",
+            "share_price"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/insider-trades/{id}": {
+      "get": {
+        "operationId": "getInsiderTrade",
+        "summary": "Get an insider trade",
+        "tags": [
+          "Insider trades"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Trade id",
+            "example": "0001127602-26-012345:1"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsiderTrade"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=300",
+        "x-cli": {
+          "group": "insider-trades",
+          "action": "get",
+          "positional": "id",
+          "flags": {},
+          "columns": [
+            "filed_at",
+            "reporting_person_name",
+            "side",
+            "shares"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/ipos": {
+      "get": {
+        "operationId": "listIpos",
+        "summary": "List offerings",
+        "tags": [
+          "IPOs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(registered|price_range|exchange_approved|effective|priced|trading|withdrawn|announced|postponed)(,(registered|price_range|exchange_approved|effective|priced|trading|withdrawn|announced|postponed))*$"
+            },
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "description": "Stages — any of `registered`, `price_range`, `exchange_approved`, `effective`, `priced`, `trading`, `withdrawn`, `announced`, `postponed`, comma-separated",
+            "example": "priced"
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "is_spac",
+            "required": false,
+            "description": "Blank-check companies only / excluded",
+            "example": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "listing_date.gte",
+            "required": false,
+            "description": "`listing_date` on or after this value",
+            "example": "2026-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "listing_date.gt",
+            "required": false,
+            "description": "`listing_date` after this value",
+            "example": "2026-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "listing_date.lte",
+            "required": false,
+            "description": "`listing_date` on or before this value",
+            "example": "2026-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "listing_date.lt",
+            "required": false,
+            "description": "`listing_date` before this value",
+            "example": "2026-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": false,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "listing_date",
+                "-listing_date",
+                "first_public_at",
+                "-first_public_at"
+              ],
+              "default": "-listing_date"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-listing_date`",
+            "example": "-listing_date"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of Ipo rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/Ipo"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=60",
+        "x-cli": {
+          "group": "ipos",
+          "action": "list",
+          "flags": {
+            "stage": "s",
+            "limit": "l"
+          },
+          "columns": [
+            "issuer_name",
+            "stage",
+            "exchange",
+            "listing_date"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/ipos/{ipo_id}": {
+      "get": {
+        "operationId": "getIpo",
+        "summary": "Get an offering",
+        "tags": [
+          "IPOs"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "ipo_id",
+            "required": true,
+            "description": "Offering id",
+            "example": "ipo_0001234567_s1_1"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ipo"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=60",
+        "x-cli": {
+          "group": "ipos",
+          "action": "get",
+          "positional": "ipo_id",
+          "flags": {},
+          "columns": [
+            "issuer_name",
+            "stage",
+            "listing_date"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
     "/v2/events": {
       "get": {
         "operationId": "listEvents",
@@ -59325,6 +64664,22 @@
     {
       "name": "Catalog",
       "description": "Static catalogs: metrics, sections, forms, event types, document kinds, mapping rules"
+    },
+    {
+      "name": "Filings",
+      "description": "SEC filings, their facts, notes, review chains, full-text search and datasets"
+    },
+    {
+      "name": "Documents",
+      "description": "Immutable document versions, sections, figures and fact places"
+    },
+    {
+      "name": "Holdings",
+      "description": "13F holdings and quarter-over-quarter changes"
+    },
+    {
+      "name": "Insider trades",
+      "description": "Form 4 transactions"
     },
     {
       "name": "Events",

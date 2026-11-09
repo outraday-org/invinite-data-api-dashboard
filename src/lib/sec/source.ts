@@ -1,5 +1,6 @@
 /**
- * View models of the SEC document store answers (`/v1/sec/*`). The spec types most nested objects as free JSON
+ * View models of the SEC document store answers (`/v1/sec/*` and the v2 SEC family, backend tasks/data-api-v2 task 6:
+ * `toV2FilingDocuments`, `toMetaSource`; a v2 document version carries the same canonical blocks). The spec types most nested objects as free JSON
  * (`additionalProperties`), so every field is read through a guard here — never cast — and a missing or
  * differently-typed field reads as absent, never as a made-up value. Shapes: the live answers of 2026-11-05 (backend
  * delivery-integration task 5 plan) and secdoors' `as_json` (block `page {ordinal, printed}`, `neighbors`,
@@ -214,16 +215,87 @@ export function citationText(citation: SecCitation, trusted: boolean) {
     return [`version ${citation.versionId}`, `block ${citation.blockId}`, page].filter(Boolean).join(" · ");
 }
 
-/** The pinned version of a document answer (`version.version_id`). */
+/** The pinned version of a document answer (v1 `version.version_id`, v2 `version.id`). */
 export function versionIdOf(version: JsonValue | undefined) {
-    return textOf(recordOf(version), "version_id");
+    const record = recordOf(version);
+
+    return textOf(record, "version_id") ?? textOf(record, "id");
 }
 
-/** The EDGAR page of the document (`source.sec_url`) — an outbound link only, never fetched by this app. */
+/**
+ * The EDGAR page of the document (v1 `source.sec_url`, v2 `source.url`) — an outbound link only, never fetched by this
+ * app; anything but a `https://www.sec.gov/` URL is not shown.
+ */
 export function secUrlOf(source: JsonValue | undefined) {
-    const url = textOf(recordOf(source), "sec_url");
+    const record = recordOf(source);
+
+    const url = textOf(record, "sec_url") ?? textOf(record, "url");
 
     return url?.startsWith("https://www.sec.gov/") ? url : null;
+}
+
+/** One document of a v2 filing (`GET /v2/filings/{accession}?expand=documents`). */
+export type V2FilingDocumentView = {
+    /** The document version serving its content (`GET /v2/document-versions/{id}`); null = not readable yet. */
+    currentVersionId: null | string;
+    description: null | string;
+    filename: string;
+    /** The permanent public copy (`source_url`, https only); null = none yet. */
+    publicUrl: null | string;
+    /** The EDGAR document type (`10-K`, `EX-99.1`, …). */
+    type: null | string;
+};
+
+/** The v2 documents of a filing through guards: no filename = not listed; only an `https:` source URL counts. */
+export function toV2FilingDocuments(documents: null | ReadonlyArray<JsonValue> | undefined): Array<V2FilingDocumentView> {
+    return (documents ?? []).filter(isRecord).flatMap((doc) => {
+        const filename = textOf(doc, "filename");
+
+        if (!filename) return [];
+
+        const sourceUrl = textOf(doc, "source_url");
+
+        return [{
+            currentVersionId: textOf(doc, "current_version_id"),
+            description: textOf(doc, "description"),
+            filename,
+            publicUrl: sourceUrl?.startsWith("https://") ? sourceUrl : null,
+            type: textOf(doc, "type"),
+        }];
+    });
+}
+
+/** The documented provenance of a v2 answer (`meta.source`); null when it states none. */
+export type V2MetaSourceView = {
+    accession: null | string;
+    datasetRelease: null | string;
+    fetchedAt: null | string;
+    versionId: null | string;
+};
+
+export function toMetaSource(source: JsonValue | undefined): null | V2MetaSourceView {
+    const record = recordOf(source);
+
+    const view = {
+        accession: textOf(record, "accession"),
+        datasetRelease: textOf(record, "dataset_release"),
+        fetchedAt: textOf(record, "fetched_at"),
+        versionId: textOf(record, "version_id"),
+    };
+
+    return Object.values(view).some(Boolean) ? view : null;
+}
+
+/** `meta.source` as short "label value" parts (dataset release, filing, document version, fetched), in that order. */
+export function metaSourceParts(source: null | V2MetaSourceView): Array<string> {
+    if (!source) return [];
+
+    return [
+        source.datasetRelease && `Dataset release ${source.datasetRelease}`,
+        source.accession && `Filing ${source.accession}`,
+        source.versionId && `Document version ${source.versionId}`,
+        source.fetchedAt && `Fetched ${source.fetchedAt}`,
+    ].filter(part => typeof part === "string");
 }
 
 const ROLE_LABELS: Partial<Record<string, string>> = {
@@ -338,4 +410,16 @@ export function latest13fPeriodEnd(now: Date) {
     const end = new Date(Date.UTC(due.getUTCFullYear(), quarterStartMonth, 1) - DAY_MS);
 
     return end.toISOString().slice(0, 10);
+}
+
+/** `count` quarter ends back from `latest` (`YYYY-MM-DD`, a quarter end), newest first: the 13F period picker. */
+export function recentQuarterEnds(latest: string, count: number): Array<string> {
+    const [year, month] = latest.split("-").map(Number);
+
+    return Array.from({ length: count }, (_, index) => {
+        // Day 0 of the month after the quarter's last month = that quarter's last day.
+        const end = new Date(Date.UTC(year, month - 3 * index, 0));
+
+        return end.toISOString().slice(0, 10);
+    });
 }

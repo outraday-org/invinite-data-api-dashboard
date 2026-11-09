@@ -2,15 +2,22 @@ import { ChevronLeft, ChevronRight, ExternalLink, FileText, ImageIcon } from "lu
 import * as React from "react";
 
 import type { SecDocumentTarget } from "@/lib/api/queries";
-import type { SecDocumentResponse, SecFigureResponse, SecFilingManifestResponse } from "@/lib/api/types";
-import type { SecBlock, SecManifestDocument } from "@/lib/sec/source";
+import type {
+    SecDocumentResponse,
+    SecFigureResponse,
+    SecFilingManifestResponse,
+    V2DocumentFigureResponse,
+    V2DocumentVersionResponse,
+    V2FilingDetailResponse,
+} from "@/lib/api/types";
+import type { SecBlock, SecManifestDocument, V2FilingDocumentView } from "@/lib/sec/source";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSecDocumentBlocks, useSecFigure, useSecFilingManifest } from "@/lib/api/queries";
+import { useSecDocumentBlocks, useSecFigure, useSecFilingManifest, useV2DocumentFigure, useV2DocumentVersion, useV2Filing } from "@/lib/api/queries";
 import { formatBytes } from "@/lib/earnings/format";
 import {
     blocksBefore,
@@ -29,6 +36,7 @@ import {
     toBlocks,
     toManifestDocuments,
     toSelection,
+    toV2FilingDocuments,
     versionIdOf,
 } from "@/lib/sec/source";
 
@@ -167,8 +175,16 @@ export function SecManifestView({
     );
 }
 
-/** A figure: its permanent public image, or the honest state (`image_not_public`, `image_not_in_filing`, …). */
-export function SecFigureView({ data, error, isLoading }: { data: null | SecFigureResponse; error: unknown; isLoading: boolean }) {
+/** The v1 readiness of an answer; a v2 answer has none (a refusal is a problem, an answer is ready). */
+function readinessOf(data: object): null | { reason: null | string; status: SecDocumentResponse["readiness"]["status"] } {
+    return "readiness" in data ? (data as SecDocumentResponse).readiness : null;
+}
+
+/**
+ * A figure (v1 `/v1/sec/versions/…/figures/…` or v2 `/v2/document-versions/…/figures/…`): its permanent public image,
+ * or the honest state (`image_not_public`, `image_not_in_filing`, …).
+ */
+export function SecFigureView({ data, error, isLoading }: { data: null | SecFigureResponse | V2DocumentFigureResponse; error: unknown; isLoading: boolean }) {
     if (error) return <SecReadinessNotice error={error} title="Failed to load the figure" />;
 
     if (isLoading && !data) return <Skeleton className="h-32 w-full" />;
@@ -193,10 +209,15 @@ export function SecFigureView({ data, error, isLoading }: { data: null | SecFigu
                             </a>
                         </>
                     )
-                : <SecReadinessNotice readiness={data.readiness.status === "ready" ? { reason: "image_not_public", status: "not_ready" } : data.readiness} />}
+                : <SecReadinessNotice readiness={figureNotice(readinessOf(data))} />}
             {caption && <figcaption className="text-muted-foreground text-xs">{caption}</figcaption>}
         </figure>
     );
+}
+
+/** No image: the answer's own non-ready state, else "The image has no public copy yet". */
+function figureNotice(readiness: null | { reason: null | string; status: SecDocumentResponse["readiness"]["status"] }) {
+    return readiness && readiness.status !== "ready" ? readiness : { reason: "image_not_public", status: "not_ready" as const };
 }
 
 function FigureLoader({ blockId, versionId }: { blockId: string; versionId: string }) {
@@ -285,7 +306,8 @@ export function SecBlocksView({
     onSelect,
     renderFigure,
 }: {
-    data: null | SecDocumentResponse;
+    /** A v1 document / version answer or a v2 document version (the same canonical blocks). */
+    data: null | SecDocumentResponse | V2DocumentVersionResponse;
     error: unknown;
     focusBlockId?: string;
     isLoading: boolean;
@@ -316,6 +338,8 @@ export function SecBlocksView({
 
     const pageCount = numberOf(recordOf(data.version), "page_count");
 
+    const readiness = readinessOf(data);
+
     return (
         <section aria-label="Document text" className="flex flex-col gap-2">
             <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
@@ -330,9 +354,9 @@ export function SecBlocksView({
                     </a>
                 )}
             </div>
-            <SecReadinessNotice readiness={data.readiness} />
+            <SecReadinessNotice readiness={readiness} />
             {blocks.length === 0
-                ? (data.readiness.status === "ready" && <div className="text-muted-foreground text-xs">No blocks in this selection.</div>)
+                ? ((readiness?.status ?? "ready") === "ready" && <div className="text-muted-foreground text-xs">No blocks in this selection.</div>)
                 : (
                         <ol className="flex flex-col gap-1.5">
                             {blocks.map(block => (
@@ -387,9 +411,147 @@ export function SecDocumentReader({ focusBlockId, target }: { focusBlockId?: str
     );
 }
 
-/** What the panel opens: a filing (its manifest, then a document) or a citation (one version, at one block). */
+/** A v2 filing's documents (pure): filename, EDGAR type, description, public copy, "Read" for a readable version. */
+export function V2FilingDocumentsView({
+    data,
+    error,
+    isLoading,
+    onRead,
+    selectedFilename,
+}: {
+    data: null | V2FilingDetailResponse;
+    error: unknown;
+    isLoading: boolean;
+    onRead: (doc: V2FilingDocumentView) => void;
+    selectedFilename: null | string;
+}) {
+    if (error) return <SecReadinessNotice error={error} title="Failed to load the filing's documents" />;
+
+    if (isLoading && !data) return <Skeleton className="h-24 w-full" />;
+
+    if (!data) return null;
+
+    const documents = toV2FilingDocuments(data.documents);
+
+    return (
+        <section aria-label="Filing documents" className="flex flex-col gap-2">
+            <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
+                <Badge variant="outline">{data.form}</Badge>
+                <span>{`Filed ${data.filing_date}`}</span>
+                {data.report_date && <span>{`Period ${data.report_date}`}</span>}
+                {data.edgar_index_url.startsWith("https://www.sec.gov/") && (
+                    // An outbound link to EDGAR; this app never fetches sec.gov.
+                    <a className={linkClass} href={data.edgar_index_url} rel="noopener noreferrer" target="_blank">
+                        <ExternalLink className="size-3" />
+                        EDGAR index
+                    </a>
+                )}
+            </div>
+            {documents.length === 0
+                ? <div className="text-muted-foreground text-xs">This filing lists no documents.</div>
+                : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-xs">
+                                <thead className="text-muted-foreground text-left">
+                                    <tr>
+                                        <th className="p-1 font-normal">Document</th>
+                                        <th className="p-1 font-normal">Description</th>
+                                        <th className="p-1 font-normal">Public copy</th>
+                                        <th className="p-1" />
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {documents.map(doc => (
+                                        <tr
+                                            className={doc.filename === selectedFilename ? "bg-muted/50" : undefined}
+                                            data-filename={doc.filename}
+                                            key={doc.filename}
+                                        >
+                                            <td className="p-1 font-medium">
+                                                {doc.filename}
+                                                {doc.type && <span className="text-muted-foreground font-normal">{` · ${doc.type}`}</span>}
+                                            </td>
+                                            <td className="p-1">{doc.description ?? "—"}</td>
+                                            <td className="p-1">
+                                                {doc.publicUrl
+                                                    ? (
+                                                            <a className={linkClass} href={doc.publicUrl} rel="noopener noreferrer" target="_blank">
+                                                                <ExternalLink className="size-3" />
+                                                                Original
+                                                            </a>
+                                                        )
+                                                    : <span className="text-muted-foreground">{NO_PUBLIC_COPY}</span>}
+                                            </td>
+                                            <td className="p-1 text-right">
+                                                {doc.currentVersionId
+                                                    ? (
+                                                            <Button onClick={() => onRead(doc)} size="xs" type="button" variant="outline">
+                                                                <FileText />
+                                                                Read
+                                                            </Button>
+                                                        )
+                                                    : <span className="text-muted-foreground">No readable version</span>}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+        </section>
+    );
+}
+
+function V2FigureLoader({ blockId, versionId }: { blockId: string; versionId: string }) {
+    const { data, error, isLoading } = useV2DocumentFigure({ blockId, versionId });
+
+    return <SecFigureView data={data} error={error} isLoading={isLoading} />;
+}
+
+/** The reader over `/v2/document-versions/{id}`: one immutable version, paged by block ranges inside it. */
+export function V2DocumentReader({ versionId }: { versionId: string }) {
+    const [blocks, setBlocks] = React.useState<string | undefined>(undefined);
+
+    const { data, error, isLoading } = useV2DocumentVersion(versionId, { blocks, footnotes: true });
+
+    return (
+        <SecBlocksView
+            data={data}
+            error={error}
+            isLoading={isLoading}
+            onSelect={setBlocks}
+            renderFigure={(block, figureVersionId) => <V2FigureLoader blockId={block.id} versionId={figureVersionId} />}
+        />
+    );
+}
+
+/** A v2 filing: its documents, then the reader of the chosen document's current version. */
+function V2FilingPanel({ accession }: { accession: string }) {
+    const [reading, setReading] = React.useState<null | V2FilingDocumentView>(null);
+
+    const filing = useV2Filing(accession, ["documents"]);
+
+    return (
+        <div className="flex flex-col gap-4">
+            <V2FilingDocumentsView
+                data={filing.data}
+                error={filing.error}
+                isLoading={filing.isLoading}
+                onRead={setReading}
+                selectedFilename={reading?.filename ?? null}
+            />
+            {reading?.currentVersionId && <V2DocumentReader key={reading.currentVersionId} versionId={reading.currentVersionId} />}
+        </div>
+    );
+}
+
+/**
+ * What the panel opens: a filing (its manifest, then a document) or a citation (one version, at one block). `filing` /
+ * `citation` read `/v1/sec/*` (the `/sec/$cik` page and the documents search); `v2-filing` reads
+ * `/v2/filings/{accession}?expand=documents` + `/v2/document-versions/{id}` (the `$ticker/filings` page).
+ */
 export type SecPanelTarget
-    = | { accession: string; kind: "filing"; title?: string }
+    = | { accession: string; kind: "filing" | "v2-filing"; title?: string }
         | { blockId: string; kind: "citation"; title?: string; versionId: string };
 
 /** The reusable source / citation panel: manifest → document reader, or a cited version at its block. */
@@ -397,6 +559,8 @@ export function SecSourcePanel({ target }: { target: SecPanelTarget }) {
     const [reading, setReading] = React.useState<null | SecManifestDocument>(null);
 
     const manifest = useSecFilingManifest(target.kind === "filing" ? target.accession : null);
+
+    if (target.kind === "v2-filing") return <V2FilingPanel accession={target.accession} />;
 
     if (target.kind === "citation") {
         return (
@@ -429,7 +593,7 @@ export function SecSourcePanel({ target }: { target: SecPanelTarget }) {
 
 /** The panel in a dialog (filings list, search hits, the CIK page); null target = closed. */
 export function SecSourceDialog({ onClose, target }: { onClose: () => void; target: null | SecPanelTarget }) {
-    const title = target?.title ?? (target?.kind === "filing" ? target.accession : "Cited passage");
+    const title = target?.title ?? (target && target.kind !== "citation" ? target.accession : "Cited passage");
 
     return (
         <Dialog onOpenChange={open => !open && onClose()} open={target !== null}>

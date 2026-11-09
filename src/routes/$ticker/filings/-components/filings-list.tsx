@@ -9,6 +9,7 @@ import { LoadMoreButton } from "./load-more-button";
 
 export function FilingsList({
     displayFilings,
+    emptyIsGenuine = true,
     hasNextPage,
     isFetchingNextPage,
     isLoading,
@@ -19,6 +20,8 @@ export function FilingsList({
     sortDirection,
 }: {
     displayFilings: ReadonlyArray<FilingListRow>;
+    /** false while the answer's coverage is pending / partial: no rows is then not "No filings found". */
+    emptyIsGenuine?: boolean;
     isLoading: boolean;
     hasNextPage: boolean;
     isFetchingNextPage: boolean;
@@ -50,7 +53,7 @@ export function FilingsList({
                     onLoadMore={onFetchNextPage}
                 />
 
-                {!isLoading && displayFilings.length === 0 && (
+                {!isLoading && emptyIsGenuine && displayFilings.length === 0 && (
                     <div className="text-muted-foreground w-full text-center text-xs p-2">No filings found.</div>
                 )}
 

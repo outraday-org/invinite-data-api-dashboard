@@ -3381,6 +3381,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/datasets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List SEC dataset releases */
+        get: operations["listDatasets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/dividends": {
         parameters: {
             query?: never;
@@ -3390,6 +3407,57 @@ export interface paths {
         };
         /** List dividends */
         get: operations["listDividends"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/document-versions/{version_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a document version */
+        get: operations["getDocumentVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/document-versions/{version_id}/figures/{block_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a figure */
+        get: operations["getDocumentFigure"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/document-versions/{version_id}/sections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a document version's sections */
+        get: operations["listDocumentSections"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3698,6 +3766,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/fact-places": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List where facts appear in a document
+         * @description Where facts sit in a document version: the inline-XBRL element id (`html_tag_id`), XPath, block, table cell, page box and the annotated-rendition link, with a typed `status`. Filter from either end: `document_version=` (every fact place of that version, in the store’s order) or `fact=` (the places of one standardized fact’s source facts); one of the two is required. A `fact=` whose source places are not resolved yet reads `meta.coverage.state: partial`. A `status` list the store cannot answer in one read is applied to its pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false.
+         */
+        get: operations["listFactPlaces"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/filers": {
         parameters: {
             query?: never;
@@ -3727,6 +3815,97 @@ export interface paths {
         };
         /** Get a filer */
         get: operations["getFiler"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/filings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List filings
+         * @description A company’s SEC filings by filing date (newest first by default). Several companies are read one after another: all filings of the first company in the request’s order, then the next; `meta.form_facet` sums the forms of the companies read on the page. `items` is applied to the store’s pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false.
+         */
+        get: operations["listFilings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/filings/{accession}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a filing */
+        get: operations["getFiling"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/filings/{accession}/facts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a filing's numeric facts */
+        get: operations["listFilingFacts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/filings/{accession}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a filing's text facts */
+        get: operations["listFilingNotes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/filings/{accession}/review-chain": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a filing's review chain
+         * @description The comment-letter graph around a filing (UPLOAD / CORRESP and the filings they review). `max_depth=1` lists the filing’s direct relations (`direction`: `down` = relations the filing makes, `up` = relations pointing at it); deeper reads follow confirmed relations up to `max_depth` hops and at most 100 nodes. `completeness` names what was cut or is still unresolved; a filing whose letters are not resolved yet answers its own node only. 503 `unavailable` only while the review store is switched off.
+         */
+        get: operations["getReviewChain"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3769,6 +3948,80 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/holding-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List 13F position changes
+         * @description Quarter-over-quarter 13F position changes between `prior_period_end` (default: the quarter before) and `period_end` (default: the newest quarter end whose 13F deadline has passed). `company=` lists every manager’s change of that issuer, `filer=` every change of that manager, both together that manager’s change of the issuer; several values are read one after another. Rows are ordered by manager CIK, then position. Only changes the store can prove are listed: a position whose prior snapshot is missing or incomplete is left out and the page reads `meta.coverage.state: partial`. The store names the issuer of a change by CUSIP only: `name_company` is null, and with `filer=` alone `cik_company` and `ticker_company` are null too (`cusip_company` identifies the security). `type` and the left-out positions are applied to the store’s pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false.
+         */
+        get: operations["listHoldingChanges"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/holdings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List 13F holdings
+         * @description 13F positions: by issuer (`company=`), by manager (`filer=`, the manager’s effective snapshot, amendments applied) or by filing (`accession=`, the filing’s information-table lines); exactly one of the three. `period_end` defaults to the newest quarter end whose 13F deadline (45 days) has passed. Order: dollar value, descending (`company=`, `filer=`), the filing’s line order (`accession=`); several companies or managers are read one after another.
+         */
+        get: operations["listHoldings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/insider-trades": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List insider trades */
+        get: operations["listInsiderTrades"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/insider-trades/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an insider trade */
+        get: operations["getInsiderTrade"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/investor-documents": {
         parameters: {
             query?: never;
@@ -3798,6 +4051,40 @@ export interface paths {
          * @description One investor document from either source (`company` = the IR library, `call` = an event's documents); `expand=pages` inlines the per-page text (`pages`, otherwise null). 404 `not_found` for an unknown or not served document id.
          */
         get: operations["getInvestorDocument"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/ipos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List offerings */
+        get: operations["listIpos"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/ipos/{ipo_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an offering */
+        get: operations["getIpo"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3968,6 +4255,26 @@ export interface paths {
         };
         /** Get a person */
         get: operations["getPerson"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/search/filings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search filings
+         * @description Ranked passages from SEC documents with citations (`mode=lexical` by default: keywords and quoted phrases, English stemming; `literal` for the exact characters). Each request reads one page of the index: `limit` above 50 answers 50 hits and a `next_cursor`; `match.lexical_rank` counts on across pages. `meta.index` says how complete the answer is: empty `data` with `completeness: complete` is a genuine no-result, anything else is not. A search without `company=` reads at most `meta.index.matches.cap` matching passages, newest filings first; `meta.index.hint` says how to narrow it.
+         */
+        get: operations["searchFilings"];
         put?: never;
         post?: never;
         delete?: never;
@@ -5027,7 +5334,7 @@ export interface components {
                 [key: string]: unknown;
             };
             /** @description With `expand=proposed_symbols` */
-            proposed_symbols?: Array<components["schemas"]["ProposedSymbol"]> | null;
+            proposed_symbols?: Array<components["schemas"]["ProposedTicker"]> | null;
             /** @description With `expand=former_names` */
             former_names?: Array<{
                 /** @description Name */
@@ -5047,6 +5354,22 @@ export interface components {
                 /** @description Succession kind */
                 kind: null | string;
             }> | null;
+        };
+        /**
+         * ProposedTicker
+         * @description A ticker the registration statement says the issuer applied, intends or was approved to list under
+         */
+        ProposedTicker: {
+            /** @description Proposed ticker, upper case (`ABCD.WS` for warrants) */
+            symbol: string;
+            /** @description Exchange as an ISO 10383 MIC (`XNAS`, `XNYS`, `XASE`, `ARCX`, `BATS`); null when the prospectus names none or the name has no MIC mapping */
+            exchange: null | string;
+            /** @description common, ads, units, warrants, rights, preferred or other */
+            security_class: null | string;
+            /** @description How it was read: regex or llm */
+            source: null | string;
+            /** @description The ticker and issuer name are also on the listing calendar (`sources.listing` of GET /v2/ipos) — a hint, not an identity */
+            ipo_calendar_match: boolean;
         };
         /**
          * Person
@@ -5347,6 +5670,842 @@ export interface components {
             rule: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * Filing
+         * @description One SEC filing
+         */
+        Filing: {
+            /**
+             * @description Accession number
+             * @example 0000320193-26-000026
+             */
+            accession: string;
+            company: components["schemas"]["CompanyRef"];
+            /**
+             * @description Form
+             * @example 10-K
+             */
+            form: string;
+            /**
+             * Format: date
+             * @description Filing date
+             */
+            filing_date: string;
+            /**
+             * Format: date
+             * @description Period of report
+             */
+            report_date: null | string;
+            /**
+             * Format: date-time
+             * @description EDGAR acceptance time
+             */
+            filed_at: null | string;
+            /** @description 8-K items */
+            items: Array<string>;
+            /** @description Primary document file name */
+            primary_document: null | string;
+            /** @description The company's roles on the filing (filer, subject, …) */
+            roles: Array<string>;
+            /** @description EDGAR index page */
+            edgar_index_url: string;
+        };
+        /**
+         * FilingDetail
+         * @description One SEC filing's manifest
+         */
+        FilingDetail: {
+            /**
+             * @description Accession number
+             * @example 0000320193-26-000026
+             */
+            accession: string;
+            company: components["schemas"]["CompanyRef"];
+            /** @description Form */
+            form: string;
+            /**
+             * Format: date
+             * @description Filing date
+             */
+            filing_date: string;
+            /**
+             * Format: date
+             * @description Period of report
+             */
+            report_date: null | string;
+            /**
+             * Format: date-time
+             * @description EDGAR acceptance time
+             */
+            filed_at: null | string;
+            /** @description 8-K items */
+            items: Array<string>;
+            /** @description EDGAR index page */
+            edgar_index_url: string;
+            /** @description With `expand=documents` */
+            documents?: Array<components["schemas"]["FilingDocument"]> | null;
+            /** @description With `expand=parties` */
+            parties?: Array<{
+                [key: string]: unknown;
+            }> | null;
+            /** @description With `expand=relations` */
+            relations?: Array<{
+                [key: string]: unknown;
+            }> | null;
+        };
+        /**
+         * FilingDocument
+         * @description One document of a filing
+         */
+        FilingDocument: {
+            /** @description File name */
+            filename: string;
+            /** @description EDGAR document type */
+            type: null | string;
+            /** @description Description */
+            description: null | string;
+            /** @description The document version serving its content (`GET /v2/document-versions/{id}`) */
+            current_version_id: null | string;
+            /** @description Permanent public URL of the original */
+            source_url: null | string;
+        };
+        /**
+         * FilingFact
+         * @description One numeric fact of a filing (SEC financial statement data sets)
+         */
+        FilingFact: {
+            /**
+             * @description XBRL concept
+             * @example us-gaap:Revenues
+             */
+            tag: string;
+            /** @description Value as filed (unscaled); null when the filing states the fact as nil */
+            value: null | number;
+            /** @description Unit */
+            unit: null | string;
+            /** @description XBRL decimals */
+            decimals: null | number;
+            /**
+             * Format: date
+             * @description Start of a duration
+             */
+            period_start: null | string;
+            /**
+             * Format: date
+             * @description End of a duration
+             */
+            period_end: null | string;
+            /**
+             * Format: date
+             * @description Instant
+             */
+            instant: null | string;
+            /** @description Axis / member pairs; empty = consolidated */
+            dimensions: Array<components["schemas"]["Dimension"]>;
+        };
+        /**
+         * Dimension
+         * @description One axis / member pair
+         */
+        Dimension: {
+            /**
+             * @description XBRL axis
+             * @example srt:ProductOrServiceAxis
+             */
+            axis: string;
+            /**
+             * @description XBRL member
+             * @example us-gaap:ProductMember
+             */
+            member: string;
+        };
+        /**
+         * FilingNote
+         * @description One text fact of a filing
+         */
+        FilingNote: {
+            /** @description XBRL text-block concept */
+            tag: string;
+            /** @description Text */
+            text: string;
+            /**
+             * Format: date
+             * @description Period end
+             */
+            period_end: null | string;
+            /** @description Axis / member pairs */
+            dimensions: Array<components["schemas"]["Dimension"]>;
+        };
+        /**
+         * ReviewChain
+         * @description The comment-letter graph around a filing
+         */
+        ReviewChain: {
+            /** @description The filing the chain starts at */
+            accession: string;
+            /** @description Filings */
+            nodes: Array<{
+                [key: string]: unknown;
+            }>;
+            /** @description Relations */
+            edges: Array<{
+                [key: string]: unknown;
+            }>;
+            /** @description Twins */
+            twins: Array<{
+                [key: string]: unknown;
+            }>;
+            /** @description Whether the chain was cut by max_depth / max_nodes */
+            completeness: {
+                [key: string]: unknown;
+            };
+        };
+        /** FilingSearchHit */
+        FilingSearchHit: {
+            [key: string]: unknown;
+        } & {
+            /**
+             * Format: uuid
+             * @description The cited document version
+             */
+            version_id?: string;
+            /** @description Accession number */
+            accession?: string;
+            /** @description Document file name */
+            filename?: string;
+            /** @description Form type */
+            form?: string;
+            /**
+             * Format: date
+             * @description SEC filing date
+             */
+            filing_date?: null | string;
+            /** @description The whole search unit (≤ 4,000 code points) */
+            text?: string;
+            /** @description Lexical rank (ts_rank_cd); 0 for literal */
+            score?: number;
+            match?: components["schemas"]["HitMatch"];
+            /** @description Each span in document-text and block offsets (code points) */
+            document_spans?: Array<{
+                [key: string]: unknown;
+            }>;
+            /** @description version_id, accession, filename and the original’s permanent `source.url` */
+            citation?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * FilingSearchCoverage
+         * @description How much of the searched SEC scope the text index covers (the earnings search vocabulary). `forms_indexed` / `years_indexed` / `indexed_since` state the index policy; documents of other forms are counted in `lexical.not_indexed_by_policy` (by design, not a gap). For exactly one `cik`, `held` / `mirror` say how much of the filer's history is held (`held_through`).
+         */
+        FilingSearchCoverage: {
+            /**
+             * @description complete = no hits is a genuine no-result; partial / unknown = the answer may be incomplete
+             * @enum {string}
+             */
+            completeness: "complete" | "partial" | "unknown";
+            /** @description The text index over the scope; null when nothing was searched (excluded / not indexed by policy) */
+            lexical: null | ({
+                /** @description ready / partial / not_ready */
+                state?: string;
+                /** @description Documents of the scope searchable now */
+                indexed?: number;
+                /** @description Not indexed yet */
+                pending?: number;
+                /** @description Indexing failed */
+                failed?: number;
+            } & {
+                [key: string]: unknown;
+            });
+            /** @description Why the answer may be incomplete: not_projected, projection_failed, not_published, not_held, held_not_verified, too_many_matches, candidate_cap_reached, scan_budget_reached, scope_needs_review, scope_not_current, form_not_indexed, older_than_index_window, no_forms_indexed, held_gap, search_provider_not_registered, search_projection_empty, search_timeout, scope_excluded, documents_not_held */
+            reasons: Array<string>;
+            /** @description The indexed form policy (`10-K*` = the form and its /A) */
+            forms_indexed?: Array<string> | null;
+            /** @description The selectivity cap of a search without a company filter (no filter at all, or only `form` and / or `filed_at`): at most `cap` matching passages are read from the index, newest filings first (`order`), then ranked and cited. null when the search names a `company` (never capped: that gives complete results) */
+            matches?: null | ({
+                /** @description true = more passages match than were examined: the answer is partial (`too_many_matches`) */
+                capped: boolean;
+                /** @description The most matching passages a search without a company filter reads (300) */
+                cap: number;
+                /** @description Matching passages read from the index (at most `cap`) */
+                examined: number;
+                /** @description Of them, passages in searchable documents: the set the hits are ranked from */
+                examined_in_scope: number;
+                /** @description Every matching passage when not capped; null when capped (the total is unknown) */
+                total: null | number;
+                /** @description When capped: the total is at least this (cap + 1); never an estimate. null when not capped */
+                total_at_least: null | number;
+                /**
+                 * @description Which passages were examined: `newest_first` = every match filed since `complete_since`, then older ones from `window_from` on in index order; `index_order` = the first ones the index returned (older servers). Treat an unknown value as "not stated": the SDKs keep it as a string
+                 * @enum {string}
+                 */
+                order: "index_order" | "newest_first";
+                /**
+                 * Format: date
+                 * @description `newest_first` only: every matching passage filed on or after this date was examined; null when even the newest window (7 days) holds more than `cap` matches, or when not capped
+                 */
+                complete_since?: null | string;
+                /**
+                 * Format: date
+                 * @description `newest_first` only: the older passages examined (in index order, up to `cap`) were filed on or after this date; null = any date, or when not capped
+                 */
+                window_from?: null | string;
+                /**
+                 * Format: date
+                 * @description Earliest filing date among the examined passages in searchable documents
+                 */
+                filed_from: null | string;
+                /**
+                 * Format: date
+                 * @description Latest filing date among the examined passages in searchable documents
+                 */
+                filed_to: null | string;
+                /** @description The filters to add for a complete answer: filer (`company`), form (`form`), filing date (`filed_at`). A search already filtered by form / date lists only `company` (a form or date filter is itself capped while it matches more than `cap`) */
+                narrow_with: Array<string>;
+            } & {
+                [key: string]: unknown;
+            });
+            /** @description What to do for a complete answer (set when `matches.capped`; null otherwise) */
+            hint?: null | string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * Dataset
+         * @description One SEC dataset release the filings routes serve
+         */
+        Dataset: {
+            /**
+             * @description Dataset
+             * @example financial_statements
+             */
+            dataset: string;
+            /**
+             * @description Newest release served
+             * @example 2026q3
+             */
+            release: string;
+            /**
+             * Format: date
+             * @description Release date
+             */
+            released_at: null | string;
+            /** @description Forms it covers */
+            forms: Array<string>;
+        };
+        /**
+         * DocumentVersion
+         * @description One immutable document version
+         */
+        DocumentVersion: {
+            /** @description The version: id, accession, filename, sha256, created_at */
+            version: {
+                [key: string]: unknown;
+            };
+            /** @description Original URL and content type */
+            source: {
+                [key: string]: unknown;
+            };
+            /** @description Extraction quality */
+            quality: {
+                [key: string]: unknown;
+            };
+            /** @description What `blocks` / `pages` / `printed` / `neighbors` selected */
+            selection: {
+                [key: string]: unknown;
+            };
+            /** @description Table of contents */
+            toc: Array<{
+                [key: string]: unknown;
+            }>;
+            /** @description Blocks */
+            blocks: Array<{
+                [key: string]: unknown;
+            }>;
+            /** @description Pages */
+            pages: Array<{
+                [key: string]: unknown;
+            }>;
+            /** @description Footnotes */
+            footnotes: Array<{
+                [key: string]: unknown;
+            }>;
+        };
+        /** DocumentSection */
+        DocumentSection: {
+            /**
+             * @description legacy = the existing section ids; generic = other headings
+             * @enum {string}
+             */
+            outline?: "generic" | "legacy";
+            /** @description Position in its outline */
+            ordinal?: number;
+            /** @description The section id of the legacy sections route (null for generic) */
+            legacy_section_key?: null | string;
+            /** @description Part heading */
+            part?: null | string;
+            /** @description Item number */
+            item_id?: null | string;
+            /** @description Heading */
+            title?: string;
+            /** @description `blocks` selectors of the section's spans */
+            blocks?: Array<string>;
+            /** @description `{from, to}` block ids */
+            block_spans?: Array<{
+                [key: string]: unknown;
+            }>;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * DocumentFigure
+         * @description One figure of a document version
+         */
+        DocumentFigure: {
+            /** @description Document version */
+            version_id: string;
+            /** @description The figure block */
+            figure: {
+                [key: string]: unknown;
+            };
+            /** @description Permanent image URL and size */
+            image: null | {
+                [key: string]: unknown;
+            };
+            /** @description Where the figure sits in the document */
+            citation: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * FactPlace
+         * @description Where one fact appears in one document version (PRO)
+         */
+        FactPlace: {
+            /** @description Standardized fact placed, when the place belongs to one */
+            fact_id: null | string;
+            /** @description Document version id */
+            document_version: string;
+            /** @description XBRL concept */
+            concept: string;
+            /**
+             * @description Typed placement status
+             * @enum {string}
+             */
+            status: "derived" | "hidden" | "not_in_document" | "placed" | "unmatched";
+            /** @description The native `ix:` element id verbatim */
+            html_tag_id: null | string;
+            /** @description XPath of the element */
+            xpath: null | string;
+            /** @description Block holding the value */
+            block_id: null | string;
+            /** @description Ordinal of the fact in the instance */
+            xbrl_ordinal: null | number;
+            /** @description Row in its table */
+            table_row: null | number;
+            /** @description Column in its table */
+            table_col: null | number;
+            /** @description Page */
+            page: null | number;
+            /** @description x0, y0, x1, y1 on the page */
+            pdf_box: Array<number> | null;
+            /** @description SHA-256 of the source document */
+            source_sha256: null | string;
+            /** @description Annotated-rendition alias */
+            legacy_id: null | string;
+            /** @description Annotated rendition URL */
+            rendition_url: null | string;
+        };
+        /** Holding */
+        Holding: {
+            /** @description SEC filing accession number */
+            accession_number: string;
+            /** @description Calendar quarter (1-4) */
+            calendar_quarter: number;
+            /** @description Calendar year */
+            calendar_year: number;
+            /** @description Company CIK */
+            cik_company?: null | string;
+            /** @description Company name */
+            name_company?: null | string;
+            /** @description Company ticker symbol */
+            ticker_company?: null | string;
+            /** @description Company CUSIP */
+            cusip_company: string;
+            /** @description Institution CIK */
+            cik_institution: string;
+            /** @description Institution name */
+            name_institution?: null | string;
+            /** @description Position market value in USD; null when the filer stated none */
+            dollar_value: null | number;
+            /**
+             * Format: date
+             * @description Filing date (YYYY-MM-DD); null when the filing is undated in the store
+             */
+            filing_date: null | string;
+            /** @description Investment discretion type */
+            investment_discretion?: null | string;
+            /** @description URL to SEC filing details */
+            link_to_filing_details: string;
+            /**
+             * Format: date
+             * @description Period end date (YYYY-MM-DD)
+             */
+            period_end: string;
+            /** @description Option type if applicable */
+            put_call?: null | string;
+            /** @description Shares or principal amount; null when the filer stated none */
+            shares_or_principal_amount: null | number;
+            /** @description Type of position amount */
+            shares_or_principal_amount_type: string;
+            /** @description Votes with no authority */
+            voting_authority_none?: null | number;
+            /** @description Votes with shared authority */
+            voting_authority_shared?: null | number;
+            /** @description Votes with sole authority */
+            voting_authority_sole?: null | number;
+        };
+        /** HoldingChange */
+        HoldingChange: {
+            /** @description Institution CIK */
+            cik_institution: string;
+            /** @description Institution name */
+            name_institution?: null | string;
+            /** @description Company CIK */
+            cik_company?: null | string;
+            /** @description Company name */
+            name_company?: null | string;
+            /** @description Company ticker symbol */
+            ticker_company?: null | string;
+            /** @description Company CUSIP */
+            cusip_company: string;
+            /**
+             * @description Change type: new (a position the prior complete snapshot did not hold), added, reduced, sold_out, unchanged (served only when `type` asks for it)
+             * @enum {string}
+             */
+            type: "added" | "new" | "reduced" | "sold_out" | "unchanged";
+            /** @description Change in dollar value */
+            change_dollar_value: number;
+            /** @description Absolute change in shares or principal */
+            change_shares_or_principal_amount_absolute: number;
+            /** @description Change over the prior position as a fraction (0.05 = +5 %); +1 for a new position, −1 for a sold-out one */
+            change_shares_or_principal_amount_percent: number;
+            /** @description New position size */
+            shares_or_principal_amount_new: number;
+            /** @description Prior position size */
+            shares_or_principal_amount_old: number;
+            /** @description SEC filing accession number */
+            accession_number: string;
+            /** @description Calendar quarter (1-4) */
+            calendar_quarter: number;
+            /** @description Calendar year */
+            calendar_year: number;
+            /** @description Position market value in USD */
+            dollar_value: number;
+            /**
+             * Format: date
+             * @description Filing date (YYYY-MM-DD); null when the store does not state it for a position change
+             */
+            filing_date: null | string;
+            /** @description Investment discretion type */
+            investment_discretion?: null | string;
+            /**
+             * Format: date
+             * @description Period end date (YYYY-MM-DD)
+             */
+            period_end: string;
+            /** @description Option type if applicable */
+            put_call?: null | string;
+            /** @description Type of position amount */
+            shares_or_principal_amount_type: string;
+            /** @description Votes with no authority */
+            voting_authority_none?: null | number;
+            /** @description Votes with shared authority */
+            voting_authority_shared?: null | number;
+            /** @description Votes with sole authority */
+            voting_authority_sole?: null | number;
+        };
+        /** InsiderTrade */
+        InsiderTrade: {
+            /** @description Internal transaction ID */
+            id: string;
+            /** @description SEC filing accession number */
+            accession_number: string;
+            /** @description CIK of the company */
+            cik: string;
+            /**
+             * Format: date-time
+             * @description Filing time (ISO 8601, UTC)
+             */
+            filed_at: string;
+            /**
+             * Format: date
+             * @description Period of report (YYYY-MM-DD)
+             */
+            period_of_report?: null | string;
+            /** @description Name of the reporting insider */
+            reporting_person_name: string;
+            /** @description Insider is a director */
+            reporting_person_is_director: boolean;
+            /** @description Insider is an officer */
+            reporting_person_is_officer: boolean;
+            /** @description Insider owns 10%+ */
+            reporting_person_is_ten_percent_owner: boolean;
+            /** @description Insider flagged as other */
+            reporting_person_is_other: boolean;
+            /** @description Officer title as reported (e.g. Chief Executive Officer) */
+            reporting_person_officer_title?: null | string;
+            /** @description Other role description */
+            reporting_person_other_text?: null | string;
+            /** @description Security title */
+            security_title: string;
+            /** @description A for acquisition, D for disposition */
+            acquired_disposed: string;
+            /** @description SEC transaction code */
+            coding_code: string;
+            /** @description Number of shares traded */
+            shares: number;
+            /** @description Price per share (null when the filing states none, e.g. a gift or grant) */
+            share_price: null | number;
+            /** @description Total transaction value (null when the filing states no price) */
+            total: null | number;
+            /** @description Shares held after the transaction */
+            shares_owned_following_transaction: number;
+            /** @description Shares held before the transaction */
+            shares_owned_before_transaction?: null | number;
+            /**
+             * @description buy = acquired (A), sell = disposed (D)
+             * @enum {string}
+             */
+            side: "buy" | "sell";
+        };
+        /**
+         * Ipo
+         * @description One offering
+         */
+        Ipo: {
+            /**
+             * @description Offering id
+             * @example ipo_0001234567_s1_1
+             */
+            ipo_id: string;
+            company: components["schemas"]["CompanyRef"] | null;
+            /** @description Issuer */
+            issuer_name: string;
+            /**
+             * @description One vocabulary for registration stages and the calendar status
+             * @enum {string}
+             */
+            stage: "announced" | "effective" | "exchange_approved" | "postponed" | "price_range" | "priced" | "registered" | "trading" | "withdrawn";
+            /** @description Blank-check company */
+            is_spac: boolean;
+            /**
+             * @description Exchange (MIC)
+             * @example XNAS
+             */
+            exchange: null | string;
+            /** @description Proposed tickers */
+            proposed_symbols: Array<string>;
+            /** @description Low end of the range */
+            price_range_low: null | number;
+            /** @description High end of the range */
+            price_range_high: null | number;
+            /** @description Final offer price */
+            final_price: null | number;
+            /** @description Shares offered */
+            shares_offered: null | number;
+            /** @description Offer size */
+            total_offer_size: null | number;
+            /**
+             * @description Currency
+             * @example USD
+             */
+            currency: null | string;
+            /**
+             * Format: date
+             * @description First trading day
+             */
+            listing_date: null | string;
+            /** @description The registration track (SEC) and the listing-calendar row of the same offering */
+            sources: {
+                registration: components["schemas"]["IpoRegistration"] | null;
+                listing: components["schemas"]["IpoListing"] | null;
+            };
+        };
+        /** IpoRegistration */
+        IpoRegistration: {
+            /** @description 10-digit CIK of the issuer */
+            cik: string;
+            /** @description Issuer name (SEC) */
+            company_name: null | string;
+            /** @description The registration: its Securities Act file number (333-…), else the accession of its first registration statement */
+            track_key: string;
+            /**
+             * @description S-1 (domestic) or F-1 (foreign issuer)
+             * @enum {string}
+             */
+            form_family: "F-1" | "S-1";
+            /**
+             * @description registered → price_range (an amendment states the range) → exchange_approved (8-A12B / exchange certification) → effective (SEC EFFECT) → priced (final prospectus 424B4 / 424B1) → trading (a listing appeared); withdrawn (RW) ends a track
+             * @enum {string}
+             */
+            stage: "effective" | "exchange_approved" | "price_range" | "priced" | "registered" | "trading" | "withdrawn";
+            /** @description Blank-check company ("blank check company" on the cover or SIC 6770) */
+            is_spac: boolean | null;
+            /** @description Tickers the registration statement proposes (S-1, S-1/A, F-1, F-1/A only). null = not a registration form (or not read), [] = none found */
+            proposed_symbols: Array<components["schemas"]["ProposedTicker"]> | null;
+            /** @description Exchange the issuer applied to, as an ISO 10383 MIC (`XNAS`, `XNYS`, `XASE`, `ARCX`, `BATS`); null when none is named or the name has no MIC mapping */
+            exchange: null | string;
+            /** @description Low end of the price range per share, ADS or unit (decimal string) */
+            price_range_low: null | string;
+            /** @description High end of the price range (decimal string) */
+            price_range_high: null | string;
+            /** @description Shares offered at the price range */
+            shares_offered: null | number;
+            /** @description Final offering price (final prospectus) (decimal string) */
+            final_offer_price: null | string;
+            /** @description Shares sold at the final price */
+            final_shares_offered: null | number;
+            /**
+             * Format: date-time
+             * @description SEC acceptance time of the first public registration statement (ISO 8601 UTC)
+             */
+            first_public_at: string;
+            /**
+             * Format: date-time
+             * @description When the price range was first filed (ISO 8601 UTC)
+             */
+            price_range_at: null | string;
+            /**
+             * Format: date-time
+             * @description When the exchange approval was filed (ISO 8601 UTC)
+             */
+            exchange_approved_at: null | string;
+            /**
+             * Format: date-time
+             * @description When the registration became effective (ISO 8601 UTC)
+             */
+            effective_at: null | string;
+            /**
+             * Format: date-time
+             * @description When the final prospectus was filed (ISO 8601 UTC)
+             */
+            priced_at: null | string;
+            /**
+             * Format: date-time
+             * @description When the withdrawal was filed (ISO 8601 UTC)
+             */
+            withdrawn_at: null | string;
+            /**
+             * Format: date
+             * @description First trading day of the listing (YYYY-MM-DD); set at stage trading
+             */
+            first_trade_date: null | string;
+            /** @description The filings that moved this registration, in the order they were applied */
+            filings: Array<{
+                /** @description SEC accession number */
+                accession_number: string;
+                /** @description SEC form type (S-1, S-1/A, F-1, F-1/A, 8-A12B, CERT, EFFECT, 424B4, 424B1, RW) */
+                form_type: null | string;
+                /** @description What the filing meant for the registration: registration, exchange_approval, effective, priced or withdrawn */
+                signal: null | string;
+                /**
+                 * Format: date-time
+                 * @description SEC acceptance time (ISO 8601 UTC)
+                 */
+                filed_at: null | string;
+                /**
+                 * Format: date
+                 * @description Filing date (YYYY-MM-DD); null when the filing is not archived
+                 */
+                filing_date: null | string;
+                /** @description URL to the archived filing HTML; null when the filing is not archived */
+                html_url: null | string;
+            }>;
+            /** @description The issuer lifecycle's IPO-pending entry of this registration ("Pre-IPO, proposed XYZ (exchange)"), matched by CIK and track; null when the track has none. Proposed symbols stay attributes, never a listing */
+            ipo_pending?: null | {
+                /** @description open (the issuer is still pre-IPO on this track) or closed */
+                status: string;
+                /** @description What opened the entry: exchange_approval (8-A12B / exchange certification) or ipo_calendar_match */
+                open_reason: string;
+                /**
+                 * Format: date-time
+                 * @description When the entry opened (ISO 8601 UTC)
+                 */
+                opened_at: string;
+                /**
+                 * Format: date-time
+                 * @description When the entry closed (ISO 8601 UTC)
+                 */
+                closed_at: null | string;
+                /** @description Why the entry closed (listed, withdrawn, …) */
+                close_reason: null | string;
+                /** @description Exchange the entry names, as an ISO 10383 MIC; null when none is named or the name has no MIC mapping */
+                exchange: null | string;
+            };
+        };
+        /** IpoListing */
+        IpoListing: {
+            /**
+             * Format: date
+             * @description IPO listing date (YYYY-MM-DD); null when Massive has no value
+             */
+            listing_date: null | string;
+            /**
+             * Format: date
+             * @description IPO announcement date (YYYY-MM-DD); null when Massive has no value
+             */
+            announced_date: null | string;
+            /** @description Currency code (e.g., USD); null when Massive has no value */
+            currency_code: null | string;
+            /** @description Final issue price; null when Massive has no value */
+            final_issue_price: null | number;
+            /** @description Highest offer price; null when Massive has no value */
+            highest_offer_price: null | number;
+            /** @description IPO status */
+            ipo_status: string;
+            /** @description ISIN identifier; null when Massive has no value */
+            isin: null | string;
+            /**
+             * Format: date
+             * @description Issue end date (YYYY-MM-DD); null when Massive has no value
+             */
+            issue_end_date: null | string;
+            /**
+             * Format: date
+             * @description Issue start date (YYYY-MM-DD); null when Massive has no value
+             */
+            issue_start_date: null | string;
+            /** @description Issuer name */
+            issuer_name: string;
+            /**
+             * Format: date-time
+             * @description Last update of the row (ISO 8601, UTC)
+             */
+            last_updated: string;
+            /** @description Lot size; null when Massive has no value */
+            lot_size: null | number;
+            /** @description Lowest offer price; null when Massive has no value */
+            lowest_offer_price: null | number;
+            /** @description Maximum shares offered; null when Massive has no value */
+            max_shares_offered: null | number;
+            /** @description Minimum shares offered; null when Massive has no value */
+            min_shares_offered: null | number;
+            /** @description Primary exchange; null when Massive has no value */
+            primary_exchange: null | string;
+            /** @description Security description; null when Massive has no value */
+            security_description: null | string;
+            /** @description Security type */
+            security_type: string;
+            /** @description Shares outstanding; null when Massive has no value */
+            shares_outstanding: null | number;
+            /** @description Ticker symbol */
+            ticker: string;
+            /** @description Total offer size; null when Massive has no value */
+            total_offer_size: null | number;
+            /** @description CUSIP; null when Massive has no value */
+            us_code: null | string;
         };
         /**
          * Event
@@ -11188,7 +12347,7 @@ export interface operations {
                      *           "short_float_shares": 131591865,
                      *           "homepage_url": "https://www.apple.com",
                      *           "investor_relations_url": "https://www.apple.com",
-                     *           "logo_url": "https://storage-prod.invinite.com/company_logos/AAPL.png",
+                     *           "logo_url": "https://storage.invinite.com/company_logos/AAPL.png",
                      *           "brand_colors": [
                      *             "#000000"
                      *           ],
@@ -11535,7 +12694,7 @@ export interface operations {
                      *           "cik": "0000320193",
                      *           "ticker": "AAPL",
                      *           "name": "Apple Inc.",
-                     *           "logo_url": "https://storage-prod.invinite.com/company_logos/AAPL.png"
+                     *           "logo_url": "https://storage.invinite.com/company_logos/AAPL.png"
                      *         }
                      *       ],
                      *       "next_url": "https://api.data.invinite.com/v1/company/search?query=apple&offset=10&limit=10"
@@ -11920,7 +13079,7 @@ export interface operations {
                      *         "symbol": "MSFT",
                      *         "conference_date": "2026-07-29T00:00:00.000Z"
                      *       },
-                     *       "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/audio/q4-fy2026-earnings-call-510kqr.mp3",
+                     *       "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/audio/q4-fy2026-earnings-call-510kqr.mp3",
                      *       "duration_seconds": 3919,
                      *       "bytes": 31350117,
                      *       "codec": "mp3",
@@ -12629,8 +13788,8 @@ export interface operations {
                      *           "bytes": 3912081,
                      *           "pages": 28,
                      *           "link_status": null,
-                     *           "url": "https://storage-prod.invinite.com/earnings_events/us/789019/esg/2026/2026-environmental-sustainability-data-factsheet.pdf",
-                     *           "pages_url": "https://storage-prod.invinite.com/earnings_events/us/789019/esg/2026/text/2026-environmental-sustainability-data-factsheet.pdf.pages.json",
+                     *           "url": "https://storage.invinite.com/earnings_events/us/789019/esg/2026/2026-environmental-sustainability-data-factsheet.pdf",
+                     *           "pages_url": "https://storage.invinite.com/earnings_events/us/789019/esg/2026/text/2026-environmental-sustainability-data-factsheet.pdf.pages.json",
                      *           "created_at": "2026-10-14T07:39:24.133Z",
                      *           "updated_at": "2026-10-21T19:15:32.574Z"
                      *         }
@@ -13077,7 +14236,7 @@ export interface operations {
                      *           "source_label": null,
                      *           "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/OutlookFY27Q1",
                      *           "accession_number": null,
-                     *           "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-cfo-commentary.pdf",
+                     *           "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-cfo-commentary.pdf",
                      *           "content_type": "application/pdf",
                      *           "bytes": 487074,
                      *           "pages": 6,
@@ -13293,7 +14452,7 @@ export interface operations {
                      *           "group": "earnings/fy2019/q2",
                      *           "group_label": "Q2 FY2019",
                      *           "category": "earnings",
-                     *           "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2019/q2/microsoft-fy-2019-second-quarter-earnings-conference-call.pdf"
+                     *           "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2019/q2/microsoft-fy-2019-second-quarter-earnings-conference-call.pdf"
                      *         }
                      *       ]
                      *     }
@@ -15730,7 +16889,7 @@ export interface operations {
                      *               }
                      *             ]
                      *           },
-                     *           "audio_url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2027/q1/audio/q1-fy2027-earnings-call-q0szpq.mp3#t=2409",
+                     *           "audio_url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2027/q1/audio/q1-fy2027-earnings-call-q0szpq.mp3#t=2409",
                      *           "slide": null
                      *         }
                      *       ]
@@ -15878,7 +17037,7 @@ export interface operations {
                      *         "conference_date": "2026-07-29T00:00:00.000Z"
                      *       },
                      *       "deck": {
-                     *         "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-earnings-presentation.pdf",
+                     *         "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-earnings-presentation.pdf",
                      *         "pages": 23,
                      *         "origin": "ir_page",
                      *         "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/SlidesFY26Q4.pptx",
@@ -15888,7 +17047,7 @@ export interface operations {
                      *         {
                      *           "page": 1,
                      *           "title": null,
-                     *           "image_url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/slides/q4-fy2026-earnings-presentation/page-001.webp"
+                     *           "image_url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/slides/q4-fy2026-earnings-presentation/page-001.webp"
                      *         }
                      *       ],
                      *       "timeline": []
@@ -16057,7 +17216,7 @@ export interface operations {
                      *       "qa_start_ms": 2298917,
                      *       "format": "speakers",
                      *       "pdf": {
-                     *         "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v6.pdf",
+                     *         "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v6.pdf",
                      *         "version": 6,
                      *         "sha256": "50159713ebd76f19e01b323ed7ccc53eb194148c533f2ed644118f8c09b6ba52",
                      *         "bytes": 80417,
@@ -16455,7 +17614,7 @@ export interface operations {
                      *           "change_note": "naming",
                      *           "corrected_by": null,
                      *           "pdf": {
-                     *             "url": "https://storage-prod.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v3.pdf",
+                     *             "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v3.pdf",
                      *             "version": 3,
                      *             "sha256": "e1d777843ae18c33e86254260d18f58bfe65bb33cff758323b8f1763342076a5",
                      *             "bytes": 80285,
@@ -17684,6 +18843,131 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    getDocumentFigure: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Document version id
+                 * @example dv_01JCA8XK
+                 */
+                version_id: string;
+                /**
+                 * @description Figure block id
+                 * @example b57
+                 */
+                block_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentFigure"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getDocumentVersion: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Block ids or ranges (`b12-b40`)
+                 * @example b1-b20
+                 */
+                blocks?: string;
+                /**
+                 * @description Page numbers or ranges
+                 * @example 1-3
+                 */
+                pages?: string;
+                /**
+                 * @description Printed page labels
+                 * @example F-1
+                 */
+                printed?: string;
+                /**
+                 * @description Blocks around each selected one
+                 * @example 0
+                 */
+                neighbors?: number;
+                /**
+                 * @description Include footnotes of selected blocks
+                 * @example false
+                 */
+                footnotes?: boolean;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Document version id
+                 * @example dv_01JCA8XK
+                 */
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentVersion"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     getEvent: {
         parameters: {
             query?: {
@@ -17900,6 +19184,117 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    getFiling: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Optional objects to include: `documents`, `parties`, `relations` (comma list)
+                 * @example documents
+                 */
+                expand?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Accession number
+                 * @example 0000320193-26-000026
+                 */
+                accession: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FilingDetail"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getInsiderTrade: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Trade id
+                 * @example 0001127602-26-012345:1
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InsiderTrade"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     getInvestorDocument: {
         parameters: {
             query?: {
@@ -17940,6 +19335,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InvestorDocument"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getIpo: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Offering id
+                 * @example ipo_0001234567_s1_1
+                 */
+                ipo_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Ipo"];
                 };
             };
             304: components["responses"]["NotModified"];
@@ -18386,6 +19834,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Prosody"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getReviewChain: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Hops (1 = direct relations)
+                 * @example 1
+                 */
+                max_depth?: number;
+                /**
+                 * @description Node cap
+                 * @example 100
+                 */
+                max_nodes?: number;
+                /**
+                 * @description Direction
+                 * @example both
+                 */
+                direction?: "both" | "down" | "up";
+                /**
+                 * @description Relation kinds, comma list
+                 * @example comment_letter
+                 */
+                kind?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Accession number
+                 * @example 0000320193-26-000026
+                 */
+                accession: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewChain"];
                 };
             };
             304: components["responses"]["NotModified"];
@@ -19644,7 +21160,7 @@ export interface operations {
                      *               "signal": "registration",
                      *               "filed_at": "2026-11-06T22:00:45.000Z",
                      *               "filing_date": "2026-11-06",
-                     *               "html_url": "https://storage-prod.invinite.com/filing_htmls/00b2d956f74f1db2d046ff043aea1056/2156369_0001185185-26-005243_S-1_2026-11-06.html"
+                     *               "html_url": "https://storage.invinite.com/filing_htmls/00b2d956f74f1db2d046ff043aea1056/2156369_0001185185-26-005243_S-1_2026-11-06.html"
                      *             }
                      *           ],
                      *           "ipo_pending": null
@@ -20021,6 +21537,75 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listDatasets: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Dataset"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listDividends: {
         parameters: {
             query: {
@@ -20185,6 +21770,82 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listDocumentSections: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Outline
+                 * @example generic
+                 */
+                outline?: "generic" | "legacy";
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Document version id
+                 * @example dv_01JCA8XK
+                 */
+                version_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["DocumentSection"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -20389,6 +22050,86 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listFactPlaces: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Document version id
+                 * @example dv_01JCA8XK
+                 */
+                document_version?: string;
+                /**
+                 * @description Standardized fact id
+                 * @example 0000320193|is_total_revenue|annual|2026|4
+                 */
+                fact?: string;
+                /**
+                 * @description Placement status — any of `placed`, `hidden`, `not_in_document`, `derived`, `unmatched`, comma-separated
+                 * @example placed
+                 */
+                status?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["FactPlace"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listFilers: {
         parameters: {
             query?: {
@@ -20478,6 +22219,290 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listFilingFacts: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Concepts, comma list
+                 * @example us-gaap:Revenues
+                 */
+                tag?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Accession number
+                 * @example 0000320193-26-000026
+                 */
+                accession: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["FilingFact"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listFilingNotes: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Concepts, comma list
+                 * @example us-gaap:RevenueRecognitionPolicyTextBlock
+                 */
+                tag?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Accession number
+                 * @example 0000320193-26-000026
+                 */
+                accession: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["FilingNote"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listFilings: {
+        parameters: {
+            query: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @example AAPL
+                 */
+                "company": string;
+                /**
+                 * @description Forms, comma list
+                 * @example 10-K
+                 */
+                "form"?: string;
+                /**
+                 * @description 8-K items, comma list
+                 * @example 2.02
+                 */
+                "items"?: string;
+                /**
+                 * @description `filed_at` on or after this value
+                 * @example 2025-01-01
+                 */
+                "filed_at.gte"?: string;
+                /**
+                 * @description `filed_at` after this value
+                 * @example 2025-01-01
+                 */
+                "filed_at.gt"?: string;
+                /**
+                 * @description `filed_at` on or before this value
+                 * @example 2025-01-01
+                 */
+                "filed_at.lte"?: string;
+                /**
+                 * @description `filed_at` before this value
+                 * @example 2025-01-01
+                 */
+                "filed_at.lt"?: string;
+                /**
+                 * @description Sort field (`-` = descending): `filed_at` only; the id tiebreaker is always appended. Default `-filed_at`
+                 * @example -filed_at
+                 */
+                "sort"?: "-filed_at" | "filed_at";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Filing"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                            /** @description Forms of the company's filings with counts */
+                            form_facet?: Array<{
+                                /** @description Form */
+                                form: string;
+                                /** @description Filings */
+                                count: number;
+                                /**
+                                 * Format: date
+                                 * @description Newest
+                                 */
+                                newest_filing_date: null | string;
+                            }>;
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -20737,6 +22762,313 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listHoldingChanges: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                company?: string;
+                /**
+                 * @description Manager CIK, comma list
+                 * @example 0000102909
+                 */
+                filer?: string;
+                /**
+                 * @description Quarter end
+                 * @example 2026-06-30
+                 */
+                period_end?: string;
+                /**
+                 * @description Quarter compared against (default the previous one)
+                 * @example 2026-03-31
+                 */
+                prior_period_end?: string;
+                /**
+                 * @description Change types — any of `new`, `added`, `reduced`, `sold_out`, `unchanged`, comma-separated. Without `type` every change but `unchanged` is listed
+                 * @example new
+                 */
+                type?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 1 000 on 13F rows)
+                 * @example 100
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["HoldingChange"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listHoldings: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                company?: string;
+                /**
+                 * @description Manager CIK, comma list
+                 * @example 0000102909
+                 */
+                filer?: string;
+                /**
+                 * @description 13F filing
+                 * @example 0000950123-26-008512
+                 */
+                accession?: string;
+                /**
+                 * @description Quarter end
+                 * @example 2026-06-30
+                 */
+                period_end?: string;
+                /**
+                 * @description shares = common shares only; all = incl. options and principal amounts
+                 * @example shares
+                 */
+                instruments?: "all" | "shares";
+                /**
+                 * @description Sort field: `-dollar_value` (the only order the store serves); the id tiebreaker is always appended
+                 * @example -dollar_value
+                 */
+                sort?: "-dollar_value";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 1 000 on 13F rows)
+                 * @example 100
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Holding"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                            /**
+                             * Format: date-time
+                             * @description Research snapshot the page reads
+                             */
+                            pinned_at?: null | string;
+                            /** @description How positions are counted (documented rule) */
+                            counting?: null | string;
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listInsiderTrades: {
+        parameters: {
+            query: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @example AAPL
+                 */
+                "company": string;
+                /**
+                 * @description buy = acquired, sell = disposed
+                 * @example buy
+                 */
+                "side"?: "buy" | "sell";
+                /**
+                 * @description `filed_at` on or after this value
+                 * @example 2025-01-01
+                 */
+                "filed_at.gte"?: string;
+                /**
+                 * @description `filed_at` after this value
+                 * @example 2025-01-01
+                 */
+                "filed_at.gt"?: string;
+                /**
+                 * @description `filed_at` on or before this value
+                 * @example 2025-01-01
+                 */
+                "filed_at.lte"?: string;
+                /**
+                 * @description `filed_at` before this value
+                 * @example 2025-01-01
+                 */
+                "filed_at.lt"?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-filed_at`
+                 * @example -filed_at
+                 */
+                "sort"?: "-filed_at" | "filed_at";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["InsiderTrade"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listInvestorDocuments: {
         parameters: {
             query?: {
@@ -20832,6 +23164,115 @@ export interface operations {
             402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listIpos: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Stages — any of `registered`, `price_range`, `exchange_approved`, `effective`, `priced`, `trading`, `withdrawn`, `announced`, `postponed`, comma-separated
+                 * @example priced
+                 */
+                "stage"?: string;
+                /**
+                 * @description Blank-check companies only / excluded
+                 * @example false
+                 */
+                "is_spac"?: boolean;
+                /**
+                 * @description `listing_date` on or after this value
+                 * @example 2026-01-01
+                 */
+                "listing_date.gte"?: string;
+                /**
+                 * @description `listing_date` after this value
+                 * @example 2026-01-01
+                 */
+                "listing_date.gt"?: string;
+                /**
+                 * @description `listing_date` on or before this value
+                 * @example 2026-01-01
+                 */
+                "listing_date.lte"?: string;
+                /**
+                 * @description `listing_date` before this value
+                 * @example 2026-01-01
+                 */
+                "listing_date.lt"?: string;
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                "company"?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-listing_date`
+                 * @example -listing_date
+                 */
+                "sort"?: "-first_public_at" | "-listing_date" | "first_public_at" | "listing_date";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Ipo"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -22375,7 +24816,7 @@ export interface operations {
                      *       ],
                      *       "developments": [],
                      *       "pdf": {
-                     *         "url": "https://storage-prod.invinite.com/earnings_events/news/us/63908/08c86854a426827937f1062c90f5e260/MCD-2026-11-04-mcdonald-s-reports-third-quarter-2026-results.pdf",
+                     *         "url": "https://storage.invinite.com/earnings_events/news/us/63908/08c86854a426827937f1062c90f5e260/MCD-2026-11-04-mcdonald-s-reports-third-quarter-2026-results.pdf",
                      *         "version": 1,
                      *         "sha256": "b7661694ca034a0bc2a93b8d72e682080a766499f46cca6b0fdd5d16a9bb1efa",
                      *         "bytes": 27975,
@@ -23525,6 +25966,128 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    searchFilings: {
+        parameters: {
+            query: {
+                /**
+                 * @description Query
+                 * @example supply chain risk
+                 */
+                "q": string;
+                /**
+                 * @description lexical = ranked words; literal = exact phrase
+                 * @example lexical
+                 */
+                "mode"?: "lexical" | "literal";
+                /**
+                 * @description literal mode only
+                 * @example false
+                 */
+                "case_sensitive"?: boolean;
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                "company"?: string;
+                /**
+                 * @description Forms, comma list
+                 * @example 10-K
+                 */
+                "form"?: string;
+                /**
+                 * @description Section ids, comma list
+                 * @example 1A
+                 */
+                "item"?: string;
+                /**
+                 * @description `filed_at` on or after this value
+                 * @example 2025-01-01
+                 */
+                "filed_at.gte"?: string;
+                /**
+                 * @description `filed_at` after this value
+                 * @example 2025-01-01
+                 */
+                "filed_at.gt"?: string;
+                /**
+                 * @description `filed_at` on or before this value
+                 * @example 2025-01-01
+                 */
+                "filed_at.lte"?: string;
+                /**
+                 * @description `filed_at` before this value
+                 * @example 2025-01-01
+                 */
+                "filed_at.lt"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["FilingSearchHit"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                            /** @description The query */
+                            query?: string;
+                            /**
+                             * @description Mode
+                             * @enum {string}
+                             */
+                            mode?: "lexical" | "literal";
+                            index?: components["schemas"]["FilingSearchCoverage"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     searchInvestorDocuments: {
         parameters: {
             query: {
@@ -24413,7 +26976,7 @@ export interface operations {
                      *               "legacy_anchor": "f-1124",
                      *               "status": "recorded",
                      *               "rendition_sha256": "f3071d0af50082eac48a057fc6b320a7194c01aa09f2ed4e5bcc8b7ef54c86a1",
-                     *               "rendition_url": "https://storage-prod.invinite.com/filing_htmls/320193_0000320193-26-000026_10-K_2026-11-03.html",
+                     *               "rendition_url": "https://storage.invinite.com/filing_htmls/320193_0000320193-26-000026_10-K_2026-11-03.html",
                      *               "legacy_anchor_is_native": true
                      *             }
                      *           ],
@@ -26345,7 +28908,7 @@ export interface operations {
                      *             "route": "/sec/v1/documents/8be0b759-1a9d-5f89-8308-bd86185f5e1f"
                      *           },
                      *           "source": {
-                     *             "url": "https://storage-prod.invinite.com/sec/4765d5384d6b2195ff48ff775f9244f9/aapl-20260926.htm"
+                     *             "url": "https://storage.invinite.com/sec/4765d5384d6b2195ff48ff775f9244f9/aapl-20260926.htm"
                      *           }
                      *         }
                      *       ],
@@ -29391,7 +31954,7 @@ export interface operations {
                      *             "document_route": "/sec/v1/documents/af82694e-4fc2-50b7-abaf-ea6aefda66ef",
                      *             "anchor_kind": "native",
                      *             "source": {
-                     *               "url": "https://storage-prod.invinite.com/sec/dd7d13d2fcd95ad601b74ca2e0a8717a/form20-f.htm"
+                     *               "url": "https://storage.invinite.com/sec/dd7d13d2fcd95ad601b74ca2e0a8717a/form20-f.htm"
                      *             }
                      *           },
                      *           "projection_version": "fs1.english",

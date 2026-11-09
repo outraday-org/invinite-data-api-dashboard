@@ -1,322 +1,240 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { createFileRoute } from "@tanstack/react-router";
-import {
-    flexRender,
-    getCoreRowModel,
-    useReactTable,
-} from "@tanstack/react-table";
 import * as React from "react";
 
-import type { InstitutionalHolding, InstitutionalTransaction } from "@/lib/api/types";
+import type {
+    V2Holding,
+    V2HoldingChange,
+    V2HoldingChangesResponse,
+    V2HoldingChangeType,
+    V2HoldingsResponse,
+} from "@/lib/api/types";
 
-import { ErrorState } from "@/components/ui/error-state";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
+import { V2ListTable } from "@/components/sec/v2-list-table";
+import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useInstitutionalHoldingsInfinite, useInstitutionalTransactionsInfinite, useInstitutions } from "@/lib/api/queries";
+import { useV2HoldingChangesInfinite, useV2HoldingsInfinite } from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
+import { isV2GenuineEmpty } from "@/lib/sec/readiness";
+import { latest13fPeriodEnd, recentQuarterEnds } from "@/lib/sec/source";
 import { formatNumberEn } from "@/lib/utils";
-import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
-
-const transactionTypeLabel = (value: string) =>
-    value
-        .replace(/_/g, " ")
-        .replace(/\b\w/g, letter => letter.toUpperCase());
-
-const normalizeCik = (value: string) => value.replace(/^0+/, "") || value;
+import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export const Route = createFileRoute("/$ticker/institutions/")({
     component: InstitutionsPage,
 });
 
+/** 13F rows per page (the API allows up to 1 000). */
+const THIRTEEN_F_PAGE = 100;
+
+/** Quarter ends the period picker offers (newest due quarter first). */
+const PICKER_QUARTERS = 8;
+
+/** The picker's "server default" entry: no `period_end` sent (the newest quarter whose 13F deadline passed). */
+const LATEST = "latest";
+
+export const CHANGE_TYPE_LABELS: Record<V2HoldingChangeType, string> = {
+    added: "Added",
+    new: "New position",
+    reduced: "Reduced",
+    sold_out: "Sold out",
+    unchanged: "Unchanged",
+};
+
+const currency = new Intl.NumberFormat("en", { currency: "USD", maximumFractionDigits: 2, style: "currency" });
+
+const money = (value: null | number) => (value === null || !Number.isFinite(value) ? "—" : currency.format(value));
+
+const count = (value: null | number) => (value === null || !Number.isFinite(value) ? "—" : formatNumberEn(value));
+
+const day = (value: null | string) => (value ? formatEnDateTime(value, { hideTime: true }) : "—");
+
+/** `change_shares_or_principal_amount_percent` is a fraction (+1 = a new position, −1 = sold out). */
+export function changePercentText(fraction: number) {
+    if (!Number.isFinite(fraction)) return "—";
+
+    const percent = fraction * 100;
+
+    return `${percent > 0 ? "+" : ""}${formatNumberEn(percent, { maximumFractionDigits: 2 })}%`;
+}
+
+const institutionCell = (row: { cik_institution: string; name_institution?: null | string }) => (
+    <div className="truncate" title={`CIK ${row.cik_institution}`}>{row.name_institution ?? row.cik_institution}</div>
+);
+
+const right = (text: string) => <div className="text-right tabular-nums">{text}</div>;
+
+const HOLDING_COLUMNS: Array<ColumnDef<V2Holding>> = [
+    { accessorKey: "period_end", cell: ({ row }) => day(row.original.period_end), header: "Period End" },
+    { accessorKey: "filing_date", cell: ({ row }) => day(row.original.filing_date), header: "Filed" },
+    { accessorKey: "cik_institution", cell: ({ row }) => institutionCell(row.original), header: "Institution" },
+    {
+        accessorKey: "shares_or_principal_amount",
+        cell: ({ row }) => right(count(row.original.shares_or_principal_amount)),
+        header: () => <div className="text-right">Shares</div>,
+    },
+    {
+        accessorKey: "shares_or_principal_amount_type",
+        cell: ({ row }) => [row.original.shares_or_principal_amount_type, row.original.put_call].filter(Boolean).join(" · "),
+        header: "Amount Type",
+    },
+    {
+        accessorKey: "dollar_value",
+        cell: ({ row }) => right(money(row.original.dollar_value)),
+        header: () => <div className="text-right">Value</div>,
+    },
+];
+
+const CHANGE_COLUMNS: Array<ColumnDef<V2HoldingChange>> = [
+    { accessorKey: "period_end", cell: ({ row }) => day(row.original.period_end), header: "Period End" },
+    { accessorKey: "filing_date", cell: ({ row }) => day(row.original.filing_date), header: "Filed" },
+    { accessorKey: "type", cell: ({ row }) => CHANGE_TYPE_LABELS[row.original.type], header: "Type" },
+    { accessorKey: "cik_institution", cell: ({ row }) => institutionCell(row.original), header: "Institution" },
+    {
+        accessorKey: "change_dollar_value",
+        cell: ({ row }) => right(money(row.original.change_dollar_value)),
+        header: () => <div className="text-right">Change $</div>,
+    },
+    {
+        accessorKey: "change_shares_or_principal_amount_absolute",
+        cell: ({ row }) => right(count(row.original.change_shares_or_principal_amount_absolute)),
+        header: () => <div className="text-right">Change Shares</div>,
+    },
+    {
+        accessorKey: "change_shares_or_principal_amount_percent",
+        cell: ({ row }) => right(changePercentText(row.original.change_shares_or_principal_amount_percent)),
+        header: () => <div className="text-right">Change %</div>,
+    },
+    {
+        accessorKey: "shares_or_principal_amount_new",
+        cell: ({ row }) => right(count(row.original.shares_or_principal_amount_new)),
+        header: () => <div className="text-right">New Position</div>,
+    },
+    {
+        accessorKey: "shares_or_principal_amount_old",
+        cell: ({ row }) => right(count(row.original.shares_or_principal_amount_old)),
+        header: () => <div className="text-right">Old Position</div>,
+    },
+    {
+        accessorKey: "dollar_value",
+        cell: ({ row }) => right(money(row.original.dollar_value)),
+        header: () => <div className="text-right">Value</div>,
+    },
+];
+
+type ListState<TPage> = {
+    error: unknown;
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+    isLoading: boolean;
+    onLoadMore: () => void;
+    pages: ReadonlyArray<TPage>;
+};
+
+/**
+ * One 13F list (pure): the request's honest state (403 `excluded`, 404 `not_covered`, 503 `unavailable`, plan gate),
+ * the answer's coverage (`pending` = still being filled, `partial`), its provenance (`pinned_at`, `counting`,
+ * `meta.source`), the rows and "Load more".
+ */
+export function ThirteenFList<TRow, TPage extends V2HoldingChangesResponse | V2HoldingsResponse>({
+    columns,
+    emptyText,
+    errorTitle,
+    loadingText,
+    rowsOf,
+    state,
+}: {
+    columns: Array<ColumnDef<TRow>>;
+    emptyText: string;
+    errorTitle: string;
+    loadingText: string;
+    rowsOf: (page: TPage) => Array<TRow>;
+    state: ListState<TPage>;
+}) {
+    const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
+
+    if (error && pages.length === 0) return <SecReadinessNotice error={error} title={errorTitle} />;
+
+    const meta = pages.at(0)?.meta;
+
+    return (
+        <div className="flex flex-col gap-2 h-full">
+            <SecReadinessNotice coverage={meta?.coverage} />
+            <V2MetaLine meta={meta} />
+            <V2ListTable
+                columns={columns}
+                emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
+                emptyText={emptyText}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                isLoading={isLoading}
+                loadingText={loadingText}
+                onLoadMore={onLoadMore}
+                rows={pages.flatMap(rowsOf)}
+            />
+            {error ? <SecReadinessNotice error={error} title={errorTitle} /> : null}
+        </div>
+    );
+}
+
+export function HoldingsList({ state }: { state: ListState<V2HoldingsResponse> }) {
+    return (
+        <ThirteenFList
+            columns={HOLDING_COLUMNS}
+            emptyText="No institutional holders reported for this quarter."
+            errorTitle="Failed to load institutional ownership"
+            loadingText="Loading institutional ownership..."
+            rowsOf={page => page.data}
+            state={state}
+        />
+    );
+}
+
+export function HoldingChangesList({ state }: { state: ListState<V2HoldingChangesResponse> }) {
+    return (
+        <ThirteenFList
+            columns={CHANGE_COLUMNS}
+            emptyText="No position changes for this quarter."
+            errorTitle="Failed to load institutional transactions"
+            loadingText="Loading institutional transactions..."
+            rowsOf={page => page.data}
+            state={state}
+        />
+    );
+}
+
 function InstitutionsPage() {
     const { ticker } = Route.useParams();
 
-    const {
-        data: holdingsData,
-        error: holdingsError,
-        fetchNextPage: fetchHoldingsNextPage,
-        hasNextPage: holdingsHasNextPage,
-        isFetchingNextPage: isFetchingHoldingsNextPage,
-        isLoading: isHoldingsLoading,
-    } = useInstitutionalHoldingsInfinite({
-        identifier: ticker,
-        limit: 40,
-        sort: "desc",
-    });
+    // The picker's quarters, from the newest one whose 13F reports are due (taken once per mount).
+    const [quarters] = React.useState(() => recentQuarterEnds(latest13fPeriodEnd(new Date()), PICKER_QUARTERS));
 
-    const {
-        data,
-        error,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-        isLoading,
-    } = useInstitutionalTransactionsInfinite({
-        identifier: ticker,
-        limit: 40,
-        sort: "desc",
-    });
+    const [period, setPeriod] = React.useState<string>(LATEST);
 
-    const holdings = React.useMemo(
-        () => holdingsData?.pages.flatMap(page => page.holdings) ?? [],
-        [holdingsData],
+    const periodEnd = period === LATEST ? undefined : period;
+
+    const periodOptions = React.useMemo(
+        () => [{ label: "Latest due quarter", value: LATEST }, ...quarters.map(quarter => ({ label: `Quarter ending ${quarter}`, value: quarter }))],
+        [quarters],
     );
 
-    const transactions = React.useMemo(
-        () => data?.pages.flatMap(page => page.transactions) ?? [],
-        [data],
-    );
+    // `/v2/holdings?company=` and `/v2/holding-changes?company=`, both for the picked quarter (none = server default).
+    const holdings = useV2HoldingsInfinite({ company: ticker, limit: THIRTEEN_F_PAGE, periodEnd });
 
-    const institutionCiks = React.useMemo(() => {
-        const ciks = new Set<string>();
-
-        holdings.forEach((holding) => {
-            if (holding.cik_institution) {
-                ciks.add(String(holding.cik_institution));
-            }
-        });
-
-        transactions.forEach((transaction) => {
-            if (transaction.cik_institution) {
-                ciks.add(String(transaction.cik_institution));
-            }
-        });
-
-        return Array.from(ciks);
-    }, [holdings, transactions]);
-
-    const institutionsQuery = React.useMemo(
-        () => institutionCiks.join(","),
-        [institutionCiks],
-    );
-
-    const { data: institutionsData } = useInstitutions({
-        ciks: institutionsQuery,
-        limit: Math.min(1000, Math.max(100, institutionCiks.length)),
-        sort: "asc",
-    });
-
-    const institutionNameByCik = React.useMemo(() => {
-        const map = new Map<string, string>();
-
-        institutionsData?.institutions.forEach((institution) => {
-            const cik = String(institution.cik);
-
-            const normalized = normalizeCik(cik);
-
-            map.set(cik, institution.name);
-
-            map.set(normalized, institution.name);
-        });
-
-        return map;
-    }, [institutionsData]);
-
-    const resolveInstitutionName = React.useCallback(
-        (value: string) => institutionNameByCik.get(value) ?? institutionNameByCik.get(normalizeCik(value)) ?? value,
-        [institutionNameByCik],
-    );
-
-    const currencyFormatter = React.useMemo(
-        () => new Intl.NumberFormat("en", { currency: "USD", maximumFractionDigits: 2, style: "currency" }),
-        [],
-    );
-
-    const holdingsColumns = React.useMemo<Array<ColumnDef<InstitutionalHolding>>>(
-        () => [
-            {
-                accessorKey: "period_end",
-                cell: ({ getValue }) => formatEnDateTime(String(getValue())),
-                header: "Period End",
-            },
-            {
-                accessorKey: "filing_date",
-                cell: ({ getValue }) => formatEnDateTime(String(getValue())),
-                header: "Filed",
-            },
-            {
-                accessorKey: "cik_institution",
-                cell: ({ getValue }) => (
-                    <div className="truncate">
-                        {resolveInstitutionName(String(getValue()))}
-                    </div>
-                ),
-                header: "Institution",
-            },
-            {
-                accessorKey: "shares_or_principal_amount",
-                cell: ({ getValue }) => {
-                    const raw = Number(getValue());
-
-                    return (
-                        <div className="text-right tabular-nums">
-                            {Number.isFinite(raw) ? formatNumberEn(raw) : "-"}
-                        </div>
-                    );
-                },
-                header: () => <div className="text-right">Shares</div>,
-            },
-            {
-                accessorKey: "shares_or_principal_amount_type",
-                header: "Amount Type",
-            },
-            {
-                accessorKey: "dollar_value",
-                cell: ({ getValue }) => {
-                    const raw = Number(getValue());
-
-                    return (
-                        <div className="text-right tabular-nums">
-                            {Number.isFinite(raw) ? currencyFormatter.format(raw) : "-"}
-                        </div>
-                    );
-                },
-                header: () => <div className="text-right">Value</div>,
-            },
-        ],
-        [currencyFormatter, resolveInstitutionName],
-    );
-
-    const transactionsColumns = React.useMemo<Array<ColumnDef<InstitutionalTransaction>>>(
-        () => [
-            {
-                accessorKey: "period_end",
-                cell: ({ getValue }) => formatEnDateTime(String(getValue())),
-                header: "Period End",
-            },
-            {
-                accessorKey: "filing_date",
-                cell: ({ getValue }) => formatEnDateTime(String(getValue())),
-                header: "Filed",
-            },
-            {
-                accessorKey: "type",
-                cell: ({ getValue }) => transactionTypeLabel(String(getValue())),
-                header: "Type",
-            },
-            {
-                accessorKey: "cik_institution",
-                cell: ({ getValue }) => (
-                    <div className="truncate">
-                        {resolveInstitutionName(String(getValue()))}
-                    </div>
-                ),
-                header: "Institution",
-            },
-            {
-                accessorKey: "change_dollar_value",
-                cell: ({ getValue }) => {
-                    const raw = Number(getValue());
-
-                    return (
-                        <div className="text-right tabular-nums">
-                            {Number.isFinite(raw) ? currencyFormatter.format(raw) : "-"}
-                        </div>
-                    );
-                },
-                header: () => <div className="text-right">Change $</div>,
-            },
-            {
-                accessorKey: "change_shares_or_principal_amount_absolute",
-                cell: ({ getValue }) => {
-                    const raw = Number(getValue());
-
-                    return (
-                        <div className="text-right tabular-nums">
-                            {Number.isFinite(raw) ? formatNumberEn(raw) : "-"}
-                        </div>
-                    );
-                },
-                header: () => <div className="text-right">Change Shares</div>,
-            },
-            {
-                accessorKey: "change_shares_or_principal_amount_percent",
-                cell: ({ getValue }) => {
-                    const raw = Number(getValue());
-
-                    return (
-                        <div className="text-right tabular-nums">
-                            {Number.isFinite(raw) ? `${formatNumberEn(raw, { maximumFractionDigits: 2 })}%` : "-"}
-                        </div>
-                    );
-                },
-                header: () => <div className="text-right">Change %</div>,
-            },
-            {
-                accessorKey: "shares_or_principal_amount_new",
-                cell: ({ getValue }) => {
-                    const raw = Number(getValue());
-
-                    return (
-                        <div className="text-right tabular-nums">
-                            {Number.isFinite(raw) ? formatNumberEn(raw) : "-"}
-                        </div>
-                    );
-                },
-                header: () => <div className="text-right">New Position</div>,
-            },
-            {
-                accessorKey: "shares_or_principal_amount_old",
-                cell: ({ getValue }) => {
-                    const raw = Number(getValue());
-
-                    return (
-                        <div className="text-right tabular-nums">
-                            {Number.isFinite(raw) ? formatNumberEn(raw) : "-"}
-                        </div>
-                    );
-                },
-                header: () => <div className="text-right">Old Position</div>,
-            },
-            {
-                accessorKey: "dollar_value",
-                cell: ({ getValue }) => {
-                    const raw = Number(getValue());
-
-                    return (
-                        <div className="text-right tabular-nums">
-                            {Number.isFinite(raw) ? currencyFormatter.format(raw) : "-"}
-                        </div>
-                    );
-                },
-                header: () => <div className="text-right">Value</div>,
-            },
-        ],
-        [currencyFormatter, resolveInstitutionName],
-    );
-
-    const holdingsTable = useReactTable({
-        columns: holdingsColumns,
-        data: holdings,
-        getCoreRowModel: getCoreRowModel(),
-    });
-
-    const transactionsTable = useReactTable({
-        columns: transactionsColumns,
-        data: transactions,
-        getCoreRowModel: getCoreRowModel(),
-    });
-
-    if (holdingsError || error) {
-        return (
-            <div className="space-y-4 relative flex flex-col h-0 grow">
-                <ErrorState
-                    error={holdingsError ?? error}
-                    title="Failed to load institutional data"
-                />
-            </div>
-        );
-    }
+    const changes = useV2HoldingChangesInfinite({ company: ticker, limit: THIRTEEN_F_PAGE, periodEnd });
 
     return (
         <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-col gap-1">
-                <div>Institutions</div>
-                <div className="text-muted-foreground text-sm">
-                    Institutional ownership and transaction activity for this symbol.
+            <div className="flex flex-wrap items-end justify-between gap-2">
+                <div className="flex flex-col gap-1">
+                    <div>Institutions</div>
+                    <div className="text-muted-foreground text-sm">
+                        13F holders of this company and their position changes vs the prior quarter.
+                    </div>
                 </div>
+                <FilterSelect className="w-[220px]" onValueChange={setPeriod} options={periodOptions} value={period} />
             </div>
 
             <Tabs className="grow" defaultValue="ownership">
@@ -326,111 +244,29 @@ function InstitutionsPage() {
                 </TabsList>
 
                 <TabsContent className="grow relative mt-2" value="ownership">
-                    <div className="flex flex-col h-full">
-                        <ScrollArea className="h-0 grow">
-                            <Table>
-                                <TableHeader>
-                                    {holdingsTable.getHeaderGroups().map(headerGroup => (
-                                        <TableRow key={headerGroup.id}>
-                                            {headerGroup.headers.map(header => (
-                                                <TableHead key={header.id}>
-                                                    {header.isPlaceholder
-                                                        ? null
-                                                        : flexRender(
-                                                                header.column.columnDef.header,
-                                                                header.getContext(),
-                                                            )}
-                                                </TableHead>
-                                            ))}
-                                        </TableRow>
-                                    ))}
-                                </TableHeader>
-                                <TableBody>
-                                    {holdingsTable.getRowModel().rows.map(row => (
-                                        <TableRow key={row.id}>
-                                            {row.getVisibleCells().map(cell => (
-                                                <TableCell key={cell.id}>
-                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                </TableCell>
-                                            ))}
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-
-                            <LoadMoreButton
-                                hasNextPage={Boolean(holdingsHasNextPage)}
-                                isFetchingNextPage={isFetchingHoldingsNextPage}
-                                onLoadMore={() => fetchHoldingsNextPage()}
-                            />
-
-                            {!isHoldingsLoading && holdings.length === 0 && (
-                                <div className="text-muted-foreground w-full text-center text-xs p-2">
-                                    No institutional ownership available.
-                                </div>
-                            )}
-
-                            {isHoldingsLoading && holdings.length === 0 && (
-                                <div className="text-muted-foreground w-full text-center text-xs p-2">
-                                    Loading institutional ownership...
-                                </div>
-                            )}
-                        </ScrollArea>
-                    </div>
+                    <HoldingsList
+                        state={{
+                            error: holdings.error,
+                            hasNextPage: holdings.hasNextPage,
+                            isFetchingNextPage: holdings.isFetchingNextPage,
+                            isLoading: holdings.isLoading,
+                            onLoadMore: () => holdings.fetchNextPage(),
+                            pages: holdings.data?.pages ?? [],
+                        }}
+                    />
                 </TabsContent>
 
                 <TabsContent className="grow relative mt-2" value="transactions">
-                    <div className="flex flex-col h-full">
-                        <ScrollArea className="h-0 grow">
-                            <Table>
-                                <TableHeader>
-                                    {transactionsTable.getHeaderGroups().map(headerGroup => (
-                                        <TableRow key={headerGroup.id}>
-                                            {headerGroup.headers.map(header => (
-                                                <TableHead key={header.id}>
-                                                    {header.isPlaceholder
-                                                        ? null
-                                                        : flexRender(
-                                                                header.column.columnDef.header,
-                                                                header.getContext(),
-                                                            )}
-                                                </TableHead>
-                                            ))}
-                                        </TableRow>
-                                    ))}
-                                </TableHeader>
-                                <TableBody>
-                                    {transactionsTable.getRowModel().rows.map(row => (
-                                        <TableRow key={row.id}>
-                                            {row.getVisibleCells().map(cell => (
-                                                <TableCell key={cell.id}>
-                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                                </TableCell>
-                                            ))}
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-
-                            <LoadMoreButton
-                                hasNextPage={Boolean(hasNextPage)}
-                                isFetchingNextPage={isFetchingNextPage}
-                                onLoadMore={() => fetchNextPage()}
-                            />
-
-                            {!isLoading && transactions.length === 0 && (
-                                <div className="text-muted-foreground w-full text-center text-xs p-2">
-                                    No institutional transactions available.
-                                </div>
-                            )}
-
-                            {isLoading && transactions.length === 0 && (
-                                <div className="text-muted-foreground w-full text-center text-xs p-2">
-                                    Loading institutional transactions...
-                                </div>
-                            )}
-                        </ScrollArea>
-                    </div>
+                    <HoldingChangesList
+                        state={{
+                            error: changes.error,
+                            hasNextPage: changes.hasNextPage,
+                            isFetchingNextPage: changes.isFetchingNextPage,
+                            isLoading: changes.isLoading,
+                            onLoadMore: () => changes.fetchNextPage(),
+                            pages: changes.data?.pages ?? [],
+                        }}
+                    />
                 </TabsContent>
             </Tabs>
         </div>

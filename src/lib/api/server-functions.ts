@@ -9,11 +9,6 @@ import type {
     FinancialCagrResponse,
     FinancialGrowthResponse,
     FinancialRatiosResponse,
-    InsiderTradesResponse,
-    InstitutionalHoldingsResponse,
-    InstitutionalTransactionsResponse,
-    InstitutionsResponse,
-    IposResponse,
     SecDocumentResponse,
     SecExportResponse,
     SecFigureResponse,
@@ -31,6 +26,8 @@ import type {
     V2DateKind,
     V2DividendsResponse,
     V2DividendsSort,
+    V2DocumentFigureResponse,
+    V2DocumentVersionResponse,
     V2EventComparisonResponse,
     V2EventResponse,
     V2EventsResponse,
@@ -39,13 +36,23 @@ import type {
     V2EventStatus,
     V2EventType,
     V2FilerResponse,
+    V2FilingDetailResponse,
+    V2FilingsResponse,
+    V2FilingsSort,
     V2GuidanceBasis,
     V2GuidancePeriodKind,
     V2GuidanceResponse,
+    V2HoldingChangesResponse,
+    V2HoldingsInstruments,
+    V2HoldingsResponse,
+    V2InsiderSide,
+    V2InsiderTradesResponse,
     V2InvestorDocumentResponse,
     V2InvestorDocumentSearchResponse,
     V2InvestorDocumentsResponse,
     V2InvestorDocumentsSort,
+    V2IposResponse,
+    V2IposSort,
     V2KpisResponse,
     V2LiveAudioResponse,
     V2MarketHolidaysResponse,
@@ -77,7 +84,16 @@ import { SEARCH_CASE_SENSITIVE_VALUES, SEARCH_MODES } from "../earnings/labels";
 import { env } from "../env";
 import { createApiClient } from "./client.server";
 import { throwApiError } from "./errors";
-import { V2_COMPANY_EXPANDS, V2_EVENT_EXPANDS, V2_FILER_EXPANDS, V2_SLIDES_INCLUDES, v2Expand, v2Query } from "./v2";
+import {
+    V2_COMPANY_EXPANDS,
+    V2_EVENT_EXPANDS,
+    V2_FILER_EXPANDS,
+    V2_FILING_EXPANDS,
+    V2_IPO_STAGES,
+    V2_SLIDES_INCLUDES,
+    v2Expand,
+    v2Query,
+} from "./v2";
 
 const apiKeySchema = z
     .string()
@@ -122,221 +138,6 @@ export const getCompanyDetails = createServerFn({ method: "GET" })
 
         const { data: res, error } = await api.GET("/v1/company/details", {
             params: { query: { identifier } },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-const insiderTradesSchema = z.object({
-    acquiredDisposed: z.enum(["A", "D"]).optional(),
-    apiKey: apiKeySchema,
-    endDate: z.string().optional(),
-    identifier: z.string(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-    startDate: z.string().optional(),
-});
-
-export const getInsiderTrades = createServerFn({ method: "GET" })
-    .inputValidator(insiderTradesSchema)
-    .handler(async ({ data }): Promise<InsiderTradesResponse> => {
-        const {
-            acquiredDisposed,
-            apiKey,
-            endDate,
-            identifier,
-            limit = 40,
-            offset = 0,
-            sort = "desc",
-            startDate,
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error } = await api.GET("/v1/insider-trades", {
-            params: {
-                query: {
-                    acquired_disposed: acquiredDisposed,
-                    end_date: endDate,
-                    identifier,
-                    limit,
-                    offset,
-                    sort,
-                    start_date: startDate,
-                },
-            },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-const institutionalTransactionsSchema = z.object({
-    apiKey: apiKeySchema,
-    calendarQuarter: z.number().optional(),
-    calendarYear: z.number().optional(),
-    endDate: z.string().optional(),
-    identifier: z.string(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-    startDate: z.string().optional(),
-    type: z.enum(["new_buy", "added", "reduced", "sold_out"]).optional(),
-});
-
-export const getInstitutionalTransactions = createServerFn({ method: "GET" })
-    .inputValidator(institutionalTransactionsSchema)
-    .handler(async ({ data }): Promise<InstitutionalTransactionsResponse> => {
-        const {
-            apiKey,
-            calendarQuarter,
-            calendarYear,
-            endDate,
-            identifier,
-            limit = 40,
-            offset = 0,
-            sort = "desc",
-            startDate,
-            type,
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error } = await api.GET("/v1/institutional-ownership/transactions", {
-            params: {
-                query: {
-                    calendar_quarter: calendarQuarter,
-                    calendar_year: calendarYear,
-                    end_date: endDate,
-                    identifier,
-                    limit,
-                    offset,
-                    sort,
-                    start_date: startDate,
-                    type,
-                },
-            },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-const institutionalHoldingsSchema = z.object({
-    apiKey: apiKeySchema,
-    identifier: z.string(),
-    limit: z.number().optional(),
-    minValue: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-});
-
-export const getInstitutionalHoldingsByCompany = createServerFn({ method: "GET" })
-    .inputValidator(institutionalHoldingsSchema)
-    .handler(async ({ data }): Promise<InstitutionalHoldingsResponse> => {
-        const {
-            apiKey,
-            identifier,
-            limit = 40,
-            minValue,
-            offset = 0,
-            sort = "desc",
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error } = await api.GET("/v1/institutional-ownership/holdings-by-company", {
-            params: {
-                query: {
-                    identifier,
-                    limit,
-                    min_value: minValue,
-                    offset,
-                    sort,
-                },
-            },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-const institutionsSchema = z.object({
-    apiKey: apiKeySchema,
-    ciks: z.string().optional(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-});
-
-export const getInstitutions = createServerFn({ method: "GET" })
-    .inputValidator(institutionsSchema)
-    .handler(async ({ data }): Promise<InstitutionsResponse> => {
-        const {
-            apiKey,
-            ciks,
-            limit = 100,
-            offset = 0,
-            sort = "asc",
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error } = await api.GET("/v1/institutional-ownership/institutions", {
-            params: {
-                query: {
-                    ciks,
-                    limit,
-                    offset,
-                    sort,
-                },
-            },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-const iposSchema = z.object({
-    apiKey: apiKeySchema,
-    endDate: z.string().optional(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-    startDate: z.string().optional(),
-});
-
-export const getIpos = createServerFn({ method: "GET" })
-    .inputValidator(iposSchema)
-    .handler(async ({ data }): Promise<IposResponse> => {
-        const {
-            apiKey,
-            endDate,
-            limit = 40,
-            offset = 0,
-            sort = "desc",
-            startDate,
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error } = await api.GET("/v1/ipos", {
-            params: {
-                query: {
-                    end_date: endDate,
-                    limit,
-                    offset,
-                    sort,
-                    start_date: startDate,
-                },
-            },
         });
 
         if (error) throw error;
@@ -1492,6 +1293,195 @@ export const getV2InvestorDocumentSearch = createServerFn({ method: "GET" })
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/search/investor-documents", {
             params: { query: v2Query({ company, kind: v2Expand(kind), limit, mode, q }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+// SEC family (`/v2/filings*`, `/v2/document-versions/*`, `/v2/holdings`, `/v2/holding-changes`, `/v2/insider-trades`,
+// `/v2/ipos`, backend tasks/data-api-v2 task 6). Readiness is `meta.coverage.state` on a 200 (`data: []` while
+// pending); 403 `excluded`, 404 `not_covered` and 503 `unavailable` are problems (page states, `secErrorState`).
+
+const v2FilingsSchema = z.object({
+    apiKey: apiKeySchema,
+    company: z.string().trim().min(1),
+    cursor: cursorSchema,
+    filedAtGte: z.string().trim().min(1).optional(),
+    filedAtLt: z.string().trim().min(1).optional(),
+    form: z.array(z.string().trim().min(1)).optional(),
+    limit: v2LimitSchema,
+    sort: z.enum(["filed_at", "-filed_at"] as const satisfies ReadonlyArray<V2FilingsSort>).optional(),
+});
+
+/** A company's filings by cursor (`meta.form_facet` = its forms with counts) (`sort`: `filed_at` only). */
+export const getV2Filings = createServerFn({ method: "GET" })
+    .inputValidator(v2FilingsSchema)
+    .handler(async ({ data }): Promise<V2FilingsResponse> => {
+        const { apiKey, company, cursor, filedAtGte, filedAtLt, form, limit, sort } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/filings", {
+            params: {
+                query: v2Query({
+                    company,
+                    cursor,
+                    "filed_at.gte": filedAtGte,
+                    "filed_at.lt": filedAtLt,
+                    "form": v2Expand(form),
+                    limit,
+                    sort,
+                }),
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** One filing's manifest; `expand: ["documents"]` lists its documents (`current_version_id`, public `source_url`). */
+export const getV2Filing = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema, expand: z.array(z.enum(V2_FILING_EXPANDS)).optional() }))
+    .handler(async ({ data }): Promise<V2FilingDetailResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/filings/{accession}", {
+            params: { path: { accession: data.accession }, query: v2Query({ expand: v2Expand(data.expand) }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        // `parties` / `relations` are free JSON in the spec (see `SecJson` in types.ts).
+        return res as V2FilingDetailResponse;
+    });
+
+/** One immutable document version: a block range (`b00107-b00244`), with its footnotes / neighbours. */
+export const getV2DocumentVersion = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        blocks: z.string().regex(/^b\d+(-b\d+)?$/).optional(),
+        footnotes: z.boolean().optional(),
+        neighbors: z.number().int().min(0).max(50).optional(),
+        versionId: versionIdSchema,
+    }))
+    .handler(async ({ data }): Promise<V2DocumentVersionResponse> => {
+        const { apiKey, blocks, footnotes, neighbors, versionId } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/document-versions/{version_id}", {
+            params: { path: { version_id: versionId }, query: v2Query({ blocks, footnotes, neighbors }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as V2DocumentVersionResponse;
+    });
+
+/** A figure of a document version (`image.url` = its permanent public image, or `image: null`). */
+export const getV2DocumentFigure = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, blockId: z.string().regex(/^b\d+$/), versionId: versionIdSchema }))
+    .handler(async ({ data }): Promise<V2DocumentFigureResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/document-versions/{version_id}/figures/{block_id}", {
+            params: { path: { block_id: data.blockId, version_id: data.versionId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as V2DocumentFigureResponse;
+    });
+
+// 13F rows: up to 1 000 per page.
+const v2ThirteenFLimitSchema = z.number().int().min(1).max(1000).optional();
+
+const v2HoldingsSchema = z.object({
+    accession: accessionSchema.optional(),
+    apiKey: apiKeySchema,
+    company: z.string().trim().min(1).optional(),
+    cursor: cursorSchema,
+    filer: z.string().trim().regex(/^\d{1,10}(,\d{1,10})*$/).optional(),
+    instruments: z.enum(["shares", "all"] as const satisfies ReadonlyArray<V2HoldingsInstruments>).optional(),
+    limit: v2ThirteenFLimitSchema,
+    periodEnd: z.iso.date().optional(),
+});
+
+/** 13F positions of exactly one scope (`company` | `filer` | `accession`); `period_end` omitted = the server's newest due quarter. */
+export const getV2Holdings = createServerFn({ method: "GET" })
+    .inputValidator(v2HoldingsSchema)
+    .handler(async ({ data }): Promise<V2HoldingsResponse> => {
+        const { accession, apiKey, company, cursor, filer, instruments, limit, periodEnd } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/holdings", {
+            params: { query: v2Query({ accession, company, cursor, filer, instruments, limit, period_end: periodEnd }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2HoldingChangesSchema = z.object({
+    apiKey: apiKeySchema,
+    company: z.string().trim().min(1),
+    cursor: cursorSchema,
+    limit: v2ThirteenFLimitSchema,
+    periodEnd: z.iso.date().optional(),
+});
+
+/** A company's proven 13F position changes vs the prior quarter (`unchanged` rows only when `type` asks; not sent here). */
+export const getV2HoldingChanges = createServerFn({ method: "GET" })
+    .inputValidator(v2HoldingChangesSchema)
+    .handler(async ({ data }): Promise<V2HoldingChangesResponse> => {
+        const { apiKey, company, cursor, limit, periodEnd } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/holding-changes", {
+            params: { query: v2Query({ company, cursor, limit, period_end: periodEnd }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2InsiderTradesSchema = z.object({
+    apiKey: apiKeySchema,
+    company: z.string().trim().min(1),
+    cursor: cursorSchema,
+    filedAtGte: z.string().trim().min(1).optional(),
+    filedAtLt: z.string().trim().min(1).optional(),
+    limit: v2LimitSchema,
+    side: z.enum(["buy", "sell"] as const satisfies ReadonlyArray<V2InsiderSide>).optional(),
+});
+
+/** A company's insider trades, newest filed first (`side` buy = acquired, sell = disposed). */
+export const getV2InsiderTrades = createServerFn({ method: "GET" })
+    .inputValidator(v2InsiderTradesSchema)
+    .handler(async ({ data }): Promise<V2InsiderTradesResponse> => {
+        const { apiKey, company, cursor, filedAtGte, filedAtLt, limit, side } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/insider-trades", {
+            params: { query: v2Query({ company, cursor, "filed_at.gte": filedAtGte, "filed_at.lt": filedAtLt, limit, side }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2IposSchema = z.object({
+    apiKey: apiKeySchema,
+    company: z.string().trim().min(1).optional(),
+    cursor: cursorSchema,
+    limit: v2LimitSchema,
+    sort: z.enum(["listing_date", "-listing_date", "first_public_at", "-first_public_at"] as const satisfies ReadonlyArray<V2IposSort>).optional(),
+    stage: z.array(z.enum(V2_IPO_STAGES)).optional(),
+});
+
+/** Offerings, one row each (registration track + listing-calendar row); `company` optional (pre-listing offerings have none). */
+export const getV2Ipos = createServerFn({ method: "GET" })
+    .inputValidator(v2IposSchema)
+    .handler(async ({ data }): Promise<V2IposResponse> => {
+        const { apiKey, company, cursor, limit, sort, stage } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/ipos", {
+            params: { query: v2Query({ company, cursor, limit, sort, stage: v2Expand(stage) }) },
         });
 
         if (error) throwApiError(error, response);

@@ -2,10 +2,11 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { SecFilingManifestResponse } from "@/lib/api/types";
+import type { V2FilingDetailResponse } from "@/lib/api/types";
 import type { FilingListRow } from "@/lib/sec/parity";
 
-import { SEC_MANIFEST } from "@/lib/sec/sec-fixtures";
+import { ApiRequestError } from "@/lib/api/errors";
+import { V2_FILING_10K } from "@/lib/sec/v2-fixtures";
 import { FilingItem } from "@/routes/$ticker/filings/-components/filing-item";
 import { FilingHtmlBody, primaryDocumentUrl } from "@/routes/$ticker/filings/-components/html-dialog";
 
@@ -14,6 +15,9 @@ vi.mock("@/lib/api/queries", () => ({
     useSecDocumentBlocks: vi.fn(),
     useSecFigure: vi.fn(),
     useSecFilingManifest: vi.fn(),
+    useV2DocumentFigure: vi.fn(),
+    useV2DocumentVersion: vi.fn(),
+    useV2Filing: vi.fn(),
 }));
 
 vi.mock("@/components/html/html-viewer", () => ({
@@ -22,18 +26,15 @@ vi.mock("@/components/html/html-viewer", () => ({
 
 afterEach(cleanup);
 
-const PUBLIC_URL = "https://storage-prod.invinite.com/sec/4765d5384d6b2195ff48ff775f9244f9/aapl-20260926.htm";
+const PUBLIC_URL = "https://storage.invinite.com/sec/4765d5384d6b2195ff48ff775f9244f9/aapl-20260926.htm";
 
-// The live 10-K manifest (0000320193-26-000026, 2026-11-06) trimmed to its primary document with a public copy.
-const MANIFEST_10K: SecFilingManifestResponse = {
-    ...SEC_MANIFEST,
-    documents: [{
-        ...SEC_MANIFEST.documents![0],
-        doc_type: "10-K",
-        filename: "aapl-20260926.htm",
-        role: "primary",
-        source: { url: PUBLIC_URL },
-    }],
+// `/v2/filings/0000320193-26-000026?expand=documents` (the API mapper over the recorded manifest, 2026-11-09).
+const FILING_10K: V2FilingDetailResponse = V2_FILING_10K;
+
+// The same filing before its primary document has a public copy.
+const NO_COPY: V2FilingDetailResponse = {
+    ...V2_FILING_10K,
+    documents: (V2_FILING_10K.documents ?? []).map(doc => ({ ...doc, source_url: null })),
 };
 
 const ROW: FilingListRow = {
@@ -77,19 +78,25 @@ describe("filings row", () => {
     });
 });
 
-describe("HTML view (lazy manifest)", () => {
+describe("HTML view (lazy /v2/filings/{accession}?expand=documents)", () => {
     it("renders the primary document at its permanent public URL", () => {
-        expect(primaryDocumentUrl(MANIFEST_10K, ROW.primaryDocument)).toBe(PUBLIC_URL);
+        expect(primaryDocumentUrl(FILING_10K, ROW.primaryDocument)).toBe(PUBLIC_URL);
 
-        render(<FilingHtmlBody data={MANIFEST_10K} error={null} isLoading={false} onOpenDocuments={noop} primaryFilename={ROW.primaryDocument} title="AAPL 10-K" />);
+        render(<FilingHtmlBody data={FILING_10K} error={null} isLoading={false} onOpenDocuments={noop} primaryFilename={ROW.primaryDocument} title="AAPL 10-K" />);
 
         expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-url", PUBLIC_URL);
     });
 
-    it("source null: 'No public copy yet' and the SEC document store reader instead", () => {
+    it("no primary filename stated: the document whose EDGAR type is the form", () => {
+        expect(primaryDocumentUrl(FILING_10K, null)).toBe(PUBLIC_URL);
+    });
+
+    it("source_url null: 'No public copy yet' and the SEC document store reader instead", () => {
         const onOpenDocuments = vi.fn();
 
-        render(<FilingHtmlBody data={SEC_MANIFEST} error={null} isLoading={false} onOpenDocuments={onOpenDocuments} primaryFilename="aapl-20261102.htm" title="AAPL 8-K" />);
+        expect(primaryDocumentUrl(NO_COPY, ROW.primaryDocument)).toBeNull();
+
+        render(<FilingHtmlBody data={NO_COPY} error={null} isLoading={false} onOpenDocuments={onOpenDocuments} primaryFilename={ROW.primaryDocument} title="AAPL 10-K" />);
 
         expect(screen.getByText("No public copy yet")).toBeInTheDocument();
 
@@ -100,13 +107,15 @@ describe("HTML view (lazy manifest)", () => {
         expect(onOpenDocuments).toHaveBeenCalledOnce();
     });
 
-    it("a too-large primary document is never linked", () => {
-        const tooLarge = { ...MANIFEST_10K, documents: [{ ...MANIFEST_10K.documents![0], too_large: true }] };
+    it("a 403 excluded problem is the excluded state", () => {
+        const problem = new ApiRequestError(403, { error: "excluded", message: "This issuer is excluded" });
 
-        expect(primaryDocumentUrl(tooLarge, ROW.primaryDocument)).toBeNull();
+        render(<FilingHtmlBody data={null} error={problem} isLoading={false} onOpenDocuments={noop} primaryFilename={null} title="x" />);
+
+        expect(screen.getByText("Outside the SEC store's coverage")).toBeInTheDocument();
     });
 
-    it("while the manifest loads nothing is rendered as a document", () => {
+    it("while the filing loads nothing is rendered as a document", () => {
         render(<FilingHtmlBody data={null} error={null} isLoading onOpenDocuments={noop} primaryFilename={null} title="x" />);
 
         expect(screen.queryByTestId("html-viewer")).toBeNull();

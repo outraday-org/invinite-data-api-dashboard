@@ -1,6 +1,6 @@
 import { ExternalLink, FileText } from "lucide-react";
 
-import type { SecFilingManifestResponse } from "@/lib/api/types";
+import type { V2FilingDetailResponse } from "@/lib/api/types";
 import type { FilingListRow } from "@/lib/sec/parity";
 
 import { HtmlViewer } from "@/components/html/html-viewer";
@@ -15,28 +15,26 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSecFilingManifest } from "@/lib/api/queries";
+import { useV2Filing } from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
 import { primaryDocumentOf } from "@/lib/sec/parity";
-import { toManifestDocuments } from "@/lib/sec/source";
+import { toV2FilingDocuments } from "@/lib/sec/source";
 
 import { fiscalPeriodLabel } from "./filing-item";
 
 /** The filing whose primary document the dialog shows. */
 export type FilingHtmlTarget = FilingListRow & { ticker: string };
 
-/** The primary document's permanent public URL of a manifest; null = no public copy yet. */
-export function primaryDocumentUrl(data: null | SecFilingManifestResponse, primaryFilename: null | string) {
+/** The primary document's permanent public URL of a v2 filing (`expand=documents`); null = no public copy yet. */
+export function primaryDocumentUrl(data: null | V2FilingDetailResponse, primaryFilename: null | string) {
     if (!data) return null;
 
-    const doc = primaryDocumentOf(toManifestDocuments(data.documents), primaryFilename);
-
-    return doc && !doc.tooLarge ? doc.publicUrl : null;
+    return primaryDocumentOf(toV2FilingDocuments(data.documents), primaryFilename, data.form)?.publicUrl ?? null;
 }
 
 /**
- * The HTML view's body (pure): the primary document of the manifest at its permanent public URL, the manifest's
- * honest state while it loads / is pending / failed, or "No public copy yet" with the documents reader instead.
+ * The HTML view's body (pure): the primary document of `/v2/filings/{accession}?expand=documents` at its permanent
+ * public URL, the filing's honest state while it loads / failed, or "No public copy yet" with the documents reader.
  */
 export function FilingHtmlBody({
     data,
@@ -46,7 +44,7 @@ export function FilingHtmlBody({
     primaryFilename,
     title,
 }: {
-    data: null | SecFilingManifestResponse;
+    data: null | V2FilingDetailResponse;
     error: unknown;
     isLoading: boolean;
     onOpenDocuments: () => void;
@@ -65,7 +63,6 @@ export function FilingHtmlBody({
 
     return (
         <div className="flex flex-col items-start gap-3">
-            <SecReadinessNotice readiness={data.readiness} />
             <div className="text-muted-foreground text-sm">{NO_PUBLIC_COPY}</div>
             <Button onClick={onOpenDocuments} size="sm" type="button" variant="outline">
                 <FileText />
@@ -88,7 +85,7 @@ export function HtmlDialog({
     onOpenDocuments: (filing: FilingHtmlTarget) => void;
 }) {
     // Loaded only while the dialog is open (a null accession keeps the query idle).
-    const manifest = useSecFilingManifest(dialog?.accessionNumber ?? null);
+    const manifest = useV2Filing(dialog?.accessionNumber ?? null, ["documents"]);
 
     const url = primaryDocumentUrl(manifest.data, dialog?.primaryDocument ?? null);
 
