@@ -17,8 +17,6 @@ import type {
     InstitutionalHoldingsResponse,
     InstitutionalTransactionsResponse,
     IposResponse,
-    NewsItemResponse,
-    NewsListResponse,
     RatioCategory,
     SearchMode,
     SecDocumentResponse,
@@ -35,6 +33,7 @@ import type {
     SecSectionsResponse,
     SegmentedFinancialsSegmentId,
     StatementType,
+    V2AnnouncementsResponse,
     V2AudioResponse,
     V2CompanyExpand,
     V2CompanyResponse,
@@ -61,6 +60,9 @@ import type {
     V2LiveAudioResponse,
     V2MarketHolidaysResponse,
     V2MarketHolidaysSort,
+    V2NewsItem,
+    V2NewsListResponse,
+    V2NewsText,
     V2ParticipantsResponse,
     V2PressReleaseResponse,
     V2PriceAttributionResponse,
@@ -95,8 +97,6 @@ import {
     getInstitutionalTransactions,
     getInstitutions,
     getIpos,
-    getNewsItem,
-    getNewsList,
     getSecDocument,
     getSecExport,
     getSecExportFile,
@@ -110,6 +110,7 @@ import {
     getSecVersion,
     getSegmentedFinancials,
     getStandardizedFinancials,
+    getV2Announcements,
     getV2Audio,
     getV2Company,
     getV2Dividends,
@@ -125,6 +126,9 @@ import {
     getV2Kpis,
     getV2LiveAudio,
     getV2MarketHolidays,
+    getV2News,
+    getV2NewsItem,
+    getV2NewsText,
     getV2Participants,
     getV2PressRelease,
     getV2PriceAttribution,
@@ -907,7 +911,7 @@ const nextCursorOf = (lastPage: { next_cursor?: null | string }) => lastPage.nex
 
 /**
  * The infinite twin of `useEarningsQuery` over a cursor list: the first page asks without a cursor, the next ones with
- * the last page's `next_cursor` (`/v1/news` pages by cursor with a pager instead: `useNewsPage`).
+ * the last page's `next_cursor` (`/v2/news` pages by cursor with a pager instead: `useNewsPage`).
  */
 function useEarningsInfinite<TPage extends { next_cursor?: null | string }>(options: {
     enabled: boolean;
@@ -947,57 +951,61 @@ export function isEarningsEventLiveish(event: Pick<V2Event, "capture_status" | "
     return !event.has_transcript && LIVE_CAPTURE_STATUSES.has(event.capture_status);
 }
 
-// News (IDA `/v1/news*`, backend earnings tasks/inhouse-news-pipeline task 17)
+// News (IDA `/v2/news*`, backend tasks/data-api-v2 task 8; the page since backend earnings inhouse-news-pipeline task 17)
 
 export type NewsListInput = {
-    earnings?: "false" | "true";
+    /** The company (ticker): v2 lists a company's news only. */
+    company: string;
+    /** Day (`YYYY-MM-DD`, UTC): `published_at.gte` its midnight. */
     from?: string;
-    issuerCategory?: Array<string>;
-    issuerTag?: Array<string>;
     kind?: Array<string>;
     limit: number;
-    /** Hold the request (the publisher's CIK is still loading). */
-    paused?: boolean;
-    publicationType?: Array<string>;
-    /** Publisher CIKs ("Company-published"). */
-    publisher?: Array<string>;
-    scope: "company" | "market";
-    source?: Array<string>;
-    ticker: string;
+    /** Day (`YYYY-MM-DD`, UTC), inclusive: `published_at.lt` the next midnight. */
     to?: string;
     topic?: Array<string>;
 };
 
+/** A UTC day's first instant; `next` = the following day's (an inclusive `to` day as an exclusive bound). */
+export function dayStartInstant(day: string, next = false): string {
+    const start = new Date(`${day}T00:00:00.000Z`);
+
+    if (next) start.setUTCDate(start.getUTCDate() + 1);
+
+    return start.toISOString();
+}
+
 /**
- * One page of the news feed, newest first, at the API's keyset cursor (`null` = the first page; the page's
+ * One page of a company's news, newest first, at the API's keyset cursor (`null` = the first page; the page's
  * `next_cursor` is the next one, an item published meanwhile never shifts a page). Without `from` / `to` the API pages
- * back through the whole history. Status-aware: the News page renders the plan / error state. `scope: "market"` drops
- * the ticker. A visited page stays cached, so the pager's Previous does not refetch.
+ * back through the company's whole history. Status-aware: the News page renders the plan / error state. A visited page
+ * stays cached, so the pager's Previous does not refetch.
  */
 export function useNewsPage(input: NewsListInput & { cursor: null | string }) {
-    return useEarningsQuery<NewsListResponse>({
-        enabled: !input.paused && (input.scope === "market" || input.ticker.trim().length > 0),
+    return useEarningsQuery<V2NewsListResponse>({
+        enabled: input.company.trim().length > 0,
         errorMessage: null,
-        load: (apiKey) => {
-            const { cursor, paused: _paused, ...query } = input;
-
-            return getNewsList({ data: { ...query, apiKey, cursor: cursor ?? undefined } });
-        },
+        load: apiKey =>
+            getV2News({
+                data: {
+                    apiKey,
+                    company: input.company,
+                    cursor: input.cursor ?? undefined,
+                    kind: input.kind,
+                    limit: input.limit,
+                    publishedAtGte: input.from ? dayStartInstant(input.from) : undefined,
+                    publishedAtLt: input.to ? dayStartInstant(input.to, true) : undefined,
+                    topic: input.topic,
+                },
+            }),
         queryKey: [
             "news",
+            "v2",
             "list",
-            input.scope,
-            input.scope === "market" ? "" : input.ticker,
-            input.publisher?.join(",") ?? "",
+            input.company,
             input.from ?? "",
             input.to ?? "",
-            input.source?.join(",") ?? "",
             input.kind?.join(",") ?? "",
             input.topic?.join(",") ?? "",
-            input.earnings ?? "",
-            input.publicationType?.join(",") ?? "",
-            input.issuerCategory?.join(",") ?? "",
-            input.issuerTag?.join(",") ?? "",
             input.limit,
             input.cursor ?? "",
         ],
@@ -1005,16 +1013,35 @@ export function useNewsPage(input: NewsListInput & { cursor: null | string }) {
     });
 }
 
-/**
- * One news item with Invinite's summary, plain and HTML (STANDARD); a null id keeps it idle. Status-aware: 404 / plan
- * are panel states.
- */
+/** One news item, the list row (STANDARD); a null id keeps it idle. Status-aware: 404 / plan are panel states. */
 export function useNewsItem(id: null | string) {
-    return useEarningsQuery<NewsItemResponse>({
+    return useEarningsQuery<V2NewsItem>({
         enabled: Boolean(id),
         errorMessage: null,
-        load: apiKey => getNewsItem({ data: { apiKey, id: id ?? "" } }),
-        queryKey: ["news", "item", id ?? ""],
+        load: apiKey => getV2NewsItem({ data: { apiKey, id: id ?? "" } }),
+        queryKey: ["news", "v2", "item", id ?? ""],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/** Invinite's summary of an item in blocks, every page joined (STANDARD); a null id keeps it idle. */
+export function useNewsText(id: null | string) {
+    return useEarningsQuery<V2NewsText>({
+        enabled: Boolean(id),
+        errorMessage: null,
+        load: apiKey => getV2NewsText({ data: { apiKey, id: id ?? "" } }),
+        queryKey: ["news", "v2", "text", id ?? ""],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/** The announcements (v1 "developments") read from one item (STANDARD); a null id keeps it idle. */
+export function useNewsAnnouncements(id: null | string) {
+    return useEarningsQuery<V2AnnouncementsResponse>({
+        enabled: Boolean(id),
+        errorMessage: null,
+        load: apiKey => getV2Announcements({ data: { apiKey, item: id ?? "", limit: 50 } }),
+        queryKey: ["news", "v2", "announcements", id ?? ""],
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }

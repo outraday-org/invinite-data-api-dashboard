@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { NewsDevelopment } from "@/lib/api/types";
 
 import { ApiRequestError } from "@/lib/api/errors";
-import { edgarItem, newsDetail, newsroomItem, SUMMARY_TEXT } from "@/lib/news/news-fixtures";
+import { edgarItem, newsroomItem, newsText } from "@/lib/news/news-fixtures";
 import { NewsFilters } from "@/routes/$ticker/news/-components/news-filters";
 import { NewsItemView } from "@/routes/$ticker/news/-components/news-item-panel";
 import { NewsPageView } from "@/routes/$ticker/news/index";
@@ -19,8 +19,10 @@ vi.mock("@tanstack/react-router", () => ({
 vi.mock("@/lib/api/queries", () => ({
     useApiBaseUrl: vi.fn(() => null),
     useCompanyDetails: vi.fn(() => ({ data: null })),
+    useNewsAnnouncements: vi.fn(),
     useNewsItem: vi.fn(),
     useNewsPage: vi.fn(),
+    useNewsText: vi.fn(),
 }));
 
 afterEach(() => {
@@ -118,6 +120,38 @@ describe("NewsPageView", () => {
         expect(screen.queryByTestId("news-pager")).toBeNull();
     });
 
+    it("never looks empty while the page-side filters hid every row and older news follows: it offers the next page", () => {
+        const onNext = vi.fn();
+
+        render(<NewsPageView {...pageProps} hiddenByFilters={50} items={[]} pager={{ ...pageProps.pager, hasNext: true, onNext }} />);
+
+        expect(screen.queryByText("No news in this window.")).toBeNull();
+
+        const filtered = screen.getByTestId("news-filtered-out");
+
+        expect(within(filtered).getByText(/None of the 50 items on this page match the filters; older news follows/u)).toBeTruthy();
+
+        fireEvent.click(within(filtered).getByText("Load the next page"));
+
+        expect(onNext).toHaveBeenCalledTimes(1);
+    });
+
+    it("says the filters hid the rest on the last page, and counts hidden rows under a shorter page", () => {
+        render(<NewsPageView {...pageProps} hiddenByFilters={3} items={[]} />);
+
+        expect(screen.getByText("No news on this page matches the filters.")).toBeTruthy();
+
+        expect(screen.queryByText("Load the next page")).toBeNull();
+
+        cleanup();
+
+        render(<NewsPageView {...pageProps} hiddenByFilters={1} items={[edgarItem()]} />);
+
+        expect(screen.getAllByTestId("news-row")).toHaveLength(1);
+
+        expect(screen.getByText("1 more item on this page hidden by the filters.")).toBeTruthy();
+    });
+
     it("renders the plan gate as a notice, not an error", () => {
         render(<NewsPageView {...pageProps} error={new ApiRequestError(403, { error: "Forbidden", message: "Upgrade" })} items={[]} />);
 
@@ -127,9 +161,12 @@ describe("NewsPageView", () => {
 
 describe("NewsFilters", () => {
     it("offers no Has media filter", () => {
-        render(<NewsFilters categories={[]} onChange={vi.fn()} search={{}} tags={[]} ticker="NVDA" />);
+        render(<NewsFilters categories={[]} onChange={vi.fn()} search={{}} tags={[]} />);
 
         expect(screen.queryByText("Has media")).toBeNull();
+
+        // v2 has no market-wide feed (a company scope is required): no scope switch.
+        expect(screen.queryByText("Whole market")).toBeNull();
 
         expect(screen.getByText("Company-published")).toBeTruthy();
     });
@@ -146,6 +183,11 @@ const DEVELOPMENT: Omit<NewsDevelopment, "item_id"> = {
     effective_from: null,
     effective_to: null,
     id: "00000000-0000-4000-8000-0000000000d1",
+    item: {
+        attribution: newsroomItem().attribution,
+        title: newsroomItem().title,
+        url: newsroomItem().url,
+    },
     model_processing_allowed: true,
     products: [{ name: "Rubin" }],
     revision: 1,
@@ -156,11 +198,11 @@ const DEVELOPMENT: Omit<NewsDevelopment, "item_id"> = {
 
 const PDF = { bytes: 184_233, generated_at: "2026-10-30T00:03:11.000Z", pages: 3, sha256: "ab", url: "https://storage.example.com/r1.pdf", version: 1 };
 
-describe("NewsItemView", () => {
+describe("NewsItemView (v2: the item row + /text blocks + /v2/announcements?item=)", () => {
     it("shows the attribution block above an EDGAR item's summary (form + accession)", () => {
         const item = edgarItem();
 
-        render(<NewsItemView data={newsDetail(item)} error={null} isLoading={false} onOpen={() => undefined} />);
+        render(<NewsItemView announcements={[]} error={null} isLoading={false} item={item} text={newsText(item)} />);
 
         const block = screen.getByLabelText("Attribution");
 
@@ -176,15 +218,16 @@ describe("NewsItemView", () => {
         expect(block.compareDocumentPosition(body) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     });
 
-    it("renders header → lede → summary → developments → PDF, in that order", () => {
+    it("renders header → lede → summary → announcements, in that order (no sightings or companies in v2)", () => {
         const item = newsroomItem();
 
         render(
             <NewsItemView
-                data={newsDetail(item, { developments: [{ ...DEVELOPMENT, item_id: item.id }], pdf: PDF })}
+                announcements={[{ ...DEVELOPMENT, item_id: item.id }]}
                 error={null}
                 isLoading={false}
-                onOpen={() => undefined}
+                item={item}
+                text={newsText(item)}
             />,
         );
 
@@ -193,7 +236,6 @@ describe("NewsItemView", () => {
             screen.getByTestId("news-lede"),
             screen.getByTestId("news-summary"),
             screen.getByTestId("news-development"),
-            screen.getByTestId("pdf-document"),
         ];
 
         for (const [index, node] of order.slice(1).entries()) {
@@ -202,11 +244,47 @@ describe("NewsItemView", () => {
 
         expect(screen.getByTestId("news-lede").textContent).toBe(item.description);
 
-        expect(screen.getByText("Summary by Invinite · 180 of 260 words")).toBeTruthy();
+        expect(screen.getByText("Summary by Invinite · 180 words")).toBeTruthy();
+
+        expect(screen.queryByTestId("pdf-document")).toBeNull();
+
+        expect(screen.queryByText("Seen on")).toBeNull();
     });
 
-    it("renders summary_html: headings, paragraphs and lists", () => {
-        render(<NewsItemView data={newsDetail(newsroomItem())} error={null} isLoading={false} onOpen={() => undefined} />);
+    it("shows the item's branded PDF inline from the v2 item's pdf (owner decision 2026-11-09), hidden without one", () => {
+        const item = newsroomItem({ pdf: PDF });
+
+        render(<NewsItemView announcements={[]} error={null} isLoading={false} item={item} text={newsText(item)} />);
+
+        expect(screen.getByTestId("pdf-document").textContent).toContain("3 pages");
+
+        expect(screen.getByText("Open in new tab").closest("a")?.getAttribute("href")).toBe(PDF.url);
+
+        fireEvent.click(screen.getByText("View"));
+
+        expect(screen.getByTestId("news-pdf-viewer").getAttribute("src")).toBe(PDF.url);
+
+        // After the summary and the announcements.
+        expect(screen.getByTestId("news-summary").compareDocumentPosition(screen.getByTestId("pdf-document")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it("renders the blocks as React elements: headings, paragraphs and lists (bullets dropped), no injected HTML", () => {
+        const item = newsroomItem();
+
+        render(
+            <NewsItemView
+                announcements={[]}
+                error={null}
+                isLoading={false}
+                item={item}
+                text={newsText(item, {
+                    blocks: [
+                        ...newsText(item).blocks,
+                        { block_id: "00000000-0000-4000-8000-0000000000b9", heading: null, index: 4, kind: "paragraph", text: "<script>window.pwned = 1</script>" },
+                    ],
+                })}
+            />,
+        );
 
         const body = screen.getByTestId("news-summary");
 
@@ -214,60 +292,23 @@ describe("NewsItemView", () => {
 
         expect([...body.querySelectorAll("li")].map(li => li.textContent)).toEqual(["Six new chips", "One rack-scale system"]);
 
-        expect(body.querySelectorAll("p")).toHaveLength(2);
-    });
+        expect(body.querySelectorAll("p")).toHaveLength(3);
 
-    it("keeps only h2, p, ul, li, strong, em and no attribute of summary_html", () => {
-        render(
-            <NewsItemView
-                data={newsDetail(newsroomItem(), {
-                    summary_html: `<p>Text <strong>bold</strong> <em>it</em></p><script>window.pwned = 1</script><img src="https://x.example/p.gif" onerror="window.pwned = 1"><a href="https://x.example">link</a><h3>Deep</h3><table><tr><td>cell</td></tr></table><p style="color:red" class="x" onclick="x()">Styled</p>`,
-                })}
-                error={null}
-                isLoading={false}
-                onOpen={() => undefined}
-            />,
-        );
+        expect(body.querySelector("script")).toBeNull();
 
-        const body = screen.getByTestId("news-summary");
-
-        expect(body.querySelector("script, img, a, h3, table, td")).toBeNull();
-
-        expect(body.innerHTML).not.toMatch(/onerror|onclick|style=|class=|href=|src=/);
-
-        expect(body.querySelector("strong")?.textContent).toBe("bold");
-
-        expect(body.querySelector("em")?.textContent).toBe("it");
-
-        // The text of a dropped tag stays.
-        expect(body.textContent).toContain("link");
-    });
-
-    it("renders summary_text as paragraphs when there is no html", () => {
-        render(<NewsItemView data={newsDetail(newsroomItem(), { summary_html: null })} error={null} isLoading={false} onOpen={() => undefined} />);
-
-        const paragraphs = screen.getByTestId("news-summary").querySelectorAll("p");
-
-        expect([...paragraphs].map(p => p.textContent)).toEqual(SUMMARY_TEXT.split("\n\n"));
-    });
-
-    it("falls back to summary_text when nothing of summary_html survives the allow-list", () => {
-        render(<NewsItemView data={newsDetail(newsroomItem(), { summary_html: "<script>window.pwned = 1</script><img src=\"x\">" })} error={null} isLoading={false} onOpen={() => undefined} />);
-
-        const paragraphs = screen.getByTestId("news-summary").querySelectorAll("p");
-
-        expect([...paragraphs].map(p => p.textContent)).toEqual(SUMMARY_TEXT.split("\n\n"));
+        expect(body.textContent).toContain("<script>");
     });
 
     it("shows headline-and-link only, never an empty text block, for an item without a summary", () => {
-        const item = newsroomItem();
+        const item = newsroomItem({ description: null, summary_words: null });
 
         render(
             <NewsItemView
-                data={newsDetail(item, { content_status: "no_text", description: null, source_words: null, summarized_at: null, summary_html: null, summary_text: null, summary_words: null, text_url: null })}
+                announcements={[]}
                 error={null}
                 isLoading={false}
-                onOpen={() => undefined}
+                item={item}
+                text={newsText(item, { blocks: [], content_status: "no_text" })}
             />,
         );
 
@@ -282,15 +323,16 @@ describe("NewsItemView", () => {
         expect(within(screen.getByLabelText("Attribution")).getByText(/© NVIDIA Corporation/)).toBeTruthy();
     });
 
-    it("labels a planned development as planned, without evidence quotes; lists sightings; no media section", () => {
+    it("labels a planned announcement as planned, without evidence quotes; no media section", () => {
         const item = newsroomItem();
 
         render(
             <NewsItemView
-                data={newsDetail(item, { developments: [{ ...DEVELOPMENT, item_id: item.id }] })}
+                announcements={[{ ...DEVELOPMENT, item_id: item.id }]}
                 error={null}
                 isLoading={false}
-                onOpen={() => undefined}
+                item={item}
+                text={newsText(item)}
             />,
         );
 
@@ -300,41 +342,42 @@ describe("NewsItemView", () => {
 
         expect(development.querySelector("blockquote")).toBeNull();
 
-        expect(screen.getByText("Company newsroom (nvidianews.nvidia.com)", { selector: "a" })).toBeTruthy();
-
         expect(screen.queryByText("Images and files")).toBeNull();
 
         expect(screen.queryByTestId("news-image")).toBeNull();
-
-        expect(screen.queryByTestId("news-asset")).toBeNull();
     });
 
-    it("shows the item's branded PDF inline, hidden without one", () => {
-        const { unmount } = render(<NewsItemView data={newsDetail(newsroomItem())} error={null} isLoading={false} onOpen={() => undefined} />);
+    it("renders the item while its text loads, and a failed text read as an error state", () => {
+        const item = newsroomItem();
 
-        expect(screen.queryByTestId("pdf-document")).toBeNull();
+        const { rerender } = render(<NewsItemView announcements={[]} error={null} isLoading={false} item={item} text={null} />);
 
-        unmount();
+        expect(screen.getByLabelText("Attribution")).toBeTruthy();
 
-        render(<NewsItemView data={newsDetail(newsroomItem(), { pdf: PDF })} error={null} isLoading={false} onOpen={() => undefined} />);
+        expect(screen.queryByTestId("news-summary")).toBeNull();
 
-        expect(screen.getByTestId("pdf-document").textContent).toContain("3 pages");
+        rerender(
+            <NewsItemView
+                announcements={[]}
+                error={null}
+                isLoading={false}
+                item={item}
+                text={null}
+                textError={new ApiRequestError(500, { error: "internal", message: "x" })}
+            />,
+        );
 
-        expect(screen.getByText("Open in new tab").closest("a")?.getAttribute("href")).toBe(PDF.url);
-
-        fireEvent.click(screen.getByText("View"));
-
-        expect(screen.getByTestId("news-pdf-viewer").getAttribute("src")).toBe(PDF.url);
+        expect(screen.getByText("Failed to load the summary")).toBeTruthy();
     });
 
     it("renders 404 and the plan gate as states", () => {
         const { rerender } = render(
-            <NewsItemView data={null} error={new ApiRequestError(404, { error: "not_found", message: "x" })} isLoading={false} onOpen={() => undefined} />,
+            <NewsItemView announcements={[]} error={new ApiRequestError(404, { error: "not_found", message: "x" })} isLoading={false} item={null} text={null} />,
         );
 
         expect(screen.getByText("This news item is not available")).toBeTruthy();
 
-        rerender(<NewsItemView data={null} error={new ApiRequestError(403, { error: "Forbidden", message: "x" })} isLoading={false} onOpen={() => undefined} />);
+        rerender(<NewsItemView announcements={[]} error={new ApiRequestError(403, { error: "Forbidden", message: "x" })} isLoading={false} item={null} text={null} />);
 
         expect(screen.getByText("Your plan does not include news summaries")).toBeTruthy();
     });

@@ -1,4 +1,4 @@
-import type { NewsItemPublic, NewsItemResponse } from "@/lib/api/types";
+import type { NewsItemPublic, V2NewsBlock, V2NewsText } from "@/lib/api/types";
 
 /** Test fixtures of the News page (`labels.test.ts`, `src/routes/-tests/news-page.test.tsx`); imported by no app code. */
 
@@ -24,6 +24,7 @@ export function newsroomItem(overrides: Partial<NewsItemPublic> = {}): NewsItemP
         is_earnings_news: false,
         kind: "other",
         model_processing_allowed: true,
+        pdf: null,
         publications: [{
             categories: [{ id: "12", label: "Press Releases", url: null }],
             modified_at: null,
@@ -77,25 +78,35 @@ export function edgarItem(overrides: Partial<NewsItemPublic> = {}): NewsItemPubl
 }
 
 /** Invinite's summary of the Rubin release, as the API renders it (`summary_text` blocks, `summary_html` from them). */
-export const SUMMARY_TEXT = "NVIDIA introduced Rubin, its next data-center platform.\n\nAvailability\n\nPartners can order systems from the second half of 2027.\n\n• Six new chips\n• One rack-scale system";
+const block = (index: number, kind: V2NewsBlock["kind"], text: string, heading: null | string = null): V2NewsBlock => ({
+    block_id: `00000000-0000-4000-8000-0000000000b${index}`,
+    heading,
+    index,
+    kind,
+    text,
+});
 
-export const SUMMARY_HTML = "<p>NVIDIA introduced Rubin, its next data-center platform.</p><h2>Availability</h2><p>Partners can order systems from the second half of 2027.</p><ul><li>Six new chips</li><li>One rack-scale system</li></ul>";
+/** Invinite's summary of `newsroomItem()` in blocks (`GET /v2/news/{id}/text`). */
+export const SUMMARY_BLOCKS: Array<V2NewsBlock> = [
+    block(0, "paragraph", "NVIDIA introduced Rubin, its next data-center platform."),
+    block(1, "heading", "Availability"),
+    block(2, "paragraph", "Partners can order systems from the second half of 2027.", "Availability"),
+    block(3, "list", "• Six new chips\n• One rack-scale system", "Availability"),
+];
 
-/** `GET /v1/news/{id}` of `item` (summary available unless overridden). */
-export function newsDetail(item: NewsItemPublic, overrides: Partial<NewsItemResponse> = {}): NewsItemResponse {
+/** `GET /v2/news/{id}/text` of `item` (summary available unless overridden). */
+export function newsText(item: NewsItemPublic, overrides: Partial<V2NewsText> = {}): V2NewsText {
     return {
-        ...item,
-        companies: [{ cik: NVIDIA_CIK, confidence: 1, match_kind: "issuer", symbol: "NVDA" }],
+        attribution: item.attribution,
+        blocks: SUMMARY_BLOCKS,
         content_status: "available",
-        developments: [],
-        pdf: null,
-        sightings: [{ published_at_claimed: null, seen_at: "2026-10-29T13:03:40.000Z", source_id: item.source.id, url: item.url }],
-        source_words: 260,
-        summarized_at: "2026-10-29T13:10:00.000Z",
-        summary_html: SUMMARY_HTML,
-        summary_text: SUMMARY_TEXT,
-        superseded_by: null,
-        text_url: `/v1/news/${item.id}/text`,
+        coverage: { blocks_through: SUMMARY_BLOCKS.length, blocks_total: SUMMARY_BLOCKS.length },
+        has_more: false,
+        item_id: item.id,
+        model_processing_allowed: item.model_processing_allowed,
+        next_cursor: null,
+        revision: item.revision,
+        title: item.title,
         ...overrides,
     };
 }

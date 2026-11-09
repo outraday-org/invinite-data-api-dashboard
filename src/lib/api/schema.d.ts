@@ -3228,6 +3228,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/announcements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List announcements */
+        get: operations["listAnnouncements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/catalog/document-kinds": {
         parameters: {
             query?: never;
@@ -3857,6 +3874,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/news": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List news items */
+        get: operations["listNews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/news/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a news item */
+        get: operations["getNewsItem"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/news/{id}/text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a news item's text */
+        get: operations["getNewsText"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/participants": {
         parameters: {
             query?: never;
@@ -3928,6 +3996,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/search/news": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search news */
+        get: operations["searchNews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/search/transcripts": {
         parameters: {
             query?: never;
@@ -3959,6 +4044,110 @@ export interface paths {
         get: operations["listSplits"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List webhooks */
+        get: operations["listWebhooks"];
+        put?: never;
+        /** Create a webhook */
+        post: operations["createWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/webhooks/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a webhook */
+        get: operations["getWebhook"];
+        put?: never;
+        post?: never;
+        /** Delete a webhook */
+        delete: operations["deleteWebhook"];
+        options?: never;
+        head?: never;
+        /** Update a webhook */
+        patch: operations["updateWebhook"];
+        trace?: never;
+    };
+    "/v2/webhooks/{id}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a webhook's deliveries */
+        get: operations["listWebhookDeliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/webhooks/{id}:rotate-secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rotate a webhook's secret */
+        post: operations["rotateWebhookSecret"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/webhooks/{id}:test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send a test delivery */
+        post: operations["testWebhook"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6553,6 +6742,658 @@ export interface components {
             /** @description Permanent public URL of the stored file; null for a link-only row */
             url: null | string;
         };
+        /** NewsItem */
+        NewsItem: {
+            /**
+             * Format: uuid
+             * @description Stable item id (a correction is a new item, see supersedes_id)
+             */
+            id: string;
+            /** @description Headline */
+            title: string;
+            /** @description Lede: one or two sentences written by Invinite with the summary (never the publisher's words); null for an item without a summary (title-only, metadata-only) or whose publisher reserved reuse */
+            description: null | string;
+            /** @description Canonical URL of the item (the first publication) */
+            url: string;
+            /**
+             * Format: date-time
+             * @description Publication time (ISO 8601 UTC)
+             */
+            published_at: string;
+            /**
+             * Format: date-time
+             * @description When Invinite first saw it
+             */
+            first_seen_at: string;
+            /** @description The item's first source */
+            source: {
+                /** @description `edgar` or `ir` (a company newsroom) */
+                id: string;
+                /** @description Source label */
+                name: null | string;
+                /** @description The newsroom host of an `ir` source; null otherwise */
+                host: null | string;
+            };
+            /**
+             * @description What the item is about
+             * @enum {string}
+             */
+            kind: "call_announcement" | "capital_markets" | "dividend" | "earnings_results" | "event_announcement" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "promo" | "results_date";
+            /** @description Development topics found in the text */
+            topics: Array<"availability" | "capacity_expansion" | "customer_contract" | "other" | "partnership" | "product_launch" | "product_update" | "regulatory" | "research">;
+            /**
+             * @description public_record = an SEC filing; issuer = the company's own publication
+             * @enum {string}
+             */
+            rights: "issuer" | "public_record";
+            /** @description Results, results date, call announcement or guidance */
+            is_earnings_news: boolean;
+            /** @description The fiscal period an earnings item belongs to; null when none was found */
+            earnings: null | {
+                /** @description Fiscal year */
+                fiscal_year: null | number;
+                /** @description Fiscal quarter */
+                fiscal_quarter: null | number;
+                /**
+                 * Format: date-time
+                 * @description The results call it announces or follows
+                 */
+                conference_date: null | string;
+            };
+            /** @description Tickers mentioned (stored dash spelling, `BRK-B`) */
+            symbols: Array<string>;
+            /** @description 10-digit CIKs mentioned */
+            ciks: Array<string>;
+            /** @description Revision of the publication (grows when the publisher corrects it) */
+            revision: number;
+            /** @description The older item this one corrects */
+            supersedes_id: null | string;
+            /** @description The companies' own verified publications of the item, oldest first (at most 10) */
+            publications: Array<{
+                /** @description The newsroom source (`ir:<host>`) */
+                source_id: string;
+                publisher: {
+                    /** @description 10-digit CIK of the publishing company */
+                    cik: null | string;
+                    /** @description Ticker of the publishing company */
+                    symbol: null | string;
+                    /** @description Name the newsroom publishes under */
+                    name: null | string;
+                };
+                /** @description The company's own publication */
+                url: string;
+                /** @description press_release, company_blog, company_update or unknown */
+                publication_type: string;
+                /**
+                 * Format: date-time
+                 * @description Publication time the newsroom states (else when we first saw it)
+                 */
+                published_at: string;
+                /**
+                 * Format: date-time
+                 * @description Last modification the newsroom states
+                 */
+                modified_at: null | string;
+                /** @description The newsroom's own categories */
+                categories: Array<{
+                    /** @description The newsroom's own id of the label, when it has one */
+                    id: null | string;
+                    /** @description The label as the newsroom shows it */
+                    label: string;
+                    /** @description The newsroom's page of the label */
+                    url: null | string;
+                }>;
+                /** @description The newsroom's own tags */
+                tags: Array<{
+                    /** @description The newsroom's own id of the label, when it has one */
+                    id: null | string;
+                    /** @description The label as the newsroom shows it */
+                    label: string;
+                    /** @description The newsroom's page of the label */
+                    url: null | string;
+                }>;
+            }>;
+            /** @description More than 10 publications exist (the detail lists every sighting) */
+            publications_truncated: boolean;
+            /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
+            model_processing_allowed: boolean;
+            /** @description Words of the item's summary (`GET /v2/news/{id}` serves it); null for an item without one (title-only, metadata-only or a reserved source) */
+            summary_words: null | number;
+            /** @description Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text) */
+            attribution: {
+                /** @description Publisher of the summarised publication: the company, or SEC EDGAR for a filing */
+                publisher: string;
+                /** @description Host of the original URL */
+                publisher_host: null | string;
+                /** @description The original publication the summary was written from */
+                source_url: string;
+                /**
+                 * Format: date-time
+                 * @description Publication time (ISO 8601 UTC)
+                 */
+                published_at: string;
+                /**
+                 * @description public_record = an SEC filing; issuer = the company's own publication
+                 * @enum {string}
+                 */
+                rights: "issuer" | "public_record";
+                /** @description The filing of an SEC item; null otherwise */
+                edgar: null | {
+                    /** @description SEC form type (8-K, 6-K, …) */
+                    form: null | string;
+                    /** @description SEC accession number */
+                    accession: string;
+                };
+                /**
+                 * @description The attribution sentence to carry with the text
+                 * @enum {string}
+                 */
+                statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
+            };
+            /**
+             * PdfDocument
+             * @description Permanent URL of the branded PDF of the item's current revision; shared, immutable, deleted on takedown. Carries the notice page; see /status/licensing → PDF documents. Null = no PDF (not rendered yet, or the item is ineligible / denied)
+             */
+            pdf: null | {
+                /**
+                 * Format: uri
+                 * @description Permanent public URL, shown inline; no API key and no expiry
+                 */
+                url: string;
+                /** @description Transcript version or news revision the PDF was rendered from */
+                version: number;
+                /** @description SHA-256 of the PDF file (lowercase hex) */
+                sha256: string;
+                /** @description File size in bytes */
+                bytes: number;
+                /** @description Pages, including the notice page */
+                pages: number;
+                /**
+                 * Format: date-time
+                 * @description When the PDF was rendered
+                 */
+                generated_at: string;
+            };
+        };
+        /** NewsText */
+        NewsText: {
+            /**
+             * Format: uuid
+             * @description News item id
+             */
+            item_id: string;
+            /** @description The revision every block's summary was written from */
+            revision: number;
+            /** @description Headline */
+            title: string;
+            /**
+             * @description available = the item has a summary of its current revision (`summary_text`, `summary_html`, `text_url`); no_text = headline and link only (an item published before summaries started, a metadata-only item, or a source whose owner reserved reuse)
+             * @enum {string}
+             */
+            content_status: "available" | "no_text";
+            /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
+            model_processing_allowed: boolean;
+            /** @description Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text) */
+            attribution: {
+                /** @description Publisher of the summarised publication: the company, or SEC EDGAR for a filing */
+                publisher: string;
+                /** @description Host of the original URL */
+                publisher_host: null | string;
+                /** @description The original publication the summary was written from */
+                source_url: string;
+                /**
+                 * Format: date-time
+                 * @description Publication time (ISO 8601 UTC)
+                 */
+                published_at: string;
+                /**
+                 * @description public_record = an SEC filing; issuer = the company's own publication
+                 * @enum {string}
+                 */
+                rights: "issuer" | "public_record";
+                /** @description The filing of an SEC item; null otherwise */
+                edgar: null | {
+                    /** @description SEC form type (8-K, 6-K, …) */
+                    form: null | string;
+                    /** @description SEC accession number */
+                    accession: string;
+                };
+                /**
+                 * @description The attribution sentence to carry with the text
+                 * @enum {string}
+                 */
+                statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
+            };
+            /** @description Blocks of this page, in order */
+            blocks: Array<{
+                /**
+                 * Format: uuid
+                 * @description Stable block id of the summary (search hits cite it as `block.id`)
+                 */
+                block_id: string;
+                /** @description Position in the summary (zero-based) */
+                index: number;
+                /** @description The text of the section heading the block sits under (null for a heading block and for blocks before the first heading) */
+                heading: null | string;
+                /**
+                 * @description heading = a section heading, paragraph, list (its items on separate lines, each prefixed `• `); null = a kind this API version does not know
+                 * @enum {string|null}
+                 */
+                kind: "heading" | "list" | "paragraph" | null;
+                /** @description The block's text (Invinite's wording) */
+                text: string;
+            }>;
+            coverage: {
+                /** @description Blocks of the summary */
+                blocks_total: number;
+                /** @description Blocks served up to and including this page */
+                blocks_through: number;
+            };
+            /** @description Whether blocks follow this page */
+            has_more: boolean;
+            /** @description `cursor` of the next page (also in `Link: <…>; rel="next"`); null on the last page. A cursor of another revision or summary is a 400 `cursor_mismatch` */
+            next_cursor: null | string;
+        };
+        /** NewsSearchHit */
+        NewsSearchHit: {
+            item: {
+                /**
+                 * Format: uuid
+                 * @description Stable item id (a correction is a new item, see supersedes_id)
+                 */
+                id: string;
+                /** @description Headline */
+                title: string;
+                /** @description Lede: one or two sentences written by Invinite with the summary (never the publisher's words); null for an item without a summary (title-only, metadata-only) or whose publisher reserved reuse */
+                description: null | string;
+                /** @description Canonical URL of the item (the first publication) */
+                url: string;
+                /**
+                 * Format: date-time
+                 * @description Publication time (ISO 8601 UTC)
+                 */
+                published_at: string;
+                /**
+                 * Format: date-time
+                 * @description When Invinite first saw it
+                 */
+                first_seen_at: string;
+                /** @description The item's first source */
+                source: {
+                    /** @description `edgar` or `ir` (a company newsroom) */
+                    id: string;
+                    /** @description Source label */
+                    name: null | string;
+                    /** @description The newsroom host of an `ir` source; null otherwise */
+                    host: null | string;
+                };
+                /**
+                 * @description What the item is about
+                 * @enum {string}
+                 */
+                kind: "call_announcement" | "capital_markets" | "dividend" | "earnings_results" | "event_announcement" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "promo" | "results_date";
+                /** @description Development topics found in the text */
+                topics: Array<"availability" | "capacity_expansion" | "customer_contract" | "other" | "partnership" | "product_launch" | "product_update" | "regulatory" | "research">;
+                /**
+                 * @description public_record = an SEC filing; issuer = the company's own publication
+                 * @enum {string}
+                 */
+                rights: "issuer" | "public_record";
+                /** @description Results, results date, call announcement or guidance */
+                is_earnings_news: boolean;
+                /** @description The fiscal period an earnings item belongs to; null when none was found */
+                earnings: null | {
+                    /** @description Fiscal year */
+                    fiscal_year: null | number;
+                    /** @description Fiscal quarter */
+                    fiscal_quarter: null | number;
+                    /**
+                     * Format: date-time
+                     * @description The results call it announces or follows
+                     */
+                    conference_date: null | string;
+                };
+                /** @description Tickers mentioned (stored dash spelling, `BRK-B`) */
+                symbols: Array<string>;
+                /** @description 10-digit CIKs mentioned */
+                ciks: Array<string>;
+                /** @description Revision of the publication (grows when the publisher corrects it) */
+                revision: number;
+                /** @description The older item this one corrects */
+                supersedes_id: null | string;
+                /** @description The companies' own verified publications of the item, oldest first (at most 10) */
+                publications: Array<{
+                    /** @description The newsroom source (`ir:<host>`) */
+                    source_id: string;
+                    publisher: {
+                        /** @description 10-digit CIK of the publishing company */
+                        cik: null | string;
+                        /** @description Ticker of the publishing company */
+                        symbol: null | string;
+                        /** @description Name the newsroom publishes under */
+                        name: null | string;
+                    };
+                    /** @description The company's own publication */
+                    url: string;
+                    /** @description press_release, company_blog, company_update or unknown */
+                    publication_type: string;
+                    /**
+                     * Format: date-time
+                     * @description Publication time the newsroom states (else when we first saw it)
+                     */
+                    published_at: string;
+                    /**
+                     * Format: date-time
+                     * @description Last modification the newsroom states
+                     */
+                    modified_at: null | string;
+                    /** @description The newsroom's own categories */
+                    categories: Array<{
+                        /** @description The newsroom's own id of the label, when it has one */
+                        id: null | string;
+                        /** @description The label as the newsroom shows it */
+                        label: string;
+                        /** @description The newsroom's page of the label */
+                        url: null | string;
+                    }>;
+                    /** @description The newsroom's own tags */
+                    tags: Array<{
+                        /** @description The newsroom's own id of the label, when it has one */
+                        id: null | string;
+                        /** @description The label as the newsroom shows it */
+                        label: string;
+                        /** @description The newsroom's page of the label */
+                        url: null | string;
+                    }>;
+                }>;
+                /** @description More than 10 publications exist (the detail lists every sighting) */
+                publications_truncated: boolean;
+                /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
+                model_processing_allowed: boolean;
+                /** @description Words of the item's summary (`GET /v2/news/{id}` serves it); null for an item without one (title-only, metadata-only or a reserved source) */
+                summary_words: null | number;
+                /** @description Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text) */
+                attribution: {
+                    /** @description Publisher of the summarised publication: the company, or SEC EDGAR for a filing */
+                    publisher: string;
+                    /** @description Host of the original URL */
+                    publisher_host: null | string;
+                    /** @description The original publication the summary was written from */
+                    source_url: string;
+                    /**
+                     * Format: date-time
+                     * @description Publication time (ISO 8601 UTC)
+                     */
+                    published_at: string;
+                    /**
+                     * @description public_record = an SEC filing; issuer = the company's own publication
+                     * @enum {string}
+                     */
+                    rights: "issuer" | "public_record";
+                    /** @description The filing of an SEC item; null otherwise */
+                    edgar: null | {
+                        /** @description SEC form type (8-K, 6-K, …) */
+                        form: null | string;
+                        /** @description SEC accession number */
+                        accession: string;
+                    };
+                    /**
+                     * @description The attribution sentence to carry with the text
+                     * @enum {string}
+                     */
+                    statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
+                };
+            };
+            /**
+             * @description Where it matched: the headline, the lede or a passage of the summary
+             * @enum {string}
+             */
+            field: "lede" | "summary" | "title";
+            /** @description Relevance per mode: lexical = ts_rank_cd (4 decimals), literal = 0 (newest first) */
+            score: number;
+            match: components["schemas"]["HitMatch"];
+            /** @description The matched passage (≤ 600 characters, cut on word boundaries around the first match) */
+            text: string;
+            /** @description true = text is shorter than the passage */
+            text_truncated: boolean;
+            /** @description The summary block the passage is from (see GET /v2/news/{id}/text); null for a headline or lede */
+            block: null | {
+                /**
+                 * Format: uuid
+                 * @description Block id (`blocks[].block_id` of the text route)
+                 */
+                id: string;
+                /** @description Position of the block in the item's summary */
+                index: number;
+                /** @description The section heading the block sits under */
+                heading: null | string;
+            };
+            /** @description Position of the passage among the item's passages (-1 for a headline or lede) */
+            chunk_index: number;
+            /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
+            model_processing_allowed: boolean;
+        };
+        /** Announcement */
+        Announcement: {
+            /**
+             * Format: uuid
+             * @description Development id
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description The news item it was read from
+             */
+            item_id: string;
+            /** @description Revision of the publication it was read from */
+            revision: number;
+            /**
+             * @description Topic
+             * @enum {string}
+             */
+            topic: "availability" | "capacity_expansion" | "customer_contract" | "partnership" | "product_launch" | "product_update" | "regulatory" | "research";
+            /** @description Short title (model-derived; see `derived`) */
+            title: string;
+            /** @description Summary (model-derived; see `derived`) */
+            summary: string;
+            /**
+             * @description Always true: title and summary are derived by a model, not the publisher's words
+             * @enum {boolean}
+             */
+            derived: true;
+            /** @description Products named, verbatim */
+            products: Array<{
+                name: string;
+            }>;
+            /** @description Partners, customers or other parties named */
+            counterparties: Array<{
+                /** @description Counterparty, verbatim */
+                name: string;
+                /** @description 10-digit CIK when the article names exactly one known company */
+                cik: null | string;
+                /** @description exact_ticker or unresolved */
+                resolution: string;
+            }>;
+            /**
+             * Format: date-time
+             * @description When it was announced (the item's publication)
+             */
+            announced_at: string;
+            /** @description The effective date as the text states it */
+            effective_date_text: null | string;
+            /**
+             * Format: date
+             * @description Effective from (YYYY-MM-DD)
+             */
+            effective_from: null | string;
+            /**
+             * Format: date
+             * @description Effective until (YYYY-MM-DD)
+             */
+            effective_to: null | string;
+            /**
+             * @description Precision of the effective dates
+             * @enum {string}
+             */
+            date_precision: "day" | "month" | "quarter" | "unknown" | "year";
+            /**
+             * @description What the publication says happened
+             * @enum {string}
+             */
+            claim_status: "announced" | "available" | "cancelled" | "completed" | "planned" | "unknown";
+            /**
+             * @description Extraction confidence
+             * @enum {string}
+             */
+            confidence: "high" | "medium";
+            /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
+            model_processing_allowed: boolean;
+            /** @description The news item the development cites */
+            item: {
+                /** @description Headline */
+                title: string;
+                /** @description Canonical URL */
+                url: string;
+                /** @description Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text) */
+                attribution: {
+                    /** @description Publisher of the summarised publication: the company, or SEC EDGAR for a filing */
+                    publisher: string;
+                    /** @description Host of the original URL */
+                    publisher_host: null | string;
+                    /** @description The original publication the summary was written from */
+                    source_url: string;
+                    /**
+                     * Format: date-time
+                     * @description Publication time (ISO 8601 UTC)
+                     */
+                    published_at: string;
+                    /**
+                     * @description public_record = an SEC filing; issuer = the company's own publication
+                     * @enum {string}
+                     */
+                    rights: "issuer" | "public_record";
+                    /** @description The filing of an SEC item; null otherwise */
+                    edgar: null | {
+                        /** @description SEC form type (8-K, 6-K, …) */
+                        form: null | string;
+                        /** @description SEC accession number */
+                        accession: string;
+                    };
+                    /**
+                     * @description The attribution sentence to carry with the text
+                     * @enum {string}
+                     */
+                    statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
+                };
+            };
+        };
+        /** Webhook */
+        Webhook: {
+            /** @description Subscription id */
+            id: string;
+            /** @description HTTPS endpoint the deliveries are POSTed to */
+            url: string;
+            events: Array<"event.assets_ready" | "event.documents_updated" | "event.ended" | "event.guidance_flash" | "event.keyword_hit" | "event.rescheduled" | "event.scheduled" | "event.started" | "event.test" | "event.transcript_corrected" | "event.transcript_provisional" | "event.transcript_ready" | "news.published">;
+            filters: {
+                /** @description 10-digit CIKs; empty = every company */
+                ciks: Array<string>;
+                /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript, and news.published (headline + lede) */
+                keywords: Array<string>;
+            };
+            /** @description false once disabled */
+            active: boolean;
+            /** @description Why the subscription was disabled */
+            disabled_reason: null | string;
+            /** @description Dead-lettered deliveries in a row */
+            consecutive_failures: number;
+            /** @description Last 4 characters of the signing secret */
+            secret_hint: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * WebhookCreated
+         * @description A new subscription with its secret
+         */
+        WebhookCreated: {
+            /** @description Subscription id */
+            id: string;
+            /** @description HTTPS endpoint the deliveries are POSTed to */
+            url: string;
+            events: Array<"event.assets_ready" | "event.documents_updated" | "event.ended" | "event.guidance_flash" | "event.keyword_hit" | "event.rescheduled" | "event.scheduled" | "event.started" | "event.test" | "event.transcript_corrected" | "event.transcript_provisional" | "event.transcript_ready" | "news.published">;
+            filters: {
+                /** @description 10-digit CIKs; empty = every company */
+                ciks: Array<string>;
+                /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript, and news.published (headline + lede) */
+                keywords: Array<string>;
+            };
+            /** @description false once disabled */
+            active: boolean;
+            /** @description Why the subscription was disabled */
+            disabled_reason: null | string;
+            /** @description Dead-lettered deliveries in a row */
+            consecutive_failures: number;
+            /** @description Last 4 characters of the signing secret */
+            secret_hint: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** @description Signing secret; shown once */
+            secret: string;
+        };
+        /** WebhookSecret */
+        WebhookSecret: {
+            /** @description Signing secret (whsec_…). Returned ONCE — store it; it is never shown again. */
+            secret: string;
+            /**
+             * Format: date-time
+             * @description Deliveries are signed with both secrets until then
+             */
+            previous_secret_expires_at: string;
+        };
+        /**
+         * WebhookTestAccepted
+         * @description The queued test delivery; it shows in `GET /v2/webhooks/{id}/deliveries`
+         */
+        WebhookTestAccepted: {
+            /**
+             * Format: uuid
+             * @description Id of the queued delivery (= `X-Invinite-Delivery`)
+             */
+            delivery_id: string;
+            /**
+             * @description The test event
+             * @enum {string}
+             */
+            event: "event.test";
+        };
+        /** WebhookDelivery */
+        WebhookDelivery: {
+            /**
+             * Format: uuid
+             * @description Same id on every retry (X-Invinite-Delivery)
+             */
+            delivery_id: string;
+            /** @enum {string} */
+            event: "event.assets_ready" | "event.documents_updated" | "event.ended" | "event.guidance_flash" | "event.keyword_hit" | "event.rescheduled" | "event.scheduled" | "event.started" | "event.test" | "event.transcript_corrected" | "event.transcript_provisional" | "event.transcript_ready" | "news.published";
+            /** @description 1-based attempt number */
+            attempt: number;
+            /** @enum {string} */
+            status: "blocked_address" | "delivered" | "dropped" | "failed" | "subscription_inactive" | "timeout";
+            /** @description HTTP status your endpoint answered */
+            response_status: null | number;
+            duration_ms: null | number;
+            /** Format: date-time */
+            at: string;
+            /**
+             * Format: date-time
+             * @description When the next attempt runs; null = final
+             */
+            next_attempt_at: null | string;
+        };
         /**
          * Me
          * @description Who the caller is and what the plan allows (0 credits)
@@ -7237,6 +8078,270 @@ export interface components {
             type: "unsubscribed";
             /** @enum {string} */
             channel: "news.live";
+        };
+        /** @description Client frame: subscribe to the live transcript of one earnings call, by event_id or by cik (the call that is live or starts within ±2 h), or with scope: all_live (no event_id / cik) to every call being captured live — keyword hits only, never segments, one subscription slot. Requires the PRO plan. */
+        StreamSubscribeEarningsCall: {
+            /** @enum {string} */
+            type: "subscribe";
+            /** @enum {string} */
+            channel: "events.live";
+            /**
+             * Format: uuid
+             * @description Event id from the earnings-calls REST routes
+             */
+            event_id?: string;
+            /** @description CIK, padded or not */
+            cik?: string;
+            /**
+             * @description all_live = every live call (keywords required, error keywords_required without); then no event_id / cik
+             * @enum {string}
+             */
+            scope?: "all_live";
+            /** @description Last final seq the client holds; finals after it are replayed before live delivery (-1 = from the first final) */
+            since_seq?: number;
+            /**
+             * @description Also receive partial (not yet final) segments
+             * @default false
+             */
+            partials: boolean;
+            /**
+             * @description Also receive price_tick frames of the call's stock (≤ 1 per second while the call is live). Per-call only: with scope: all_live the subscribe is refused (bad_message). GET /v1/earnings-calls/live says live_prices: true when ticks flow
+             * @default false
+             */
+            prices: boolean;
+            /** @description Keyword alerts: a keyword_hit frame for every FINAL segment that contains one (whole words, case-insensitive, multi-word allowed). Held for this subscription only */
+            keywords?: Array<string>;
+            /**
+             * @description exact = whole-word match of your spelling (buyback never matches buybacks); stem = also s / es / ed / ing / 's per word (tariff matches tariffs)
+             * @default exact
+             * @enum {string}
+             */
+            keyword_match: "exact" | "stem";
+            /** @description Only hits spoken by one of these roles (from the provisional live speaker names; a hit whose speaker is still unnamed passes) */
+            speaker_roles?: Array<"analyst" | "executive" | "ir_host" | "operator">;
+            /** @description all_live only: calls of companies ranked ≤ min_rank by market cap */
+            min_rank?: number;
+            /** @description all_live only: what reaches the subscription (default keyword_hit; add guidance_flash to receive the flashes of every live call) */
+            events?: Array<"guidance_flash" | "keyword_hit">;
+        };
+        /** @description A client frame was refused (unavailable = an unexpected server failure, retry shortly); the socket stays open */
+        StreamErrorEvent: {
+            /** @enum {string} */
+            type: "error";
+            /** @enum {string} */
+            code: "attach_failed" | "bad_message" | "channel_unavailable" | "forbidden_tier" | "keywords_required" | "not_found" | "not_live" | "resume_unavailable" | "subscription_limit" | "unavailable";
+            message: string;
+            /** Format: uuid */
+            subscription_id?: string;
+            /**
+             * @description news for a refusal of a news frame (channel_unavailable = live news is switched off; read GET /v1/news)
+             * @enum {string}
+             */
+            channel?: "news";
+        };
+        /** @description Client frame: follow new news items. One news subscription per connection; a second subscribe replaces the filters. No filter = every item. tickers and ciks together = either; every other filter narrows */
+        StreamSubscribeNews: {
+            /** @enum {string} */
+            type: "subscribe";
+            /** @enum {string} */
+            channel: "news";
+            /** @description Tickers (BRK.B and BRK-B both match) */
+            tickers?: Array<string>;
+            /** @description CIKs, padded or not */
+            ciks?: Array<string>;
+            /**
+             * @description Earnings news only
+             * @default false
+             */
+            earnings_only: boolean;
+            kinds?: Array<"call_announcement" | "capital_markets" | "dividend" | "earnings_results" | "event_announcement" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "promo" | "results_date">;
+            /** @description edgar (SEC filings) and / or ir (company newsrooms) */
+            sources?: Array<"edgar" | "ir">;
+        };
+        /** @description Client frame: stop following news */
+        StreamUnsubscribeNews: {
+            /** @enum {string} */
+            type: "unsubscribe";
+            /** @enum {string} */
+            channel: "news";
+        };
+        /** @description The news subscription is active, with its normalised filters */
+        StreamNewsSubscribedEvent: {
+            /** @enum {string} */
+            type: "subscribed";
+            /** @enum {string} */
+            channel: "news";
+            filters: {
+                /** @description Upper-case, both spellings (BRK.B, BRK-B) */
+                tickers: Array<string>;
+                /** @description Without leading zeros */
+                ciks: Array<string>;
+                earnings_only: boolean;
+                kinds: Array<string>;
+                sources: Array<string>;
+            };
+        };
+        /** @description A new news item, the same object as a GET /v1/news row (with its attribution). Sent once when the pipeline announces the item; corrections, later enrichment and items without a ticker are not pushed — GET /v1/news has them */
+        StreamNewsItemEvent: {
+            /** @enum {string} */
+            type: "news_item";
+            /** @enum {string} */
+            channel: "news";
+            item: {
+                /**
+                 * Format: uuid
+                 * @description Stable item id (a correction is a new item, see supersedes_id)
+                 */
+                id: string;
+                /** @description Headline */
+                title: string;
+                /** @description Lede: one or two sentences written by Invinite with the summary (never the publisher's words); null for an item without a summary (title-only, metadata-only) or whose publisher reserved reuse */
+                description: null | string;
+                /** @description Canonical URL of the item (the first publication) */
+                url: string;
+                /**
+                 * Format: date-time
+                 * @description Publication time (ISO 8601 UTC)
+                 */
+                published_at: string;
+                /**
+                 * Format: date-time
+                 * @description When Invinite first saw it
+                 */
+                first_seen_at: string;
+                /** @description The item's first source */
+                source: {
+                    /** @description `edgar` or `ir` (a company newsroom) */
+                    id: string;
+                    /** @description Source label */
+                    name: null | string;
+                    /** @description The newsroom host of an `ir` source; null otherwise */
+                    host: null | string;
+                };
+                /**
+                 * @description What the item is about
+                 * @enum {string}
+                 */
+                kind: "call_announcement" | "capital_markets" | "dividend" | "earnings_results" | "event_announcement" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "promo" | "results_date";
+                /** @description Development topics found in the text */
+                topics: Array<"availability" | "capacity_expansion" | "customer_contract" | "other" | "partnership" | "product_launch" | "product_update" | "regulatory" | "research">;
+                /**
+                 * @description public_record = an SEC filing; issuer = the company's own publication
+                 * @enum {string}
+                 */
+                rights: "issuer" | "public_record";
+                /** @description Results, results date, call announcement or guidance */
+                is_earnings_news: boolean;
+                /** @description The fiscal period an earnings item belongs to; null when none was found */
+                earnings: null | {
+                    /** @description Fiscal year */
+                    fiscal_year: null | number;
+                    /** @description Fiscal quarter */
+                    fiscal_quarter: null | number;
+                    /**
+                     * Format: date-time
+                     * @description The results call it announces or follows
+                     */
+                    conference_date: null | string;
+                };
+                /** @description Tickers mentioned (stored dash spelling, `BRK-B`) */
+                symbols: Array<string>;
+                /** @description 10-digit CIKs mentioned */
+                ciks: Array<string>;
+                /** @description Revision of the publication (grows when the publisher corrects it) */
+                revision: number;
+                /** @description The older item this one corrects */
+                supersedes_id: null | string;
+                /** @description The companies' own verified publications of the item, oldest first (at most 10) */
+                publications: Array<{
+                    /** @description The newsroom source (`ir:<host>`) */
+                    source_id: string;
+                    publisher: {
+                        /** @description 10-digit CIK of the publishing company */
+                        cik: null | string;
+                        /** @description Ticker of the publishing company */
+                        symbol: null | string;
+                        /** @description Name the newsroom publishes under */
+                        name: null | string;
+                    };
+                    /** @description The company's own publication */
+                    url: string;
+                    /** @description press_release, company_blog, company_update or unknown */
+                    publication_type: string;
+                    /**
+                     * Format: date-time
+                     * @description Publication time the newsroom states (else when we first saw it)
+                     */
+                    published_at: string;
+                    /**
+                     * Format: date-time
+                     * @description Last modification the newsroom states
+                     */
+                    modified_at: null | string;
+                    /** @description The newsroom's own categories */
+                    categories: Array<{
+                        /** @description The newsroom's own id of the label, when it has one */
+                        id: null | string;
+                        /** @description The label as the newsroom shows it */
+                        label: string;
+                        /** @description The newsroom's page of the label */
+                        url: null | string;
+                    }>;
+                    /** @description The newsroom's own tags */
+                    tags: Array<{
+                        /** @description The newsroom's own id of the label, when it has one */
+                        id: null | string;
+                        /** @description The label as the newsroom shows it */
+                        label: string;
+                        /** @description The newsroom's page of the label */
+                        url: null | string;
+                    }>;
+                }>;
+                /** @description More than 10 publications exist (the detail lists every sighting) */
+                publications_truncated: boolean;
+                /** @description false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's */
+                model_processing_allowed: boolean;
+                /** @description Words of the item's summary (`GET /v1/news/{id}` serves it); null for an item without one (title-only, metadata-only or a reserved source) */
+                summary_words: null | number;
+                /** @description Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text) */
+                attribution: {
+                    /** @description Publisher of the summarised publication: the company, or SEC EDGAR for a filing */
+                    publisher: string;
+                    /** @description Host of the original URL */
+                    publisher_host: null | string;
+                    /** @description The original publication the summary was written from */
+                    source_url: string;
+                    /**
+                     * Format: date-time
+                     * @description Publication time (ISO 8601 UTC)
+                     */
+                    published_at: string;
+                    /**
+                     * @description public_record = an SEC filing; issuer = the company's own publication
+                     * @enum {string}
+                     */
+                    rights: "issuer" | "public_record";
+                    /** @description The filing of an SEC item; null otherwise */
+                    edgar: null | {
+                        /** @description SEC form type (8-K, 6-K, …) */
+                        form: null | string;
+                        /** @description SEC accession number */
+                        accession: string;
+                    };
+                    /**
+                     * @description The attribution sentence to carry with the text
+                     * @enum {string}
+                     */
+                    statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
+                };
+            };
+        };
+        /** @description The news subscription ended (on request) */
+        StreamNewsUnsubscribedEvent: {
+            /** @enum {string} */
+            type: "unsubscribed";
+            /** @enum {string} */
+            channel: "news";
         };
         WebhookEnvelope: {
             /**
@@ -10545,6 +11650,124 @@ export interface operations {
             401: components["responses"]["UnauthorizedError"];
             404: components["responses"]["NotFoundError"];
             500: components["responses"]["InternalServerError"];
+        };
+    };
+    createWebhook: {
+        parameters: {
+            query?: never;
+            header?: {
+                /**
+                 * @description Replays the first answer for 24 h; 409 while in flight (R13)
+                 * @example 6f1c0f3e-7b7a-4a8e-9d63-3c1b2f0e9a11
+                 */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "url": "https://hooks.example.com/invinite",
+                 *       "events": [
+                 *         "event.transcript_ready",
+                 *         "news.published"
+                 *       ],
+                 *       "filters": {
+                 *         "ciks": [
+                 *           "0000320193"
+                 *         ]
+                 *       }
+                 *     }
+                 */
+                "application/json": {
+                    /** @description https endpoint (port 443, public addresses only) */
+                    url: string;
+                    /** @description Event names to receive (the plan decides which; `event.test` needs no subscription — every subscription receives it) */
+                    events: Array<string>;
+                    filters?: {
+                        /** @description Only these companies (at most 10 / 25 / 100 on LITE / STANDARD / PRO); a news item matches when it mentions any of them */
+                        ciks?: Array<string>;
+                        /** @description Keyword alerts (PRO, with event.keyword_hit in events): whole-word, case-insensitive matches; with news.published they also narrow news items to those whose headline or lede names one */
+                        keywords?: Array<string>;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description The resource */
+            201: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookCreated"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    deleteWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Webhook id
+                 * @example k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Done */
+            204: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     earningsCallsAnalysts: {
@@ -16865,6 +18088,117 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    getNewsItem: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description News item id
+                 * @example nws_01JCB4R8
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewsItem"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getNewsText: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Characters per page
+                 * @example 20000
+                 */
+                max_chars?: number;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description News item id
+                 * @example nws_01JCB4R8
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewsText"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     getPerson: {
         parameters: {
             query?: {
@@ -17289,6 +18623,53 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TranscriptText"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Webhook id
+                 * @example k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Webhook"];
                 };
             };
             304: components["responses"]["NotModified"];
@@ -18429,6 +19810,126 @@ export interface operations {
             400: components["responses"]["BadRequestError"];
             401: components["responses"]["UnauthorizedError"];
             500: components["responses"]["InternalServerError"];
+        };
+    };
+    listAnnouncements: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                "company"?: string;
+                /**
+                 * @description Topics, comma list
+                 * @example product_launch
+                 */
+                "topic"?: string;
+                /**
+                 * @description News item id
+                 * @example nws_01JCB4R8
+                 */
+                "item"?: string;
+                /**
+                 * @description `announced_at` on or after this value
+                 * @example 2026-10-01T00:00:00Z
+                 */
+                "announced_at.gte"?: string;
+                /**
+                 * @description `announced_at` after this value
+                 * @example 2026-10-01T00:00:00Z
+                 */
+                "announced_at.gt"?: string;
+                /**
+                 * @description `announced_at` on or before this value
+                 * @example 2026-10-01T00:00:00Z
+                 */
+                "announced_at.lte"?: string;
+                /**
+                 * @description `announced_at` before this value
+                 * @example 2026-10-01T00:00:00Z
+                 */
+                "announced_at.lt"?: string;
+                /**
+                 * @description `effective_from` on or after this day
+                 * @example 2026-11-01
+                 */
+                "effective_from.gte"?: string;
+                /**
+                 * @description `effective_to` on or before this day
+                 * @example 2027-12-31
+                 */
+                "effective_to.lte"?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-announced_at`
+                 * @example -announced_at
+                 */
+                "sort"?: "-announced_at" | "announced_at";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Announcement"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     listCompanies: {
@@ -19673,6 +21174,121 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listNews: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                "company"?: string;
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                "event"?: string;
+                /**
+                 * @description Kinds, comma list
+                 * @example earnings_results
+                 */
+                "kind"?: string;
+                /**
+                 * @description Topics, comma list
+                 * @example guidance
+                 */
+                "topic"?: string;
+                /**
+                 * @description `published_at` on or after this value
+                 * @example 2026-11-01T00:00:00Z
+                 */
+                "published_at.gte"?: string;
+                /**
+                 * @description `published_at` after this value
+                 * @example 2026-11-01T00:00:00Z
+                 */
+                "published_at.gt"?: string;
+                /**
+                 * @description `published_at` on or before this value
+                 * @example 2026-11-01T00:00:00Z
+                 */
+                "published_at.lte"?: string;
+                /**
+                 * @description `published_at` before this value
+                 * @example 2026-11-01T00:00:00Z
+                 */
+                "published_at.lt"?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-published_at`
+                 * @example -published_at
+                 */
+                "sort"?: "-published_at" | "published_at";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["NewsItem"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listParticipants: {
         parameters: {
             query?: {
@@ -20149,6 +21765,141 @@ export interface operations {
             402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listWebhookDeliveries: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Webhook id
+                 * @example k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["WebhookDelivery"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listWebhooks: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Webhook"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -21730,6 +23481,50 @@ export interface operations {
             503: components["responses"]["ServiceUnavailableError"];
         };
     };
+    rotateWebhookSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Webhook id
+                 * @example k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookSecret"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     searchInvestorDocuments: {
         parameters: {
             query: {
@@ -21792,6 +23587,113 @@ export interface operations {
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["InvestorDocumentSearchHit"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                            /** @description The query */
+                            query?: string;
+                            index?: components["schemas"]["SearchCoverage"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    searchNews: {
+        parameters: {
+            query: {
+                /**
+                 * @description Query
+                 * @example buyback
+                 */
+                "q": string;
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                "company"?: string;
+                /**
+                 * @description Field searched
+                 * @example any
+                 */
+                "field"?: "any" | "lede" | "summary" | "title";
+                /**
+                 * @description Mode
+                 * @example lexical
+                 */
+                "mode"?: "lexical" | "literal";
+                /**
+                 * @description `published_at` on or after this value
+                 * @example 2026-11-01T00:00:00Z
+                 */
+                "published_at.gte"?: string;
+                /**
+                 * @description `published_at` after this value
+                 * @example 2026-11-01T00:00:00Z
+                 */
+                "published_at.gt"?: string;
+                /**
+                 * @description `published_at` on or before this value
+                 * @example 2026-11-01T00:00:00Z
+                 */
+                "published_at.lte"?: string;
+                /**
+                 * @description `published_at` before this value
+                 * @example 2026-11-01T00:00:00Z
+                 */
+                "published_at.lt"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["NewsSearchHit"]>;
                         /** @description true when a next page exists */
                         has_more: boolean;
                         /** @description Opaque cursor of the next page; null on the last page */
@@ -30662,6 +32564,117 @@ export interface operations {
                 };
             };
             500: components["responses"]["InternalServerError"];
+        };
+    };
+    testWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Webhook id
+                 * @example k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The test delivery is queued */
+            202: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookTestAccepted"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    updateWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Webhook id
+                 * @example k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Any of the four fields; at least one */
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "events": [
+                 *         "event.transcript_ready"
+                 *       ],
+                 *       "active": true
+                 *     }
+                 */
+                "application/json": {
+                    /** @description Replaces the keyword list (empty = no keyword alerts; PRO only) */
+                    keywords?: Array<string>;
+                    /** @description Replaces the company filter (empty = every company; at most 10 / 25 / 100 on LITE / STANDARD / PRO) */
+                    ciks?: Array<string>;
+                    /** @description Replaces the event list */
+                    events?: Array<string>;
+                    /** @description true re-enables a disabled subscription (its failure counter resets); false pauses it (disabled_reason: paused) */
+                    active?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Webhook"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
 }

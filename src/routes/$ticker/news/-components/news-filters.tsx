@@ -34,42 +34,27 @@ export function NewsFilters({
     onChange,
     search,
     tags,
-    ticker,
 }: {
     /** The publisher's newsroom categories seen in the loaded items. */
     categories: ReadonlyArray<string>;
     onChange: (patch: Partial<NewsSearch>) => void;
     search: NewsSearch;
     tags: ReadonlyArray<string>;
-    ticker: string;
 }) {
-    const market = search.scope === "market";
-
     return (
         <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
-                <FilterSelect
-                    className="w-[170px]"
-                    onValueChange={value => onChange({ scope: value === "market" ? "market" : undefined })}
-                    options={[
-                        { label: `${ticker} news`, value: "company" },
-                        { label: "Whole market", value: "market" },
-                    ]}
-                    value={market ? "market" : "company"}
-                />
-                {!market && (
-                    <Button
-                        aria-pressed={search.published === true}
-                        onClick={() => onChange(search.published
-                            ? { category: undefined, published: undefined, pubType: undefined, tag: undefined }
-                            : { published: true })}
-                        size="lg"
-                        type="button"
-                        variant={search.published ? "default" : "outline"}
-                    >
-                        Company-published
-                    </Button>
-                )}
+                <Button
+                    aria-pressed={search.published === true}
+                    onClick={() => onChange(search.published
+                        ? { category: undefined, published: undefined, pubType: undefined, tag: undefined }
+                        : { published: true })}
+                    size="lg"
+                    type="button"
+                    variant={search.published ? "default" : "outline"}
+                >
+                    Company-published
+                </Button>
                 <Input
                     aria-label="From"
                     className="w-[150px]"

@@ -5617,6 +5617,1642 @@
         },
         "title": "InvestorDocumentSearchHit"
       },
+      "NewsItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "description",
+          "url",
+          "published_at",
+          "first_seen_at",
+          "source",
+          "kind",
+          "topics",
+          "rights",
+          "is_earnings_news",
+          "earnings",
+          "symbols",
+          "ciks",
+          "revision",
+          "supersedes_id",
+          "publications",
+          "publications_truncated",
+          "model_processing_allowed",
+          "summary_words",
+          "attribution",
+          "pdf"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Stable item id (a correction is a new item, see supersedes_id)"
+          },
+          "title": {
+            "type": "string",
+            "description": "Headline"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true,
+            "description": "Lede: one or two sentences written by Invinite with the summary (never the publisher's words); null for an item without a summary (title-only, metadata-only) or whose publisher reserved reuse"
+          },
+          "url": {
+            "type": "string",
+            "description": "Canonical URL of the item (the first publication)"
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Publication time (ISO 8601 UTC)"
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When Invinite first saw it"
+          },
+          "source": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "host"
+            ],
+            "description": "The item's first source",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "`edgar` or `ir` (a company newsroom)"
+              },
+              "name": {
+                "type": "string",
+                "nullable": true,
+                "description": "Source label"
+              },
+              "host": {
+                "type": "string",
+                "nullable": true,
+                "description": "The newsroom host of an `ir` source; null otherwise"
+              }
+            }
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "earnings_results",
+              "results_date",
+              "call_announcement",
+              "event_announcement",
+              "guidance",
+              "m_and_a",
+              "material_agreement",
+              "management_change",
+              "dividend",
+              "capital_markets",
+              "legal_spam",
+              "promo",
+              "other"
+            ],
+            "description": "What the item is about"
+          },
+          "topics": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "product_launch",
+                "product_update",
+                "availability",
+                "partnership",
+                "customer_contract",
+                "capacity_expansion",
+                "regulatory",
+                "research",
+                "other"
+              ]
+            },
+            "description": "Development topics found in the text"
+          },
+          "rights": {
+            "type": "string",
+            "enum": [
+              "public_record",
+              "issuer"
+            ],
+            "description": "public_record = an SEC filing; issuer = the company's own publication"
+          },
+          "is_earnings_news": {
+            "type": "boolean",
+            "description": "Results, results date, call announcement or guidance"
+          },
+          "earnings": {
+            "type": "object",
+            "nullable": true,
+            "description": "The fiscal period an earnings item belongs to; null when none was found",
+            "required": [
+              "fiscal_year",
+              "fiscal_quarter",
+              "conference_date"
+            ],
+            "properties": {
+              "fiscal_year": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Fiscal year"
+              },
+              "fiscal_quarter": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Fiscal quarter"
+              },
+              "conference_date": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The results call it announces or follows",
+                "nullable": true
+              }
+            }
+          },
+          "symbols": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tickers mentioned (stored dash spelling, `BRK-B`)"
+          },
+          "ciks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "10-digit CIKs mentioned"
+          },
+          "revision": {
+            "type": "integer",
+            "description": "Revision of the publication (grows when the publisher corrects it)"
+          },
+          "supersedes_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The older item this one corrects"
+          },
+          "publications": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source_id",
+                "publisher",
+                "url",
+                "publication_type",
+                "published_at",
+                "modified_at",
+                "categories",
+                "tags"
+              ],
+              "properties": {
+                "source_id": {
+                  "type": "string",
+                  "description": "The newsroom source (`ir:<host>`)"
+                },
+                "publisher": {
+                  "type": "object",
+                  "required": [
+                    "cik",
+                    "symbol",
+                    "name"
+                  ],
+                  "properties": {
+                    "cik": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "10-digit CIK of the publishing company"
+                    },
+                    "symbol": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Ticker of the publishing company"
+                    },
+                    "name": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Name the newsroom publishes under"
+                    }
+                  }
+                },
+                "url": {
+                  "type": "string",
+                  "description": "The company's own publication"
+                },
+                "publication_type": {
+                  "type": "string",
+                  "description": "press_release, company_blog, company_update or unknown"
+                },
+                "published_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Publication time the newsroom states (else when we first saw it)"
+                },
+                "modified_at": {
+                  "type": "string",
+                  "format": "date-time",
+                  "description": "Last modification the newsroom states",
+                  "nullable": true
+                },
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "label",
+                      "url"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The newsroom's own id of the label, when it has one"
+                      },
+                      "label": {
+                        "type": "string",
+                        "description": "The label as the newsroom shows it"
+                      },
+                      "url": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The newsroom's page of the label"
+                      }
+                    }
+                  },
+                  "description": "The newsroom's own categories"
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "label",
+                      "url"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The newsroom's own id of the label, when it has one"
+                      },
+                      "label": {
+                        "type": "string",
+                        "description": "The label as the newsroom shows it"
+                      },
+                      "url": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "The newsroom's page of the label"
+                      }
+                    }
+                  },
+                  "description": "The newsroom's own tags"
+                }
+              }
+            },
+            "description": "The companies' own verified publications of the item, oldest first (at most 10)"
+          },
+          "publications_truncated": {
+            "type": "boolean",
+            "description": "More than 10 publications exist (the detail lists every sighting)"
+          },
+          "model_processing_allowed": {
+            "type": "boolean",
+            "description": "false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's"
+          },
+          "summary_words": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Words of the item's summary (`GET /v2/news/{id}` serves it); null for an item without one (title-only, metadata-only or a reserved source)"
+          },
+          "attribution": {
+            "type": "object",
+            "description": "Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text)",
+            "required": [
+              "publisher",
+              "publisher_host",
+              "source_url",
+              "published_at",
+              "rights",
+              "edgar",
+              "statement"
+            ],
+            "properties": {
+              "publisher": {
+                "type": "string",
+                "description": "Publisher of the summarised publication: the company, or SEC EDGAR for a filing"
+              },
+              "publisher_host": {
+                "type": "string",
+                "nullable": true,
+                "description": "Host of the original URL"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "The original publication the summary was written from"
+              },
+              "published_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Publication time (ISO 8601 UTC)"
+              },
+              "rights": {
+                "type": "string",
+                "enum": [
+                  "public_record",
+                  "issuer"
+                ],
+                "description": "public_record = an SEC filing; issuer = the company's own publication"
+              },
+              "edgar": {
+                "type": "object",
+                "nullable": true,
+                "description": "The filing of an SEC item; null otherwise",
+                "required": [
+                  "form",
+                  "accession"
+                ],
+                "properties": {
+                  "form": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "SEC form type (8-K, 6-K, …)"
+                  },
+                  "accession": {
+                    "type": "string",
+                    "description": "SEC accession number"
+                  }
+                }
+              },
+              "statement": {
+                "type": "string",
+                "enum": [
+                  "Summary written by Invinite from the publication above; not the publisher's text. Source and date above."
+                ],
+                "description": "The attribution sentence to carry with the text"
+              }
+            }
+          },
+          "pdf": {
+            "title": "PdfDocument",
+            "type": "object",
+            "nullable": true,
+            "required": [
+              "url",
+              "version",
+              "sha256",
+              "bytes",
+              "pages",
+              "generated_at"
+            ],
+            "description": "Permanent URL of the branded PDF of the item's current revision; shared, immutable, deleted on takedown. Carries the notice page; see /status/licensing → PDF documents. Null = no PDF (not rendered yet, or the item is ineligible / denied)",
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri",
+                "description": "Permanent public URL, shown inline; no API key and no expiry"
+              },
+              "version": {
+                "type": "integer",
+                "description": "Transcript version or news revision the PDF was rendered from"
+              },
+              "sha256": {
+                "type": "string",
+                "description": "SHA-256 of the PDF file (lowercase hex)"
+              },
+              "bytes": {
+                "type": "integer",
+                "description": "File size in bytes"
+              },
+              "pages": {
+                "type": "integer",
+                "description": "Pages, including the notice page"
+              },
+              "generated_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the PDF was rendered"
+              }
+            }
+          }
+        },
+        "title": "NewsItem"
+      },
+      "NewsText": {
+        "type": "object",
+        "required": [
+          "item_id",
+          "revision",
+          "title",
+          "content_status",
+          "model_processing_allowed",
+          "attribution",
+          "blocks",
+          "coverage",
+          "has_more",
+          "next_cursor"
+        ],
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "News item id"
+          },
+          "revision": {
+            "type": "integer",
+            "description": "The revision every block's summary was written from"
+          },
+          "title": {
+            "type": "string",
+            "description": "Headline"
+          },
+          "content_status": {
+            "type": "string",
+            "enum": [
+              "available",
+              "no_text"
+            ],
+            "description": "available = the item has a summary of its current revision (`summary_text`, `summary_html`, `text_url`); no_text = headline and link only (an item published before summaries started, a metadata-only item, or a source whose owner reserved reuse)"
+          },
+          "model_processing_allowed": {
+            "type": "boolean",
+            "description": "false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's"
+          },
+          "attribution": {
+            "type": "object",
+            "description": "Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text)",
+            "required": [
+              "publisher",
+              "publisher_host",
+              "source_url",
+              "published_at",
+              "rights",
+              "edgar",
+              "statement"
+            ],
+            "properties": {
+              "publisher": {
+                "type": "string",
+                "description": "Publisher of the summarised publication: the company, or SEC EDGAR for a filing"
+              },
+              "publisher_host": {
+                "type": "string",
+                "nullable": true,
+                "description": "Host of the original URL"
+              },
+              "source_url": {
+                "type": "string",
+                "description": "The original publication the summary was written from"
+              },
+              "published_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Publication time (ISO 8601 UTC)"
+              },
+              "rights": {
+                "type": "string",
+                "enum": [
+                  "public_record",
+                  "issuer"
+                ],
+                "description": "public_record = an SEC filing; issuer = the company's own publication"
+              },
+              "edgar": {
+                "type": "object",
+                "nullable": true,
+                "description": "The filing of an SEC item; null otherwise",
+                "required": [
+                  "form",
+                  "accession"
+                ],
+                "properties": {
+                  "form": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "SEC form type (8-K, 6-K, …)"
+                  },
+                  "accession": {
+                    "type": "string",
+                    "description": "SEC accession number"
+                  }
+                }
+              },
+              "statement": {
+                "type": "string",
+                "enum": [
+                  "Summary written by Invinite from the publication above; not the publisher's text. Source and date above."
+                ],
+                "description": "The attribution sentence to carry with the text"
+              }
+            }
+          },
+          "blocks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "block_id",
+                "index",
+                "heading",
+                "kind",
+                "text"
+              ],
+              "properties": {
+                "block_id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Stable block id of the summary (search hits cite it as `block.id`)"
+                },
+                "index": {
+                  "type": "integer",
+                  "description": "Position in the summary (zero-based)"
+                },
+                "heading": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "The text of the section heading the block sits under (null for a heading block and for blocks before the first heading)"
+                },
+                "kind": {
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    "heading",
+                    "paragraph",
+                    "list"
+                  ],
+                  "description": "heading = a section heading, paragraph, list (its items on separate lines, each prefixed `• `); null = a kind this API version does not know"
+                },
+                "text": {
+                  "type": "string",
+                  "description": "The block's text (Invinite's wording)"
+                }
+              }
+            },
+            "description": "Blocks of this page, in order"
+          },
+          "coverage": {
+            "type": "object",
+            "required": [
+              "blocks_total",
+              "blocks_through"
+            ],
+            "properties": {
+              "blocks_total": {
+                "type": "integer",
+                "description": "Blocks of the summary"
+              },
+              "blocks_through": {
+                "type": "integer",
+                "description": "Blocks served up to and including this page"
+              }
+            }
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Whether blocks follow this page"
+          },
+          "next_cursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "`cursor` of the next page (also in `Link: <…>; rel=\"next\"`); null on the last page. A cursor of another revision or summary is a 400 `cursor_mismatch`"
+          }
+        },
+        "title": "NewsText"
+      },
+      "NewsSearchHit": {
+        "type": "object",
+        "required": [
+          "item",
+          "field",
+          "score",
+          "match",
+          "text",
+          "text_truncated",
+          "block",
+          "chunk_index",
+          "model_processing_allowed"
+        ],
+        "properties": {
+          "item": {
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "description",
+              "url",
+              "published_at",
+              "first_seen_at",
+              "source",
+              "kind",
+              "topics",
+              "rights",
+              "is_earnings_news",
+              "earnings",
+              "symbols",
+              "ciks",
+              "revision",
+              "supersedes_id",
+              "publications",
+              "publications_truncated",
+              "model_processing_allowed",
+              "summary_words",
+              "attribution"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Stable item id (a correction is a new item, see supersedes_id)"
+              },
+              "title": {
+                "type": "string",
+                "description": "Headline"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true,
+                "description": "Lede: one or two sentences written by Invinite with the summary (never the publisher's words); null for an item without a summary (title-only, metadata-only) or whose publisher reserved reuse"
+              },
+              "url": {
+                "type": "string",
+                "description": "Canonical URL of the item (the first publication)"
+              },
+              "published_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Publication time (ISO 8601 UTC)"
+              },
+              "first_seen_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When Invinite first saw it"
+              },
+              "source": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "name",
+                  "host"
+                ],
+                "description": "The item's first source",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "`edgar` or `ir` (a company newsroom)"
+                  },
+                  "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source label"
+                  },
+                  "host": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "The newsroom host of an `ir` source; null otherwise"
+                  }
+                }
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "earnings_results",
+                  "results_date",
+                  "call_announcement",
+                  "event_announcement",
+                  "guidance",
+                  "m_and_a",
+                  "material_agreement",
+                  "management_change",
+                  "dividend",
+                  "capital_markets",
+                  "legal_spam",
+                  "promo",
+                  "other"
+                ],
+                "description": "What the item is about"
+              },
+              "topics": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "product_launch",
+                    "product_update",
+                    "availability",
+                    "partnership",
+                    "customer_contract",
+                    "capacity_expansion",
+                    "regulatory",
+                    "research",
+                    "other"
+                  ]
+                },
+                "description": "Development topics found in the text"
+              },
+              "rights": {
+                "type": "string",
+                "enum": [
+                  "public_record",
+                  "issuer"
+                ],
+                "description": "public_record = an SEC filing; issuer = the company's own publication"
+              },
+              "is_earnings_news": {
+                "type": "boolean",
+                "description": "Results, results date, call announcement or guidance"
+              },
+              "earnings": {
+                "type": "object",
+                "nullable": true,
+                "description": "The fiscal period an earnings item belongs to; null when none was found",
+                "required": [
+                  "fiscal_year",
+                  "fiscal_quarter",
+                  "conference_date"
+                ],
+                "properties": {
+                  "fiscal_year": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Fiscal year"
+                  },
+                  "fiscal_quarter": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Fiscal quarter"
+                  },
+                  "conference_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "The results call it announces or follows",
+                    "nullable": true
+                  }
+                }
+              },
+              "symbols": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Tickers mentioned (stored dash spelling, `BRK-B`)"
+              },
+              "ciks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "10-digit CIKs mentioned"
+              },
+              "revision": {
+                "type": "integer",
+                "description": "Revision of the publication (grows when the publisher corrects it)"
+              },
+              "supersedes_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "The older item this one corrects"
+              },
+              "publications": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "source_id",
+                    "publisher",
+                    "url",
+                    "publication_type",
+                    "published_at",
+                    "modified_at",
+                    "categories",
+                    "tags"
+                  ],
+                  "properties": {
+                    "source_id": {
+                      "type": "string",
+                      "description": "The newsroom source (`ir:<host>`)"
+                    },
+                    "publisher": {
+                      "type": "object",
+                      "required": [
+                        "cik",
+                        "symbol",
+                        "name"
+                      ],
+                      "properties": {
+                        "cik": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "10-digit CIK of the publishing company"
+                        },
+                        "symbol": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Ticker of the publishing company"
+                        },
+                        "name": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Name the newsroom publishes under"
+                        }
+                      }
+                    },
+                    "url": {
+                      "type": "string",
+                      "description": "The company's own publication"
+                    },
+                    "publication_type": {
+                      "type": "string",
+                      "description": "press_release, company_blog, company_update or unknown"
+                    },
+                    "published_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Publication time the newsroom states (else when we first saw it)"
+                    },
+                    "modified_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Last modification the newsroom states",
+                      "nullable": true
+                    },
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "label",
+                          "url"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "The newsroom's own id of the label, when it has one"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "The label as the newsroom shows it"
+                          },
+                          "url": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "The newsroom's page of the label"
+                          }
+                        }
+                      },
+                      "description": "The newsroom's own categories"
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "label",
+                          "url"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "The newsroom's own id of the label, when it has one"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "The label as the newsroom shows it"
+                          },
+                          "url": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "The newsroom's page of the label"
+                          }
+                        }
+                      },
+                      "description": "The newsroom's own tags"
+                    }
+                  }
+                },
+                "description": "The companies' own verified publications of the item, oldest first (at most 10)"
+              },
+              "publications_truncated": {
+                "type": "boolean",
+                "description": "More than 10 publications exist (the detail lists every sighting)"
+              },
+              "model_processing_allowed": {
+                "type": "boolean",
+                "description": "false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's"
+              },
+              "summary_words": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Words of the item's summary (`GET /v2/news/{id}` serves it); null for an item without one (title-only, metadata-only or a reserved source)"
+              },
+              "attribution": {
+                "type": "object",
+                "description": "Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text)",
+                "required": [
+                  "publisher",
+                  "publisher_host",
+                  "source_url",
+                  "published_at",
+                  "rights",
+                  "edgar",
+                  "statement"
+                ],
+                "properties": {
+                  "publisher": {
+                    "type": "string",
+                    "description": "Publisher of the summarised publication: the company, or SEC EDGAR for a filing"
+                  },
+                  "publisher_host": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Host of the original URL"
+                  },
+                  "source_url": {
+                    "type": "string",
+                    "description": "The original publication the summary was written from"
+                  },
+                  "published_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Publication time (ISO 8601 UTC)"
+                  },
+                  "rights": {
+                    "type": "string",
+                    "enum": [
+                      "public_record",
+                      "issuer"
+                    ],
+                    "description": "public_record = an SEC filing; issuer = the company's own publication"
+                  },
+                  "edgar": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "The filing of an SEC item; null otherwise",
+                    "required": [
+                      "form",
+                      "accession"
+                    ],
+                    "properties": {
+                      "form": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "SEC form type (8-K, 6-K, …)"
+                      },
+                      "accession": {
+                        "type": "string",
+                        "description": "SEC accession number"
+                      }
+                    }
+                  },
+                  "statement": {
+                    "type": "string",
+                    "enum": [
+                      "Summary written by Invinite from the publication above; not the publisher's text. Source and date above."
+                    ],
+                    "description": "The attribution sentence to carry with the text"
+                  }
+                }
+              }
+            }
+          },
+          "field": {
+            "type": "string",
+            "enum": [
+              "title",
+              "lede",
+              "summary"
+            ],
+            "description": "Where it matched: the headline, the lede or a passage of the summary"
+          },
+          "score": {
+            "type": "number",
+            "description": "Relevance per mode: lexical = ts_rank_cd (4 decimals), literal = 0 (newest first)"
+          },
+          "match": {
+            "$ref": "#/components/schemas/HitMatch"
+          },
+          "text": {
+            "type": "string",
+            "description": "The matched passage (≤ 600 characters, cut on word boundaries around the first match)"
+          },
+          "text_truncated": {
+            "type": "boolean",
+            "description": "true = text is shorter than the passage"
+          },
+          "block": {
+            "type": "object",
+            "nullable": true,
+            "required": [
+              "id",
+              "index",
+              "heading"
+            ],
+            "description": "The summary block the passage is from (see GET /v2/news/{id}/text); null for a headline or lede",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Block id (`blocks[].block_id` of the text route)"
+              },
+              "index": {
+                "type": "integer",
+                "description": "Position of the block in the item's summary"
+              },
+              "heading": {
+                "type": "string",
+                "nullable": true,
+                "description": "The section heading the block sits under"
+              }
+            }
+          },
+          "chunk_index": {
+            "type": "integer",
+            "description": "Position of the passage among the item's passages (-1 for a headline or lede)"
+          },
+          "model_processing_allowed": {
+            "type": "boolean",
+            "description": "false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's"
+          }
+        },
+        "title": "NewsSearchHit"
+      },
+      "Announcement": {
+        "type": "object",
+        "required": [
+          "id",
+          "item_id",
+          "revision",
+          "topic",
+          "title",
+          "summary",
+          "derived",
+          "products",
+          "counterparties",
+          "announced_at",
+          "effective_date_text",
+          "effective_from",
+          "effective_to",
+          "date_precision",
+          "claim_status",
+          "confidence",
+          "model_processing_allowed",
+          "item"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Development id"
+          },
+          "item_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The news item it was read from"
+          },
+          "revision": {
+            "type": "integer",
+            "description": "Revision of the publication it was read from"
+          },
+          "topic": {
+            "type": "string",
+            "enum": [
+              "product_launch",
+              "product_update",
+              "availability",
+              "partnership",
+              "customer_contract",
+              "capacity_expansion",
+              "regulatory",
+              "research"
+            ],
+            "description": "Topic"
+          },
+          "title": {
+            "type": "string",
+            "description": "Short title (model-derived; see `derived`)"
+          },
+          "summary": {
+            "type": "string",
+            "description": "Summary (model-derived; see `derived`)"
+          },
+          "derived": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Always true: title and summary are derived by a model, not the publisher's words"
+          },
+          "products": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Products named, verbatim"
+          },
+          "counterparties": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "cik",
+                "resolution"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Counterparty, verbatim"
+                },
+                "cik": {
+                  "type": "string",
+                  "nullable": true,
+                  "description": "10-digit CIK when the article names exactly one known company"
+                },
+                "resolution": {
+                  "type": "string",
+                  "description": "exact_ticker or unresolved"
+                }
+              }
+            },
+            "description": "Partners, customers or other parties named"
+          },
+          "announced_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When it was announced (the item's publication)"
+          },
+          "effective_date_text": {
+            "type": "string",
+            "nullable": true,
+            "description": "The effective date as the text states it"
+          },
+          "effective_from": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Effective from (YYYY-MM-DD)"
+          },
+          "effective_to": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Effective until (YYYY-MM-DD)"
+          },
+          "date_precision": {
+            "type": "string",
+            "enum": [
+              "day",
+              "month",
+              "quarter",
+              "year",
+              "unknown"
+            ],
+            "description": "Precision of the effective dates"
+          },
+          "claim_status": {
+            "type": "string",
+            "enum": [
+              "announced",
+              "planned",
+              "available",
+              "completed",
+              "cancelled",
+              "unknown"
+            ],
+            "description": "What the publication says happened"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "medium",
+              "high"
+            ],
+            "description": "Extraction confidence"
+          },
+          "model_processing_allowed": {
+            "type": "boolean",
+            "description": "false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's"
+          },
+          "item": {
+            "type": "object",
+            "required": [
+              "title",
+              "url",
+              "attribution"
+            ],
+            "description": "The news item the development cites",
+            "properties": {
+              "title": {
+                "type": "string",
+                "description": "Headline"
+              },
+              "url": {
+                "type": "string",
+                "description": "Canonical URL"
+              },
+              "attribution": {
+                "type": "object",
+                "description": "Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text)",
+                "required": [
+                  "publisher",
+                  "publisher_host",
+                  "source_url",
+                  "published_at",
+                  "rights",
+                  "edgar",
+                  "statement"
+                ],
+                "properties": {
+                  "publisher": {
+                    "type": "string",
+                    "description": "Publisher of the summarised publication: the company, or SEC EDGAR for a filing"
+                  },
+                  "publisher_host": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Host of the original URL"
+                  },
+                  "source_url": {
+                    "type": "string",
+                    "description": "The original publication the summary was written from"
+                  },
+                  "published_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Publication time (ISO 8601 UTC)"
+                  },
+                  "rights": {
+                    "type": "string",
+                    "enum": [
+                      "public_record",
+                      "issuer"
+                    ],
+                    "description": "public_record = an SEC filing; issuer = the company's own publication"
+                  },
+                  "edgar": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "The filing of an SEC item; null otherwise",
+                    "required": [
+                      "form",
+                      "accession"
+                    ],
+                    "properties": {
+                      "form": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "SEC form type (8-K, 6-K, …)"
+                      },
+                      "accession": {
+                        "type": "string",
+                        "description": "SEC accession number"
+                      }
+                    }
+                  },
+                  "statement": {
+                    "type": "string",
+                    "enum": [
+                      "Summary written by Invinite from the publication above; not the publisher's text. Source and date above."
+                    ],
+                    "description": "The attribution sentence to carry with the text"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "title": "Announcement"
+      },
+      "Webhook": {
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "events",
+          "filters",
+          "active",
+          "disabled_reason",
+          "consecutive_failures",
+          "secret_hint",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Subscription id"
+          },
+          "url": {
+            "type": "string",
+            "description": "HTTPS endpoint the deliveries are POSTed to"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "event.scheduled",
+                "event.rescheduled",
+                "event.started",
+                "event.ended",
+                "event.transcript_provisional",
+                "event.transcript_ready",
+                "event.transcript_corrected",
+                "event.assets_ready",
+                "event.guidance_flash",
+                "event.documents_updated",
+                "event.keyword_hit",
+                "news.published",
+                "event.test"
+              ]
+            }
+          },
+          "filters": {
+            "type": "object",
+            "required": [
+              "ciks",
+              "keywords"
+            ],
+            "properties": {
+              "ciks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "10-digit CIKs; empty = every company"
+              },
+              "keywords": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript, and news.published (headline + lede)"
+              }
+            }
+          },
+          "active": {
+            "type": "boolean",
+            "description": "false once disabled"
+          },
+          "disabled_reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the subscription was disabled"
+          },
+          "consecutive_failures": {
+            "type": "integer",
+            "description": "Dead-lettered deliveries in a row"
+          },
+          "secret_hint": {
+            "type": "string",
+            "description": "Last 4 characters of the signing secret"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "title": "Webhook"
+      },
+      "WebhookCreated": {
+        "type": "object",
+        "required": [
+          "id",
+          "url",
+          "events",
+          "filters",
+          "active",
+          "disabled_reason",
+          "consecutive_failures",
+          "secret_hint",
+          "created_at",
+          "updated_at",
+          "secret"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Subscription id"
+          },
+          "url": {
+            "type": "string",
+            "description": "HTTPS endpoint the deliveries are POSTed to"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "event.scheduled",
+                "event.rescheduled",
+                "event.started",
+                "event.ended",
+                "event.transcript_provisional",
+                "event.transcript_ready",
+                "event.transcript_corrected",
+                "event.assets_ready",
+                "event.guidance_flash",
+                "event.documents_updated",
+                "event.keyword_hit",
+                "news.published",
+                "event.test"
+              ]
+            }
+          },
+          "filters": {
+            "type": "object",
+            "required": [
+              "ciks",
+              "keywords"
+            ],
+            "properties": {
+              "ciks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "10-digit CIKs; empty = every company"
+              },
+              "keywords": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript, and news.published (headline + lede)"
+              }
+            }
+          },
+          "active": {
+            "type": "boolean",
+            "description": "false once disabled"
+          },
+          "disabled_reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Why the subscription was disabled"
+          },
+          "consecutive_failures": {
+            "type": "integer",
+            "description": "Dead-lettered deliveries in a row"
+          },
+          "secret_hint": {
+            "type": "string",
+            "description": "Last 4 characters of the signing secret"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "secret": {
+            "type": "string",
+            "description": "Signing secret; shown once"
+          }
+        },
+        "description": "A new subscription with its secret",
+        "title": "WebhookCreated"
+      },
+      "WebhookSecret": {
+        "type": "object",
+        "required": [
+          "secret",
+          "previous_secret_expires_at"
+        ],
+        "properties": {
+          "secret": {
+            "type": "string",
+            "description": "Signing secret (whsec_…). Returned ONCE — store it; it is never shown again."
+          },
+          "previous_secret_expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Deliveries are signed with both secrets until then"
+          }
+        },
+        "title": "WebhookSecret"
+      },
+      "WebhookTestAccepted": {
+        "type": "object",
+        "title": "WebhookTestAccepted",
+        "required": [
+          "delivery_id",
+          "event"
+        ],
+        "description": "The queued test delivery; it shows in `GET /v2/webhooks/{id}/deliveries`",
+        "properties": {
+          "delivery_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id of the queued delivery (= `X-Invinite-Delivery`)"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "event.test"
+            ],
+            "description": "The test event"
+          }
+        }
+      },
+      "WebhookDelivery": {
+        "type": "object",
+        "required": [
+          "delivery_id",
+          "event",
+          "attempt",
+          "status",
+          "response_status",
+          "duration_ms",
+          "at",
+          "next_attempt_at"
+        ],
+        "properties": {
+          "delivery_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Same id on every retry (X-Invinite-Delivery)"
+          },
+          "event": {
+            "type": "string",
+            "enum": [
+              "event.scheduled",
+              "event.rescheduled",
+              "event.started",
+              "event.ended",
+              "event.transcript_provisional",
+              "event.transcript_ready",
+              "event.transcript_corrected",
+              "event.assets_ready",
+              "event.guidance_flash",
+              "event.documents_updated",
+              "event.keyword_hit",
+              "news.published",
+              "event.test"
+            ]
+          },
+          "attempt": {
+            "type": "integer",
+            "description": "1-based attempt number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "delivered",
+              "failed",
+              "timeout",
+              "blocked_address",
+              "dropped",
+              "subscription_inactive"
+            ]
+          },
+          "response_status": {
+            "type": "integer",
+            "nullable": true,
+            "description": "HTTP status your endpoint answered"
+          },
+          "duration_ms": {
+            "type": "integer",
+            "nullable": true
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "next_attempt_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "When the next attempt runs; null = final"
+          }
+        },
+        "title": "WebhookDelivery"
+      },
       "Me": {
         "type": "object",
         "description": "Who the caller is and what the plan allows (0 credits)",
@@ -7472,6 +9108,746 @@
             "type": "string",
             "enum": [
               "news.live"
+            ]
+          }
+        }
+      },
+      "StreamSubscribeEarningsCall": {
+        "type": "object",
+        "description": "Client frame: subscribe to the live transcript of one earnings call, by event_id or by cik (the call that is live or starts within ±2 h), or with scope: all_live (no event_id / cik) to every call being captured live — keyword hits only, never segments, one subscription slot. Requires the PRO plan.",
+        "required": [
+          "type",
+          "channel"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "subscribe"
+            ]
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "events.live"
+            ]
+          },
+          "event_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Event id from the earnings-calls REST routes"
+          },
+          "cik": {
+            "type": "string",
+            "pattern": "^\\d{1,10}$",
+            "description": "CIK, padded or not"
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "all_live"
+            ],
+            "description": "all_live = every live call (keywords required, error keywords_required without); then no event_id / cik"
+          },
+          "since_seq": {
+            "type": "integer",
+            "minimum": -1,
+            "description": "Last final seq the client holds; finals after it are replayed before live delivery (-1 = from the first final)"
+          },
+          "partials": {
+            "type": "boolean",
+            "default": false,
+            "description": "Also receive partial (not yet final) segments"
+          },
+          "prices": {
+            "type": "boolean",
+            "default": false,
+            "description": "Also receive price_tick frames of the call's stock (≤ 1 per second while the call is live). Per-call only: with scope: all_live the subscribe is refused (bad_message). GET /v1/earnings-calls/live says live_prices: true when ticks flow"
+          },
+          "keywords": {
+            "type": "array",
+            "maxItems": 20,
+            "items": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 64
+            },
+            "description": "Keyword alerts: a keyword_hit frame for every FINAL segment that contains one (whole words, case-insensitive, multi-word allowed). Held for this subscription only"
+          },
+          "keyword_match": {
+            "type": "string",
+            "enum": [
+              "exact",
+              "stem"
+            ],
+            "default": "exact",
+            "description": "exact = whole-word match of your spelling (buyback never matches buybacks); stem = also s / es / ed / ing / 's per word (tariff matches tariffs)"
+          },
+          "speaker_roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "executive",
+                "ir_host",
+                "analyst",
+                "operator"
+              ]
+            },
+            "description": "Only hits spoken by one of these roles (from the provisional live speaker names; a hit whose speaker is still unnamed passes)"
+          },
+          "min_rank": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "all_live only: calls of companies ranked ≤ min_rank by market cap"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "keyword_hit",
+                "guidance_flash"
+              ]
+            },
+            "description": "all_live only: what reaches the subscription (default keyword_hit; add guidance_flash to receive the flashes of every live call)"
+          }
+        }
+      },
+      "StreamErrorEvent": {
+        "type": "object",
+        "description": "A client frame was refused (unavailable = an unexpected server failure, retry shortly); the socket stays open",
+        "required": [
+          "type",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "error"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "bad_message",
+              "not_live",
+              "not_found",
+              "forbidden_tier",
+              "subscription_limit",
+              "attach_failed",
+              "resume_unavailable",
+              "keywords_required",
+              "unavailable",
+              "channel_unavailable"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "subscription_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "news"
+            ],
+            "description": "news for a refusal of a news frame (channel_unavailable = live news is switched off; read GET /v1/news)"
+          }
+        }
+      },
+      "StreamSubscribeNews": {
+        "type": "object",
+        "description": "Client frame: follow new news items. One news subscription per connection; a second subscribe replaces the filters. No filter = every item. tickers and ciks together = either; every other filter narrows",
+        "required": [
+          "type",
+          "channel"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "subscribe"
+            ]
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "news"
+            ]
+          },
+          "tickers": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "string"
+            },
+            "description": "Tickers (BRK.B and BRK-B both match)"
+          },
+          "ciks": {
+            "type": "array",
+            "maxItems": 50,
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{1,10}$"
+            },
+            "description": "CIKs, padded or not"
+          },
+          "earnings_only": {
+            "type": "boolean",
+            "default": false,
+            "description": "Earnings news only"
+          },
+          "kinds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "earnings_results",
+                "results_date",
+                "call_announcement",
+                "event_announcement",
+                "guidance",
+                "m_and_a",
+                "material_agreement",
+                "management_change",
+                "dividend",
+                "capital_markets",
+                "legal_spam",
+                "promo",
+                "other"
+              ]
+            }
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "edgar",
+                "ir"
+              ]
+            },
+            "description": "edgar (SEC filings) and / or ir (company newsrooms)"
+          }
+        }
+      },
+      "StreamUnsubscribeNews": {
+        "type": "object",
+        "description": "Client frame: stop following news",
+        "required": [
+          "type",
+          "channel"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "unsubscribe"
+            ]
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "news"
+            ]
+          }
+        }
+      },
+      "StreamNewsSubscribedEvent": {
+        "type": "object",
+        "description": "The news subscription is active, with its normalised filters",
+        "required": [
+          "type",
+          "channel",
+          "filters"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "subscribed"
+            ]
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "news"
+            ]
+          },
+          "filters": {
+            "type": "object",
+            "required": [
+              "tickers",
+              "ciks",
+              "earnings_only",
+              "kinds",
+              "sources"
+            ],
+            "properties": {
+              "tickers": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Upper-case, both spellings (BRK.B, BRK-B)"
+              },
+              "ciks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Without leading zeros"
+              },
+              "earnings_only": {
+                "type": "boolean"
+              },
+              "kinds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "sources": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "StreamNewsItemEvent": {
+        "type": "object",
+        "description": "A new news item, the same object as a GET /v1/news row (with its attribution). Sent once when the pipeline announces the item; corrections, later enrichment and items without a ticker are not pushed — GET /v1/news has them",
+        "required": [
+          "type",
+          "channel",
+          "item"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "news_item"
+            ]
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "news"
+            ]
+          },
+          "item": {
+            "type": "object",
+            "required": [
+              "id",
+              "title",
+              "description",
+              "url",
+              "published_at",
+              "first_seen_at",
+              "source",
+              "kind",
+              "topics",
+              "rights",
+              "is_earnings_news",
+              "earnings",
+              "symbols",
+              "ciks",
+              "revision",
+              "supersedes_id",
+              "publications",
+              "publications_truncated",
+              "model_processing_allowed",
+              "summary_words",
+              "attribution"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Stable item id (a correction is a new item, see supersedes_id)"
+              },
+              "title": {
+                "type": "string",
+                "description": "Headline"
+              },
+              "description": {
+                "type": "string",
+                "nullable": true,
+                "description": "Lede: one or two sentences written by Invinite with the summary (never the publisher's words); null for an item without a summary (title-only, metadata-only) or whose publisher reserved reuse"
+              },
+              "url": {
+                "type": "string",
+                "description": "Canonical URL of the item (the first publication)"
+              },
+              "published_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Publication time (ISO 8601 UTC)"
+              },
+              "first_seen_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When Invinite first saw it"
+              },
+              "source": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "name",
+                  "host"
+                ],
+                "description": "The item's first source",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "description": "`edgar` or `ir` (a company newsroom)"
+                  },
+                  "name": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Source label"
+                  },
+                  "host": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "The newsroom host of an `ir` source; null otherwise"
+                  }
+                }
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "earnings_results",
+                  "results_date",
+                  "call_announcement",
+                  "event_announcement",
+                  "guidance",
+                  "m_and_a",
+                  "material_agreement",
+                  "management_change",
+                  "dividend",
+                  "capital_markets",
+                  "legal_spam",
+                  "promo",
+                  "other"
+                ],
+                "description": "What the item is about"
+              },
+              "topics": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "product_launch",
+                    "product_update",
+                    "availability",
+                    "partnership",
+                    "customer_contract",
+                    "capacity_expansion",
+                    "regulatory",
+                    "research",
+                    "other"
+                  ]
+                },
+                "description": "Development topics found in the text"
+              },
+              "rights": {
+                "type": "string",
+                "enum": [
+                  "public_record",
+                  "issuer"
+                ],
+                "description": "public_record = an SEC filing; issuer = the company's own publication"
+              },
+              "is_earnings_news": {
+                "type": "boolean",
+                "description": "Results, results date, call announcement or guidance"
+              },
+              "earnings": {
+                "type": "object",
+                "nullable": true,
+                "description": "The fiscal period an earnings item belongs to; null when none was found",
+                "required": [
+                  "fiscal_year",
+                  "fiscal_quarter",
+                  "conference_date"
+                ],
+                "properties": {
+                  "fiscal_year": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Fiscal year"
+                  },
+                  "fiscal_quarter": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Fiscal quarter"
+                  },
+                  "conference_date": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "The results call it announces or follows",
+                    "nullable": true
+                  }
+                }
+              },
+              "symbols": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Tickers mentioned (stored dash spelling, `BRK-B`)"
+              },
+              "ciks": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "10-digit CIKs mentioned"
+              },
+              "revision": {
+                "type": "integer",
+                "description": "Revision of the publication (grows when the publisher corrects it)"
+              },
+              "supersedes_id": {
+                "type": "string",
+                "nullable": true,
+                "description": "The older item this one corrects"
+              },
+              "publications": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "source_id",
+                    "publisher",
+                    "url",
+                    "publication_type",
+                    "published_at",
+                    "modified_at",
+                    "categories",
+                    "tags"
+                  ],
+                  "properties": {
+                    "source_id": {
+                      "type": "string",
+                      "description": "The newsroom source (`ir:<host>`)"
+                    },
+                    "publisher": {
+                      "type": "object",
+                      "required": [
+                        "cik",
+                        "symbol",
+                        "name"
+                      ],
+                      "properties": {
+                        "cik": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "10-digit CIK of the publishing company"
+                        },
+                        "symbol": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Ticker of the publishing company"
+                        },
+                        "name": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Name the newsroom publishes under"
+                        }
+                      }
+                    },
+                    "url": {
+                      "type": "string",
+                      "description": "The company's own publication"
+                    },
+                    "publication_type": {
+                      "type": "string",
+                      "description": "press_release, company_blog, company_update or unknown"
+                    },
+                    "published_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Publication time the newsroom states (else when we first saw it)"
+                    },
+                    "modified_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Last modification the newsroom states",
+                      "nullable": true
+                    },
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "label",
+                          "url"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "The newsroom's own id of the label, when it has one"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "The label as the newsroom shows it"
+                          },
+                          "url": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "The newsroom's page of the label"
+                          }
+                        }
+                      },
+                      "description": "The newsroom's own categories"
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "label",
+                          "url"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "The newsroom's own id of the label, when it has one"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "The label as the newsroom shows it"
+                          },
+                          "url": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "The newsroom's page of the label"
+                          }
+                        }
+                      },
+                      "description": "The newsroom's own tags"
+                    }
+                  }
+                },
+                "description": "The companies' own verified publications of the item, oldest first (at most 10)"
+              },
+              "publications_truncated": {
+                "type": "boolean",
+                "description": "More than 10 publications exist (the detail lists every sighting)"
+              },
+              "model_processing_allowed": {
+                "type": "boolean",
+                "description": "false = the publisher reserved text and data mining of its original publication (a machine-readable reservation read at fetch time). Informational: every text this API serves — lede, summary, developments — is Invinite's own wording; the headline is the publisher's"
+              },
+              "summary_words": {
+                "type": "integer",
+                "nullable": true,
+                "description": "Words of the item's summary (`GET /v1/news/{id}` serves it); null for an item without one (title-only, metadata-only or a reserved source)"
+              },
+              "attribution": {
+                "type": "object",
+                "description": "Who published what the text summarises, where and when (show publisher, source URL and date wherever you show the text)",
+                "required": [
+                  "publisher",
+                  "publisher_host",
+                  "source_url",
+                  "published_at",
+                  "rights",
+                  "edgar",
+                  "statement"
+                ],
+                "properties": {
+                  "publisher": {
+                    "type": "string",
+                    "description": "Publisher of the summarised publication: the company, or SEC EDGAR for a filing"
+                  },
+                  "publisher_host": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Host of the original URL"
+                  },
+                  "source_url": {
+                    "type": "string",
+                    "description": "The original publication the summary was written from"
+                  },
+                  "published_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Publication time (ISO 8601 UTC)"
+                  },
+                  "rights": {
+                    "type": "string",
+                    "enum": [
+                      "public_record",
+                      "issuer"
+                    ],
+                    "description": "public_record = an SEC filing; issuer = the company's own publication"
+                  },
+                  "edgar": {
+                    "type": "object",
+                    "nullable": true,
+                    "description": "The filing of an SEC item; null otherwise",
+                    "required": [
+                      "form",
+                      "accession"
+                    ],
+                    "properties": {
+                      "form": {
+                        "type": "string",
+                        "nullable": true,
+                        "description": "SEC form type (8-K, 6-K, …)"
+                      },
+                      "accession": {
+                        "type": "string",
+                        "description": "SEC accession number"
+                      }
+                    }
+                  },
+                  "statement": {
+                    "type": "string",
+                    "enum": [
+                      "Summary written by Invinite from the publication above; not the publisher's text. Source and date above."
+                    ],
+                    "description": "The attribution sentence to carry with the text"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "StreamNewsUnsubscribedEvent": {
+        "type": "object",
+        "description": "The news subscription ended (on request)",
+        "required": [
+          "type",
+          "channel"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "unsubscribed"
+            ]
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "news"
             ]
           }
         }
@@ -54113,6 +56489,2284 @@
         ]
       }
     },
+    "/v2/news": {
+      "get": {
+        "operationId": "listNews",
+        "summary": "List news items",
+        "tags": [
+          "News"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": false,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "event",
+            "required": false,
+            "description": "Event id",
+            "example": "evt_01JC8M2X"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "description": "Kinds, comma list",
+            "example": "earnings_results"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "topic",
+            "required": false,
+            "description": "Topics, comma list",
+            "example": "guidance"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "published_at.gte",
+            "required": false,
+            "description": "`published_at` on or after this value",
+            "example": "2026-11-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "published_at.gt",
+            "required": false,
+            "description": "`published_at` after this value",
+            "example": "2026-11-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "published_at.lte",
+            "required": false,
+            "description": "`published_at` on or before this value",
+            "example": "2026-11-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "published_at.lt",
+            "required": false,
+            "description": "`published_at` before this value",
+            "example": "2026-11-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "published_at",
+                "-published_at"
+              ],
+              "default": "-published_at"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-published_at`",
+            "example": "-published_at"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of NewsItem rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/NewsItem"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "free",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, max-age=60",
+        "x-cli": {
+          "group": "news",
+          "action": "list",
+          "positional": "company",
+          "flags": {
+            "kind": "k",
+            "topic": "t",
+            "limit": "l"
+          },
+          "columns": [
+            "published_at",
+            "title",
+            "kind",
+            "symbols"
+          ]
+        },
+        "x-example-params": [
+          "company"
+        ]
+      }
+    },
+    "/v2/news/{id}": {
+      "get": {
+        "operationId": "getNewsItem",
+        "summary": "Get a news item",
+        "tags": [
+          "News"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "News item id",
+            "example": "nws_01JCB4R8"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewsItem"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 2,
+        "x-license": "display",
+        "x-cache-control": "private, max-age=300",
+        "x-cli": {
+          "group": "news",
+          "action": "get",
+          "positional": "id",
+          "flags": {},
+          "columns": [
+            "published_at",
+            "title"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/news/{id}/text": {
+      "get": {
+        "operationId": "getNewsText",
+        "summary": "Get a news item's text",
+        "tags": [
+          "News"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 500,
+              "maximum": 100000,
+              "default": 20000
+            },
+            "in": "query",
+            "name": "max_chars",
+            "required": false,
+            "description": "Characters per page",
+            "example": 20000
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "News item id",
+            "example": "nws_01JCB4R8"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewsText"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 2,
+        "x-license": "display",
+        "x-cache-control": "private, max-age=300",
+        "x-cli": {
+          "group": "news",
+          "action": "text",
+          "positional": "id",
+          "flags": {
+            "max_chars": "m"
+          }
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/search/news": {
+      "get": {
+        "operationId": "searchNews",
+        "summary": "Search news",
+        "tags": [
+          "News"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "description": "Query",
+            "example": "buyback"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": false,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "title",
+                "lede",
+                "summary",
+                "any"
+              ],
+              "default": "any"
+            },
+            "in": "query",
+            "name": "field",
+            "required": false,
+            "description": "Field searched",
+            "example": "any"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "lexical",
+                "literal"
+              ],
+              "default": "lexical"
+            },
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "description": "Mode",
+            "example": "lexical"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "published_at.gte",
+            "required": false,
+            "description": "`published_at` on or after this value",
+            "example": "2026-11-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "published_at.gt",
+            "required": false,
+            "description": "`published_at` after this value",
+            "example": "2026-11-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "published_at.lte",
+            "required": false,
+            "description": "`published_at` on or before this value",
+            "example": "2026-11-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "published_at.lt",
+            "required": false,
+            "description": "`published_at` before this value",
+            "example": "2026-11-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of NewsSearchHit rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/NewsSearchHit"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        },
+                        "query": {
+                          "type": "string",
+                          "description": "The query"
+                        },
+                        "index": {
+                          "$ref": "#/components/schemas/SearchCoverage"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 10,
+        "x-license": "display",
+        "x-cache-control": "no-store",
+        "x-cli": {
+          "group": "search",
+          "action": "news",
+          "positional": "q",
+          "flags": {
+            "company": "c",
+            "limit": "l"
+          },
+          "columns": [
+            "text",
+            "score"
+          ]
+        },
+        "x-example-params": [
+          "company"
+        ]
+      }
+    },
+    "/v2/announcements": {
+      "get": {
+        "operationId": "listAnnouncements",
+        "summary": "List announcements",
+        "tags": [
+          "News"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": false,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "topic",
+            "required": false,
+            "description": "Topics, comma list",
+            "example": "product_launch"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "item",
+            "required": false,
+            "description": "News item id",
+            "example": "nws_01JCB4R8"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "announced_at.gte",
+            "required": false,
+            "description": "`announced_at` on or after this value",
+            "example": "2026-10-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "announced_at.gt",
+            "required": false,
+            "description": "`announced_at` after this value",
+            "example": "2026-10-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "announced_at.lte",
+            "required": false,
+            "description": "`announced_at` on or before this value",
+            "example": "2026-10-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "in": "query",
+            "name": "announced_at.lt",
+            "required": false,
+            "description": "`announced_at` before this value",
+            "example": "2026-10-01T00:00:00Z"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "effective_from.gte",
+            "required": false,
+            "description": "`effective_from` on or after this day",
+            "example": "2026-11-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "effective_to.lte",
+            "required": false,
+            "description": "`effective_to` on or before this day",
+            "example": "2027-12-31"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "announced_at",
+                "-announced_at"
+              ],
+              "default": "-announced_at"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-announced_at`",
+            "example": "-announced_at"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of Announcement rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/Announcement"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 2,
+        "x-license": "display",
+        "x-cache-control": "private, max-age=60",
+        "x-cli": {
+          "group": "news",
+          "action": "announcements",
+          "positional": "company",
+          "flags": {
+            "topic": "t",
+            "limit": "l"
+          },
+          "columns": [
+            "announced_at",
+            "topic",
+            "title"
+          ]
+        },
+        "x-example-params": [
+          "company"
+        ]
+      }
+    },
+    "/v2/webhooks": {
+      "get": {
+        "operationId": "listWebhooks",
+        "summary": "List webhooks",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of Webhook rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/Webhook"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "lite",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, no-store",
+        "x-cli": {
+          "group": "webhooks",
+          "action": "list",
+          "flags": {},
+          "columns": [
+            "id",
+            "url",
+            "events",
+            "active"
+          ]
+        },
+        "x-example-params": []
+      },
+      "post": {
+        "operationId": "createWebhook",
+        "summary": "Create a webhook",
+        "tags": [
+          "Webhooks"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "url",
+                  "events"
+                ],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "description": "https endpoint (port 443, public addresses only)"
+                  },
+                  "events": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Event names to receive (the plan decides which; `event.test` needs no subscription — every subscription receives it)"
+                  },
+                  "filters": {
+                    "type": "object",
+                    "properties": {
+                      "ciks": {
+                        "type": "array",
+                        "maxItems": 100,
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Only these companies (at most 10 / 25 / 100 on LITE / STANDARD / PRO); a news item matches when it mentions any of them"
+                      },
+                      "keywords": {
+                        "type": "array",
+                        "maxItems": 20,
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Keyword alerts (PRO, with event.keyword_hit in events): whole-word, case-insensitive matches; with news.published they also narrow news items to those whose headline or lede names one"
+                      }
+                    }
+                  }
+                },
+                "title": "CreateWebhookRequest"
+              },
+              "example": {
+                "url": "https://hooks.example.com/invinite",
+                "events": [
+                  "event.transcript_ready",
+                  "news.published"
+                ],
+                "filters": {
+                  "ciks": [
+                    "0000320193"
+                  ]
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "maxLength": 255
+            },
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": false,
+            "description": "Replays the first answer for 24 h; 409 while in flight (R13)",
+            "example": "6f1c0f3e-7b7a-4a8e-9d63-3c1b2f0e9a11"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookCreated"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "lite",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, no-store",
+        "x-cli": {
+          "group": "webhooks",
+          "action": "create",
+          "flags": {
+            "url": "u",
+            "events": "e"
+          },
+          "columns": [
+            "id",
+            "url",
+            "secret"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/webhooks/{id}": {
+      "get": {
+        "operationId": "getWebhook",
+        "summary": "Get a webhook",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Webhook id",
+            "example": "k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "lite",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, no-store",
+        "x-cli": {
+          "group": "webhooks",
+          "action": "get",
+          "positional": "id",
+          "flags": {},
+          "columns": [
+            "id",
+            "url",
+            "events",
+            "active"
+          ]
+        },
+        "x-example-params": []
+      },
+      "patch": {
+        "operationId": "updateWebhook",
+        "summary": "Update a webhook",
+        "tags": [
+          "Webhooks"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "minProperties": 1,
+                "description": "Any of the four fields; at least one",
+                "properties": {
+                  "keywords": {
+                    "type": "array",
+                    "maxItems": 20,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Replaces the keyword list (empty = no keyword alerts; PRO only)"
+                  },
+                  "ciks": {
+                    "type": "array",
+                    "maxItems": 100,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Replaces the company filter (empty = every company; at most 10 / 25 / 100 on LITE / STANDARD / PRO)"
+                  },
+                  "events": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Replaces the event list"
+                  },
+                  "active": {
+                    "type": "boolean",
+                    "description": "true re-enables a disabled subscription (its failure counter resets); false pauses it (disabled_reason: paused)"
+                  }
+                },
+                "title": "UpdateWebhookRequest"
+              },
+              "example": {
+                "events": [
+                  "event.transcript_ready"
+                ],
+                "active": true
+              }
+            }
+          },
+          "description": "Any of the four fields; at least one",
+          "required": true
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Webhook id",
+            "example": "k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Webhook"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "lite",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, no-store",
+        "x-cli": {
+          "group": "webhooks",
+          "action": "update",
+          "positional": "id",
+          "flags": {
+            "url": "u",
+            "events": "e"
+          },
+          "columns": [
+            "id",
+            "url",
+            "events",
+            "active"
+          ]
+        },
+        "x-example-params": []
+      },
+      "delete": {
+        "operationId": "deleteWebhook",
+        "summary": "Delete a webhook",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Webhook id",
+            "example": "k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Done",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Done"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "lite",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, no-store",
+        "x-cli": {
+          "group": "webhooks",
+          "action": "delete",
+          "positional": "id",
+          "flags": {}
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/webhooks/{id}:rotate-secret": {
+      "post": {
+        "operationId": "rotateWebhookSecret",
+        "summary": "Rotate a webhook's secret",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Webhook id",
+            "example": "k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookSecret"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "lite",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, no-store",
+        "x-cli": {
+          "group": "webhooks",
+          "action": "rotate-secret",
+          "positional": "id",
+          "flags": {},
+          "columns": [
+            "secret",
+            "previous_secret_expires_at"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/webhooks/{id}:test": {
+      "post": {
+        "operationId": "testWebhook",
+        "summary": "Send a test delivery",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Webhook id",
+            "example": "k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "The test delivery is queued",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookTestAccepted"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "lite",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, no-store",
+        "x-cli": {
+          "group": "webhooks",
+          "action": "test",
+          "positional": "id",
+          "flags": {}
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/webhooks/{id}/deliveries": {
+      "get": {
+        "operationId": "listWebhookDeliveries",
+        "summary": "List a webhook's deliveries",
+        "tags": [
+          "Webhooks"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "Webhook id",
+            "example": "k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of WebhookDelivery rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/WebhookDelivery"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "lite",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, no-store",
+        "x-cli": {
+          "group": "webhooks",
+          "action": "deliveries",
+          "positional": "id",
+          "flags": {
+            "limit": "l"
+          },
+          "columns": [
+            "at",
+            "event",
+            "status",
+            "attempt"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
     "/v1/ws": {
       "ws": {
         "operationId": "websocketConnect",
@@ -54327,6 +58981,234 @@
         ],
         "x-license": "display"
       }
+    },
+    "/v2/stream": {
+      "ws": {
+        "x-events": [
+          {
+            "name": "new_filing",
+            "description": "Emitted when a new company SEC filing is available",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketNewFilingEvent"
+            }
+          },
+          {
+            "name": "ping",
+            "description": "Heartbeat payload for clients that do not support protocol-level pings, should not be required if using a WebSocket library",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketPingEvent"
+            }
+          },
+          {
+            "name": "subscribed",
+            "description": "A subscription is active (an earnings call, or news with its filters)",
+            "payload": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/WebSocketSubscribedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/StreamNewsSubscribedEvent"
+                }
+              ]
+            }
+          },
+          {
+            "name": "news_item",
+            "description": "A new news item (news)",
+            "payload": {
+              "$ref": "#/components/schemas/StreamNewsItemEvent"
+            }
+          },
+          {
+            "name": "transcript_segment",
+            "description": "A live transcript segment (finals in seq order; partials only with partials: true)",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketTranscriptSegmentEvent"
+            }
+          },
+          {
+            "name": "speaker_names",
+            "description": "The newest provisional live speaker-name snapshot",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketSpeakerNamesEvent"
+            }
+          },
+          {
+            "name": "keyword_hit",
+            "description": "A subscribed keyword in a final segment (layer live) or in the final transcript at transcript_ready (layer final)",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketKeywordHitEvent"
+            }
+          },
+          {
+            "name": "guidance_flash",
+            "description": "A guidance number extracted from the live transcript seconds after it was spoken",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketGuidanceFlashEvent"
+            }
+          },
+          {
+            "name": "price_tick",
+            "description": "One second of the call's stock price (prices: true subscriptions only; temporal coincidence, not cause)",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketPriceTickEvent"
+            }
+          },
+          {
+            "name": "warning",
+            "description": "A subscription is degraded but keeps running (global_scope_degraded)",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketWarningEvent"
+            }
+          },
+          {
+            "name": "call_started",
+            "description": "A lifecycle phase of the subscribed call",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketCallLifecycleEvent"
+            }
+          },
+          {
+            "name": "call_ended",
+            "description": "A lifecycle phase of the subscribed call",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketCallLifecycleEvent"
+            }
+          },
+          {
+            "name": "transcript_provisional",
+            "description": "A lifecycle phase of the subscribed call",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketCallLifecycleEvent"
+            }
+          },
+          {
+            "name": "transcript_ready",
+            "description": "A lifecycle phase of the subscribed call",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketCallLifecycleEvent"
+            }
+          },
+          {
+            "name": "rescheduled",
+            "description": "A lifecycle phase of the subscribed call",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketCallLifecycleEvent"
+            }
+          },
+          {
+            "name": "gap",
+            "description": "A seq range with no final within the reorder wait",
+            "payload": {
+              "$ref": "#/components/schemas/WebSocketGapEvent"
+            }
+          },
+          {
+            "name": "unsubscribed",
+            "description": "A subscription ended (an earnings call, or news)",
+            "payload": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/WebSocketUnsubscribedEvent"
+                },
+                {
+                  "$ref": "#/components/schemas/StreamNewsUnsubscribedEvent"
+                }
+              ]
+            }
+          },
+          {
+            "name": "error",
+            "description": "A client frame was refused (the socket stays open)",
+            "payload": {
+              "$ref": "#/components/schemas/StreamErrorEvent"
+            }
+          }
+        ],
+        "x-client-messages": [
+          {
+            "name": "subscribe",
+            "description": "Subscribe to the live transcript of an earnings call (PRO), optionally with keyword alerts, or with scope: all_live to the keyword hits of every live call; or, with channel news, to new news items (STANDARD)",
+            "payload": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/StreamSubscribeEarningsCall"
+                },
+                {
+                  "$ref": "#/components/schemas/StreamSubscribeNews"
+                }
+              ]
+            }
+          },
+          {
+            "name": "unsubscribe",
+            "description": "End a subscription (by subscription_id; news by channel)",
+            "payload": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/WebSocketUnsubscribe"
+                },
+                {
+                  "$ref": "#/components/schemas/StreamUnsubscribeNews"
+                }
+              ]
+            }
+          }
+        ],
+        "operationId": "streamEvents",
+        "summary": "Stream filings, news and live events",
+        "description": "One WebSocket connection; channels `filings` (STANDARD), `news` (STANDARD) and `events.live` (PRO). Frames are documented per message type. WebSocket sessions cost no credits.",
+        "tags": [
+          "Realtime"
+        ],
+        "parameters": [
+          {
+            "name": "api_key",
+            "in": "query",
+            "required": true,
+            "description": "API key (WebSocket authentication)",
+            "schema": {
+              "type": "string"
+            },
+            "example": "invd_live_example"
+          }
+        ],
+        "responses": {
+          "101": {
+            "description": "Switching Protocols — the stream is open",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        },
+        "x-channels": [
+          "filings",
+          "news",
+          "events.live"
+        ],
+        "x-tier": "standard",
+        "x-credits": 0,
+        "x-license": "display",
+        "x-example-params": []
+      }
     }
   },
   "servers": [
@@ -54463,6 +59345,10 @@
     {
       "name": "Investor documents",
       "description": "Company-published documents and their search"
+    },
+    {
+      "name": "Realtime",
+      "description": "The WebSocket stream"
     }
   ],
   "x-webhooks": {

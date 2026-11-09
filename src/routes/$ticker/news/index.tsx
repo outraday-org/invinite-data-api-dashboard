@@ -8,6 +8,7 @@ import type { NewsItemPublic } from "@/lib/api/types";
 import type { LiveNewsStop } from "@/lib/live/use-live-news";
 import type { NewsFilters, NewsSearch } from "@/lib/news/labels";
 
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { isTierError } from "@/lib/api/errors";
@@ -31,11 +32,39 @@ export const Route = createFileRoute("/$ticker/news/")({
 
 const PAGE_SIZE = 50;
 
-/** The list's request state: `/v1/news` is FREE, so a plan gate is unexpected but still a notice, not an error. */
+/** The list's request state: `/v2/news` is FREE, so a plan gate is unexpected but still a notice, not an error. */
 function ListError({ error }: { error: unknown }) {
     if (isTierError(error)) return <Notice badge="FREE" title="Your plan does not include news" />;
 
     return <ErrorState error={error} title="Failed to load the news" />;
+}
+
+/**
+ * The list when the page-side filters hid rows of the loaded page: never an empty-looking list while older news
+ * follows — every row hidden + a next page = a line saying so and a button to load it; some hidden = a count under
+ * the table.
+ */
+function FilteredOut({ hidden, pager, shown }: { hidden: number; pager: React.ComponentProps<typeof NewsPager>; shown: number }) {
+    if (shown > 0) {
+        return (
+            <div className="text-muted-foreground p-2 text-center text-xs" data-testid="news-filtered-out">
+                {`${hidden.toLocaleString("en-US")} more ${hidden === 1 ? "item" : "items"} on this page hidden by the filters.`}
+            </div>
+        );
+    }
+
+    return (
+        <div className="text-muted-foreground flex flex-col items-center gap-2 p-2 text-center text-xs" data-testid="news-filtered-out">
+            {pager.hasNext
+                ? `None of the ${hidden.toLocaleString("en-US")} items on this page match the filters; older news follows.`
+                : "No news on this page matches the filters."}
+            {pager.hasNext && (
+                <Button disabled={pager.isFetching} onClick={pager.onNext} size="sm" type="button" variant="outline">
+                    Load the next page
+                </Button>
+            )}
+        </div>
+    );
 }
 
 /** The News page body (pure: tested in `src/routes/-tests/news-page.test.tsx`). */
@@ -43,6 +72,7 @@ export function NewsPageView({
     controls,
     emptyText = "No news in this window.",
     error,
+    hiddenByFilters = 0,
     isLoading,
     items,
     liveIds,
@@ -55,6 +85,11 @@ export function NewsPageView({
     /** The empty list's line. */
     emptyText?: string;
     error: unknown;
+    /**
+     * Rows of the loaded page the page-side filters hid (source, earnings, Company-published: `/v2/news` has no
+     * parameter for them), so a page can show fewer rows than it loaded, or none.
+     */
+    hiddenByFilters?: number;
     isLoading: boolean;
     items: ReadonlyArray<NewsItemPublic>;
     liveIds?: ReadonlySet<string>;
@@ -84,9 +119,14 @@ export function NewsPageView({
                         <>
                             {/* Keyed by page: a new page starts at the top of the table. */}
                             <ScrollArea className="h-0 grow" key={pager.page}>
-                                {!isLoading && items.length === 0
+                                {!isLoading && items.length === 0 && hiddenByFilters === 0
                                     ? <div className="text-muted-foreground w-full p-2 text-center text-xs">{emptyText}</div>
-                                    : <NewsTable isLoading={isLoading} items={items} liveIds={liveIds} onOpen={onOpen} />}
+                                    : !isLoading && items.length === 0
+                                            ? <FilteredOut hidden={hiddenByFilters} pager={pager} shown={0} />
+                                            : <NewsTable isLoading={isLoading} items={items} liveIds={liveIds} onOpen={onOpen} />}
+                                {!isLoading && items.length > 0 && hiddenByFilters > 0 && (
+                                    <FilteredOut hidden={hiddenByFilters} pager={pager} shown={items.length} />
+                                )}
                             </ScrollArea>
                             <NewsPager {...pager} />
                         </>
@@ -102,33 +142,25 @@ function NewsPage() {
 
     const navigate = Route.useNavigate();
 
-    const market = search.scope === "market";
-
-    // "Company-published" filters by the publisher's CIK (verified issuer publications), not the ticker it mentions.
+    // "Company-published" keeps the items the company published itself (its verified publications, by CIK) among the
+    // ones that mention it: v2 has no publisher filter, so it filters the loaded page (as source and earnings do).
     const company = useCompanyDetails(ticker).data?.companies[0];
 
     const publisherCik = search.published ? company?.cik.replace(/^0+/, "") : undefined;
 
+    // `/v2/news` filters by company, kind, topic and the published window; v2 has no market-wide feed (decision 15:
+    // a company scope is required), so a stale `?scope=market` URL reads the company's news.
     const listInput: NewsListInput = {
-        earnings: search.earnings,
+        company: ticker,
         from: search.from,
-        issuerCategory: search.category ? [search.category] : undefined,
-        issuerTag: search.tag ? [search.tag] : undefined,
         kind: search.kind ? [search.kind] : undefined,
         limit: PAGE_SIZE,
-        paused: search.published === true && !publisherCik,
-        publicationType: search.pubType ? [search.pubType] : undefined,
-        publisher: publisherCik ? [publisherCik] : undefined,
-        // A publisher filter replaces the mention filter: the company's own items, whoever they mention.
-        scope: market || publisherCik ? "market" : "company",
-        source: search.source ? [search.source] : undefined,
-        ticker,
         to: search.to,
         topic: search.topic ? [search.topic] : undefined,
     };
 
     // Previous / Next over the keyset cursor: the visited cursors stack up; any filter or date change is page 1.
-    const filterKey = JSON.stringify({ ...listInput, paused: undefined });
+    const filterKey = JSON.stringify(listInput);
 
     const [storedPager, setPager] = useState(() => firstNewsPage(filterKey));
 
@@ -138,7 +170,7 @@ function NewsPage() {
 
     const list = useNewsPage({ ...listInput, cursor: newsPageCursor(pager) });
 
-    const listed = list.data?.items ?? [];
+    const fetched = list.data?.data ?? [];
 
     const nextCursor = list.data?.next_cursor ?? null;
 
@@ -152,6 +184,10 @@ function NewsPage() {
         tag: search.tag,
         topic: search.topic,
     };
+
+    // The filters `/v2/news` has no parameter for (source, earnings, Company-published + its type / category / tag) are
+    // applied to the loaded page; a page may then show fewer rows than PAGE_SIZE.
+    const listed = fetched.filter(item => matchesNewsFilters(item, filters));
 
     const onFilterChange = (patch: Partial<NewsSearch>) => {
         void navigate({ search: prev => ({ ...prev, ...patch }) });
@@ -188,7 +224,7 @@ function NewsPage() {
             earningsOnly: search.earnings === "true",
             kinds: search.kind ? [search.kind] : undefined,
             sources: search.source ? [search.source] : undefined,
-            tickers: market ? undefined : [ticker],
+            tickers: [ticker],
         },
         onResubscribed,
         onStop: onLiveStop,
@@ -208,11 +244,10 @@ function NewsPage() {
     const controls = (
         <div className="flex flex-wrap items-start justify-between gap-2">
             <NewsFilterControls
-                categories={publisherCik ? issuerLabels(listed, publisherCik, "categories") : []}
+                categories={publisherCik ? issuerLabels(fetched, publisherCik, "categories") : []}
                 onChange={onFilterChange}
                 search={search}
-                tags={publisherCik ? issuerLabels(listed, publisherCik, "tags") : []}
-                ticker={ticker}
+                tags={publisherCik ? issuerLabels(fetched, publisherCik, "tags") : []}
             />
             <NewsLiveToggle
                 live={search.live === true}
@@ -238,6 +273,7 @@ function NewsPage() {
                 controls={controls}
                 emptyText={search.from || search.to ? undefined : "No news yet."}
                 error={list.error}
+                hiddenByFilters={fetched.length - listed.length}
                 isLoading={list.isLoading}
                 items={items}
                 liveIds={liveIds}
@@ -252,12 +288,11 @@ function NewsPage() {
                     onPrevious: () => setPager(previousNewsPage(pager)),
                     page,
                 }}
-                scopeLabel={market ? "Every company" : search.published ? `Published by ${company?.name ?? ticker}` : `News about ${ticker}`}
+                scopeLabel={search.published ? `Published by ${company?.name ?? ticker}` : `News about ${ticker}`}
             />
             <NewsItemPanel
                 id={search.item ?? null}
                 onClose={() => void navigate({ search: prev => ({ ...prev, item: undefined }) })}
-                onOpen={openItem}
                 title={selectedTitle}
             />
         </>

@@ -1,6 +1,4 @@
-import * as React from "react";
-
-import type { NewsAttribution, NewsDevelopment, NewsItemResponse } from "@/lib/api/types";
+import type { NewsAttribution, NewsDevelopment, V2NewsItem, V2NewsText } from "@/lib/api/types";
 
 import { PdfDocumentSection } from "@/components/pdf/pdf-inline-viewer";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +7,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
-import { useNewsItem } from "@/lib/api/queries";
+import { useNewsAnnouncements, useNewsItem, useNewsText } from "@/lib/api/queries";
 import { formatInstant } from "@/lib/earnings/format";
 import {
     CLAIM_STATUS_LABELS,
@@ -20,7 +18,6 @@ import {
     publishedBy,
     sourceLabel,
 } from "@/lib/news/labels";
-import { prepareSummaryHtml } from "@/lib/news/summary-html";
 import { Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
 import { SummaryBody } from "./summary-body";
@@ -97,116 +94,116 @@ function Developments({ developments }: { developments: ReadonlyArray<NewsDevelo
 
 /**
  * The item panel's body (pure: tested in `src/routes/-tests/news-page.test.tsx`): the header (kind, source, publisher,
- * the attribution block with date and source link) → the lede → Invinite's summary → developments → the branded PDF.
+ * the attribution block with date and source link) → the lede → Invinite's summary (the text blocks) → the
+ * announcements read from the item → the branded PDF. v2 (backend tasks/data-api-v2 task 8): the item is the list row
+ * with its `pdf` (owner decision 2026-11-09), the summary comes from `/v2/news/{id}/text`, the developments from
+ * `/v2/announcements?item=`; the v1 detail's sightings, companies, source word count and `superseded_by` are not in
+ * the v2 contract (lead decision G4), so the panel shows none of them — never an empty section.
  */
 export function NewsItemView({
-    data,
+    announcements,
     error,
     isLoading,
-    onOpen,
+    item,
+    text,
+    textError,
 }: {
-    data: NewsItemResponse | null;
+    announcements: ReadonlyArray<NewsDevelopment>;
     error: unknown;
     isLoading: boolean;
-    onOpen: (id: string) => void;
+    item: null | V2NewsItem;
+    /** null while the text loads (or when it failed: `textError`); the header renders meanwhile. */
+    text: null | V2NewsText;
+    textError?: unknown;
 }) {
-    const summaryHtml = data?.content_status === "available" ? data.summary_html : null;
-
-    // Sanitized once per answer, not on every render.
-    const html = React.useMemo(() => (summaryHtml ? prepareSummaryHtml(summaryHtml) : null), [summaryHtml]);
-
     if (isTierError(error)) return <Notice badge="STANDARD" title="Your plan does not include news summaries" />;
 
     if (error instanceof ApiRequestError && error.status === 404) return <Notice title="This news item is not available" />;
 
     if (error) return <ErrorState error={error} title="Failed to load the news item" />;
 
-    if (isLoading || !data) return <Skeleton className="h-40 w-full" />;
+    if (isLoading || !item) return <Skeleton className="h-40 w-full" />;
 
-    const publishers = publishedBy(data);
+    const publishers = publishedBy(item);
 
-    const text = data.content_status === "available" ? (data.summary_text ?? "") : "";
+    const blocks = text?.content_status === "available" ? text.blocks : [];
 
     return (
         <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-2 text-xs">
-                <Badge variant="outline">{NEWS_KIND_LABELS[data.kind]}</Badge>
-                {data.is_earnings_news && <Badge variant="secondary">Earnings</Badge>}
-                <span className="text-muted-foreground">{sourceLabel(data.source.id)}</span>
+                <Badge variant="outline">{NEWS_KIND_LABELS[item.kind]}</Badge>
+                {item.is_earnings_news && <Badge variant="secondary">Earnings</Badge>}
+                <span className="text-muted-foreground">{sourceLabel(item.source.id)}</span>
                 {publishers.length > 0 && <span>{`Published by ${publishers.join(", ")}`}</span>}
-                {data.publications.map(publication => (
+                {item.publications.map(publication => (
                     <Badge key={`${publication.source_id}:${publication.url}`} variant="outline">
                         {publicationTypeLabel(publication.publication_type)}
                     </Badge>
                 ))}
             </div>
 
-            {data.superseded_by && (
-                <Notice title="A corrected version of this item exists">
-                    <button className="underline underline-offset-4" onClick={() => onOpen(data.superseded_by ?? "")} type="button">
-                        Open the corrected item
-                    </button>
-                </Notice>
-            )}
+            {item.supersedes_id && <Notice title="A corrected version of an earlier item" />}
 
-            <AttributionBlock attribution={data.attribution} />
+            <AttributionBlock attribution={text?.attribution ?? item.attribution} />
 
-            {data.description && <p className="text-sm font-medium" data-testid="news-lede">{data.description}</p>}
+            {item.description && <p className="text-sm font-medium" data-testid="news-lede">{item.description}</p>}
 
-            {html || text
-                ? (
-                        <section className="flex flex-col gap-1">
-                            {data.summary_words !== null && data.source_words !== null && (
-                                <div className="text-muted-foreground text-xs">
-                                    {`Summary by Invinite · ${data.summary_words.toLocaleString("en-US")} of ${data.source_words.toLocaleString("en-US")} words`}
-                                </div>
+            {textError
+                ? <ErrorState error={textError} title="Failed to load the summary" />
+                : text === null
+                    ? <Skeleton className="h-24 w-full" />
+                    : blocks.length > 0
+                        ? (
+                                <section className="flex flex-col gap-1">
+                                    {item.summary_words !== null && (
+                                        <div className="text-muted-foreground text-xs">
+                                            {`Summary by Invinite · ${item.summary_words.toLocaleString("en-US")} words`}
+                                        </div>
+                                    )}
+                                    <SummaryBody blocks={blocks} />
+                                </section>
+                            )
+                        : (
+                                <Notice title="Headline and link only">
+                                    No summary is served for this item.
+                                    {" "}
+                                    <a className="underline underline-offset-4" href={item.attribution.source_url} {...EXTERNAL}>Open at source</a>
+                                </Notice>
                             )}
-                            <SummaryBody html={html} text={text} />
-                        </section>
-                    )
-                : (
-                        <Notice title="Headline and link only">
-                            No summary is served for this item.
-                            {" "}
-                            <a className="underline underline-offset-4" href={data.attribution.source_url} {...EXTERNAL}>Open at source</a>
-                        </Notice>
-                    )}
 
-            {data.developments.length > 0 && <Developments developments={data.developments} />}
+            {announcements.length > 0 && <Developments developments={announcements} />}
 
-            <PdfDocumentSection filename={`news-${data.id}.pdf`} pdf={data.pdf} />
-
-            <section className="flex flex-col gap-1 text-xs">
-                <div className="text-sm font-medium">Seen on</div>
-                {data.sightings.map(sighting => (
-                    <div key={`${sighting.source_id}:${sighting.seen_at}`}>
-                        <a className="underline underline-offset-4" href={sighting.url} {...EXTERNAL}>{sourceLabel(sighting.source_id)}</a>
-                        {` ${formatInstant(sighting.seen_at)}`}
-                    </div>
-                ))}
-                {data.companies.length > 0 && (
-                    <div className="text-muted-foreground">{`Companies: ${data.companies.map(c => c.symbol).join(", ")}`}</div>
-                )}
-            </section>
+            <PdfDocumentSection filename={`news-${item.id}.pdf`} pdf={item.pdf} />
         </div>
     );
 }
 
 /** `?item=<id>`: the item in a dialog; `id: null` = closed (no request). */
-export function NewsItemPanel({ id, onClose, onOpen, title }: { id: null | string; onClose: () => void; onOpen: (id: string) => void; title?: string }) {
-    const { data, error, isLoading } = useNewsItem(id);
+export function NewsItemPanel({ id, onClose, title }: { id: null | string; onClose: () => void; title?: string }) {
+    const item = useNewsItem(id);
+
+    const text = useNewsText(id);
+
+    const announcements = useNewsAnnouncements(id);
 
     return (
         <Dialog onOpenChange={open => !open && onClose()} open={id !== null}>
             <DialogContent className="sm:max-w-5xl">
                 <DialogHeader>
-                    <DialogTitle>{data?.title ?? title ?? "News item"}</DialogTitle>
+                    <DialogTitle>{item.data?.title ?? title ?? "News item"}</DialogTitle>
                     <DialogDescription>Invinite&apos;s summary of the announcement</DialogDescription>
                 </DialogHeader>
                 <ScrollArea className="h-[80vh] pr-3">
                     {/* p-px: the viewport clips what lies outside it, and a Card's ring-1 does */}
                     <div className="p-px">
-                        <NewsItemView data={data} error={error} isLoading={isLoading} onOpen={onOpen} />
+                        <NewsItemView
+                            announcements={announcements.data?.data ?? []}
+                            error={item.error}
+                            isLoading={item.isLoading}
+                            item={item.data ?? null}
+                            text={text.data ?? null}
+                            textError={text.error}
+                        />
                     </div>
                 </ScrollArea>
             </DialogContent>

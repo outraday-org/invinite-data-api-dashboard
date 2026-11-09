@@ -14,8 +14,6 @@ import type {
     InstitutionalTransactionsResponse,
     InstitutionsResponse,
     IposResponse,
-    NewsItemResponse,
-    NewsListResponse,
     SecDocumentResponse,
     SecExportResponse,
     SecFigureResponse,
@@ -27,6 +25,7 @@ import type {
     SecSectionsResponse,
     SegmentedFinancialsResponse,
     StandardizedFinancialsPresentationResponse,
+    V2AnnouncementsResponse,
     V2AudioResponse,
     V2CompanyResponse,
     V2DateKind,
@@ -51,6 +50,9 @@ import type {
     V2LiveAudioResponse,
     V2MarketHolidaysResponse,
     V2MarketHolidaysSort,
+    V2NewsItem,
+    V2NewsListResponse,
+    V2NewsText,
     V2ParticipantsResponse,
     V2PressReleaseResponse,
     V2PriceAttributionResponse,
@@ -638,52 +640,37 @@ export const getFinancialCagr = createServerFn({ method: "GET" })
         return res;
     });
 
-// News (IDA /v1/news*, backend earnings tasks/inhouse-news-pipeline task 17)
+// News (IDA /v2/news*, backend tasks/data-api-v2 task 8; the page since backend earnings inhouse-news-pipeline task 17)
 
 const newsListSchema = z.object({
     apiKey: apiKeySchema,
+    /** Ticker or CIK: v2 lists a company's news only (no market-wide feed, decision 15). */
+    company: z.string().trim().min(1),
     cursor: z.string().optional(),
-    earnings: z.enum(["true", "false"]).optional(),
-    from: z.string().optional(),
-    issuerCategory: z.array(z.string()).optional(),
-    issuerTag: z.array(z.string()).optional(),
     kind: z.array(z.string()).optional(),
     limit: z.number().int().min(1).max(200).optional(),
-    publicationType: z.array(z.string()).optional(),
-    /** Publisher CIKs: items the company published itself (a verified issuer publication), not mentions. */
-    publisher: z.array(z.string()).optional(),
-    /** `market` = every company: `ticker` is not sent. */
-    scope: z.enum(["company", "market"]),
-    source: z.array(z.string()).optional(),
-    ticker: z.string().optional(),
-    to: z.string().optional(),
+    /** ISO instants: `published_at.gte` / `published_at.lt`. */
+    publishedAtGte: z.string().optional(),
+    publishedAtLt: z.string().optional(),
     topic: z.array(z.string()).optional(),
 });
 
-const listOrUndefined = (values: Array<string> | undefined) => (values?.length ? values : undefined);
-
-export const getNewsList = createServerFn({ method: "GET" })
+export const getV2News = createServerFn({ method: "GET" })
     .inputValidator(newsListSchema)
-    .handler(async ({ data }): Promise<NewsListResponse> => {
-        const api = createApiClient(data.apiKey);
+    .handler(async ({ data }): Promise<V2NewsListResponse> => {
+        const { apiKey, company, cursor, kind, limit, publishedAtGte, publishedAtLt, topic } = data;
 
-        const { data: res, error, response } = await api.GET("/v1/news", {
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/news", {
             params: {
-                query: {
-                    cursor: data.cursor,
-                    earnings: data.earnings,
-                    from: data.from,
-                    issuer_category: listOrUndefined(data.issuerCategory),
-                    issuer_tag: listOrUndefined(data.issuerTag),
-                    kind: listOrUndefined(data.kind),
-                    limit: data.limit,
-                    publication_type: listOrUndefined(data.publicationType),
-                    publisher: listOrUndefined(data.publisher),
-                    source: listOrUndefined(data.source),
-                    ticker: data.scope === "company" && data.ticker ? [data.ticker] : undefined,
-                    to: data.to,
-                    topic: listOrUndefined(data.topic),
-                },
+                query: v2Query({
+                    company,
+                    cursor,
+                    "kind": v2Expand(kind),
+                    limit,
+                    "published_at.gte": publishedAtGte,
+                    "published_at.lt": publishedAtLt,
+                    "topic": v2Expand(topic),
+                }),
             },
         });
 
@@ -692,13 +679,60 @@ export const getNewsList = createServerFn({ method: "GET" })
         return res;
     });
 
-export const getNewsItem = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, id: z.string().uuid() }))
-    .handler(async ({ data }): Promise<NewsItemResponse> => {
+const newsItemInputSchema = z.object({ apiKey: apiKeySchema, id: z.string().uuid() });
+
+export const getV2NewsItem = createServerFn({ method: "GET" })
+    .inputValidator(newsItemInputSchema)
+    .handler(async ({ data }): Promise<V2NewsItem> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/news/{id}", {
+            params: { path: { id: data.id } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** Pages of a summary read at most (each up to 20,000 characters; a summary is far shorter). */
+const NEWS_TEXT_MAX_PAGES = 10;
+
+/**
+ * `GET /v2/news/{id}/text`, every page (`next_cursor`; lead decision G2). The blocks of all pages are joined into one
+ * answer.
+ */
+export const getV2NewsText = createServerFn({ method: "GET" })
+    .inputValidator(newsItemInputSchema)
+    .handler(async ({ data }): Promise<V2NewsText> => {
         const api = createApiClient(data.apiKey);
 
-        const { data: res, error, response } = await api.GET("/v1/news/{id}", {
-            params: { path: { id: data.id } },
+        let cursor: string | undefined;
+
+        let joined: undefined | V2NewsText;
+
+        for (let page = 0; page < NEWS_TEXT_MAX_PAGES; page += 1) {
+            const { data: res, error, response } = await api.GET("/v2/news/{id}/text", {
+                params: { path: { id: data.id }, query: v2Query({ cursor }) },
+            });
+
+            if (error) throwApiError(error, response);
+
+            joined = joined ? { ...res, blocks: [...joined.blocks, ...res.blocks] } : res;
+
+            cursor = res.next_cursor ?? undefined;
+
+            if (!cursor) break;
+        }
+
+        if (!joined) throw new Error("No news text page was read");
+
+        return joined;
+    });
+
+export const getV2Announcements = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, item: z.string().uuid(), limit: z.number().int().min(1).max(200).optional() }))
+    .handler(async ({ data }): Promise<V2AnnouncementsResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/announcements", {
+            params: { query: v2Query({ item: data.item, limit: data.limit }) },
         });
 
         if (error) throwApiError(error, response);

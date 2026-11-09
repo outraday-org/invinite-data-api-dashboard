@@ -76,17 +76,19 @@ export type SegmentedFinancialFact
 // JSON, so those fields are narrowed to `JsonValue`.
 export type JsonValue = Array<JsonValue> | boolean | null | number | string | { [key: string]: JsonValue };
 
-// News (IDA /v1/news*)
-export type NewsListResponse = ApiResponse<"/v1/news", "get">;
-export type NewsItemResponse = ApiResponse<"/v1/news/{id}", "get">;
-/** A `GET /v1/news` row; also the `item` of a `news.live` `news_item` frame. */
-export type NewsItemPublic = NewsListResponse["items"][number];
+// News (IDA /v2/news*, backend tasks/data-api-v2 task 8)
+export type V2NewsListResponse = ApiResponse<"/v2/news", "get">;
+export type V2NewsItem = ApiResponse<"/v2/news/{id}", "get">;
+export type V2NewsText = ApiResponse<"/v2/news/{id}/text", "get">;
+export type V2NewsBlock = V2NewsText["blocks"][number];
+export type V2AnnouncementsResponse = ApiResponse<"/v2/announcements", "get">;
+/** The list row = the item member = the `news.live` WebSocket frame's `item` (one projection, IDA `toNewsItemPublic`). */
+export type NewsItemPublic = V2NewsItem;
 export type NewsAttribution = NewsItemPublic["attribution"];
 export type NewsPublication = NewsItemPublic["publications"][number];
 export type NewsKind = NewsItemPublic["kind"];
-export type NewsDevelopment = NewsItemResponse["developments"][number];
-export type NewsSighting = NewsItemResponse["sightings"][number];
-export type NewsQuery = ApiQuery<"/v1/news">;
+/** An announcement (v1 "development") of a news item. */
+export type NewsDevelopment = V2AnnouncementsResponse["data"][number];
 
 // SEC document store (IDA `/v1/sec/*`, backend delivery-integration task 2). Most nested objects are typed
 // `{ [key: string]: unknown }` by the spec (`additionalProperties`); `SecJson` narrows every `unknown` to `JsonValue`
