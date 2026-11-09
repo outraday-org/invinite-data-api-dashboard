@@ -9,11 +9,8 @@ import type { AssetGroupCategory } from "@/lib/earnings/documents";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import type {
-    CagrPeriodYears,
     CompanyFiscalPeriod,
     FiscalPeriodType,
-    GrowthType,
-    RatioCategory,
     SearchMode,
     SecDocumentResponse,
     SecExportResponse,
@@ -27,13 +24,15 @@ import type {
     SecSearchMode,
     SecSearchResponse,
     SecSectionsResponse,
-    SegmentedFinancialsSegmentId,
     StatementType,
     V2AnnouncementsResponse,
     V2AudioResponse,
+    V2CagrHorizon,
+    V2CagrResponse,
     V2CompanyExpand,
     V2CompanyResponse,
     V2DateKind,
+    V2DisplaySign,
     V2DividendsResponse,
     V2DividendsSort,
     V2DocumentFigureResponse,
@@ -45,12 +44,17 @@ import type {
     V2EventStatsResponse,
     V2EventStatus,
     V2EventType,
+    V2FactResponse,
     V2FilerExpand,
     V2FilerResponse,
     V2FilingDetailResponse,
     V2FilingExpand,
     V2FilingsResponse,
     V2FilingsSort,
+    V2FinancialsBasis,
+    V2FinancialsView,
+    V2GrowthBasis,
+    V2GrowthResponse,
     V2GuidanceBasis,
     V2GuidancePeriodKind,
     V2GuidanceResponse,
@@ -79,10 +83,15 @@ import type {
     V2ProsodyResponse,
     V2ProsodySection,
     V2QaResponse,
+    V2RatioCategory,
+    V2RatiosResponse,
+    V2SegmentsDetailedResponse,
+    V2SegmentsResponse,
     V2SlidesInclude,
     V2SlidesResponse,
     V2SplitsResponse,
     V2SplitsSort,
+    V2StatementsResponse,
     V2TranscriptDiffResponse,
     V2TranscriptLayer,
     V2TranscriptResponse,
@@ -96,12 +105,8 @@ import type {
 import { ApiRequestError, errorDescription, rethrowApiError, retryUnlessApiError } from "./errors";
 import {
     getApiBaseUrl,
-    getAsReportedFinancialsPresentation,
     getCompanyDetails,
     getCompanyFiscalPeriods,
-    getFinancialCagr,
-    getFinancialGrowth,
-    getFinancialRatios,
     getSecDocument,
     getSecExport,
     getSecExportFile,
@@ -113,10 +118,12 @@ import {
     getSecSearch,
     getSecSections,
     getSecVersion,
-    getSegmentedFinancials,
-    getStandardizedFinancials,
     getV2Announcements,
+    getV2AsReported,
+    getV2AsReportedDetailed,
+    getV2AsReportedPresentation,
     getV2Audio,
+    getV2Cagr,
     getV2Company,
     getV2Dividends,
     getV2DocumentFigure,
@@ -125,9 +132,11 @@ import {
     getV2EventComparison,
     getV2Events,
     getV2EventStats,
+    getV2Fact,
     getV2Filer,
     getV2Filing,
     getV2Filings,
+    getV2Growth,
     getV2Guidance,
     getV2HoldingChanges,
     getV2Holdings,
@@ -147,8 +156,14 @@ import {
     getV2PriceAttribution,
     getV2Prosody,
     getV2Qa,
+    getV2Ratios,
+    getV2Segments,
+    getV2SegmentsDetailed,
     getV2Slides,
     getV2Splits,
+    getV2Standardized,
+    getV2StandardizedDetailed,
+    getV2StandardizedPresentation,
     getV2Transcript,
     getV2TranscriptDiff,
     getV2TranscriptSearch,
@@ -185,153 +200,6 @@ export const companyDetailsOptions = (identifier: string) =>
         enabled: identifier.trim().length > 0,
         queryFn: () => getCompanyDetails({ data: { identifier } }),
         queryKey: ["company", "details", identifier],
-        staleTime: 5 * 60 * 1000,
-    });
-
-type StandardizedFinancialsInput = {
-    fiscalPeriodType: FiscalPeriodType;
-    identifier: string;
-    limit?: number;
-    offset?: number;
-    sort?: "asc" | "desc";
-    statement: StatementType;
-};
-
-export const standardizedFinancialsOptions = (input: StandardizedFinancialsInput) =>
-    queryOptions({
-        enabled: input.identifier.trim().length > 0,
-        queryFn: () => getStandardizedFinancials({ data: input }),
-        queryKey: [
-            "standardized",
-            input.statement,
-            input.identifier,
-            input.fiscalPeriodType,
-            input.sort ?? "desc",
-            input.limit ?? 8,
-            input.offset ?? 0,
-        ],
-        staleTime: 5 * 60 * 1000,
-    });
-
-type AsReportedFinancialsPresentationInput = StandardizedFinancialsInput;
-
-export const asReportedFinancialsPresentationOptions = (
-    input: AsReportedFinancialsPresentationInput,
-) =>
-    queryOptions({
-        enabled: input.identifier.trim().length > 0,
-        queryFn: () => getAsReportedFinancialsPresentation({ data: input }),
-        queryKey: [
-            "as-reported",
-            "presentation",
-            input.statement,
-            input.identifier,
-            input.fiscalPeriodType,
-            input.sort ?? "desc",
-            input.limit ?? 8,
-            input.offset ?? 0,
-        ],
-        staleTime: 5 * 60 * 1000,
-    });
-
-type SegmentedFinancialsInput = {
-    fiscalPeriodType: FiscalPeriodType;
-    identifier: string;
-    limit?: number;
-    offset?: number;
-    segmentId?: SegmentedFinancialsSegmentId;
-    sort?: "asc" | "desc";
-};
-
-type FinancialRatiosInput = {
-    category?: RatioCategory;
-    fiscalPeriodType: FiscalPeriodType;
-    identifier: string;
-    limit?: number;
-    offset?: number;
-    sort?: "asc" | "desc";
-};
-
-type FinancialGrowthInput = {
-    fiscalPeriodType: FiscalPeriodType;
-    growthType?: GrowthType;
-    identifier: string;
-    limit?: number;
-    offset?: number;
-    sort?: "asc" | "desc";
-};
-
-type FinancialCagrInput = {
-    identifier: string;
-    limit?: number;
-    offset?: number;
-    periodYears?: CagrPeriodYears;
-    sort?: "asc" | "desc";
-};
-
-export const segmentedFinancialsOptions = (input: SegmentedFinancialsInput) =>
-    queryOptions({
-        enabled: input.identifier.trim().length > 0,
-        queryFn: () => getSegmentedFinancials({ data: input }),
-        queryKey: [
-            "segmented-financials",
-            input.identifier,
-            input.fiscalPeriodType,
-            input.segmentId ?? "all",
-            input.sort ?? "desc",
-            input.limit ?? 8,
-            input.offset ?? 0,
-        ],
-        staleTime: 5 * 60 * 1000,
-    });
-
-export const financialRatiosOptions = (input: FinancialRatiosInput) =>
-    queryOptions({
-        enabled: input.identifier.trim().length > 0,
-        queryFn: () => getFinancialRatios({ data: input }),
-        queryKey: [
-            "financial-metrics",
-            "ratios",
-            input.identifier,
-            input.fiscalPeriodType,
-            input.category ?? "all",
-            input.sort ?? "desc",
-            input.limit ?? 8,
-            input.offset ?? 0,
-        ],
-        staleTime: 5 * 60 * 1000,
-    });
-
-export const financialGrowthOptions = (input: FinancialGrowthInput) =>
-    queryOptions({
-        enabled: input.identifier.trim().length > 0,
-        queryFn: () => getFinancialGrowth({ data: input }),
-        queryKey: [
-            "financial-metrics",
-            "growth",
-            input.identifier,
-            input.fiscalPeriodType,
-            input.growthType ?? "all",
-            input.sort ?? "desc",
-            input.limit ?? 8,
-            input.offset ?? 0,
-        ],
-        staleTime: 5 * 60 * 1000,
-    });
-
-export const financialCagrOptions = (input: FinancialCagrInput) =>
-    queryOptions({
-        enabled: input.identifier.trim().length > 0,
-        queryFn: () => getFinancialCagr({ data: input }),
-        queryKey: [
-            "financial-metrics",
-            "cagr",
-            input.identifier,
-            input.periodYears ?? "all",
-            input.sort ?? "desc",
-            input.limit ?? 8,
-            input.offset ?? 0,
-        ],
         staleTime: 5 * 60 * 1000,
     });
 
@@ -388,137 +256,6 @@ export function useCompanyDetails(identifier: string) {
     );
 
     useErrorToast(result.error, "Failed to load company details");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useStandardizedFinancials(input: StandardizedFinancialsInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const result = useQuery(
-        queryOptions({
-            ...standardizedFinancialsOptions(input),
-            enabled: hasHydrated && input.identifier.trim().length > 0,
-            queryFn: () =>
-                getStandardizedFinancials({ data: { ...input, apiKey: apiKey ?? undefined } }),
-            queryKey: [...standardizedFinancialsOptions(input).queryKey, String(apiKeyUpdatedAt)],
-        }),
-    );
-
-    useErrorToast(result.error, "Failed to load financials");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useAsReportedFinancialsPresentation(
-    input: AsReportedFinancialsPresentationInput,
-) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const result = useQuery(
-        queryOptions({
-            ...asReportedFinancialsPresentationOptions(input),
-            enabled: hasHydrated && input.identifier.trim().length > 0,
-            queryFn: () =>
-                getAsReportedFinancialsPresentation({ data: { ...input, apiKey: apiKey ?? undefined } }),
-            queryKey: [
-                ...asReportedFinancialsPresentationOptions(input).queryKey,
-                String(apiKeyUpdatedAt),
-            ],
-        }),
-    );
-
-    useErrorToast(result.error, "Failed to load as-reported financials");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useSegmentedFinancials(input: SegmentedFinancialsInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const result = useQuery(
-        queryOptions({
-            ...segmentedFinancialsOptions(input),
-            enabled: hasHydrated && input.identifier.trim().length > 0,
-            queryFn: () =>
-                getSegmentedFinancials({ data: { ...input, apiKey: apiKey ?? undefined } }),
-            queryKey: [...segmentedFinancialsOptions(input).queryKey, String(apiKeyUpdatedAt)],
-        }),
-    );
-
-    useErrorToast(result.error, "Failed to load segmented financials");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useFinancialRatios(input: FinancialRatiosInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const result = useQuery(
-        queryOptions({
-            ...financialRatiosOptions(input),
-            enabled: hasHydrated && input.identifier.trim().length > 0,
-            queryFn: () =>
-                getFinancialRatios({ data: { ...input, apiKey: apiKey ?? undefined } }),
-            queryKey: [...financialRatiosOptions(input).queryKey, String(apiKeyUpdatedAt)],
-        }),
-    );
-
-    useErrorToast(result.error, "Failed to load financial ratios");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useFinancialGrowth(input: FinancialGrowthInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const result = useQuery(
-        queryOptions({
-            ...financialGrowthOptions(input),
-            enabled: hasHydrated && input.identifier.trim().length > 0,
-            queryFn: () =>
-                getFinancialGrowth({ data: { ...input, apiKey: apiKey ?? undefined } }),
-            queryKey: [...financialGrowthOptions(input).queryKey, String(apiKeyUpdatedAt)],
-        }),
-    );
-
-    useErrorToast(result.error, "Failed to load growth financials");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useFinancialCagr(input: FinancialCagrInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const result = useQuery(
-        queryOptions({
-            ...financialCagrOptions(input),
-            enabled: hasHydrated && input.identifier.trim().length > 0,
-            queryFn: () =>
-                getFinancialCagr({ data: { ...input, apiKey: apiKey ?? undefined } }),
-            queryKey: [...financialCagrOptions(input).queryKey, String(apiKeyUpdatedAt)],
-        }),
-    );
-
-    useErrorToast(result.error, "Failed to load CAGR financials");
 
     return {
         ...result,
@@ -1539,5 +1276,168 @@ export function useV2IposInfinite(input: V2IposInput) {
         queryKey: ["v2", "ipos", input.company ?? "", key(input.stage), input.sort ?? "", input.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
+    });
+}
+
+// Financials + Metrics groups on v2 (`/v2/financials/*`, `/v2/metrics/*`, `/v2/segments*`, `/v2/facts/*`, backend
+// tasks/data-api-v2 task 5). Status-aware (`errorMessage: null`): the plan gate of a PRO view (403 `plan_required`) and
+// 404 `not_covered` are page states. A first page with `meta.coverage.state: pending` (`data: []`: the statement table
+// is filled after a release) is asked again every 30 s.
+
+const FINANCIALS_STALE_MS = 10 * 60 * 1000;
+
+export type V2FinancialsInput = {
+    /** Point in time (`YYYY-MM-DD`): the newest rendering filed on or before it. */
+    asOf?: string;
+    basis: V2FinancialsBasis;
+    company: string;
+    /** As-reported only (never sent on standardized: an unknown parameter is a 400). */
+    displaySign?: V2DisplaySign;
+    /** Accession: pin one filing's rendering. */
+    filing?: string;
+    limit?: number;
+    period: FiscalPeriodType;
+    /** As-reported only: drop Invinite-derived values. */
+    reportedOnly?: boolean;
+    /** Any of; omitted = all three. */
+    statement?: Array<StatementType>;
+    view: V2FinancialsView;
+};
+
+/** One page of the statement operation that `basis` × `view` names. */
+function fetchStatementsPage(input: V2FinancialsInput, cursor: null | string, apiKey: string | undefined): Promise<V2StatementsResponse> {
+    const base = {
+        apiKey,
+        asOf: input.asOf,
+        company: input.company,
+        cursor: cursor ?? undefined,
+        filing: input.filing,
+        limit: input.limit,
+        period: input.period,
+        statement: input.statement,
+    };
+
+    if (input.basis === "standardized") {
+        switch (input.view) {
+            case "detailed":
+                return getV2StandardizedDetailed({ data: base });
+            case "presentation":
+                return getV2StandardizedPresentation({ data: base });
+            case "summary":
+                return getV2Standardized({ data: base });
+        }
+    }
+
+    const data = { ...base, displaySign: input.displaySign, reportedOnly: input.reportedOnly };
+
+    switch (input.view) {
+        case "detailed":
+            return getV2AsReportedDetailed({ data });
+        case "presentation":
+            return getV2AsReportedPresentation({ data });
+        case "summary":
+            return getV2AsReported({ data });
+    }
+}
+
+/** A company's statements (one row per fiscal period, newest first) by cursor, in the basis × view's shape. */
+export function useV2FinancialsInfinite(input: V2FinancialsInput) {
+    const asReported = input.basis === "as-reported";
+
+    return useEarningsInfinite<V2StatementsResponse>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => fetchStatementsPage(input, cursor, apiKey),
+        queryKey: [
+            "v2",
+            "financials",
+            input.basis,
+            input.view,
+            input.company,
+            key(input.statement),
+            input.period,
+            input.asOf ?? "",
+            input.filing ?? "",
+            asReported ? String(input.reportedOnly ?? "") : "",
+            asReported ? input.displaySign ?? "" : "",
+            input.limit ?? "",
+        ],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: FINANCIALS_STALE_MS,
+    });
+}
+
+type V2PeriodListInput = { company: string; limit?: number; period: FiscalPeriodType };
+
+/** Ratios per period by cursor (`category` any of). */
+export function useV2RatiosInfinite(input: V2PeriodListInput & { category?: Array<V2RatioCategory> }) {
+    return useEarningsInfinite<V2RatiosResponse>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2Ratios({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "metrics", "ratios", input.company, input.period, key(input.category), input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: FINANCIALS_STALE_MS,
+    });
+}
+
+/** Growth per period by cursor (`basis` omitted = both bases, one row each). */
+export function useV2GrowthInfinite(input: V2PeriodListInput & { basis?: V2GrowthBasis }) {
+    return useEarningsInfinite<V2GrowthResponse>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2Growth({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "metrics", "growth", input.company, input.period, input.basis ?? "", input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: FINANCIALS_STALE_MS,
+    });
+}
+
+/** CAGR per period by cursor (`horizon` omitted = every horizon, one row each). */
+export function useV2CagrInfinite(input: V2PeriodListInput & { horizon?: V2CagrHorizon }) {
+    return useEarningsInfinite<V2CagrResponse>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2Cagr({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "metrics", "cagr", input.company, input.period, input.horizon ?? "", input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: FINANCIALS_STALE_MS,
+    });
+}
+
+export type V2SegmentsInput = V2PeriodListInput & { axis?: Array<string>; metric?: Array<string> };
+
+/** Segment facts by cursor (one row per fact). */
+export function useV2SegmentsInfinite(input: V2SegmentsInput) {
+    return useEarningsInfinite<V2SegmentsResponse>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2Segments({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "segments", input.company, input.period, key(input.metric), key(input.axis), input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: FINANCIALS_STALE_MS,
+    });
+}
+
+/** Segment facts with lineage (PRO) by cursor. */
+export function useV2SegmentsDetailedInfinite(input: V2SegmentsInput) {
+    return useEarningsInfinite<V2SegmentsDetailedResponse>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2SegmentsDetailed({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "segments", "detailed", input.company, input.period, key(input.metric), key(input.axis), input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: FINANCIALS_STALE_MS,
+    });
+}
+
+/** Why a standardized fact has its value; idle for a null id. */
+export function useV2Fact(factId: null | string) {
+    return useEarningsQuery<V2FactResponse>({
+        enabled: Boolean(factId),
+        errorMessage: null,
+        load: apiKey => getV2Fact({ data: { apiKey, factId: factId ?? "" } }),
+        queryKey: ["v2", "fact", factId ?? ""],
+        staleTime: FINANCIALS_STALE_MS,
     });
 }

@@ -2282,6 +2282,1588 @@
         },
         "title": "MappingRule"
       },
+      "StandardizedPeriod": {
+        "type": "object",
+        "description": "One fiscal period of standardized statements",
+        "required": [
+          "company",
+          "fiscal_year",
+          "fiscal_quarter",
+          "period",
+          "period_start",
+          "period_end",
+          "calendar_year",
+          "calendar_quarter",
+          "currency",
+          "source",
+          "statements"
+        ],
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "description": "Fiscal year",
+            "example": 2026
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "description": "Fiscal quarter (4 on annual rows)",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 4
+          },
+          "period": {
+            "type": "string",
+            "description": "Period type",
+            "enum": [
+              "annual",
+              "quarterly",
+              "ytd",
+              "ttm"
+            ],
+            "example": "annual"
+          },
+          "period_start": {
+            "type": "string",
+            "description": "First day of the period",
+            "format": "date",
+            "nullable": true
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Last day of the period",
+            "format": "date"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year of period_end"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter of period_end",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "currency": {
+            "type": "string",
+            "description": "Reporting currency of every monetary value of the row",
+            "example": "USD",
+            "nullable": true
+          },
+          "source": {
+            "$ref": "#/components/schemas/FilingSource"
+          },
+          "statements": {
+            "type": "object",
+            "description": "The requested statements (`statement=`); a statement that was not requested is absent",
+            "properties": {
+              "income_statement": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "$ref": "#/components/schemas/StandardizedFacts"
+                  }
+                }
+              },
+              "balance_sheet": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "$ref": "#/components/schemas/StandardizedFacts"
+                  }
+                }
+              },
+              "cash_flow": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "$ref": "#/components/schemas/StandardizedFacts"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "title": "StandardizedPeriod"
+      },
+      "FilingSource": {
+        "type": "object",
+        "description": "The filing a statement period was rendered from",
+        "required": [
+          "accession",
+          "form",
+          "filed_at",
+          "restated"
+        ],
+        "properties": {
+          "accession": {
+            "type": "string",
+            "description": "Accession of the filing this rendering comes from",
+            "example": "0000320193-26-000026"
+          },
+          "form": {
+            "type": "string",
+            "description": "Form",
+            "example": "10-K"
+          },
+          "filed_at": {
+            "type": "string",
+            "description": "When the filing was accepted by EDGAR",
+            "format": "date-time"
+          },
+          "restated": {
+            "type": "boolean",
+            "description": "true when a later filing restated this period (point-in-time reads only)"
+          }
+        },
+        "title": "FilingSource"
+      },
+      "StandardizedFacts": {
+        "type": "object",
+        "description": "`{metric_id: value}` — the plain standardized facts of one statement",
+        "additionalProperties": {
+          "type": "number",
+          "description": "Value at full magnitude in `currency`"
+        },
+        "title": "StandardizedFacts"
+      },
+      "StandardizedDetailedPeriod": {
+        "type": "object",
+        "description": "One fiscal period of standardized statements with lineage",
+        "required": [
+          "company",
+          "fiscal_year",
+          "fiscal_quarter",
+          "period",
+          "period_start",
+          "period_end",
+          "calendar_year",
+          "calendar_quarter",
+          "currency",
+          "source",
+          "statements"
+        ],
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "description": "Fiscal year",
+            "example": 2026
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "description": "Fiscal quarter (4 on annual rows)",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 4
+          },
+          "period": {
+            "type": "string",
+            "description": "Period type",
+            "enum": [
+              "annual",
+              "quarterly",
+              "ytd",
+              "ttm"
+            ],
+            "example": "annual"
+          },
+          "period_start": {
+            "type": "string",
+            "description": "First day of the period",
+            "format": "date",
+            "nullable": true
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Last day of the period",
+            "format": "date"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year of period_end"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter of period_end",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "currency": {
+            "type": "string",
+            "description": "Reporting currency of every monetary value of the row",
+            "example": "USD",
+            "nullable": true
+          },
+          "source": {
+            "$ref": "#/components/schemas/FilingSource"
+          },
+          "statements": {
+            "type": "object",
+            "description": "The requested statements (`statement=`); a statement that was not requested is absent",
+            "properties": {
+              "income_statement": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "$ref": "#/components/schemas/StandardizedDetailedFacts"
+                  }
+                }
+              },
+              "balance_sheet": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "$ref": "#/components/schemas/StandardizedDetailedFacts"
+                  }
+                }
+              },
+              "cash_flow": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "$ref": "#/components/schemas/StandardizedDetailedFacts"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "title": "StandardizedDetailedPeriod"
+      },
+      "StandardizedDetailedFacts": {
+        "type": "object",
+        "description": "`{metric_id: StandardizedDetailedFact}`",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/StandardizedDetailedFact"
+        },
+        "title": "StandardizedDetailedFacts"
+      },
+      "StandardizedDetailedFact": {
+        "type": "object",
+        "description": "One standardized fact with lineage (PRO)",
+        "required": [
+          "value",
+          "unit",
+          "fact_id",
+          "formula",
+          "accession",
+          "html_tag_id",
+          "parent_id"
+        ],
+        "properties": {
+          "value": {
+            "type": "number",
+            "description": "Value at full magnitude"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit",
+            "example": "USD",
+            "nullable": true
+          },
+          "fact_id": {
+            "type": "string",
+            "description": "Id of this standardized fact (`GET /v2/facts/{fact_id}` explains it)",
+            "example": "0000320193|is_total_revenue|annual|2026|4"
+          },
+          "formula": {
+            "type": "object",
+            "description": "How a derived value was computed; null for a reported value",
+            "required": [
+              "formula_str",
+              "members"
+            ],
+            "properties": {
+              "formula_str": {
+                "type": "string",
+                "description": "Readable formula",
+                "example": "is_revenue_q1 + is_revenue_q2 + is_revenue_q3"
+              },
+              "members": {
+                "type": "array",
+                "description": "The formula's operands",
+                "items": {
+                  "$ref": "#/components/schemas/FormulaMember"
+                }
+              }
+            },
+            "nullable": true
+          },
+          "accession": {
+            "type": "string",
+            "description": "Filing the value comes from",
+            "nullable": true
+          },
+          "html_tag_id": {
+            "type": "string",
+            "description": "Inline-XBRL element id in that filing",
+            "nullable": true
+          },
+          "parent_id": {
+            "type": "string",
+            "description": "Metric id of the parent line",
+            "nullable": true
+          }
+        },
+        "title": "StandardizedDetailedFact"
+      },
+      "FormulaMember": {
+        "type": "object",
+        "description": "One operand of a formula; `concept` is set on reported members, `metric_id` on standardized ones (one object, no union: R17)",
+        "required": [
+          "type",
+          "value"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "reported = an XBRL fact of the filing; standardized = another standardized metric",
+            "enum": [
+              "reported",
+              "standardized"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "description": "Value of the member"
+          },
+          "concept": {
+            "type": "string",
+            "description": "Financial concept",
+            "nullable": true
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Start date (YYYY-MM-DD)"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "End date (YYYY-MM-DD)"
+          },
+          "instant_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Instant date (YYYY-MM-DD)"
+          },
+          "segment": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Segment information"
+          },
+          "fiscal_period_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Fiscal period type"
+          },
+          "metric_id": {
+            "type": "string",
+            "description": "Standardized metric ID",
+            "nullable": true
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Fiscal year"
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Fiscal quarter"
+          }
+        },
+        "title": "FormulaMember"
+      },
+      "StandardizedPresentationPeriod": {
+        "type": "object",
+        "description": "One fiscal period of standardized statements as a presentation tree",
+        "required": [
+          "company",
+          "fiscal_year",
+          "fiscal_quarter",
+          "period",
+          "period_start",
+          "period_end",
+          "calendar_year",
+          "calendar_quarter",
+          "currency",
+          "source",
+          "statements"
+        ],
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "description": "Fiscal year",
+            "example": 2026
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "description": "Fiscal quarter (4 on annual rows)",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 4
+          },
+          "period": {
+            "type": "string",
+            "description": "Period type",
+            "enum": [
+              "annual",
+              "quarterly",
+              "ytd",
+              "ttm"
+            ],
+            "example": "annual"
+          },
+          "period_start": {
+            "type": "string",
+            "description": "First day of the period",
+            "format": "date",
+            "nullable": true
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Last day of the period",
+            "format": "date"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year of period_end"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter of period_end",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "currency": {
+            "type": "string",
+            "description": "Reporting currency of every monetary value of the row",
+            "example": "USD",
+            "nullable": true
+          },
+          "source": {
+            "$ref": "#/components/schemas/FilingSource"
+          },
+          "statements": {
+            "type": "object",
+            "description": "The requested statements (`statement=`); a statement that was not requested is absent",
+            "properties": {
+              "income_statement": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/StandardizedPresentationFact"
+                    }
+                  }
+                }
+              },
+              "balance_sheet": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/StandardizedPresentationFact"
+                    }
+                  }
+                }
+              },
+              "cash_flow": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/StandardizedPresentationFact"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "title": "StandardizedPresentationPeriod"
+      },
+      "AsReportedPeriod": {
+        "type": "object",
+        "description": "One fiscal period of as-reported statements",
+        "required": [
+          "company",
+          "fiscal_year",
+          "fiscal_quarter",
+          "period",
+          "period_start",
+          "period_end",
+          "calendar_year",
+          "calendar_quarter",
+          "currency",
+          "source",
+          "statements"
+        ],
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "description": "Fiscal year",
+            "example": 2026
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "description": "Fiscal quarter (4 on annual rows)",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 4
+          },
+          "period": {
+            "type": "string",
+            "description": "Period type",
+            "enum": [
+              "annual",
+              "quarterly",
+              "ytd",
+              "ttm"
+            ],
+            "example": "annual"
+          },
+          "period_start": {
+            "type": "string",
+            "description": "First day of the period",
+            "format": "date",
+            "nullable": true
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Last day of the period",
+            "format": "date"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year of period_end"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter of period_end",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "currency": {
+            "type": "string",
+            "description": "Reporting currency of every monetary value of the row",
+            "example": "USD",
+            "nullable": true
+          },
+          "source": {
+            "$ref": "#/components/schemas/FilingSource"
+          },
+          "statements": {
+            "type": "object",
+            "description": "The requested statements (`statement=`); a statement that was not requested is absent",
+            "properties": {
+              "income_statement": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "$ref": "#/components/schemas/AsReportedFacts"
+                  }
+                }
+              },
+              "balance_sheet": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "$ref": "#/components/schemas/AsReportedFacts"
+                  }
+                }
+              },
+              "cash_flow": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "$ref": "#/components/schemas/AsReportedFacts"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "title": "AsReportedPeriod"
+      },
+      "AsReportedFacts": {
+        "type": "object",
+        "description": "`{concept: AsReportedFact}`",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/AsReportedFact"
+        },
+        "title": "AsReportedFacts"
+      },
+      "AsReportedDetailedPeriod": {
+        "type": "object",
+        "description": "One fiscal period of as-reported statements with labels and lineage",
+        "required": [
+          "company",
+          "fiscal_year",
+          "fiscal_quarter",
+          "period",
+          "period_start",
+          "period_end",
+          "calendar_year",
+          "calendar_quarter",
+          "currency",
+          "source",
+          "statements"
+        ],
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "description": "Fiscal year",
+            "example": 2026
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "description": "Fiscal quarter (4 on annual rows)",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 4
+          },
+          "period": {
+            "type": "string",
+            "description": "Period type",
+            "enum": [
+              "annual",
+              "quarterly",
+              "ytd",
+              "ttm"
+            ],
+            "example": "annual"
+          },
+          "period_start": {
+            "type": "string",
+            "description": "First day of the period",
+            "format": "date",
+            "nullable": true
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Last day of the period",
+            "format": "date"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year of period_end"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter of period_end",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "currency": {
+            "type": "string",
+            "description": "Reporting currency of every monetary value of the row",
+            "example": "USD",
+            "nullable": true
+          },
+          "source": {
+            "$ref": "#/components/schemas/FilingSource"
+          },
+          "statements": {
+            "type": "object",
+            "description": "The requested statements (`statement=`); a statement that was not requested is absent",
+            "properties": {
+              "income_statement": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "$ref": "#/components/schemas/AsReportedDetailedFacts"
+                  }
+                }
+              },
+              "balance_sheet": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "$ref": "#/components/schemas/AsReportedDetailedFacts"
+                  }
+                }
+              },
+              "cash_flow": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "$ref": "#/components/schemas/AsReportedDetailedFacts"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "title": "AsReportedDetailedPeriod"
+      },
+      "AsReportedDetailedFacts": {
+        "type": "object",
+        "description": "`{concept: AsReportedDetailedLineItem}`",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/AsReportedDetailedLineItem"
+        },
+        "title": "AsReportedDetailedFacts"
+      },
+      "AsReportedDetailedLineItem": {
+        "type": "object",
+        "required": [
+          "value",
+          "derived",
+          "label",
+          "company_label",
+          "decimals",
+          "accession",
+          "html_tag_id",
+          "formula"
+        ],
+        "properties": {
+          "value": {
+            "type": "number",
+            "description": "Fact value (as filed unless `display_sign=cash_flow_direction`)"
+          },
+          "derived": {
+            "type": "boolean",
+            "description": "true when Invinite computed the value (a Q4, TTM or YTD derivation, see `formula`); false = the company reported it"
+          },
+          "label": {
+            "type": "string",
+            "nullable": true,
+            "description": "The concept's taxonomy label"
+          },
+          "company_label": {
+            "type": "string",
+            "nullable": true,
+            "description": "The company's own caption of the line item in the filing (null when it was not extracted)"
+          },
+          "decimals": {
+            "type": "integer",
+            "nullable": true,
+            "description": "XBRL decimals of the reported fact (-6 = rounded to millions); null = exact (INF) or not stated. A derived fact carries its source fact's"
+          },
+          "formula": {
+            "type": "object",
+            "description": "How a derived value was computed; null for a reported value",
+            "required": [
+              "formula_str",
+              "members"
+            ],
+            "properties": {
+              "formula_str": {
+                "type": "string",
+                "description": "Readable formula",
+                "example": "is_revenue_q1 + is_revenue_q2 + is_revenue_q3"
+              },
+              "members": {
+                "type": "array",
+                "description": "The formula's operands",
+                "items": {
+                  "$ref": "#/components/schemas/FormulaMember"
+                }
+              }
+            },
+            "nullable": true
+          },
+          "accession": {
+            "type": "string",
+            "nullable": true,
+            "description": "Accession number of the filing that holds the value"
+          },
+          "html_tag_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Anchor of the fact in the filing's HTML (null on a derived fact)"
+          }
+        },
+        "title": "AsReportedDetailedLineItem"
+      },
+      "AsReportedPresentationPeriod": {
+        "type": "object",
+        "description": "One fiscal period of as-reported statements as the filer's presentation tree",
+        "required": [
+          "company",
+          "fiscal_year",
+          "fiscal_quarter",
+          "period",
+          "period_start",
+          "period_end",
+          "calendar_year",
+          "calendar_quarter",
+          "currency",
+          "source",
+          "statements"
+        ],
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "description": "Fiscal year",
+            "example": 2026
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "description": "Fiscal quarter (4 on annual rows)",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 4
+          },
+          "period": {
+            "type": "string",
+            "description": "Period type",
+            "enum": [
+              "annual",
+              "quarterly",
+              "ytd",
+              "ttm"
+            ],
+            "example": "annual"
+          },
+          "period_start": {
+            "type": "string",
+            "description": "First day of the period",
+            "format": "date",
+            "nullable": true
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Last day of the period",
+            "format": "date"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year of period_end"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter of period_end",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "currency": {
+            "type": "string",
+            "description": "Reporting currency of every monetary value of the row",
+            "example": "USD",
+            "nullable": true
+          },
+          "source": {
+            "$ref": "#/components/schemas/FilingSource"
+          },
+          "statements": {
+            "type": "object",
+            "description": "The requested statements (`statement=`); a statement that was not requested is absent",
+            "properties": {
+              "income_statement": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AsReportedPresentationNode"
+                    }
+                  }
+                }
+              },
+              "balance_sheet": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AsReportedPresentationNode"
+                    }
+                  }
+                }
+              },
+              "cash_flow": {
+                "type": "object",
+                "description": "One statement of the period",
+                "required": [
+                  "facts"
+                ],
+                "properties": {
+                  "facts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AsReportedPresentationNode"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "title": "AsReportedPresentationPeriod"
+      },
+      "AsReportedPresentationNode": {
+        "type": "object",
+        "properties": {
+          "concept": {
+            "type": "string",
+            "description": "Financial concept ID"
+          },
+          "label": {
+            "type": "string",
+            "description": "Label for the concept"
+          },
+          "value": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric value for the metric (if available)"
+          },
+          "derived": {
+            "type": "boolean",
+            "description": "Set with `value`: true when Invinite computed the value (Q4, TTM or YTD derivation), false = the company reported it"
+          },
+          "company_label": {
+            "type": "string",
+            "nullable": true,
+            "description": "Set with `value`: the company's own caption of the line item (null when not extracted)"
+          },
+          "depth": {
+            "type": "integer",
+            "description": "Depth level in the tree structure (0 for root items)"
+          },
+          "is_total": {
+            "type": "boolean",
+            "description": "Indicates if this item is a total (sum of siblings)"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AsReportedPresentationNode"
+            },
+            "description": "Nested child facts with facts schema (only present if there are children)"
+          }
+        },
+        "required": [
+          "concept",
+          "label",
+          "depth"
+        ],
+        "title": "AsReportedPresentationNode"
+      },
+      "RatioPeriod": {
+        "type": "object",
+        "description": "Ratios of one period",
+        "required": [
+          "company",
+          "fiscal_year",
+          "fiscal_quarter",
+          "period",
+          "period_start",
+          "period_end",
+          "calendar_year",
+          "calendar_quarter",
+          "ratios"
+        ],
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "description": "Fiscal year",
+            "example": 2026
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "description": "Fiscal quarter (4 on annual rows)",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 4
+          },
+          "period": {
+            "type": "string",
+            "description": "Period type",
+            "enum": [
+              "annual",
+              "quarterly",
+              "ytd",
+              "ttm"
+            ],
+            "example": "annual"
+          },
+          "period_start": {
+            "type": "string",
+            "description": "First day of the period",
+            "format": "date",
+            "nullable": true
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Last day of the period",
+            "format": "date"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year of period_end"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter of period_end",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "ratios": {
+            "type": "object",
+            "description": "`{category: {metric_id: value}}`",
+            "additionalProperties": {
+              "type": "object",
+              "description": "Ratios of one category",
+              "additionalProperties": {
+                "type": "number",
+                "description": "Ratio value"
+              }
+            }
+          }
+        },
+        "title": "RatioPeriod"
+      },
+      "GrowthPeriod": {
+        "type": "object",
+        "description": "Growth rates of one period",
+        "required": [
+          "company",
+          "fiscal_year",
+          "fiscal_quarter",
+          "period",
+          "period_start",
+          "period_end",
+          "calendar_year",
+          "calendar_quarter",
+          "basis",
+          "facts"
+        ],
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "description": "Fiscal year",
+            "example": 2026
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "description": "Fiscal quarter (4 on annual rows)",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 4
+          },
+          "period": {
+            "type": "string",
+            "description": "Period type",
+            "enum": [
+              "annual",
+              "quarterly",
+              "ytd",
+              "ttm"
+            ],
+            "example": "annual"
+          },
+          "period_start": {
+            "type": "string",
+            "description": "First day of the period",
+            "format": "date",
+            "nullable": true
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Last day of the period",
+            "format": "date"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year of period_end"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter of period_end",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "basis": {
+            "type": "string",
+            "description": "yoy = against the same period a year earlier, qoq = against the previous quarter",
+            "enum": [
+              "yoy",
+              "qoq"
+            ]
+          },
+          "facts": {
+            "type": "object",
+            "description": "`{metric_id: growth}`",
+            "additionalProperties": {
+              "type": "number",
+              "description": "Growth as a fraction (0.12 = 12 %)"
+            }
+          }
+        },
+        "title": "GrowthPeriod"
+      },
+      "CagrPeriod": {
+        "type": "object",
+        "description": "Compound annual growth rates of one period",
+        "required": [
+          "company",
+          "fiscal_year",
+          "fiscal_quarter",
+          "period",
+          "period_start",
+          "period_end",
+          "calendar_year",
+          "calendar_quarter",
+          "horizon",
+          "facts"
+        ],
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "description": "Fiscal year",
+            "example": 2026
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "description": "Fiscal quarter (4 on annual rows)",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 4
+          },
+          "period": {
+            "type": "string",
+            "description": "Period type",
+            "enum": [
+              "annual",
+              "quarterly",
+              "ytd",
+              "ttm"
+            ],
+            "example": "annual"
+          },
+          "period_start": {
+            "type": "string",
+            "description": "First day of the period",
+            "format": "date",
+            "nullable": true
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Last day of the period",
+            "format": "date"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year of period_end"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter of period_end",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "horizon": {
+            "type": "integer",
+            "description": "Years the CAGR spans",
+            "enum": [
+              3,
+              5,
+              10
+            ]
+          },
+          "facts": {
+            "type": "object",
+            "description": "`{metric_id: cagr}`",
+            "additionalProperties": {
+              "type": "number",
+              "description": "CAGR as a fraction"
+            }
+          }
+        },
+        "title": "CagrPeriod"
+      },
+      "Segment": {
+        "type": "object",
+        "description": "One segment value of one metric and period",
+        "required": [
+          "company",
+          "fiscal_year",
+          "fiscal_quarter",
+          "period",
+          "period_start",
+          "period_end",
+          "calendar_year",
+          "calendar_quarter",
+          "metric_id",
+          "segment_id",
+          "value",
+          "dimensions"
+        ],
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "description": "Fiscal year",
+            "example": 2026
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "description": "Fiscal quarter (4 on annual rows)",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 4
+          },
+          "period": {
+            "type": "string",
+            "description": "Period type",
+            "enum": [
+              "annual",
+              "quarterly",
+              "ytd",
+              "ttm"
+            ],
+            "example": "annual"
+          },
+          "period_start": {
+            "type": "string",
+            "description": "First day of the period",
+            "format": "date",
+            "nullable": true
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Last day of the period",
+            "format": "date"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year of period_end"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter of period_end",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "metric_id": {
+            "type": "string",
+            "description": "Standardized metric",
+            "example": "is_total_revenue"
+          },
+          "segment_id": {
+            "type": "string",
+            "description": "Segment id, unique within the company"
+          },
+          "value": {
+            "type": "number",
+            "description": "Value at full magnitude"
+          },
+          "dimensions": {
+            "type": "array",
+            "description": "The segment's axis / member pairs (normalised; v1 `segment`)",
+            "items": {
+              "$ref": "#/components/schemas/Dimension"
+            }
+          }
+        },
+        "title": "Segment"
+      },
+      "Dimension": {
+        "type": "object",
+        "description": "One axis / member pair",
+        "required": [
+          "axis",
+          "member"
+        ],
+        "properties": {
+          "axis": {
+            "type": "string",
+            "description": "XBRL axis",
+            "example": "srt:ProductOrServiceAxis"
+          },
+          "member": {
+            "type": "string",
+            "description": "XBRL member",
+            "example": "us-gaap:ProductMember"
+          }
+        },
+        "title": "Dimension"
+      },
+      "SegmentDetailed": {
+        "type": "object",
+        "description": "One segment value with lineage (PRO)",
+        "required": [
+          "company",
+          "fiscal_year",
+          "fiscal_quarter",
+          "period",
+          "period_start",
+          "period_end",
+          "calendar_year",
+          "calendar_quarter",
+          "metric_id",
+          "segment_id",
+          "value",
+          "dimensions",
+          "metric",
+          "accession",
+          "html_tag_id",
+          "html_label",
+          "unit"
+        ],
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "description": "Fiscal year",
+            "example": 2026
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "description": "Fiscal quarter (4 on annual rows)",
+            "minimum": 1,
+            "maximum": 4,
+            "example": 4
+          },
+          "period": {
+            "type": "string",
+            "description": "Period type",
+            "enum": [
+              "annual",
+              "quarterly",
+              "ytd",
+              "ttm"
+            ],
+            "example": "annual"
+          },
+          "period_start": {
+            "type": "string",
+            "description": "First day of the period",
+            "format": "date",
+            "nullable": true
+          },
+          "period_end": {
+            "type": "string",
+            "description": "Last day of the period",
+            "format": "date"
+          },
+          "calendar_year": {
+            "type": "integer",
+            "description": "Calendar year of period_end"
+          },
+          "calendar_quarter": {
+            "type": "integer",
+            "description": "Calendar quarter of period_end",
+            "minimum": 1,
+            "maximum": 4
+          },
+          "metric_id": {
+            "type": "string",
+            "description": "Standardized metric",
+            "example": "is_total_revenue"
+          },
+          "segment_id": {
+            "type": "string",
+            "description": "Segment id, unique within the company"
+          },
+          "value": {
+            "type": "number",
+            "description": "Value at full magnitude"
+          },
+          "dimensions": {
+            "type": "array",
+            "description": "The segment's axis / member pairs (normalised; v1 `segment`)",
+            "items": {
+              "$ref": "#/components/schemas/Dimension"
+            }
+          },
+          "metric": {
+            "type": "string",
+            "description": "Reported XBRL concept",
+            "nullable": true
+          },
+          "accession": {
+            "type": "string",
+            "description": "Filing the value comes from",
+            "nullable": true
+          },
+          "html_tag_id": {
+            "type": "string",
+            "description": "Inline-XBRL element id",
+            "nullable": true
+          },
+          "html_label": {
+            "type": "string",
+            "description": "Label of the line in the filing",
+            "nullable": true
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit",
+            "nullable": true
+          }
+        },
+        "title": "SegmentDetailed"
+      },
+      "FactExplanation": {
+        "type": "object",
+        "description": "Why a standardized fact has its value",
+        "required": [
+          "fact_id",
+          "company",
+          "metric_id",
+          "value",
+          "unit",
+          "rule",
+          "operands",
+          "source_facts"
+        ],
+        "properties": {
+          "fact_id": {
+            "type": "string",
+            "description": "The standardized fact",
+            "example": "0000320193|is_total_revenue|annual|2026|4"
+          },
+          "company": {
+            "$ref": "#/components/schemas/CompanyRef"
+          },
+          "metric_id": {
+            "type": "string",
+            "description": "Standardized metric"
+          },
+          "value": {
+            "type": "number",
+            "description": "Value at full magnitude"
+          },
+          "unit": {
+            "type": "string",
+            "description": "Unit",
+            "nullable": true
+          },
+          "rule": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "The mapping rule that produced the value"
+          },
+          "operands": {
+            "type": "array",
+            "description": "Operand tree",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "One operand (nested operands bounded by max_depth / max_members)"
+            }
+          },
+          "source_facts": {
+            "type": "array",
+            "description": "The reported facts the value rests on",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "One reported XBRL fact"
+            }
+          }
+        },
+        "title": "FactExplanation"
+      },
       "Filing": {
         "type": "object",
         "description": "One SEC filing",
@@ -2538,27 +4120,6 @@
           }
         },
         "title": "FilingFact"
-      },
-      "Dimension": {
-        "type": "object",
-        "description": "One axis / member pair",
-        "required": [
-          "axis",
-          "member"
-        ],
-        "properties": {
-          "axis": {
-            "type": "string",
-            "description": "XBRL axis",
-            "example": "srt:ProductOrServiceAxis"
-          },
-          "member": {
-            "type": "string",
-            "description": "XBRL member",
-            "example": "us-gaap:ProductMember"
-          }
-        },
-        "title": "Dimension"
       },
       "FilingNote": {
         "type": "object",
@@ -54602,6 +56163,3873 @@
         "x-example-params": []
       }
     },
+    "/v2/financials/standardized": {
+      "get": {
+        "operationId": "getStandardizedFinancials",
+        "summary": "Standardized statements",
+        "tags": [
+          "Financials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(income-statement|balance-sheet|cash-flow)(,(income-statement|balance-sheet|cash-flow))*$"
+            },
+            "in": "query",
+            "name": "statement",
+            "required": false,
+            "description": "Statements (default all three) — any of `income-statement`, `balance-sheet`, `cash-flow`, comma-separated",
+            "example": "income-statement"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "annual",
+                "quarterly",
+                "ytd",
+                "ttm"
+              ]
+            },
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "description": "Period type",
+            "example": "annual"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year",
+            "required": false,
+            "description": "Fiscal year",
+            "example": 2025
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            "in": "query",
+            "name": "fiscal_quarter",
+            "required": false,
+            "description": "Fiscal quarter",
+            "example": 4
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gte",
+            "required": false,
+            "description": "`fiscal_year` on or after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gt",
+            "required": false,
+            "description": "`fiscal_year` after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lte",
+            "required": false,
+            "description": "`fiscal_year` on or before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lt",
+            "required": false,
+            "description": "`fiscal_year` before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "description": "Point in time: the newest rendering of each period filed on or before this day",
+            "example": "2025-01-31"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "filing",
+            "required": false,
+            "description": "Pin the rendering of one filing (accession)",
+            "example": "0000320193-25-000079"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "period_end",
+                "-period_end"
+              ],
+              "default": "-period_end"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`",
+            "example": "-period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of StandardizedPeriod rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/StandardizedPeriod"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "description": "Currency of the page when every row shares one",
+                          "nullable": true
+                        },
+                        "basis": {
+                          "type": "string",
+                          "description": "standardized or as_reported",
+                          "enum": [
+                            "standardized",
+                            "as_reported"
+                          ]
+                        },
+                        "point_in_time": {
+                          "type": "object",
+                          "description": "The point-in-time selector of the page; null = current",
+                          "required": [
+                            "as_of",
+                            "filing"
+                          ],
+                          "properties": {
+                            "as_of": {
+                              "type": "string",
+                              "description": "as_of",
+                              "format": "date",
+                              "nullable": true
+                            },
+                            "filing": {
+                              "type": "string",
+                              "description": "filing",
+                              "nullable": true
+                            }
+                          },
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "free",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "financials",
+          "action": "get",
+          "positional": "company",
+          "flags": {
+            "statement": "s",
+            "period": "p",
+            "fiscal_year": "y",
+            "fiscal_quarter": "q",
+            "limit": "l"
+          },
+          "columns": [
+            "fiscal_year",
+            "fiscal_quarter",
+            "period_end",
+            "currency"
+          ],
+          "command": "financials",
+          "select": {
+            "basis": "standardized",
+            "view": "summary"
+          }
+        },
+        "x-example-params": [
+          "statement"
+        ]
+      }
+    },
+    "/v2/financials/standardized/detailed": {
+      "get": {
+        "operationId": "getStandardizedFinancialsDetailed",
+        "summary": "Standardized statements with lineage",
+        "tags": [
+          "Financials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(income-statement|balance-sheet|cash-flow)(,(income-statement|balance-sheet|cash-flow))*$"
+            },
+            "in": "query",
+            "name": "statement",
+            "required": false,
+            "description": "Statements (default all three) — any of `income-statement`, `balance-sheet`, `cash-flow`, comma-separated",
+            "example": "income-statement"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "annual",
+                "quarterly",
+                "ytd",
+                "ttm"
+              ]
+            },
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "description": "Period type",
+            "example": "annual"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year",
+            "required": false,
+            "description": "Fiscal year",
+            "example": 2025
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            "in": "query",
+            "name": "fiscal_quarter",
+            "required": false,
+            "description": "Fiscal quarter",
+            "example": 4
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gte",
+            "required": false,
+            "description": "`fiscal_year` on or after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gt",
+            "required": false,
+            "description": "`fiscal_year` after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lte",
+            "required": false,
+            "description": "`fiscal_year` on or before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lt",
+            "required": false,
+            "description": "`fiscal_year` before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "description": "Point in time: the newest rendering of each period filed on or before this day",
+            "example": "2025-01-31"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "filing",
+            "required": false,
+            "description": "Pin the rendering of one filing (accession)",
+            "example": "0000320193-25-000079"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "period_end",
+                "-period_end"
+              ],
+              "default": "-period_end"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`",
+            "example": "-period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of StandardizedDetailedPeriod rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/StandardizedDetailedPeriod"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "description": "Currency of the page when every row shares one",
+                          "nullable": true
+                        },
+                        "basis": {
+                          "type": "string",
+                          "description": "standardized or as_reported",
+                          "enum": [
+                            "standardized",
+                            "as_reported"
+                          ]
+                        },
+                        "point_in_time": {
+                          "type": "object",
+                          "description": "The point-in-time selector of the page; null = current",
+                          "required": [
+                            "as_of",
+                            "filing"
+                          ],
+                          "properties": {
+                            "as_of": {
+                              "type": "string",
+                              "description": "as_of",
+                              "format": "date",
+                              "nullable": true
+                            },
+                            "filing": {
+                              "type": "string",
+                              "description": "filing",
+                              "nullable": true
+                            }
+                          },
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "pro",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "financials",
+          "action": "get",
+          "positional": "company",
+          "flags": {
+            "statement": "s",
+            "period": "p",
+            "fiscal_year": "y",
+            "fiscal_quarter": "q",
+            "limit": "l"
+          },
+          "columns": [
+            "fiscal_year",
+            "fiscal_quarter",
+            "period_end",
+            "currency"
+          ],
+          "command": "financials",
+          "select": {
+            "basis": "standardized",
+            "view": "detailed"
+          }
+        },
+        "x-example-params": [
+          "statement"
+        ]
+      }
+    },
+    "/v2/financials/standardized/presentation": {
+      "get": {
+        "operationId": "getStandardizedFinancialsPresentation",
+        "summary": "Standardized statements as a tree",
+        "tags": [
+          "Financials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(income-statement|balance-sheet|cash-flow)(,(income-statement|balance-sheet|cash-flow))*$"
+            },
+            "in": "query",
+            "name": "statement",
+            "required": false,
+            "description": "Statements (default all three) — any of `income-statement`, `balance-sheet`, `cash-flow`, comma-separated",
+            "example": "income-statement"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "annual",
+                "quarterly",
+                "ytd",
+                "ttm"
+              ]
+            },
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "description": "Period type",
+            "example": "annual"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year",
+            "required": false,
+            "description": "Fiscal year",
+            "example": 2025
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            "in": "query",
+            "name": "fiscal_quarter",
+            "required": false,
+            "description": "Fiscal quarter",
+            "example": 4
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gte",
+            "required": false,
+            "description": "`fiscal_year` on or after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gt",
+            "required": false,
+            "description": "`fiscal_year` after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lte",
+            "required": false,
+            "description": "`fiscal_year` on or before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lt",
+            "required": false,
+            "description": "`fiscal_year` before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "description": "Point in time: the newest rendering of each period filed on or before this day",
+            "example": "2025-01-31"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "filing",
+            "required": false,
+            "description": "Pin the rendering of one filing (accession)",
+            "example": "0000320193-25-000079"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "period_end",
+                "-period_end"
+              ],
+              "default": "-period_end"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`",
+            "example": "-period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of StandardizedPresentationPeriod rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/StandardizedPresentationPeriod"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "description": "Currency of the page when every row shares one",
+                          "nullable": true
+                        },
+                        "basis": {
+                          "type": "string",
+                          "description": "standardized or as_reported",
+                          "enum": [
+                            "standardized",
+                            "as_reported"
+                          ]
+                        },
+                        "point_in_time": {
+                          "type": "object",
+                          "description": "The point-in-time selector of the page; null = current",
+                          "required": [
+                            "as_of",
+                            "filing"
+                          ],
+                          "properties": {
+                            "as_of": {
+                              "type": "string",
+                              "description": "as_of",
+                              "format": "date",
+                              "nullable": true
+                            },
+                            "filing": {
+                              "type": "string",
+                              "description": "filing",
+                              "nullable": true
+                            }
+                          },
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "pro",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "financials",
+          "action": "get",
+          "positional": "company",
+          "flags": {
+            "statement": "s",
+            "period": "p",
+            "fiscal_year": "y",
+            "fiscal_quarter": "q",
+            "limit": "l"
+          },
+          "columns": [
+            "fiscal_year",
+            "fiscal_quarter",
+            "period_end",
+            "currency"
+          ],
+          "command": "financials",
+          "select": {
+            "basis": "standardized",
+            "view": "presentation"
+          }
+        },
+        "x-example-params": [
+          "statement"
+        ]
+      }
+    },
+    "/v2/financials/as-reported": {
+      "get": {
+        "operationId": "getAsReportedFinancials",
+        "summary": "As-reported statements",
+        "tags": [
+          "Financials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(income-statement|balance-sheet|cash-flow)(,(income-statement|balance-sheet|cash-flow))*$"
+            },
+            "in": "query",
+            "name": "statement",
+            "required": false,
+            "description": "Statements (default all three) — any of `income-statement`, `balance-sheet`, `cash-flow`, comma-separated",
+            "example": "income-statement"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "annual",
+                "quarterly",
+                "ytd",
+                "ttm"
+              ]
+            },
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "description": "Period type",
+            "example": "annual"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year",
+            "required": false,
+            "description": "Fiscal year",
+            "example": 2025
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            "in": "query",
+            "name": "fiscal_quarter",
+            "required": false,
+            "description": "Fiscal quarter",
+            "example": 4
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gte",
+            "required": false,
+            "description": "`fiscal_year` on or after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gt",
+            "required": false,
+            "description": "`fiscal_year` after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lte",
+            "required": false,
+            "description": "`fiscal_year` on or before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lt",
+            "required": false,
+            "description": "`fiscal_year` before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "description": "Point in time: the newest rendering of each period filed on or before this day",
+            "example": "2025-01-31"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "filing",
+            "required": false,
+            "description": "Pin the rendering of one filing (accession)",
+            "example": "0000320193-25-000079"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "period_end",
+                "-period_end"
+              ],
+              "default": "-period_end"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`",
+            "example": "-period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "in": "query",
+            "name": "reported_only",
+            "required": false,
+            "description": "true = only facts the company reported (no derived ones)",
+            "example": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "as_filed",
+                "cash_flow_direction"
+              ],
+              "default": "as_filed"
+            },
+            "in": "query",
+            "name": "display_sign",
+            "required": false,
+            "description": "as_filed (default) or re-apply the cash-flow credit-balance negation",
+            "example": "as_filed"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of AsReportedPeriod rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/AsReportedPeriod"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "description": "Currency of the page when every row shares one",
+                          "nullable": true
+                        },
+                        "basis": {
+                          "type": "string",
+                          "description": "standardized or as_reported",
+                          "enum": [
+                            "standardized",
+                            "as_reported"
+                          ]
+                        },
+                        "point_in_time": {
+                          "type": "object",
+                          "description": "The point-in-time selector of the page; null = current",
+                          "required": [
+                            "as_of",
+                            "filing"
+                          ],
+                          "properties": {
+                            "as_of": {
+                              "type": "string",
+                              "description": "as_of",
+                              "format": "date",
+                              "nullable": true
+                            },
+                            "filing": {
+                              "type": "string",
+                              "description": "filing",
+                              "nullable": true
+                            }
+                          },
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "financials",
+          "action": "get",
+          "positional": "company",
+          "flags": {
+            "statement": "s",
+            "period": "p",
+            "fiscal_year": "y",
+            "fiscal_quarter": "q",
+            "limit": "l"
+          },
+          "columns": [
+            "fiscal_year",
+            "fiscal_quarter",
+            "period_end",
+            "currency"
+          ],
+          "command": "financials",
+          "select": {
+            "basis": "as-reported",
+            "view": "summary"
+          }
+        },
+        "x-example-params": [
+          "statement"
+        ]
+      }
+    },
+    "/v2/financials/as-reported/detailed": {
+      "get": {
+        "operationId": "getAsReportedFinancialsDetailed",
+        "summary": "As-reported statements with labels",
+        "tags": [
+          "Financials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(income-statement|balance-sheet|cash-flow)(,(income-statement|balance-sheet|cash-flow))*$"
+            },
+            "in": "query",
+            "name": "statement",
+            "required": false,
+            "description": "Statements (default all three) — any of `income-statement`, `balance-sheet`, `cash-flow`, comma-separated",
+            "example": "income-statement"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "annual",
+                "quarterly",
+                "ytd",
+                "ttm"
+              ]
+            },
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "description": "Period type",
+            "example": "annual"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year",
+            "required": false,
+            "description": "Fiscal year",
+            "example": 2025
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            "in": "query",
+            "name": "fiscal_quarter",
+            "required": false,
+            "description": "Fiscal quarter",
+            "example": 4
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gte",
+            "required": false,
+            "description": "`fiscal_year` on or after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gt",
+            "required": false,
+            "description": "`fiscal_year` after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lte",
+            "required": false,
+            "description": "`fiscal_year` on or before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lt",
+            "required": false,
+            "description": "`fiscal_year` before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "description": "Point in time: the newest rendering of each period filed on or before this day",
+            "example": "2025-01-31"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "filing",
+            "required": false,
+            "description": "Pin the rendering of one filing (accession)",
+            "example": "0000320193-25-000079"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "period_end",
+                "-period_end"
+              ],
+              "default": "-period_end"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`",
+            "example": "-period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "in": "query",
+            "name": "reported_only",
+            "required": false,
+            "description": "true = only facts the company reported (no derived ones)",
+            "example": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "as_filed",
+                "cash_flow_direction"
+              ],
+              "default": "as_filed"
+            },
+            "in": "query",
+            "name": "display_sign",
+            "required": false,
+            "description": "as_filed (default) or re-apply the cash-flow credit-balance negation",
+            "example": "as_filed"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of AsReportedDetailedPeriod rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/AsReportedDetailedPeriod"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "description": "Currency of the page when every row shares one",
+                          "nullable": true
+                        },
+                        "basis": {
+                          "type": "string",
+                          "description": "standardized or as_reported",
+                          "enum": [
+                            "standardized",
+                            "as_reported"
+                          ]
+                        },
+                        "point_in_time": {
+                          "type": "object",
+                          "description": "The point-in-time selector of the page; null = current",
+                          "required": [
+                            "as_of",
+                            "filing"
+                          ],
+                          "properties": {
+                            "as_of": {
+                              "type": "string",
+                              "description": "as_of",
+                              "format": "date",
+                              "nullable": true
+                            },
+                            "filing": {
+                              "type": "string",
+                              "description": "filing",
+                              "nullable": true
+                            }
+                          },
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "pro",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "financials",
+          "action": "get",
+          "positional": "company",
+          "flags": {
+            "statement": "s",
+            "period": "p",
+            "fiscal_year": "y",
+            "fiscal_quarter": "q",
+            "limit": "l"
+          },
+          "columns": [
+            "fiscal_year",
+            "fiscal_quarter",
+            "period_end",
+            "currency"
+          ],
+          "command": "financials",
+          "select": {
+            "basis": "as-reported",
+            "view": "detailed"
+          }
+        },
+        "x-example-params": [
+          "statement"
+        ]
+      }
+    },
+    "/v2/financials/as-reported/presentation": {
+      "get": {
+        "operationId": "getAsReportedFinancialsPresentation",
+        "summary": "As-reported statements as the filer's tree",
+        "tags": [
+          "Financials"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(income-statement|balance-sheet|cash-flow)(,(income-statement|balance-sheet|cash-flow))*$"
+            },
+            "in": "query",
+            "name": "statement",
+            "required": false,
+            "description": "Statements (default all three) — any of `income-statement`, `balance-sheet`, `cash-flow`, comma-separated",
+            "example": "income-statement"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "annual",
+                "quarterly",
+                "ytd",
+                "ttm"
+              ]
+            },
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "description": "Period type",
+            "example": "annual"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year",
+            "required": false,
+            "description": "Fiscal year",
+            "example": 2025
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4
+            },
+            "in": "query",
+            "name": "fiscal_quarter",
+            "required": false,
+            "description": "Fiscal quarter",
+            "example": 4
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gte",
+            "required": false,
+            "description": "`fiscal_year` on or after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gt",
+            "required": false,
+            "description": "`fiscal_year` after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lte",
+            "required": false,
+            "description": "`fiscal_year` on or before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lt",
+            "required": false,
+            "description": "`fiscal_year` before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "description": "Point in time: the newest rendering of each period filed on or before this day",
+            "example": "2025-01-31"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "filing",
+            "required": false,
+            "description": "Pin the rendering of one filing (accession)",
+            "example": "0000320193-25-000079"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "period_end",
+                "-period_end"
+              ],
+              "default": "-period_end"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`",
+            "example": "-period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          },
+          {
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "in": "query",
+            "name": "reported_only",
+            "required": false,
+            "description": "true = only facts the company reported (no derived ones)",
+            "example": false
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "as_filed",
+                "cash_flow_direction"
+              ],
+              "default": "as_filed"
+            },
+            "in": "query",
+            "name": "display_sign",
+            "required": false,
+            "description": "as_filed (default) or re-apply the cash-flow credit-balance negation",
+            "example": "as_filed"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of AsReportedPresentationPeriod rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/AsReportedPresentationPeriod"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        },
+                        "currency": {
+                          "type": "string",
+                          "description": "Currency of the page when every row shares one",
+                          "nullable": true
+                        },
+                        "basis": {
+                          "type": "string",
+                          "description": "standardized or as_reported",
+                          "enum": [
+                            "standardized",
+                            "as_reported"
+                          ]
+                        },
+                        "point_in_time": {
+                          "type": "object",
+                          "description": "The point-in-time selector of the page; null = current",
+                          "required": [
+                            "as_of",
+                            "filing"
+                          ],
+                          "properties": {
+                            "as_of": {
+                              "type": "string",
+                              "description": "as_of",
+                              "format": "date",
+                              "nullable": true
+                            },
+                            "filing": {
+                              "type": "string",
+                              "description": "filing",
+                              "nullable": true
+                            }
+                          },
+                          "nullable": true
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "pro",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "financials",
+          "action": "get",
+          "positional": "company",
+          "flags": {
+            "statement": "s",
+            "period": "p",
+            "fiscal_year": "y",
+            "fiscal_quarter": "q",
+            "limit": "l"
+          },
+          "columns": [
+            "fiscal_year",
+            "fiscal_quarter",
+            "period_end",
+            "currency"
+          ],
+          "command": "financials",
+          "select": {
+            "basis": "as-reported",
+            "view": "presentation"
+          }
+        },
+        "x-example-params": [
+          "statement"
+        ]
+      }
+    },
+    "/v2/metrics/ratios": {
+      "get": {
+        "operationId": "listRatios",
+        "summary": "List ratios",
+        "tags": [
+          "Metrics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "annual",
+                "quarterly",
+                "ytd",
+                "ttm"
+              ]
+            },
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "description": "Period type",
+            "example": "annual"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "pattern": "^(profitability|liquidity|leverage|efficiency|valuation)(,(profitability|liquidity|leverage|efficiency|valuation))*$"
+            },
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "description": "Ratio categories — any of `profitability`, `liquidity`, `leverage`, `efficiency`, `valuation`, comma-separated",
+            "example": "profitability"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gte",
+            "required": false,
+            "description": "`fiscal_year` on or after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gt",
+            "required": false,
+            "description": "`fiscal_year` after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lte",
+            "required": false,
+            "description": "`fiscal_year` on or before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lt",
+            "required": false,
+            "description": "`fiscal_year` before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "period_end",
+                "-period_end"
+              ],
+              "default": "-period_end"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`",
+            "example": "-period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of RatioPeriod rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/RatioPeriod"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "metrics",
+          "action": "ratios",
+          "positional": "company",
+          "flags": {
+            "period": "p",
+            "category": "c",
+            "limit": "l"
+          },
+          "columns": [
+            "fiscal_year",
+            "fiscal_quarter",
+            "period_end"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/metrics/growth": {
+      "get": {
+        "operationId": "listGrowth",
+        "summary": "List growth rates",
+        "tags": [
+          "Metrics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "annual",
+                "quarterly",
+                "ytd",
+                "ttm"
+              ]
+            },
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "description": "Period type",
+            "example": "annual"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "yoy",
+                "qoq"
+              ],
+              "default": "yoy"
+            },
+            "in": "query",
+            "name": "basis",
+            "required": false,
+            "description": "Comparison basis",
+            "example": "yoy"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gte",
+            "required": false,
+            "description": "`fiscal_year` on or after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gt",
+            "required": false,
+            "description": "`fiscal_year` after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lte",
+            "required": false,
+            "description": "`fiscal_year` on or before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lt",
+            "required": false,
+            "description": "`fiscal_year` before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "period_end",
+                "-period_end"
+              ],
+              "default": "-period_end"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`",
+            "example": "-period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of GrowthPeriod rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/GrowthPeriod"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "metrics",
+          "action": "growth",
+          "positional": "company",
+          "flags": {
+            "period": "p",
+            "basis": "b",
+            "limit": "l"
+          },
+          "columns": [
+            "fiscal_year",
+            "fiscal_quarter",
+            "period_end",
+            "basis"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/metrics/cagr": {
+      "get": {
+        "operationId": "listCagr",
+        "summary": "List CAGRs",
+        "tags": [
+          "Metrics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "annual",
+                "quarterly",
+                "ytd",
+                "ttm"
+              ]
+            },
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "description": "Period type",
+            "example": "annual"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "enum": [
+                3,
+                5,
+                10
+              ]
+            },
+            "in": "query",
+            "name": "horizon",
+            "required": false,
+            "description": "Years spanned",
+            "example": 5
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gte",
+            "required": false,
+            "description": "`fiscal_year` on or after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gt",
+            "required": false,
+            "description": "`fiscal_year` after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lte",
+            "required": false,
+            "description": "`fiscal_year` on or before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lt",
+            "required": false,
+            "description": "`fiscal_year` before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "period_end",
+                "-period_end"
+              ],
+              "default": "-period_end"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`",
+            "example": "-period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of CagrPeriod rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/CagrPeriod"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "metrics",
+          "action": "cagr",
+          "positional": "company",
+          "flags": {
+            "period": "p",
+            "horizon": "h",
+            "limit": "l"
+          },
+          "columns": [
+            "fiscal_year",
+            "fiscal_quarter",
+            "period_end",
+            "horizon"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/segments": {
+      "get": {
+        "operationId": "listSegments",
+        "summary": "List segment values",
+        "tags": [
+          "Metrics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "metric",
+            "required": false,
+            "description": "Metric id, comma list",
+            "example": "is_total_revenue"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "axis",
+            "required": false,
+            "description": "XBRL axis, comma list",
+            "example": "srt:ProductOrServiceAxis"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "annual",
+                "quarterly",
+                "ytd",
+                "ttm"
+              ]
+            },
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "description": "Period type",
+            "example": "annual"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gte",
+            "required": false,
+            "description": "`fiscal_year` on or after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gt",
+            "required": false,
+            "description": "`fiscal_year` after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lte",
+            "required": false,
+            "description": "`fiscal_year` on or before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lt",
+            "required": false,
+            "description": "`fiscal_year` before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "period_end",
+                "-period_end"
+              ],
+              "default": "-period_end"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`",
+            "example": "-period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of Segment rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/Segment"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "segments",
+          "action": "list",
+          "positional": "company",
+          "flags": {
+            "metric": "m",
+            "period": "p",
+            "limit": "l"
+          },
+          "columns": [
+            "fiscal_year",
+            "fiscal_quarter",
+            "period_end",
+            "metric_id",
+            "segment_id",
+            "value"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/segments/detailed": {
+      "get": {
+        "operationId": "listSegmentsDetailed",
+        "summary": "List segment values with lineage",
+        "tags": [
+          "Metrics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "in": "query",
+            "name": "company",
+            "required": true,
+            "description": "Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.",
+            "example": "AAPL"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "metric",
+            "required": false,
+            "description": "Metric id, comma list",
+            "example": "is_total_revenue"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "axis",
+            "required": false,
+            "description": "XBRL axis, comma list",
+            "example": "srt:ProductOrServiceAxis"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "annual",
+                "quarterly",
+                "ytd",
+                "ttm"
+              ]
+            },
+            "in": "query",
+            "name": "period",
+            "required": true,
+            "description": "Period type",
+            "example": "annual"
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gte",
+            "required": false,
+            "description": "`fiscal_year` on or after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.gt",
+            "required": false,
+            "description": "`fiscal_year` after this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lte",
+            "required": false,
+            "description": "`fiscal_year` on or before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "integer"
+            },
+            "in": "query",
+            "name": "fiscal_year.lt",
+            "required": false,
+            "description": "`fiscal_year` before this value",
+            "example": 2020
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "period_end",
+                "-period_end"
+              ],
+              "default": "-period_end"
+            },
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "description": "Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`",
+            "example": "-period_end"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "fields",
+            "required": false,
+            "description": "Comma list of root-level fields to keep (R7)",
+            "example": "fiscal_year,period_end"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 25
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Rows per page (default 25, max 200)",
+            "example": 25
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "description": "Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)",
+            "example": "eyJ2IjoyfQ"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of rows",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              },
+              "Link": {
+                "$ref": "#/components/headers/Link"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "A page of SegmentDetailed rows (the list envelope, R3)",
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "has_more",
+                    "next_cursor",
+                    "meta"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "description": "The rows of this page",
+                      "items": {
+                        "$ref": "#/components/schemas/SegmentDetailed"
+                      }
+                    },
+                    "has_more": {
+                      "type": "boolean",
+                      "description": "true when a next page exists"
+                    },
+                    "next_cursor": {
+                      "type": "string",
+                      "description": "Opaque cursor of the next page; null on the last page",
+                      "nullable": true
+                    },
+                    "meta": {
+                      "type": "object",
+                      "description": "Page metadata",
+                      "properties": {
+                        "coverage": {
+                          "$ref": "#/components/schemas/MetaCoverage"
+                        },
+                        "source": {
+                          "$ref": "#/components/schemas/MetaSource"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "pro",
+        "x-credits": 1,
+        "x-license": "redistribute",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "segments",
+          "action": "list-detailed",
+          "positional": "company",
+          "flags": {
+            "metric": "m",
+            "period": "p",
+            "limit": "l"
+          },
+          "columns": [
+            "fiscal_year",
+            "fiscal_quarter",
+            "period_end",
+            "metric_id",
+            "segment_id",
+            "value",
+            "accession"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
+    "/v2/facts/{fact_id}": {
+      "get": {
+        "operationId": "getFact",
+        "summary": "Explain a standardized fact",
+        "tags": [
+          "Metrics"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6,
+              "default": 3
+            },
+            "in": "query",
+            "name": "max_depth",
+            "required": false,
+            "description": "Operand tree depth",
+            "example": 3
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "in": "query",
+            "name": "max_members",
+            "required": false,
+            "description": "Operands per node",
+            "example": 50
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "fact_id",
+            "required": true,
+            "description": "Standardized fact id (from a detailed fact)",
+            "example": "0000320193|is_total_revenue|annual|2026|4"
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The resource",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/X-Request-Id"
+              },
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Cache-Control": {
+                "$ref": "#/components/headers/Cache-Control"
+              },
+              "X-Credits-Charged": {
+                "$ref": "#/components/headers/X-Credits-Charged"
+              },
+              "X-Credits-Remaining": {
+                "$ref": "#/components/headers/X-Credits-Remaining"
+              },
+              "X-RateLimit-Limit-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Second"
+              },
+              "X-RateLimit-Remaining-Second": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Second"
+              },
+              "X-RateLimit-Limit-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Limit-Minute"
+              },
+              "X-RateLimit-Remaining-Minute": {
+                "$ref": "#/components/headers/X-RateLimit-Remaining-Minute"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/X-RateLimit-Reset"
+              },
+              "RateLimit": {
+                "$ref": "#/components/headers/RateLimit"
+              },
+              "RateLimit-Policy": {
+                "$ref": "#/components/headers/RateLimit-Policy"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FactExplanation"
+                }
+              }
+            }
+          },
+          "304": {
+            "$ref": "#/components/responses/NotModified"
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "429": {
+            "$ref": "#/components/responses/TooManyRequests"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        },
+        "description": "",
+        "x-tier": "standard",
+        "x-credits": 1,
+        "x-license": "display",
+        "x-cache-control": "private, max-age=3600",
+        "x-cli": {
+          "group": "metrics",
+          "action": "explain",
+          "positional": "fact_id",
+          "flags": {},
+          "columns": [
+            "fact_id",
+            "metric_id",
+            "value"
+          ]
+        },
+        "x-example-params": []
+      }
+    },
     "/v2/filings": {
       "get": {
         "operationId": "listFilings",
@@ -64664,6 +70092,14 @@
     {
       "name": "Catalog",
       "description": "Static catalogs: metrics, sections, forms, event types, document kinds, mapping rules"
+    },
+    {
+      "name": "Financials",
+      "description": "Statements: standardized and as-reported, plain, detailed and presentation, point in time"
+    },
+    {
+      "name": "Metrics",
+      "description": "Ratios, growth, CAGR, segments and the explanation of one fact"
     },
     {
       "name": "Filings",

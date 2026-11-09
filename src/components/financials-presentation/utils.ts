@@ -19,7 +19,7 @@ export function buildTreeRows(
         out.push({
             depth,
             hasChildren: children.length > 0,
-            isTotal: "isTotal" in fact ? Boolean(fact.isTotal) : false,
+            isTotal: fact.type === "as-reported" ? Boolean(fact.is_total) : false,
             label: getFactLabel(fact),
             metricId: getFactId(fact),
             parentId,
@@ -45,7 +45,7 @@ export function flattenToValueMap(
 }
 
 export function addFactTypes(
-    facts: Array<AsReportedPresentationFactRaw | StandardizedPresentationFactRaw>,
+    facts: ReadonlyArray<AsReportedPresentationFactRaw | StandardizedPresentationFactRaw>,
 ): Array<PresentationFact> {
     return facts.map((fact) => {
         if ("metric_id" in fact) {

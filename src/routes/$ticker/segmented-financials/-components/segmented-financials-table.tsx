@@ -1,99 +1,27 @@
 import * as React from "react";
 
-import type { SegmentedFinancialPeriod } from "@/lib/api/types";
+import type { SegmentLine } from "@/lib/financials/statements";
 
 import { MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatMetricId, formatNumberEnCompact, formatSegmentId } from "@/lib/utils";
 
-type SegmentedRow = {
-    axis?: null | string;
-    key: string;
-    member?: null | string;
-    metricId: string;
-    segmentId: string;
-    values: Record<string, number | undefined>;
+/** "Revenue Product · IPhone": the segment id in words, then its dimensions' members. */
+export const formatSegmentLabel = (row: Pick<SegmentLine, "details" | "segmentId">) => {
+    const segmentLabel = formatSegmentId(row.segmentId) || row.segmentId;
+
+    return row.details ? `${segmentLabel} · ${row.details}` : segmentLabel;
 };
 
-const buildPeriodLabel = (period: SegmentedFinancialPeriod) => {
-    if (period.fiscal_quarter && period.fiscal_quarter > 0) {
-        return `Q${period.fiscal_quarter} ${period.fiscal_year}`;
-    }
+/** The segments table: one line per metric × segment × dimensions, one column per period (newest first). */
+export function SegmentedFinancialsTable({ periodLabels, rows: lines }: { periodLabels: Array<string>; rows: Array<SegmentLine> }) {
+    const [selectedRow, setSelectedRow] = React.useState<null | SegmentLine>(null);
 
-    return `${period.fiscal_year}`;
-};
-
-const formatSegmentLabel = (row: SegmentedRow) => {
-    const rawDetails = row.member ?? row.axis;
-
-    const details = rawDetails
-        ? rawDetails
-                .replace(/(SegmentMember|Member)$/u, "")
-                .replace(/([a-z])([A-Z])/g, "$1 $2")
-                .replace(/(\w)and\b/g, "$1 and")
-                .trim()
-        : undefined;
-
-    const segmentLabel = formatSegmentId(row.segmentId);
-
-    return details ? `${segmentLabel} · ${details}` : segmentLabel;
-};
-
-export function SegmentedFinancialsTable({ periods }: { periods: Array<SegmentedFinancialPeriod> }) {
-    const periodLabels = React.useMemo(() => periods.map(buildPeriodLabel), [periods]);
-
-    const [selectedRow, setSelectedRow] = React.useState<null | SegmentedRow>(null);
-
-    const rows = React.useMemo(() => {
-        const rowMap = new Map<string, SegmentedRow>();
-
-        periods.forEach((period, periodIndex) => {
-            const periodLabel = periodLabels[periodIndex];
-
-            Object.entries(period.facts).forEach(([metricId, facts]) => {
-                facts.forEach((fact) => {
-                    const keyParts = [metricId, fact.segment_id, fact.axis ?? "", fact.member ?? ""];
-
-                    const key = keyParts.join("::");
-
-                    if (!rowMap.has(key)) {
-                        rowMap.set(key, {
-                            axis: fact.axis,
-                            key,
-                            member: fact.member,
-                            metricId,
-                            segmentId: fact.segment_id,
-                            values: {},
-                        });
-                    }
-
-                    const row = rowMap.get(key)!;
-
-                    const current = row.values[periodLabel] ?? 0;
-
-                    row.values[periodLabel] = current + fact.value;
-                });
-            });
-        });
-
-        const out = Array.from(rowMap.values()).map(row => ({
-            ...row,
-            values: Object.fromEntries(
-                periodLabels.map(label => [label, row.values[label]]),
-            ),
-        }));
-
-        return out
-            .filter(row => !periodLabels.every(label => (row.values[label] ?? 0) === 0))
-            .sort((a, b) => {
-                if (a.metricId !== b.metricId) return a.metricId.localeCompare(b.metricId);
-
-                if (a.segmentId !== b.segmentId) return a.segmentId.localeCompare(b.segmentId);
-
-                return `${a.member ?? ""}${a.axis ?? ""}`.localeCompare(`${b.member ?? ""}${b.axis ?? ""}`);
-            });
-    }, [periodLabels, periods]);
+    const rows = React.useMemo(
+        () => lines.filter(row => !periodLabels.every(label => (row.values[label] ?? 0) === 0)),
+        [lines, periodLabels],
+    );
 
     return (
         <div className="space-y-2 flex flex-col h-0 grow">

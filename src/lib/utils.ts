@@ -35,6 +35,11 @@ export function formatPercentCompact(value: number) {
     return `${formatNumberEnCompact(value)}%`;
 }
 
+/** A fraction (`0.12`) as a compact percent (`12%`): the v2 growth / CAGR values. */
+export function formatFractionPercentCompact(value: number) {
+    return formatPercentCompact(value * 100);
+}
+
 const metricUpperWords = new Set(["ebit", "ebitda", "ebt", "eps"]);
 
 function titleCaseWords(value: string) {

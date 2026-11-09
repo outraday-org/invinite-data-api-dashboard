@@ -2,13 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import type {
-    AsReportedFinancialsPresentationResponse,
     CompanyDetailsResponse,
     CompanyFiscalPeriod,
     CompanySearchResponse,
-    FinancialCagrResponse,
-    FinancialGrowthResponse,
-    FinancialRatiosResponse,
     SecDocumentResponse,
     SecExportResponse,
     SecFigureResponse,
@@ -18,10 +14,12 @@ import type {
     SecManagerPortfolioResponse,
     SecSearchResponse,
     SecSectionsResponse,
-    SegmentedFinancialsResponse,
-    StandardizedFinancialsPresentationResponse,
     V2AnnouncementsResponse,
+    V2AsReportedDetailedResponse,
+    V2AsReportedPresentationResponse,
+    V2AsReportedResponse,
     V2AudioResponse,
+    V2CagrResponse,
     V2CompanyResponse,
     V2DateKind,
     V2DividendsResponse,
@@ -35,10 +33,12 @@ import type {
     V2EventStatsResponse,
     V2EventStatus,
     V2EventType,
+    V2FactResponse,
     V2FilerResponse,
     V2FilingDetailResponse,
     V2FilingsResponse,
     V2FilingsSort,
+    V2GrowthResponse,
     V2GuidanceBasis,
     V2GuidancePeriodKind,
     V2GuidanceResponse,
@@ -66,9 +66,15 @@ import type {
     V2ProsodyResponse,
     V2ProsodySection,
     V2QaResponse,
+    V2RatiosResponse,
+    V2SegmentsDetailedResponse,
+    V2SegmentsResponse,
     V2SlidesResponse,
     V2SplitsResponse,
     V2SplitsSort,
+    V2StandardizedDetailedResponse,
+    V2StandardizedPresentationResponse,
+    V2StandardizedResponse,
     V2TranscriptDiffResponse,
     V2TranscriptLayer,
     V2TranscriptResponse,
@@ -90,7 +96,9 @@ import {
     V2_FILER_EXPANDS,
     V2_FILING_EXPANDS,
     V2_IPO_STAGES,
+    V2_RATIO_CATEGORIES,
     V2_SLIDES_INCLUDES,
+    V2_STATEMENTS,
     v2Expand,
     v2Query,
 } from "./v2";
@@ -184,261 +192,6 @@ export const getCompanyFiscalPeriods = createServerFn({ method: "GET" })
         }
 
         return periods;
-    });
-
-const financialsSchema = z.object({
-    apiKey: apiKeySchema,
-    fiscalPeriodType: z.enum(["annual", "quarterly", "ttm", "ytd"]),
-    identifier: z.string(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-    statement: z.enum(["balance-sheet", "cash-flow-statement", "income-statement"]),
-});
-
-const segmentedFinancialsSchema = z.object({
-    apiKey: apiKeySchema,
-    fiscalPeriodType: z.enum(["annual", "quarterly", "ttm", "ytd"]),
-    identifier: z.string(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    segmentId: z.enum([
-        "seg_revenue_product",
-        "seg_revenue_geographic",
-        "seg_revenue_business_segment",
-        "seg_cost_of_revenue_business_segment",
-        "seg_research_and_development_expenses_business_segment",
-        "seg_selling_and_marketing_expenses_business_segment",
-        "seg_general_and_administrative_expenses_business_segment",
-    ]).optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-});
-
-const ratiosSchema = z.object({
-    apiKey: apiKeySchema,
-    category: z.enum(["valuation", "profitability", "liquidity", "solvency"]).optional(),
-    fiscalPeriodType: z.enum(["annual", "quarterly", "ttm", "ytd"]),
-    identifier: z.string(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-});
-
-const growthSchema = z.object({
-    apiKey: apiKeySchema,
-    fiscalPeriodType: z.enum(["annual", "quarterly", "ttm", "ytd"]),
-    growthType: z.enum(["year_over_year", "quarter_over_quarter"]).optional(),
-    identifier: z.string(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-});
-
-const cagrSchema = z.object({
-    apiKey: apiKeySchema,
-    identifier: z.string(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    periodYears: z.union([z.literal(3), z.literal(5), z.literal(10)]).optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-});
-
-export const getStandardizedFinancials = createServerFn({ method: "GET" })
-    .inputValidator(financialsSchema)
-    .handler(async ({ data }): Promise<StandardizedFinancialsPresentationResponse> => {
-        const {
-            apiKey,
-            fiscalPeriodType,
-            identifier,
-            limit = 8,
-            offset = 0,
-            sort = "desc",
-            statement,
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const path = `/v1/standardized/${statement}/presentation` as const;
-
-        const { data: res, error } = await api.GET(path, {
-            params: {
-                query: {
-                    fiscal_period_type: fiscalPeriodType,
-                    identifier,
-                    limit,
-                    offset,
-                    sort,
-                },
-            },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-export const getAsReportedFinancialsPresentation = createServerFn({ method: "GET" })
-    .inputValidator(financialsSchema)
-    .handler(async ({ data }): Promise<AsReportedFinancialsPresentationResponse> => {
-        const {
-            apiKey,
-            fiscalPeriodType,
-            identifier,
-            limit = 8,
-            offset = 0,
-            sort = "desc",
-            statement,
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const path = `/v1/as-reported/${statement}/presentation` as const;
-
-        const { data: res, error } = await api.GET(path, {
-            params: {
-                query: {
-                    fiscal_period_type: fiscalPeriodType,
-                    identifier,
-                    limit,
-                    offset,
-                    sort,
-                },
-            },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-export const getSegmentedFinancials = createServerFn({ method: "GET" })
-    .inputValidator(segmentedFinancialsSchema)
-    .handler(async ({ data }): Promise<SegmentedFinancialsResponse> => {
-        const {
-            apiKey,
-            fiscalPeriodType,
-            identifier,
-            limit = 8,
-            offset = 0,
-            segmentId,
-            sort = "desc",
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error } = await api.GET("/v1/segmented-financials", {
-            params: {
-                query: {
-                    fiscal_period_type: fiscalPeriodType,
-                    identifier,
-                    limit,
-                    offset,
-                    segment_id: segmentId,
-                    sort,
-                },
-            },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-export const getFinancialRatios = createServerFn({ method: "GET" })
-    .inputValidator(ratiosSchema)
-    .handler(async ({ data }): Promise<FinancialRatiosResponse> => {
-        const {
-            apiKey,
-            category,
-            fiscalPeriodType,
-            identifier,
-            limit = 8,
-            offset = 0,
-            sort = "desc",
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error } = await api.GET("/v1/financial-metrics/ratios", {
-            params: {
-                query: {
-                    category,
-                    fiscal_period_type: fiscalPeriodType,
-                    identifier,
-                    limit,
-                    offset,
-                    sort,
-                },
-            },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-export const getFinancialGrowth = createServerFn({ method: "GET" })
-    .inputValidator(growthSchema)
-    .handler(async ({ data }): Promise<FinancialGrowthResponse> => {
-        const {
-            apiKey,
-            fiscalPeriodType,
-            growthType,
-            identifier,
-            limit = 8,
-            offset = 0,
-            sort = "desc",
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error } = await api.GET("/v1/financial-metrics/growth", {
-            params: {
-                query: {
-                    fiscal_period_type: fiscalPeriodType,
-                    growth_type: growthType,
-                    identifier,
-                    limit,
-                    offset,
-                    sort,
-                },
-            },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-export const getFinancialCagr = createServerFn({ method: "GET" })
-    .inputValidator(cagrSchema)
-    .handler(async ({ data }): Promise<FinancialCagrResponse> => {
-        const {
-            apiKey,
-            identifier,
-            limit = 8,
-            offset = 0,
-            periodYears,
-            sort = "desc",
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error } = await api.GET("/v1/financial-metrics/cagr", {
-            params: {
-                query: {
-                    identifier,
-                    limit,
-                    offset,
-                    period_years: periodYears ? (String(periodYears) as "3" | "5" | "10") : undefined,
-                    sort,
-                },
-            },
-        });
-
-        if (error) throw error;
-
-        return res;
     });
 
 // News (IDA /v2/news*, backend tasks/data-api-v2 task 8; the page since backend earnings inhouse-news-pipeline task 17)
@@ -1487,4 +1240,242 @@ export const getV2Ipos = createServerFn({ method: "GET" })
         if (error) throwApiError(error, response);
 
         return res;
+    });
+
+// Financials + Metrics groups (`/v2/financials/*`, `/v2/metrics/*`, `/v2/segments*`, `/v2/facts/*`, backend
+// tasks/data-api-v2 task 5). One row per fiscal period (segments: per segment fact), newest `period_end` first, by
+// cursor. A first page whose `meta.coverage.state` is `pending` (`data: []`) = the statements are being prepared.
+
+const periodTypeSchema = z.enum(["annual", "quarterly", "ytd", "ttm"]);
+
+const fiscalYearSchema = z.number().int().min(1900).max(2200).optional();
+
+const v2PeriodListSchema = z.object({
+    apiKey: apiKeySchema,
+    company: z.string().trim().min(1),
+    cursor: cursorSchema,
+    fiscalYearGt: fiscalYearSchema,
+    fiscalYearGte: fiscalYearSchema,
+    fiscalYearLt: fiscalYearSchema,
+    fiscalYearLte: fiscalYearSchema,
+    limit: v2LimitSchema,
+    period: periodTypeSchema,
+    sort: z.enum(["period_end", "-period_end"]).optional(),
+});
+
+type V2PeriodListInput = z.infer<typeof v2PeriodListSchema>;
+
+/** The shared query of every period list: company, period type, the fiscal-year window, sort, limit, cursor. */
+const periodListQuery = (data: V2PeriodListInput) => ({
+    "company": data.company,
+    "cursor": data.cursor,
+    "fiscal_year.gt": data.fiscalYearGt,
+    "fiscal_year.gte": data.fiscalYearGte,
+    "fiscal_year.lt": data.fiscalYearLt,
+    "fiscal_year.lte": data.fiscalYearLte,
+    "limit": data.limit,
+    "period": data.period,
+    "sort": data.sort,
+});
+
+const v2StandardizedSchema = v2PeriodListSchema.extend({
+    /** Point in time: the newest rendering of each period filed on or before this day (`YYYY-MM-DD`). */
+    asOf: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    /** Pin the rendering of one filing. */
+    filing: accessionSchema.optional(),
+    fiscalQuarter: z.number().int().min(1).max(4).optional(),
+    fiscalYear: fiscalYearSchema,
+    /** Any of; omitted = all three. */
+    statement: z.array(z.enum(V2_STATEMENTS)).optional(),
+});
+
+type V2StandardizedInput = z.infer<typeof v2StandardizedSchema>;
+
+const v2AsReportedSchema = v2StandardizedSchema.extend({
+    displaySign: z.enum(["as_filed", "cash_flow_direction"]).optional(),
+    reportedOnly: z.boolean().optional(),
+});
+
+type V2AsReportedInput = z.infer<typeof v2AsReportedSchema>;
+
+const standardizedQuery = (data: V2StandardizedInput) => v2Query({
+    ...periodListQuery(data),
+    as_of: data.asOf,
+    filing: data.filing,
+    fiscal_quarter: data.fiscalQuarter,
+    fiscal_year: data.fiscalYear,
+    statement: v2Expand(data.statement),
+});
+
+const asReportedQuery = (data: V2AsReportedInput) => v2Query({
+    ...standardizedQuery(data),
+    display_sign: data.displaySign,
+    reported_only: data.reportedOnly,
+});
+
+/** Standardized statements, summary: `facts` = `{metric_id: value}`. */
+export const getV2Standardized = createServerFn({ method: "GET" })
+    .inputValidator(v2StandardizedSchema)
+    .handler(async ({ data }): Promise<V2StandardizedResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/financials/standardized", {
+            params: { query: standardizedQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** Standardized statements with lineage (PRO): `facts` = `{metric_id: {value, unit, fact_id, formula, …}}`. */
+export const getV2StandardizedDetailed = createServerFn({ method: "GET" })
+    .inputValidator(v2StandardizedSchema)
+    .handler(async ({ data }): Promise<V2StandardizedDetailedResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/financials/standardized/detailed", {
+            params: { query: standardizedQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as V2StandardizedDetailedResponse;
+    });
+
+/** Standardized statements as a presentation tree (PRO): `facts` = `[{metric_id, value, children?}]`. */
+export const getV2StandardizedPresentation = createServerFn({ method: "GET" })
+    .inputValidator(v2StandardizedSchema)
+    .handler(async ({ data }): Promise<V2StandardizedPresentationResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/financials/standardized/presentation", {
+            params: { query: standardizedQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** As-reported statements, summary: `facts` = `{concept: {value, derived}}`. */
+export const getV2AsReported = createServerFn({ method: "GET" })
+    .inputValidator(v2AsReportedSchema)
+    .handler(async ({ data }): Promise<V2AsReportedResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/financials/as-reported", {
+            params: { query: asReportedQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** As-reported statements with labels and lineage (PRO). */
+export const getV2AsReportedDetailed = createServerFn({ method: "GET" })
+    .inputValidator(v2AsReportedSchema)
+    .handler(async ({ data }): Promise<V2AsReportedDetailedResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/financials/as-reported/detailed", {
+            params: { query: asReportedQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as V2AsReportedDetailedResponse;
+    });
+
+/** As-reported statements as the filer's presentation tree (PRO): `[{concept, label, value?, depth, is_total?, children?}]`. */
+export const getV2AsReportedPresentation = createServerFn({ method: "GET" })
+    .inputValidator(v2AsReportedSchema)
+    .handler(async ({ data }): Promise<V2AsReportedPresentationResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/financials/as-reported/presentation", {
+            params: { query: asReportedQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** Ratios per period, `{category: {metric_id: value}}` (`category` any of; v1's `solvency` = `leverage`). */
+export const getV2Ratios = createServerFn({ method: "GET" })
+    .inputValidator(v2PeriodListSchema.extend({ category: z.array(z.enum(V2_RATIO_CATEGORIES)).optional() }))
+    .handler(async ({ data }): Promise<V2RatiosResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/metrics/ratios", {
+            params: { query: v2Query({ ...periodListQuery(data), category: v2Expand(data.category) }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** Growth per period and basis (`basis` yoy | qoq, v1 `growth_type`; omitted = both, one row each). */
+export const getV2Growth = createServerFn({ method: "GET" })
+    .inputValidator(v2PeriodListSchema.extend({ basis: z.enum(["yoy", "qoq"]).optional() }))
+    .handler(async ({ data }): Promise<V2GrowthResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/metrics/growth", {
+            params: { query: v2Query({ ...periodListQuery(data), basis: data.basis }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** CAGR per period and horizon (`horizon` 3 | 5 | 10 years, v1 `period_years`; omitted = every horizon). */
+export const getV2Cagr = createServerFn({ method: "GET" })
+    .inputValidator(v2PeriodListSchema.extend({ horizon: z.union([z.literal(3), z.literal(5), z.literal(10)]).optional() }))
+    .handler(async ({ data }): Promise<V2CagrResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/metrics/cagr", {
+            params: { query: v2Query({ ...periodListQuery(data), horizon: data.horizon }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2SegmentsSchema = v2PeriodListSchema.extend({
+    /** XBRL axes (any of). */
+    axis: z.array(z.string().trim().min(1)).optional(),
+    /** Metric ids (any of). */
+    metric: z.array(z.string().trim().min(1)).optional(),
+});
+
+type V2SegmentsInput = z.infer<typeof v2SegmentsSchema>;
+
+const segmentsQuery = (data: V2SegmentsInput) => v2Query({ ...periodListQuery(data), axis: v2Expand(data.axis), metric: v2Expand(data.metric) });
+
+/** Segment facts, one row each (`metric_id`, `segment_id`, `value`, `dimensions[]`). */
+export const getV2Segments = createServerFn({ method: "GET" })
+    .inputValidator(v2SegmentsSchema)
+    .handler(async ({ data }): Promise<V2SegmentsResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/segments", {
+            params: { query: segmentsQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** Segment facts with lineage (PRO): adds `metric` (the XBRL concept), `accession`, `html_tag_id`, `html_label`, `unit`. */
+export const getV2SegmentsDetailed = createServerFn({ method: "GET" })
+    .inputValidator(v2SegmentsSchema)
+    .handler(async ({ data }): Promise<V2SegmentsDetailedResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/segments/detailed", {
+            params: { query: segmentsQuery(data) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** Why a standardized fact has its value (`fact_id` of a detailed standardized fact). */
+export const getV2Fact = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, factId: z.string().trim().min(1).max(200) }))
+    .handler(async ({ data }): Promise<V2FactResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/facts/{fact_id}", {
+            params: { path: { fact_id: data.factId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as V2FactResponse;
     });

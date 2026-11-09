@@ -1,25 +1,34 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 
-import type { FiscalPeriodType, RatioCategory } from "@/lib/api/types";
+import type { MetricsTableRow } from "@/components/financial-metrics/financial-metrics-table";
+import type { MetricsListState } from "@/components/financial-metrics/metrics-list-body";
+import type { FiscalPeriodType, V2RatioCategory, V2RatioPeriod, V2RatiosResponse } from "@/lib/api/types";
 
-import { buildPeriodLabel, FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
+import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
+import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
-import { ErrorState } from "@/components/ui/error-state";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
-import { useFinancialRatios } from "@/lib/api/queries";
+import { useV2RatiosInfinite } from "@/lib/api/queries";
+import { periodLabel, periodLabels } from "@/lib/financials/statements";
 import { formatMetricId, formatNumberEnCompact } from "@/lib/utils";
+import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export const Route = createFileRoute("/$ticker/financials-ratios/")({
     component: FinancialRatiosPage,
 });
 
-const ratioCategoryOptions: Array<{ label: string; value: "all" | RatioCategory }> = [
-    { label: "All Categories", value: "all" },
+/** Periods per page of `/v2/metrics/ratios` (one row per period). */
+const RATIOS_PAGE = 8;
+
+const ALL = "all";
+
+const ratioCategoryOptions: Array<{ label: string; value: typeof ALL | V2RatioCategory }> = [
+    { label: "All Categories", value: ALL },
     { label: "Valuation", value: "valuation" },
     { label: "Profitability", value: "profitability" },
     { label: "Liquidity", value: "liquidity" },
-    { label: "Solvency", value: "solvency" },
+    { label: "Leverage", value: "leverage" },
+    { label: "Efficiency", value: "efficiency" },
 ];
 
 const formatCategoryLabel = (category: string) =>
@@ -27,133 +36,98 @@ const formatCategoryLabel = (category: string) =>
         .replace(/_/g, " ")
         .replace(/\b\w/g, char => char.toUpperCase());
 
+const percentText = (value: number) => `${formatNumberEnCompact(value)}%`;
+
+/** The ratios table: one line per metric × category (`ratios.{category}.{metric_id}`), one value per period. */
+export function ratioRows(periods: ReadonlyArray<V2RatioPeriod>): Array<MetricsTableRow> {
+    const rowMap = new Map<string, MetricsTableRow>();
+
+    for (const period of periods) {
+        const label = periodLabel(period);
+
+        for (const [category, facts] of Object.entries(period.ratios)) {
+            for (const [metricId, value] of Object.entries(facts)) {
+                const key = `${metricId}:${category}`;
+
+                let row = rowMap.get(key);
+
+                if (!row) {
+                    row = {
+                        formatValue: metricId.endsWith("_pct") ? percentText : undefined,
+                        group: formatMetricId(metricId),
+                        key,
+                        label: formatCategoryLabel(category),
+                        values: {},
+                    };
+
+                    rowMap.set(key, row);
+                }
+
+                row.values[label] = value;
+            }
+        }
+    }
+
+    return [...rowMap.values()].sort((a, b) => (a.group ?? "").localeCompare(b.group ?? "") || a.label.localeCompare(b.label));
+}
+
+/** The ratios list (pure): state, coverage, the table over the loaded periods and "Load more". */
+export function RatiosView({ pages, ...state }: MetricsListState & { pages: ReadonlyArray<V2RatiosResponse> }) {
+    const periods = React.useMemo(() => pages.flatMap(page => page.data), [pages]);
+
+    const labels = React.useMemo(() => periodLabels(periods), [periods]);
+
+    const rows = React.useMemo(() => ratioRows(periods), [periods]);
+
+    return (
+        <MetricsListBody
+            coverage={pages.at(0)?.meta.coverage}
+            emptyText="No financial data available."
+            hasRows={rows.length > 0}
+            loadedPages={pages.length}
+            state={state}
+            title="Failed to load ratio financials"
+        >
+            <FinancialMetricsTable groupLabel="Metric" labelHeader="Category" periodLabels={labels} rows={rows} />
+        </MetricsListBody>
+    );
+}
+
 function FinancialRatiosPage() {
     const { ticker } = Route.useParams();
 
     const [periodType, setPeriodType] = React.useState<FiscalPeriodType>("quarterly");
 
-    const [category, setCategory] = React.useState<"all" | RatioCategory>("all");
+    const [category, setCategory] = React.useState<typeof ALL | V2RatioCategory>(ALL);
 
-    const { data, error, isLoading } = useFinancialRatios({
-        category: category === "all" ? undefined : category,
-        fiscalPeriodType: periodType,
-        identifier: ticker,
-        limit: 8,
+    // `/v2/metrics/ratios?company=<ticker>&period=<type>[&category=<one>]`, newest first.
+    const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2RatiosInfinite({
+        category: category === ALL ? undefined : [category],
+        company: ticker,
+        limit: RATIOS_PAGE,
+        period: periodType,
     });
-
-    const company = data?.companies[0];
-
-    const periods = React.useMemo(() => company?.periods ?? [], [company]);
-
-    const periodLabels = React.useMemo(
-        () => periods.map(p => buildPeriodLabel(p)),
-        [periods],
-    );
-
-    const rows = React.useMemo(() => {
-        const rowMap = new Map<string, {
-            group?: string;
-            key: string;
-            formatValue?: (value: number) => string;
-            label: string;
-            values: Record<string, number | undefined>;
-        }>();
-
-        periods.forEach((period, index) => {
-            const label = periodLabels[index];
-
-            Object.entries(period.facts).forEach(([categoryKey, categoryFacts]) => {
-                Object.entries(categoryFacts).forEach(([metricId, value]) => {
-                    const rowKey = `${metricId}:${categoryKey}`;
-
-                    const isPercentMetric = metricId.endsWith("_pct");
-
-                    if (!rowMap.has(rowKey)) {
-                        rowMap.set(rowKey, {
-                            formatValue: isPercentMetric
-                                ? (val: number) => `${formatNumberEnCompact(val)}%`
-                                : undefined,
-                            group: formatMetricId(metricId),
-                            key: rowKey,
-                            label: formatCategoryLabel(categoryKey),
-                            values: {},
-                        });
-                    }
-
-                    rowMap.get(rowKey)!.values[label] = value;
-                });
-            });
-        });
-
-        return Array.from(rowMap.values())
-            .map(row => ({
-                ...row,
-                values: Object.fromEntries(
-                    periodLabels.map(label => [label, row.values[label]]),
-                ),
-            }))
-            .filter(row => periodLabels.some(label => row.values[label] !== undefined))
-            .sort((a, b) => {
-                const groupCompare = (a.group ?? "").localeCompare(b.group ?? "");
-
-                return groupCompare !== 0
-                    ? groupCompare
-                    : a.label.localeCompare(b.label);
-            });
-    }, [periodLabels, periods]);
 
     return (
         <div className="space-y-4 relative flex flex-col h-0 grow">
             <div className="flex flex-col shrink-0 gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <div>Ratio Financials</div>
-                    <div>
-                        Financial ratios grouped by category.
-                    </div>
+                    <div>Financial ratios grouped by category.</div>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    <Select
-                        onValueChange={value => setCategory(value as "all" | RatioCategory)}
-                        value={category}
-                    >
-                        <SelectTrigger className="w-[220px]">
-                            {ratioCategoryOptions.find(opt => opt.value === category)?.label ?? "Category"}
-                        </SelectTrigger>
-                        <SelectContent>
-                            {ratioCategoryOptions.map(opt => (
-                                <SelectItem key={opt.value} value={opt.value}>
-                                    {opt.label}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    <PeriodTypeButtons
-                        onValueChange={setPeriodType}
-                        value={periodType}
-                    />
+                    <FilterSelect className="w-[220px]" onValueChange={setCategory} options={ratioCategoryOptions} value={category} />
+                    <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
                 </div>
             </div>
-            {error
-                ? (
-                        <ErrorState error={error} title="Failed to load ratio financials" />
-                    )
-                : isLoading
-                    ? (
-                            <div className="text-muted-foreground text-sm">Loading financials...</div>
-                        )
-                    : periods.length === 0
-                        ? (
-                                <div className="text-muted-foreground text-sm">No financial data available.</div>
-                            )
-                        : (
-                                <FinancialMetricsTable
-                                    groupLabel="Metric"
-                                    labelHeader="Category"
-                                    periodLabels={periodLabels}
-                                    rows={rows}
-                                />
-                            )}
+            <RatiosView
+                error={error}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                isLoading={isLoading}
+                onLoadMore={() => fetchNextPage()}
+                pages={data?.pages ?? []}
+            />
         </div>
     );
 }

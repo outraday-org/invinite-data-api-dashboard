@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 const statementOptions: Array<{ label: string; value: StatementType }> = [
     { label: "Income Statement", value: "income-statement" },
     { label: "Balance Sheet", value: "balance-sheet" },
-    { label: "Cash Flow Statement", value: "cash-flow-statement" },
+    { label: "Cash Flow Statement", value: "cash-flow" },
 ];
 
 export function StatementSelect({

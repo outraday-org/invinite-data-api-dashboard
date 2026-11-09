@@ -13,20 +13,6 @@ export type MetricsTableRow = {
     values: Record<string, number | undefined>;
 };
 
-export type MetricsTablePeriod = {
-    fiscal_quarter: number;
-    fiscal_year: number;
-    period_end: string;
-};
-
-export function buildPeriodLabel(period: MetricsTablePeriod) {
-    if (period.fiscal_quarter && period.fiscal_quarter > 0) {
-        return `Q${period.fiscal_quarter} ${period.fiscal_year}`;
-    }
-
-    return `${period.fiscal_year}`;
-}
-
 export function FinancialMetricsTable({
     formatValue,
     groupLabel = "Category",

@@ -14,43 +14,11 @@ type ApiQuery<TPath extends keyof paths>
 export type CompanySearchResponse = ApiResponse<"/v1/company/search", "get">;
 export type CompanyDetailsResponse = ApiResponse<"/v1/company/details", "get">;
 export type CompanyFiscalPeriodsResponse = ApiResponse<"/v1/company/fiscal-periods", "get">;
-export type FinancialRatiosResponse = ApiResponse<"/v1/financial-metrics/ratios", "get">;
-export type FinancialGrowthResponse = ApiResponse<"/v1/financial-metrics/growth", "get">;
-export type FinancialCagrResponse = ApiResponse<"/v1/financial-metrics/cagr", "get">;
-
-// All 3 statement endpoints have the same response structure
-export type StandardizedFinancialsResponse = ApiResponse<"/v1/standardized/income-statement", "get">;
-export type StandardizedFinancialsPresentationResponse = ApiResponse<
-    "/v1/standardized/income-statement/presentation",
-    "get"
->;
-export type AsReportedFinancialsPresentationResponse = ApiResponse<
-    "/v1/as-reported/income-statement/presentation",
-    "get"
->;
-export type SegmentedFinancialsResponse = ApiResponse<"/v1/segmented-financials", "get">;
 
 // Derived entity types
 export type Company = CompanySearchResponse["companies"][number];
 export type CompanyDetails = CompanyDetailsResponse["companies"][number];
 export type CompanyFiscalPeriod = CompanyFiscalPeriodsResponse["companies"][number]["periods"][number];
-export type FinancialPeriod
-    = StandardizedFinancialsPresentationResponse["companies"][number]["periods"][number];
-export type PresentationFinancialPeriod
-    = | AsReportedFinancialsPresentationResponse["companies"][number]["periods"][number]
-        | StandardizedFinancialsPresentationResponse["companies"][number]["periods"][number];
-export type SegmentedFinancialPeriod
-    = SegmentedFinancialsResponse["companies"][number]["periods"][number];
-export type FinancialCagrPeriod
-    = FinancialCagrResponse["companies"][number]["periods"][number];
-export type FinancialGrowthPeriod
-    = FinancialGrowthResponse["companies"][number]["periods"][number];
-export type FinancialRatiosPeriod
-    = FinancialRatiosResponse["companies"][number]["periods"][number];
-export type FinancialMetricPeriod
-    = FinancialCagrPeriod | FinancialGrowthPeriod | FinancialRatiosPeriod;
-export type SegmentedFinancialFact
-    = SegmentedFinancialPeriod["facts"][string][number];
 
 // A JSON value. The spec types free-form fields (`InvestorDocument.pages[]`, SEC nested objects) as `unknown`, which a
 // server function's return type rejects (TanStack Start only accepts provably serialisable values); the API answers
@@ -242,16 +210,64 @@ export type HitMatch = V2TranscriptSearchHit["match"];
 /** Zero-based, end-exclusive Unicode code-point offsets into the hit's `text`. */
 export type MatchSpan = HitMatch["spans"][number];
 
+// Data API v2 Financials + Metrics groups (`/v2/financials/*`, `/v2/metrics/*`, `/v2/segments*`, `/v2/facts/*`,
+// backend tasks/data-api-v2 task 5). One row per fiscal period; `statements.<statement>.facts` takes the operation's
+// shape (summary / detailed / presentation). A first page may be `meta.coverage.state: pending` (the backing table
+// is filled after a release).
+export type V2StandardizedResponse = ApiResponse<"/v2/financials/standardized", "get">;
+/** A formula member's `segment` is free JSON in the spec: narrowed to `JsonValue` (both detailed views). */
+export type V2StandardizedDetailedResponse = SecJson<ApiResponse<"/v2/financials/standardized/detailed", "get">>;
+export type V2StandardizedPresentationResponse = ApiResponse<"/v2/financials/standardized/presentation", "get">;
+export type V2AsReportedResponse = ApiResponse<"/v2/financials/as-reported", "get">;
+export type V2AsReportedDetailedResponse = SecJson<ApiResponse<"/v2/financials/as-reported/detailed", "get">>;
+export type V2AsReportedPresentationResponse = ApiResponse<"/v2/financials/as-reported/presentation", "get">;
+export type V2RatiosResponse = ApiResponse<"/v2/metrics/ratios", "get">;
+export type V2GrowthResponse = ApiResponse<"/v2/metrics/growth", "get">;
+export type V2CagrResponse = ApiResponse<"/v2/metrics/cagr", "get">;
+export type V2SegmentsResponse = ApiResponse<"/v2/segments", "get">;
+export type V2SegmentsDetailedResponse = ApiResponse<"/v2/segments/detailed", "get">;
+/** The mapping rule, operands and source facts are free JSON in the spec: narrowed to `JsonValue`. */
+export type V2FactResponse = SecJson<ApiResponse<"/v2/facts/{fact_id}", "get">>;
+
+/** `standardized` | `as-reported` (the path segment of the statement operations). */
+export type V2FinancialsBasis = "as-reported" | "standardized";
+/** `summary` = `{id: value}`, `detailed` = values with lineage (PRO), `presentation` = the tree (PRO). */
+export type V2FinancialsView = "detailed" | "presentation" | "summary";
+export type V2StatementsResponse
+    = | V2AsReportedDetailedResponse
+        | V2AsReportedPresentationResponse
+        | V2AsReportedResponse
+        | V2StandardizedDetailedResponse
+        | V2StandardizedPresentationResponse
+        | V2StandardizedResponse;
+export type V2StatementPeriod = V2StatementsResponse["data"][number];
+/** The response key of a statement (`statement=cash-flow` → `cash_flow`). */
+export type V2StatementKey = keyof V2StandardizedResponse["data"][number]["statements"];
+export type V2FilingSource = V2StandardizedResponse["data"][number]["source"];
+export type V2StandardizedDetailedFacts = NonNullable<V2StandardizedDetailedResponse["data"][number]["statements"]["income_statement"]>["facts"];
+export type V2StandardizedDetailedFact = V2StandardizedDetailedFacts[string];
+export type V2StandardizedPresentationNode = NonNullable<V2StandardizedPresentationResponse["data"][number]["statements"]["income_statement"]>["facts"][number];
+export type V2AsReportedFacts = NonNullable<V2AsReportedResponse["data"][number]["statements"]["income_statement"]>["facts"];
+export type V2AsReportedDetailedFacts = NonNullable<V2AsReportedDetailedResponse["data"][number]["statements"]["income_statement"]>["facts"];
+export type V2AsReportedDetailedFact = V2AsReportedDetailedFacts[string];
+export type V2AsReportedPresentationNode = NonNullable<V2AsReportedPresentationResponse["data"][number]["statements"]["income_statement"]>["facts"][number];
+export type V2DisplaySign = NonNullable<ApiQuery<"/v2/financials/as-reported">["display_sign"]>;
+export type V2RatioPeriod = V2RatiosResponse["data"][number];
+/** `category=` (any of); v1's `solvency` is the contract's `leverage`. */
+export type V2RatioCategory = "efficiency" | "leverage" | "liquidity" | "profitability" | "valuation";
+export type V2GrowthPeriod = V2GrowthResponse["data"][number];
+export type V2GrowthBasis = V2GrowthPeriod["basis"];
+export type V2CagrPeriod = V2CagrResponse["data"][number];
+export type V2CagrHorizon = V2CagrPeriod["horizon"];
+export type V2Segment = V2SegmentsResponse["data"][number];
+
 // Query parameter types
 export type FiscalPeriodType = "annual" | "quarterly" | "ttm" | "ytd";
 
-// Only the 3 statement types that share the same response structure
-export type StatementType = "balance-sheet" | "cash-flow-statement" | "income-statement";
+/** `statement=` of the v2 statement operations (one statement per page view). */
+export type StatementType = "balance-sheet" | "cash-flow" | "income-statement";
 
-export type RatioCategory = "liquidity" | "profitability" | "solvency" | "valuation";
-export type GrowthType = "quarter_over_quarter" | "year_over_year";
-export type CagrPeriodYears = 3 | 5 | 10;
-
+/** v1 `segment_id` values; v2 has no `segment_id` filter, so the segments page filters the loaded rows by them. */
 export type SegmentedFinancialsSegmentId
     = | "seg_cost_of_revenue_business_segment"
         | "seg_general_and_administrative_expenses_business_segment"

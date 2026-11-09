@@ -1,14 +1,12 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import * as React from "react";
 
-import type { PresentationFinancialPeriod } from "@/lib/api/types";
-
 import { MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
 
-import type { TreeRow } from "./types";
+import type { PresentationPeriod, TreeRow } from "./types";
 
 import { ExpandCollapseButtons } from "./expand-collapse-buttons";
 import { addFactTypes, buildTreeRows, flattenToValueMap } from "./utils";
@@ -18,16 +16,9 @@ export function FinancialsPresentationTable({
     periods,
 }: {
     isCollapsible?: boolean;
-    periods: Array<PresentationFinancialPeriod>;
+    periods: Array<PresentationPeriod>;
 }) {
-    // Build period labels for column headers
-    const periodLabels = periods.map((p) => {
-        if (p.fiscal_quarter && p.fiscal_quarter > 0) {
-            return `Q${p.fiscal_quarter} ${p.fiscal_year}`;
-        }
-
-        return `${p.fiscal_year}`;
-    });
+    const periodLabels = React.useMemo(() => periods.map(p => p.label), [periods]);
 
     const typedPeriods = React.useMemo(() => {
         return periods.map(period => ({
@@ -128,9 +119,9 @@ export function FinancialsPresentationTable({
                             <TableHead className="w-[420px] min-w-[420px] max-w-[420px]">
                                 Metric
                             </TableHead>
-                            {periodLabels.map(label => (
-                                <TableHead className="text-right" key={label}>
-                                    {label}
+                            {periods.map(period => (
+                                <TableHead className="text-right" key={period.label} title={period.title}>
+                                    {period.label}
                                 </TableHead>
                             ))}
                         </TableRow>
