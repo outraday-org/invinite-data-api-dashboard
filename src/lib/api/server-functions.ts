@@ -6,7 +6,6 @@ import type {
     CompanyDetailsResponse,
     CompanyFiscalPeriod,
     CompanySearchResponse,
-    DividendsResponse,
     EarningsAudioResponse,
     EarningsCalendarResponse,
     EarningsCompanyDocumentResponse,
@@ -39,23 +38,27 @@ import type {
     InstitutionalTransactionsResponse,
     InstitutionsResponse,
     IposResponse,
-    MarketHolidaysResponse,
     NewsItemResponse,
     NewsListResponse,
     SecDocumentResponse,
     SecExportResponse,
     SecFigureResponse,
-    SecFilerResponse,
     SecFilersResponse,
     SecFilingManifestResponse,
     SecFilingsResponse,
-    SecLifecycleResponse,
     SecManagerPortfolioResponse,
     SecSearchResponse,
     SecSectionsResponse,
     SegmentedFinancialsResponse,
-    SplitsResponse,
     StandardizedFinancialsPresentationResponse,
+    V2CompanyResponse,
+    V2DividendsResponse,
+    V2DividendsSort,
+    V2FilerResponse,
+    V2MarketHolidaysResponse,
+    V2MarketHolidaysSort,
+    V2SplitsResponse,
+    V2SplitsSort,
 } from "./types";
 
 import { ASSET_GROUP_CATEGORIES } from "../earnings/documents";
@@ -63,6 +66,7 @@ import { SEARCH_CASE_SENSITIVE_VALUES, SEARCH_MODES } from "../earnings/labels";
 import { env } from "../env";
 import { createApiClient } from "./client.server";
 import { throwApiError } from "./errors";
+import { V2_COMPANY_EXPANDS, V2_FILER_EXPANDS, v2Expand, v2Query } from "./v2";
 
 const apiKeySchema = z
     .string()
@@ -107,86 +111,6 @@ export const getCompanyDetails = createServerFn({ method: "GET" })
 
         const { data: res, error } = await api.GET("/v1/company/details", {
             params: { query: { identifier } },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-const dividendsSchema = z.object({
-    apiKey: apiKeySchema,
-    endDate: z.string().optional(),
-    identifier: z.string(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-    startDate: z.string().optional(),
-});
-
-export const getCompanyDividends = createServerFn({ method: "GET" })
-    .inputValidator(dividendsSchema)
-    .handler(async ({ data }): Promise<DividendsResponse> => {
-        const {
-            apiKey,
-            endDate,
-            identifier,
-            limit = 40,
-            offset = 0,
-            sort = "desc",
-            startDate,
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error } = await api.GET("/v1/company/dividends", {
-            params: {
-                query: {
-                    end_date: endDate,
-                    identifier,
-                    limit,
-                    offset,
-                    sort,
-                    start_date: startDate,
-                },
-            },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-const splitsSchema = z.object({
-    apiKey: apiKeySchema,
-    identifier: z.string(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-});
-
-export const getCompanySplits = createServerFn({ method: "GET" })
-    .inputValidator(splitsSchema)
-    .handler(async ({ data }): Promise<SplitsResponse> => {
-        const {
-            apiKey,
-            identifier,
-            limit = 40,
-            offset = 0,
-            sort = "desc",
-        } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error } = await api.GET("/v1/company/splits", {
-            params: {
-                query: {
-                    identifier,
-                    limit,
-                    offset,
-                    sort,
-                },
-            },
         });
 
         if (error) throw error;
@@ -400,35 +324,6 @@ export const getIpos = createServerFn({ method: "GET" })
                     offset,
                     sort,
                     start_date: startDate,
-                },
-            },
-        });
-
-        if (error) throw error;
-
-        return res;
-    });
-
-const marketHolidaysSchema = z.object({
-    apiKey: apiKeySchema,
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-});
-
-export const getMarketHolidays = createServerFn({ method: "GET" })
-    .inputValidator(marketHolidaysSchema)
-    .handler(async ({ data }): Promise<MarketHolidaysResponse> => {
-        const { apiKey, limit = 40, offset = 0, sort = "desc" } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error } = await api.GET("/v1/market/market-holidays", {
-            params: {
-                query: {
-                    limit,
-                    offset,
-                    sort,
                 },
             },
         });
@@ -1422,32 +1317,6 @@ export const getSecFilers = createServerFn({ method: "GET" })
         return res as SecFilersResponse;
     });
 
-const secCikSchema = z.object({ apiKey: apiKeySchema, cik: cikSchema });
-
-export const getSecFiler = createServerFn({ method: "GET" })
-    .inputValidator(secCikSchema)
-    .handler(async ({ data }): Promise<SecFilerResponse> => {
-        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/sec/filers/{cik}", {
-            params: { path: { cik: data.cik } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res as SecFilerResponse;
-    });
-
-export const getSecFilerLifecycle = createServerFn({ method: "GET" })
-    .inputValidator(secCikSchema)
-    .handler(async ({ data }): Promise<SecLifecycleResponse> => {
-        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/sec/filers/{cik}/lifecycle", {
-            params: { path: { cik: data.cik } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res as SecLifecycleResponse;
-    });
-
 const secFilingsSchema = z.object({
     apiKey: apiKeySchema,
     cursor: cursorSchema,
@@ -1658,4 +1527,116 @@ export const getSecManagerPortfolio = createServerFn({ method: "GET" })
         if (error) throwApiError(error, response);
 
         return res as SecManagerPortfolioResponse;
+    });
+
+// Data API v2 (`/v2/*`, backend tasks/data-api-v2 task 4). An unknown query parameter is a 400 `unknown_parameter`,
+// so each function sends only the operation's declared parameters and drops the unset ones (`v2Query`). Lists page by
+// `cursor` (= the previous page's `next_cursor`, with the SAME filters; changed filters + an old cursor = 400
+// `cursor_mismatch`). Errors are RFC 9457 problems, thrown as `ApiRequestError` (`code`, `requestId`).
+
+const v2LimitSchema = z.number().int().min(1).max(200).optional();
+
+const v2CompanySchema = z.object({
+    apiKey: apiKeySchema,
+    company: z.string().trim().min(1),
+    expand: z.array(z.enum(V2_COMPANY_EXPANDS)).optional(),
+});
+
+export const getV2Company = createServerFn({ method: "GET" })
+    .inputValidator(v2CompanySchema)
+    .handler(async ({ data }): Promise<V2CompanyResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/companies/{company}", {
+            params: { path: { company: data.company }, query: v2Query({ expand: v2Expand(data.expand) }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2DividendsSchema = z.object({
+    apiKey: apiKeySchema,
+    company: z.string().trim().min(1),
+    cursor: cursorSchema,
+    exDateGte: z.string().trim().min(1).optional(),
+    exDateLte: z.string().trim().min(1).optional(),
+    limit: v2LimitSchema,
+    sort: z.enum(["ex_date", "-ex_date", "pay_date", "-pay_date"] as const satisfies ReadonlyArray<V2DividendsSort>).optional(),
+});
+
+export const getV2Dividends = createServerFn({ method: "GET" })
+    .inputValidator(v2DividendsSchema)
+    .handler(async ({ data }): Promise<V2DividendsResponse> => {
+        const { apiKey, company, cursor, exDateGte, exDateLte, limit, sort } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/dividends", {
+            params: { query: v2Query({ company, cursor, "ex_date.gte": exDateGte, "ex_date.lte": exDateLte, limit, sort }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2SplitsSchema = z.object({
+    apiKey: apiKeySchema,
+    company: z.string().trim().min(1),
+    cursor: cursorSchema,
+    limit: v2LimitSchema,
+    sort: z.enum(["execution_date", "-execution_date"] as const satisfies ReadonlyArray<V2SplitsSort>).optional(),
+});
+
+export const getV2Splits = createServerFn({ method: "GET" })
+    .inputValidator(v2SplitsSchema)
+    .handler(async ({ data }): Promise<V2SplitsResponse> => {
+        const { apiKey, company, cursor, limit, sort } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/splits", {
+            params: { query: v2Query({ company, cursor, limit, sort }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2MarketHolidaysSchema = z.object({
+    apiKey: apiKeySchema,
+    cursor: cursorSchema,
+    dateGte: z.string().trim().min(1).optional(),
+    dateLte: z.string().trim().min(1).optional(),
+    limit: v2LimitSchema,
+    sort: z.enum(["date", "-date"] as const satisfies ReadonlyArray<V2MarketHolidaysSort>).optional(),
+});
+
+export const getV2MarketHolidays = createServerFn({ method: "GET" })
+    .inputValidator(v2MarketHolidaysSchema)
+    .handler(async ({ data }): Promise<V2MarketHolidaysResponse> => {
+        const { apiKey, cursor, dateGte, dateLte, limit, sort } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/market-holidays", {
+            params: { query: v2Query({ cursor, "date.gte": dateGte, "date.lte": dateLte, limit, sort }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2FilerSchema = z.object({
+    apiKey: apiKeySchema,
+    cik: cikSchema,
+    expand: z.array(z.enum(V2_FILER_EXPANDS)).optional(),
+});
+
+export const getV2Filer = createServerFn({ method: "GET" })
+    .inputValidator(v2FilerSchema)
+    .handler(async ({ data }): Promise<V2FilerResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/filers/{cik}", {
+            params: { path: { cik: data.cik }, query: v2Query({ expand: v2Expand(data.expand) }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as V2FilerResponse;
     });

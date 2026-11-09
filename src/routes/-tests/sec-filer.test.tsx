@@ -4,12 +4,12 @@ import type * as React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { SecLifecycleResponse } from "@/lib/api/types";
+import type { V2FilerResponse } from "@/lib/api/types";
 
 import { cikOf, SecFilerMatches } from "@/components/sec/sec-filer-lookup";
 import { SecFilerHeader, SecFilingsView, SecLifecycleView } from "@/components/sec/sec-filer-views";
 import { ApiRequestError } from "@/lib/api/errors";
-import { SEC_FILERS, SEC_FILINGS, SEC_LIFECYCLE_NOT_READY_BODY } from "@/lib/sec/sec-fixtures";
+import { SEC_FILERS, SEC_FILINGS } from "@/lib/sec/sec-fixtures";
 
 vi.mock("@tanstack/react-router", () => ({
     Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => (
@@ -42,57 +42,105 @@ describe("tickerless filer selection", () => {
     });
 
     it("the header of a tickerless filer says so and invents no ticker", () => {
-        const data = {
-            api_schema: "secdoors.v1",
-            filer: { cik: "2063464", cik10: "0002063464", name: "Acme SPAC Corp", stated_tickers: [] },
-            readiness: { reason: null, recoverable: false, status: "ready" as const },
-        };
-
-        render(<SecFilerHeader cik="2063464" data={data} error={null} isLoading={false} />);
+        render(<SecFilerHeader cik="2063464" data={TICKERLESS_FILER} error={null} isLoading={false} />);
 
         expect(screen.getByText("Acme SPAC Corp")).toBeInTheDocument();
 
         expect(screen.getByText("No ticker")).toBeInTheDocument();
+
+        expect(screen.getByText("Pre-IPO")).toBeInTheDocument();
+
+        expect(screen.getByText("12-31")).toBeInTheDocument();
+    });
+
+    it("a listed filer shows its verified listing", () => {
+        render(<SecFilerHeader cik="320193" data={{ ...TICKERLESS_FILER, listing: { exchange: "XNAS", ticker: "AAPL" }, phase: "public" }} error={null} isLoading={false} />);
+
+        expect(screen.getByText("AAPL · XNAS")).toBeInTheDocument();
+
+        expect(screen.queryByText("No ticker")).toBeNull();
+    });
+
+    it("a 404 not_covered problem is its state, with the API's detail", () => {
+        const error = new ApiRequestError(404, { error: "not_covered", message: "CIK 0000000001 is not covered", requestId: "req_1" });
+
+        render(<SecFilerHeader cik="1" data={null} error={error} isLoading={false} />);
+
+        expect(screen.getByText("Not covered by the Invinite API")).toBeInTheDocument();
+
+        expect(screen.getByText("CIK 0000000001 is not covered")).toBeInTheDocument();
+    });
+
+    it("a 403 excluded problem reads as outside the coverage", () => {
+        const error = new ApiRequestError(403, { error: "excluded", message: "x" });
+
+        render(<SecFilerHeader cik="1" data={null} error={error} isLoading={false} />);
+
+        expect(screen.getByText("Outside the SEC store's coverage")).toBeInTheDocument();
     });
 });
 
+const TICKERLESS_FILER: V2FilerResponse = {
+    cik: "0002063464",
+    entity_type: "operating",
+    fiscal_year_end: "12-31",
+    listing: null,
+    name: "Acme SPAC Corp",
+    phase: "pre_ipo",
+    sic: "6770",
+    state_of_incorporation: "DE",
+};
+
 describe("SecLifecycleView", () => {
-    it("the live 503 not_ready: 'Issuer lifecycle is not switched on yet', nothing listed", () => {
-        const error = new ApiRequestError(503, {
-            code: "issuer_lifecycle_provider_not_registered",
-            error: "not_ready",
-            message: "This SEC store capability is not switched on yet.",
-            readiness: { reason: "issuer_lifecycle_provider_not_registered", status: "not_ready" },
-        });
+    it("a filer without lifecycle evidence says so; 503 unavailable is its state", () => {
+        const { rerender } = render(<SecLifecycleView data={{ ...TICKERLESS_FILER, lifecycle: null, successors: [] }} error={null} isLoading={false} />);
 
-        render(<SecLifecycleView data={null} error={error} isLoading={false} />);
-
-        expect(SEC_LIFECYCLE_NOT_READY_BODY.code).toBe("issuer_lifecycle_provider_not_registered");
-
-        expect(screen.getByText("Issuer lifecycle is not switched on yet")).toBeInTheDocument();
+        expect(screen.getByText("No lifecycle evidence for this filer.")).toBeInTheDocument();
 
         expect(screen.queryByText("Registration tracks")).toBeNull();
+
+        rerender(<SecLifecycleView data={null} error={new ApiRequestError(503, { error: "unavailable", message: "The SEC store is unavailable" })} isLoading={false} />);
+
+        expect(screen.getByText("Temporarily unavailable — try again later")).toBeInTheDocument();
     });
 
-    it("tracks and successor evidence state their review status explicitly", () => {
-        const data: SecLifecycleResponse = {
-            api_schema: "secdoors.v1",
-            decision: { reason: "public_preipo", status: "eligible" },
-            issuer: { kind: "operating", phase: "public_preipo" },
-            readiness: { reason: "lifecycle_evidence_pending", recoverable: false, status: "partial" },
-            registration_tracks: [{ form: "S-1", stage: "registered", track_key: "333-123456" }],
-            successions: { relations: [{ relationship_type: "legal_successor", review_status: "verified", successor_cik: "99" }, { successor_cik: "98" }] },
+    it("phase, tracks with their review status, pending actions, proposed symbols, successors, former names", () => {
+        const data: V2FilerResponse = {
+            ...TICKERLESS_FILER,
+            former_names: [{ name: "Acme Holdings Inc", until: "2024-05-01" }],
+            lifecycle: {
+                first_public_seen_at: null,
+                ipo_pending: [],
+                kind: "spac",
+                last_observed_at: "2026-11-08T10:00:00Z",
+                pending_actions: [{ action: "await_effectiveness", track_id: "t1" }],
+                phase: "registration_filed",
+                registration_tracks: [{ form: "S-1", review_status: "verified", stage: "registered", track_key: "333-123456" }, { track_key: "333-999" }],
+                warnings: ["listing_unconfirmed"],
+            },
+            proposed_symbols: [{ exchange: "NASDAQ", ipo_calendar_match: true, security_class: "units", source: "regex", symbol: "ACMEU" }],
+            successors: [{ cik: "0000000099", kind: "legal_successor", name: "Acme Inc" }],
         };
 
         render(<SecLifecycleView data={data} error={null} isLoading={false} />);
 
-        expect(screen.getByText("Some lifecycle evidence is still being processed")).toBeInTheDocument();
+        expect(screen.getByText("registration_filed")).toBeInTheDocument();
 
         expect(screen.getByText("333-123456")).toBeInTheDocument();
 
         expect(screen.getByText("Review status: verified")).toBeInTheDocument();
 
-        expect(screen.getAllByText("Review status: not stated")).toHaveLength(2);
+        expect(screen.getAllByText("Review status: not stated")).toHaveLength(1);
+
+        expect(screen.getByText("await_effectiveness")).toBeInTheDocument();
+
+        expect(screen.getByText("ACMEU · NASDAQ · units · on the IPO calendar")).toBeInTheDocument();
+
+        expect(screen.getByText("Acme Inc · CIK 0000000099 · legal successor")).toBeInTheDocument();
+
+        expect(screen.getByText("Acme Holdings Inc (until 2024-05-01)")).toBeInTheDocument();
+
+        expect(screen.getByText("listing unconfirmed")).toBeInTheDocument();
     });
 });
 

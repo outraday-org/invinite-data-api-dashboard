@@ -11,7 +11,6 @@ import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import type {
     CagrPeriodYears,
     CompanyFiscalPeriod,
-    DividendsResponse,
     EarningsAudioResponse,
     EarningsCalendarDateKind,
     EarningsCalendarResponse,
@@ -56,37 +55,41 @@ import type {
     InstitutionalHoldingsResponse,
     InstitutionalTransactionsResponse,
     IposResponse,
-    MarketHolidaysResponse,
     NewsItemResponse,
     NewsListResponse,
     RatioCategory,
     SecDocumentResponse,
     SecExportResponse,
     SecFigureResponse,
-    SecFilerResponse,
     SecFilersResponse,
     SecFilingManifestResponse,
     SecFilingsOrder,
     SecFilingsResponse,
-    SecLifecycleResponse,
     SecManagerPortfolioResponse,
     SecSearchMode,
     SecSearchResponse,
     SecSectionsResponse,
     SegmentedFinancialsSegmentId,
-    SplitsResponse,
     StatementType,
+    V2CompanyExpand,
+    V2CompanyResponse,
+    V2DividendsResponse,
+    V2DividendsSort,
+    V2FilerExpand,
+    V2FilerResponse,
+    V2MarketHolidaysResponse,
+    V2MarketHolidaysSort,
+    V2SplitsResponse,
+    V2SplitsSort,
 } from "./types";
 
-import { ApiRequestError, rethrowApiError, retryUnlessApiError } from "./errors";
+import { ApiRequestError, errorDescription, rethrowApiError, retryUnlessApiError } from "./errors";
 import { firstPageParam, offsetPageParam } from "./page-params";
 import {
     getApiBaseUrl,
     getAsReportedFinancialsPresentation,
     getCompanyDetails,
-    getCompanyDividends,
     getCompanyFiscalPeriods,
-    getCompanySplits,
     getEarningsAudio,
     getEarningsCalendar,
     getEarningsCompanyDocument,
@@ -119,15 +122,12 @@ import {
     getInstitutionalTransactions,
     getInstitutions,
     getIpos,
-    getMarketHolidays,
     getNewsItem,
     getNewsList,
     getSecDocument,
     getSecExport,
     getSecExportFile,
     getSecFigure,
-    getSecFiler,
-    getSecFilerLifecycle,
     getSecFilers,
     getSecFilingManifest,
     getSecFilings,
@@ -137,6 +137,11 @@ import {
     getSecVersion,
     getSegmentedFinancials,
     getStandardizedFinancials,
+    getV2Company,
+    getV2Dividends,
+    getV2Filer,
+    getV2MarketHolidays,
+    getV2Splits,
     searchCompanies,
 } from "./server-functions";
 
@@ -170,22 +175,6 @@ export const companyDetailsOptions = (identifier: string) =>
         queryKey: ["company", "details", identifier],
         staleTime: 5 * 60 * 1000,
     });
-
-type DividendsQueryInput = {
-    endDate?: string;
-    identifier: string;
-    limit?: number;
-    offset?: number;
-    sort?: "asc" | "desc";
-    startDate?: string;
-};
-
-type SplitsQueryInput = {
-    identifier: string;
-    limit?: number;
-    offset?: number;
-    sort?: "asc" | "desc";
-};
 
 type InsiderTradesQueryInput = {
     acquiredDisposed?: "A" | "D";
@@ -223,42 +212,6 @@ type InstitutionsQueryInput = {
     offset?: number;
     sort?: "asc" | "desc";
 };
-
-type MarketHolidaysQueryInput = {
-    limit?: number;
-    offset?: number;
-    sort?: "asc" | "desc";
-};
-
-export const dividendsOptions = (input: DividendsQueryInput) =>
-    queryOptions({
-        enabled: input.identifier.trim().length > 0,
-        queryFn: () => getCompanyDividends({ data: input }),
-        queryKey: [
-            "dividends",
-            input.identifier,
-            input.startDate ?? "all",
-            input.endDate ?? "all",
-            input.sort ?? "desc",
-            input.limit ?? 40,
-            input.offset ?? 0,
-        ],
-        staleTime: 10 * 60 * 1000,
-    });
-
-export const splitsOptions = (input: SplitsQueryInput) =>
-    queryOptions({
-        enabled: input.identifier.trim().length > 0,
-        queryFn: () => getCompanySplits({ data: input }),
-        queryKey: [
-            "splits",
-            input.identifier,
-            input.sort ?? "desc",
-            input.limit ?? 40,
-            input.offset ?? 0,
-        ],
-        staleTime: 10 * 60 * 1000,
-    });
 
 type IposQueryInput = {
     endDate?: string;
@@ -429,12 +382,12 @@ export const financialCagrOptions = (input: FinancialCagrInput) =>
         staleTime: 5 * 60 * 1000,
     });
 
-// Helper to show error toast
+// Helper to show error toast (a v2 problem's request id appended: `errorDescription`)
 function useErrorToast(error: Error | null, message: string) {
     React.useEffect(() => {
         if (error) {
             toast.error(message, {
-                description: error.message,
+                description: errorDescription(error),
             });
         }
     }, [error, message]);
@@ -489,14 +442,6 @@ export function useCompanyDetails(identifier: string) {
     };
 }
 
-type DividendsInfiniteInput = Omit<DividendsQueryInput, "offset"> & {
-    limit: number;
-};
-
-type SplitsInfiniteInput = Omit<SplitsQueryInput, "offset"> & {
-    limit: number;
-};
-
 type InsiderTradesInfiniteInput = Omit<InsiderTradesQueryInput, "offset"> & {
     limit: number;
 };
@@ -512,124 +457,6 @@ type InstitutionalHoldingsInfiniteInput = Omit<InstitutionalHoldingsQueryInput, 
 type IposInfiniteInput = Omit<IposQueryInput, "offset"> & {
     limit: number;
 };
-
-type MarketHolidaysInfiniteInput = Omit<MarketHolidaysQueryInput, "offset"> & {
-    limit: number;
-};
-
-export function useDividendsInfinite(input: DividendsInfiniteInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const queryKey = [
-        "dividends",
-        "infinite",
-        input.identifier,
-        input.startDate ?? "all",
-        input.endDate ?? "all",
-        input.sort ?? "desc",
-        input.limit,
-        String(apiKeyUpdatedAt),
-    ] as const;
-
-    const result = useInfiniteQuery<
-        DividendsResponse,
-        Error,
-        InfiniteData<DividendsResponse, number>,
-        typeof queryKey,
-        number
-    >({
-        enabled: hasHydrated && input.identifier.trim().length > 0,
-        getNextPageParam: (lastPage: DividendsResponse) => {
-            const nextUrl = lastPage.companies[0]?.next_url;
-
-            if (!nextUrl) return undefined;
-
-            const parsed = new URL(nextUrl, "http://local");
-
-            const offset = parsed.searchParams.get("offset");
-
-            if (!offset) return undefined;
-
-            const parsedOffset = Number(offset);
-
-            return Number.isNaN(parsedOffset) ? undefined : parsedOffset;
-        },
-        initialPageParam: 0,
-        queryFn: ({ pageParam }) =>
-            getCompanyDividends({
-                data: {
-                    ...input,
-                    apiKey: apiKey ?? undefined,
-                    offset: Number(pageParam) || 0,
-                },
-            }),
-        queryKey,
-        staleTime: 10 * 60 * 1000,
-    });
-
-    useErrorToast(result.error, "Failed to load dividends");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useSplitsInfinite(input: SplitsInfiniteInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const queryKey = [
-        "splits",
-        "infinite",
-        input.identifier,
-        input.sort ?? "desc",
-        input.limit,
-        String(apiKeyUpdatedAt),
-    ] as const;
-
-    const result = useInfiniteQuery<
-        SplitsResponse,
-        Error,
-        InfiniteData<SplitsResponse, number>,
-        typeof queryKey,
-        number
-    >({
-        enabled: hasHydrated && input.identifier.trim().length > 0,
-        getNextPageParam: (lastPage: SplitsResponse) => {
-            const nextUrl = lastPage.companies[0]?.next_url;
-
-            if (!nextUrl) return undefined;
-
-            const parsed = new URL(nextUrl, "http://local");
-
-            const offset = parsed.searchParams.get("offset");
-
-            if (!offset) return undefined;
-
-            const parsedOffset = Number(offset);
-
-            return Number.isNaN(parsedOffset) ? undefined : parsedOffset;
-        },
-        initialPageParam: 0,
-        queryFn: ({ pageParam }) =>
-            getCompanySplits({
-                data: {
-                    ...input,
-                    apiKey: apiKey ?? undefined,
-                    offset: Number(pageParam) || 0,
-                },
-            }),
-        queryKey,
-        staleTime: 10 * 60 * 1000,
-    });
-
-    useErrorToast(result.error, "Failed to load stock splits");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
 
 export function useInsiderTradesInfinite(input: InsiderTradesInfiniteInput) {
     const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
@@ -903,51 +730,6 @@ export function useIposInfinite(input: IposInfiniteInput) {
     };
 }
 
-export function useMarketHolidaysInfinite(input: MarketHolidaysInfiniteInput) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const queryKey = [
-        "market-holidays",
-        "infinite",
-        input.sort ?? "desc",
-        input.limit,
-        String(apiKeyUpdatedAt),
-    ] as const;
-
-    const result = useInfiniteQuery<
-        MarketHolidaysResponse,
-        Error,
-        InfiniteData<MarketHolidaysResponse, number>,
-        typeof queryKey,
-        number
-    >({
-        enabled: hasHydrated,
-        getNextPageParam: (lastPage, allPages) => {
-            if (lastPage.holidays.length < input.limit) return undefined;
-
-            return allPages.length * input.limit;
-        },
-        initialPageParam: 0,
-        queryFn: ({ pageParam }) =>
-            getMarketHolidays({
-                data: {
-                    ...input,
-                    apiKey: apiKey ?? undefined,
-                    offset: Number(pageParam) || 0,
-                },
-            }),
-        queryKey,
-        staleTime: 10 * 60 * 1000,
-    });
-
-    useErrorToast(result.error, "Failed to load market holidays");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
 export function useStandardizedFinancials(input: StandardizedFinancialsInput) {
     const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
 
@@ -1144,7 +926,7 @@ function useEarningsQuery<T>(options: EarningsQueryExtras<T> & {
  * The infinite twin of `useEarningsQuery`. Pages by `offset` (`offsetPageParam`, first page 0) unless `pageParamOf`
  * says otherwise (`/v1/news` pages by cursor with a pager instead: `useNewsPage`).
  */
-function useEarningsInfinite<TPage extends { next_url?: null | string }, TParam = number>(options: {
+function useEarningsInfinite<TPage extends { next_cursor?: null | string } | { next_url?: null | string }, TParam = number>(options: {
     enabled: boolean;
     errorMessage: null | string;
     fetchPage: (pageParam: TParam, apiKey: string | undefined) => Promise<TPage>;
@@ -1787,28 +1569,6 @@ export function useSecFilers(input: { limit?: number; name?: string; ticker?: st
     });
 }
 
-export function useSecFiler(cik: string) {
-    return useEarningsQuery<SecFilerResponse>({
-        enabled: cik.length > 0,
-        errorMessage: null,
-        load: apiKey => getSecFiler({ data: { apiKey, cik } }),
-        queryKey: ["sec", "filer", cik],
-        refetchInterval: refetchWhilePending,
-        staleTime: SEC_STALE_MS,
-    });
-}
-
-export function useSecFilerLifecycle(cik: string) {
-    return useEarningsQuery<SecLifecycleResponse>({
-        enabled: cik.length > 0,
-        errorMessage: null,
-        load: apiKey => getSecFilerLifecycle({ data: { apiKey, cik } }),
-        queryKey: ["sec", "lifecycle", cik],
-        refetchInterval: refetchWhilePending,
-        staleTime: SEC_STALE_MS,
-    });
-}
-
 /** One filer's filings (ticker or CIK), newest first by default, one page per `next_cursor`. */
 export function useSecFilingsInfinite(input: { form?: string; identifier: string; limit?: number; order?: SecFilingsOrder }) {
     return useEarningsInfinite<SecFilingsResponse, null | string>({
@@ -1960,5 +1720,77 @@ export function useSecManagerPortfolio(cik: string, periodEnd: null | string) {
         queryKey: ["sec", "portfolio", cik, periodEnd ?? ""],
         refetchInterval: refetchWhilePending,
         staleTime: SEC_STALE_MS,
+    });
+}
+
+// Data API v2 (`/v2/*`, backend tasks/data-api-v2 task 4). Every hook revives the problem+json error
+// (`ApiRequestError` with `code` / `requestId`) and never retries an API answer. The lists page by `next_cursor`
+// (`initialPageParam: null`, the cursor is the page param and never part of the key; the filters are, so a changed
+// filter starts over at page 1 and never sends an old cursor = 400 `cursor_mismatch`).
+
+const V2_STALE_MS = 10 * 60 * 1000;
+
+/** One company (ticker or CIK), `expand: ["coverage"]` adds the data families and their `through` day. */
+export function useV2Company(company: string, { expand = [] }: { expand?: ReadonlyArray<V2CompanyExpand> } = {}) {
+    return useEarningsQuery<V2CompanyResponse>({
+        enabled: company.trim().length > 0,
+        errorMessage: "Failed to load company details",
+        load: apiKey => getV2Company({ data: { apiKey, company, expand: [...expand] } }),
+        queryKey: ["v2", "company", company, [...expand].sort().join(",")],
+        quietStatuses: [404],
+        staleTime: V2_STALE_MS,
+    });
+}
+
+/** One filer by CIK with its expansions (status-aware: 403 excluded / 404 not_covered / 503 unavailable are states). */
+export function useV2Filer(cik: string, expand: ReadonlyArray<V2FilerExpand> = []) {
+    return useEarningsQuery<V2FilerResponse>({
+        enabled: cik.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2Filer({ data: { apiKey, cik, expand: [...expand] } }),
+        queryKey: ["v2", "filer", cik, [...expand].sort().join(",")],
+        staleTime: V2_STALE_MS,
+    });
+}
+
+type V2DividendsInput = { company: string; exDateGte?: string; exDateLte?: string; limit?: number; sort?: V2DividendsSort };
+
+export function useV2DividendsInfinite(input: V2DividendsInput) {
+    return useEarningsInfinite<V2DividendsResponse, null | string>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: "Failed to load dividends",
+        fetchPage: (cursor, apiKey) => getV2Dividends({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        initialPageParam: null,
+        pageParamOf: nextCursorOf,
+        queryKey: ["v2", "dividends", input.company, input.exDateGte ?? "", input.exDateLte ?? "", input.sort ?? "", input.limit ?? ""],
+        staleTime: V2_STALE_MS,
+    });
+}
+
+type V2SplitsInput = { company: string; limit?: number; sort?: V2SplitsSort };
+
+export function useV2SplitsInfinite(input: V2SplitsInput) {
+    return useEarningsInfinite<V2SplitsResponse, null | string>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: "Failed to load stock splits",
+        fetchPage: (cursor, apiKey) => getV2Splits({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        initialPageParam: null,
+        pageParamOf: nextCursorOf,
+        queryKey: ["v2", "splits", input.company, input.sort ?? "", input.limit ?? ""],
+        staleTime: V2_STALE_MS,
+    });
+}
+
+type V2MarketHolidaysInput = { dateGte?: string; dateLte?: string; limit?: number; sort?: V2MarketHolidaysSort };
+
+export function useV2MarketHolidaysInfinite(input: V2MarketHolidaysInput) {
+    return useEarningsInfinite<V2MarketHolidaysResponse, null | string>({
+        enabled: true,
+        errorMessage: "Failed to load market holidays",
+        fetchPage: (cursor, apiKey) => getV2MarketHolidays({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        initialPageParam: null,
+        pageParamOf: nextCursorOf,
+        queryKey: ["v2", "market-holidays", input.dateGte ?? "", input.dateLte ?? "", input.sort ?? "", input.limit ?? ""],
+        staleTime: V2_STALE_MS,
     });
 }

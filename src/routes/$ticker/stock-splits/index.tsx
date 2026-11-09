@@ -8,12 +8,12 @@ import {
 } from "@tanstack/react-table";
 import * as React from "react";
 
-import type { Split } from "@/lib/api/types";
+import type { V2Split } from "@/lib/api/types";
 
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useSplitsInfinite } from "@/lib/api/queries";
+import { useV2SplitsInfinite } from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
 import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
@@ -31,18 +31,18 @@ function StockSplitsPage() {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useSplitsInfinite({
-        identifier: ticker,
+    } = useV2SplitsInfinite({
+        company: ticker,
         limit: 40,
-        sort: "desc",
+        sort: "-execution_date",
     });
 
     const splits = React.useMemo(
-        () => data?.pages.flatMap(page => page.companies[0]?.splits ?? []) ?? [],
+        () => data?.pages.flatMap(page => page.data) ?? [],
         [data],
     );
 
-    const columns = React.useMemo<Array<ColumnDef<Split>>>(
+    const columns = React.useMemo<Array<ColumnDef<V2Split>>>(
         () => [
             {
                 accessorKey: "execution_date",

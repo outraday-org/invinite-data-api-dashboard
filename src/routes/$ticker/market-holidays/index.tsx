@@ -4,12 +4,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import * as React from "react";
 
-import type { MarketHoliday } from "@/lib/api/types";
+import type { V2MarketHoliday } from "@/lib/api/types";
 
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useMarketHolidaysInfinite } from "@/lib/api/queries";
+import { useV2MarketHolidaysInfinite } from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
 import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
@@ -25,17 +25,17 @@ function MarketHolidaysPage() {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useMarketHolidaysInfinite({
+    } = useV2MarketHolidaysInfinite({
         limit: 40,
-        sort: "desc",
+        sort: "-date",
     });
 
     const holidays = React.useMemo(
-        () => data?.pages.flatMap(page => page.holidays) ?? [],
+        () => data?.pages.flatMap(page => page.data) ?? [],
         [data],
     );
 
-    const columns = React.useMemo<Array<ColumnDef<MarketHoliday>>>(
+    const columns = React.useMemo<Array<ColumnDef<V2MarketHoliday>>>(
         () => [
             {
                 accessorKey: "day",

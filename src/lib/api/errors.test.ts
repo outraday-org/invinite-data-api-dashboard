@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ApiRequestError, fromSerialized, isTierError, rethrowApiError, throwApiError } from "./errors";
+import { ApiRequestError, errorDescription, fromSerialized, isTierError, rethrowApiError, throwApiError } from "./errors";
 
 describe("ApiRequestError", () => {
     it("survives a JSON round trip through fromSerialized", () => {
@@ -54,5 +54,101 @@ describe("ApiRequestError", () => {
         const network = new Error("fetch failed");
 
         expect(() => rethrowApiError(network)).toThrow(network);
+    });
+});
+
+const PROBLEM = {
+    code: "not_covered",
+    detail: "Company ZZZZ is not covered",
+    docs_url: "https://data.invinite.com/docs/errors#not_covered",
+    request_id: "req_01HXYZ",
+    status: 404,
+    title: "Not covered",
+    type: "https://data.invinite.com/docs/errors#not_covered",
+};
+
+function thrownBy(body: unknown, status: number) {
+    try {
+        throwApiError(body, new Response(null, { status }));
+    }
+    catch (error) {
+        return error as ApiRequestError;
+    }
+
+    throw new Error("throwApiError did not throw");
+}
+
+describe("problem+json (v2)", () => {
+    it("reads code, detail, param and request_id of a problem body", () => {
+        const error = thrownBy({ ...PROBLEM, code: "unknown_parameter", detail: "Unknown parameter: offset", param: "offset", status: 400 }, 400);
+
+        expect(error.status).toBe(400);
+
+        expect(error.code).toBe("unknown_parameter");
+
+        expect(error.message).toBe("Unknown parameter: offset");
+
+        expect(error.body.param).toBe("offset");
+
+        expect(error.requestId).toBe("req_01HXYZ");
+
+        expect(error.reason).toBeNull();
+    });
+
+    it("keeps a v1 body unchanged (no request id)", () => {
+        const error = thrownBy({ code: "scope_excluded", error: "excluded", message: "x" }, 403);
+
+        expect(error.code).toBe("excluded");
+
+        expect(error.reason).toBe("scope_excluded");
+
+        expect(error.requestId).toBeNull();
+    });
+
+    it("the request id survives the server-function serialisation", () => {
+        const original = thrownBy(PROBLEM, 404);
+
+        const revived = fromSerialized(JSON.parse(JSON.stringify(original)));
+
+        expect(revived).toBeInstanceOf(ApiRequestError);
+
+        expect(revived?.code).toBe("not_covered");
+
+        expect(revived?.message).toBe("Company ZZZZ is not covered");
+
+        expect(revived?.requestId).toBe("req_01HXYZ");
+
+        expect(errorDescription(revived as ApiRequestError)).toBe("Company ZZZZ is not covered (not_covered, request req_01HXYZ)");
+    });
+
+    it("keeps every parameter problem of errors[] across the serialisation", () => {
+        const original = thrownBy({
+            ...PROBLEM,
+            code: "invalid_parameter",
+            detail: "2 parameter problems",
+            errors: [
+                { code: "invalid_parameter", detail: "limit: must be at most 200.", param: "limit" },
+                { code: "unknown_parameter", detail: "Unknown parameter: offset", param: "offset" },
+                { code: 7 },
+            ],
+            status: 400,
+        }, 400);
+
+        const revived = fromSerialized(JSON.parse(JSON.stringify(original)));
+
+        expect(revived?.body.errors).toEqual([
+            { code: "invalid_parameter", detail: "limit: must be at most 200.", param: "limit" },
+            { code: "unknown_parameter", detail: "Unknown parameter: offset", param: "offset" },
+        ]);
+    });
+
+    it("recognises the v2 plan gate (403 plan_required), not any other 403", () => {
+        expect(isTierError(thrownBy({ ...PROBLEM, code: "plan_required", status: 403 }, 403))).toBe(true);
+
+        expect(isTierError(thrownBy({ ...PROBLEM, code: "excluded", status: 403 }, 403))).toBe(false);
+    });
+
+    it("errorDescription is the plain message without a request id", () => {
+        expect(errorDescription(new Error("fetch failed"))).toBe("fetch failed");
     });
 });

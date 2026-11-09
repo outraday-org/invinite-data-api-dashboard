@@ -1,8 +1,14 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 
+import type { V2CompanyCoverage } from "@/lib/api/types";
+
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
-import { useCompanyDetails } from "@/lib/api/queries";
+import { Notice } from "@/components/ui/notice";
+import { ApiRequestError } from "@/lib/api/errors";
+import { useV2Company } from "@/lib/api/queries";
+import { coverageEntries } from "@/lib/api/v2";
 import { formatEnDateTime } from "@/lib/date";
 
 export const Route = createFileRoute("/$ticker/")({
@@ -12,9 +18,11 @@ export const Route = createFileRoute("/$ticker/")({
 function TickerOverview() {
     const { ticker } = Route.useParams();
 
-    const { data, error, isLoading } = useCompanyDetails(ticker);
+    const { data: company, error, isLoading } = useV2Company(ticker, { expand: ["coverage"] });
 
-    const company = data?.companies[0];
+    if (error instanceof ApiRequestError && error.code === "not_covered") {
+        return <Notice badge="Not covered" title={`${ticker} is not covered by the Invinite API`}>{error.message}</Notice>;
+    }
 
     if (error) {
         return <ErrorState error={error} title="Failed to load company details" />;
@@ -42,7 +50,18 @@ function TickerOverview() {
                     </div>
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">CIK</span>
-                        <span className="font-medium">{company.cik}</span>
+                        {company.filer_cik
+                            ? (
+                                    <Link
+                                        className="font-medium underline-offset-4 hover:underline"
+                                        params={{ cik: company.filer_cik }}
+                                        title="SEC filer: identity, lifecycle and filings"
+                                        to="/sec/$cik"
+                                    >
+                                        {company.cik}
+                                    </Link>
+                                )
+                            : <span className="font-medium">{company.cik}</span>}
                     </div>
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Sector</span>
@@ -94,7 +113,7 @@ function TickerOverview() {
                     )}
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Exchange</span>
-                        <span className="font-medium">{company.exchange}</span>
+                        <span className="font-medium">{company.exchange ?? "-"}</span>
                     </div>
                     {company.employees && (
                         <div className="flex justify-between">
@@ -115,6 +134,8 @@ function TickerOverview() {
                 </CardContent>
             </Card>
 
+            <CoverageCard coverage={company.coverage} />
+
             {company.description && (
                 <Card className="border-border/60 md:col-span-2">
                     <CardHeader>
@@ -128,5 +149,28 @@ function TickerOverview() {
                 </Card>
             )}
         </div>
+    );
+}
+
+/** `expand=coverage`: which data families hold rows for the company and through which day. */
+function CoverageCard({ coverage }: { coverage: null | undefined | V2CompanyCoverage }) {
+    const entries = coverageEntries(coverage);
+
+    return (
+        <Card className="border-border/60 md:col-span-2">
+            <CardHeader>
+                <CardTitle>Data available</CardTitle>
+                <CardDescription>The data families that hold rows for this company</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {entries.length === 0
+                    ? <div className="text-muted-foreground text-sm">No data family holds rows for this company yet.</div>
+                    : (
+                            <div className="flex flex-wrap gap-2">
+                                {entries.map(entry => <Badge key={entry.family} variant="secondary">{entry.text}</Badge>)}
+                            </div>
+                        )}
+            </CardContent>
+        </Card>
     );
 }

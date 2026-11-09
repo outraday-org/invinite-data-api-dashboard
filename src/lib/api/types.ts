@@ -13,11 +13,8 @@ type ApiQuery<TPath extends keyof paths>
 // Response types derived from schema
 export type CompanySearchResponse = ApiResponse<"/v1/company/search", "get">;
 export type CompanyDetailsResponse = ApiResponse<"/v1/company/details", "get">;
-export type DividendsResponse = ApiResponse<"/v1/company/dividends", "get">;
-export type SplitsResponse = ApiResponse<"/v1/company/splits", "get">;
 export type InsiderTradesResponse = ApiResponse<"/v1/insider-trades", "get">;
 export type IposResponse = ApiResponse<"/v1/ipos", "get">;
-export type MarketHolidaysResponse = ApiResponse<"/v1/market/market-holidays", "get">;
 export type CompanyFiscalPeriodsResponse = ApiResponse<"/v1/company/fiscal-periods", "get">;
 export type FinancialRatiosResponse = ApiResponse<"/v1/financial-metrics/ratios", "get">;
 export type FinancialGrowthResponse = ApiResponse<"/v1/financial-metrics/growth", "get">;
@@ -50,11 +47,8 @@ export type SegmentedFinancialsResponse = ApiResponse<"/v1/segmented-financials"
 // Derived entity types
 export type Company = CompanySearchResponse["companies"][number];
 export type CompanyDetails = CompanyDetailsResponse["companies"][number];
-export type Dividend = DividendsResponse["companies"][number]["dividends"][number];
-export type Split = SplitsResponse["companies"][number]["splits"][number];
 export type InsiderTrade = InsiderTradesResponse["transactions"][number];
 export type Ipo = IposResponse["ipos"][number];
-export type MarketHoliday = MarketHolidaysResponse["holidays"][number];
 export type CompanyFiscalPeriod = CompanyFiscalPeriodsResponse["companies"][number]["periods"][number];
 export type InstitutionalTransaction = InstitutionalTransactionsResponse["transactions"][number];
 export type InstitutionalHolding = InstitutionalHoldingsResponse["holdings"][number];
@@ -194,8 +188,6 @@ type SecJson<T> = unknown extends T
             : T;
 
 export type SecFilersResponse = SecJson<ApiResponse<"/v1/sec/filers", "get">>;
-export type SecFilerResponse = SecJson<ApiResponse<"/v1/sec/filers/{cik}", "get">>;
-export type SecLifecycleResponse = SecJson<ApiResponse<"/v1/sec/filers/{cik}/lifecycle", "get">>;
 export type SecFilingsResponse = SecJson<ApiResponse<"/v1/sec/filings", "get">>;
 export type SecFilingManifestResponse = SecJson<ApiResponse<"/v1/sec/filings/{accession}", "get">>;
 /** `/v1/sec/documents/{accession}/{filename}` and `/v1/sec/versions/{version_id}` answer the same body. */
@@ -215,6 +207,30 @@ export type SecSearchHit = NonNullable<SecSearchResponse["hits"]>[number];
 export type SecSearchCoverage = NonNullable<SecSearchResponse["coverage"]>;
 export type SecSearchMode = NonNullable<ApiQuery<"/v1/sec/search">["mode"]>;
 export type SecFilingsOrder = NonNullable<ApiQuery<"/v1/sec/filings">["order"]>;
+
+// Data API v2 (`/v2/*`, backend tasks/data-api-v2 task 4). Lists answer `{ data, has_more, next_cursor, meta }` and
+// page by `cursor` (the same filters, no offset); errors are RFC 9457 problems (`ApiRequestError.requestId`).
+export type V2CompanyResponse = ApiResponse<"/v2/companies/{company}", "get">;
+export type V2DividendsResponse = ApiResponse<"/v2/dividends", "get">;
+export type V2SplitsResponse = ApiResponse<"/v2/splits", "get">;
+export type V2MarketHolidaysResponse = ApiResponse<"/v2/market-holidays", "get">;
+/** `lifecycle` is free JSON in the spec (snake_case: phase, kind, first_public_seen_at, registration_tracks, …). */
+export type V2FilerResponse = SecJson<ApiResponse<"/v2/filers/{cik}", "get">>;
+
+export type V2Dividend = V2DividendsResponse["data"][number];
+export type V2Split = V2SplitsResponse["data"][number];
+export type V2MarketHoliday = V2MarketHolidaysResponse["data"][number];
+export type V2CompanyCoverage = NonNullable<V2CompanyResponse["coverage"]>;
+export type V2ProposedSymbol = NonNullable<V2FilerResponse["proposed_symbols"]>[number];
+export type V2FormerName = NonNullable<V2FilerResponse["former_names"]>[number];
+export type V2Successor = NonNullable<V2FilerResponse["successors"]>[number];
+export type V2DividendsSort = NonNullable<ApiQuery<"/v2/dividends">["sort"]>;
+export type V2SplitsSort = NonNullable<ApiQuery<"/v2/splits">["sort"]>;
+export type V2MarketHolidaysSort = NonNullable<ApiQuery<"/v2/market-holidays">["sort"]>;
+/** `GET /v2/companies/{company}?expand=` values the dashboard asks for. */
+export type V2CompanyExpand = "coverage";
+/** `GET /v2/filers/{cik}?expand=` values. */
+export type V2FilerExpand = "former_names" | "lifecycle" | "proposed_symbols" | "successors";
 
 // Earnings calendar semantics (`calendar` of every calendar event, appended 2026-11)
 export type EarningsCalendarSemantics = NonNullable<EarningsEvent["calendar"]>;

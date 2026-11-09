@@ -113,7 +113,7 @@ export interface paths {
         };
         /**
          * As-reported balance sheet (detailed)
-         * @description Fetch detailed as-reported balance sheet data with html_label, formula, accession number, and html tag info. Minimum tier for redistribute: PRO.
+         * @description Fetch detailed as-reported balance sheet data with derived flag, taxonomy and company labels, decimals, accession number, html tag id and optional formula. Minimum tier for redistribute: PRO.
          */
         get: operations["asReportedBalanceSheetDetailed"];
         put?: never;
@@ -173,7 +173,7 @@ export interface paths {
         };
         /**
          * As-reported cash flow statement (detailed)
-         * @description Fetch detailed as-reported cash flow statement data with html_label, formula, accession number, and html tag info. Minimum tier for redistribute: PRO.
+         * @description Fetch detailed as-reported cash flow statement data with derived flag, taxonomy and company labels, decimals, accession number, html tag id and optional formula. Minimum tier for redistribute: PRO.
          */
         get: operations["asReportedCashFlowStatementDetailed"];
         put?: never;
@@ -233,7 +233,7 @@ export interface paths {
         };
         /**
          * As-reported income statement (detailed)
-         * @description Fetch detailed as-reported income statement data with html_label, formula, accession number, and html tag info. Minimum tier for redistribute: PRO.
+         * @description Fetch detailed as-reported income statement data with derived flag, taxonomy and company labels, decimals, accession number, html tag id and optional formula. Minimum tier for redistribute: PRO.
          */
         get: operations["asReportedIncomeStatementDetailed"];
         put?: never;
@@ -293,7 +293,7 @@ export interface paths {
         };
         /**
          * As-reported snapshot (detailed)
-         * @description Fetch latest complete detailed as-reported financial statements snapshot with html_label, formula, accession number, and html tag info. Minimum tier for redistribute: PRO.
+         * @description Fetch latest complete detailed as-reported financial statements snapshot with derived flag, taxonomy and company labels, decimals, accession number, html tag id and optional formula. Minimum tier for redistribute: PRO.
          */
         get: operations["asReportedSnapshotDetailed"];
         put?: never;
@@ -3228,14 +3228,478 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/catalog/document-kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List investor-document kinds */
+        get: operations["listDocumentKindCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/catalog/event-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List event types */
+        get: operations["listEventTypeCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/catalog/forms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List SEC forms */
+        get: operations["listFormCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/catalog/mapping-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List standardized mapping rules */
+        get: operations["listMappingRules"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/catalog/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List standardized metrics */
+        get: operations["listMetricCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/catalog/sections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List filing section ids */
+        get: operations["listSectionCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/companies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List listed companies */
+        get: operations["listCompanies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/companies/{company}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a company */
+        get: operations["getCompany"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/dividends": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List dividends */
+        get: operations["listDividends"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/filers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List SEC filers
+         * @description Every SEC filer: a registry search by `q` (name), `form` or `phase` (one of them is required). Without `phase` the registry search answers ONE page of at most 50 filers (`limit` is capped at 50, `has_more` is false): narrow `q` / `form` to find more. `phase=pre_ipo|public|former|other` lists the issuer lifecycle and pages by `cursor`; `phase=manager` lists 13F-HR filers.
+         */
+        get: operations["listFilers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/filers/{cik}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a filer */
+        get: operations["getFiler"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/fiscal-periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List fiscal periods */
+        get: operations["listFiscalPeriods"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/market-holidays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List market holidays */
+        get: operations["listMarketHolidays"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who am I */
+        get: operations["getMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/me/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get my usage */
+        get: operations["getMyUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/participants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List event participations */
+        get: operations["listParticipants"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/people": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List people */
+        get: operations["listPeople"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/people/{person_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a person */
+        get: operations["getPerson"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/splits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List stock splits */
+        get: operations["listSplits"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
-    headers: never;
+    headers: {
+        /** @description Id of this request (`req_<ulid>`); echoed in every problem body */
+        "X-Request-Id": string;
+        /** @description Credits this response cost (0 on a 304) */
+        "X-Credits-Charged": number;
+        /** @description Included credits left in the period */
+        "X-Credits-Remaining": number;
+        /** @description Weak entity tag of the body; send it as If-None-Match */
+        "ETag": string;
+        /** @description Caching policy of the family */
+        "Cache-Control": string;
+        /** @description `<…>; rel="next"` on a list page with a next page */
+        "Link": string;
+        /** @description Requests allowed per second */
+        "X-RateLimit-Limit-Second": number;
+        /** @description Requests left this second */
+        "X-RateLimit-Remaining-Second": number;
+        /** @description Requests allowed per minute */
+        "X-RateLimit-Limit-Minute": number;
+        /** @description Requests left this minute */
+        "X-RateLimit-Remaining-Minute": number;
+        /** @description Seconds until the minute window resets */
+        "X-RateLimit-Reset": number;
+        /** @description IETF RateLimit header (limit, remaining, reset) */
+        "RateLimit": string;
+        /** @description IETF RateLimit-Policy header */
+        "RateLimit-Policy": string;
+        /** @description Seconds to wait before retrying */
+        "Retry-After": number;
+    };
     parameters: never;
     pathItems: never;
     requestBodies: never;
     responses: {
+        /** @description 400: invalid_parameter / unknown_parameter / cursor_mismatch */
+        BadRequest: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description 401: Missing or invalid API key */
+        Unauthorized: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description 402: insufficient_credits */
+        PaymentRequired: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description 403: plan_required / excluded */
+        Forbidden: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description 404: not_found / not_covered */
+        NotFound: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description 409: idempotency_in_flight */
+        Conflict: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description 429: rate_limited */
+        TooManyRequests: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                "Retry-After": components["headers"]["Retry-After"];
+                "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                "RateLimit": components["headers"]["RateLimit"];
+                "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description 500: internal */
+        InternalError: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description 503: A dependency is down (an outage, never a data state) */
+        ServiceUnavailable: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                "Retry-After": components["headers"]["Retry-After"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
+        /** @description 304: the `If-None-Match` ETag still matches (0 credits) */
+        NotModified: {
+            headers: {
+                "X-Request-Id": components["headers"]["X-Request-Id"];
+                "ETag": components["headers"]["ETag"];
+                "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                [name: string]: unknown;
+            };
+            content?: never;
+        };
         /** @description Bad Request - Invalid request parameters */
         BadRequestError: {
             headers: {
@@ -3423,12 +3887,93 @@ export interface components {
             label: string;
             /** @description Numeric value for the metric (if available) */
             value?: null | number;
+            /** @description Set with `value`: true when Invinite computed the value (Q4, TTM or YTD derivation), false = the company reported it */
+            derived?: boolean;
+            /** @description Set with `value`: the company's own caption of the line item (null when not extracted) */
+            company_label?: null | string;
             /** @description Depth level in the tree structure (0 for root items) */
             depth: number;
             /** @description Indicates if this item is a total (sum of siblings) */
             isTotal?: boolean;
             /** @description Nested child facts with facts schema (only present if there are children) */
             children?: Array<components["schemas"]["PresentationFact"]>;
+        };
+        /** AsReportedFact */
+        AsReportedFact: {
+            /** @description Fact value (as filed unless `display_sign=cash_flow_direction`) */
+            value: number;
+            /** @description true when Invinite computed the value (a Q4, TTM or YTD derivation; `formula` on the detailed route names its members); false = the company reported it */
+            derived: boolean;
+        };
+        /** AsReportedDetailedFact */
+        AsReportedDetailedFact: {
+            /** @description Fact value (as filed unless `display_sign=cash_flow_direction`) */
+            value: number;
+            /** @description true when Invinite computed the value (a Q4, TTM or YTD derivation, see `formula`); false = the company reported it */
+            derived: boolean;
+            /** @description The concept's taxonomy label */
+            label: null | string;
+            /** @description The company's own caption of the line item in the filing (null when it was not extracted) */
+            company_label: null | string;
+            /** @description XBRL decimals of the reported fact (-6 = rounded to millions); null = exact (INF) or not stated. A derived fact carries its source fact's */
+            decimals: null | number;
+            formula?: null | {
+                /** @description Readable formula string */
+                formulaStr: string;
+                /** @description Metrics used in the formula */
+                members: Array<{
+                    /**
+                     * @description Member type
+                     * @enum {string}
+                     */
+                    type: "reported";
+                    /** @description Value of the member */
+                    value: number;
+                    /** @description Financial concept */
+                    concept: string;
+                    /**
+                     * Format: date
+                     * @description Start date (YYYY-MM-DD)
+                     */
+                    start_date?: null | string;
+                    /**
+                     * Format: date
+                     * @description End date (YYYY-MM-DD)
+                     */
+                    end_date?: null | string;
+                    /**
+                     * Format: date
+                     * @description Instant date (YYYY-MM-DD)
+                     */
+                    instant_date?: null | string;
+                    /** @description Segment information */
+                    segment?: null | {
+                        [key: string]: unknown;
+                    };
+                    /** @description Fiscal period type */
+                    fiscal_period_type?: null | string;
+                } | {
+                    /**
+                     * @description Member type
+                     * @enum {string}
+                     */
+                    type: "standardized";
+                    /** @description Value of the member */
+                    value: number;
+                    /** @description Standardized metric ID */
+                    metric_id: string;
+                    /** @description Fiscal period type */
+                    fiscal_period_type?: null | string;
+                    /** @description Fiscal year */
+                    fiscal_year?: null | number;
+                    /** @description Fiscal quarter */
+                    fiscal_quarter?: null | number;
+                }>;
+            };
+            /** @description Accession number of the filing that holds the value */
+            accession_number: null | string;
+            /** @description Anchor of the fact in the filing's HTML (null on a derived fact) */
+            html_tag_id: null | string;
         };
         /** StandardizedPresentationFact */
         StandardizedPresentationFact: {
@@ -3638,6 +4183,694 @@ export interface components {
             hint?: null | string;
         } & {
             [key: string]: unknown;
+        };
+        /**
+         * CompanyListItem
+         * @description One listed registrant
+         */
+        CompanyListItem: {
+            /**
+             * @description SEC CIK, 10 digits
+             * @example 0000320193
+             */
+            cik: string;
+            /**
+             * @description Primary ticker
+             * @example AAPL
+             */
+            ticker: string;
+            /** @description Company name */
+            name: string;
+            /**
+             * @description Primary exchange (MIC)
+             * @example XNAS
+             */
+            exchange: null | string;
+            /** @description Sector */
+            sector: null | string;
+            /**
+             * @description Fiscal year end as MM-DD
+             * @example 09-27
+             */
+            fiscal_year_end: null | string;
+            /** @description Permanent logo URL */
+            logo_url: null | string;
+        };
+        /**
+         * MetaCoverage
+         * @description Readiness of the requested scope on a 200 (R11, decision 11); never a 202 / 503 for a data state
+         */
+        MetaCoverage: {
+            /**
+             * @description pending = the store is still filling this scope (`data` is empty); partial = some rows are served, more are coming; complete = everything the source has is served
+             * @example complete
+             * @enum {string}
+             */
+            state: "complete" | "partial" | "pending";
+            /**
+             * Format: date
+             * @description The newest date the served rows are complete through
+             */
+            through?: null | string;
+            /** @description While pending: seconds after which a retry is likely to find rows */
+            retry_after_s?: null | number;
+        };
+        /**
+         * MetaSource
+         * @description Documented provenance a customer needs (R11); never an internal path or resolver id
+         */
+        MetaSource: {
+            /**
+             * @description The SEC dataset release the rows come from
+             * @example 2026q3
+             */
+            dataset_release?: null | string;
+            /** @description The pinned document version the rows come from */
+            version_id?: null | string;
+            /**
+             * @description The filing the rows come from
+             * @example 0000320193-26-000026
+             */
+            accession?: null | string;
+            /**
+             * Format: date-time
+             * @description When the source was last fetched
+             */
+            fetched_at?: null | string;
+        };
+        /**
+         * Company
+         * @description A listed company's profile
+         */
+        Company: {
+            /** @description Ticker symbol */
+            ticker: string;
+            /** @description CIK with or without leading zeros */
+            cik: string;
+            /** @description Company name */
+            name: string;
+            /** @description Business description */
+            description: null | string;
+            /** @description High-level category */
+            category: string;
+            /** @description Sector classification */
+            sector: string;
+            /** @description Industry classification */
+            industry: string;
+            /** @description SIC code */
+            sic: string;
+            /** @description SIC sector name */
+            sic_sector: string;
+            /** @description SIC industry name */
+            sic_industry: string;
+            /** @description Fama-French sector */
+            fama_sector: null | string;
+            /** @description Fama-French industry */
+            fama_industry: null | string;
+            /** @description Listing exchange (null when unknown) */
+            exchange: null | string;
+            /** @description Reporting currency */
+            currency: string;
+            /** @description CUSIP identifier */
+            cusip: string;
+            /** @description Composite FIGI */
+            composite_figi: null | string;
+            /** @description Whether the security is delisted */
+            is_delisted: boolean;
+            /**
+             * Format: date
+             * @description Listing date
+             */
+            list_date: null | string;
+            /** @description Employee headcount */
+            employees: null | number;
+            /** @description Market capitalization */
+            market_cap: null | number;
+            /** @description Shares outstanding */
+            shares_outstanding: null | number;
+            /** @description Insider ownership percentage */
+            insider_own_pct: null | number;
+            /** @description Insider-owned shares */
+            insider_own_shares: null | number;
+            /** @description Institutional ownership percentage */
+            inst_own_pct: null | number;
+            /** @description Institutional-owned shares */
+            inst_own_shares: null | number;
+            /** @description Short float percentage */
+            short_float_pct: null | number;
+            /** @description Short float shares */
+            short_float_shares: null | number;
+            /** @description Company website URL */
+            homepage_url: null | string;
+            /** @description Investor relations URL */
+            investor_relations_url: null | string;
+            /** @description Logo image URL */
+            logo_url: null | string;
+            /** @description Brand color hex codes */
+            brand_colors: Array<string> | null;
+            /** @description Street address */
+            street: null | string;
+            /** @description City */
+            city: null | string;
+            /** @description State or province */
+            state: null | string;
+            /** @description Postal/ZIP code */
+            zip_code: null | string;
+            /** @description ISO country code */
+            country_code: null | string;
+            /** @description The registry identity (`GET /v2/filers/{cik}`) */
+            filer_cik?: string;
+            /** @description With `expand=coverage`: which data families hold rows and through which date */
+            coverage?: null | {
+                /** @description Families that hold rows for the company */
+                families: Array<{
+                    /**
+                     * @description Data family
+                     * @example financials
+                     */
+                    family: string;
+                    /**
+                     * Format: date
+                     * @description Newest date the family holds rows for
+                     */
+                    through: null | string;
+                }>;
+            };
+        };
+        /**
+         * Filer
+         * @description One SEC filer (registry row)
+         */
+        Filer: {
+            /**
+             * @description SEC CIK, 10 digits
+             * @example 0000102909
+             */
+            cik: string;
+            /** @description Conformed name */
+            name: string;
+            /** @description SEC entity type */
+            entity_type: null | string;
+            /** @description SIC code */
+            sic: null | string;
+            /**
+             * @description Lifecycle phase
+             * @enum {string|null}
+             */
+            phase: "former" | "manager" | "other" | "pre_ipo" | "public" | null;
+            /** @description Forms the filer files (e.g. `13F-HR`) */
+            forms: Array<string>;
+            /** @description Tickers the filer states */
+            stated_tickers: Array<string>;
+            /** @description The company row of a listed filer */
+            listing: null | {
+                /** @description Ticker */
+                ticker: string;
+                /** @description Exchange (MIC) */
+                exchange: null | string;
+            };
+        };
+        /**
+         * FilerDetail
+         * @description One SEC filer's registry identity
+         */
+        FilerDetail: {
+            /**
+             * @description SEC CIK, 10 digits
+             * @example 0000102909
+             */
+            cik: string;
+            /** @description Conformed name */
+            name: string;
+            /** @description SEC entity type */
+            entity_type: null | string;
+            /** @description SIC code */
+            sic: null | string;
+            /** @description State of incorporation */
+            state_of_incorporation: null | string;
+            /** @description Fiscal year end as MM-DD */
+            fiscal_year_end: null | string;
+            /**
+             * @description Lifecycle phase
+             * @enum {string|null}
+             */
+            phase: "former" | "manager" | "other" | "pre_ipo" | "public" | null;
+            /** @description Listing */
+            listing: null | {
+                /** @description Ticker */
+                ticker: string;
+                /** @description Exchange (MIC) */
+                exchange: null | string;
+            };
+            /** @description With `expand=lifecycle`: phase, registration tracks, pending actions */
+            lifecycle?: null | {
+                [key: string]: unknown;
+            };
+            /** @description With `expand=proposed_symbols` */
+            proposed_symbols?: Array<components["schemas"]["ProposedSymbol"]> | null;
+            /** @description With `expand=former_names` */
+            former_names?: Array<{
+                /** @description Name */
+                name: string;
+                /**
+                 * Format: date
+                 * @description Last day used
+                 */
+                until: null | string;
+            }> | null;
+            /** @description With `expand=successors` */
+            successors?: Array<{
+                /** @description Successor CIK */
+                cik: string;
+                /** @description Name */
+                name: null | string;
+                /** @description Succession kind */
+                kind: null | string;
+            }> | null;
+        };
+        /**
+         * Person
+         * @description A person who appears on calls (executives, analysts, operators)
+         */
+        Person: {
+            /**
+             * Format: uuid
+             * @description Canonical person identifier
+             */
+            person_id: string;
+            /** @description executive, analyst, operator or ir_host */
+            kind: null | string;
+            /** @description Canonical name */
+            name: string;
+            /** @description Latest firm */
+            current_firm: null | string;
+            /** @description Latest title */
+            current_title: null | string;
+            /** @description Calls the person appeared on (served calls only) */
+            appearance_count: null | number;
+            /** @description Other spellings of the name */
+            aliases: Array<string> | null;
+            /** @description Current firm */
+            firm: null | string;
+            /** @description Calls of this company the analyst appeared on */
+            appearances: null | number;
+            /** @description Questions asked on those calls */
+            questions: null | number;
+            /**
+             * Format: date-time
+             * @description First such call
+             */
+            first_seen: null | string;
+            /**
+             * Format: date-time
+             * @description Latest such call
+             */
+            last_seen: null | string;
+            /** @description Mean difficulty (0–1) of the analyst's scored questions across every covered call — a descriptive feature of how pointed the questions were, not a rating; null while none is scored */
+            mean_difficulty: null | number;
+            /** @description Questions of the analyst that carry a difficulty score (every covered call) */
+            scored_question_count: null | number;
+            /**
+             * @description Most recent role
+             * @enum {string}
+             */
+            role: "analyst" | "executive" | "operator" | "other";
+        };
+        /**
+         * Participation
+         * @description One person's participation in one event
+         */
+        Participation: {
+            /**
+             * @description Event
+             * @example evt_01JC8M2X
+             */
+            event_id: string;
+            /** @description Speaker label of the transcript (A, B, …) */
+            speaker_label: string;
+            /**
+             * Format: uuid
+             * @description Cross-call person identifier (people route); null = unresolved
+             */
+            person_id: null | string;
+            /** @description Speaker name */
+            name: null | string;
+            /** @description Speaker title */
+            title: null | string;
+            /** @description Speaker firm (analysts) */
+            firm: null | string;
+            /** @description operator, executive, analyst, ir_host or unknown; null = unresolved label */
+            role: null | string;
+            /** @description Naming confidence 0..1 */
+            confidence: null | number;
+            /** @description How the name was resolved */
+            resolved_by: null | string;
+            /** @description Quotes the name was resolved from */
+            evidence: Array<{
+                /** @description Verbatim quote */
+                quote: string;
+                /** @description Where the quote starts (ms into the call) */
+                start_ms: number;
+            }>;
+        };
+        /** FiscalPeriod */
+        FiscalPeriod: {
+            company: components["schemas"]["CompanyRef"];
+            /** @description Fiscal year */
+            fiscal_year: number;
+            /** @description Fiscal quarter (1-4) */
+            fiscal_quarter: number;
+            /** @description Calendar year */
+            calendar_year: number;
+            /** @description Calendar quarter (1-4) */
+            calendar_quarter: number;
+            /**
+             * Format: date
+             * @description Period end date
+             */
+            period_end: string;
+        };
+        /**
+         * CompanyRef
+         * @description The company a row belongs to
+         */
+        CompanyRef: {
+            /**
+             * @description SEC CIK, 10 digits
+             * @example 0000320193
+             */
+            cik: string;
+            /**
+             * @description Primary ticker; null for an unlisted registrant
+             * @example AAPL
+             */
+            ticker: null | string;
+        };
+        /** Dividend */
+        Dividend: {
+            company: components["schemas"]["CompanyRef"];
+            /**
+             * Format: date
+             * @description Ex-dividend date
+             */
+            ex_dividend_date: string;
+            /**
+             * Format: date
+             * @description Declaration date
+             */
+            declaration_date: string;
+            /** @description Cash amount per share */
+            cash_amount: number;
+            /** @description Dividend type code */
+            dividend_type: string;
+            /** @description Payment frequency per year */
+            frequency: number;
+            /**
+             * Format: date
+             * @description Payable date
+             */
+            pay_date: string;
+            /**
+             * Format: date
+             * @description Shareholder record date
+             */
+            record_date: string;
+        };
+        /** Split */
+        Split: {
+            company: components["schemas"]["CompanyRef"];
+            /**
+             * Format: date
+             * @description Split execution date
+             */
+            execution_date: string;
+            /** @description Pre-split share count */
+            split_from: number;
+            /** @description Post-split share count */
+            split_to: number;
+        };
+        /** MarketHoliday */
+        MarketHoliday: {
+            /**
+             * Format: date
+             * @description Holiday date (YYYY-MM-DD)
+             */
+            day: string;
+            /** @description Holiday name */
+            event_name: string;
+            /**
+             * Format: date-time
+             * @description Market open on a partial day (ISO 8601, UTC); null when closed all day
+             */
+            start_time: null | string;
+            /**
+             * Format: date-time
+             * @description Market close on a partial day (ISO 8601, UTC); null when closed all day
+             */
+            end_time: null | string;
+        };
+        /**
+         * MetricCatalogEntry
+         * @description One standardized metric
+         */
+        MetricCatalogEntry: {
+            /**
+             * @description Metric id
+             * @example is_total_revenue
+             */
+            metric_id: string;
+            /** @description Display name */
+            name: string;
+            /**
+             * @description Statement
+             * @enum {string|null}
+             */
+            statement: "balance-sheet" | "cash-flow" | "income-statement" | null;
+            /**
+             * @description Unit kind
+             * @example currency
+             */
+            unit: null | string;
+            /** @description What the metric measures */
+            description: null | string;
+        };
+        /**
+         * SectionCatalogEntry
+         * @description One filing section id
+         */
+        SectionCatalogEntry: {
+            /**
+             * @description Form
+             * @example 10-K
+             */
+            form: string;
+            /**
+             * @description Section id
+             * @example 1A
+             */
+            section_id: string;
+            /**
+             * @description Section title
+             * @example Risk Factors
+             */
+            title: string;
+        };
+        /**
+         * FormCatalogEntry
+         * @description One SEC form the API serves
+         */
+        FormCatalogEntry: {
+            /**
+             * @description Form
+             * @example 10-K
+             */
+            form: string;
+            /** @description What the form is */
+            description: string;
+            /**
+             * @description Form family
+             * @example periodic
+             */
+            family: string;
+        };
+        /**
+         * EventTypeCatalogEntry
+         * @description One event type
+         */
+        EventTypeCatalogEntry: {
+            /**
+             * @description Event type
+             * @example earnings_call
+             */
+            event_type: string;
+            /** @description Display label */
+            label: string;
+            /** @description What the type covers */
+            description: string;
+        };
+        /**
+         * DocumentKindCatalogEntry
+         * @description One investor-document kind
+         */
+        DocumentKindCatalogEntry: {
+            /**
+             * @description Document kind
+             * @example investor_presentation
+             */
+            kind: string;
+            /** @description Display label */
+            label: string;
+            /**
+             * @description Category
+             * @example presentations
+             */
+            category: string;
+        };
+        /**
+         * MappingRule
+         * @description One standardized-metric mapping rule
+         */
+        MappingRule: {
+            /**
+             * @description Standardized metric
+             * @example is_total_revenue
+             */
+            metric_id: string;
+            /**
+             * @description Statement
+             * @enum {string}
+             */
+            statement: "balance-sheet" | "cash-flow" | "income-statement";
+            /** @description Display label */
+            label: string;
+            /** @description The concepts and operations that produce the metric */
+            rule: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * Me
+         * @description Who the caller is and what the plan allows (0 credits)
+         */
+        Me: {
+            /** @description The data account */
+            account: {
+                /** @description Account id */
+                id: string;
+                /** @description Account name */
+                name: null | string;
+            };
+            /**
+             * @description Plan. A prepaid-credits account reads `lite` (its access rank; owner decision 2026-11-09)
+             * @enum {string}
+             */
+            plan: "enterprise" | "free" | "lite" | "pro" | "standard";
+            /** @description Rate limits */
+            limits: {
+                /** @description Rate limit */
+                requests_per_second: number;
+                /** @description Rate limit */
+                requests_per_minute: number;
+            };
+            /** @description Credits */
+            credits: {
+                /** @description Credits included per period */
+                included: number;
+                /** @description Credits used this period */
+                used: number;
+                /** @description Included credits left */
+                remaining: number;
+                /**
+                 * Format: date-time
+                 * @description When the period resets; null = the period has no reset
+                 */
+                resets_at: null | string;
+                /** @description Prepaid balance */
+                prepaid_balance_usd: null | number;
+            };
+            /** @description Docs groups the plan can call */
+            allowed_families: Array<string>;
+        };
+        /** Usage */
+        Usage: {
+            /**
+             * @description The window answered
+             * @enum {integer}
+             */
+            window_days: 7 | 30 | 90;
+            /** @description The current billing period */
+            period: {
+                /**
+                 * @description The account's Data API plan
+                 * @enum {string}
+                 */
+                tier: "free" | "lite" | "prepaid" | "pro" | "standard";
+                /** @description Credits the plan includes per period */
+                included_credits: number;
+                /** @description Credits used this period, counted as the quota gate counts them (live) */
+                used_credits: number;
+                /**
+                 * Format: date-time
+                 * @description When the included credits reset; null when the period has no reset
+                 */
+                resets_at: null | string;
+                /** @description Prepaid credit balance in USD */
+                prepaid_balance_usd: number;
+            };
+            /** @description One row per UTC day of the window, ascending, zero-filled */
+            daily: Array<{
+                /**
+                 * Format: date
+                 * @description UTC day (YYYY-MM-DD)
+                 */
+                date: string;
+                /** @description Requests answered (every status) */
+                requests: number;
+                /** @description Credits billed (2xx responses only) */
+                credits: number;
+                /** @description Error responses by status class */
+                errors: {
+                    /** @description Payment required */
+                    "402": number;
+                    /** @description Forbidden (plan) */
+                    "403": number;
+                    /** @description Rate limited */
+                    "429": number;
+                    /** @description Other client errors */
+                    "4xx": number;
+                    /** @description Server errors */
+                    "5xx": number;
+                };
+            }>;
+            /** @description Usage per endpoint family over the window, most credits first */
+            by_family: Array<{
+                /** @description Endpoint family id */
+                family: string;
+                /** @description Endpoint family name */
+                label: string;
+                /** @description Requests answered (every status) */
+                requests: number;
+                /** @description Credits billed (2xx responses only) */
+                credits: number;
+            }>;
+            /** @description Usage per caller over the window. Never names a user or an email. */
+            by_key: Array<{
+                /**
+                 * @description An API key, a signed-in OAuth user, or a request counted before callers were recorded
+                 * @enum {string}
+                 */
+                caller: "key" | "oauth" | "unknown";
+                /** @description The key's name, or "Signed-in user" for OAuth */
+                label: string;
+                /** @description Masked key, null for OAuth */
+                key_hint: null | string;
+                /** @description Requests answered (every status) */
+                requests: number;
+                /** @description Credits billed (2xx responses only) */
+                credits: number;
+            }>;
+            /** @description A breakdown was capped at its item limit */
+            truncated: boolean;
         };
         /** @description A new SEC filing with its `ticker` (null before an IPO) and `proposed_symbols`. Until 2026-10 the frame forwarded the upstream camelCase envelope (`schemaVersion`, `eventKey`, `filing.accessionNumber`, …) instead of this documented shape; it now is exactly this object */
         WebSocketFiling: {
@@ -4216,6 +5449,67 @@ export interface components {
             /** @description Event-specific, see each x-webhooks entry */
             data: Record<string, never>;
         };
+        /**
+         * Problem
+         * @description RFC 9457 problem details (R8); every 4xx / 5xx body
+         */
+        Problem: {
+            /**
+             * Format: uri
+             * @description URI of the problem type: `https://data.invinite.com/docs/errors#<code>`
+             * @example https://data.invinite.com/docs/errors#invalid_parameter
+             */
+            type: string;
+            /**
+             * @description Short, human-readable summary of the problem type
+             * @example Invalid parameter
+             */
+            title: string;
+            /**
+             * @description HTTP status code
+             * @example 400
+             */
+            status: number;
+            /**
+             * @description Explanation of this occurrence
+             * @example limit: must be at most 200.
+             */
+            detail: string;
+            /**
+             * @description Stable machine-readable code (lower_snake)
+             * @example invalid_parameter
+             * @enum {string}
+             */
+            code: "cursor_mismatch" | "excluded" | "forbidden" | "idempotency_in_flight" | "insufficient_credits" | "internal" | "invalid_parameter" | "not_covered" | "not_found" | "plan_required" | "rate_limited" | "unauthorized" | "unavailable" | "unknown_parameter";
+            /**
+             * @description The query parameter the problem is about
+             * @example limit
+             */
+            param?: null | string;
+            /** @description Every parameter problem of a 400 (invalid_parameter / unknown_parameter) */
+            errors?: Array<{
+                /** @description Parameter */
+                param: null | string;
+                /**
+                 * @description Code
+                 * @enum {string}
+                 */
+                code: "cursor_mismatch" | "excluded" | "forbidden" | "idempotency_in_flight" | "insufficient_credits" | "internal" | "invalid_parameter" | "not_covered" | "not_found" | "plan_required" | "rate_limited" | "unauthorized" | "unavailable" | "unknown_parameter";
+                /** @description Explanation */
+                detail: string;
+            }>;
+            /**
+             * @description The `X-Request-Id` of this response
+             * @example req_01JCX3V7Q9W2N8M4K6T0B5R1YZ
+             */
+            request_id: string;
+            /**
+             * Format: uri
+             * @description Documentation of the code
+             * @example https://data.invinite.com/docs/errors#invalid_parameter
+             */
+            docs_url: string;
+        };
     };
 }
 export type $defs = Record<string, never>;
@@ -4402,6 +5696,11 @@ export interface operations {
                  * @example 0
                  */
                 offset?: number;
+                /**
+                 * @description `true`: only the facts the company reported (`derived: false`); the pipeline's derived Q4 / TTM / YTD values are left out
+                 * @example true
+                 */
+                reported_only?: "false" | "true";
             };
             header?: never;
             path?: never;
@@ -4430,18 +5729,54 @@ export interface operations {
                      *               "fiscal_period_type": "annual",
                      *               "period_end": "2026-09-26",
                      *               "facts": {
-                     *                 "CashAndCashEquivalentsAtCarryingValue": 36305000000,
-                     *                 "MarketableSecuritiesCurrent": 20417000000,
-                     *                 "AccountsReceivableNetCurrent": 43817000000,
-                     *                 "NontradeReceivablesCurrent": 39896000000,
-                     *                 "InventoryNet": 14541000000,
-                     *                 "OtherAssetsCurrent": 18881000000,
-                     *                 "AssetsCurrent": 173857000000,
-                     *                 "MarketableSecuritiesNoncurrent": 80213000000,
-                     *                 "PropertyPlantAndEquipmentNet": 52084000000,
-                     *                 "IntangibleAssetExcludingGoodwillAfterAccumulatedAmortizationNoncurrent": 20278000000,
-                     *                 "OtherAssetsNoncurrent": 78116000000,
-                     *                 "AssetsNoncurrent": 230691000000
+                     *                 "CashAndCashEquivalentsAtCarryingValue": {
+                     *                   "value": 36305000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "MarketableSecuritiesCurrent": {
+                     *                   "value": 20417000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "AccountsReceivableNetCurrent": {
+                     *                   "value": 43817000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "NontradeReceivablesCurrent": {
+                     *                   "value": 39896000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "InventoryNet": {
+                     *                   "value": 14541000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "OtherAssetsCurrent": {
+                     *                   "value": 18881000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "AssetsCurrent": {
+                     *                   "value": 173857000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "MarketableSecuritiesNoncurrent": {
+                     *                   "value": 80213000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "PropertyPlantAndEquipmentNet": {
+                     *                   "value": 52084000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IntangibleAssetExcludingGoodwillAfterAccumulatedAmortizationNoncurrent": {
+                     *                   "value": 20278000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "OtherAssetsNoncurrent": {
+                     *                   "value": 78116000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "AssetsNoncurrent": {
+                     *                   "value": 230691000000,
+                     *                   "derived": false
+                     *                 }
                      *               }
                      *             }
                      *           ],
@@ -4476,7 +5811,7 @@ export interface operations {
                                 period_end: string;
                                 /** @description As-reported facts keyed by concept */
                                 facts: {
-                                    [key: string]: number;
+                                    [key: string]: components["schemas"]["AsReportedFact"];
                                 };
                             }>;
                             /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
@@ -4520,10 +5855,15 @@ export interface operations {
                  */
                 offset?: number;
                 /**
-                 * @description Include formula in response
+                 * @description Include each derived fact's formula (its members and their values)
                  * @example true
                  */
                 with_formula?: "false" | "true";
+                /**
+                 * @description `true`: only the facts the company reported (`derived: false`); the pipeline's derived Q4 / TTM / YTD values are left out
+                 * @example true
+                 */
+                reported_only?: "false" | "true";
             };
             header?: never;
             path?: never;
@@ -4554,73 +5894,109 @@ export interface operations {
                      *               "facts": {
                      *                 "CashAndCashEquivalentsAtCarryingValue": {
                      *                   "value": 36305000000,
-                     *                   "html_label": "Cash and cash equivalents",
+                     *                   "derived": false,
+                     *                   "label": "Cash and cash equivalents",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-157"
                      *                 },
                      *                 "MarketableSecuritiesCurrent": {
                      *                   "value": 20417000000,
-                     *                   "html_label": "Marketable securities",
+                     *                   "derived": false,
+                     *                   "label": "Marketable securities",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-159"
                      *                 },
                      *                 "AccountsReceivableNetCurrent": {
                      *                   "value": 43817000000,
-                     *                   "html_label": "Accounts receivable, net",
+                     *                   "derived": false,
+                     *                   "label": "Accounts receivable, net",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-161"
                      *                 },
                      *                 "NontradeReceivablesCurrent": {
                      *                   "value": 39896000000,
-                     *                   "html_label": "Vendor non-trade receivables",
+                     *                   "derived": false,
+                     *                   "label": "Vendor non-trade receivables",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-163"
                      *                 },
                      *                 "InventoryNet": {
                      *                   "value": 14541000000,
-                     *                   "html_label": "Inventories",
+                     *                   "derived": false,
+                     *                   "label": "Inventories",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-165"
                      *                 },
                      *                 "OtherAssetsCurrent": {
                      *                   "value": 18881000000,
-                     *                   "html_label": "Other current assets",
+                     *                   "derived": false,
+                     *                   "label": "Other current assets",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-167"
                      *                 },
                      *                 "AssetsCurrent": {
                      *                   "value": 173857000000,
-                     *                   "html_label": "Total current assets",
+                     *                   "derived": false,
+                     *                   "label": "Total current assets",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-169"
                      *                 },
                      *                 "MarketableSecuritiesNoncurrent": {
                      *                   "value": 80213000000,
-                     *                   "html_label": "Marketable securities",
+                     *                   "derived": false,
+                     *                   "label": "Marketable securities",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-171"
                      *                 },
                      *                 "PropertyPlantAndEquipmentNet": {
                      *                   "value": 52084000000,
-                     *                   "html_label": "Property, plant and equipment, net",
+                     *                   "derived": false,
+                     *                   "label": "Property, plant and equipment, net",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-173"
                      *                 },
                      *                 "IntangibleAssetExcludingGoodwillAfterAccumulatedAmortizationNoncurrent": {
                      *                   "value": 20278000000,
-                     *                   "html_label": "Non-current portion of intangible assets",
+                     *                   "derived": false,
+                     *                   "label": "Non-current portion of intangible assets",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-175"
                      *                 },
                      *                 "OtherAssetsNoncurrent": {
                      *                   "value": 78116000000,
-                     *                   "html_label": "Other non-current assets",
+                     *                   "derived": false,
+                     *                   "label": "Other non-current assets",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-177"
                      *                 },
                      *                 "AssetsNoncurrent": {
                      *                   "value": 230691000000,
-                     *                   "html_label": "Total non-current assets",
+                     *                   "derived": false,
+                     *                   "label": "Total non-current assets",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-179"
                      *                 }
@@ -4657,65 +6033,7 @@ export interface operations {
                                  */
                                 period_end: string;
                                 facts: {
-                                    [key: string]: {
-                                        value?: number;
-                                        html_label?: null | string;
-                                        formula?: null | {
-                                            /** @description Readable formula string */
-                                            formulaStr: string;
-                                            /** @description Metrics used in the formula */
-                                            members: Array<{
-                                                /**
-                                                 * @description Member type
-                                                 * @enum {string}
-                                                 */
-                                                type: "reported";
-                                                /** @description Value of the member */
-                                                value: number;
-                                                /** @description Financial concept */
-                                                concept: string;
-                                                /**
-                                                 * Format: date
-                                                 * @description Start date (YYYY-MM-DD)
-                                                 */
-                                                start_date?: null | string;
-                                                /**
-                                                 * Format: date
-                                                 * @description End date (YYYY-MM-DD)
-                                                 */
-                                                end_date?: null | string;
-                                                /**
-                                                 * Format: date
-                                                 * @description Instant date (YYYY-MM-DD)
-                                                 */
-                                                instant_date?: null | string;
-                                                /** @description Segment information */
-                                                segment?: null | {
-                                                    [key: string]: unknown;
-                                                };
-                                                /** @description Fiscal period type */
-                                                fiscal_period_type?: null | string;
-                                            } | {
-                                                /**
-                                                 * @description Member type
-                                                 * @enum {string}
-                                                 */
-                                                type: "standardized";
-                                                /** @description Value of the member */
-                                                value: number;
-                                                /** @description Standardized metric ID */
-                                                metric_id: string;
-                                                /** @description Fiscal period type */
-                                                fiscal_period_type?: null | string;
-                                                /** @description Fiscal year */
-                                                fiscal_year?: null | number;
-                                                /** @description Fiscal quarter */
-                                                fiscal_quarter?: null | number;
-                                            }>;
-                                        };
-                                        accession_number?: null | string;
-                                        html_tag_id?: null | string;
-                                    };
+                                    [key: string]: components["schemas"]["AsReportedDetailedFact"];
                                 };
                             }>;
                             /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
@@ -4758,6 +6076,11 @@ export interface operations {
                  * @example 0
                  */
                 offset?: number;
+                /**
+                 * @description `true`: only the facts the company reported (`derived: false`); the pipeline's derived Q4 / TTM / YTD values are left out
+                 * @example true
+                 */
+                reported_only?: "false" | "true";
             };
             header?: never;
             path?: never;
@@ -4800,7 +6123,9 @@ export interface operations {
                      *                           "concept": "CashAndCashEquivalentsAtCarryingValue",
                      *                           "label": "Cash and cash equivalents",
                      *                           "depth": 2,
-                     *                           "value": 36305000000
+                     *                           "value": 36305000000,
+                     *                           "derived": false,
+                     *                           "company_label": null
                      *                         }
                      *                       ]
                      *                     }
@@ -4880,6 +6205,16 @@ export interface operations {
                  * @example 0
                  */
                 offset?: number;
+                /**
+                 * @description `true`: only the facts the company reported (`derived: false`); the pipeline's derived Q4 / TTM / YTD values are left out
+                 * @example true
+                 */
+                reported_only?: "false" | "true";
+                /**
+                 * @description Sign of cash-flow facts. `as_filed` (default): the value as the company tagged it in XBRL. `cash_flow_direction`: a credit-balance cash-flow fact (outside the supplemental disclosures) is negated so outflows read negative. Standardized cash-flow metrics already carry one sign per metric (outflows negative, capital expenditures positive).
+                 * @example as_filed
+                 */
+                display_sign?: "as_filed" | "cash_flow_direction";
             };
             header?: never;
             path?: never;
@@ -4908,18 +6243,54 @@ export interface operations {
                      *               "fiscal_period_type": "annual",
                      *               "period_end": "2026-09-26",
                      *               "facts": {
-                     *                 "NetIncomeLoss": 132175000000,
-                     *                 "DepreciationDepletionAndAmortization": 13423000000,
-                     *                 "ShareBasedCompensation": 13789000000,
-                     *                 "OtherNoncashIncomeExpense": 568000000,
-                     *                 "IncreaseDecreaseInAccountsReceivable": -3994000000,
-                     *                 "IncreaseDecreaseInOtherReceivables": -6716000000,
-                     *                 "IncreaseDecreaseInInventories": -8905000000,
-                     *                 "IncreaseDecreaseInOtherOperatingAssets": -21117000000,
-                     *                 "IncreaseDecreaseInAccountsPayable": 12171000000,
-                     *                 "IncreaseDecreaseInOtherOperatingLiabilities": 13703000000,
-                     *                 "NetCashProvidedByUsedInOperatingActivities": 145097000000,
-                     *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": -54945000000
+                     *                 "NetIncomeLoss": {
+                     *                   "value": 132175000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "DepreciationDepletionAndAmortization": {
+                     *                   "value": 13423000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "ShareBasedCompensation": {
+                     *                   "value": 13789000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "OtherNoncashIncomeExpense": {
+                     *                   "value": -568000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncreaseDecreaseInAccountsReceivable": {
+                     *                   "value": 3994000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncreaseDecreaseInOtherReceivables": {
+                     *                   "value": 6716000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncreaseDecreaseInInventories": {
+                     *                   "value": 8905000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncreaseDecreaseInOtherOperatingAssets": {
+                     *                   "value": 21117000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncreaseDecreaseInAccountsPayable": {
+                     *                   "value": 12171000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncreaseDecreaseInOtherOperatingLiabilities": {
+                     *                   "value": 13703000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "NetCashProvidedByUsedInOperatingActivities": {
+                     *                   "value": 145097000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": {
+                     *                   "value": 54945000000,
+                     *                   "derived": false
+                     *                 }
                      *               }
                      *             }
                      *           ],
@@ -4954,7 +6325,7 @@ export interface operations {
                                 period_end: string;
                                 /** @description As-reported facts keyed by concept */
                                 facts: {
-                                    [key: string]: number;
+                                    [key: string]: components["schemas"]["AsReportedFact"];
                                 };
                             }>;
                             /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
@@ -4998,10 +6369,20 @@ export interface operations {
                  */
                 offset?: number;
                 /**
-                 * @description Include formula in response
+                 * @description Include each derived fact's formula (its members and their values)
                  * @example true
                  */
                 with_formula?: "false" | "true";
+                /**
+                 * @description `true`: only the facts the company reported (`derived: false`); the pipeline's derived Q4 / TTM / YTD values are left out
+                 * @example true
+                 */
+                reported_only?: "false" | "true";
+                /**
+                 * @description Sign of cash-flow facts. `as_filed` (default): the value as the company tagged it in XBRL. `cash_flow_direction`: a credit-balance cash-flow fact (outside the supplemental disclosures) is negated so outflows read negative. Standardized cash-flow metrics already carry one sign per metric (outflows negative, capital expenditures positive).
+                 * @example as_filed
+                 */
+                display_sign?: "as_filed" | "cash_flow_direction";
             };
             header?: never;
             path?: never;
@@ -5032,73 +6413,109 @@ export interface operations {
                      *               "facts": {
                      *                 "NetIncomeLoss": {
                      *                   "value": 132175000000,
-                     *                   "html_label": "Net income",
+                     *                   "derived": false,
+                     *                   "label": "Net income",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-112"
                      *                 },
                      *                 "DepreciationDepletionAndAmortization": {
                      *                   "value": 13423000000,
-                     *                   "html_label": "Depreciation and amortization",
+                     *                   "derived": false,
+                     *                   "label": "Depreciation and amortization",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-280"
                      *                 },
                      *                 "ShareBasedCompensation": {
                      *                   "value": 13789000000,
-                     *                   "html_label": "Share-based compensation expense",
+                     *                   "derived": false,
+                     *                   "label": "Share-based compensation expense",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-283"
                      *                 },
                      *                 "OtherNoncashIncomeExpense": {
-                     *                   "value": 568000000,
-                     *                   "html_label": "Other",
+                     *                   "value": -568000000,
+                     *                   "derived": false,
+                     *                   "label": "Other",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-286"
                      *                 },
                      *                 "IncreaseDecreaseInAccountsReceivable": {
-                     *                   "value": -3994000000,
-                     *                   "html_label": "Accounts receivable, net",
+                     *                   "value": 3994000000,
+                     *                   "derived": false,
+                     *                   "label": "Accounts receivable, net",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-289"
                      *                 },
                      *                 "IncreaseDecreaseInOtherReceivables": {
-                     *                   "value": -6716000000,
-                     *                   "html_label": "Vendor non-trade receivables",
+                     *                   "value": 6716000000,
+                     *                   "derived": false,
+                     *                   "label": "Vendor non-trade receivables",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-292"
                      *                 },
                      *                 "IncreaseDecreaseInInventories": {
-                     *                   "value": -8905000000,
-                     *                   "html_label": "Inventories",
+                     *                   "value": 8905000000,
+                     *                   "derived": false,
+                     *                   "label": "Inventories",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-295"
                      *                 },
                      *                 "IncreaseDecreaseInOtherOperatingAssets": {
-                     *                   "value": -21117000000,
-                     *                   "html_label": "Other current and non-current assets",
+                     *                   "value": 21117000000,
+                     *                   "derived": false,
+                     *                   "label": "Other current and non-current assets",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-298"
                      *                 },
                      *                 "IncreaseDecreaseInAccountsPayable": {
                      *                   "value": 12171000000,
-                     *                   "html_label": "Accounts payable",
+                     *                   "derived": false,
+                     *                   "label": "Accounts payable",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-301"
                      *                 },
                      *                 "IncreaseDecreaseInOtherOperatingLiabilities": {
                      *                   "value": 13703000000,
-                     *                   "html_label": "Other current and non-current liabilities",
+                     *                   "derived": false,
+                     *                   "label": "Other current and non-current liabilities",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-304"
                      *                 },
                      *                 "NetCashProvidedByUsedInOperatingActivities": {
                      *                   "value": 145097000000,
-                     *                   "html_label": "Cash generated by operating activities",
+                     *                   "derived": false,
+                     *                   "label": "Cash generated by operating activities",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-307"
                      *                 },
                      *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": {
-                     *                   "value": -54945000000,
-                     *                   "html_label": "Purchases of marketable securities",
+                     *                   "value": 54945000000,
+                     *                   "derived": false,
+                     *                   "label": "Purchases of marketable securities",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-310"
                      *                 }
@@ -5135,65 +6552,7 @@ export interface operations {
                                  */
                                 period_end: string;
                                 facts: {
-                                    [key: string]: {
-                                        value?: number;
-                                        html_label?: null | string;
-                                        formula?: null | {
-                                            /** @description Readable formula string */
-                                            formulaStr: string;
-                                            /** @description Metrics used in the formula */
-                                            members: Array<{
-                                                /**
-                                                 * @description Member type
-                                                 * @enum {string}
-                                                 */
-                                                type: "reported";
-                                                /** @description Value of the member */
-                                                value: number;
-                                                /** @description Financial concept */
-                                                concept: string;
-                                                /**
-                                                 * Format: date
-                                                 * @description Start date (YYYY-MM-DD)
-                                                 */
-                                                start_date?: null | string;
-                                                /**
-                                                 * Format: date
-                                                 * @description End date (YYYY-MM-DD)
-                                                 */
-                                                end_date?: null | string;
-                                                /**
-                                                 * Format: date
-                                                 * @description Instant date (YYYY-MM-DD)
-                                                 */
-                                                instant_date?: null | string;
-                                                /** @description Segment information */
-                                                segment?: null | {
-                                                    [key: string]: unknown;
-                                                };
-                                                /** @description Fiscal period type */
-                                                fiscal_period_type?: null | string;
-                                            } | {
-                                                /**
-                                                 * @description Member type
-                                                 * @enum {string}
-                                                 */
-                                                type: "standardized";
-                                                /** @description Value of the member */
-                                                value: number;
-                                                /** @description Standardized metric ID */
-                                                metric_id: string;
-                                                /** @description Fiscal period type */
-                                                fiscal_period_type?: null | string;
-                                                /** @description Fiscal year */
-                                                fiscal_year?: null | number;
-                                                /** @description Fiscal quarter */
-                                                fiscal_quarter?: null | number;
-                                            }>;
-                                        };
-                                        accession_number?: null | string;
-                                        html_tag_id?: null | string;
-                                    };
+                                    [key: string]: components["schemas"]["AsReportedDetailedFact"];
                                 };
                             }>;
                             /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
@@ -5236,6 +6595,16 @@ export interface operations {
                  * @example 0
                  */
                 offset?: number;
+                /**
+                 * @description `true`: only the facts the company reported (`derived: false`); the pipeline's derived Q4 / TTM / YTD values are left out
+                 * @example true
+                 */
+                reported_only?: "false" | "true";
+                /**
+                 * @description Sign of cash-flow facts. `as_filed` (default): the value as the company tagged it in XBRL. `cash_flow_direction`: a credit-balance cash-flow fact (outside the supplemental disclosures) is negated so outflows read negative. Standardized cash-flow metrics already carry one sign per metric (outflows negative, capital expenditures positive).
+                 * @example as_filed
+                 */
+                display_sign?: "as_filed" | "cash_flow_direction";
             };
             header?: never;
             path?: never;
@@ -5273,7 +6642,9 @@ export interface operations {
                      *                       "concept": "NetIncomeLoss",
                      *                       "label": "Net income",
                      *                       "depth": 1,
-                     *                       "value": 132175000000
+                     *                       "value": 132175000000,
+                     *                       "derived": false,
+                     *                       "company_label": null
                      *                     }
                      *                   ]
                      *                 }
@@ -5351,6 +6722,11 @@ export interface operations {
                  * @example 0
                  */
                 offset?: number;
+                /**
+                 * @description `true`: only the facts the company reported (`derived: false`); the pipeline's derived Q4 / TTM / YTD values are left out
+                 * @example true
+                 */
+                reported_only?: "false" | "true";
             };
             header?: never;
             path?: never;
@@ -5379,21 +6755,66 @@ export interface operations {
                      *               "fiscal_period_type": "annual",
                      *               "period_end": "2026-09-26",
                      *               "facts": {
-                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": 478834000000,
-                     *                 "CostOfGoodsAndServicesSold": 245232000000,
-                     *                 "GrossProfit": 233602000000,
-                     *                 "ResearchAndDevelopmentExpense": 45765000000,
-                     *                 "SellingGeneralAndAdministrativeExpense": 29774000000,
-                     *                 "OperatingExpenses": 75539000000,
-                     *                 "OperatingIncomeLoss": 158063000000,
-                     *                 "NonoperatingIncomeExpense": 1174000000,
-                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": 159237000000,
-                     *                 "IncomeTaxExpenseBenefit": 27062000000,
-                     *                 "NetIncomeLoss": 132175000000,
-                     *                 "EarningsPerShareBasic": 9.01,
-                     *                 "EarningsPerShareDiluted": 8.98,
-                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": 14661935000,
-                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": 14720306000
+                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": {
+                     *                   "value": 478834000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "CostOfGoodsAndServicesSold": {
+                     *                   "value": 245232000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "GrossProfit": {
+                     *                   "value": 233602000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "ResearchAndDevelopmentExpense": {
+                     *                   "value": 45765000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "SellingGeneralAndAdministrativeExpense": {
+                     *                   "value": 29774000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "OperatingExpenses": {
+                     *                   "value": 75539000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "OperatingIncomeLoss": {
+                     *                   "value": 158063000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "NonoperatingIncomeExpense": {
+                     *                   "value": 1174000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {
+                     *                   "value": 159237000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncomeTaxExpenseBenefit": {
+                     *                   "value": 27062000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "NetIncomeLoss": {
+                     *                   "value": 132175000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "EarningsPerShareBasic": {
+                     *                   "value": 9.01,
+                     *                   "derived": false
+                     *                 },
+                     *                 "EarningsPerShareDiluted": {
+                     *                   "value": 8.98,
+                     *                   "derived": false
+                     *                 },
+                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": {
+                     *                   "value": 14661935000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": {
+                     *                   "value": 14720306000,
+                     *                   "derived": false
+                     *                 }
                      *               }
                      *             }
                      *           ],
@@ -5428,7 +6849,7 @@ export interface operations {
                                 period_end: string;
                                 /** @description As-reported facts keyed by concept */
                                 facts: {
-                                    [key: string]: number;
+                                    [key: string]: components["schemas"]["AsReportedFact"];
                                 };
                             }>;
                             /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
@@ -5472,10 +6893,15 @@ export interface operations {
                  */
                 offset?: number;
                 /**
-                 * @description Include formula in response
+                 * @description Include each derived fact's formula (its members and their values)
                  * @example true
                  */
                 with_formula?: "false" | "true";
+                /**
+                 * @description `true`: only the facts the company reported (`derived: false`); the pipeline's derived Q4 / TTM / YTD values are left out
+                 * @example true
+                 */
+                reported_only?: "false" | "true";
             };
             header?: never;
             path?: never;
@@ -5506,91 +6932,136 @@ export interface operations {
                      *               "facts": {
                      *                 "RevenueFromContractWithCustomerExcludingAssessedTax": {
                      *                   "value": 478834000000,
-                     *                   "html_label": "Net sales",
+                     *                   "derived": false,
+                     *                   "label": "Net sales",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-76"
                      *                 },
                      *                 "CostOfGoodsAndServicesSold": {
                      *                   "value": 245232000000,
-                     *                   "html_label": "Cost of sales",
+                     *                   "derived": false,
+                     *                   "label": "Cost of sales",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-85"
                      *                 },
                      *                 "GrossProfit": {
                      *                   "value": 233602000000,
-                     *                   "html_label": "Gross margin",
+                     *                   "derived": false,
+                     *                   "label": "Gross margin",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-88"
                      *                 },
                      *                 "ResearchAndDevelopmentExpense": {
                      *                   "value": 45765000000,
-                     *                   "html_label": "Research and development",
+                     *                   "derived": false,
+                     *                   "label": "Research and development",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-91"
                      *                 },
                      *                 "SellingGeneralAndAdministrativeExpense": {
                      *                   "value": 29774000000,
-                     *                   "html_label": "Selling, general and administrative",
+                     *                   "derived": false,
+                     *                   "label": "Selling, general and administrative",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-94"
                      *                 },
                      *                 "OperatingExpenses": {
                      *                   "value": 75539000000,
-                     *                   "html_label": "Total operating expenses",
+                     *                   "derived": false,
+                     *                   "label": "Total operating expenses",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-97"
                      *                 },
                      *                 "OperatingIncomeLoss": {
                      *                   "value": 158063000000,
-                     *                   "html_label": "Operating income",
+                     *                   "derived": false,
+                     *                   "label": "Operating income",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-100"
                      *                 },
                      *                 "NonoperatingIncomeExpense": {
                      *                   "value": 1174000000,
-                     *                   "html_label": "Other income/(expense), net",
+                     *                   "derived": false,
+                     *                   "label": "Other income/(expense), net",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-103"
                      *                 },
                      *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {
                      *                   "value": 159237000000,
-                     *                   "html_label": "Income before provision for income taxes",
+                     *                   "derived": false,
+                     *                   "label": "Income before provision for income taxes",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-106"
                      *                 },
                      *                 "IncomeTaxExpenseBenefit": {
                      *                   "value": 27062000000,
-                     *                   "html_label": "Provision for income taxes",
+                     *                   "derived": false,
+                     *                   "label": "Provision for income taxes",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-109"
                      *                 },
                      *                 "NetIncomeLoss": {
                      *                   "value": 132175000000,
-                     *                   "html_label": "Net income",
+                     *                   "derived": false,
+                     *                   "label": "Net income",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-112"
                      *                 },
                      *                 "EarningsPerShareBasic": {
                      *                   "value": 9.01,
-                     *                   "html_label": "Basic (in dollars per share)",
+                     *                   "derived": false,
+                     *                   "label": "Basic (in dollars per share)",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-115"
                      *                 },
                      *                 "EarningsPerShareDiluted": {
                      *                   "value": 8.98,
-                     *                   "html_label": "Diluted (in dollars per share)",
+                     *                   "derived": false,
+                     *                   "label": "Diluted (in dollars per share)",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-118"
                      *                 },
                      *                 "WeightedAverageNumberOfSharesOutstandingBasic": {
                      *                   "value": 14661935000,
-                     *                   "html_label": "Basic (in shares)",
+                     *                   "derived": false,
+                     *                   "label": "Basic (in shares)",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-121"
                      *                 },
                      *                 "WeightedAverageNumberOfDilutedSharesOutstanding": {
                      *                   "value": 14720306000,
-                     *                   "html_label": "Diluted (in shares)",
+                     *                   "derived": false,
+                     *                   "label": "Diluted (in shares)",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-124"
                      *                 }
@@ -5627,65 +7098,7 @@ export interface operations {
                                  */
                                 period_end: string;
                                 facts: {
-                                    [key: string]: {
-                                        value?: number;
-                                        html_label?: null | string;
-                                        formula?: null | {
-                                            /** @description Readable formula string */
-                                            formulaStr: string;
-                                            /** @description Metrics used in the formula */
-                                            members: Array<{
-                                                /**
-                                                 * @description Member type
-                                                 * @enum {string}
-                                                 */
-                                                type: "reported";
-                                                /** @description Value of the member */
-                                                value: number;
-                                                /** @description Financial concept */
-                                                concept: string;
-                                                /**
-                                                 * Format: date
-                                                 * @description Start date (YYYY-MM-DD)
-                                                 */
-                                                start_date?: null | string;
-                                                /**
-                                                 * Format: date
-                                                 * @description End date (YYYY-MM-DD)
-                                                 */
-                                                end_date?: null | string;
-                                                /**
-                                                 * Format: date
-                                                 * @description Instant date (YYYY-MM-DD)
-                                                 */
-                                                instant_date?: null | string;
-                                                /** @description Segment information */
-                                                segment?: null | {
-                                                    [key: string]: unknown;
-                                                };
-                                                /** @description Fiscal period type */
-                                                fiscal_period_type?: null | string;
-                                            } | {
-                                                /**
-                                                 * @description Member type
-                                                 * @enum {string}
-                                                 */
-                                                type: "standardized";
-                                                /** @description Value of the member */
-                                                value: number;
-                                                /** @description Standardized metric ID */
-                                                metric_id: string;
-                                                /** @description Fiscal period type */
-                                                fiscal_period_type?: null | string;
-                                                /** @description Fiscal year */
-                                                fiscal_year?: null | number;
-                                                /** @description Fiscal quarter */
-                                                fiscal_quarter?: null | number;
-                                            }>;
-                                        };
-                                        accession_number?: null | string;
-                                        html_tag_id?: null | string;
-                                    };
+                                    [key: string]: components["schemas"]["AsReportedDetailedFact"];
                                 };
                             }>;
                             /** @description URL for the next page (includes next offset and same limit). Omitted when no next page exists. */
@@ -5728,6 +7141,11 @@ export interface operations {
                  * @example 0
                  */
                 offset?: number;
+                /**
+                 * @description `true`: only the facts the company reported (`derived: false`); the pipeline's derived Q4 / TTM / YTD values are left out
+                 * @example true
+                 */
+                reported_only?: "false" | "true";
             };
             header?: never;
             path?: never;
@@ -5760,7 +7178,9 @@ export interface operations {
                      *                   "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
                      *                   "label": "Net sales",
                      *                   "depth": 0,
-                     *                   "value": 478834000000
+                     *                   "value": 478834000000,
+                     *                   "derived": false,
+                     *                   "company_label": null
                      *                 }
                      *               ]
                      *             }
@@ -5831,6 +7251,16 @@ export interface operations {
                  * @example 4
                  */
                 calendar_quarter?: number;
+                /**
+                 * @description `true`: only the facts the company reported (`derived: false`); the pipeline's derived Q4 / TTM / YTD values are left out
+                 * @example true
+                 */
+                reported_only?: "false" | "true";
+                /**
+                 * @description Sign of cash-flow facts. `as_filed` (default): the value as the company tagged it in XBRL. `cash_flow_direction`: a credit-balance cash-flow fact (outside the supplemental disclosures) is negated so outflows read negative. Standardized cash-flow metrics already carry one sign per metric (outflows negative, capital expenditures positive).
+                 * @example as_filed
+                 */
+                display_sign?: "as_filed" | "cash_flow_direction";
             };
             header?: never;
             path?: never;
@@ -5859,53 +7289,170 @@ export interface operations {
                      *           "statements": {
                      *             "income_statement": {
                      *               "facts": {
-                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": 478834000000,
-                     *                 "CostOfGoodsAndServicesSold": 245232000000,
-                     *                 "GrossProfit": 233602000000,
-                     *                 "ResearchAndDevelopmentExpense": 45765000000,
-                     *                 "SellingGeneralAndAdministrativeExpense": 29774000000,
-                     *                 "OperatingExpenses": 75539000000,
-                     *                 "OperatingIncomeLoss": 158063000000,
-                     *                 "NonoperatingIncomeExpense": 1174000000,
-                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": 159237000000,
-                     *                 "IncomeTaxExpenseBenefit": 27062000000,
-                     *                 "NetIncomeLoss": 132175000000,
-                     *                 "EarningsPerShareBasic": 9.01,
-                     *                 "EarningsPerShareDiluted": 8.98,
-                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": 14661935000,
-                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": 14720306000
+                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": {
+                     *                   "value": 478834000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "CostOfGoodsAndServicesSold": {
+                     *                   "value": 245232000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "GrossProfit": {
+                     *                   "value": 233602000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "ResearchAndDevelopmentExpense": {
+                     *                   "value": 45765000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "SellingGeneralAndAdministrativeExpense": {
+                     *                   "value": 29774000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "OperatingExpenses": {
+                     *                   "value": 75539000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "OperatingIncomeLoss": {
+                     *                   "value": 158063000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "NonoperatingIncomeExpense": {
+                     *                   "value": 1174000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {
+                     *                   "value": 159237000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncomeTaxExpenseBenefit": {
+                     *                   "value": 27062000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "NetIncomeLoss": {
+                     *                   "value": 132175000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "EarningsPerShareBasic": {
+                     *                   "value": 9.01,
+                     *                   "derived": false
+                     *                 },
+                     *                 "EarningsPerShareDiluted": {
+                     *                   "value": 8.98,
+                     *                   "derived": false
+                     *                 },
+                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": {
+                     *                   "value": 14661935000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": {
+                     *                   "value": 14720306000,
+                     *                   "derived": false
+                     *                 }
                      *               }
                      *             },
                      *             "balance_sheet": {
                      *               "facts": {
-                     *                 "CashAndCashEquivalentsAtCarryingValue": 36305000000,
-                     *                 "MarketableSecuritiesCurrent": 20417000000,
-                     *                 "AccountsReceivableNetCurrent": 43817000000,
-                     *                 "NontradeReceivablesCurrent": 39896000000,
-                     *                 "InventoryNet": 14541000000,
-                     *                 "OtherAssetsCurrent": 18881000000,
-                     *                 "AssetsCurrent": 173857000000,
-                     *                 "MarketableSecuritiesNoncurrent": 80213000000,
-                     *                 "PropertyPlantAndEquipmentNet": 52084000000,
-                     *                 "IntangibleAssetExcludingGoodwillAfterAccumulatedAmortizationNoncurrent": 20278000000,
-                     *                 "OtherAssetsNoncurrent": 78116000000,
-                     *                 "AssetsNoncurrent": 230691000000
+                     *                 "CashAndCashEquivalentsAtCarryingValue": {
+                     *                   "value": 36305000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "MarketableSecuritiesCurrent": {
+                     *                   "value": 20417000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "AccountsReceivableNetCurrent": {
+                     *                   "value": 43817000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "NontradeReceivablesCurrent": {
+                     *                   "value": 39896000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "InventoryNet": {
+                     *                   "value": 14541000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "OtherAssetsCurrent": {
+                     *                   "value": 18881000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "AssetsCurrent": {
+                     *                   "value": 173857000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "MarketableSecuritiesNoncurrent": {
+                     *                   "value": 80213000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "PropertyPlantAndEquipmentNet": {
+                     *                   "value": 52084000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IntangibleAssetExcludingGoodwillAfterAccumulatedAmortizationNoncurrent": {
+                     *                   "value": 20278000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "OtherAssetsNoncurrent": {
+                     *                   "value": 78116000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "AssetsNoncurrent": {
+                     *                   "value": 230691000000,
+                     *                   "derived": false
+                     *                 }
                      *               }
                      *             },
                      *             "cash_flow_statement": {
                      *               "facts": {
-                     *                 "NetIncomeLoss": 132175000000,
-                     *                 "DepreciationDepletionAndAmortization": 13423000000,
-                     *                 "ShareBasedCompensation": 13789000000,
-                     *                 "OtherNoncashIncomeExpense": 568000000,
-                     *                 "IncreaseDecreaseInAccountsReceivable": -3994000000,
-                     *                 "IncreaseDecreaseInOtherReceivables": -6716000000,
-                     *                 "IncreaseDecreaseInInventories": -8905000000,
-                     *                 "IncreaseDecreaseInOtherOperatingAssets": -21117000000,
-                     *                 "IncreaseDecreaseInAccountsPayable": 12171000000,
-                     *                 "IncreaseDecreaseInOtherOperatingLiabilities": 13703000000,
-                     *                 "NetCashProvidedByUsedInOperatingActivities": 145097000000,
-                     *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": -54945000000
+                     *                 "NetIncomeLoss": {
+                     *                   "value": 132175000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "DepreciationDepletionAndAmortization": {
+                     *                   "value": 13423000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "ShareBasedCompensation": {
+                     *                   "value": 13789000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "OtherNoncashIncomeExpense": {
+                     *                   "value": -568000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncreaseDecreaseInAccountsReceivable": {
+                     *                   "value": 3994000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncreaseDecreaseInOtherReceivables": {
+                     *                   "value": 6716000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncreaseDecreaseInInventories": {
+                     *                   "value": 8905000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncreaseDecreaseInOtherOperatingAssets": {
+                     *                   "value": 21117000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncreaseDecreaseInAccountsPayable": {
+                     *                   "value": 12171000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncreaseDecreaseInOtherOperatingLiabilities": {
+                     *                   "value": 13703000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "NetCashProvidedByUsedInOperatingActivities": {
+                     *                   "value": 145097000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": {
+                     *                   "value": 54945000000,
+                     *                   "derived": false
+                     *                 }
                      *               }
                      *             }
                      *           }
@@ -5943,21 +7490,21 @@ export interface operations {
                                 income_statement: null | {
                                     /** @description Financial facts (concept -> value) */
                                     facts?: {
-                                        [key: string]: number;
+                                        [key: string]: components["schemas"]["AsReportedFact"];
                                     };
                                 };
                                 /** @description Latest balance sheet facts or null if not available */
                                 balance_sheet: null | {
                                     /** @description Financial facts (concept -> value) */
                                     facts?: {
-                                        [key: string]: number;
+                                        [key: string]: components["schemas"]["AsReportedFact"];
                                     };
                                 };
                                 /** @description Latest cash flow statement facts or null if not available */
                                 cash_flow_statement: null | {
                                     /** @description Financial facts (concept -> value) */
                                     facts?: {
-                                        [key: string]: number;
+                                        [key: string]: components["schemas"]["AsReportedFact"];
                                     };
                                 };
                             };
@@ -5995,7 +7542,17 @@ export interface operations {
                  */
                 calendar_quarter?: number;
                 /**
-                 * @description Include formula in response
+                 * @description `true`: only the facts the company reported (`derived: false`); the pipeline's derived Q4 / TTM / YTD values are left out
+                 * @example true
+                 */
+                reported_only?: "false" | "true";
+                /**
+                 * @description Sign of cash-flow facts. `as_filed` (default): the value as the company tagged it in XBRL. `cash_flow_direction`: a credit-balance cash-flow fact (outside the supplemental disclosures) is negated so outflows read negative. Standardized cash-flow metrics already carry one sign per metric (outflows negative, capital expenditures positive).
+                 * @example as_filed
+                 */
+                display_sign?: "as_filed" | "cash_flow_direction";
+                /**
+                 * @description Include each derived fact's formula (its members and their values)
                  * @example true
                  */
                 with_formula?: "false" | "true";
@@ -6029,91 +7586,136 @@ export interface operations {
                      *               "facts": {
                      *                 "RevenueFromContractWithCustomerExcludingAssessedTax": {
                      *                   "value": 478834000000,
-                     *                   "html_label": "Net sales",
+                     *                   "derived": false,
+                     *                   "label": "Net sales",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-76"
                      *                 },
                      *                 "CostOfGoodsAndServicesSold": {
                      *                   "value": 245232000000,
-                     *                   "html_label": "Cost of sales",
+                     *                   "derived": false,
+                     *                   "label": "Cost of sales",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-85"
                      *                 },
                      *                 "GrossProfit": {
                      *                   "value": 233602000000,
-                     *                   "html_label": "Gross margin",
+                     *                   "derived": false,
+                     *                   "label": "Gross margin",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-88"
                      *                 },
                      *                 "ResearchAndDevelopmentExpense": {
                      *                   "value": 45765000000,
-                     *                   "html_label": "Research and development",
+                     *                   "derived": false,
+                     *                   "label": "Research and development",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-91"
                      *                 },
                      *                 "SellingGeneralAndAdministrativeExpense": {
                      *                   "value": 29774000000,
-                     *                   "html_label": "Selling, general and administrative",
+                     *                   "derived": false,
+                     *                   "label": "Selling, general and administrative",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-94"
                      *                 },
                      *                 "OperatingExpenses": {
                      *                   "value": 75539000000,
-                     *                   "html_label": "Total operating expenses",
+                     *                   "derived": false,
+                     *                   "label": "Total operating expenses",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-97"
                      *                 },
                      *                 "OperatingIncomeLoss": {
                      *                   "value": 158063000000,
-                     *                   "html_label": "Operating income",
+                     *                   "derived": false,
+                     *                   "label": "Operating income",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-100"
                      *                 },
                      *                 "NonoperatingIncomeExpense": {
                      *                   "value": 1174000000,
-                     *                   "html_label": "Other income/(expense), net",
+                     *                   "derived": false,
+                     *                   "label": "Other income/(expense), net",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-103"
                      *                 },
                      *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {
                      *                   "value": 159237000000,
-                     *                   "html_label": "Income before provision for income taxes",
+                     *                   "derived": false,
+                     *                   "label": "Income before provision for income taxes",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-106"
                      *                 },
                      *                 "IncomeTaxExpenseBenefit": {
                      *                   "value": 27062000000,
-                     *                   "html_label": "Provision for income taxes",
+                     *                   "derived": false,
+                     *                   "label": "Provision for income taxes",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-109"
                      *                 },
                      *                 "NetIncomeLoss": {
                      *                   "value": 132175000000,
-                     *                   "html_label": "Net income",
+                     *                   "derived": false,
+                     *                   "label": "Net income",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-112"
                      *                 },
                      *                 "EarningsPerShareBasic": {
                      *                   "value": 9.01,
-                     *                   "html_label": "Basic (in dollars per share)",
+                     *                   "derived": false,
+                     *                   "label": "Basic (in dollars per share)",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-115"
                      *                 },
                      *                 "EarningsPerShareDiluted": {
                      *                   "value": 8.98,
-                     *                   "html_label": "Diluted (in dollars per share)",
+                     *                   "derived": false,
+                     *                   "label": "Diluted (in dollars per share)",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-118"
                      *                 },
                      *                 "WeightedAverageNumberOfSharesOutstandingBasic": {
                      *                   "value": 14661935000,
-                     *                   "html_label": "Basic (in shares)",
+                     *                   "derived": false,
+                     *                   "label": "Basic (in shares)",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-121"
                      *                 },
                      *                 "WeightedAverageNumberOfDilutedSharesOutstanding": {
                      *                   "value": 14720306000,
-                     *                   "html_label": "Diluted (in shares)",
+                     *                   "derived": false,
+                     *                   "label": "Diluted (in shares)",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-124"
                      *                 }
@@ -6123,73 +7725,109 @@ export interface operations {
                      *               "facts": {
                      *                 "CashAndCashEquivalentsAtCarryingValue": {
                      *                   "value": 36305000000,
-                     *                   "html_label": "Cash and cash equivalents",
+                     *                   "derived": false,
+                     *                   "label": "Cash and cash equivalents",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-157"
                      *                 },
                      *                 "MarketableSecuritiesCurrent": {
                      *                   "value": 20417000000,
-                     *                   "html_label": "Marketable securities",
+                     *                   "derived": false,
+                     *                   "label": "Marketable securities",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-159"
                      *                 },
                      *                 "AccountsReceivableNetCurrent": {
                      *                   "value": 43817000000,
-                     *                   "html_label": "Accounts receivable, net",
+                     *                   "derived": false,
+                     *                   "label": "Accounts receivable, net",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-161"
                      *                 },
                      *                 "NontradeReceivablesCurrent": {
                      *                   "value": 39896000000,
-                     *                   "html_label": "Vendor non-trade receivables",
+                     *                   "derived": false,
+                     *                   "label": "Vendor non-trade receivables",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-163"
                      *                 },
                      *                 "InventoryNet": {
                      *                   "value": 14541000000,
-                     *                   "html_label": "Inventories",
+                     *                   "derived": false,
+                     *                   "label": "Inventories",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-165"
                      *                 },
                      *                 "OtherAssetsCurrent": {
                      *                   "value": 18881000000,
-                     *                   "html_label": "Other current assets",
+                     *                   "derived": false,
+                     *                   "label": "Other current assets",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-167"
                      *                 },
                      *                 "AssetsCurrent": {
                      *                   "value": 173857000000,
-                     *                   "html_label": "Total current assets",
+                     *                   "derived": false,
+                     *                   "label": "Total current assets",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-169"
                      *                 },
                      *                 "MarketableSecuritiesNoncurrent": {
                      *                   "value": 80213000000,
-                     *                   "html_label": "Marketable securities",
+                     *                   "derived": false,
+                     *                   "label": "Marketable securities",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-171"
                      *                 },
                      *                 "PropertyPlantAndEquipmentNet": {
                      *                   "value": 52084000000,
-                     *                   "html_label": "Property, plant and equipment, net",
+                     *                   "derived": false,
+                     *                   "label": "Property, plant and equipment, net",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-173"
                      *                 },
                      *                 "IntangibleAssetExcludingGoodwillAfterAccumulatedAmortizationNoncurrent": {
                      *                   "value": 20278000000,
-                     *                   "html_label": "Non-current portion of intangible assets",
+                     *                   "derived": false,
+                     *                   "label": "Non-current portion of intangible assets",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-175"
                      *                 },
                      *                 "OtherAssetsNoncurrent": {
                      *                   "value": 78116000000,
-                     *                   "html_label": "Other non-current assets",
+                     *                   "derived": false,
+                     *                   "label": "Other non-current assets",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-177"
                      *                 },
                      *                 "AssetsNoncurrent": {
                      *                   "value": 230691000000,
-                     *                   "html_label": "Total non-current assets",
+                     *                   "derived": false,
+                     *                   "label": "Total non-current assets",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-179"
                      *                 }
@@ -6199,73 +7837,109 @@ export interface operations {
                      *               "facts": {
                      *                 "NetIncomeLoss": {
                      *                   "value": 132175000000,
-                     *                   "html_label": "Net income",
+                     *                   "derived": false,
+                     *                   "label": "Net income",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-112"
                      *                 },
                      *                 "DepreciationDepletionAndAmortization": {
                      *                   "value": 13423000000,
-                     *                   "html_label": "Depreciation and amortization",
+                     *                   "derived": false,
+                     *                   "label": "Depreciation and amortization",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-280"
                      *                 },
                      *                 "ShareBasedCompensation": {
                      *                   "value": 13789000000,
-                     *                   "html_label": "Share-based compensation expense",
+                     *                   "derived": false,
+                     *                   "label": "Share-based compensation expense",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-283"
                      *                 },
                      *                 "OtherNoncashIncomeExpense": {
-                     *                   "value": 568000000,
-                     *                   "html_label": "Other",
+                     *                   "value": -568000000,
+                     *                   "derived": false,
+                     *                   "label": "Other",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-286"
                      *                 },
                      *                 "IncreaseDecreaseInAccountsReceivable": {
-                     *                   "value": -3994000000,
-                     *                   "html_label": "Accounts receivable, net",
+                     *                   "value": 3994000000,
+                     *                   "derived": false,
+                     *                   "label": "Accounts receivable, net",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-289"
                      *                 },
                      *                 "IncreaseDecreaseInOtherReceivables": {
-                     *                   "value": -6716000000,
-                     *                   "html_label": "Vendor non-trade receivables",
+                     *                   "value": 6716000000,
+                     *                   "derived": false,
+                     *                   "label": "Vendor non-trade receivables",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-292"
                      *                 },
                      *                 "IncreaseDecreaseInInventories": {
-                     *                   "value": -8905000000,
-                     *                   "html_label": "Inventories",
+                     *                   "value": 8905000000,
+                     *                   "derived": false,
+                     *                   "label": "Inventories",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-295"
                      *                 },
                      *                 "IncreaseDecreaseInOtherOperatingAssets": {
-                     *                   "value": -21117000000,
-                     *                   "html_label": "Other current and non-current assets",
+                     *                   "value": 21117000000,
+                     *                   "derived": false,
+                     *                   "label": "Other current and non-current assets",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-298"
                      *                 },
                      *                 "IncreaseDecreaseInAccountsPayable": {
                      *                   "value": 12171000000,
-                     *                   "html_label": "Accounts payable",
+                     *                   "derived": false,
+                     *                   "label": "Accounts payable",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-301"
                      *                 },
                      *                 "IncreaseDecreaseInOtherOperatingLiabilities": {
                      *                   "value": 13703000000,
-                     *                   "html_label": "Other current and non-current liabilities",
+                     *                   "derived": false,
+                     *                   "label": "Other current and non-current liabilities",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-304"
                      *                 },
                      *                 "NetCashProvidedByUsedInOperatingActivities": {
                      *                   "value": 145097000000,
-                     *                   "html_label": "Cash generated by operating activities",
+                     *                   "derived": false,
+                     *                   "label": "Cash generated by operating activities",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-307"
                      *                 },
                      *                 "PaymentsToAcquireAvailableForSaleSecuritiesDebt": {
-                     *                   "value": -54945000000,
-                     *                   "html_label": "Purchases of marketable securities",
+                     *                   "value": 54945000000,
+                     *                   "derived": false,
+                     *                   "label": "Purchases of marketable securities",
+                     *                   "company_label": null,
+                     *                   "decimals": null,
                      *                   "accession_number": "0000320193-26-000026",
                      *                   "html_tag_id": "f-310"
                      *                 }
@@ -6305,193 +7979,19 @@ export interface operations {
                                 /** @description Latest income statement facts or null if not available */
                                 income_statement: null | {
                                     facts?: {
-                                        [key: string]: {
-                                            value?: number;
-                                            html_label?: null | string;
-                                            formula?: null | {
-                                                /** @description Readable formula string */
-                                                formulaStr: string;
-                                                /** @description Metrics used in the formula */
-                                                members: Array<{
-                                                    /**
-                                                     * @description Member type
-                                                     * @enum {string}
-                                                     */
-                                                    type: "reported";
-                                                    /** @description Value of the member */
-                                                    value: number;
-                                                    /** @description Financial concept */
-                                                    concept: string;
-                                                    /**
-                                                     * Format: date
-                                                     * @description Start date (YYYY-MM-DD)
-                                                     */
-                                                    start_date?: null | string;
-                                                    /**
-                                                     * Format: date
-                                                     * @description End date (YYYY-MM-DD)
-                                                     */
-                                                    end_date?: null | string;
-                                                    /**
-                                                     * Format: date
-                                                     * @description Instant date (YYYY-MM-DD)
-                                                     */
-                                                    instant_date?: null | string;
-                                                    /** @description Segment information */
-                                                    segment?: null | {
-                                                        [key: string]: unknown;
-                                                    };
-                                                    /** @description Fiscal period type */
-                                                    fiscal_period_type?: null | string;
-                                                } | {
-                                                    /**
-                                                     * @description Member type
-                                                     * @enum {string}
-                                                     */
-                                                    type: "standardized";
-                                                    /** @description Value of the member */
-                                                    value: number;
-                                                    /** @description Standardized metric ID */
-                                                    metric_id: string;
-                                                    /** @description Fiscal period type */
-                                                    fiscal_period_type?: null | string;
-                                                    /** @description Fiscal year */
-                                                    fiscal_year?: null | number;
-                                                    /** @description Fiscal quarter */
-                                                    fiscal_quarter?: null | number;
-                                                }>;
-                                            };
-                                            accession_number?: null | string;
-                                            html_tag_id?: null | string;
-                                        };
+                                        [key: string]: components["schemas"]["AsReportedDetailedFact"];
                                     };
                                 };
                                 /** @description Latest balance sheet facts or null if not available */
                                 balance_sheet: null | {
                                     facts?: {
-                                        [key: string]: {
-                                            value?: number;
-                                            html_label?: null | string;
-                                            formula?: null | {
-                                                /** @description Readable formula string */
-                                                formulaStr: string;
-                                                /** @description Metrics used in the formula */
-                                                members: Array<{
-                                                    /**
-                                                     * @description Member type
-                                                     * @enum {string}
-                                                     */
-                                                    type: "reported";
-                                                    /** @description Value of the member */
-                                                    value: number;
-                                                    /** @description Financial concept */
-                                                    concept: string;
-                                                    /**
-                                                     * Format: date
-                                                     * @description Start date (YYYY-MM-DD)
-                                                     */
-                                                    start_date?: null | string;
-                                                    /**
-                                                     * Format: date
-                                                     * @description End date (YYYY-MM-DD)
-                                                     */
-                                                    end_date?: null | string;
-                                                    /**
-                                                     * Format: date
-                                                     * @description Instant date (YYYY-MM-DD)
-                                                     */
-                                                    instant_date?: null | string;
-                                                    /** @description Segment information */
-                                                    segment?: null | {
-                                                        [key: string]: unknown;
-                                                    };
-                                                    /** @description Fiscal period type */
-                                                    fiscal_period_type?: null | string;
-                                                } | {
-                                                    /**
-                                                     * @description Member type
-                                                     * @enum {string}
-                                                     */
-                                                    type: "standardized";
-                                                    /** @description Value of the member */
-                                                    value: number;
-                                                    /** @description Standardized metric ID */
-                                                    metric_id: string;
-                                                    /** @description Fiscal period type */
-                                                    fiscal_period_type?: null | string;
-                                                    /** @description Fiscal year */
-                                                    fiscal_year?: null | number;
-                                                    /** @description Fiscal quarter */
-                                                    fiscal_quarter?: null | number;
-                                                }>;
-                                            };
-                                            accession_number?: null | string;
-                                            html_tag_id?: null | string;
-                                        };
+                                        [key: string]: components["schemas"]["AsReportedDetailedFact"];
                                     };
                                 };
                                 /** @description Latest cash flow statement facts or null if not available */
                                 cash_flow_statement: null | {
                                     facts?: {
-                                        [key: string]: {
-                                            value?: number;
-                                            html_label?: null | string;
-                                            formula?: null | {
-                                                /** @description Readable formula string */
-                                                formulaStr: string;
-                                                /** @description Metrics used in the formula */
-                                                members: Array<{
-                                                    /**
-                                                     * @description Member type
-                                                     * @enum {string}
-                                                     */
-                                                    type: "reported";
-                                                    /** @description Value of the member */
-                                                    value: number;
-                                                    /** @description Financial concept */
-                                                    concept: string;
-                                                    /**
-                                                     * Format: date
-                                                     * @description Start date (YYYY-MM-DD)
-                                                     */
-                                                    start_date?: null | string;
-                                                    /**
-                                                     * Format: date
-                                                     * @description End date (YYYY-MM-DD)
-                                                     */
-                                                    end_date?: null | string;
-                                                    /**
-                                                     * Format: date
-                                                     * @description Instant date (YYYY-MM-DD)
-                                                     */
-                                                    instant_date?: null | string;
-                                                    /** @description Segment information */
-                                                    segment?: null | {
-                                                        [key: string]: unknown;
-                                                    };
-                                                    /** @description Fiscal period type */
-                                                    fiscal_period_type?: null | string;
-                                                } | {
-                                                    /**
-                                                     * @description Member type
-                                                     * @enum {string}
-                                                     */
-                                                    type: "standardized";
-                                                    /** @description Value of the member */
-                                                    value: number;
-                                                    /** @description Standardized metric ID */
-                                                    metric_id: string;
-                                                    /** @description Fiscal period type */
-                                                    fiscal_period_type?: null | string;
-                                                    /** @description Fiscal year */
-                                                    fiscal_year?: null | number;
-                                                    /** @description Fiscal quarter */
-                                                    fiscal_quarter?: null | number;
-                                                }>;
-                                            };
-                                            accession_number?: null | string;
-                                            html_tag_id?: null | string;
-                                        };
+                                        [key: string]: components["schemas"]["AsReportedDetailedFact"];
                                     };
                                 };
                             };
@@ -6528,6 +8028,16 @@ export interface operations {
                  * @example 4
                  */
                 calendar_quarter?: number;
+                /**
+                 * @description `true`: only the facts the company reported (`derived: false`); the pipeline's derived Q4 / TTM / YTD values are left out
+                 * @example true
+                 */
+                reported_only?: "false" | "true";
+                /**
+                 * @description Sign of cash-flow facts. `as_filed` (default): the value as the company tagged it in XBRL. `cash_flow_direction`: a credit-balance cash-flow fact (outside the supplemental disclosures) is negated so outflows read negative. Standardized cash-flow metrics already carry one sign per metric (outflows negative, capital expenditures positive).
+                 * @example as_filed
+                 */
+                display_sign?: "as_filed" | "cash_flow_direction";
             };
             header?: never;
             path?: never;
@@ -6560,7 +8070,9 @@ export interface operations {
                      *                   "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
                      *                   "label": "Net sales",
                      *                   "depth": 0,
-                     *                   "value": 478834000000
+                     *                   "value": 478834000000,
+                     *                   "derived": false,
+                     *                   "company_label": null
                      *                 }
                      *               ]
                      *             },
@@ -6580,7 +8092,9 @@ export interface operations {
                      *                           "concept": "CashAndCashEquivalentsAtCarryingValue",
                      *                           "label": "Cash and cash equivalents",
                      *                           "depth": 2,
-                     *                           "value": 36305000000
+                     *                           "value": 36305000000,
+                     *                           "derived": false,
+                     *                           "company_label": null
                      *                         }
                      *                       ]
                      *                     }
@@ -6599,7 +8113,9 @@ export interface operations {
                      *                       "concept": "NetIncomeLoss",
                      *                       "label": "Net income",
                      *                       "depth": 1,
-                     *                       "value": 132175000000
+                     *                       "value": 132175000000,
+                     *                       "derived": false,
+                     *                       "company_label": null
                      *                     }
                      *                   ]
                      *                 }
@@ -13035,6 +14551,263 @@ export interface operations {
             500: components["responses"]["InternalServerError"];
         };
     };
+    getCompany: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Optional objects to include: `coverage` (comma list)
+                 * @example coverage
+                 */
+                expand?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Ticker or CIK
+                 * @example AAPL
+                 */
+                company: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Company"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getFiler: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Optional objects to include: `lifecycle`, `proposed_symbols`, `former_names`, `successors` (comma list)
+                 * @example lifecycle
+                 */
+                expand?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description SEC CIK (any padding)
+                 * @example 0000102909
+                 */
+                cik: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FilerDetail"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getMyUsage: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Days back
+                 * @example 30
+                 */
+                days?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Usage"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getPerson: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Person id
+                 * @example per_01JC9A7Y
+                 */
+                person_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Person"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     healthGet: {
         parameters: {
             query?: never;
@@ -13200,10 +14973,10 @@ export interface operations {
                             coding_code: string;
                             /** @description Number of shares traded */
                             shares: number;
-                            /** @description Price per share */
-                            share_price: number;
-                            /** @description Total transaction value */
-                            total: number;
+                            /** @description Price per share (null when the filing states none, e.g. a gift or grant) */
+                            share_price: null | number;
+                            /** @description Total transaction value (null when the filing states no price) */
+                            total: null | number;
                             /** @description Shares held after the transaction */
                             shares_owned_following_transaction: number;
                             /** @description Shares held before the transaction */
@@ -14162,6 +15935,1157 @@ export interface operations {
             400: components["responses"]["BadRequestError"];
             401: components["responses"]["UnauthorizedError"];
             500: components["responses"]["InternalServerError"];
+        };
+    };
+    listCompanies: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Name or ticker prefix
+                 * @example apple
+                 */
+                q?: string;
+                /**
+                 * @description Exchange (MIC), comma list
+                 * @example XNAS
+                 */
+                exchange?: string;
+                /**
+                 * @description Sector, comma list
+                 * @example Technology
+                 */
+                sector?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `ticker`
+                 * @example ticker
+                 */
+                sort?: "-name" | "-ticker" | "name" | "ticker";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["CompanyListItem"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listDividends: {
+        parameters: {
+            query: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @example AAPL
+                 */
+                "company": string;
+                /**
+                 * @description `ex_date` on or after this value
+                 * @example 2025-01-01
+                 */
+                "ex_date.gte"?: string;
+                /**
+                 * @description `ex_date` after this value
+                 * @example 2025-01-01
+                 */
+                "ex_date.gt"?: string;
+                /**
+                 * @description `ex_date` on or before this value
+                 * @example 2025-01-01
+                 */
+                "ex_date.lte"?: string;
+                /**
+                 * @description `ex_date` before this value
+                 * @example 2025-01-01
+                 */
+                "ex_date.lt"?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-ex_date`
+                 * @example -ex_date
+                 */
+                "sort"?: "-ex_date" | "-pay_date" | "ex_date" | "pay_date";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Dividend"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listDocumentKindCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["DocumentKindCatalogEntry"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listEventTypeCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["EventTypeCatalogEntry"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listFilers: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Name or ticker
+                 * @example berkshire
+                 */
+                q?: string;
+                /**
+                 * @description Forms filed, comma list
+                 * @example 13F-HR
+                 */
+                form?: string;
+                /**
+                 * @description Lifecycle phase
+                 * @example manager
+                 */
+                phase?: "former" | "manager" | "other" | "pre_ipo" | "public";
+                /**
+                 * @description true = only filers with a listed company row
+                 * @example false
+                 */
+                listed?: boolean;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `name`
+                 * @example name
+                 */
+                sort?: "-cik" | "-name" | "cik" | "name";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Filer"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listFiscalPeriods: {
+        parameters: {
+            query: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @example AAPL
+                 */
+                company: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`
+                 * @example -period_end
+                 */
+                sort?: "-period_end" | "period_end";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["FiscalPeriod"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listFormCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["FormCatalogEntry"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listMappingRules: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Statement — any of `income-statement`, `balance-sheet`, `cash-flow`, comma-separated
+                 * @example income-statement
+                 */
+                statement?: string;
+                /**
+                 * @description Metric id, comma list
+                 * @example is_total_revenue
+                 */
+                metric_id?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["MappingRule"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listMarketHolidays: {
+        parameters: {
+            query?: {
+                /**
+                 * @description `date` on or after this value
+                 * @example 2026-01-01
+                 */
+                "date.gte"?: string;
+                /**
+                 * @description `date` after this value
+                 * @example 2026-01-01
+                 */
+                "date.gt"?: string;
+                /**
+                 * @description `date` on or before this value
+                 * @example 2026-01-01
+                 */
+                "date.lte"?: string;
+                /**
+                 * @description `date` before this value
+                 * @example 2026-01-01
+                 */
+                "date.lt"?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `date`
+                 * @example date
+                 */
+                "sort"?: "-date" | "date";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["MarketHoliday"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listMetricCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Statement — any of `income-statement`, `balance-sheet`, `cash-flow`, comma-separated
+                 * @example income-statement
+                 */
+                statement?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["MetricCatalogEntry"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listParticipants: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event?: string;
+                /**
+                 * @description Person id
+                 * @example per_01JC9A7Y
+                 */
+                person?: string;
+                /**
+                 * @description Role
+                 * @example analyst
+                 */
+                role?: "analyst" | "executive" | "operator" | "other";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Participation"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listPeople: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                company?: string;
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event?: string;
+                /**
+                 * @description Role
+                 * @example analyst
+                 */
+                role?: "analyst" | "executive" | "operator" | "other";
+                /**
+                 * @description Name
+                 * @example smith
+                 */
+                q?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-last_seen`
+                 * @example -last_seen
+                 */
+                sort?: "-last_seen" | "-name" | "last_seen" | "name";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Person"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listSectionCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Form, comma list
+                 * @example 10-K
+                 */
+                form?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["SectionCatalogEntry"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listSplits: {
+        parameters: {
+            query: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @example AAPL
+                 */
+                company: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-execution_date`
+                 * @example -execution_date
+                 */
+                sort?: "-execution_date" | "execution_date";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Split"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     marketHolidays: {

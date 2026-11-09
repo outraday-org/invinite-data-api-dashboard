@@ -1,12 +1,14 @@
 import { FileText } from "lucide-react";
 
-import type { JsonValue, SecFilerResponse, SecFilingsResponse, SecLifecycleResponse, SecManagerPortfolioResponse } from "@/lib/api/types";
+import type { JsonValue, SecFilingsResponse, SecManagerPortfolioResponse, V2FilerResponse } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ApiRequestError, isTierError } from "@/lib/api/errors";
 import { isGenuineEmpty } from "@/lib/sec/readiness";
-import { listOf, recordOf, reviewStatusOf, scalarEntries, textOf } from "@/lib/sec/source";
+import { listOf, reviewStatusOf, scalarEntries } from "@/lib/sec/source";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 import type { SecPanelTarget } from "./sec-source-panel";
@@ -28,34 +30,62 @@ function Facts({ entries }: { entries: Array<[string, string]> }) {
     );
 }
 
-/** The filer's identity (pure): name, CIK, SEC-stated tickers (or none — a pre-IPO issuer, a SPAC, a manager). */
-export function SecFilerHeader({ cik, data, error, isLoading }: { cik: string; data: null | SecFilerResponse; error: unknown; isLoading: boolean }) {
-    if (error) return <SecReadinessNotice error={error} title="Failed to load the filer" />;
+const PHASE_LABELS: Record<NonNullable<V2FilerResponse["phase"]>, string> = {
+    former: "Former issuer",
+    manager: "13F manager",
+    other: "Other filer",
+    pre_ipo: "Pre-IPO",
+    public: "Public",
+};
+
+/**
+ * A failed `/v2/filers/{cik}` request: 404 `not_covered` and 503 `unavailable` are states of their own; 403 `excluded`,
+ * the plan gate (`plan_required`) and anything else go through `SecReadinessNotice`.
+ */
+function V2FilerErrorNotice({ error, title }: { error: unknown; title: string }) {
+    if (error instanceof ApiRequestError && !isTierError(error)) {
+        if (error.code === "not_covered") return <Notice badge="Not covered" title="Not covered by the Invinite API">{error.message}</Notice>;
+
+        if (error.code === "unavailable") return <Notice badge="Unavailable" title="Temporarily unavailable — try again later">{error.message}</Notice>;
+    }
+
+    return <SecReadinessNotice error={error} title={title} />;
+}
+
+/**
+ * The filer's identity (pure, `GET /v2/filers/{cik}`): name, CIK, the verified listing (or "No ticker" — a pre-IPO
+ * issuer, a SPAC, a manager), phase, entity type, SIC, state of incorporation, fiscal year end.
+ */
+export function SecFilerHeader({ cik, data, error, isLoading }: { cik: string; data: null | V2FilerResponse; error: unknown; isLoading: boolean }) {
+    if (error) return <V2FilerErrorNotice error={error} title="Failed to load the filer" />;
 
     if (isLoading && !data) return <Skeleton className="h-12 w-full" />;
 
-    const filer = recordOf(data?.filer);
+    const stated: Array<[string, null | string | undefined]> = [
+        ["entity type", data?.entity_type],
+        ["SIC", data?.sic],
+        ["state of incorporation", data?.state_of_incorporation],
+        ["fiscal year end", data?.fiscal_year_end],
+    ];
 
-    const tickers = listOf(filer.stated_tickers).filter(item => typeof item === "string");
+    const facts = stated.flatMap(([key, value]): Array<[string, string]> => (value ? [[key, value]] : []));
 
     return (
         <div className="flex flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-lg font-semibold">{textOf(filer, "name") ?? `CIK ${cik}`}</h1>
-                <span className="text-muted-foreground text-sm tabular-nums">{`CIK ${textOf(filer, "cik10") ?? cik}`}</span>
-                {tickers.length > 0
-                    ? tickers.map(ticker => <Badge key={ticker} variant="secondary">{ticker}</Badge>)
+                <h1 className="text-lg font-semibold">{data?.name || `CIK ${cik}`}</h1>
+                <span className="text-muted-foreground text-sm tabular-nums">{`CIK ${data?.cik ?? cik}`}</span>
+                {data?.listing
+                    ? <Badge variant="secondary">{data.listing.exchange ? `${data.listing.ticker} · ${data.listing.exchange}` : data.listing.ticker}</Badge>
                     : <Badge variant="outline">No ticker</Badge>}
+                {data?.phase && <Badge variant="outline">{PHASE_LABELS[data.phase]}</Badge>}
             </div>
-            {tickers.length > 0 && (
-                <div className="text-muted-foreground text-xs">Tickers as stated to the SEC by the filer, not a verified listing.</div>
-            )}
-            {data && <SecReadinessNotice readiness={data.readiness} />}
+            <Facts entries={facts} />
         </div>
     );
 }
 
-function RecordList({ empty, items, title }: { empty: string; items: ReadonlyArray<JsonValue>; title: string }) {
+function RecordList({ empty, items, reviewed = true, title }: { empty: string; items: ReadonlyArray<JsonValue>; reviewed?: boolean; title: string }) {
     return (
         <div className="flex flex-col gap-1">
             <div className="text-sm font-medium">{title}</div>
@@ -66,10 +96,12 @@ function RecordList({ empty, items, title }: { empty: string; items: ReadonlyArr
                             {items.map((item, index) => (
                                 // Free-form rows without an id of their own; their order is the API's.
                                 <li className="rounded-md border p-2" key={index}>
-                                    <div className="mb-1">
-                                        <Badge variant="outline">{`Review status: ${reviewStatusOf(item) ?? "not stated"}`}</Badge>
-                                    </div>
-                                    <Facts entries={scalarEntries(item, ["status", "review_status"])} />
+                                    {reviewed && (
+                                        <div className="mb-1">
+                                            <Badge variant="outline">{`Review status: ${reviewStatusOf(item) ?? "not stated"}`}</Badge>
+                                        </div>
+                                    )}
+                                    <Facts entries={scalarEntries(item, reviewed ? ["status", "review_status"] : [])} />
                                 </li>
                             ))}
                         </ul>
@@ -78,39 +110,76 @@ function RecordList({ empty, items, title }: { empty: string; items: ReadonlyArr
     );
 }
 
+function TextList({ empty, items, title }: { empty: string; items: ReadonlyArray<{ key: string; text: string }>; title: string }) {
+    return (
+        <div className="flex flex-col gap-1">
+            <div className="text-sm font-medium">{title}</div>
+            {items.length === 0
+                ? <div className="text-muted-foreground text-xs">{empty}</div>
+                : (
+                        <ul className="flex flex-col gap-0.5 text-xs">
+                            {items.map(item => <li key={item.key}>{item.text}</li>)}
+                        </ul>
+                    )}
+        </div>
+    );
+}
+
 /**
- * The issuer lifecycle (pure): the eligibility decision, the issuer phase, registration tracks and successor evidence,
- * each with its review status stated (never assumed). A refused / not switched-on lifecycle is its notice.
+ * The issuer lifecycle (pure, `GET /v2/filers/{cik}?expand=lifecycle,proposed_symbols,former_names,successors`): phase,
+ * kind, first public sighting, registration tracks (each with its review status stated, never assumed), pending
+ * actions, proposed symbols of a pending IPO, successors, former names and warnings. A filer without lifecycle
+ * evidence (`lifecycle: null`) says so; a refused request is its notice.
  */
-export function SecLifecycleView({ data, error, isLoading }: { data: null | SecLifecycleResponse; error: unknown; isLoading: boolean }) {
-    if (error) return <SecReadinessNotice error={error} title="Failed to load the issuer lifecycle" />;
+export function SecLifecycleView({ data, error, isLoading }: { data: null | V2FilerResponse; error: unknown; isLoading: boolean }) {
+    if (error) return <V2FilerErrorNotice error={error} title="Failed to load the issuer lifecycle" />;
 
     if (isLoading && !data) return <Skeleton className="h-24 w-full" />;
 
     if (!data) return null;
 
-    const successions = listOf(recordOf(data.successions).relations);
+    const lifecycle = data.lifecycle ?? null;
+
+    const warnings = listOf(lifecycle?.warnings).filter(item => typeof item === "string");
+
+    // Keys carry the index: one symbol / CIK can appear twice (another class, another succession kind).
+    const symbols = (data.proposed_symbols ?? []).map((symbol, index) => ({
+        key: `${index}-${symbol.symbol}`,
+        text: [
+            symbol.symbol,
+            symbol.exchange,
+            symbol.security_class,
+            symbol.ipo_calendar_match ? "on the IPO calendar" : null,
+        ].filter(Boolean).join(" · "),
+    }));
+
+    const successors = (data.successors ?? []).map((successor, index) => ({
+        key: `${index}-${successor.cik}`,
+        text: [successor.name ?? `CIK ${successor.cik}`, `CIK ${successor.cik}`, successor.kind?.replaceAll("_", " ")].filter(Boolean).join(" · "),
+    }));
+
+    const formerNames = (data.former_names ?? []).map(former => ({
+        key: `${former.name}-${former.until ?? ""}`,
+        text: former.until ? `${former.name} (until ${former.until})` : former.name,
+    }));
 
     return (
         <section aria-label="Issuer lifecycle" className="flex flex-col gap-3">
-            <SecReadinessNotice readiness={data.readiness} />
-            {data.decision && (
-                <div className="flex flex-col gap-1">
-                    <div className="text-sm font-medium">Decision</div>
-                    <Facts entries={scalarEntries(data.decision)} />
-                </div>
-            )}
-            {data.issuer && (
-                <div className="flex flex-col gap-1">
-                    <div className="text-sm font-medium">Issuer</div>
-                    <Facts entries={scalarEntries(data.issuer)} />
-                </div>
-            )}
-            <RecordList empty="No registration track." items={data.registration_tracks ?? []} title="Registration tracks" />
-            <RecordList empty="No successor evidence." items={successions} title="Successor evidence" />
-            {(data.warnings ?? []).length > 0 && (
+            {lifecycle
+                ? (
+                        <>
+                            <Facts entries={scalarEntries(lifecycle)} />
+                            <RecordList empty="No registration track." items={listOf(lifecycle.registration_tracks)} title="Registration tracks" />
+                            <RecordList empty="No pending action." items={listOf(lifecycle.pending_actions)} reviewed={false} title="Pending actions" />
+                        </>
+                    )
+                : <div className="text-muted-foreground text-xs">No lifecycle evidence for this filer.</div>}
+            {symbols.length > 0 && <TextList empty="" items={symbols} title="Proposed symbols" />}
+            <TextList empty="No successor." items={successors} title="Successors" />
+            {formerNames.length > 0 && <TextList empty="" items={formerNames} title="Former names" />}
+            {warnings.length > 0 && (
                 <div className="text-muted-foreground flex flex-col text-xs" role="status">
-                    {(data.warnings ?? []).map(warning => <span key={warning}>{warning.replaceAll("_", " ")}</span>)}
+                    {warnings.map(warning => <span key={warning}>{warning.replaceAll("_", " ")}</span>)}
                 </div>
             )}
         </section>

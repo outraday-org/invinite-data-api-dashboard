@@ -9,12 +9,12 @@ import {
 } from "@tanstack/react-table";
 import * as React from "react";
 
-import type { Dividend } from "@/lib/api/types";
+import type { V2Dividend } from "@/lib/api/types";
 
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useDividendsInfinite } from "@/lib/api/queries";
+import { useV2DividendsInfinite } from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
 import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
@@ -32,14 +32,14 @@ function DividendsPage() {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useDividendsInfinite({
-        identifier: ticker,
+    } = useV2DividendsInfinite({
+        company: ticker,
         limit: 40,
-        sort: "desc",
+        sort: "-ex_date",
     });
 
     const dividends = React.useMemo(
-        () => data?.pages.flatMap(page => page.companies[0]?.dividends ?? []) ?? [],
+        () => data?.pages.flatMap(page => page.data) ?? [],
         [data],
     );
 
@@ -48,7 +48,7 @@ function DividendsPage() {
         [],
     );
 
-    const columns = React.useMemo<Array<ColumnDef<Dividend>>>(
+    const columns = React.useMemo<Array<ColumnDef<V2Dividend>>>(
         () => [
             {
                 accessorKey: "ex_dividend_date",

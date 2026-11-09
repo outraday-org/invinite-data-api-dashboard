@@ -7,13 +7,15 @@ import { SecFilerHeader, SecFilingsView, SecLifecycleView, SecPortfolioView } fr
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
 import { NotFound } from "@/components/ui/not-found";
-import { useSecFiler, useSecFilerLifecycle, useSecFilingsInfinite, useSecManagerPortfolio } from "@/lib/api/queries";
+import { useSecFilingsInfinite, useSecManagerPortfolio, useV2Filer } from "@/lib/api/queries";
+import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import { latest13fPeriodEnd } from "@/lib/sec/source";
 
 /**
  * One SEC filer by CIK — outside `$ticker` on purpose: a pre-IPO issuer, a SPAC or a 13F manager without an exchange
  * listing has no ticker, and none is invented (no asset row, no fake `$ticker`). Reached from the landing page's filer
- * lookup (`/v1/sec/filers`).
+ * lookup (`/v1/sec/filers`) and the company overview's CIK. Identity + lifecycle = one `GET /v2/filers/{cik}` with every
+ * expansion; the filings list and the 13F portfolio stay on `/v1/sec/*` (data-api-v2 task 6 moves them).
  */
 export const Route = createFileRoute("/sec/$cik")({
     component: SecFilerPage,
@@ -35,9 +37,7 @@ function SecFilerPage() {
     // The 13F portfolio costs a request: asked on a click, for the newest quarter whose reports are due.
     const [period, setPeriod] = React.useState<null | string>(null);
 
-    const filer = useSecFiler(cik);
-
-    const lifecycle = useSecFilerLifecycle(cik);
+    const filer = useV2Filer(cik, V2_FILER_EXPANDS);
 
     const filings = useSecFilingsInfinite({ form: form ?? undefined, identifier: cik, limit: FILINGS_PAGE });
 
@@ -55,7 +55,7 @@ function SecFilerPage() {
 
             <section className="flex flex-col gap-2">
                 <div className="font-medium">Lifecycle</div>
-                <SecLifecycleView data={lifecycle.data} error={lifecycle.error} isLoading={lifecycle.isLoading} />
+                <SecLifecycleView data={filer.data} error={filer.error} isLoading={filer.isLoading} />
             </section>
 
             {isManager && (
