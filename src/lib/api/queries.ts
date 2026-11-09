@@ -11,44 +11,6 @@ import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import type {
     CagrPeriodYears,
     CompanyFiscalPeriod,
-    EarningsAudioResponse,
-    EarningsCalendarDateKind,
-    EarningsCalendarResponse,
-    EarningsCalendarStatus,
-    EarningsCompanyDocumentResponse,
-    EarningsCompanyDocumentsResponse,
-    EarningsDateStatus,
-    EarningsDiffResponse,
-    EarningsDocumentSearchResponse,
-    EarningsDocumentsResponse,
-    EarningsEventResponse,
-    EarningsEventsResponse,
-    EarningsEventType,
-    EarningsExtractionKind,
-    EarningsExtractionReview,
-    EarningsExtractionsResponse,
-    EarningsGuidanceBasis,
-    EarningsGuidanceHistoryResponse,
-    EarningsGuidancePeriodKind,
-    EarningsLiveResponse,
-    EarningsLiveStreamResponse,
-    EarningsMetricsResponse,
-    EarningsParticipantsResponse,
-    EarningsPressReleaseResponse,
-    EarningsPriceAttributionResponse,
-    EarningsProsodyResponse,
-    EarningsProsodySection,
-    EarningsQaResponse,
-    EarningsSearchCaseSensitive,
-    EarningsSearchMode,
-    EarningsSearchResponse,
-    EarningsSearchType,
-    EarningsSession,
-    EarningsSlidesResponse,
-    EarningsTranscriptDiffResponse,
-    EarningsTranscriptFormat,
-    EarningsTranscriptResponse,
-    EarningsTranscriptVersionsResponse,
     FiscalPeriodType,
     GrowthType,
     InsiderTradesResponse,
@@ -58,6 +20,7 @@ import type {
     NewsItemResponse,
     NewsListResponse,
     RatioCategory,
+    SearchMode,
     SecDocumentResponse,
     SecExportResponse,
     SecFigureResponse,
@@ -66,54 +29,64 @@ import type {
     SecFilingsOrder,
     SecFilingsResponse,
     SecManagerPortfolioResponse,
+    SecSearchCaseSensitive,
     SecSearchMode,
     SecSearchResponse,
     SecSectionsResponse,
     SegmentedFinancialsSegmentId,
     StatementType,
+    V2AudioResponse,
     V2CompanyExpand,
     V2CompanyResponse,
+    V2DateKind,
     V2DividendsResponse,
     V2DividendsSort,
+    V2Event,
+    V2EventComparisonResponse,
+    V2EventsResponse,
+    V2EventsSort,
+    V2EventStatsResponse,
+    V2EventStatus,
+    V2EventType,
     V2FilerExpand,
     V2FilerResponse,
+    V2GuidanceBasis,
+    V2GuidancePeriodKind,
+    V2GuidanceResponse,
+    V2InvestorDocumentResponse,
+    V2InvestorDocumentSearchResponse,
+    V2InvestorDocumentsResponse,
+    V2InvestorDocumentsSort,
+    V2KpisResponse,
+    V2LiveAudioResponse,
     V2MarketHolidaysResponse,
     V2MarketHolidaysSort,
+    V2ParticipantsResponse,
+    V2PressReleaseResponse,
+    V2PriceAttributionResponse,
+    V2ProsodyResponse,
+    V2ProsodySection,
+    V2QaResponse,
+    V2SlidesInclude,
+    V2SlidesResponse,
     V2SplitsResponse,
     V2SplitsSort,
+    V2TranscriptDiffResponse,
+    V2TranscriptLayer,
+    V2TranscriptResponse,
+    V2TranscriptSearchResponse,
+    V2TranscriptSearchType,
+    V2TranscriptSplit,
+    V2TranscriptTextResponse,
+    V2TranscriptVersionsResponse,
 } from "./types";
 
 import { ApiRequestError, errorDescription, rethrowApiError, retryUnlessApiError } from "./errors";
-import { firstPageParam, offsetPageParam } from "./page-params";
 import {
     getApiBaseUrl,
     getAsReportedFinancialsPresentation,
     getCompanyDetails,
     getCompanyFiscalPeriods,
-    getEarningsAudio,
-    getEarningsCalendar,
-    getEarningsCompanyDocument,
-    getEarningsCompanyDocuments,
-    getEarningsDiff,
-    getEarningsDocuments,
-    getEarningsDocumentSearch,
-    getEarningsEvent,
-    getEarningsEvents,
-    getEarningsExtractions,
-    getEarningsGuidanceHistory,
-    getEarningsLive,
-    getEarningsLiveStream,
-    getEarningsMetrics,
-    getEarningsParticipants,
-    getEarningsPressRelease,
-    getEarningsPriceAttribution,
-    getEarningsProsody,
-    getEarningsQa,
-    getEarningsSearch,
-    getEarningsSlides,
-    getEarningsTranscript,
-    getEarningsTranscriptDiff,
-    getEarningsTranscriptVersions,
     getFinancialCagr,
     getFinancialGrowth,
     getFinancialRatios,
@@ -137,11 +110,33 @@ import {
     getSecVersion,
     getSegmentedFinancials,
     getStandardizedFinancials,
+    getV2Audio,
     getV2Company,
     getV2Dividends,
+    getV2Event,
+    getV2EventComparison,
+    getV2Events,
+    getV2EventStats,
     getV2Filer,
+    getV2Guidance,
+    getV2InvestorDocument,
+    getV2InvestorDocuments,
+    getV2InvestorDocumentSearch,
+    getV2Kpis,
+    getV2LiveAudio,
     getV2MarketHolidays,
+    getV2Participants,
+    getV2PressRelease,
+    getV2PriceAttribution,
+    getV2Prosody,
+    getV2Qa,
+    getV2Slides,
     getV2Splits,
+    getV2Transcript,
+    getV2TranscriptDiff,
+    getV2TranscriptSearch,
+    getV2TranscriptText,
+    getV2TranscriptVersions,
     searchCompanies,
 } from "./server-functions";
 
@@ -861,26 +856,11 @@ export function useFinancialCagr(input: FinancialCagrInput) {
     };
 }
 
-// Earnings calls (IDA `/v1/earnings-calls/*`)
-
-/** One call: `eventId`, or `identifier` + `date` (New York day) / `year` + `quarter`. */
-export type EarningsEventSelector = {
-    date?: string;
-    eventId?: string;
-    identifier?: string;
-    quarter?: number;
-    year?: number;
-};
+// Shared hook shapes (the earnings family began on v1; every status-aware hook uses them)
 
 const EARNINGS_LIST_STALE_MS = 60 * 1000;
 
 const EARNINGS_EVENT_STALE_MS = 10 * 60 * 1000;
-
-const hasEventSelector = (s: EarningsEventSelector) =>
-    Boolean(s.eventId?.trim() || s.identifier?.trim());
-
-const selectorKey = (s: EarningsEventSelector) =>
-    [s.eventId ?? "", s.identifier ?? "", s.date ?? "", s.year ?? "", s.quarter ?? ""] as const;
 
 type EarningsQueryExtras<T> = Pick<
     UseQueryOptions<T, Error, T, ReadonlyArray<unknown>>,
@@ -922,16 +902,17 @@ function useEarningsQuery<T>(options: EarningsQueryExtras<T> & {
     };
 }
 
+/** The next page's cursor of a v2-style list (`next_cursor`); undefined = the last page. */
+const nextCursorOf = (lastPage: { next_cursor?: null | string }) => lastPage.next_cursor ?? undefined;
+
 /**
- * The infinite twin of `useEarningsQuery`. Pages by `offset` (`offsetPageParam`, first page 0) unless `pageParamOf`
- * says otherwise (`/v1/news` pages by cursor with a pager instead: `useNewsPage`).
+ * The infinite twin of `useEarningsQuery` over a cursor list: the first page asks without a cursor, the next ones with
+ * the last page's `next_cursor` (`/v1/news` pages by cursor with a pager instead: `useNewsPage`).
  */
-function useEarningsInfinite<TPage extends { next_cursor?: null | string } | { next_url?: null | string }, TParam = number>(options: {
+function useEarningsInfinite<TPage extends { next_cursor?: null | string }>(options: {
     enabled: boolean;
     errorMessage: null | string;
-    fetchPage: (pageParam: TParam, apiKey: string | undefined) => Promise<TPage>;
-    initialPageParam?: TParam;
-    pageParamOf?: (lastPage: TPage) => TParam | undefined;
+    fetchPage: (cursor: null | string, apiKey: string | undefined) => Promise<TPage>;
     queryKey: ReadonlyArray<unknown>;
     quietStatuses?: ReadonlyArray<number>;
     staleTime: number;
@@ -940,13 +921,11 @@ function useEarningsInfinite<TPage extends { next_cursor?: null | string } | { n
 
     const { enabled, errorMessage, fetchPage, queryKey, quietStatuses, staleTime } = options;
 
-    const pageParamOf = options.pageParamOf ?? (offsetPageParam as (lastPage: TPage) => TParam | undefined);
-
-    const result = useInfiniteQuery<TPage, Error, InfiniteData<TPage, TParam>, ReadonlyArray<unknown>, TParam>({
+    const result = useInfiniteQuery<TPage, Error, InfiniteData<TPage, null | string>, ReadonlyArray<unknown>, null | string>({
         enabled: hasHydrated && enabled,
-        getNextPageParam: lastPage => pageParamOf(lastPage),
-        initialPageParam: firstPageParam(options.initialPageParam),
-        queryFn: ({ pageParam }) => fetchPage(pageParam as TParam, apiKey ?? undefined).catch(rethrowApiError),
+        getNextPageParam: nextCursorOf,
+        initialPageParam: null,
+        queryFn: ({ pageParam }) => fetchPage(pageParam, apiKey ?? undefined).catch(rethrowApiError),
         queryKey: [...queryKey, String(apiKeyUpdatedAt)],
         retry: retryUnlessApiError,
         staleTime,
@@ -960,500 +939,12 @@ function useEarningsInfinite<TPage extends { next_cursor?: null | string } | { n
     };
 }
 
-type EarningsCalendarInfiniteInput = {
-    calendarStatus?: Array<EarningsCalendarStatus>;
-    dateKind?: EarningsCalendarDateKind;
-    eventType?: EarningsEventType;
-    exchange?: string;
-    from?: string;
-    limit: number;
-    session?: EarningsSession;
-    sort?: "asc" | "desc";
-    status?: Array<EarningsDateStatus>;
-    to?: string;
-};
-
-export function useEarningsCalendarInfinite(input: EarningsCalendarInfiniteInput) {
-    return useEarningsInfinite<EarningsCalendarResponse>({
-        enabled: true,
-        errorMessage: "Failed to load the earnings calendar",
-        fetchPage: (offset, apiKey) => getEarningsCalendar({ data: { ...input, apiKey, offset } }),
-        queryKey: [
-            "earnings",
-            "calendar",
-            input.from ?? "",
-            input.to ?? "",
-            input.status?.join(",") ?? "",
-            input.session ?? "",
-            input.exchange ?? "",
-            input.eventType ?? "",
-            input.dateKind ?? "",
-            input.calendarStatus?.join(",") ?? "",
-            input.sort ?? "",
-            input.limit,
-        ],
-        staleTime: EARNINGS_LIST_STALE_MS,
-    });
-}
-
-type EarningsEventsInfiniteInput = {
-    eventType?: EarningsEventType;
-    from?: string;
-    identifier: string;
-    include?: "observations";
-    limit: number;
-    sort?: "asc" | "desc";
-    to?: string;
-};
-
-export function useEarningsEventsInfinite(input: EarningsEventsInfiniteInput) {
-    return useEarningsInfinite<EarningsEventsResponse>({
-        enabled: input.identifier.trim().length > 0,
-        errorMessage: "Failed to load earnings calls",
-        fetchPage: (offset, apiKey) => getEarningsEvents({ data: { ...input, apiKey, offset } }),
-        queryKey: [
-            "earnings",
-            "events",
-            input.identifier,
-            input.eventType ?? "",
-            input.from ?? "",
-            input.to ?? "",
-            input.include ?? "",
-            input.sort ?? "",
-            input.limit,
-        ],
-        staleTime: EARNINGS_LIST_STALE_MS,
-    });
-}
-
-/**
- * Calls being captured right now; refetched every 15 s while the tab is visible.
- * Status-aware (no toast: a failing refetch would toast every 15 s; the strip shows a note).
- * `enabled: false` keeps it idle (the call page asks only for a call that may be live).
- */
-export function useEarningsLive(enabled = true) {
-    return useEarningsQuery<EarningsLiveResponse>({
-        enabled,
-        errorMessage: null,
-        load: apiKey => getEarningsLive({ data: { apiKey } }),
-        queryKey: ["earnings", "live"],
-        refetchInterval: 15 * 1000,
-        staleTime: EARNINGS_LIST_STALE_MS,
-    });
-}
-
 // Pipeline capture states of a call that is (about to be) live or just ended without a transcript.
 const LIVE_CAPTURE_STATUSES = new Set(["armed", "captured", "capturing"]);
 
 /** Whether a call may be live (or just ended) and not published yet: the call page then polls it. */
-export function isEarningsEventLiveish(event: Pick<EarningsEventResponse, "capture_status" | "has_transcript">) {
+export function isEarningsEventLiveish(event: Pick<V2Event, "capture_status" | "has_transcript">) {
     return !event.has_transcript && LIVE_CAPTURE_STATUSES.has(event.capture_status);
-}
-
-/**
- * Status-aware: the call page renders a 404 as `NotFound`. Refetched every 30 s while the call
- * is live or just ended without a transcript (`isEarningsEventLiveish`), so the live player
- * appears when capture starts and the Transcript tab lights up when `has_transcript` flips.
- */
-export function useEarningsEvent(eventId: string) {
-    return useEarningsQuery<EarningsEventResponse>({
-        enabled: eventId.trim().length > 0,
-        errorMessage: null,
-        load: apiKey => getEarningsEvent({ data: { apiKey, eventId } }),
-        queryKey: ["earnings", "event", eventId],
-        refetchInterval: query => (query.state.data && isEarningsEventLiveish(query.state.data) ? 30 * 1000 : false),
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsTranscriptInput = EarningsEventSelector & {
-    asOf?: string;
-    format?: EarningsTranscriptFormat;
-    version?: number;
-};
-
-/** Status-aware: a 404 is a state ("no cleaned layer for this version", no transcript yet). */
-export function useEarningsTranscript(input: EarningsTranscriptInput) {
-    return useEarningsQuery<EarningsTranscriptResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: null,
-        load: apiKey => getEarningsTranscript({ data: { ...input, apiKey } }),
-        queryKey: [
-            "earnings",
-            "transcript",
-            ...selectorKey(input),
-            input.format ?? "",
-            input.version ?? "",
-            input.asOf ?? "",
-        ],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-export function useEarningsTranscriptVersions(input: EarningsEventSelector) {
-    return useEarningsQuery<EarningsTranscriptVersionsResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: "Failed to load transcript versions",
-        load: apiKey => getEarningsTranscriptVersions({ data: { ...input, apiKey } }),
-        queryKey: ["earnings", "transcript-versions", ...selectorKey(input)],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsTranscriptDiffInput = EarningsEventSelector & {
-    from: number;
-    to?: number;
-};
-
-export function useEarningsTranscriptDiff(input: EarningsTranscriptDiffInput) {
-    return useEarningsQuery<EarningsTranscriptDiffResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: "Failed to compare transcript versions",
-        load: apiKey => getEarningsTranscriptDiff({ data: { ...input, apiKey } }),
-        queryKey: ["earnings", "transcript-diff", ...selectorKey(input), input.from, input.to ?? ""],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsQaInfiniteInput = EarningsEventSelector & {
-    limit: number;
-};
-
-export function useEarningsQaInfinite(input: EarningsQaInfiniteInput) {
-    return useEarningsInfinite<EarningsQaResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: "Failed to load Q&A",
-        fetchPage: (offset, apiKey) => getEarningsQa({ data: { ...input, apiKey, offset } }),
-        queryKey: ["earnings", "qa", ...selectorKey(input), input.limit],
-        quietStatuses: [404],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsParticipantsInput = EarningsEventSelector & {
-    include?: "evidence";
-};
-
-export function useEarningsParticipants(input: EarningsParticipantsInput) {
-    return useEarningsQuery<EarningsParticipantsResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: "Failed to load participants",
-        load: apiKey => getEarningsParticipants({ data: { ...input, apiKey } }),
-        queryKey: ["earnings", "participants", ...selectorKey(input), input.include ?? ""],
-        quietStatuses: [404],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsPressReleaseInput = EarningsEventSelector & {
-    include?: "body";
-};
-
-/** Status-aware: a 404 = "No press release stored for this call". */
-export function useEarningsPressRelease(input: EarningsPressReleaseInput) {
-    return useEarningsQuery<EarningsPressReleaseResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: null,
-        load: apiKey => getEarningsPressRelease({ data: { ...input, apiKey } }),
-        queryKey: ["earnings", "press-release", ...selectorKey(input), input.include ?? ""],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsExtractionsInfiniteInput = EarningsEventSelector & {
-    kind?: EarningsExtractionKind;
-    limit: number;
-    review?: EarningsExtractionReview;
-};
-
-export function useEarningsExtractionsInfinite(input: EarningsExtractionsInfiniteInput) {
-    return useEarningsInfinite<EarningsExtractionsResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: "Failed to load guidance and KPIs",
-        fetchPage: (offset, apiKey) => getEarningsExtractions({ data: { ...input, apiKey, offset } }),
-        queryKey: [
-            "earnings",
-            "extractions",
-            ...selectorKey(input),
-            input.kind ?? "",
-            input.review ?? "",
-            input.limit,
-        ],
-        quietStatuses: [404],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsGuidanceHistoryInput = {
-    basis?: EarningsGuidanceBasis;
-    identifier: string;
-    limit?: number;
-    metric: string;
-    periodKind?: EarningsGuidancePeriodKind;
-};
-
-export function useEarningsGuidanceHistory(input: EarningsGuidanceHistoryInput) {
-    return useEarningsQuery<EarningsGuidanceHistoryResponse>({
-        enabled: input.identifier.trim().length > 0 && input.metric.trim().length > 0,
-        errorMessage: "Failed to load guidance history",
-        load: apiKey => getEarningsGuidanceHistory({ data: { ...input, apiKey } }),
-        queryKey: [
-            "earnings",
-            "guidance-history",
-            input.identifier,
-            input.metric,
-            input.periodKind ?? "",
-            input.basis ?? "",
-            input.limit ?? "",
-        ],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-/** Status-aware: `404 diff_unavailable` = first call on record / not derived yet. */
-export function useEarningsDiff(input: EarningsEventSelector) {
-    return useEarningsQuery<EarningsDiffResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: null,
-        load: apiKey => getEarningsDiff({ data: { ...input, apiKey, vs: "prior" } }),
-        queryKey: ["earnings", "diff", ...selectorKey(input)],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-/** Status-aware: `404 metrics_unavailable` until the call has been derived. */
-export function useEarningsMetrics(input: EarningsEventSelector) {
-    return useEarningsQuery<EarningsMetricsResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: null,
-        load: apiKey => getEarningsMetrics({ data: { ...input, apiKey } }),
-        queryKey: ["earnings", "metrics", ...selectorKey(input)],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsProsodyInput = EarningsEventSelector & {
-    section?: EarningsProsodySection;
-};
-
-/** Status-aware: `404 prosody_unavailable` until the call has been derived. */
-export function useEarningsProsody(input: EarningsProsodyInput) {
-    return useEarningsQuery<EarningsProsodyResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: null,
-        load: apiKey => getEarningsProsody({ data: { ...input, apiKey } }),
-        queryKey: ["earnings", "prosody", ...selectorKey(input), input.section ?? ""],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-/**
- * Status-aware: `404 price_attribution_unavailable` until the first minute row exists. While
- * the call is live (`live: true` — the caller passes `isEarningsEventLiveish`) the minute rows
- * grow once a minute: refetched every 60 s (same query key, so the live player's seed and the
- * Price moves tab share the answer).
- */
-export function useEarningsPriceAttribution(input: EarningsEventSelector, { live = false }: { live?: boolean } = {}) {
-    return useEarningsQuery<EarningsPriceAttributionResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: null,
-        load: apiKey => getEarningsPriceAttribution({ data: { ...input, apiKey } }),
-        queryKey: ["earnings", "price-attribution", ...selectorKey(input)],
-        refetchInterval: live ? 60 * 1000 : false,
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-// Status-aware hooks: no toast; `error` is an ApiRequestError (`status`, `code`) for the
-// page to render `audio_unavailable` / `media_unavailable` / `search_disabled` / a plan gate
-// (`isTierError`) as a state.
-
-/**
- * The recording at its permanent public URL, in one request (no polling: a call without a
- * servable recording answers `403 audio_unavailable`).
- */
-export function useEarningsAudio(input: EarningsEventSelector) {
-    return useEarningsQuery<EarningsAudioResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: null,
-        load: apiKey => getEarningsAudio({ data: { ...input, apiKey } }),
-        queryKey: ["earnings", "audio", ...selectorKey(input)],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsSlidesInput = EarningsEventSelector & {
-    include?: "markdown";
-    pages?: string;
-};
-
-export function useEarningsSlides(input: EarningsSlidesInput) {
-    return useEarningsQuery<EarningsSlidesResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: null,
-        load: apiKey => getEarningsSlides({ data: { ...input, apiKey } }),
-        queryKey: ["earnings", "slides", ...selectorKey(input), input.include ?? "", input.pages ?? ""],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsDocumentsInfiniteInput = EarningsEventSelector & {
-    include?: "body";
-    kind?: Array<string>;
-    limit?: number;
-};
-
-export function useEarningsDocumentsInfinite(input: EarningsDocumentsInfiniteInput) {
-    return useEarningsInfinite<EarningsDocumentsResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: null,
-        fetchPage: (offset, apiKey) =>
-            getEarningsDocuments({ data: { ...input, apiKey, offset } }),
-        queryKey: [
-            "earnings",
-            "documents",
-            ...selectorKey(input),
-            input.kind?.join(",") ?? "",
-            input.include ?? "",
-            input.limit ?? "",
-        ],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsSearchInput = {
-    caseSensitive?: EarningsSearchCaseSensitive;
-    eventId?: string;
-    from?: string;
-    identifier?: string;
-    limit?: number;
-    mode?: EarningsSearchMode;
-    q: string;
-    to?: string;
-    type?: EarningsSearchType;
-};
-
-/** "Search this call" (`AskThisCall`): runs once `q` is non-empty (set it on submit, not per keystroke). */
-export function useEarningsSearch(input: EarningsSearchInput) {
-    return useEarningsQuery<EarningsSearchResponse>({
-        enabled: input.q.trim().length > 0,
-        errorMessage: null,
-        load: apiKey => getEarningsSearch({ data: { ...input, apiKey } }),
-        queryKey: [
-            "earnings",
-            "search",
-            input.q,
-            input.mode ?? "",
-            input.caseSensitive ?? "",
-            input.eventId ?? "",
-            input.identifier ?? "",
-            input.from ?? "",
-            input.to ?? "",
-            input.type ?? "",
-            input.limit ?? "",
-        ],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsCompanyDocumentsInfiniteInput = {
-    category?: Array<AssetGroupCategory>;
-    eventId?: string;
-    identifier: string;
-    /** `calls` adds every earnings call's documents (`source: "call"`) to the same list. */
-    include?: Array<"calls">;
-    kind?: Array<string>;
-    limit?: number;
-    section?: Array<string>;
-    year?: number;
-};
-
-/** A company's IR documents (`/company-documents`); status-aware, the Documents page renders its own error state. */
-export function useEarningsCompanyDocumentsInfinite(input: EarningsCompanyDocumentsInfiniteInput) {
-    return useEarningsInfinite<EarningsCompanyDocumentsResponse>({
-        enabled: input.identifier.trim().length > 0,
-        errorMessage: null,
-        fetchPage: (offset, apiKey) => getEarningsCompanyDocuments({ data: { ...input, apiKey, offset } }),
-        queryKey: [
-            "earnings",
-            "company-documents",
-            input.identifier,
-            input.category?.join(",") ?? "",
-            input.section?.join(",") ?? "",
-            input.kind?.join(",") ?? "",
-            input.year ?? "",
-            input.eventId ?? "",
-            input.include?.join(",") ?? "",
-            input.limit ?? "",
-        ],
-        staleTime: EARNINGS_LIST_STALE_MS,
-    });
-}
-
-/** One company document; `pages` adds the per-page text (≤ 2 MB). A null id keeps it idle. */
-export function useEarningsCompanyDocument(documentId: null | string, { pages = false }: { pages?: boolean } = {}) {
-    return useEarningsQuery<EarningsCompanyDocumentResponse>({
-        enabled: Boolean(documentId),
-        errorMessage: null,
-        load: apiKey => getEarningsCompanyDocument({ data: { apiKey, documentId: documentId ?? "", pages } }),
-        queryKey: ["earnings", "company-document", documentId ?? "", pages],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-type EarningsDocumentSearchInput = {
-    caseSensitive?: EarningsSearchCaseSensitive;
-    identifier?: string;
-    kind?: Array<string>;
-    limit?: number;
-    mode?: EarningsSearchMode;
-    q: string;
-    section?: Array<string>;
-    table?: "company_documents" | "event_documents";
-    year?: number;
-};
-
-/** Document search (passages with page numbers): runs once `q` is non-empty (set it on submit). */
-export function useEarningsDocumentSearch(input: EarningsDocumentSearchInput) {
-    return useEarningsQuery<EarningsDocumentSearchResponse>({
-        enabled: input.q.trim().length > 0,
-        errorMessage: null,
-        load: apiKey => getEarningsDocumentSearch({ data: { ...input, apiKey } }),
-        queryKey: [
-            "earnings",
-            "document-search",
-            input.q,
-            input.mode ?? "",
-            input.caseSensitive ?? "",
-            input.identifier ?? "",
-            input.kind?.join(",") ?? "",
-            input.section?.join(",") ?? "",
-            input.year ?? "",
-            input.table ?? "",
-            input.limit ?? "",
-        ],
-        staleTime: EARNINGS_EVENT_STALE_MS,
-    });
-}
-
-/**
- * The live HLS stream URL of a call (the live player). Never cached (`gcTime: 0`), never
- * retried. Each request costs 5 credits, so it is asked again only every 15 s while
- * `not_started`; otherwise the player refetches it itself — before the loaded URL expires and
- * once on a 403. An empty selector keeps it idle (a call without `live_audio`).
- */
-export function useEarningsLiveStream(input: EarningsEventSelector) {
-    return useEarningsQuery<EarningsLiveStreamResponse>({
-        enabled: hasEventSelector(input),
-        errorMessage: null,
-        gcTime: 0,
-        load: apiKey => getEarningsLiveStream({ data: { ...input, apiKey } }),
-        queryKey: ["earnings", "live-stream", ...selectorKey(input)],
-        refetchInterval: query => (query.state.data?.status === "not_started" ? 15 * 1000 : false),
-        retry: false,
-        // Never stale: no refetch on window focus / remount (each one would cost 5 credits).
-        staleTime: Number.POSITIVE_INFINITY,
-    });
 }
 
 // News (IDA `/v1/news*`, backend earnings tasks/inhouse-news-pipeline task 17)
@@ -1551,8 +1042,6 @@ const SEC_PENDING_REFETCH_MS = 30 * 1000;
 const refetchWhilePending = (query: { state: { data?: { readiness: { status: string } } } }) =>
     query.state.data?.readiness.status === "pending" ? SEC_PENDING_REFETCH_MS : false;
 
-const nextCursorOf = (lastPage: { next_cursor?: null | string }) => lastPage.next_cursor ?? undefined;
-
 /** CIK / name lookup (`/v1/sec/filers`): idle until `name` (≥ 2 characters) or `ticker` is set. */
 export function useSecFilers(input: { limit?: number; name?: string; ticker?: string }) {
     const name = input.name?.trim() ?? "";
@@ -1571,12 +1060,10 @@ export function useSecFilers(input: { limit?: number; name?: string; ticker?: st
 
 /** One filer's filings (ticker or CIK), newest first by default, one page per `next_cursor`. */
 export function useSecFilingsInfinite(input: { form?: string; identifier: string; limit?: number; order?: SecFilingsOrder }) {
-    return useEarningsInfinite<SecFilingsResponse, null | string>({
+    return useEarningsInfinite<SecFilingsResponse>({
         enabled: input.identifier.trim().length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getSecFilings({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        initialPageParam: null,
-        pageParamOf: nextCursorOf,
         queryKey: ["sec", "filings", input.identifier, input.form ?? "", input.order ?? "", input.limit ?? ""],
         staleTime: SEC_STALE_MS,
     });
@@ -1660,7 +1147,7 @@ export function useSecSections(versionId: null | string) {
 }
 
 export type SecSearchInput = {
-    caseSensitive?: EarningsSearchCaseSensitive;
+    caseSensitive?: SecSearchCaseSensitive;
     cik?: string;
     form?: string;
     limit?: number;
@@ -1670,12 +1157,10 @@ export type SecSearchInput = {
 
 /** SEC filing search (100 credits a page): runs once `q` is set (on submit); "More results" follows `next_cursor`. */
 export function useSecSearchInfinite(input: SecSearchInput) {
-    return useEarningsInfinite<SecSearchResponse, null | string>({
+    return useEarningsInfinite<SecSearchResponse>({
         enabled: input.q.trim().length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getSecSearch({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        initialPageParam: null,
-        pageParamOf: nextCursorOf,
         queryKey: [
             "sec",
             "search",
@@ -1725,7 +1210,7 @@ export function useSecManagerPortfolio(cik: string, periodEnd: null | string) {
 
 // Data API v2 (`/v2/*`, backend tasks/data-api-v2 task 4). Every hook revives the problem+json error
 // (`ApiRequestError` with `code` / `requestId`) and never retries an API answer. The lists page by `next_cursor`
-// (`initialPageParam: null`, the cursor is the page param and never part of the key; the filters are, so a changed
+// (`useEarningsInfinite`: the cursor is the page param and never part of the key; the filters are, so a changed
 // filter starts over at page 1 and never sends an old cursor = 400 `cursor_mismatch`).
 
 const V2_STALE_MS = 10 * 60 * 1000;
@@ -1756,12 +1241,10 @@ export function useV2Filer(cik: string, expand: ReadonlyArray<V2FilerExpand> = [
 type V2DividendsInput = { company: string; exDateGte?: string; exDateLte?: string; limit?: number; sort?: V2DividendsSort };
 
 export function useV2DividendsInfinite(input: V2DividendsInput) {
-    return useEarningsInfinite<V2DividendsResponse, null | string>({
+    return useEarningsInfinite<V2DividendsResponse>({
         enabled: input.company.trim().length > 0,
         errorMessage: "Failed to load dividends",
         fetchPage: (cursor, apiKey) => getV2Dividends({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        initialPageParam: null,
-        pageParamOf: nextCursorOf,
         queryKey: ["v2", "dividends", input.company, input.exDateGte ?? "", input.exDateLte ?? "", input.sort ?? "", input.limit ?? ""],
         staleTime: V2_STALE_MS,
     });
@@ -1770,12 +1253,10 @@ export function useV2DividendsInfinite(input: V2DividendsInput) {
 type V2SplitsInput = { company: string; limit?: number; sort?: V2SplitsSort };
 
 export function useV2SplitsInfinite(input: V2SplitsInput) {
-    return useEarningsInfinite<V2SplitsResponse, null | string>({
+    return useEarningsInfinite<V2SplitsResponse>({
         enabled: input.company.trim().length > 0,
         errorMessage: "Failed to load stock splits",
         fetchPage: (cursor, apiKey) => getV2Splits({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        initialPageParam: null,
-        pageParamOf: nextCursorOf,
         queryKey: ["v2", "splits", input.company, input.sort ?? "", input.limit ?? ""],
         staleTime: V2_STALE_MS,
     });
@@ -1784,13 +1265,408 @@ export function useV2SplitsInfinite(input: V2SplitsInput) {
 type V2MarketHolidaysInput = { dateGte?: string; dateLte?: string; limit?: number; sort?: V2MarketHolidaysSort };
 
 export function useV2MarketHolidaysInfinite(input: V2MarketHolidaysInput) {
-    return useEarningsInfinite<V2MarketHolidaysResponse, null | string>({
+    return useEarningsInfinite<V2MarketHolidaysResponse>({
         enabled: true,
         errorMessage: "Failed to load market holidays",
         fetchPage: (cursor, apiKey) => getV2MarketHolidays({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        initialPageParam: null,
-        pageParamOf: nextCursorOf,
         queryKey: ["v2", "market-holidays", input.dateGte ?? "", input.dateLte ?? "", input.sort ?? "", input.limit ?? ""],
         staleTime: V2_STALE_MS,
+    });
+}
+
+// Events family (`/v2/events*`, `/v2/guidance`, `/v2/kpis`, `/v2/participants`, `/v2/investor-documents*`,
+// `/v2/search/*`, backend tasks/data-api-v2 task 7). Every per-event hook takes the event id ("" keeps it idle); a
+// status-aware one (`errorMessage: null`) leaves 404 `not_found` ("not derived yet"), 403 `forbidden` (audio) and 503
+// `unavailable` (media) to the page (`MediaState`).
+
+const key = (values: ReadonlyArray<string> | undefined) => [...(values ?? [])].sort().join(",");
+
+export type V2EventsInput = {
+    company?: string;
+    dateKind?: V2DateKind;
+    /** `false` keeps the list idle. */
+    enabled?: boolean;
+    expand?: Array<"calendar">;
+    limit: number;
+    scheduledAtGte?: string;
+    scheduledAtLte?: string;
+    sort?: V2EventsSort;
+    status?: Array<V2EventStatus>;
+    /** Omitted = the API's default `earnings_call`; `all` = every event type. */
+    type?: V2EventType;
+};
+
+/**
+ * `GET /v2/events` by cursor: a company's events (`company`) or the calendar window (no company, ≤ 92 days). A 404
+ * `not_covered` (company outside the coverage) is a page state, never a toast.
+ */
+export function useV2EventsInfinite(input: V2EventsInput) {
+    const { enabled = true, ...query } = input;
+
+    return useEarningsInfinite<V2EventsResponse>({
+        enabled: enabled && (query.company === undefined || query.company.trim().length > 0),
+        errorMessage: "Failed to load events",
+        fetchPage: (cursor, apiKey) => getV2Events({ data: { ...query, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: [
+            "v2",
+            "events",
+            query.company ?? "",
+            query.type ?? "",
+            key(query.status),
+            query.scheduledAtGte ?? "",
+            query.scheduledAtLte ?? "",
+            query.dateKind ?? "",
+            key(query.expand),
+            query.sort ?? "",
+            query.limit,
+        ],
+        quietStatuses: [404],
+        staleTime: EARNINGS_LIST_STALE_MS,
+    });
+}
+
+/**
+ * Events being captured right now (`status=live&type=all`, one page), refetched every 15 s. Status-aware (no toast: a
+ * failing refetch would toast every 15 s; the strip shows a note). `enabled: false` keeps it idle.
+ */
+export function useV2LiveEvents(enabled = true) {
+    return useEarningsQuery<V2EventsResponse>({
+        enabled,
+        errorMessage: null,
+        load: apiKey => getV2Events({ data: { apiKey, limit: 200, status: ["live"], type: "all" } }),
+        queryKey: ["v2", "events", "live"],
+        refetchInterval: 15 * 1000,
+        staleTime: EARNINGS_LIST_STALE_MS,
+    });
+}
+
+/**
+ * One event with its calendar semantics and call-time observations. Status-aware: the call page renders a 404 as
+ * `NotFound`. Refetched every 30 s while the call is live or just ended without a transcript
+ * (`isEarningsEventLiveish`), so the live player appears when capture starts and the Transcript tab lights up.
+ */
+export function useV2Event(eventId: string) {
+    return useEarningsQuery<V2Event>({
+        enabled: eventId.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2Event({ data: { apiKey, eventId, expand: ["calendar", "observations"] } }),
+        queryKey: ["v2", "event", eventId],
+        refetchInterval: query => (query.state.data && isEarningsEventLiveish(query.state.data) ? 30 * 1000 : false),
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+type V2TranscriptInput = { eventId: string; layer?: V2TranscriptLayer; version?: number; words?: boolean };
+
+/** The turns of a version. Status-aware: a 404 is a state (no cleaned layer for this version, no transcript yet). */
+export function useV2Transcript(input: V2TranscriptInput) {
+    return useEarningsQuery<V2TranscriptResponse>({
+        enabled: input.eventId.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2Transcript({ data: { ...input, apiKey } }),
+        queryKey: ["v2", "transcript", input.eventId, input.layer ?? "", input.version ?? "", input.words ?? false],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+type V2TranscriptTextInput = { eventId: string; split?: V2TranscriptSplit; version?: number };
+
+/** The transcript as text blocks (`split: "sections"` = prepared remarks + Q&A). Status-aware like the turns. */
+export function useV2TranscriptText(input: V2TranscriptTextInput) {
+    return useEarningsQuery<V2TranscriptTextResponse>({
+        enabled: input.eventId.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2TranscriptText({ data: { ...input, apiKey } }),
+        queryKey: ["v2", "transcript-text", input.eventId, input.split ?? "", input.version ?? ""],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/** Every published version (one page of 200: a call has a handful). */
+export function useV2TranscriptVersions(eventId: string) {
+    return useEarningsQuery<V2TranscriptVersionsResponse>({
+        enabled: eventId.length > 0,
+        errorMessage: "Failed to load transcript versions",
+        load: apiKey => getV2TranscriptVersions({ data: { apiKey, eventId, limit: 200 } }),
+        queryKey: ["v2", "transcript-versions", eventId],
+        quietStatuses: [404],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+export function useV2TranscriptDiff(input: { eventId: string; from: number; to: number }) {
+    return useEarningsQuery<V2TranscriptDiffResponse>({
+        enabled: input.eventId.length > 0,
+        errorMessage: "Failed to compare transcript versions",
+        load: apiKey => getV2TranscriptDiff({ data: { ...input, apiKey } }),
+        queryKey: ["v2", "transcript-diff", input.eventId, input.from, input.to],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+export function useV2QaInfinite(input: { eventId: string; limit: number }) {
+    return useEarningsInfinite<V2QaResponse>({
+        enabled: input.eventId.length > 0,
+        errorMessage: "Failed to load Q&A",
+        fetchPage: (cursor, apiKey) => getV2Qa({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "qa", input.eventId, input.limit],
+        quietStatuses: [404],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/** The speakers of one event (one page of 200), each with the quotes its name was resolved from. */
+export function useV2Participants(eventId: string) {
+    return useEarningsQuery<V2ParticipantsResponse>({
+        enabled: eventId.length > 0,
+        errorMessage: "Failed to load participants",
+        load: apiKey => getV2Participants({ data: { apiKey, event: eventId, limit: 200 } }),
+        queryKey: ["v2", "participants", eventId],
+        quietStatuses: [404],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/** Status-aware: a 404 = no press release stored for this event. The body is always in the answer. */
+export function useV2PressRelease(eventId: string) {
+    return useEarningsQuery<V2PressReleaseResponse>({
+        enabled: eventId.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2PressRelease({ data: { apiKey, eventId } }),
+        queryKey: ["v2", "press-release", eventId],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+export type V2GuidanceInput = {
+    basis?: V2GuidanceBasis;
+    company?: string;
+    /** The event id (one call's guidance). */
+    event?: string;
+    limit: number;
+    metric?: string;
+    periodKind?: V2GuidancePeriodKind;
+    sort?: "-conference_date" | "conference_date";
+};
+
+/** Guidance items of one event or one company (a metric's history); every review state (`review=any`). */
+export function useV2GuidanceInfinite(input: V2GuidanceInput) {
+    return useEarningsInfinite<V2GuidanceResponse>({
+        enabled: Boolean(input.event || input.company?.trim()),
+        errorMessage: "Failed to load guidance",
+        fetchPage: (cursor, apiKey) => getV2Guidance({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: [
+            "v2",
+            "guidance",
+            input.event ?? "",
+            input.company ?? "",
+            input.metric ?? "",
+            input.periodKind ?? "",
+            input.basis ?? "",
+            input.sort ?? "",
+            input.limit,
+        ],
+        quietStatuses: [404],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+export function useV2KpisInfinite(input: { eventId: string; limit: number }) {
+    return useEarningsInfinite<V2KpisResponse>({
+        enabled: input.eventId.length > 0,
+        errorMessage: "Failed to load KPIs",
+        fetchPage: (cursor, apiKey) =>
+            getV2Kpis({ data: { apiKey, cursor: cursor ?? undefined, event: input.eventId, limit: input.limit } }),
+        queryKey: ["v2", "kpis", input.eventId, input.limit],
+        quietStatuses: [404],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/** Status-aware: a 404 until the call's metrics are derived. */
+export function useV2EventStats(eventId: string) {
+    return useEarningsQuery<V2EventStatsResponse>({
+        enabled: eventId.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2EventStats({ data: { apiKey, eventId } }),
+        queryKey: ["v2", "stats", eventId],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/** Status-aware: a 404 = first call on record / the comparison is not derived yet. */
+export function useV2EventComparison(eventId: string) {
+    return useEarningsQuery<V2EventComparisonResponse>({
+        enabled: eventId.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2EventComparison({ data: { apiKey, eventId } }),
+        queryKey: ["v2", "comparison", eventId],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/** Status-aware: a 404 until the call's prosody is derived. */
+export function useV2Prosody(input: { eventId: string; section?: V2ProsodySection }) {
+    return useEarningsQuery<V2ProsodyResponse>({
+        enabled: input.eventId.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2Prosody({ data: { ...input, apiKey } }),
+        queryKey: ["v2", "prosody", input.eventId, input.section ?? ""],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/**
+ * Status-aware: a 404 until the first minute row exists. While the call is live (`live: true` — the caller passes
+ * `isEarningsEventLiveish`) the minute rows grow once a minute: refetched every 60 s (same query key, so the live
+ * player's seed and the Price moves tab share the answer).
+ */
+export function useV2PriceAttribution(eventId: string, { live = false }: { live?: boolean } = {}) {
+    return useEarningsQuery<V2PriceAttributionResponse>({
+        enabled: eventId.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2PriceAttribution({ data: { apiKey, eventId } }),
+        queryKey: ["v2", "price-attribution", eventId],
+        refetchInterval: live ? 60 * 1000 : false,
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/**
+ * The recording at its permanent public URL, in one request (no polling: an event without a servable recording
+ * answers `403 forbidden`).
+ */
+export function useV2Audio(eventId: string) {
+    return useEarningsQuery<V2AudioResponse>({
+        enabled: eventId.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2Audio({ data: { apiKey, eventId } }),
+        queryKey: ["v2", "audio", eventId],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/** The deck and its page images; `include` adds the player-slide `timeline` (opt-in in v2) and page `markdown`. */
+export function useV2Slides(input: { eventId: string; include?: Array<V2SlidesInclude>; pages?: string }) {
+    return useEarningsQuery<V2SlidesResponse>({
+        enabled: input.eventId.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2Slides({ data: { ...input, apiKey } }),
+        queryKey: ["v2", "slides", input.eventId, key(input.include), input.pages ?? ""],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/**
+ * The live HLS stream URL of an event (the live player). Never cached (`gcTime: 0`), never retried, never polled: ONE
+ * call per live event view. The player asks again itself only for a fresh URL — once after a 403 (an expired token) and
+ * before the loaded URL expires (it lives 2 h, so only a call longer than that). An empty id keeps it idle.
+ */
+export function useV2LiveAudio(eventId: string) {
+    return useEarningsQuery<V2LiveAudioResponse>({
+        enabled: eventId.length > 0,
+        errorMessage: null,
+        gcTime: 0,
+        load: apiKey => getV2LiveAudio({ data: { apiKey, eventId } }),
+        queryKey: ["v2", "live-audio", eventId],
+        // At most ONE call per live event view (PRO, 5 credits each; lead decision 10, backend tasks/data-api-v2 task
+        // 7): no polling while `not_started`, never stale (no refetch on window focus / remount). The only other call
+        // is `refreshStream`'s one fresh URL after a 403 (an expired token).
+        retry: false,
+        staleTime: Number.POSITIVE_INFINITY,
+    });
+}
+
+export type V2InvestorDocumentsInput = {
+    category?: AssetGroupCategory;
+    company?: string;
+    /** The event id (one call's documents). */
+    event?: string;
+    fiscalYear?: number;
+    kind?: Array<string>;
+    limit?: number;
+    sort?: V2InvestorDocumentsSort;
+};
+
+/** The IR library and every call's documents (`source: company | call`); status-aware (the pages render the error). */
+export function useV2InvestorDocumentsInfinite(input: V2InvestorDocumentsInput) {
+    return useEarningsInfinite<V2InvestorDocumentsResponse>({
+        enabled: Boolean(input.event || input.company?.trim()),
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2InvestorDocuments({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: [
+            "v2",
+            "investor-documents",
+            input.company ?? "",
+            input.event ?? "",
+            input.category ?? "",
+            key(input.kind),
+            input.fiscalYear ?? "",
+            input.sort ?? "",
+            input.limit ?? "",
+        ],
+        staleTime: EARNINGS_LIST_STALE_MS,
+    });
+}
+
+/** One document of either source; `pages` inlines the per-page text (≤ 2 MB) and the body. A null id keeps it idle. */
+export function useV2InvestorDocument(documentId: null | string, { pages = false }: { pages?: boolean } = {}) {
+    return useEarningsQuery<V2InvestorDocumentResponse>({
+        enabled: Boolean(documentId),
+        errorMessage: null,
+        load: apiKey => getV2InvestorDocument({ data: { apiKey, documentId: documentId ?? "", pages } }),
+        queryKey: ["v2", "investor-document", documentId ?? "", pages],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+export type V2TranscriptSearchInput = {
+    company?: string;
+    /** The event id ("Search this call"). */
+    event?: string;
+    limit?: number;
+    mode?: SearchMode;
+    q: string;
+    type?: V2TranscriptSearchType;
+};
+
+/** "Search this call" (`AskThisCall`): runs once `q` is non-empty (set it on submit, not per keystroke). */
+export function useV2TranscriptSearch(input: V2TranscriptSearchInput) {
+    return useEarningsQuery<V2TranscriptSearchResponse>({
+        enabled: input.q.trim().length > 0,
+        errorMessage: null,
+        load: apiKey => getV2TranscriptSearch({ data: { ...input, apiKey } }),
+        queryKey: [
+            "v2",
+            "search-transcripts",
+            input.q,
+            input.mode ?? "",
+            input.event ?? "",
+            input.company ?? "",
+            input.type ?? "",
+            input.limit ?? "",
+        ],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+export type V2InvestorDocumentSearchInput = { company?: string; kind?: Array<string>; limit?: number; mode?: SearchMode; q: string };
+
+/** Document search (passages with page numbers): runs once `q` is non-empty (set it on submit). */
+export function useV2InvestorDocumentSearch(input: V2InvestorDocumentSearchInput) {
+    return useEarningsQuery<V2InvestorDocumentSearchResponse>({
+        enabled: input.q.trim().length > 0,
+        errorMessage: null,
+        load: apiKey => getV2InvestorDocumentSearch({ data: { ...input, apiKey } }),
+        queryKey: [
+            "v2",
+            "search-investor-documents",
+            input.q,
+            input.mode ?? "",
+            input.company ?? "",
+            key(input.kind),
+            input.limit ?? "",
+        ],
+        staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }

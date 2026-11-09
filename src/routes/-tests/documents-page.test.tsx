@@ -4,10 +4,10 @@ import type * as React from "react";
 import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { EarningsCompanyDocument, EarningsEventWithObservations } from "@/lib/api/types";
+import type { V2Event, V2InvestorDocument } from "@/lib/api/types";
 import type { DocumentsSearch } from "@/lib/earnings/documents";
 
-import { useEarningsCompanyDocumentsInfinite, useEarningsEventsInfinite } from "@/lib/api/queries";
+import { useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
 import { buildDocumentTree } from "@/lib/earnings/documents";
 import { Route } from "@/routes/$ticker/documents";
 import { DocumentTree } from "@/routes/$ticker/documents/-components/document-tree";
@@ -38,10 +38,11 @@ vi.mock("@tanstack/react-router", () => ({
 
 // Keep the server functions (TanStack Start) unloaded; the page's two lists are set per test.
 vi.mock("@/lib/api/queries", () => ({
-    useEarningsCompanyDocument: vi.fn(() => ({ data: null, error: null, isLoading: false })),
-    useEarningsCompanyDocumentsInfinite: vi.fn(),
-    useEarningsDocumentSearch: vi.fn(),
-    useEarningsEventsInfinite: vi.fn(),
+    useCompanyDetails: vi.fn(() => ({ data: { companies: [{ cik: "0000000001", name: "Acme Corp" }] } })),
+    useV2EventsInfinite: vi.fn(),
+    useV2InvestorDocument: vi.fn(() => ({ data: null, error: null, isLoading: false })),
+    useV2InvestorDocumentSearch: vi.fn(),
+    useV2InvestorDocumentsInfinite: vi.fn(),
 }));
 
 vi.mock("@/routes/$ticker/documents/-components/document-search", () => ({ DocumentSearch: () => null }));
@@ -50,7 +51,10 @@ afterEach(cleanup);
 
 const PUBLIC_URL = "https://storage-prod.invinite.com/earnings/ir-documents/0123456789abcdef0123456789abcdef/annual-report.pdf";
 
-const base: EarningsCompanyDocument = {
+// A `/v2/investor-documents` row: `pages` is null in lists (v2 has no page count), `body_text` too.
+const base: V2InvestorDocument = {
+    accession_number: null,
+    body_text: null,
     bytes: 2_400_000,
     category: "reports",
     confidence: "high",
@@ -60,13 +64,14 @@ const base: EarningsCompanyDocument = {
     event_date: null,
     event_id: null,
     event_type: null,
+    filing_date: null,
     group: "reports/2025",
     group_label: "Reports 2025",
     kind: "annual_report",
     link_status: null,
     origin: "html_page",
     page_url: null,
-    pages: 120,
+    pages: null,
     pages_url: `${PUBLIC_URL}.pages.json`,
     period: "FY",
     producer: "company",
@@ -81,7 +86,7 @@ const base: EarningsCompanyDocument = {
     year: 2025,
 };
 
-const DOCUMENTS: Array<EarningsCompanyDocument> = [
+const DOCUMENTS: Array<V2InvestorDocument> = [
     base,
     {
         ...base,
@@ -115,7 +120,7 @@ const DOCUMENTS: Array<EarningsCompanyDocument> = [
     },
 ];
 
-const renderTree = (documents: ReadonlyArray<EarningsCompanyDocument>, onShowText = vi.fn()) =>
+const renderTree = (documents: ReadonlyArray<V2InvestorDocument>, onShowText = vi.fn()) =>
     render(<DocumentTree onShowText={onShowText} ticker="ACME" tree={buildDocumentTree(documents, [], "")} />);
 
 describe("DocumentTree", () => {
@@ -152,7 +157,8 @@ describe("DocumentTree", () => {
 
         expect(open).toHaveAttribute("target", "_blank");
 
-        expect(within(row).getByText("120 pp.")).toBeInTheDocument();
+        // No page count in v2 lists: nothing like "120 pp." is shown.
+        expect(within(row).queryByText(/pp\./)).toBeNull();
 
         fireEvent.click(within(row).getByRole("button", { name: "Show text" }));
 
@@ -182,7 +188,7 @@ describe("DocumentTree", () => {
 
 const CALL_EVENT_ID = "22222222-2222-4222-8222-222222222222";
 
-const CALL_DOCUMENT: EarningsCompanyDocument = {
+const CALL_DOCUMENT: V2InvestorDocument = {
     ...base,
     category: "earnings",
     document_id: "00000000-0000-4000-8000-000000000004",
@@ -214,12 +220,12 @@ const CALL_EVENT = {
     has_transcript: true,
     scheduled_at: "2026-08-26T20:30:00.000Z",
     symbol: "ACME",
-} as EarningsEventWithObservations;
+} as V2Event;
 
 /** The shape of an infinite list the page reads. */
 function infinite<TPage>(pages: Array<TPage>, overrides: Record<string, unknown> = {}) {
     return {
-        data: { pageParams: pages.map((_, index) => index), pages },
+        data: { pageParams: pages.map((_, index) => (index === 0 ? null : `cursor-${index}`)), pages },
         error: null,
         fetchNextPage: vi.fn(() => Promise.resolve()),
         hasNextPage: false,
@@ -231,19 +237,17 @@ function infinite<TPage>(pages: Array<TPage>, overrides: Record<string, unknown>
     };
 }
 
-const documentsPage = (documents: Array<EarningsCompanyDocument>) => ({
-    company: { name: "Acme Corp", symbol: "ACME" },
-    documents,
-    next_url: null,
-});
+const documentsPage = (documents: Array<V2InvestorDocument>) => ({ data: documents, has_more: false, meta: {}, next_cursor: null });
+
+const eventsPage = (events: Array<V2Event>) => ({ data: events, has_more: false, meta: {}, next_cursor: null });
 
 const mockLists = (
     documents: ReturnType<typeof infinite>,
-    events = infinite([{ events: [CALL_EVENT], next_url: null }]),
+    events = infinite([eventsPage([CALL_EVENT])]),
 ) => {
-    vi.mocked(useEarningsCompanyDocumentsInfinite).mockReturnValue(documents as never);
+    vi.mocked(useV2InvestorDocumentsInfinite).mockReturnValue(documents as never);
 
-    vi.mocked(useEarningsEventsInfinite).mockReturnValue(events as never);
+    vi.mocked(useV2EventsInfinite).mockReturnValue(events as never);
 };
 
 const DocumentsPage = Route.options.component as React.ComponentType;
@@ -262,9 +266,11 @@ describe("Documents page", () => {
 
         render(<DocumentsPage />);
 
-        expect(useEarningsCompanyDocumentsInfinite).toHaveBeenCalledWith(expect.objectContaining({ identifier: "ACME", include: ["calls"], limit: 100 }));
+        expect(useV2InvestorDocumentsInfinite).toHaveBeenCalledWith(expect.objectContaining({ company: "ACME", limit: 200 }));
 
-        expect(useEarningsEventsInfinite).toHaveBeenCalledWith({ eventType: "all", identifier: "ACME", limit: 200, sort: "desc" });
+        expect(useV2EventsInfinite).toHaveBeenCalledWith({ company: "ACME", limit: 200, sort: "-scheduled_at", type: "all" });
+
+        expect(screen.getByText(/Acme Corp/)).toBeInTheDocument();
 
         expect(screen.queryByText("Call folders")).toBeNull();
     });
@@ -314,7 +320,7 @@ describe("Documents page", () => {
     });
 
     it("dates a call's SEC filing by its EDGAR filing date, else its fiscal period; a muted Call link, no chip", () => {
-        const filing: EarningsCompanyDocument = {
+        const filing: V2InvestorDocument = {
             ...CALL_DOCUMENT,
             bytes: null,
             content_type: null,
@@ -328,7 +334,7 @@ describe("Documents page", () => {
             url: null,
         };
 
-        const undated: EarningsCompanyDocument = {
+        const undated: V2InvestorDocument = {
             ...filing,
             document_id: "00000000-0000-4000-8000-000000000006",
             filing_date: null,
@@ -385,9 +391,9 @@ describe("Documents page", () => {
     it("names an event folder by its stored name, else by its event's title; finds a folder by its full label", () => {
         const named = { ...DOCUMENTS[2], document_id: "00000000-0000-4000-8000-000000000005", group: "events/2025/05-18-gtc-taipei-2025", group_label: "May 18, 2025 · GTC Taipei 2025", title: "Keynote deck" };
 
-        const investorDay = { ...CALL_EVENT, event_id: DOCUMENTS[2].event_id!, event_title: "Acme Investor Day 2026", event_type: "investor_day", has_documents: false, has_press_release: false } as EarningsEventWithObservations;
+        const investorDay = { ...CALL_EVENT, event_id: DOCUMENTS[2].event_id!, event_title: "Acme Investor Day 2026", event_type: "investor_day", has_documents: false, has_press_release: false } as V2Event;
 
-        mockLists(infinite([documentsPage([CALL_DOCUMENT, DOCUMENTS[2], named])]), infinite([{ events: [CALL_EVENT, investorDay], next_url: null }]));
+        mockLists(infinite([documentsPage([CALL_DOCUMENT, DOCUMENTS[2], named])]), infinite([eventsPage([CALL_EVENT, investorDay])]));
 
         render(<DocumentsPage />);
 

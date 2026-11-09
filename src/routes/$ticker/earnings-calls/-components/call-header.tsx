@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import * as React from "react";
 
-import type { EarningsEventResponse } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -26,7 +26,7 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
  * and the API's call-time provenance (`observations[]`, collapsed — shown because this is the
  * example app).
  */
-export function CallHeader({ event }: { event: EarningsEventResponse }) {
+export function CallHeader({ event }: { event: V2Event }) {
     const [showObservations, setShowObservations] = React.useState(false);
 
     const ObservationsIcon = showObservations ? ChevronDown : ChevronRight;

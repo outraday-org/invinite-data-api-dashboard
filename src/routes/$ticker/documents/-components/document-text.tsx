@@ -1,28 +1,28 @@
-import type { EarningsCompanyDocument } from "@/lib/api/types";
+import type { V2InvestorDocument } from "@/lib/api/types";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEarningsCompanyDocument } from "@/lib/api/queries";
+import { useV2InvestorDocument } from "@/lib/api/queries";
 import { documentKindLabel, pagesOf } from "@/lib/earnings/documents";
 import { MediaState, Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
-/** The per-page text of one document (detail route, `include=pages`); a file over 2 MB links its pages file instead. */
+/** The per-page text of one document (`/v2/investor-documents/{id}?expand=pages`); a file over 2 MB links its pages file instead. */
 function DocumentPages({ documentId }: { documentId: string }) {
-    const { data, error, isLoading } = useEarningsCompanyDocument(documentId, { pages: true });
+    const { data, error, isLoading } = useV2InvestorDocument(documentId, { pages: true });
 
     if (error) return <MediaState error={error} notFound="This document is no longer available" title="Failed to load the document text" />;
 
     if (isLoading || !data) return <Skeleton className="h-40 w-full" />;
 
-    const pages = pagesOf(data.document.pages_json);
+    const pages = pagesOf(data.pages ?? undefined);
 
     if (pages.length === 0) {
-        return data.document.pages_url
+        return data.pages_url
             ? (
                     <Notice title="The text is too large to show here">
                         {/* A permanent public URL, only an href; no referrer. */}
-                        <a className="underline underline-offset-4" href={data.document.pages_url} rel="noopener noreferrer" target="_blank">
+                        <a className="underline underline-offset-4" href={data.pages_url} rel="noopener noreferrer" target="_blank">
                             Open the per-page text (JSON)
                         </a>
                     </Notice>
@@ -45,7 +45,7 @@ function DocumentPages({ documentId }: { documentId: string }) {
 }
 
 /** "Show text" dialog of the Documents page; `doc: null` = closed (no request). */
-export function DocumentTextDialog({ doc, onClose }: { doc: EarningsCompanyDocument | null; onClose: () => void }) {
+export function DocumentTextDialog({ doc, onClose }: { doc: null | V2InvestorDocument; onClose: () => void }) {
     return (
         <Dialog onOpenChange={open => !open && onClose()} open={doc !== null}>
             <DialogContent className="sm:max-w-3xl">

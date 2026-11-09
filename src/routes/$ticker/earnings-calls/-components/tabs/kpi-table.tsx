@@ -1,12 +1,12 @@
 import { ExternalLink } from "lucide-react";
 
-import type { EarningsKpi } from "@/lib/api/types";
+import type { V2KpiMention } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useEarningsExtractionsInfinite } from "@/lib/api/queries";
+import { useV2KpisInfinite } from "@/lib/api/queries";
 import { formatDecimal, metricLabel } from "@/lib/earnings/labels";
 import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
@@ -16,7 +16,7 @@ import { MediaState, NO_TRANSCRIPT_TITLE, Notice } from "../media-state";
 import { SeekButton } from "../seek-button";
 import { EXTRACTIONS_PAGE_LIMIT } from "./guidance-table";
 
-type FilingLink = NonNullable<EarningsKpi["filing_link"]>;
+type FilingLink = NonNullable<V2KpiMention["filing_link"]>;
 
 const ORIGIN_LABELS = { press_release: "Press release", transcript: "Transcript" } as const;
 
@@ -48,7 +48,7 @@ function TruncatedText({ className, text }: { className?: string; text: string }
  * the 10-Q / 10-K XBRL fact once that is on EDGAR. `rounded` = the filing's value rounds to the
  * figure as spoken.
  */
-function FilingLinkCell({ link }: { link: EarningsKpi["filing_link"] }) {
+function FilingLinkCell({ link }: { link: V2KpiMention["filing_link"] }) {
     if (!link) return <span className="text-muted-foreground">—</span>;
 
     const factPeriod = factPeriodText(link.fact_period);
@@ -89,7 +89,7 @@ function FilingLinkCell({ link }: { link: EarningsKpi["filing_link"] }) {
 }
 
 /** Every reported KPI figure of the call, with its SEC filing match. */
-export function KpiTable({ selector }: Pick<CallTabProps, "selector">) {
+export function KpiTable({ eventId }: Pick<CallTabProps, "eventId">) {
     const {
         data,
         error,
@@ -97,9 +97,9 @@ export function KpiTable({ selector }: Pick<CallTabProps, "selector">) {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useEarningsExtractionsInfinite({ ...selector, kind: "kpi", limit: EXTRACTIONS_PAGE_LIMIT });
+    } = useV2KpisInfinite({ eventId, limit: EXTRACTIONS_PAGE_LIMIT });
 
-    const kpis = data?.pages.flatMap(page => page.kpis ?? []) ?? [];
+    const kpis = data?.pages.flatMap(page => page.data) ?? [];
 
     if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} title="Failed to load KPIs" />;
 

@@ -2,10 +2,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { EarningsCalendarSemantics, EarningsEvent } from "@/lib/api/types";
+import type { V2Event, V2EventCalendar } from "@/lib/api/types";
 
 import { CALENDAR_EVENT, CALENDAR_EVENT_EXPIRED_CALL } from "@/lib/sec/sec-fixtures";
-import { validateCalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
+import { matchesCalendarSearch, validateCalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 import {
     CalendarCallCell,
     CalendarReportCell,
@@ -15,7 +15,7 @@ import {
 
 afterEach(cleanup);
 
-const REPORT_ONLY_CALENDAR: EarningsCalendarSemantics = {
+const REPORT_ONLY_CALENDAR: V2EventCalendar = {
     call: { at: null, date: null, date_basis: "none", source: null, status: "no_call", time_quality: "none" },
     fiscal_period_quality: "stated",
     report: { date: "2026-11-05", quality: "filing_acceptance", source: { accepted_at: "2026-11-05T11:01:59.000Z", accession: "0001193125-26-448358", form: "6-K" }, time_kind: "bmo" },
@@ -23,7 +23,7 @@ const REPORT_ONLY_CALENDAR: EarningsCalendarSemantics = {
     warnings: [],
 };
 
-const REPORT_ONLY: EarningsEvent = { ...CALENDAR_EVENT, calendar: REPORT_ONLY_CALENDAR };
+const REPORT_ONLY: V2Event = { ...CALENDAR_EVENT, calendar: REPORT_ONLY_CALENDAR };
 
 describe("calendar semantics", () => {
     it("live event: report day + BMO + filing, call time with its quality / source / zone, event status", () => {
@@ -86,14 +86,27 @@ describe("validateCalendarSearch", () => {
             eventType: undefined,
             from: undefined,
             session: undefined,
-            status: undefined,
             to: undefined,
         });
     });
 
-    it("accepts date_kind and calendar_status; invalid values fall back to none", () => {
-        expect(validateCalendarSearch({ calendarStatus: "reported", dateKind: "report" })).toMatchObject({ calendarStatus: "reported", dateKind: "report" });
+    it("accepts date certainty (v2 `date_kind`) and calendar_status; invalid values (and v1's call / report) fall back to none", () => {
+        expect(validateCalendarSearch({ calendarStatus: "reported", dateKind: "estimated" })).toMatchObject({ calendarStatus: "reported", dateKind: "estimated" });
 
-        expect(validateCalendarSearch({ calendarStatus: "held", dateKind: "fiscal" })).toMatchObject({ calendarStatus: undefined, dateKind: undefined });
+        expect(validateCalendarSearch({ calendarStatus: "held", dateKind: "report" })).toMatchObject({ calendarStatus: undefined, dateKind: undefined });
+    });
+
+    it("filters the loaded rows by session and event status (no `/v2/events` parameter)", () => {
+        const row = { calendar: { status: "confirmed" as const }, session: "amc" as const };
+
+        expect(matchesCalendarSearch(row, {})).toBe(true);
+
+        expect(matchesCalendarSearch(row, { calendarStatus: "confirmed", session: "amc" })).toBe(true);
+
+        expect(matchesCalendarSearch(row, { session: "bmo" })).toBe(false);
+
+        expect(matchesCalendarSearch(row, { calendarStatus: "reported" })).toBe(false);
+
+        expect(matchesCalendarSearch({ calendar: null, session: null }, { calendarStatus: "reported" })).toBe(false);
     });
 });

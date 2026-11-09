@@ -1,12 +1,12 @@
 import { Download } from "lucide-react";
 import * as React from "react";
 
-import type { EarningsSlide } from "@/lib/api/types";
+import type { V2Slide } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEarningsSlides } from "@/lib/api/queries";
+import { useV2Slides } from "@/lib/api/queries";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -32,17 +32,20 @@ function DeckViewer({ url }: { url: string }) {
  * Every URL is a permanent public one, used as the API answered it (a failing image shows the
  * browser's broken image; nothing is refetched).
  */
-export function SlidesTab({ selector }: CallTabProps) {
-    const { data, error } = useEarningsSlides({ ...selector, include: "markdown" });
+export function SlidesTab({ eventId }: CallTabProps) {
+    // `timeline` is opt-in in v2 (v1 always sent it).
+    const { data, error } = useV2Slides({ eventId, include: ["markdown", "timeline"] });
 
-    const [openSlide, setOpenSlide] = React.useState<EarningsSlide | null>(null);
+    const [openSlide, setOpenSlide] = React.useState<null | V2Slide>(null);
 
     if (error) return <MediaState error={error} notFound="No slides stored for this call" title="Failed to load the slides" />;
 
     if (!data) return <Skeleton className="h-40 w-full" />;
 
-    // Default `[]`: an API without the field (released before IDA's timeline) must not break the tab.
-    const { deck, slides, timeline = [] } = data;
+    const { deck, slides } = data;
+
+    // `[]` without one: the field is opt-in (`include=timeline`) and nullable.
+    const timeline = data.timeline ?? [];
 
     if (!deck && slides.length === 0 && timeline.length === 0) return <Notice title="No slides stored for this call" />;
 

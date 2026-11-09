@@ -1,14 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import type { EarningsEventVideo } from "@/lib/api/types";
+import type { V2EventVideo } from "@/lib/api/types";
 
-import { httpsUrl, videoEmbedSrc } from "./video";
+import { httpsUrl, videoEmbedSrc, videoProvider, videoProviderLabel } from "./video";
 
-const GTC: EarningsEventVideo = {
+const GTC: V2EventVideo = {
     channel: "NVIDIA",
     embed_url: "https://www.youtube-nocookie.com/embed/v-NGxyPjcrE",
     embeddable: true,
-    provider: "youtube",
     thumbnail_url: "https://i.ytimg.com/vi/v-NGxyPjcrE/hqdefault.jpg",
     title: "NVIDIA GTC Berlin 2026 Keynote With CEO Jensen Huang",
     url: "https://www.youtube.com/watch?v=v-NGxyPjcrE",
@@ -21,7 +20,7 @@ describe("videoEmbedSrc", () => {
     });
 
     it("keeps Vimeo's dnt=1", () => {
-        const src = videoEmbedSrc({ ...GTC, embed_url: "https://player.vimeo.com/video/123?dnt=1", provider: "vimeo" });
+        const src = videoEmbedSrc({ ...GTC, embed_url: "https://player.vimeo.com/video/123?dnt=1" });
 
         expect(src).toBe("https://player.vimeo.com/video/123?dnt=1&autoplay=1");
     });
@@ -34,7 +33,6 @@ describe("videoEmbedSrc", () => {
         const src = videoEmbedSrc({
             ...GTC,
             embed_url: "https://player.vimeo.com/video/1084537",
-            provider: "vimeo",
             video_id: "1084537",
         });
 
@@ -48,10 +46,24 @@ describe("videoEmbedSrc", () => {
     it.each([
         "https://www.youtube.com/embed/v-NGxyPjcrE",
         "http://www.youtube-nocookie.com/embed/v-NGxyPjcrE",
-        "https://player.vimeo.com/video/123",
+        "https://vimeo.com/123",
         "not a url",
     ])("frames only the provider's privacy-enhanced host (%s → link)", (embedUrl) => {
         expect(videoEmbedSrc({ ...GTC, embed_url: embedUrl })).toBeNull();
+    });
+});
+
+describe("videoProvider", () => {
+    it("reads the platform from the embed / watch URL host (v2 has no provider field)", () => {
+        expect(videoProvider(GTC)).toBe("youtube");
+
+        expect(videoProvider({ embed_url: "https://player.vimeo.com/video/1", url: "https://vimeo.com/1" })).toBe("vimeo");
+
+        expect(videoProvider({ embed_url: "https://cdn.example.com/x", url: "https://youtu.be/x" })).toBe("youtube");
+
+        expect(videoProvider({ embed_url: "https://cdn.example.com/v.mp4", url: "https://example.com/v" })).toBeNull();
+
+        expect(videoProviderLabel({ embed_url: "https://example.com/e", url: "https://example.com/v" })).toBe("video platform");
     });
 });
 

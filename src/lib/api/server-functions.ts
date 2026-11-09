@@ -6,30 +6,6 @@ import type {
     CompanyDetailsResponse,
     CompanyFiscalPeriod,
     CompanySearchResponse,
-    EarningsAudioResponse,
-    EarningsCalendarResponse,
-    EarningsCompanyDocumentResponse,
-    EarningsCompanyDocumentsResponse,
-    EarningsDiffResponse,
-    EarningsDocumentSearchResponse,
-    EarningsDocumentsResponse,
-    EarningsEventResponse,
-    EarningsEventsResponse,
-    EarningsExtractionsResponse,
-    EarningsGuidanceHistoryResponse,
-    EarningsLiveResponse,
-    EarningsLiveStreamResponse,
-    EarningsMetricsResponse,
-    EarningsParticipantsResponse,
-    EarningsPressReleaseResponse,
-    EarningsPriceAttributionResponse,
-    EarningsProsodyResponse,
-    EarningsQaResponse,
-    EarningsSearchResponse,
-    EarningsSlidesResponse,
-    EarningsTranscriptDiffResponse,
-    EarningsTranscriptResponse,
-    EarningsTranscriptVersionsResponse,
     FinancialCagrResponse,
     FinancialGrowthResponse,
     FinancialRatiosResponse,
@@ -51,14 +27,47 @@ import type {
     SecSectionsResponse,
     SegmentedFinancialsResponse,
     StandardizedFinancialsPresentationResponse,
+    V2AudioResponse,
     V2CompanyResponse,
+    V2DateKind,
     V2DividendsResponse,
     V2DividendsSort,
+    V2EventComparisonResponse,
+    V2EventResponse,
+    V2EventsResponse,
+    V2EventsSort,
+    V2EventStatsResponse,
+    V2EventStatus,
+    V2EventType,
     V2FilerResponse,
+    V2GuidanceBasis,
+    V2GuidancePeriodKind,
+    V2GuidanceResponse,
+    V2InvestorDocumentResponse,
+    V2InvestorDocumentSearchResponse,
+    V2InvestorDocumentsResponse,
+    V2InvestorDocumentsSort,
+    V2KpisResponse,
+    V2LiveAudioResponse,
     V2MarketHolidaysResponse,
     V2MarketHolidaysSort,
+    V2ParticipantsResponse,
+    V2PressReleaseResponse,
+    V2PriceAttributionResponse,
+    V2ProsodyResponse,
+    V2ProsodySection,
+    V2QaResponse,
+    V2SlidesResponse,
     V2SplitsResponse,
     V2SplitsSort,
+    V2TranscriptDiffResponse,
+    V2TranscriptLayer,
+    V2TranscriptResponse,
+    V2TranscriptSearchResponse,
+    V2TranscriptSearchType,
+    V2TranscriptSplit,
+    V2TranscriptTextResponse,
+    V2TranscriptVersionsResponse,
 } from "./types";
 
 import { ASSET_GROUP_CATEGORIES } from "../earnings/documents";
@@ -66,7 +75,7 @@ import { SEARCH_CASE_SENSITIVE_VALUES, SEARCH_MODES } from "../earnings/labels";
 import { env } from "../env";
 import { createApiClient } from "./client.server";
 import { throwApiError } from "./errors";
-import { V2_COMPANY_EXPANDS, V2_FILER_EXPANDS, v2Expand, v2Query } from "./v2";
+import { V2_COMPANY_EXPANDS, V2_EVENT_EXPANDS, V2_FILER_EXPANDS, V2_SLIDES_INCLUDES, v2Expand, v2Query } from "./v2";
 
 const apiKeySchema = z
     .string()
@@ -629,591 +638,6 @@ export const getFinancialCagr = createServerFn({ method: "GET" })
         return res;
     });
 
-// Earnings calls (IDA `/v1/earnings-calls/*`). The event selector picks one call: `eventId`,
-// or `identifier` + `date` (New York day YYYY-MM-DD) / `year` + `quarter`.
-const eventSelectorSchema = z.object({
-    date: z.string().optional(),
-    eventId: z.string().uuid().optional(),
-    identifier: z.string().optional(),
-    quarter: z.number().int().min(1).max(4).optional(),
-    year: z.number().int().optional(),
-});
-
-type EventSelector = z.infer<typeof eventSelectorSchema>;
-
-const toSelectorQuery = (s: EventSelector) => ({
-    date: s.date,
-    event_id: s.eventId,
-    identifier: s.identifier,
-    quarter: s.quarter,
-    year: s.year,
-});
-
-const selectorInputSchema = eventSelectorSchema.extend({ apiKey: apiKeySchema });
-
-const earningsCalendarSchema = z.object({
-    apiKey: apiKeySchema,
-    // `calendar` filters (2026-11): which day `from` / `to` select, and `calendar.status`. Omitted = the API defaults.
-    calendarStatus: z.array(z.enum(["cancelled", "postponed", "reported", "confirmed", "announced", "estimated"])).optional(),
-    dateKind: z.enum(["call", "report"]).optional(),
-    eventType: z.enum(["earnings_call", "investor_day", "conference", "agm", "other", "all"]).optional(),
-    exchange: z.string().optional(),
-    from: z.string().optional(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    session: z.enum(["bmo", "amc", "intraday"]).optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-    status: z.array(z.enum(["estimated", "unconfirmed", "confirmed", "postponed", "cancelled"])).optional(),
-    to: z.string().optional(),
-});
-
-export const getEarningsCalendar = createServerFn({ method: "GET" })
-    .inputValidator(earningsCalendarSchema)
-    .handler(async ({ data }): Promise<EarningsCalendarResponse> => {
-        const { apiKey, calendarStatus, dateKind, eventType, exchange, from, limit, offset, session, sort, status, to } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/calendar", {
-            params: {
-                query: {
-                    calendar_status: calendarStatus?.length ? calendarStatus : undefined,
-                    date_kind: dateKind,
-                    event_type: eventType,
-                    exchange,
-                    from,
-                    limit,
-                    offset,
-                    session,
-                    sort,
-                    status,
-                    to,
-                },
-            },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const earningsEventsSchema = z.object({
-    apiKey: apiKeySchema,
-    eventType: z.enum(["earnings_call", "investor_day", "conference", "agm", "other", "all"]).optional(),
-    from: z.string().optional(),
-    identifier: z.string(),
-    include: z.literal("observations").optional(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    sort: z.enum(["asc", "desc"]).optional(),
-    to: z.string().optional(),
-});
-
-export const getEarningsEvents = createServerFn({ method: "GET" })
-    .inputValidator(earningsEventsSchema)
-    .handler(async ({ data }): Promise<EarningsEventsResponse> => {
-        const { apiKey, eventType, from, identifier, include, limit, offset, sort, to } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/events", {
-            params: {
-                query: {
-                    event_type: eventType,
-                    from,
-                    identifier,
-                    include: include ? [include] : undefined,
-                    limit,
-                    offset,
-                    sort,
-                    to,
-                },
-            },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-export const getEarningsLive = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema }))
-    .handler(async ({ data }): Promise<EarningsLiveResponse> => {
-        const api = createApiClient(data.apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/live");
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-export const getEarningsEvent = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, eventId: z.string().uuid() }))
-    .handler(async ({ data }): Promise<EarningsEventResponse> => {
-        const api = createApiClient(data.apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/event/{event_id}", {
-            // The call header shows the call-time provenance (example app); the API omits it by default.
-            params: { path: { event_id: data.eventId }, query: { include: ["observations"] } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const earningsTranscriptSchema = selectorInputSchema.extend({
-    asOf: z.string().optional(),
-    format: z.enum(["text", "speakers", "words", "sections", "cleaned"]).optional(),
-    version: z.number().int().optional(),
-});
-
-export const getEarningsTranscript = createServerFn({ method: "GET" })
-    .inputValidator(earningsTranscriptSchema)
-    .handler(async ({ data }): Promise<EarningsTranscriptResponse> => {
-        const { apiKey, asOf, format, version } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/transcript", {
-            params: { query: { ...toSelectorQuery(data), as_of: asOf, format, version } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        // `data` is JSON typed as `unknown` by the spec (see `JsonValue` in types.ts).
-        return res as EarningsTranscriptResponse;
-    });
-
-export const getEarningsTranscriptVersions = createServerFn({ method: "GET" })
-    .inputValidator(selectorInputSchema)
-    .handler(async ({ data }): Promise<EarningsTranscriptVersionsResponse> => {
-        const api = createApiClient(data.apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/transcript/versions", {
-            params: { query: toSelectorQuery(data) },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const earningsTranscriptDiffSchema = selectorInputSchema.extend({
-    from: z.number().int(),
-    to: z.number().int().optional(),
-});
-
-export const getEarningsTranscriptDiff = createServerFn({ method: "GET" })
-    .inputValidator(earningsTranscriptDiffSchema)
-    .handler(async ({ data }): Promise<EarningsTranscriptDiffResponse> => {
-        const { apiKey, from, to } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/transcript/diff", {
-            params: { query: { ...toSelectorQuery(data), from, to } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const earningsQaSchema = selectorInputSchema.extend({
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-});
-
-export const getEarningsQa = createServerFn({ method: "GET" })
-    .inputValidator(earningsQaSchema)
-    .handler(async ({ data }): Promise<EarningsQaResponse> => {
-        const { apiKey, limit, offset } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/qa", {
-            params: { query: { ...toSelectorQuery(data), limit, offset } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const earningsParticipantsSchema = selectorInputSchema.extend({
-    include: z.literal("evidence").optional(),
-});
-
-export const getEarningsParticipants = createServerFn({ method: "GET" })
-    .inputValidator(earningsParticipantsSchema)
-    .handler(async ({ data }): Promise<EarningsParticipantsResponse> => {
-        const { apiKey, include } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/participants", {
-            params: { query: { ...toSelectorQuery(data), include: include ? [include] : undefined } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        // `detail` is JSON typed as `unknown` by the spec (see `JsonValue` in types.ts).
-        return res as EarningsParticipantsResponse;
-    });
-
-const earningsPressReleaseSchema = selectorInputSchema.extend({
-    include: z.literal("body").optional(),
-});
-
-export const getEarningsPressRelease = createServerFn({ method: "GET" })
-    .inputValidator(earningsPressReleaseSchema)
-    .handler(async ({ data }): Promise<EarningsPressReleaseResponse> => {
-        const { apiKey, include } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/press-release", {
-            params: { query: { ...toSelectorQuery(data), include: include ? [include] : undefined } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const earningsExtractionsSchema = selectorInputSchema.extend({
-    kind: z.enum(["guidance", "kpi"]).optional(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    review: z.enum(["approved", "auto", "all"]).optional(),
-});
-
-export const getEarningsExtractions = createServerFn({ method: "GET" })
-    .inputValidator(earningsExtractionsSchema)
-    .handler(async ({ data }): Promise<EarningsExtractionsResponse> => {
-        const { apiKey, kind, limit, offset, review } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/extractions", {
-            params: { query: { ...toSelectorQuery(data), kind, limit, offset, review } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const earningsGuidanceHistorySchema = z.object({
-    apiKey: apiKeySchema,
-    basis: z.enum(["gaap", "non_gaap", "unknown"]).optional(),
-    identifier: z.string(),
-    limit: z.number().optional(),
-    metric: z.string(),
-    periodKind: z.enum(["quarter", "fiscal_year", "half", "other"]).optional(),
-});
-
-export const getEarningsGuidanceHistory = createServerFn({ method: "GET" })
-    .inputValidator(earningsGuidanceHistorySchema)
-    .handler(async ({ data }): Promise<EarningsGuidanceHistoryResponse> => {
-        const { apiKey, basis, identifier, limit, metric, periodKind } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/guidance/history", {
-            params: { query: { basis, identifier, limit, metric, period_kind: periodKind } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const earningsDiffSchema = selectorInputSchema.extend({
-    vs: z.literal("prior").optional(),
-});
-
-export const getEarningsDiff = createServerFn({ method: "GET" })
-    .inputValidator(earningsDiffSchema)
-    .handler(async ({ data }): Promise<EarningsDiffResponse> => {
-        const { apiKey, vs } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/diff", {
-            params: { query: { ...toSelectorQuery(data), vs } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-export const getEarningsMetrics = createServerFn({ method: "GET" })
-    .inputValidator(selectorInputSchema)
-    .handler(async ({ data }): Promise<EarningsMetricsResponse> => {
-        const api = createApiClient(data.apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/metrics", {
-            params: { query: toSelectorQuery(data) },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const earningsProsodySchema = selectorInputSchema.extend({
-    section: z.enum(["prepared", "qa", "all"]).optional(),
-});
-
-export const getEarningsProsody = createServerFn({ method: "GET" })
-    .inputValidator(earningsProsodySchema)
-    .handler(async ({ data }): Promise<EarningsProsodyResponse> => {
-        const { apiKey, section } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/prosody", {
-            params: { query: { ...toSelectorQuery(data), section } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-export const getEarningsPriceAttribution = createServerFn({ method: "GET" })
-    .inputValidator(selectorInputSchema)
-    .handler(async ({ data }): Promise<EarningsPriceAttributionResponse> => {
-        const api = createApiClient(data.apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/price-attribution", {
-            params: { query: toSelectorQuery(data) },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-// Status-aware routes (audio, slides, documents, search, live stream): their pages render a
-// state per status / code (`audio_unavailable`, `media_unavailable`, …), so they throw an
-// ApiRequestError instead of the bare error body.
-export const getEarningsAudio = createServerFn({ method: "GET" })
-    .inputValidator(selectorInputSchema)
-    .handler(async ({ data }): Promise<EarningsAudioResponse> => {
-        const api = createApiClient(data.apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/audio", {
-            params: { query: toSelectorQuery(data) },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const earningsSlidesSchema = selectorInputSchema.extend({
-    include: z.literal("markdown").optional(),
-    pages: z.string().optional(),
-});
-
-export const getEarningsSlides = createServerFn({ method: "GET" })
-    .inputValidator(earningsSlidesSchema)
-    .handler(async ({ data }): Promise<EarningsSlidesResponse> => {
-        const { apiKey, include, pages } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/slides", {
-            params: { query: { ...toSelectorQuery(data), include: include ? [include] : undefined, pages } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const earningsDocumentsSchema = selectorInputSchema.extend({
-    include: z.literal("body").optional(),
-    kind: z.array(z.string()).optional(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-});
-
-export const getEarningsDocuments = createServerFn({ method: "GET" })
-    .inputValidator(earningsDocumentsSchema)
-    .handler(async ({ data }): Promise<EarningsDocumentsResponse> => {
-        const { apiKey, include, kind, limit, offset } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/documents", {
-            params: {
-                query: {
-                    ...toSelectorQuery(data),
-                    include: include ? [include] : undefined,
-                    kind: kind?.length ? kind : undefined,
-                    limit,
-                    offset,
-                },
-            },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-// Both search routes: `mode` = the exhaustive `SEARCH_MODES`; `case_sensitive` is the API's string enum (`mode=literal`
-// only — the API answers 400 otherwise).
-const searchModeSchema = z.enum(SEARCH_MODES);
-
-const caseSensitiveSchema = z.enum(SEARCH_CASE_SENSITIVE_VALUES);
-
-const earningsSearchSchema = z.object({
-    apiKey: apiKeySchema,
-    caseSensitive: caseSensitiveSchema.optional(),
-    eventId: z.string().uuid().optional(),
-    from: z.string().optional(),
-    identifier: z.string().optional(),
-    limit: z.number().optional(),
-    mode: searchModeSchema.optional(),
-    q: z.string().min(1),
-    to: z.string().optional(),
-    type: z.enum(["transcript", "qa", "preparedRemarks", "presentation"]).optional(),
-});
-
-export const getEarningsSearch = createServerFn({ method: "GET" })
-    .inputValidator(earningsSearchSchema)
-    .handler(async ({ data }): Promise<EarningsSearchResponse> => {
-        const { apiKey, caseSensitive, eventId, from, identifier, limit, mode, q, to, type } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/search", {
-            params: { query: { case_sensitive: caseSensitive, event_id: eventId, from, identifier, limit, mode, q, to, type } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-// A company's IR documents outside its calls' folders (offset paging like the per-call documents).
-const earningsCompanyDocumentsSchema = z.object({
-    apiKey: apiKeySchema,
-    category: z.array(z.enum(ASSET_GROUP_CATEGORIES)).optional(),
-    eventId: z.string().uuid().optional(),
-    identifier: z.string().min(1),
-    include: z.array(z.enum(["calls"])).optional(),
-    kind: z.array(z.string()).optional(),
-    limit: z.number().optional(),
-    offset: z.number().optional(),
-    section: z.array(z.string()).optional(),
-    year: z.number().int().optional(),
-});
-
-export const getEarningsCompanyDocuments = createServerFn({ method: "GET" })
-    .inputValidator(earningsCompanyDocumentsSchema)
-    .handler(async ({ data }): Promise<EarningsCompanyDocumentsResponse> => {
-        const { apiKey, category, eventId, identifier, include, kind, limit, offset, section, year } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/company-documents", {
-            params: {
-                query: {
-                    category: category?.length ? category : undefined,
-                    event_id: eventId,
-                    identifier,
-                    include: include?.length ? include : undefined,
-                    kind: kind?.length ? kind : undefined,
-                    limit,
-                    offset,
-                    section: section?.length ? section : undefined,
-                    year,
-                },
-            },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res as EarningsCompanyDocumentsResponse;
-    });
-
-export const getEarningsCompanyDocument = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, documentId: z.string().uuid(), pages: z.boolean().optional() }))
-    .handler(async ({ data }): Promise<EarningsCompanyDocumentResponse> => {
-        const api = createApiClient(data.apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/company-documents/{document_id}", {
-            params: { path: { document_id: data.documentId }, query: { include: data.pages ? ["pages"] : undefined } },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res as EarningsCompanyDocumentResponse;
-    });
-
-const earningsDocumentSearchSchema = z.object({
-    apiKey: apiKeySchema,
-    caseSensitive: caseSensitiveSchema.optional(),
-    identifier: z.string().optional(),
-    kind: z.array(z.string()).optional(),
-    limit: z.number().optional(),
-    mode: searchModeSchema.optional(),
-    q: z.string().min(1),
-    section: z.array(z.string()).optional(),
-    table: z.enum(["event_documents", "company_documents"]).optional(),
-    year: z.number().int().optional(),
-});
-
-export const getEarningsDocumentSearch = createServerFn({ method: "GET" })
-    .inputValidator(earningsDocumentSearchSchema)
-    .handler(async ({ data }): Promise<EarningsDocumentSearchResponse> => {
-        const { apiKey, caseSensitive, identifier, kind, limit, mode, q, section, table, year } = data;
-
-        const api = createApiClient(apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/documents/search", {
-            params: {
-                query: {
-                    case_sensitive: caseSensitive,
-                    identifier,
-                    kind: kind?.length ? kind : undefined,
-                    limit,
-                    mode,
-                    q,
-                    section: section?.length ? section : undefined,
-                    table,
-                    year,
-                },
-            },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-export const getEarningsLiveStream = createServerFn({ method: "GET" })
-    .inputValidator(selectorInputSchema)
-    .handler(async ({ data }): Promise<EarningsLiveStreamResponse> => {
-        const api = createApiClient(data.apiKey);
-
-        const { data: res, error, response } = await api.GET("/v1/earnings-calls/live/stream", {
-            params: { query: toSelectorQuery(data) },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
 // News (IDA /v1/news*, backend earnings tasks/inhouse-news-pipeline task 17)
 
 const newsListSchema = z.object({
@@ -1295,6 +719,12 @@ export const getApiBaseUrl = createServerFn({ method: "GET" })
 const cikSchema = z.string().trim().regex(/^\d{1,10}$/);
 
 const cursorSchema = z.string().min(1).optional();
+
+// Every search route: `mode` = the exhaustive `SEARCH_MODES`; `case_sensitive` (SEC search) is the API's string enum
+// (`mode=literal` only — the API answers 400 otherwise).
+const searchModeSchema = z.enum(SEARCH_MODES);
+
+const caseSensitiveSchema = z.enum(SEARCH_CASE_SENSITIVE_VALUES);
 
 const secFilersSchema = z.object({
     apiKey: apiKeySchema,
@@ -1639,4 +1069,398 @@ export const getV2Filer = createServerFn({ method: "GET" })
         if (error) throwApiError(error, response);
 
         return res as V2FilerResponse;
+    });
+
+// Events family (`/v2/events*`, `/v2/guidance`, `/v2/kpis`, `/v2/investor-documents*`, `/v2/search/*`, backend
+// tasks/data-api-v2 task 7). Every per-event read names the event by id; "not derived yet" is a 404 `not_found` with
+// the reason in `detail`, audio refused = 403 `forbidden`, a media outage = 503 `unavailable` (page states).
+
+const eventIdSchema = z.uuid();
+
+const eventInputSchema = z.object({ apiKey: apiKeySchema, eventId: eventIdSchema });
+
+const v2EventTypeSchema = z.enum(["earnings_call", "investor_day", "conference", "agm", "other", "all"] as const satisfies ReadonlyArray<V2EventType>);
+
+const v2EventsSchema = z.object({
+    apiKey: apiKeySchema,
+    company: z.string().trim().min(1).optional(),
+    cursor: cursorSchema,
+    dateKind: z.enum(["confirmed", "estimated", "any"] as const satisfies ReadonlyArray<V2DateKind>).optional(),
+    expand: z.array(z.literal("calendar")).optional(),
+    limit: v2LimitSchema,
+    scheduledAtGte: z.string().trim().min(1).optional(),
+    scheduledAtLte: z.string().trim().min(1).optional(),
+    sort: z.enum(["scheduled_at", "-scheduled_at"] as const satisfies ReadonlyArray<V2EventsSort>).optional(),
+    status: z.array(z.enum(["upcoming", "live", "ended"] as const satisfies ReadonlyArray<V2EventStatus>)).optional(),
+    type: v2EventTypeSchema.optional(),
+});
+
+/** `GET /v2/events`: without `company` a calendar window (≤ 92 days; `status=live` alone needs none). */
+export const getV2Events = createServerFn({ method: "GET" })
+    .inputValidator(v2EventsSchema)
+    .handler(async ({ data }): Promise<V2EventsResponse> => {
+        const { apiKey, company, cursor, dateKind, expand, limit, scheduledAtGte, scheduledAtLte, sort, status, type } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/events", {
+            params: {
+                query: v2Query({
+                    company,
+                    cursor,
+                    "date_kind": dateKind,
+                    "expand": v2Expand(expand),
+                    limit,
+                    "scheduled_at.gte": scheduledAtGte,
+                    "scheduled_at.lte": scheduledAtLte,
+                    sort,
+                    "status": v2Expand(status),
+                    type,
+                }),
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getV2Event = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema.extend({ expand: z.array(z.enum(V2_EVENT_EXPANDS)).optional() }))
+    .handler(async ({ data }): Promise<V2EventResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/events/{event_id}", {
+            params: { path: { event_id: data.eventId }, query: v2Query({ expand: v2Expand(data.expand) }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getV2PressRelease = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema)
+    .handler(async ({ data }): Promise<V2PressReleaseResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/events/{event_id}/press-release", {
+            params: { path: { event_id: data.eventId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getV2Qa = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema.extend({ cursor: cursorSchema, include: z.literal("scores").optional(), limit: v2LimitSchema }))
+    .handler(async ({ data }): Promise<V2QaResponse> => {
+        const { apiKey, cursor, eventId, include, limit } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/events/{event_id}/qa", {
+            params: { path: { event_id: eventId }, query: v2Query({ cursor, include, limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getV2Slides = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema.extend({ include: z.array(z.enum(V2_SLIDES_INCLUDES)).optional(), pages: z.string().trim().min(1).optional() }))
+    .handler(async ({ data }): Promise<V2SlidesResponse> => {
+        const { apiKey, eventId, include, pages } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/events/{event_id}/slides", {
+            params: { path: { event_id: eventId }, query: v2Query({ include: v2Expand(include), pages }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getV2Audio = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema)
+    .handler(async ({ data }): Promise<V2AudioResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/events/{event_id}/audio", {
+            params: { path: { event_id: data.eventId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getV2LiveAudio = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema)
+    .handler(async ({ data }): Promise<V2LiveAudioResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/events/{event_id}/live-audio", {
+            params: { path: { event_id: data.eventId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getV2EventStats = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema)
+    .handler(async ({ data }): Promise<V2EventStatsResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/events/{event_id}/stats", {
+            params: { path: { event_id: data.eventId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The comparison with the previous call (the one the pipeline derives; `prior` is not sent). */
+export const getV2EventComparison = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema)
+    .handler(async ({ data }): Promise<V2EventComparisonResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/events/{event_id}/comparison", {
+            params: { path: { event_id: data.eventId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getV2Prosody = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema.extend({ section: z.enum(["prepared", "qa", "all"] as const satisfies ReadonlyArray<V2ProsodySection>).optional() }))
+    .handler(async ({ data }): Promise<V2ProsodyResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/events/{event_id}/prosody", {
+            params: { path: { event_id: data.eventId }, query: v2Query({ section: data.section }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getV2PriceAttribution = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema)
+    .handler(async ({ data }): Promise<V2PriceAttributionResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/events/{event_id}/price-attribution", {
+            params: { path: { event_id: data.eventId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const transcriptVersionSchema = z.number().int().min(1).optional();
+
+/** The turns of one version (`layer` raw | cleaned; `words` adds each turn's timed words). */
+export const getV2Transcript = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema.extend({
+        layer: z.enum(["raw", "cleaned"] as const satisfies ReadonlyArray<V2TranscriptLayer>).optional(),
+        version: transcriptVersionSchema,
+        words: z.boolean().optional(),
+    }))
+    .handler(async ({ data }): Promise<V2TranscriptResponse> => {
+        const { apiKey, eventId, layer, version, words } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/events/{event_id}/transcript", {
+            params: { path: { event_id: eventId }, query: v2Query({ include: words ? "words" as const : undefined, layer, version }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The transcript as text blocks (`split=sections`: prepared remarks + Q&A). */
+export const getV2TranscriptText = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema.extend({
+        split: z.enum(["none", "sections"] as const satisfies ReadonlyArray<V2TranscriptSplit>).optional(),
+        version: transcriptVersionSchema,
+    }))
+    .handler(async ({ data }): Promise<V2TranscriptTextResponse> => {
+        const { apiKey, eventId, split, version } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/events/{event_id}/transcript-text", {
+            params: { path: { event_id: eventId }, query: v2Query({ split, version }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getV2TranscriptVersions = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema.extend({ cursor: cursorSchema, limit: v2LimitSchema }))
+    .handler(async ({ data }): Promise<V2TranscriptVersionsResponse> => {
+        const { apiKey, cursor, eventId, limit } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/events/{event_id}/transcript-versions", {
+            params: { path: { event_id: eventId }, query: v2Query({ cursor, limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getV2TranscriptDiff = createServerFn({ method: "GET" })
+    .inputValidator(eventInputSchema.extend({ from: z.number().int().min(1), to: z.number().int().min(1) }))
+    .handler(async ({ data }): Promise<V2TranscriptDiffResponse> => {
+        const { apiKey, eventId, from, to } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/events/{event_id}/transcript-diff", {
+            params: { path: { event_id: eventId }, query: { from, to } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/**
+ * One page of ranked passages (the API answers ≤ 8 hits, `has_more: false`); `meta.index` = the index coverage. `type`
+ * is a hit's type (one spelling since lead decision 11: `prepared`).
+ */
+export const getV2TranscriptSearch = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        company: z.string().trim().min(1).optional(),
+        event: eventIdSchema.optional(),
+        limit: v2LimitSchema,
+        mode: searchModeSchema.optional(),
+        q: z.string().trim().min(1),
+        type: z.enum(["transcript", "qa", "prepared", "presentation"] as const satisfies ReadonlyArray<V2TranscriptSearchType>).optional(),
+    }))
+    .handler(async ({ data }): Promise<V2TranscriptSearchResponse> => {
+        const { apiKey, company, event, limit, mode, q, type } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/search/transcripts", {
+            params: { query: v2Query({ company, event, limit, mode, q, type }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2GuidanceSchema = z.object({
+    apiKey: apiKeySchema,
+    basis: z.enum(["gaap", "non_gaap", "unknown"] as const satisfies ReadonlyArray<V2GuidanceBasis>).optional(),
+    company: z.string().trim().min(1).optional(),
+    cursor: cursorSchema,
+    event: eventIdSchema.optional(),
+    limit: v2LimitSchema,
+    metric: z.string().trim().min(1).optional(),
+    periodKind: z.enum(["quarter", "fiscal_year", "half", "other"] as const satisfies ReadonlyArray<V2GuidancePeriodKind>).optional(),
+    sort: z.enum(["conference_date", "-conference_date"]).optional(),
+});
+
+/**
+ * `GET /v2/guidance` (`company` or `event`). Always `review=any`: the contract default `approved` matches no row
+ * today (every item is `auto` or `needs_review`).
+ */
+export const getV2Guidance = createServerFn({ method: "GET" })
+    .inputValidator(v2GuidanceSchema)
+    .handler(async ({ data }): Promise<V2GuidanceResponse> => {
+        const { apiKey, basis, company, cursor, event, limit, metric, periodKind, sort } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/guidance", {
+            params: { query: v2Query({ basis, company, cursor, event, limit, metric, period_kind: periodKind, review: "any" as const, sort }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+export const getV2Kpis = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, event: eventIdSchema, limit: v2LimitSchema }))
+    .handler(async ({ data }): Promise<V2KpisResponse> => {
+        const { apiKey, cursor, event, limit } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/kpis", {
+            params: { query: v2Query({ cursor, event, limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The speakers of one event (`/v2/participants?event=`), with the quotes each name was resolved from. */
+export const getV2Participants = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, event: eventIdSchema, limit: v2LimitSchema }))
+    .handler(async ({ data }): Promise<V2ParticipantsResponse> => {
+        const { apiKey, cursor, event, limit } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/participants", {
+            params: { query: v2Query({ cursor, event, limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2InvestorDocumentsSchema = z.object({
+    apiKey: apiKeySchema,
+    category: z.enum(ASSET_GROUP_CATEGORIES).optional(),
+    company: z.string().trim().min(1).optional(),
+    cursor: cursorSchema,
+    event: eventIdSchema.optional(),
+    fiscalYear: z.number().int().optional(),
+    kind: z.array(z.string().trim().min(1)).optional(),
+    limit: v2LimitSchema,
+    sort: z.enum(["filing_date", "-filing_date", "event_date", "-event_date"] as const satisfies ReadonlyArray<V2InvestorDocumentsSort>).optional(),
+});
+
+/** The IR library and every call's documents in one list (`source: company | call`); `pages` is null in lists. */
+export const getV2InvestorDocuments = createServerFn({ method: "GET" })
+    .inputValidator(v2InvestorDocumentsSchema)
+    .handler(async ({ data }): Promise<V2InvestorDocumentsResponse> => {
+        const { apiKey, category, company, cursor, event, fiscalYear, kind, limit, sort } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/investor-documents", {
+            params: {
+                query: v2Query({ category, company, cursor, event, fiscal_year: fiscalYear, kind: v2Expand(kind), limit, sort }),
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        // `pages[]` is free JSON in the spec (see `SecJson` in types.ts).
+        return res as V2InvestorDocumentsResponse;
+    });
+
+/** One document of either source; `pages` inlines the per-page text (`expand=pages`, ≤ 2 MB) and `body_text`. */
+export const getV2InvestorDocument = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, documentId: z.uuid(), pages: z.boolean().optional() }))
+    .handler(async ({ data }): Promise<V2InvestorDocumentResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v2/investor-documents/{document_id}", {
+            params: { path: { document_id: data.documentId }, query: v2Query({ expand: data.pages ? "pages" : undefined }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as V2InvestorDocumentResponse;
+    });
+
+/** One page of passages (≤ 20, `has_more: false`); no source filter and no case switch in v2. */
+export const getV2InvestorDocumentSearch = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        company: z.string().trim().min(1).optional(),
+        kind: z.array(z.string().trim().min(1)).optional(),
+        limit: v2LimitSchema,
+        mode: searchModeSchema.optional(),
+        q: z.string().trim().min(1),
+    }))
+    .handler(async ({ data }): Promise<V2InvestorDocumentSearchResponse> => {
+        const { apiKey, company, kind, limit, mode, q } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v2/search/investor-documents", {
+            params: { query: v2Query({ company, kind: v2Expand(kind), limit, mode, q }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
     });

@@ -1,6 +1,12 @@
-import type { EarningsTranscriptFormat } from "@/lib/api/types";
+import type { V2TranscriptTextResponse } from "@/lib/api/types";
 
-/** One turn of `format=speakers` / `format=cleaned` (IDA `SpeakerTurn` / `CleanedTurn`). */
+/**
+ * The renderings of the Transcript tab: `speakers` / `cleaned` = the turns of `/transcript` (`layer` raw / cleaned),
+ * `text` / `sections` = the blocks of `/transcript-text` (`split` none / sections).
+ */
+export type TranscriptFormat = "cleaned" | "sections" | "speakers" | "text";
+
+/** One turn of `/transcript` (raw or cleaned layer); `start_ms` null = an untimed company-published transcript. */
 export type TranscriptTurn = {
     name: null | string;
     role: null | string;
@@ -10,14 +16,14 @@ export type TranscriptTurn = {
     title: null | string;
 };
 
-/** `format=sections`: the two blocks as text, plus where the Q&A starts (call ms; null = not found / untimed / live). */
+/** `split=sections`: the two blocks as text, plus where the Q&A starts (call ms; null = not found / untimed / live). */
 export type TranscriptSections = {
     prepared_remarks: null | string;
     qa_start_ms: null | number;
     questions_and_answers: null | string;
 };
 
-/** The spec types the transcript's `data` as unknown; this is what the page renders. */
+/** What the page renders of a transcript answer. */
 export type TranscriptView
     = | { kind: "empty" }
         | { kind: "sections"; sections: TranscriptSections }
@@ -44,8 +50,12 @@ function toTurn(value: unknown): null | TranscriptTurn {
     };
 }
 
-/** Narrows a transcript answer's `data` for its `format`; anything unreadable or blank → `empty`. */
-export function toTranscriptView(format: EarningsTranscriptFormat, data: unknown): TranscriptView {
+/**
+ * Narrows transcript data for its `format` (turns for speakers / cleaned, a string for text, the sections object for
+ * sections — `textAnswerData` builds the last two from `/transcript-text`); anything unreadable or blank → `empty`.
+ * A turn's `start_ms` is read defensively: v2 types it as a number, yet a company-published transcript has none.
+ */
+export function toTranscriptView(format: TranscriptFormat, data: unknown): TranscriptView {
     if (format === "text") {
         return typeof data === "string" && data.trim().length > 0 ? { kind: "text", text: data } : { kind: "empty" };
     }
@@ -119,4 +129,21 @@ export function turnIndexAt(starts: ReadonlyArray<number>, ms: number) {
     });
 
     return found;
+}
+
+/**
+ * The `toTranscriptView` data of a `/transcript-text` answer: `split=none` → the full text, `split=sections` → the
+ * prepared remarks + Q&A blocks with where the Q&A starts.
+ */
+export function textAnswerData(answer: Pick<V2TranscriptTextResponse, "blocks" | "qa_start_ms">, format: "sections" | "text") {
+    const textOf = (section: V2TranscriptTextResponse["blocks"][number]["section"]) =>
+        answer.blocks.filter(block => block.section === section).map(block => block.text).join("\n\n") || null;
+
+    if (format === "text") return answer.blocks.map(block => block.text).join("\n\n");
+
+    return {
+        prepared_remarks: textOf("prepared_remarks"),
+        qa_start_ms: answer.qa_start_ms,
+        questions_and_answers: textOf("questions_and_answers"),
+    };
 }

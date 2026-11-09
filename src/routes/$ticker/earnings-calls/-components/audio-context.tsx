@@ -1,24 +1,24 @@
 import * as React from "react";
 
-import type { EarningsAudioResponse } from "@/lib/api/types";
+import type { V2AudioResponse } from "@/lib/api/types";
 import type { WordTurn } from "@/lib/earnings/follow-along";
 import type { PlaybackPosition } from "@/lib/earnings/use-playback-position";
 
-import { useEarningsAudio, useEarningsTranscript } from "@/lib/api/queries";
+import { useV2Audio, useV2Transcript } from "@/lib/api/queries";
 import { toWordTurns } from "@/lib/earnings/follow-along";
 import { usePlaybackPosition } from "@/lib/earnings/use-playback-position";
 
-type AudioQuery = ReturnType<typeof useEarningsAudio>;
+type AudioQuery = ReturnType<typeof useV2Audio>;
 
-type WordsQuery = ReturnType<typeof useEarningsTranscript>;
+type WordsQuery = ReturnType<typeof useV2Transcript>;
 
 export type CallAudio = {
     /** The `/audio` query; idle (never sent) until the Audio tab first opens or a timestamp is clicked. */
     audio: AudioQuery;
     /** `audio.data`: the recording at its permanent public URL; `null` while idle or loading. */
-    recording: EarningsAudioResponse | null;
+    recording: null | V2AudioResponse;
     /**
-     * The `format=words` transcript (one request, once a recording is in): what the follow
+     * The transcript with its words (`include=words`, one request, once a recording is in): what the follow
      * view and the caption line run over. Idle while nothing is loaded.
      */
     words: WordsQuery;
@@ -79,7 +79,7 @@ function seekElement(element: HTMLMediaElement, ms: number) {
  * Hosts the call's audio above the tabs, so a timestamp on any tab can seek and start the
  * recording while the Audio tab's player is hidden. The `/audio` request goes out the first
  * time the Audio tab opens (`audioTabOpen`) or a timestamp is clicked — never on page load:
- * before that the empty selector keeps it idle. A click before the recording is in is kept
+ * before that the empty id keeps it idle. A click before the recording is in is kept
  * and played once it loads.
  */
 export function CallAudioProvider({
@@ -97,7 +97,7 @@ export function CallAudioProvider({
 
     if (!requested && hasAudio && audioTabOpen) setRequested(true);
 
-    const audio = useEarningsAudio(requested ? { eventId } : {});
+    const audio = useV2Audio(requested ? eventId : "");
 
     const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
@@ -168,9 +168,9 @@ export function CallAudioProvider({
     const loaded = recording !== null || playedUrl !== null;
 
     // The text to follow, asked for once a recording plays (a search hit plays the same recording).
-    const words = useEarningsTranscript({ eventId: loaded ? eventId : undefined, format: "words" });
+    const words = useV2Transcript({ eventId: loaded ? eventId : "", words: true });
 
-    const wordTurns = React.useMemo(() => (words.data ? toWordTurns(words.data.data) : []), [words.data]);
+    const wordTurns = React.useMemo(() => (words.data ? toWordTurns(words.data.turns) : []), [words.data]);
 
     const seek = (ms: number) => {
         const element = audioRef.current;

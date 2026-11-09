@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, ExternalLink, FileText, Folder, FolderOpen, Link2, Mic } from "lucide-react";
 import * as React from "react";
 
-import type { EarningsCompanyDocument } from "@/lib/api/types";
+import type { V2InvestorDocument } from "@/lib/api/types";
 import type { CallEntry, TreeNode } from "@/lib/earnings/documents";
 import type { CallTab } from "@/routes/$ticker/earnings-calls/-components/call-tabs";
 
@@ -20,7 +20,7 @@ const rowClass = "hover:bg-muted/60 flex min-h-7 items-center gap-1.5 rounded-md
 const guideClass = "ml-[13px] border-l pl-1";
 
 /** "Q3 2025" / "2025"; "Undated" without a year. */
-function periodLabel(doc: EarningsCompanyDocument) {
+function periodLabel(doc: V2InvestorDocument) {
     if (doc.year === null) return "Undated";
 
     return doc.period ? `${doc.period} ${doc.year}` : String(doc.year);
@@ -30,7 +30,7 @@ function periodLabel(doc: EarningsCompanyDocument) {
  * The row's date: an SEC filing link is dated by its EDGAR filing (`filing_date`), else its fiscal period — never the
  * call's day (a 10-K is filed days after the call); every other row by its own day, else its period.
  */
-export function documentDate(doc: EarningsCompanyDocument) {
+export function documentDate(doc: V2InvestorDocument) {
     if (doc.kind === "sec_filing") return doc.filing_date ?? periodLabel(doc);
 
     return doc.event_date ?? periodLabel(doc);
@@ -43,8 +43,8 @@ function DocumentRow({
     onShowText,
     ticker,
 }: {
-    doc: EarningsCompanyDocument;
-    onShowText: (doc: EarningsCompanyDocument) => void;
+    doc: V2InvestorDocument;
+    onShowText: (doc: V2InvestorDocument) => void;
     ticker: string;
 }) {
     const linkOnly = doc.url === null;
@@ -67,7 +67,6 @@ function DocumentRow({
                 <span className="w-20" title={filing && doc.filing_date ? "Filed on EDGAR" : undefined}>
                     {documentDate(doc)}
                 </span>
-                <span className="hidden w-12 text-right sm:inline">{doc.pages !== null ? `${doc.pages} pp.` : ""}</span>
                 <span className="hidden w-16 text-right sm:inline">{doc.bytes !== null ? formatBytes(doc.bytes) : ""}</span>
                 <div className="flex w-36 items-center justify-end gap-2.5">
                     {callEventId && (
@@ -163,8 +162,8 @@ function FolderNode({
 }: {
     depth: number;
     isOpen: (key: string) => boolean;
-    node: TreeNode<EarningsCompanyDocument>;
-    onShowText: (doc: EarningsCompanyDocument) => void;
+    node: TreeNode<V2InvestorDocument>;
+    onShowText: (doc: V2InvestorDocument) => void;
     onToggle: (key: string) => void;
     ticker: string;
 }) {
@@ -223,9 +222,9 @@ export function DocumentTree({
     tree,
 }: {
     filtering?: boolean;
-    onShowText: (doc: EarningsCompanyDocument) => void;
+    onShowText: (doc: V2InvestorDocument) => void;
     ticker: string;
-    tree: ReadonlyArray<TreeNode<EarningsCompanyDocument>>;
+    tree: ReadonlyArray<TreeNode<V2InvestorDocument>>;
 }) {
     const defaults = React.useMemo(() => new Set(filtering ? allKeys(tree) : defaultOpenKeys(tree)), [filtering, tree]);
 

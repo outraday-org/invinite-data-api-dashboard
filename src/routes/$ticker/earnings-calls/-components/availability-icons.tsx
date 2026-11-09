@@ -2,13 +2,13 @@ import type { LucideIcon } from "lucide-react";
 
 import { AudioLines, FileText, FolderOpen, Newspaper, Presentation } from "lucide-react";
 
-import type { EarningsEvent } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 type AvailabilityFlags = Pick<
-    EarningsEvent,
+    V2Event,
     "has_audio" | "has_documents" | "has_press_release" | "has_slides" | "has_transcript"
 >;
 

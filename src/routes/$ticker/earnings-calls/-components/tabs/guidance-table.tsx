@@ -1,13 +1,13 @@
 import { ChartLine, Check, ChevronDown, ChevronRight } from "lucide-react";
 import * as React from "react";
 
-import type { EarningsGuidanceItem } from "@/lib/api/types";
+import type { V2GuidanceItem } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useEarningsExtractionsInfinite } from "@/lib/api/queries";
+import { useV2GuidanceInfinite } from "@/lib/api/queries";
 import {
     BASIS_LABELS,
     DIRECTION_STYLES,
@@ -28,7 +28,7 @@ import { SeekButton } from "../seek-button";
 
 export const EXTRACTIONS_PAGE_LIMIT = 50;
 
-/** The API filters `review` by `approved | auto | all`; "needs review" is a filter over the loaded rows. */
+/** The dashboard asks every review state (`review=any`); "needs review" is a filter over the loaded rows. */
 type ReviewFilter = "all" | "needs_review";
 
 const ORIGIN_LABELS = { press_release: "Press release", transcript: "Transcript" } as const;
@@ -47,18 +47,20 @@ export function ConfidenceBar({ value }: { value: number }) {
     );
 }
 
-export function DirectionChip({ direction }: { direction: EarningsGuidanceItem["direction"] }) {
+export function DirectionChip({ direction }: { direction: V2GuidanceItem["direction"] }) {
     const style = DIRECTION_STYLES[direction];
 
     return <Badge className={style.className} variant="outline">{style.label}</Badge>;
 }
 
-function GuidanceSources({ item }: { item: EarningsGuidanceItem }) {
-    if (item.sources.length === 0) return <div className="text-muted-foreground">No citations.</div>;
+function GuidanceSources({ item }: { item: V2GuidanceItem }) {
+    const sources = item.sources ?? [];
+
+    if (sources.length === 0) return <div className="text-muted-foreground">No citations.</div>;
 
     return (
         <div className="flex flex-col gap-2">
-            {item.sources.map((source, index) => (
+            {sources.map((source, index) => (
                 // Sources have no id; their order within one item is stable.
                 <div className="flex flex-col gap-1" key={index}>
                     <div className="flex flex-wrap items-center gap-2">
@@ -87,8 +89,8 @@ function GuidanceRow({
     onToggle,
 }: {
     expanded: boolean;
-    item: EarningsGuidanceItem;
-    onMetricClick: (item: EarningsGuidanceItem) => void;
+    item: V2GuidanceItem;
+    onMetricClick: (item: V2GuidanceItem) => void;
     onToggle: () => void;
 }) {
     return (
@@ -108,15 +110,19 @@ function GuidanceRow({
                 </TableCell>
                 <TableCell>
                     <div className="flex flex-col items-start gap-1">
-                        <button
-                            className="inline-flex items-center gap-1 hover:underline"
-                            onClick={() => onMetricClick(item)}
-                            title="Guidance history for this metric"
-                            type="button"
-                        >
-                            <Badge variant="secondary">{metricLabel(item.metric_normalized)}</Badge>
-                            <ChartLine className="text-muted-foreground size-3" />
-                        </button>
+                        {item.metric_normalized
+                            ? (
+                                    <button
+                                        className="inline-flex items-center gap-1 hover:underline"
+                                        onClick={() => onMetricClick(item)}
+                                        title="Guidance history for this metric"
+                                        type="button"
+                                    >
+                                        <Badge variant="secondary">{metricLabel(item.metric_normalized)}</Badge>
+                                        <ChartLine className="text-muted-foreground size-3" />
+                                    </button>
+                                )
+                            : <Badge variant="secondary">—</Badge>}
                         <span className="text-muted-foreground">{item.metric}</span>
                     </div>
                 </TableCell>
@@ -148,10 +154,10 @@ function GuidanceRow({
                 </TableCell>
                 <TableCell>
                     <Badge variant={item.review_status === "needs_review" ? "destructive" : "outline"}>
-                        {REVIEW_STATUS_LABELS[item.review_status]}
+                        {item.review_status ? REVIEW_STATUS_LABELS[item.review_status] : "—"}
                     </Badge>
                 </TableCell>
-                <TableCell className="text-muted-foreground tabular-nums">{item.sources.length}</TableCell>
+                <TableCell className="text-muted-foreground tabular-nums">{item.sources?.length ?? 0}</TableCell>
             </TableRow>
             {expanded && (
                 <TableRow>
@@ -166,9 +172,9 @@ function GuidanceRow({
 
 /** Forward guidance of the call: one consolidated item per metric, period and basis. */
 export function GuidanceTable({
+    eventId,
     onMetricClick,
-    selector,
-}: Pick<CallTabProps, "selector"> & { onMetricClick: (item: EarningsGuidanceItem) => void }) {
+}: Pick<CallTabProps, "eventId"> & { onMetricClick: (item: V2GuidanceItem) => void }) {
     const [review, setReview] = React.useState<ReviewFilter>("all");
 
     const [expandedId, setExpandedId] = React.useState<null | string>(null);
@@ -180,9 +186,9 @@ export function GuidanceTable({
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useEarningsExtractionsInfinite({ ...selector, kind: "guidance", limit: EXTRACTIONS_PAGE_LIMIT });
+    } = useV2GuidanceInfinite({ event: eventId, limit: EXTRACTIONS_PAGE_LIMIT });
 
-    const all = data?.pages.flatMap(page => page.guidance ?? []) ?? [];
+    const all = data?.pages.flatMap(page => page.data) ?? [];
 
     const items = review === "needs_review" ? all.filter(item => item.review_status === "needs_review") : all;
 
@@ -226,15 +232,20 @@ export function GuidanceTable({
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {items.map(item => (
-                                        <GuidanceRow
-                                            expanded={expandedId === item.id}
-                                            item={item}
-                                            key={item.id}
-                                            onMetricClick={onMetricClick}
-                                            onToggle={() => setExpandedId(current => (current === item.id ? null : item.id))}
-                                        />
-                                    ))}
+                                    {items.map((item, index) => {
+                                        // `id` is nullable in v2: the row's position is the fallback key.
+                                        const rowKey = item.id ?? `row-${index}`;
+
+                                        return (
+                                            <GuidanceRow
+                                                expanded={expandedId === rowKey}
+                                                item={item}
+                                                key={rowKey}
+                                                onMetricClick={onMetricClick}
+                                                onToggle={() => setExpandedId(current => (current === rowKey ? null : rowKey))}
+                                            />
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         )}

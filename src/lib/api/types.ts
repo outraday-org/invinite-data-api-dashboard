@@ -71,98 +71,10 @@ export type FinancialMetricPeriod
 export type SegmentedFinancialFact
     = SegmentedFinancialPeriod["facts"][string][number];
 
-// Earnings calls (IDA `/v1/earnings-calls/*`)
-
-// A JSON value. The spec types free-form fields (`transcript.data`, `participation_events[].detail`)
-// as `unknown`, which a server function's return type rejects (TanStack Start only accepts provably
-// serialisable values); the API answers JSON, so those fields are narrowed to `JsonValue`.
+// A JSON value. The spec types free-form fields (`InvestorDocument.pages[]`, SEC nested objects) as `unknown`, which a
+// server function's return type rejects (TanStack Start only accepts provably serialisable values); the API answers
+// JSON, so those fields are narrowed to `JsonValue`.
 export type JsonValue = Array<JsonValue> | boolean | null | number | string | { [key: string]: JsonValue };
-
-type WithJson<TObject, TKey extends keyof TObject> = Omit<TObject, TKey> & { [TProp in TKey]: JsonValue };
-
-export type EarningsCalendarResponse = ApiResponse<"/v1/earnings-calls/calendar", "get">;
-export type EarningsEventsResponse = ApiResponse<"/v1/earnings-calls/events", "get">;
-export type EarningsLiveResponse = ApiResponse<"/v1/earnings-calls/live", "get">;
-export type EarningsLiveStreamResponse = ApiResponse<"/v1/earnings-calls/live/stream", "get">;
-export type EarningsEventResponse = ApiResponse<"/v1/earnings-calls/event/{event_id}", "get">;
-export type EarningsTranscriptResponse = WithJson<ApiResponse<"/v1/earnings-calls/transcript", "get">, "data">;
-export type EarningsTranscriptVersionsResponse = ApiResponse<"/v1/earnings-calls/transcript/versions", "get">;
-export type EarningsTranscriptDiffResponse = ApiResponse<"/v1/earnings-calls/transcript/diff", "get">;
-export type EarningsQaResponse = ApiResponse<"/v1/earnings-calls/qa", "get">;
-type EarningsParticipantsRaw = ApiResponse<"/v1/earnings-calls/participants", "get">;
-
-export type EarningsParticipationEvent
-    = Omit<EarningsParticipantsRaw["participation_events"][number], "detail"> & { detail: null | Record<string, JsonValue> };
-export type EarningsParticipantsResponse
-    = Omit<EarningsParticipantsRaw, "participation_events"> & { participation_events: Array<EarningsParticipationEvent> };
-export type EarningsPressReleaseResponse = ApiResponse<"/v1/earnings-calls/press-release", "get">;
-export type EarningsExtractionsResponse = ApiResponse<"/v1/earnings-calls/extractions", "get">;
-export type EarningsGuidanceHistoryResponse = ApiResponse<"/v1/earnings-calls/guidance/history", "get">;
-export type EarningsDiffResponse = ApiResponse<"/v1/earnings-calls/diff", "get">;
-export type EarningsMetricsResponse = ApiResponse<"/v1/earnings-calls/metrics", "get">;
-export type EarningsProsodyResponse = ApiResponse<"/v1/earnings-calls/prosody", "get">;
-/** Derived returns only (basis points): the response carries no price or volume. */
-export type EarningsPriceAttributionResponse = ApiResponse<"/v1/earnings-calls/price-attribution", "get">;
-/** `url` is the recording's permanent public URL (one forensic watermark per call); it does not expire. */
-export type EarningsAudioResponse = ApiResponse<"/v1/earnings-calls/audio", "get">;
-export type EarningsSlidesResponse = ApiResponse<"/v1/earnings-calls/slides", "get">;
-export type EarningsDocumentsResponse = ApiResponse<"/v1/earnings-calls/documents", "get">;
-export type EarningsSearchResponse = ApiResponse<"/v1/earnings-calls/search", "get">;
-type EarningsCompanyDocumentsRaw = ApiResponse<"/v1/earnings-calls/company-documents", "get">;
-// `pages_json` (detail route, `include=pages`; optional, in the shared document shape) is free-form JSON in the spec.
-type EarningsCompanyDocumentJson = Omit<EarningsCompanyDocumentsRaw["documents"][number], "pages_json"> & { pages_json?: JsonValue };
-
-export type EarningsCompanyDocumentsResponse
-    = Omit<EarningsCompanyDocumentsRaw, "documents"> & { documents: Array<EarningsCompanyDocumentJson> };
-export type EarningsCompanyDocumentResponse
-    = Omit<ApiResponse<"/v1/earnings-calls/company-documents/{document_id}", "get">, "document"> & { document: EarningsCompanyDocumentJson };
-export type EarningsDocumentSearchResponse = ApiResponse<"/v1/earnings-calls/documents/search", "get">;
-
-export type EarningsEvent = EarningsCalendarResponse["events"][number];
-export type EarningsEventWithObservations = EarningsEventsResponse["events"][number];
-export type EarningsLiveEvent = EarningsLiveResponse["events"][number];
-export type EarningsEventBrief = EarningsAudioResponse["event"];
-export type EarningsTranscriptVersion = EarningsTranscriptVersionsResponse["versions"][number];
-export type EarningsQaPair = EarningsQaResponse["pairs"][number];
-export type EarningsParticipant = EarningsParticipantsResponse["participants"][number];
-export type EarningsGuidanceItem = NonNullable<EarningsExtractionsResponse["guidance"]>[number];
-export type EarningsKpi = NonNullable<EarningsExtractionsResponse["kpis"]>[number];
-export type EarningsDocument = EarningsDocumentsResponse["documents"][number];
-export type EarningsSlide = EarningsSlidesResponse["slides"][number];
-export type EarningsSlideDeck = NonNullable<EarningsSlidesResponse["deck"]>;
-/** A player slide on the audio's clock (`at_ms` from the start of the recording `/audio` serves). */
-export type EarningsSlideTimelineEntry = EarningsSlidesResponse["timeline"][number];
-/** The company's public broadcast on a video platform (`video` of every event; null = none known). */
-export type EarningsEventVideo = NonNullable<EarningsEvent["video"]>;
-export type EarningsSearchHit = EarningsSearchResponse["hits"][number];
-export type EarningsCompanyDocument = EarningsCompanyDocumentsResponse["documents"][number];
-export type EarningsDocumentSearchHit = EarningsDocumentSearchResponse["hits"][number];
-export type EarningsProsodySpeaker = EarningsProsodyResponse["speakers"][number];
-export type EarningsPriceBucket = EarningsPriceAttributionResponse["buckets"][number];
-export type EarningsPriceTopMinute = EarningsPriceAttributionResponse["top_minutes"][number];
-export type EarningsPriceUtteranceRef = EarningsPriceBucket["utterance_refs"][number];
-
-export type EarningsDateStatus = EarningsEvent["date_status"];
-export type EarningsSession = NonNullable<ApiQuery<"/v1/earnings-calls/calendar">["session"]>;
-// The query parameter is a comma list (a string in the spec); one stored type or `all` is what the dashboard sends.
-export type EarningsEventType = "all" | EarningsEvent["event_type"];
-export type EarningsTranscriptFormat = NonNullable<ApiQuery<"/v1/earnings-calls/transcript">["format"]>;
-export type EarningsExtractionKind = NonNullable<ApiQuery<"/v1/earnings-calls/extractions">["kind"]>;
-export type EarningsExtractionReview = NonNullable<ApiQuery<"/v1/earnings-calls/extractions">["review"]>;
-export type EarningsGuidancePeriodKind = NonNullable<ApiQuery<"/v1/earnings-calls/guidance/history">["period_kind"]>;
-export type EarningsGuidanceBasis = NonNullable<ApiQuery<"/v1/earnings-calls/guidance/history">["basis"]>;
-export type EarningsProsodySection = NonNullable<ApiQuery<"/v1/earnings-calls/prosody">["section"]>;
-export type EarningsSearchType = NonNullable<ApiQuery<"/v1/earnings-calls/search">["type"]>;
-/** `lexical` (the API default) · `literal`; both search routes take the same modes. */
-export type EarningsSearchMode = NonNullable<ApiQuery<"/v1/earnings-calls/search">["mode"]>;
-/** The API's string enum (`mode=literal` only). */
-export type EarningsSearchCaseSensitive = NonNullable<ApiQuery<"/v1/earnings-calls/search">["case_sensitive"]>;
-export type SearchCoverage = EarningsSearchResponse["coverage"];
-export type HitMatch = EarningsSearchHit["match"];
-/** Zero-based, end-exclusive Unicode code-point offsets into the hit's `text`. */
-export type MatchSpan = HitMatch["spans"][number];
-
-export type EarningsLiveStreamStatus = EarningsLiveStreamResponse["status"];
 
 // News (IDA /v1/news*)
 export type NewsListResponse = ApiResponse<"/v1/news", "get">;
@@ -207,6 +119,8 @@ export type SecSearchHit = NonNullable<SecSearchResponse["hits"]>[number];
 export type SecSearchCoverage = NonNullable<SecSearchResponse["coverage"]>;
 export type SecSearchMode = NonNullable<ApiQuery<"/v1/sec/search">["mode"]>;
 export type SecFilingsOrder = NonNullable<ApiQuery<"/v1/sec/filings">["order"]>;
+/** The API's `case_sensitive` string enum (`mode=literal` only). */
+export type SecSearchCaseSensitive = NonNullable<ApiQuery<"/v1/sec/search">["case_sensitive"]>;
 
 // Data API v2 (`/v2/*`, backend tasks/data-api-v2 task 4). Lists answer `{ data, has_more, next_cursor, meta }` and
 // page by `cursor` (the same filters, no offset); errors are RFC 9457 problems (`ApiRequestError.requestId`).
@@ -232,10 +146,84 @@ export type V2CompanyExpand = "coverage";
 /** `GET /v2/filers/{cik}?expand=` values. */
 export type V2FilerExpand = "former_names" | "lifecycle" | "proposed_symbols" | "successors";
 
-// Earnings calendar semantics (`calendar` of every calendar event, appended 2026-11)
-export type EarningsCalendarSemantics = NonNullable<EarningsEvent["calendar"]>;
-export type EarningsCalendarStatus = NonNullable<EarningsCalendarSemantics["status"]>;
-export type EarningsCalendarDateKind = NonNullable<ApiQuery<"/v1/earnings-calls/calendar">["date_kind"]>;
+// Data API v2 events family (`/v2/events*`, `/v2/guidance`, `/v2/kpis`, `/v2/investor-documents*`, `/v2/search/*`,
+// backend tasks/data-api-v2 task 7). Every per-event read names the event by id (no selector, no offset).
+export type V2EventsResponse = ApiResponse<"/v2/events", "get">;
+export type V2EventResponse = ApiResponse<"/v2/events/{event_id}", "get">;
+export type V2PressReleaseResponse = ApiResponse<"/v2/events/{event_id}/press-release", "get">;
+export type V2QaResponse = ApiResponse<"/v2/events/{event_id}/qa", "get">;
+export type V2SlidesResponse = ApiResponse<"/v2/events/{event_id}/slides", "get">;
+/** `url` is the recording's permanent public URL (one forensic watermark per call); it does not expire. */
+export type V2AudioResponse = ApiResponse<"/v2/events/{event_id}/audio", "get">;
+export type V2LiveAudioResponse = ApiResponse<"/v2/events/{event_id}/live-audio", "get">;
+export type V2EventStatsResponse = ApiResponse<"/v2/events/{event_id}/stats", "get">;
+export type V2EventComparisonResponse = ApiResponse<"/v2/events/{event_id}/comparison", "get">;
+export type V2ProsodyResponse = ApiResponse<"/v2/events/{event_id}/prosody", "get">;
+/** Derived returns only (basis points): the response carries no price or volume. */
+export type V2PriceAttributionResponse = ApiResponse<"/v2/events/{event_id}/price-attribution", "get">;
+export type V2TranscriptResponse = ApiResponse<"/v2/events/{event_id}/transcript", "get">;
+export type V2TranscriptTextResponse = ApiResponse<"/v2/events/{event_id}/transcript-text", "get">;
+export type V2TranscriptVersionsResponse = ApiResponse<"/v2/events/{event_id}/transcript-versions", "get">;
+export type V2TranscriptDiffResponse = ApiResponse<"/v2/events/{event_id}/transcript-diff", "get">;
+export type V2TranscriptSearchResponse = ApiResponse<"/v2/search/transcripts", "get">;
+export type V2GuidanceResponse = ApiResponse<"/v2/guidance", "get">;
+export type V2KpisResponse = ApiResponse<"/v2/kpis", "get">;
+export type V2ParticipantsResponse = ApiResponse<"/v2/participants", "get">;
+/** `pages[]` (member route, `expand=pages`) is free JSON per page in the spec: narrowed to `JsonValue`. */
+export type V2InvestorDocumentsResponse = SecJson<ApiResponse<"/v2/investor-documents", "get">>;
+export type V2InvestorDocumentResponse = SecJson<ApiResponse<"/v2/investor-documents/{document_id}", "get">>;
+export type V2InvestorDocumentSearchResponse = ApiResponse<"/v2/search/investor-documents", "get">;
+
+/** The contract's Event (`exchange` a MIC such as XNAS; `video` without a provider). */
+export type V2Event = V2EventResponse;
+/** The company's public broadcast on a video platform (`video` of every event; null = none known). */
+export type V2EventVideo = NonNullable<V2Event["video"]>;
+/** `expand=calendar`: the call / report semantics of the calendar. */
+export type V2EventCalendar = NonNullable<V2Event["calendar"]>;
+export type V2CalendarStatus = NonNullable<V2EventCalendar["status"]>;
+export type V2DateStatus = V2Event["date_status"];
+export type V2Session = NonNullable<V2Event["session"]>;
+/** `type=` is a comma list in the spec; one stored type or `all` is what the dashboard sends. */
+export type V2EventType = "all" | V2Event["event_type"];
+/** `status=` of `GET /v2/events` (derived: upcoming / live / ended). */
+export type V2EventStatus = "ended" | "live" | "upcoming";
+/** `date_kind=` of `GET /v2/events`: date certainty (`estimated` = estimated or unconfirmed). */
+export type V2DateKind = NonNullable<ApiQuery<"/v2/events">["date_kind"]>;
+export type V2EventsSort = NonNullable<ApiQuery<"/v2/events">["sort"]>;
+/** `GET /v2/events/{event_id}?expand=` values. */
+export type V2EventExpand = "calendar" | "observations";
+export type V2QaPair = V2QaResponse["data"][number];
+export type V2Participation = V2ParticipantsResponse["data"][number];
+export type V2TranscriptTurn = V2TranscriptResponse["turns"][number];
+export type V2TranscriptLayer = V2TranscriptResponse["layer"];
+export type V2TranscriptVersion = V2TranscriptVersionsResponse["data"][number];
+export type V2TranscriptSplit = NonNullable<ApiQuery<"/v2/events/{event_id}/transcript-text">["split"]>;
+export type V2GuidanceItem = V2GuidanceResponse["data"][number];
+export type V2GuidanceBasis = V2GuidanceItem["basis"];
+export type V2GuidancePeriodKind = V2GuidanceItem["period_kind"];
+export type V2KpiMention = V2KpisResponse["data"][number];
+export type V2Slide = V2SlidesResponse["slides"][number];
+/** A player slide on the audio's clock (`at_ms` from the start of the recording `/audio` serves). */
+export type V2SlideTimelineEntry = NonNullable<V2SlidesResponse["timeline"]>[number];
+/** `GET /v2/events/{event_id}/slides?include=` values (`timeline` is opt-in in v2). */
+export type V2SlidesInclude = "markdown" | "timeline";
+export type V2ProsodySection = V2ProsodyResponse["section"];
+export type V2ProsodySpeaker = V2ProsodyResponse["speakers"][number];
+export type V2PriceBucket = V2PriceAttributionResponse["buckets"][number];
+export type V2PriceUtteranceRef = V2PriceBucket["utterance_refs"][number];
+export type V2LiveAudioStatus = V2LiveAudioResponse["status"];
+export type V2InvestorDocument = V2InvestorDocumentsResponse["data"][number];
+export type V2InvestorDocumentsSort = NonNullable<ApiQuery<"/v2/investor-documents">["sort"]>;
+export type V2TranscriptSearchHit = V2TranscriptSearchResponse["data"][number];
+export type V2TranscriptSearchType = V2TranscriptSearchHit["type"];
+export type V2InvestorDocumentSearchHit = V2InvestorDocumentSearchResponse["data"][number];
+/** `lexical` (the API default) · `literal`; both search operations take the same modes. */
+export type SearchMode = NonNullable<ApiQuery<"/v2/search/transcripts">["mode"]>;
+/** The search index state of an answer (`meta.index`; v1's `coverage`). */
+export type SearchCoverage = NonNullable<V2TranscriptSearchResponse["meta"]["index"]>;
+export type HitMatch = V2TranscriptSearchHit["match"];
+/** Zero-based, end-exclusive Unicode code-point offsets into the hit's `text`. */
+export type MatchSpan = HitMatch["spans"][number];
 
 // Query parameter types
 export type FiscalPeriodType = "annual" | "quarterly" | "ttm" | "ytd";

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { qaStartTurnIndex, speakerName, toTranscriptView, transcriptPlainText, turnIndexAt } from "./transcript";
+import { qaStartTurnIndex, speakerName, textAnswerData, toTranscriptView, transcriptPlainText, turnIndexAt } from "./transcript";
 
 const TURN = {
     end_ms: 4200,
@@ -51,6 +51,31 @@ describe("toTranscriptView", () => {
         expect(toTranscriptView("speakers", "text")).toEqual({ kind: "empty" });
 
         expect(toTranscriptView("sections", { prepared_remarks: null, questions_and_answers: null })).toEqual({ kind: "empty" });
+    });
+});
+
+describe("textAnswerData", () => {
+    const blocks = [
+        { section: "prepared_remarks" as const, text: "PR" },
+        { section: "questions_and_answers" as const, text: "QA" },
+    ];
+
+    it("builds the sections of split=sections", () => {
+        expect(toTranscriptView("sections", textAnswerData({ blocks, qa_start_ms: 1_200_000 }, "sections"))).toEqual({
+            kind: "sections",
+            sections: { prepared_remarks: "PR", qa_start_ms: 1_200_000, questions_and_answers: "QA" },
+        });
+    });
+
+    it("reads split=none as one text", () => {
+        expect(toTranscriptView("text", textAnswerData({ blocks: [{ section: "full", text: "All" }], qa_start_ms: null }, "text"))).toEqual({
+            kind: "text",
+            text: "All",
+        });
+    });
+
+    it("is empty without blocks", () => {
+        expect(toTranscriptView("sections", textAnswerData({ blocks: [], qa_start_ms: null }, "sections"))).toEqual({ kind: "empty" });
     });
 });
 

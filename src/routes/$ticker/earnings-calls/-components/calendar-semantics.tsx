@@ -1,4 +1,4 @@
-import type { EarningsCalendarSemantics, EarningsCalendarStatus, EarningsEvent } from "@/lib/api/types";
+import type { V2CalendarStatus, V2Event, V2EventCalendar } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 
@@ -9,7 +9,7 @@ import { CallTime } from "./call-time";
  * source, plus the event status. A report can exist without a call; a call time is never inferred from the release.
  */
 
-export const CALENDAR_STATUS_LABELS: Record<EarningsCalendarStatus, string> = {
+export const CALENDAR_STATUS_LABELS: Record<V2CalendarStatus, string> = {
     announced: "Announced",
     cancelled: "Cancelled",
     confirmed: "Confirmed",
@@ -18,7 +18,7 @@ export const CALENDAR_STATUS_LABELS: Record<EarningsCalendarStatus, string> = {
     reported: "Reported",
 };
 
-type ReportTimeKind = NonNullable<EarningsCalendarSemantics["report"]["time_kind"]>;
+type ReportTimeKind = NonNullable<V2EventCalendar["report"]["time_kind"]>;
 
 export const REPORT_TIME_LABELS: Record<ReportTimeKind, string> = {
     amc: "After close",
@@ -27,7 +27,7 @@ export const REPORT_TIME_LABELS: Record<ReportTimeKind, string> = {
     unknown: "Time unknown",
 };
 
-type CallTimeQuality = NonNullable<EarningsCalendarSemantics["call"]["time_quality"]>;
+type CallTimeQuality = NonNullable<V2EventCalendar["call"]["time_quality"]>;
 
 export const CALL_TIME_QUALITY_LABELS: Record<CallTimeQuality, string> = {
     date_only: "date only",
@@ -42,7 +42,7 @@ export const CALL_TIME_QUALITY_LABELS: Record<CallTimeQuality, string> = {
 const NO_CALL_STATUSES = new Set(["no_call", "not_expected"]);
 
 /** A report-only event: no call expected, or no call day / start at all. */
-export function hasNoCall(calendar: EarningsCalendarSemantics | null | undefined) {
+export function hasNoCall(calendar: null | undefined | V2EventCalendar) {
     if (!calendar) return false;
 
     const { call } = calendar;
@@ -51,14 +51,14 @@ export function hasNoCall(calendar: EarningsCalendarSemantics | null | undefined
 }
 
 /** The event status badge (`calendar.status`); nothing for an event without the field (an older API). */
-export function CalendarStatusBadge({ calendar }: { calendar: EarningsCalendarSemantics | null | undefined }) {
+export function CalendarStatusBadge({ calendar }: { calendar: null | undefined | V2EventCalendar }) {
     if (!calendar?.status) return null;
 
     return <Badge title="Event status (calendar)" variant="outline">{CALENDAR_STATUS_LABELS[calendar.status]}</Badge>;
 }
 
 /** Report day + time kind + quality + its filing (form · accession); "—" before the results. */
-export function CalendarReportCell({ calendar }: { calendar: EarningsCalendarSemantics | null | undefined }) {
+export function CalendarReportCell({ calendar }: { calendar: null | undefined | V2EventCalendar }) {
     const report = calendar?.report;
 
     if (!report?.date) return <span className="text-muted-foreground">—</span>;
@@ -85,7 +85,7 @@ export function CalendarReportCell({ calendar }: { calendar: EarningsCalendarSem
  * The call column: the existing call time (company zone) with the call's time quality and source type, or "No call"
  * for a report-only event (never a time taken from the release).
  */
-export function CalendarCallCell({ event }: { event: EarningsEvent }) {
+export function CalendarCallCell({ event }: { event: V2Event }) {
     const { calendar } = event;
 
     if (hasNoCall(calendar)) {

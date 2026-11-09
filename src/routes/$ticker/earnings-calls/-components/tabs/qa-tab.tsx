@@ -1,9 +1,9 @@
-import type { EarningsQaPair } from "@/lib/api/types";
+import type { V2QaPair } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEarningsQaInfinite } from "@/lib/api/queries";
+import { useV2QaInfinite } from "@/lib/api/queries";
 import { cn } from "@/lib/utils";
 import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
@@ -16,7 +16,7 @@ const QA_PAGE_LIMIT = 50;
 
 const labelled = (name: null | string, label: string) => name ?? `Speaker ${label}`;
 
-function QaCard({ pair }: { pair: EarningsQaPair }) {
+function QaCard({ pair }: { pair: V2QaPair }) {
     const answerers = pair.answers
         .map(answer => [labelled(answer.name, answer.speaker_label), answer.title].filter(Boolean).join(", "))
         .join(" · ");
@@ -50,7 +50,7 @@ function QaCard({ pair }: { pair: EarningsQaPair }) {
 }
 
 /** Q&A tab: each analyst question with the answering executives and the answer. */
-export function QaTab({ selector }: CallTabProps) {
+export function QaTab({ eventId }: CallTabProps) {
     const {
         data,
         error,
@@ -58,9 +58,9 @@ export function QaTab({ selector }: CallTabProps) {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useEarningsQaInfinite({ ...selector, limit: QA_PAGE_LIMIT });
+    } = useV2QaInfinite({ eventId, limit: QA_PAGE_LIMIT });
 
-    const pairs = data?.pages.flatMap(page => page.pairs) ?? [];
+    const pairs = data?.pages.flatMap(page => page.data) ?? [];
 
     if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} title="Failed to load Q&A" />;
 

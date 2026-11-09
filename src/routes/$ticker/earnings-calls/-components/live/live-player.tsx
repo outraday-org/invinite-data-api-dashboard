@@ -1,13 +1,13 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 
-import type { EarningsEventResponse } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 import type { LiveAudioMode } from "@/lib/live/live-sync";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { isEarningsEventLiveish, useApiBaseUrl, useEarningsLiveStream, useEarningsPriceAttribution } from "@/lib/api/queries";
+import { isEarningsEventLiveish, useApiBaseUrl, useV2LiveAudio, useV2PriceAttribution } from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
 import { newestReleasedFinal, parseLiveMode, resolveLiveMode, textBehindEdgeS } from "@/lib/live/live-sync";
 import { liveTurns } from "@/lib/live/live-transcript-reducer";
@@ -43,7 +43,7 @@ function writeStoredLiveMode(mode: LiveAudioMode): void {
 }
 
 /**
- * The live player of a call in progress: the live audio (`GET /v1/earnings-calls/live/stream`,
+ * The live player of a call in progress: the live audio (`GET /v2/events/{event_id}/live-audio`,
  * hls.js) and the live transcript (`/v1/ws` `earnings-calls.live`), modelled on the admin
  * console's `live-player.tsx`.
  *
@@ -72,13 +72,13 @@ export function LivePlayer({
 }: {
     apiKey: string;
     apiKeyUpdatedAt: number;
-    event: EarningsEventResponse;
-    /** `/live`'s `live_audio`: false = transcript only, the stream is never requested. */
+    event: V2Event;
+    /** false = transcript only, `/live-audio` is never requested (v2 has no `live_audio` flag: the slot passes true). */
     liveAudio: boolean;
 }) {
     const baseUrl = useApiBaseUrl();
 
-    const streamQuery = useEarningsLiveStream(liveAudio ? { eventId: event.event_id } : {});
+    const streamQuery = useV2LiveAudio(liveAudio ? event.event_id : "");
 
     const stream = streamQuery.data;
 
@@ -147,7 +147,7 @@ export function LivePlayer({
 
     // The price line's backlog: the live minute rows (a 404 = none yet). Settled rows of the
     // post-call run use another reference, so only live rows seed the line.
-    const minuteRows = useEarningsPriceAttribution({ eventId: event.event_id }, { live: isEarningsEventLiveish(event) }).data;
+    const minuteRows = useV2PriceAttribution(event.event_id, { live: isEarningsEventLiveish(event) }).data;
 
     const priceSeed = minuteRows?.live ? minuteRows.buckets : [];
 

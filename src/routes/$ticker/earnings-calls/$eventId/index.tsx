@@ -8,7 +8,7 @@ import { NotFound } from "@/components/ui/not-found";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError } from "@/lib/api/errors";
-import { useEarningsEvent } from "@/lib/api/queries";
+import { useV2Event } from "@/lib/api/queries";
 
 import type { CallTab, TranscriptJump } from "../-components/call-tabs";
 
@@ -52,7 +52,7 @@ function CallPage({ eventId }: { eventId: string }) {
 
     const validId = eventIdSchema.safeParse(eventId).success;
 
-    const { data: event, error, isLoading } = useEarningsEvent(validId ? eventId : "");
+    const { data: event, error, isLoading } = useV2Event(validId ? eventId : "");
 
     const [transcriptJump, setTranscriptJump] = React.useState<null | TranscriptJump>(null);
 

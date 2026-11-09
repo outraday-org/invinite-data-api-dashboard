@@ -2,10 +2,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { EarningsEventResponse } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 
+import { ApiRequestError } from "@/lib/api/errors";
 import { CallTabs } from "@/routes/$ticker/earnings-calls/-components/call-tabs";
-import { NO_TRANSCRIPT_TITLE, NoTranscriptNotice } from "@/routes/$ticker/earnings-calls/-components/media-state";
+import { MediaState, NO_TRANSCRIPT_TITLE, NoTranscriptNotice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
 // Every tab is a stub: a mounted tab would send its request, so a rendered stub = a request.
 const { tabStub } = vi.hoisted(() => ({
@@ -38,7 +39,7 @@ afterEach(cleanup);
 
 const DERIVED_TABS = ["guidance", "qa", "participants", "metrics", "prosody"] as const;
 
-function eventOf(overrides: Partial<EarningsEventResponse>): EarningsEventResponse {
+function eventOf(overrides: Partial<V2Event>): V2Event {
     return {
         capture_status: "pending",
         event_id: "9655a5db-8968-40be-8c79-7cd1a8aed8e9",
@@ -49,10 +50,10 @@ function eventOf(overrides: Partial<EarningsEventResponse>): EarningsEventRespon
         has_slides: false,
         has_transcript: false,
         ...overrides,
-    } as EarningsEventResponse;
+    } as V2Event;
 }
 
-function renderTab(event: EarningsEventResponse, tab: "price-moves" | (typeof DERIVED_TABS)[number]) {
+function renderTab(event: V2Event, tab: "price-moves" | (typeof DERIVED_TABS)[number]) {
     return render(
         <CallTabs
             event={event}
@@ -123,5 +124,29 @@ describe("CallTabs without a transcript", () => {
         expect(screen.queryByRole("tab", { name: "Q&A" })).toBeNull();
 
         expect(screen.getByRole("tab", { name: "Price moves" })).toBeInTheDocument();
+    });
+});
+
+describe("MediaState (v2 problems)", () => {
+    it("reads 403 forbidden as the audio refusal, 503 unavailable as the outage, 404 not_found as the empty state", () => {
+        const { rerender } = render(
+            <MediaState error={new ApiRequestError(403, { error: "forbidden", message: "Audio is not available for this event" })} title="Failed" />,
+        );
+
+        expect(screen.getByText(/Audio for this call is not available/)).toBeInTheDocument();
+
+        rerender(<MediaState error={new ApiRequestError(503, { error: "unavailable", message: "Media is temporarily unavailable" })} title="Failed" />);
+
+        expect(screen.getByText("Media temporarily unavailable")).toBeInTheDocument();
+
+        rerender(
+            <MediaState error={new ApiRequestError(404, { error: "not_found", message: "No slide deck for this event" })} notFound="No slides stored for this call" title="Failed" />,
+        );
+
+        expect(screen.getByText("No slides stored for this call")).toBeInTheDocument();
+
+        rerender(<MediaState error={new ApiRequestError(403, { error: "plan_required", message: "PRO" })} title="Failed" />);
+
+        expect(screen.getByText("PRO plan required")).toBeInTheDocument();
     });
 });

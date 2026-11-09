@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEarningsPressRelease } from "@/lib/api/queries";
+import { useV2PressRelease } from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
 import { edgarFolderUrl } from "@/lib/earnings/edgar";
 import { paragraphs } from "@/lib/utils";
@@ -11,8 +11,8 @@ import type { CallTabProps } from "../call-tabs";
 import { MediaState, Notice } from "../media-state";
 
 /** Press release tab: title, provenance (origin, trust tier, EDGAR folder), participants and the body text. */
-export function PressReleaseTab({ event, selector }: CallTabProps) {
-    const { data, error } = useEarningsPressRelease({ ...selector, include: "body" });
+export function PressReleaseTab({ event, eventId }: CallTabProps) {
+    const { data, error } = useV2PressRelease(eventId);
 
     const notFound = "No press release stored for this call";
 

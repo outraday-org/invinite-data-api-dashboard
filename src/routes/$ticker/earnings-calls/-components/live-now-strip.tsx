@@ -1,17 +1,17 @@
-import type { EarningsLiveEvent } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { isTierError } from "@/lib/api/errors";
-import { useEarningsLive } from "@/lib/api/queries";
+import { useV2LiveEvents } from "@/lib/api/queries";
 import { formatStartedAgo } from "@/lib/earnings/format";
 
 import { EventLink } from "./event-link";
 import { LiveDot } from "./live-dot";
 
-/** "Live now": calls being captured right now (`/live`, refetched every 15 s); hidden when none. */
+/** "Live now": events being captured right now (`/v2/events?status=live&type=all`, refetched every 15 s); hidden when none. */
 export function LiveNowStrip() {
-    const { data, error } = useEarningsLive();
+    const { data, dataUpdatedAt, error } = useV2LiveEvents();
 
     if (error) {
         return (
@@ -23,12 +23,12 @@ export function LiveNowStrip() {
         );
     }
 
-    const events: Array<EarningsLiveEvent> = data?.events ?? [];
+    const events: Array<V2Event> = data?.data ?? [];
 
     if (events.length === 0) return null;
 
-    // The answer's server time, not the client clock: refreshed with every refetch.
-    const asOf = new Date(data?.as_of ?? 0);
+    // When the answer arrived (v2 lists carry no server time): refreshed with every refetch.
+    const asOf = new Date(dataUpdatedAt);
 
     return (
         <div className="flex flex-col gap-2">
@@ -46,11 +46,10 @@ export function LiveNowStrip() {
                                     <span className="text-muted-foreground truncate">{event.company_name}</span>
                                 </div>
                                 <div className="text-muted-foreground">
-                                    {formatStartedAgo(event.started_at, asOf)}
+                                    {event.started_at ? formatStartedAgo(event.started_at, asOf) : "starting"}
                                 </div>
                                 <div className="flex gap-1">
                                     <Badge variant="secondary">Live transcript</Badge>
-                                    {event.live_audio && <Badge variant="secondary">Live audio</Badge>}
                                 </div>
                             </CardContent>
                         </Card>

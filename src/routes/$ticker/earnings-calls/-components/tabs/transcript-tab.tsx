@@ -2,9 +2,8 @@ import { Copy, GitCompare } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
-import type { EarningsEventSelector } from "@/lib/api/queries";
-import type { EarningsTranscriptFormat, EarningsTranscriptVersion } from "@/lib/api/types";
-import type { TranscriptView } from "@/lib/earnings/transcript";
+import type { V2TranscriptVersion } from "@/lib/api/types";
+import type { TranscriptFormat, TranscriptView } from "@/lib/earnings/transcript";
 
 import { PdfDocumentSection } from "@/components/pdf/pdf-inline-viewer";
 import { Badge } from "@/components/ui/badge";
@@ -15,18 +14,21 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEarningsTranscript, useEarningsTranscriptDiff, useEarningsTranscriptVersions } from "@/lib/api/queries";
+import { useV2Transcript, useV2TranscriptDiff, useV2TranscriptText, useV2TranscriptVersions } from "@/lib/api/queries";
 import { formatInstant, formatMs } from "@/lib/earnings/format";
 import { scrollToTurn } from "@/lib/earnings/scroll-to-turn";
-import { toTranscriptView, transcriptPlainText } from "@/lib/earnings/transcript";
+import { textAnswerData, toTranscriptView, transcriptPlainText } from "@/lib/earnings/transcript";
 
 import type { CallTabProps } from "../call-tabs";
 
 import { MediaState, Notice } from "../media-state";
 import { QaStart, TranscriptTurns } from "./transcript-turns";
 
-// `words` is not rendered (the CLI exposes it; the live view is word-less too).
-type RenderedFormat = Exclude<EarningsTranscriptFormat, "words">;
+// The turns (`/transcript`, raw or cleaned layer) or the text blocks (`/transcript-text`); words are the audio
+// follow view's (`audio-context.tsx`).
+type RenderedFormat = TranscriptFormat;
+
+const TURN_FORMATS = new Set<RenderedFormat>(["cleaned", "speakers"]);
 
 // "Jump to transcript" needs timed turns (`data-start-ms`); the other formats switch to this one.
 const LOCATING_FORMAT: RenderedFormat = "speakers";
@@ -38,7 +40,7 @@ const FORMATS: Array<{ label: string; value: RenderedFormat }> = [
     { label: "Plain text", value: "text" },
 ];
 
-function versionLabel(version: EarningsTranscriptVersion) {
+function versionLabel(version: V2TranscriptVersion) {
     return [
         `Version ${version.version}`,
         version.version_kind,
@@ -47,8 +49,8 @@ function versionLabel(version: EarningsTranscriptVersion) {
     ].filter(Boolean).join(" · ");
 }
 
-function TranscriptDiff({ from, selector, to }: { from: number; selector: EarningsEventSelector; to: number }) {
-    const { data, error, isLoading } = useEarningsTranscriptDiff({ ...selector, from, to });
+function TranscriptDiff({ eventId, from, to }: { eventId: string; from: number; to: number }) {
+    const { data, error, isLoading } = useV2TranscriptDiff({ eventId, from, to });
 
     if (error) return <ErrorState error={error} title="Failed to compare transcript versions" />;
 
@@ -127,7 +129,7 @@ function TranscriptBody({
  * in; a format that cannot locate a passage (sections, plain text, a missing cleaned layer)
  * switches to Speakers first, and a passage that still cannot be found gets a short notice.
  */
-export function TranscriptTab({ onTranscriptJumpHandled, selector, transcriptJump }: CallTabProps) {
+export function TranscriptTab({ eventId, onTranscriptJumpHandled, transcriptJump }: CallTabProps) {
     const [format, setFormat] = React.useState<RenderedFormat>("speakers");
 
     // null = the current version (no `version` parameter).
@@ -135,17 +137,27 @@ export function TranscriptTab({ onTranscriptJumpHandled, selector, transcriptJum
 
     const [compareOpen, setCompareOpen] = React.useState(false);
 
-    const versions = useEarningsTranscriptVersions(selector);
+    const versions = useV2TranscriptVersions(eventId);
 
-    const transcript = useEarningsTranscript({ ...selector, format, version: selectedVersion ?? undefined });
+    const requestedVersion = selectedVersion ?? undefined;
 
-    const view = React.useMemo(
-        () => (transcript.data ? toTranscriptView(transcript.data.format, transcript.data.data) : null),
-        [transcript.data],
-    );
+    const turnFormat = TURN_FORMATS.has(format);
 
-    // The answer for the format on screen (a switched format is loading until its own arrives).
-    const shown = transcript.data?.format === format ? transcript.data : undefined;
+    // One of the two is asked (the other idles on an empty id): turns for Speakers / Cleaned, text for the rest.
+    const turns = useV2Transcript({ eventId: turnFormat ? eventId : "", layer: format === "cleaned" ? "cleaned" : undefined, version: requestedVersion });
+
+    const text = useV2TranscriptText({ eventId: turnFormat ? "" : eventId, split: format === "sections" ? "sections" : "none", version: requestedVersion });
+
+    const transcript = turnFormat ? turns : text;
+
+    const view = React.useMemo(() => {
+        if (turnFormat) return turns.data ? toTranscriptView(format, turns.data.turns) : null;
+
+        return text.data ? toTranscriptView(format, textAnswerData(text.data, format === "sections" ? "sections" : "text")) : null;
+    }, [format, text.data, turnFormat, turns.data]);
+
+    // The answer for the format on screen (each format has its own query, so a switched one loads its own).
+    const shown = transcript.data ?? undefined;
 
     React.useEffect(() => {
         if (!transcriptJump) return;
@@ -196,9 +208,10 @@ export function TranscriptTab({ onTranscriptJumpHandled, selector, transcriptJum
         });
     }, [format, onTranscriptJumpHandled, shown, transcript.error, transcriptJump, view]);
 
-    const versionList = [...(versions.data?.versions ?? [])].sort((a, b) => b.version - a.version);
+    const versionList = [...(versions.data?.data ?? [])].sort((a, b) => b.version - a.version);
 
-    const currentVersion = versions.data?.current_version ?? null;
+    // The current version is the newest published one (what `/transcript` answers without `version`).
+    const currentVersion = versionList.at(0)?.version ?? transcript.data?.version ?? null;
 
     const shownVersion = selectedVersion ?? currentVersion;
 
@@ -226,7 +239,10 @@ export function TranscriptTab({ onTranscriptJumpHandled, selector, transcriptJum
         }
     };
 
-    const data = transcript.data;
+    const qaStartMs = transcript.data?.qa_start_ms ?? null;
+
+    // A company-published transcript has no audio timings (v2 names no STT provider: its turns carry no start).
+    const untimed = view?.kind === "turns" && view.turns.every(turn => turn.start_ms === null);
 
     return (
         <div className="flex flex-col gap-3">
@@ -276,43 +292,38 @@ export function TranscriptTab({ onTranscriptJumpHandled, selector, transcriptJum
                 </Button>
             </div>
 
-            {data && (
+            {shownEntry && (
                 <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
-                    <Badge variant="outline">{data.version_kind}</Badge>
+                    <Badge variant="outline">{shownEntry.version_kind}</Badge>
                     <span>
-                        {data.word_count.toLocaleString("en-US")}
+                        {shownEntry.word_count.toLocaleString("en-US")}
                         {" "}
                         words
                     </span>
                     <span>
-                        ·
-                        {" "}
-                        {data.transcript_provider}
-                    </span>
-                    <span>
                         · published
                         {" "}
-                        {formatInstant(data.published_at)}
+                        {formatInstant(shownEntry.published_at)}
                     </span>
-                    {data.qa_start_ms !== null && (
+                    {qaStartMs !== null && (
                         <span className="inline-flex items-baseline gap-1">
                             ·
-                            <QaStart qaStartMs={data.qa_start_ms} />
+                            <QaStart qaStartMs={qaStartMs} />
                         </span>
                     )}
                 </div>
             )}
 
-            {data?.stt_provider === "company_document" && (
+            {untimed && (
                 <div className="text-muted-foreground text-xs">Company-published transcript (no audio timings)</div>
             )}
 
             <PdfDocumentSection
-                filename={`${data?.event.symbol ?? "earnings-call"}-transcript-v${shownVersion ?? ""}.pdf`}
+                filename={`${transcript.data?.event.symbol ?? "earnings-call"}-transcript-v${shownVersion ?? ""}.pdf`}
                 pdf={shownEntry?.pdf}
             />
 
-            <TranscriptBody error={transcript.error} format={format} qaStartMs={data?.qa_start_ms ?? null} view={view} />
+            <TranscriptBody error={transcript.error} format={format} qaStartMs={qaStartMs} view={view} />
 
             {compare && (
                 <Dialog onOpenChange={setCompareOpen} open={compareOpen}>
@@ -329,7 +340,7 @@ export function TranscriptTab({ onTranscriptJumpHandled, selector, transcriptJum
                             </DialogTitle>
                             <DialogDescription>Words added and removed, with their position in the call.</DialogDescription>
                         </DialogHeader>
-                        {compareOpen && <TranscriptDiff from={compare.from} selector={selector} to={compare.to} />}
+                        {compareOpen && <TranscriptDiff eventId={eventId} from={compare.from} to={compare.to} />}
                     </DialogContent>
                 </Dialog>
             )}

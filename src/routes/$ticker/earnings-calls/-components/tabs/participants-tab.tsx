@@ -1,14 +1,12 @@
-import type { EarningsParticipant } from "@/lib/api/types";
+import type { V2Participation } from "@/lib/api/types";
 import type { RoleGroup } from "@/lib/earnings/labels";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useEarningsParticipants } from "@/lib/api/queries";
+import { useV2Participants } from "@/lib/api/queries";
 import {
-    participationDetailText,
-    participationKindLabel,
     percent,
     ROLE_GROUP_LABELS,
     ROLE_GROUPS,
@@ -20,8 +18,8 @@ import type { CallTabProps } from "../call-tabs";
 import { MediaState, NO_TRANSCRIPT_TITLE, Notice } from "../media-state";
 import { SeekButton } from "../seek-button";
 
-function Evidence({ evidence }: { evidence: EarningsParticipant["evidence"] }) {
-    if (!evidence || evidence.length === 0) return <span className="text-muted-foreground">—</span>;
+function Evidence({ evidence }: { evidence: V2Participation["evidence"] }) {
+    if (evidence.length === 0) return <span className="text-muted-foreground">—</span>;
 
     const first = evidence[0];
 
@@ -40,7 +38,7 @@ function Evidence({ evidence }: { evidence: EarningsParticipant["evidence"] }) {
     );
 }
 
-function ParticipantRows({ group, participants }: { group: RoleGroup; participants: Array<EarningsParticipant> }) {
+function ParticipantRows({ group, participants }: { group: RoleGroup; participants: Array<V2Participation> }) {
     if (participants.length === 0) return null;
 
     return (
@@ -68,72 +66,44 @@ function ParticipantRows({ group, participants }: { group: RoleGroup; participan
 }
 
 /**
- * Participants tab: the call's speakers grouped by role (management = executives + IR host)
- * with how each name was resolved and its evidence, then the participation flags vs the
- * prior call (new CFO, first appearances, …).
+ * Participants tab: the call's speakers (`/v2/participants?event=`) grouped by role (management = executives + IR host)
+ * with how each name was resolved and its evidence. v2 serves no participation flags vs the prior call (new CFO, first
+ * appearances): that section of v1 is gone.
  */
-export function ParticipantsTab({ selector }: CallTabProps) {
-    const { data, error, isLoading } = useEarningsParticipants({ ...selector, include: "evidence" });
+export function ParticipantsTab({ eventId }: CallTabProps) {
+    const { data, error, isLoading } = useV2Participants(eventId);
 
     if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} title="Failed to load participants" />;
 
     if (isLoading || !data) return <Skeleton className="h-40 w-full" />;
 
-    const names = new Map(data.participants.filter(p => p.person_id && p.name).map(p => [p.person_id, p.name] as const));
+    const participants = data.data;
 
     const grouped = ROLE_GROUPS.map(group => ({
         group,
-        participants: data.participants.filter(participant => roleGroup(participant.role) === group),
+        participants: participants.filter(participant => roleGroup(participant.role) === group),
     }));
 
+    if (participants.length === 0) return <Notice title="No participants identified yet" />;
+
     return (
-        <div className="flex flex-col gap-4">
-            {data.participants.length === 0
-                ? <Notice title="No participants identified yet" />
-                : (
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Title</TableHead>
-                                    <TableHead>Firm</TableHead>
-                                    <TableHead>Speaker</TableHead>
-                                    <TableHead>Confidence</TableHead>
-                                    <TableHead>Resolved by</TableHead>
-                                    <TableHead>Evidence</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {grouped.map(({ group, participants }) => (
-                                    <ParticipantRows group={group} key={group} participants={participants} />
-                                ))}
-                            </TableBody>
-                        </Table>
-                    )}
-
-            <section className="flex flex-col gap-2">
-                <h3 className="text-sm font-medium">Participation vs the prior call</h3>
-                {data.participation_events.length === 0
-                    ? <div className="text-muted-foreground">No participation changes.</div>
-                    : (
-                            <ul className="flex flex-col gap-1">
-                                {data.participation_events.map((item, index) => {
-                                    const who = item.person_id ? names.get(item.person_id) : undefined;
-
-                                    const detail = participationDetailText(item.detail);
-
-                                    return (
-                                        // Events have no id; their order within one call is stable.
-                                        <li className="flex flex-wrap items-center gap-2" key={index}>
-                                            <Badge variant="secondary">{participationKindLabel(item.kind)}</Badge>
-                                            {who && <span className="font-medium">{who}</span>}
-                                            {detail && <span className="text-muted-foreground">{detail}</span>}
-                                        </li>
-                                    );
-                                })}
-                            </ul>
-                        )}
-            </section>
-        </div>
+        <Table>
+            <TableHeader>
+                <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Firm</TableHead>
+                    <TableHead>Speaker</TableHead>
+                    <TableHead>Confidence</TableHead>
+                    <TableHead>Resolved by</TableHead>
+                    <TableHead>Evidence</TableHead>
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {grouped.map(({ group, participants: rows }) => (
+                    <ParticipantRows group={group} key={group} participants={rows} />
+                ))}
+            </TableBody>
+        </Table>
     );
 }

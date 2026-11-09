@@ -2,13 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { ExternalLink, Search } from "lucide-react";
 import * as React from "react";
 
-import type { EarningsDocumentSearchHit, EarningsDocumentSearchResponse, EarningsSearchMode } from "@/lib/api/types";
+import type { SearchMode, V2InvestorDocumentSearchHit, V2InvestorDocumentSearchResponse } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEarningsDocumentSearch } from "@/lib/api/queries";
+import { useV2InvestorDocumentSearch } from "@/lib/api/queries";
 import { documentKindLabel, documentPageHref } from "@/lib/earnings/documents";
 import { SEARCH_MODE_LABELS, SEARCH_MODES } from "@/lib/earnings/labels";
 import {
@@ -24,15 +24,6 @@ const SEARCH_LIMIT = 10;
 
 const MIN_QUERY_LENGTH = 2;
 
-type DocumentTable = NonNullable<EarningsDocumentSearchHit["table"]>;
-
-const TABLE_LABELS: Record<DocumentTable, string> = {
-    company_documents: "IR library",
-    event_documents: "Call documents",
-};
-
-const TABLES = Object.keys(TABLE_LABELS) as Array<DocumentTable>;
-
 /** The API's literal scope rule; the page always sends `identifier`, so this 400 should not occur. */
 const EXACT_TOO_SHORT = "Exact search needs 3 characters or a company";
 
@@ -43,7 +34,7 @@ const DOCUMENT_SEARCH_TIER = { badge: "STANDARD", title: "Your plan does not inc
 
 const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
 
-function DocumentHitCard({ hit, mode, query }: { hit: EarningsDocumentSearchHit; mode: EarningsSearchMode; query: string }) {
+function DocumentHitCard({ hit, mode, query }: { hit: V2InvestorDocumentSearchHit; mode: SearchMode; query: string }) {
     const source = [
         hit.title ?? "Untitled document",
         hit.year === null ? "undated" : String(hit.year),
@@ -92,10 +83,10 @@ export function DocumentSearchResults({
     isLoading,
     mode,
 }: {
-    data: EarningsDocumentSearchResponse | null;
+    data: null | V2InvestorDocumentSearchResponse;
     error: unknown;
     isLoading: boolean;
-    mode: EarningsSearchMode;
+    mode: SearchMode;
 }) {
     if (error) {
         return <SearchError badRequest={mode === "literal" ? EXACT_TOO_SHORT : undefined} error={error} tier={DOCUMENT_SEARCH_TIER} />;
@@ -105,52 +96,48 @@ export function DocumentSearchResults({
 
     if (!data) return null;
 
+    // v2: the hits are `data`, the index coverage `meta.index`, the query `meta.query`.
+    const coverage = data.meta.index ?? null;
+
     return (
         <>
-            {data.hits.length === 0
-                ? <SearchEmptyState coverage={data.coverage} />
+            {data.data.length === 0
+                ? <SearchEmptyState coverage={coverage} />
                 : (
                         <ul className="flex flex-col gap-2">
-                            {data.hits.map(hit => (
+                            {data.data.map(hit => (
                                 <DocumentHitCard
                                     hit={hit}
                                     // A hit has no id of its own: document + page + chunk start is unique within one answer.
                                     key={`${hit.document_id}:${hit.page ?? ""}:${hit.text.slice(0, 32)}`}
-                                    mode={data.mode}
-                                    query={data.query}
+                                    mode={mode}
+                                    query={data.meta.query ?? ""}
                                 />
                             ))}
                         </ul>
                     )}
-            <SearchCoverageNote coverage={data.coverage} />
+            {coverage && <SearchCoverageNote coverage={coverage} />}
         </>
     );
 }
 
 /**
- * Search over one company's documents (`/documents/search`, 10 credits): its calls' documents and its IR library, by
- * keywords (default; every word must match) or exact text. Runs on submit, never per keystroke; a mode or source chip
- * re-runs the submitted query.
+ * Search over one company's documents (`/v2/search/investor-documents`, one page): its calls' documents and its IR
+ * library, by keywords (default; every word must match) or exact text (the API's case-sensitive default: v2 has no
+ * case switch, and no source filter). Runs on submit, never per keystroke; a mode chip re-runs the submitted query.
  */
 export function DocumentSearch({ identifier }: { identifier: string }) {
     const [draft, setDraft] = React.useState("");
 
     const [query, setQuery] = React.useState("");
 
-    const [table, setTable] = React.useState<DocumentTable | undefined>(undefined);
+    const [mode, setMode] = React.useState<SearchMode>("lexical");
 
-    const [mode, setMode] = React.useState<EarningsSearchMode>("lexical");
-
-    // The API's literal default is case-sensitive; the parameter is sent with Exact only (else a 400).
-    const [matchCase, setMatchCase] = React.useState(true);
-
-    const { data, error, isFetching } = useEarningsDocumentSearch({
-        caseSensitive: mode === "literal" ? (matchCase ? "true" : "false") : undefined,
-        identifier,
+    const { data, error, isFetching } = useV2InvestorDocumentSearch({
+        company: identifier,
         limit: SEARCH_LIMIT,
         mode,
         q: query,
-        table,
     });
 
     const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH;
@@ -188,39 +175,6 @@ export function DocumentSearch({ identifier }: { identifier: string }) {
                         variant={mode === value ? "secondary" : "outline"}
                     >
                         {SEARCH_MODE_LABELS[value]}
-                    </Button>
-                ))}
-                {mode === "literal" && (
-                    <Button
-                        aria-pressed={matchCase}
-                        onClick={() => setMatchCase(value => !value)}
-                        size="xs"
-                        type="button"
-                        variant={matchCase ? "secondary" : "outline"}
-                    >
-                        Match case
-                    </Button>
-                )}
-                <span aria-hidden className="bg-border mx-1 h-4 w-px" />
-                <Button
-                    aria-pressed={table === undefined}
-                    onClick={() => setTable(undefined)}
-                    size="xs"
-                    type="button"
-                    variant={table === undefined ? "secondary" : "outline"}
-                >
-                    All documents
-                </Button>
-                {TABLES.map(value => (
-                    <Button
-                        aria-pressed={table === value}
-                        key={value}
-                        onClick={() => setTable(value)}
-                        size="xs"
-                        type="button"
-                        variant={table === value ? "secondary" : "outline"}
-                    >
-                        {TABLE_LABELS[value]}
                     </Button>
                 ))}
                 <span className="text-muted-foreground ml-auto text-[0.625rem]">10 credits per search</span>

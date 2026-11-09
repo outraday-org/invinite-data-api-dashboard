@@ -2,18 +2,17 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { EarningsEventVideo } from "@/lib/api/types";
+import type { V2EventVideo } from "@/lib/api/types";
 
 import { EventVideo, EventVideoSlot } from "@/routes/$ticker/earnings-calls/-components/event-video";
 
 afterEach(cleanup);
 
 // NVDA "GTC Berlin 2026 Keynote" (event 9655a5db-…), as IDA's event example serves it.
-const GTC: EarningsEventVideo = {
+const GTC: V2EventVideo = {
     channel: "NVIDIA",
     embed_url: "https://www.youtube-nocookie.com/embed/v-NGxyPjcrE",
     embeddable: true,
-    provider: "youtube",
     thumbnail_url: "https://i.ytimg.com/vi/v-NGxyPjcrE/hqdefault.jpg",
     title: "NVIDIA GTC Berlin 2026 Keynote With CEO Jensen Huang",
     url: "https://www.youtube.com/watch?v=v-NGxyPjcrE",

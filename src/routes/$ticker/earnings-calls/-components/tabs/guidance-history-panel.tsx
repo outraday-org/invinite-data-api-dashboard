@@ -9,13 +9,14 @@ import {
     YAxis,
 } from "recharts";
 
-import type { EarningsGuidanceBasis, EarningsGuidancePeriodKind } from "@/lib/api/types";
+import type { V2GuidanceBasis, V2GuidancePeriodKind } from "@/lib/api/types";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useEarningsGuidanceHistory } from "@/lib/api/queries";
+import { useV2GuidanceInfinite } from "@/lib/api/queries";
+import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
 import { BASIS_LABELS, formatGuidanceRange, formatGuidanceValue, metricLabel, PERIOD_KIND_LABELS } from "@/lib/earnings/labels";
 
 import { EventLink } from "../event-link";
@@ -23,9 +24,9 @@ import { Notice } from "../media-state";
 import { DirectionChip } from "./guidance-table";
 
 export type GuidanceHistoryTarget = {
-    basis: EarningsGuidanceBasis;
+    basis: V2GuidanceBasis;
     metric: string;
-    periodKind: EarningsGuidancePeriodKind;
+    periodKind: V2GuidancePeriodKind;
 };
 
 /** A signed delta in the item's unit ("+$200.00 M", "−1.5%"); null → "—". */
@@ -37,31 +38,43 @@ function formatDelta(delta: null | number, unit: null | string, currency: null |
     return `${sign}${formatGuidanceValue(Math.abs(delta), unit, currency)}`;
 }
 
-function HistoryBody({ identifier, target }: { identifier: string; target: GuidanceHistoryTarget }) {
-    const { data, error, isLoading } = useEarningsGuidanceHistory({
+/** The call day of a guidance row (`conference_date` is a timestamp in v2). */
+const callDay = (conferenceDate: null | string) => conferenceDate?.slice(0, 10) ?? "—";
+
+function HistoryBody({ company, target }: { company: string; target: GuidanceHistoryTarget }) {
+    // The company's items for the metric across its calls, newest call first (`/v2/guidance`, every review state).
+    const query = useV2GuidanceInfinite({
         basis: target.basis,
-        identifier,
+        company,
+        limit: 200,
         metric: target.metric,
         periodKind: target.periodKind,
+        sort: "-conference_date",
     });
+
+    useLoadAllPages({ ...query, hasNextPage: Boolean(query.hasNextPage) });
+
+    const { data, error, isLoading } = query;
+
+    const series = React.useMemo(() => data?.pages.flatMap(page => page.data) ?? [], [data]);
 
     // The API answers newest call first; the chart reads left to right.
     const points = React.useMemo(
-        () => [...(data?.series ?? [])].reverse().map(entry => ({
+        () => [...series].reverse().map(entry => ({
             band: entry.low !== null && entry.high !== null ? [entry.low, entry.high] : null,
-            label: `${entry.conference_date} · ${entry.period_label}`,
+            label: `${callDay(entry.conference_date)} · ${entry.period_label}`,
             midpoint: entry.midpoint,
         })),
-        [data],
+        [series],
     );
 
     if (error) return <ErrorState error={error} title="Failed to load guidance history" />;
 
     if (isLoading || !data) return <Skeleton className="h-64 w-full" />;
 
-    if (data.series.length === 0) return <Notice title="No history for this metric" />;
+    if (series.length === 0) return <Notice title="No history for this metric" />;
 
-    const { currency, unit } = data.series[0];
+    const { currency, unit } = series[0];
 
     const format = (value: number) => formatGuidanceValue(value, unit, currency);
 
@@ -110,13 +123,17 @@ function HistoryBody({ identifier, target }: { identifier: string; target: Guida
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {data.series.map((entry, index) => (
+                    {series.map((entry, index) => (
                         // A call can guide several periods: event id + period label + order.
-                        <TableRow key={`${entry.event_id}:${entry.period_label}:${index}`}>
+                        <TableRow key={`${entry.event_id ?? ""}:${entry.period_label}:${index}`}>
                             <TableCell>
-                                <EventLink className="underline-offset-4 hover:underline" event={{ event_id: entry.event_id, symbol: data.symbol }}>
-                                    {entry.conference_date}
-                                </EventLink>
+                                {entry.event_id
+                                    ? (
+                                            <EventLink className="underline-offset-4 hover:underline" event={{ event_id: entry.event_id, symbol: entry.company.ticker ?? company }}>
+                                                {callDay(entry.conference_date)}
+                                            </EventLink>
+                                        )
+                                    : callDay(entry.conference_date)}
                             </TableCell>
                             <TableCell>{entry.period_label}</TableCell>
                             <TableCell className="tabular-nums">{formatGuidanceRange(entry)}</TableCell>
@@ -138,11 +155,11 @@ function HistoryBody({ identifier, target }: { identifier: string; target: Guida
  * and basis so the series compares like with like.
  */
 export function GuidanceHistoryPanel({
-    identifier,
+    company,
     onClose,
     target,
 }: {
-    identifier: string;
+    company: string;
     onClose: () => void;
     target: GuidanceHistoryTarget | null;
 }) {
@@ -157,7 +174,7 @@ export function GuidanceHistoryPanel({
                                 {`${PERIOD_KIND_LABELS[target.periodKind]} guidance · ${BASIS_LABELS[target.basis] === "—" ? "basis unknown" : BASIS_LABELS[target.basis]} · newest call first in the table`}
                             </DialogDescription>
                         </DialogHeader>
-                        <HistoryBody identifier={identifier} target={target} />
+                        <HistoryBody company={company} target={target} />
                     </>
                 )}
             </DialogContent>

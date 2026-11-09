@@ -1,12 +1,12 @@
 import * as React from "react";
 
-import type { EarningsProsodySection, EarningsProsodySpeaker } from "@/lib/api/types";
+import type { V2ProsodySection, V2ProsodySpeaker } from "@/lib/api/types";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { useEarningsProsody } from "@/lib/api/queries";
+import { useV2Prosody } from "@/lib/api/queries";
 import { formatMs } from "@/lib/earnings/format";
 import { formatDecimal, percent } from "@/lib/earnings/labels";
 
@@ -14,7 +14,7 @@ import type { CallTabProps } from "../call-tabs";
 
 import { MediaState, Notice } from "../media-state";
 
-const SECTIONS: Array<{ label: string; value: EarningsProsodySection }> = [
+const SECTIONS: Array<{ label: string; value: V2ProsodySection }> = [
     { label: "Whole call", value: "all" },
     { label: "Prepared remarks", value: "prepared" },
     { label: "Q&A", value: "qa" },
@@ -41,7 +41,7 @@ function AcousticCell({ available, value }: { available: boolean; value: string 
     );
 }
 
-function SpeakerRow({ row, showAnswerTiming }: { row: EarningsProsodySpeaker; showAnswerTiming: boolean }) {
+function SpeakerRow({ row, showAnswerTiming }: { row: V2ProsodySpeaker; showAnswerTiming: boolean }) {
     const aggregate = row.speaker.label === ALL_SPEAKERS_LABEL;
 
     const detail = [row.speaker.title, row.speaker.role?.replaceAll("_", " ")].filter(Boolean).join(" · ");
@@ -75,10 +75,10 @@ function SpeakerRow({ row, showAnswerTiming }: { row: EarningsProsodySpeaker; sh
 }
 
 /** Prosody tab: per-speaker delivery features of one section, the "All speakers" row first. */
-export function ProsodyTab({ selector }: CallTabProps) {
-    const [section, setSection] = React.useState<EarningsProsodySection>("all");
+export function ProsodyTab({ eventId }: CallTabProps) {
+    const [section, setSection] = React.useState<V2ProsodySection>("all");
 
-    const { data, error, isLoading } = useEarningsProsody({ ...selector, section });
+    const { data, error, isLoading } = useV2Prosody({ eventId, section });
 
     const rows = React.useMemo(() => {
         const speakers = data?.speakers ?? [];
@@ -95,7 +95,7 @@ export function ProsodyTab({ selector }: CallTabProps) {
     return (
         <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-3">
-                <Tabs onValueChange={value => setSection(value as EarningsProsodySection)} value={section}>
+                <Tabs onValueChange={value => setSection(value as V2ProsodySection)} value={section}>
                     <TabsList>
                         {SECTIONS.map(option => (
                             <TabsTrigger key={option.value} value={option.value}>

@@ -413,6 +413,10 @@ describe("pagesOf / sectionLabel", () => {
         expect(pagesOf([1, 2])).toEqual([]);
     });
 
+    it("reads v2's inlined pages array (expand=pages)", () => {
+        expect(pagesOf([{ n: 3, text: "Three", title: null }])).toEqual([{ n: 3, text: "Three", title: null }]);
+    });
+
     it("labels known sections and falls back to the raw name", () => {
         expect(sectionLabel("annual_reports")).toBe("Annual reports");
 

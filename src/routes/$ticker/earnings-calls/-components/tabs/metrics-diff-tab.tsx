@@ -2,11 +2,11 @@ import type * as React from "react";
 
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 
-import type { EarningsDiffResponse, EarningsMetricsResponse } from "@/lib/api/types";
+import type { V2EventComparisonResponse, V2EventStatsResponse } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEarningsDiff, useEarningsMetrics } from "@/lib/api/queries";
+import { useV2EventComparison, useV2EventStats } from "@/lib/api/queries";
 import { formatMs } from "@/lib/earnings/format";
 import { formatDecimal, formatSigned, percent, TONE_SHIFT_LABELS } from "@/lib/earnings/labels";
 
@@ -16,7 +16,7 @@ import { EventLink } from "../event-link";
 import { MediaState, Notice } from "../media-state";
 import { SeekButton } from "../seek-button";
 
-type Metrics = EarningsMetricsResponse;
+type Metrics = V2EventStatsResponse;
 
 const yesNo = (value: boolean | null) => (value === null ? "—" : value ? "Yes" : "No");
 
@@ -66,8 +66,8 @@ function Section({ children, title }: { children: React.ReactNode; title: string
     );
 }
 
-function MetricsSection({ selector }: Pick<CallTabProps, "selector">) {
-    const { data, error, isLoading } = useEarningsMetrics(selector);
+function MetricsSection({ eventId }: Pick<CallTabProps, "eventId">) {
+    const { data, error, isLoading } = useV2EventStats(eventId);
 
     if (error) {
         return <MediaState error={error} notFound="Call metrics are not derived yet" title="Failed to load call metrics" />;
@@ -117,7 +117,7 @@ function ChangeArrow({ change }: { change: null | number }) {
 }
 
 /** A lexicon level and its change vs the prior call; the lexicon may be licence-gated (null). */
-function LevelRow({ hint, label, value }: { hint?: string; label: string; value: EarningsDiffResponse["hedging"] }) {
+function LevelRow({ hint, label, value }: { hint?: string; label: string; value: V2EventComparisonResponse["hedging"] }) {
     return (
         <div className="contents">
             <dt className="text-muted-foreground">
@@ -134,7 +134,7 @@ function LevelRow({ hint, label, value }: { hint?: string; label: string; value:
     );
 }
 
-function TopicList({ title, topics }: { title: string; topics: EarningsDiffResponse["new_topics"] }) {
+function TopicList({ title, topics }: { title: string; topics: V2EventComparisonResponse["new_topics"] }) {
     return (
         <section className="flex flex-col gap-2">
             <h4 className="font-medium">{title}</h4>
@@ -170,7 +170,7 @@ function TitleList({ label, titles }: { label: string; titles: Array<string> }) 
     );
 }
 
-function SlideDiff({ diff }: { diff: EarningsDiffResponse["slide_diff"] }) {
+function SlideDiff({ diff }: { diff: V2EventComparisonResponse["slide_diff"] }) {
     if (!diff) return <div className="text-muted-foreground">No slide decks to compare.</div>;
 
     return (
@@ -186,8 +186,8 @@ function SlideDiff({ diff }: { diff: EarningsDiffResponse["slide_diff"] }) {
     );
 }
 
-function DiffSection({ event, selector }: Pick<CallTabProps, "event" | "selector">) {
-    const { data, error, isLoading } = useEarningsDiff(selector);
+function DiffSection({ event, eventId }: Pick<CallTabProps, "event" | "eventId">) {
+    const { data, error, isLoading } = useV2EventComparison(eventId);
 
     if (error) {
         return (
@@ -244,14 +244,14 @@ function DiffSection({ event, selector }: Pick<CallTabProps, "event" | "selector
 }
 
 /** Metrics & diff tab: call metadata, then how the call differs from the company's prior call. */
-export function MetricsDiffTab({ event, selector }: CallTabProps) {
+export function MetricsDiffTab({ event, eventId }: CallTabProps) {
     return (
         <div className="flex flex-col gap-6">
             <Section title="Call metrics">
-                <MetricsSection selector={selector} />
+                <MetricsSection eventId={eventId} />
             </Section>
             <Section title="Versus the prior call">
-                <DiffSection event={event} selector={selector} />
+                <DiffSection event={event} eventId={eventId} />
             </Section>
         </div>
     );

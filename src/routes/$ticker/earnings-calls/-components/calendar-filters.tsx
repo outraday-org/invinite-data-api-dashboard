@@ -1,26 +1,17 @@
 import { z } from "zod";
 
 import type {
-    EarningsCalendarDateKind,
-    EarningsCalendarStatus,
-    EarningsDateStatus,
-    EarningsEventType,
-    EarningsSession,
+    V2CalendarStatus,
+    V2DateKind,
+    V2EventType,
+    V2Session,
 } from "@/lib/api/types";
 
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { orderedWindow } from "@/lib/earnings/format";
 
-export const DATE_STATUSES = [
-    "confirmed",
-    "unconfirmed",
-    "estimated",
-    "postponed",
-    "cancelled",
-] as const satisfies ReadonlyArray<EarningsDateStatus>;
-
-const SESSIONS = ["bmo", "amc", "intraday"] as const satisfies ReadonlyArray<EarningsSession>;
+const SESSIONS = ["bmo", "amc", "intraday"] as const satisfies ReadonlyArray<V2Session>;
 
 const EVENT_TYPES = [
     "earnings_call",
@@ -29,7 +20,7 @@ const EVENT_TYPES = [
     "agm",
     "other",
     "all",
-] as const satisfies ReadonlyArray<EarningsEventType>;
+] as const satisfies ReadonlyArray<V2EventType>;
 
 /** `calendar.status`, most decisive first (the API's order). */
 export const CALENDAR_STATUSES = [
@@ -39,20 +30,21 @@ export const CALENDAR_STATUSES = [
     "confirmed",
     "announced",
     "estimated",
-] as const satisfies ReadonlyArray<EarningsCalendarStatus>;
+] as const satisfies ReadonlyArray<V2CalendarStatus>;
 
-const DATE_KINDS = ["call", "report"] as const satisfies ReadonlyArray<EarningsCalendarDateKind>;
+/** `date_kind` of `/v2/events` = date certainty (`any` is the default, never sent). */
+const DATE_KINDS = ["confirmed", "estimated"] as const satisfies ReadonlyArray<V2DateKind>;
 
 // Every field optional: a bare `/$ticker/earnings-calendar` link means "around today";
 // an invalid value falls back to its default instead of failing the route.
 const calendarSearchSchema = z.object({
-    // Omitted = the API defaults (call day, every calendar status): the calendar behaves as before.
+    // `calendarStatus` and `session` have no `/v2/events` filter: they filter the loaded rows (`matchesCalendarSearch`).
     calendarStatus: z.enum(CALENDAR_STATUSES).optional().catch(undefined),
+    // Date certainty (`date_kind`); omitted = any.
     dateKind: z.enum(DATE_KINDS).optional().catch(undefined),
     eventType: z.enum(EVENT_TYPES).optional().catch(undefined),
     from: z.iso.date().optional().catch(undefined),
     session: z.enum(SESSIONS).optional().catch(undefined),
-    status: z.enum(DATE_STATUSES).optional().catch(undefined),
     to: z.iso.date().optional().catch(undefined),
 });
 
@@ -63,16 +55,7 @@ export function validateCalendarSearch(search: Record<string, unknown>): Calenda
     return orderedWindow(calendarSearchSchema.parse(search));
 }
 
-const STATUS_OPTIONS: Array<{ label: string; value: "all" | EarningsDateStatus }> = [
-    { label: "All statuses", value: "all" },
-    { label: "Confirmed", value: "confirmed" },
-    { label: "Unconfirmed", value: "unconfirmed" },
-    { label: "Estimated", value: "estimated" },
-    { label: "Postponed", value: "postponed" },
-    { label: "Cancelled", value: "cancelled" },
-];
-
-const SESSION_OPTIONS: Array<{ label: string; value: "all" | EarningsSession }> = [
+const SESSION_OPTIONS: Array<{ label: string; value: "all" | V2Session }> = [
     { label: "All sessions", value: "all" },
     { label: "Before open", value: "bmo" },
     { label: "After close", value: "amc" },
@@ -80,7 +63,7 @@ const SESSION_OPTIONS: Array<{ label: string; value: "all" | EarningsSession }> 
 ];
 
 // Omitted = the API's default `earnings_call`; "All events" sends `event_type=all`.
-const EVENT_TYPE_OPTIONS: Array<{ label: string; value: EarningsEventType }> = [
+const EVENT_TYPE_OPTIONS: Array<{ label: string; value: V2EventType }> = [
     { label: "Earnings calls", value: "earnings_call" },
     { label: "All events", value: "all" },
     { label: "Investor days", value: "investor_day" },
@@ -89,12 +72,13 @@ const EVENT_TYPE_OPTIONS: Array<{ label: string; value: EarningsEventType }> = [
     { label: "Other events", value: "other" },
 ];
 
-const DATE_KIND_OPTIONS: Array<{ label: string; value: EarningsCalendarDateKind }> = [
-    { label: "By call day", value: "call" },
-    { label: "By report day", value: "report" },
+const DATE_KIND_OPTIONS: Array<{ label: string; value: "any" | V2DateKind }> = [
+    { label: "Any date", value: "any" },
+    { label: "Confirmed date", value: "confirmed" },
+    { label: "Estimated date", value: "estimated" },
 ];
 
-const CALENDAR_STATUS_OPTIONS: Array<{ label: string; value: "all" | EarningsCalendarStatus }> = [
+const CALENDAR_STATUS_OPTIONS: Array<{ label: string; value: "all" | V2CalendarStatus }> = [
     { label: "Any event status", value: "all" },
     { label: "Reported", value: "reported" },
     { label: "Confirmed", value: "confirmed" },
@@ -132,6 +116,19 @@ export function FilterSelect<T extends string>({
     );
 }
 
+/**
+ * Whether a loaded row passes the filters `/v2/events` has no parameter for: the session and the event status
+ * (`calendar.status`, `expand=calendar`).
+ */
+export function matchesCalendarSearch(
+    event: { calendar?: null | { status: null | V2CalendarStatus }; session: null | V2Session },
+    search: Pick<CalendarSearch, "calendarStatus" | "session">,
+) {
+    if (search.session && event.session !== search.session) return false;
+
+    return !search.calendarStatus || event.calendar?.status === search.calendarStatus;
+}
+
 /** Calendar filters, controlled by the route's search params (a filter set is a shareable URL). */
 export function CalendarFilters({
     from,
@@ -163,12 +160,6 @@ export function CalendarFilters({
                 value={to}
             />
             <FilterSelect
-                className="w-[150px]"
-                onValueChange={value => onChange({ status: value === "all" ? undefined : value })}
-                options={STATUS_OPTIONS}
-                value={search.status ?? "all"}
-            />
-            <FilterSelect
                 className="w-[140px]"
                 onValueChange={value => onChange({ session: value === "all" ? undefined : value })}
                 options={SESSION_OPTIONS}
@@ -182,9 +173,9 @@ export function CalendarFilters({
             />
             <FilterSelect
                 className="w-[150px]"
-                onValueChange={value => onChange({ dateKind: value === "call" ? undefined : value })}
+                onValueChange={value => onChange({ dateKind: value === "any" ? undefined : value })}
                 options={DATE_KIND_OPTIONS}
-                value={search.dateKind ?? "call"}
+                value={search.dateKind ?? "any"}
             />
             <FilterSelect
                 className="w-[170px]"

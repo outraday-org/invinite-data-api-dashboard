@@ -1,8 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import * as React from "react";
 
-import type { EarningsEventSelector } from "@/lib/api/queries";
-import type { EarningsDocument } from "@/lib/api/types";
+import type { V2InvestorDocument } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useEarningsDocumentsInfinite } from "@/lib/api/queries";
+import { useV2InvestorDocument, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
 import { formatBytes } from "@/lib/earnings/format";
 
@@ -28,19 +27,19 @@ export const EVENT_DOCUMENT_KINDS = [
     "sec_filing",
     "infographic",
     "other",
-] as const satisfies ReadonlyArray<EarningsDocument["kind"]>;
+] as const satisfies ReadonlyArray<V2InvestorDocument["kind"]>;
 
 const kindLabel = (kind: string) => kind.replaceAll("_", " ");
 
 /** Where a row links: an SEC filing to EDGAR (`source_url`), else the stored copy, else the source. */
-function documentHref(doc: EarningsDocument) {
+function documentHref(doc: V2InvestorDocument) {
     if (doc.kind === "sec_filing") return doc.source_url;
 
     return doc.url ?? doc.source_url;
 }
 
 /** The call's SEC filing links (10-Q / 10-K), shown apart under "Filings": they are no call material. */
-function FilingsTable({ filings }: { filings: Array<EarningsDocument> }) {
+function FilingsTable({ filings }: { filings: Array<V2InvestorDocument> }) {
     return (
         <section aria-label="Filings" className="flex flex-col gap-1">
             <h3 className="text-sm font-medium">Filings</h3>
@@ -80,28 +79,19 @@ function FilingsTable({ filings }: { filings: Array<EarningsDocument> }) {
     );
 }
 
-const TEXT_LOOKUP_LIMIT = 100;
+/** "Show text": the document by id (`/v2/investor-documents/{id}`: `body_text` is served on the member route only). */
+function DocumentText({ doc }: { doc: V2InvestorDocument }) {
+    const { data, error, isLoading } = useV2InvestorDocument(doc.document_id);
 
-/** "Show text": re-asks the document's kind with `include=body` and shows that row's text. */
-function DocumentText({ doc, selector }: { doc: EarningsDocument; selector: EarningsEventSelector }) {
-    const { data, error, isLoading } = useEarningsDocumentsInfinite({
-        ...selector,
-        include: "body",
-        kind: [doc.kind],
-        limit: TEXT_LOOKUP_LIMIT,
-    });
-
-    if (error) return <MediaState error={error} title="Failed to load the document text" />;
+    if (error) return <MediaState error={error} notFound="This document is no longer available" title="Failed to load the document text" />;
 
     if (isLoading || !data) return <Skeleton className="h-40 w-full" />;
 
-    const match = data.pages.flatMap(page => page.documents).find(row => row.document_id === doc.document_id);
-
-    if (!match?.body_text) return <Notice title="No text stored for this document" />;
+    if (!data.body_text) return <Notice title="No text stored for this document" />;
 
     return (
         <ScrollArea className="h-[60vh] rounded-md border">
-            <div className="whitespace-pre-wrap p-3 leading-relaxed">{match.body_text}</div>
+            <div className="whitespace-pre-wrap p-3 leading-relaxed">{data.body_text}</div>
         </ScrollArea>
     );
 }
@@ -127,25 +117,28 @@ function AlsoOnThisCall({ event, onTabChange }: Pick<CallTabProps, "event" | "on
     );
 }
 
-/** Documents tab: the call's investor documents (every page) with a kind filter, links and their text. */
-export function DocumentsTab({ event, onTabChange, selector }: CallTabProps) {
-    const [kinds, setKinds] = React.useState<Array<EarningsDocument["kind"]>>([]);
+/**
+ * Documents tab: the call's investor documents (`/v2/investor-documents?event=`, every page) with a kind filter, links
+ * and their text. v2 lists no page count (`pages` is the inlined text of the member route), so there is no Pages column.
+ */
+export function DocumentsTab({ event, eventId, onTabChange }: CallTabProps) {
+    const [kinds, setKinds] = React.useState<Array<V2InvestorDocument["kind"]>>([]);
 
-    const [textOf, setTextOf] = React.useState<EarningsDocument | null>(null);
+    const [textOf, setTextOf] = React.useState<null | V2InvestorDocument>(null);
 
-    const documentsQuery = useEarningsDocumentsInfinite({ ...selector, kind: kinds.length > 0 ? kinds : undefined });
+    const documentsQuery = useV2InvestorDocumentsInfinite({ event: eventId, kind: kinds.length > 0 ? kinds : undefined, limit: 200 });
 
     useLoadAllPages({ ...documentsQuery, hasNextPage: Boolean(documentsQuery.hasNextPage) });
 
     const { data, error, isLoading } = documentsQuery;
 
-    const rows = data?.pages.flatMap(page => page.documents) ?? [];
+    const rows = data?.pages.flatMap(page => page.data) ?? [];
 
     const documents = rows.filter(doc => doc.kind !== "sec_filing");
 
     const filings = rows.filter(doc => doc.kind === "sec_filing");
 
-    const toggleKind = (kind: EarningsDocument["kind"]) =>
+    const toggleKind = (kind: V2InvestorDocument["kind"]) =>
         setKinds(current => (current.includes(kind) ? current.filter(k => k !== kind) : [...current, kind]));
 
     return (
@@ -184,7 +177,6 @@ export function DocumentsTab({ event, onTabChange, selector }: CallTabProps) {
                                         <TableHead>Producer / source</TableHead>
                                         <TableHead>Trust</TableHead>
                                         <TableHead>Type</TableHead>
-                                        <TableHead className="text-right">Pages</TableHead>
                                         <TableHead className="text-right">Size</TableHead>
                                         <TableHead />
                                     </TableRow>
@@ -192,7 +184,7 @@ export function DocumentsTab({ event, onTabChange, selector }: CallTabProps) {
                                 <TableBody>
                                     {isLoading && (
                                         <TableRow>
-                                            <TableCell colSpan={8}>
+                                            <TableCell colSpan={7}>
                                                 <Skeleton className="h-4 w-full" />
                                             </TableCell>
                                         </TableRow>
@@ -210,7 +202,6 @@ export function DocumentsTab({ event, onTabChange, selector }: CallTabProps) {
                                                 {doc.trust_tier ? <Badge variant="secondary">{doc.trust_tier}</Badge> : "—"}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">{doc.content_type ?? "—"}</TableCell>
-                                            <TableCell className="text-right tabular-nums">{doc.pages ?? "—"}</TableCell>
                                             <TableCell className="text-right tabular-nums">{formatBytes(doc.bytes)}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center justify-end gap-2">
@@ -255,7 +246,7 @@ export function DocumentsTab({ event, onTabChange, selector }: CallTabProps) {
                                 <DialogTitle>{textOf.title ?? kindLabel(textOf.kind)}</DialogTitle>
                                 <DialogDescription>Text extracted from the document.</DialogDescription>
                             </DialogHeader>
-                            <DocumentText doc={textOf} selector={selector} />
+                            <DocumentText doc={textOf} />
                         </>
                     )}
                 </DialogContent>

@@ -2,17 +2,17 @@ import { Link } from "@tanstack/react-router";
 import { ChevronDown, ChevronRight, ExternalLink, Play, Video } from "lucide-react";
 import * as React from "react";
 
-import type { EarningsEvent, EarningsEventVideo } from "@/lib/api/types";
+import type { V2Event, V2EventVideo } from "@/lib/api/types";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { httpsUrl, VIDEO_PROVIDER_LABELS, videoEmbedSrc } from "@/lib/earnings/video";
+import { httpsUrl, videoEmbedSrc, videoProviderLabel } from "@/lib/earnings/video";
 
-function ChannelNote({ video }: { video: EarningsEventVideo }) {
+function ChannelNote({ video }: { video: V2EventVideo }) {
     return (
         <span className="text-muted-foreground text-[0.625rem]">
             Played from the company&apos;s
             {" "}
-            {VIDEO_PROVIDER_LABELS[video.provider]}
+            {videoProviderLabel(video)}
             {" "}
             channel
             {video.channel ? ` (${video.channel})` : ""}
@@ -27,12 +27,12 @@ function ChannelNote({ video }: { video: EarningsEventVideo }) {
  * click, GDPR), the title, provider and a play button; the privacy-enhanced player iframe
  * (`youtube-nocookie.com` / Vimeo `dnt=1`) is created only by the click. Not embeddable: a link to the watch page. `null`: nothing.
  */
-export function EventVideo({ onPlay, video }: { onPlay?: () => void; video: EarningsEventVideo | null }) {
+export function EventVideo({ onPlay, video }: { onPlay?: () => void; video: null | V2EventVideo }) {
     const [playing, setPlaying] = React.useState(false);
 
     if (!video) return null;
 
-    const provider = VIDEO_PROVIDER_LABELS[video.provider];
+    const provider = videoProviderLabel(video);
 
     const title = video.title ?? `${provider} video`;
 
@@ -115,7 +115,7 @@ export function EventVideo({ onPlay, video }: { onPlay?: () => void; video: Earn
  * iframe when the capture ends; a video the user started stays mounted when a capture starts
  * (the 30-s refetch would otherwise tear the player down mid-play).
  */
-export function EventVideoSlot({ event }: { event: Pick<EarningsEvent, "capture_status" | "video"> }) {
+export function EventVideoSlot({ event }: { event: Pick<V2Event, "capture_status" | "video"> }) {
     const [open, setOpen] = React.useState(false);
 
     const [started, setStarted] = React.useState(false);
@@ -145,7 +145,7 @@ export function EventVideoSlot({ event }: { event: Pick<EarningsEvent, "capture_
 }
 
 /** Calendar icon: the event has a video (→ its call page, where it plays). */
-export function EventVideoLink({ event }: { event: Pick<EarningsEvent, "event_id" | "symbol" | "video"> }) {
+export function EventVideoLink({ event }: { event: Pick<V2Event, "event_id" | "symbol" | "video"> }) {
     if (!event.video) return null;
 
     return (
@@ -164,7 +164,7 @@ export function EventVideoLink({ event }: { event: Pick<EarningsEvent, "event_id
             <TooltipContent>
                 Video on
                 {" "}
-                {VIDEO_PROVIDER_LABELS[event.video.provider]}
+                {videoProviderLabel(event.video)}
             </TooltipContent>
         </Tooltip>
     );

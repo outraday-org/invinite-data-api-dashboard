@@ -1,7 +1,6 @@
 import type * as React from "react";
 
-import type { EarningsEventSelector } from "@/lib/api/queries";
-import type { EarningsEventResponse } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
@@ -43,11 +42,12 @@ export type TranscriptJump = { ms: number; nonce: number };
 
 /** What every tab panel gets. */
 export type CallTabProps = {
-    event: EarningsEventResponse;
+    event: V2Event;
+    /** The event every per-event read names (`/v2/events/{event_id}/…`). */
+    eventId: string;
     /** The Transcript tab clears the pending jump once it has scrolled (or told why it could not). */
     onTranscriptJumpHandled: () => void;
     onTabChange: (tab: CallTab) => void;
-    selector: EarningsEventSelector;
     transcriptJump: null | TranscriptJump;
 };
 
@@ -91,7 +91,7 @@ export function CallTabs({
     transcriptJump,
 }: {
     aboveContent?: React.ReactNode;
-    event: EarningsEventResponse;
+    event: V2Event;
     onTabChange: (tab: CallTab) => void;
     onTranscriptJumpHandled: () => void;
     tab: CallTab;
@@ -115,9 +115,9 @@ export function CallTabs({
 
     const props: CallTabProps = {
         event,
+        eventId: event.event_id,
         onTabChange,
         onTranscriptJumpHandled,
-        selector: { eventId: event.event_id },
         transcriptJump,
     };
 

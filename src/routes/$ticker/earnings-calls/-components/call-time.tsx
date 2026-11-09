@@ -1,4 +1,4 @@
-import type { EarningsEvent } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 
 import { formatCallTime } from "@/lib/earnings/format";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ export function CallTime({
     event,
     reserveCaption = false,
 }: {
-    event: Pick<EarningsEvent, "call_time_source" | "scheduled_at" | "tz">;
+    event: Pick<V2Event, "call_time_source" | "scheduled_at" | "tz">;
     reserveCaption?: boolean;
 }) {
     const dateOnly = event.call_time_source === null;

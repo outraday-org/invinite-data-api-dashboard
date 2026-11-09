@@ -2,7 +2,7 @@ import type * as React from "react";
 
 import { Link } from "@tanstack/react-router";
 
-import type { EarningsEvent } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 
 /** Link to a call's page (`/$ticker/earnings-calls/$eventId`, under the call's own symbol). */
 export function EventLink({
@@ -12,7 +12,7 @@ export function EventLink({
 }: {
     children: React.ReactNode;
     className?: string;
-    event: Pick<EarningsEvent, "event_id" | "symbol">;
+    event: Pick<V2Event, "event_id" | "symbol">;
 }) {
     return (
         <Link

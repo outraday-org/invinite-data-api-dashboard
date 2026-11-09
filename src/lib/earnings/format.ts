@@ -1,13 +1,13 @@
 import type { VariantProps } from "class-variance-authority";
 
 import type { badgeVariants } from "@/components/ui/badge";
-import type { EarningsDateStatus, EarningsEvent } from "@/lib/api/types";
+import type { V2DateStatus, V2Event } from "@/lib/api/types";
 
 import { formatEnDateTime } from "@/lib/date";
 
-type CallTimeFields = Pick<EarningsEvent, "call_time_source" | "scheduled_at" | "tz">;
+type CallTimeFields = Pick<V2Event, "call_time_source" | "scheduled_at" | "tz">;
 
-type FiscalFields = Pick<EarningsEvent, "fiscal_quarter" | "fiscal_year">;
+type FiscalFields = Pick<V2Event, "fiscal_quarter" | "fiscal_year">;
 
 type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 
@@ -53,13 +53,13 @@ export function formatFiscalPeriod(event: FiscalFields) {
  * The row label of an event: an earnings call's fiscal period; a non-earnings event (investor day,
  * conference, AGM, other) by its title, else its fiscal period ("—" without either).
  */
-export function eventLabel(event: FiscalFields & Pick<EarningsEvent, "event_title" | "event_type">) {
+export function eventLabel(event: FiscalFields & Pick<V2Event, "event_title" | "event_type">) {
     if (event.event_type === "earnings_call") return formatFiscalPeriod(event);
 
     return event.event_title?.trim() || formatFiscalPeriod(event);
 }
 
-const DATE_STATUS_VARIANTS: Record<EarningsDateStatus, BadgeVariant> = {
+const DATE_STATUS_VARIANTS: Record<V2DateStatus, BadgeVariant> = {
     cancelled: "destructive",
     confirmed: "default",
     estimated: "outline",
@@ -68,7 +68,7 @@ const DATE_STATUS_VARIANTS: Record<EarningsDateStatus, BadgeVariant> = {
 };
 
 /** `Badge` variant of a call's `date_status`. */
-export function dateStatusVariant(status: EarningsDateStatus): BadgeVariant {
+export function dateStatusVariant(status: V2DateStatus): BadgeVariant {
     return DATE_STATUS_VARIANTS[status];
 }
 
@@ -119,7 +119,7 @@ function addDays(date: string, days: number) {
  * `scheduled_at` is midnight UTC of its calendar date — read it in UTC, never in `tz`; a timed
  * call's date in `tz`.
  */
-export function callCalendarDate(event: Pick<EarningsEvent, "call_time_source" | "scheduled_at">, tz: string) {
+export function callCalendarDate(event: Pick<V2Event, "call_time_source" | "scheduled_at">, tz: string) {
     const at = new Date(event.scheduled_at);
 
     return event.call_time_source === null ? zonedDate(at, "UTC") : zonedDate(at, tz);
@@ -176,7 +176,7 @@ export function formatStartedAgo(startedAt: string, now: Date) {
     return `started ${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, "0")} min ago`;
 }
 
-export const SESSION_LABELS: Record<NonNullable<EarningsEvent["session"]>, string> = {
+export const SESSION_LABELS: Record<NonNullable<V2Event["session"]>, string> = {
     amc: "After close",
     bmo: "Before open",
     intraday: "Intraday",

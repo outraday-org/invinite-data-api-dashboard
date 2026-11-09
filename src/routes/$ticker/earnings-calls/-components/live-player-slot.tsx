@@ -1,8 +1,8 @@
 import * as React from "react";
 
-import type { EarningsEventResponse } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 
-import { isEarningsEventLiveish, useEarningsLive } from "@/lib/api/queries";
+import { isEarningsEventLiveish, useV2LiveEvents } from "@/lib/api/queries";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import { LivePlayer } from "./live/live-player";
@@ -10,31 +10,26 @@ import { Notice } from "./media-state";
 
 /**
  * The live player's place on the call page, above the tabs: `LivePlayer` while the call is
- * capturing (`capture_status`) or listed by `/live` (asked only for a call that may be live).
+ * capturing (`capture_status`) or listed by `/v2/events?status=live` (asked only for a call that may be live).
  * Once shown it stays for the page's life, so after the end its "final transcript in progress"
  * note remains while the event refetch (every 30 s) waits for `has_transcript`. Keyed by event:
  * a navigation always builds fresh hls.js / WebSocket instances.
  */
-export function LivePlayerSlot({ event }: { event: EarningsEventResponse }) {
+export function LivePlayerSlot({ event }: { event: V2Event }) {
     const apiKey = useApiKeyStore(s => s.apiKey);
 
     const apiKeyUpdatedAt = useApiKeyStore(s => s.apiKeyUpdatedAt);
 
     const hasHydrated = useApiKeyStore(s => s.hasHydrated);
 
-    const { data: live } = useEarningsLive(isEarningsEventLiveish(event));
+    const { data: live } = useV2LiveEvents(isEarningsEventLiveish(event));
 
-    const listed = live?.events.find(item => item.event_id === event.event_id);
+    const listed = live?.data.find(item => item.event_id === event.event_id);
 
-    // Sticky: the call leaves `/live` (and `capturing`) when it ends; the player stays.
+    // Sticky: the call leaves the live list (and `capturing`) when it ends; the player stays.
     const [shown, setShown] = React.useState(false);
 
     if (!shown && (event.capture_status === "capturing" || listed !== undefined)) setShown(true);
-
-    // Sticky too: a playing stream must not vanish when the ended call drops out of `/live`.
-    const [liveAudio, setLiveAudio] = React.useState(false);
-
-    if (!liveAudio && listed?.live_audio === true) setLiveAudio(true);
 
     if (!shown || !hasHydrated) return null;
 
@@ -52,7 +47,9 @@ export function LivePlayerSlot({ event }: { event: EarningsEventResponse }) {
             apiKeyUpdatedAt={apiKeyUpdatedAt}
             event={event}
             key={event.event_id}
-            liveAudio={liveAudio}
+            // v2's Event has no `live_audio` flag: the player asks `/live-audio`, whose `disabled` status is the
+            // "no live audio" state.
+            liveAudio
         />
     );
 }

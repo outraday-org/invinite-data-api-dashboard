@@ -1,6 +1,6 @@
 import { CartesianGrid, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis } from "recharts";
 
-import type { EarningsPriceAttributionResponse, EarningsPriceUtteranceRef } from "@/lib/api/types";
+import type { V2PriceAttributionResponse, V2PriceUtteranceRef } from "@/lib/api/types";
 
 import {
     AXIS_TICK,
@@ -12,7 +12,7 @@ import {
 } from "@/components/charts/chart-parts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { isEarningsEventLiveish, useEarningsPriceAttribution } from "@/lib/api/queries";
+import { isEarningsEventLiveish, useV2PriceAttribution } from "@/lib/api/queries";
 import { formatDecimal, formatSigned } from "@/lib/earnings/labels";
 
 import type { CallTabProps } from "../call-tabs";
@@ -29,9 +29,9 @@ export const PRICE_ATTRIBUTION_UNAVAILABLE = "Price moves are not available for 
 /** While the call runs the minute rows arrive as each minute closes; the post-call run replaces them. */
 export const PRICE_ATTRIBUTION_LIVE_BANNER = "Live — minute rows so far, not settled; the post-call run replaces them";
 
-type AnchorKind = NonNullable<EarningsPriceAttributionResponse["anchor_kind"]>;
-type LagKind = NonNullable<EarningsPriceAttributionResponse["lag_kind"]>;
-type MarketSession = NonNullable<EarningsPriceAttributionResponse["session"]>;
+type AnchorKind = NonNullable<V2PriceAttributionResponse["anchor_kind"]>;
+type LagKind = NonNullable<V2PriceAttributionResponse["lag_kind"]>;
+type MarketSession = NonNullable<V2PriceAttributionResponse["session"]>;
 
 const ANCHOR_KIND_LABELS: Record<AnchorKind, string> = {
     started_at: "First spoken word",
@@ -68,7 +68,7 @@ function formatBps(value: null | number) {
     return signed === null ? "—" : `${signed} bps`;
 }
 
-function formatLag(data: EarningsPriceAttributionResponse) {
+function formatLag(data: V2PriceAttributionResponse) {
     if (data.anchor_lag_ms === null) return "—";
 
     const seconds = `${formatDecimal(data.anchor_lag_ms / 1000, 1)} s`;
@@ -77,11 +77,11 @@ function formatLag(data: EarningsPriceAttributionResponse) {
 }
 
 /** The anchor / session summary exists only once the post-call run wrote it (null while live). */
-function hasSummary(data: EarningsPriceAttributionResponse) {
+function hasSummary(data: V2PriceAttributionResponse) {
     return [data.anchor_kind, data.anchor_lag_ms, data.lag_kind, data.session, data.end_of_window_return_bps].some(value => value !== null);
 }
 
-function AnchorFacts({ data }: { data: EarningsPriceAttributionResponse }) {
+function AnchorFacts({ data }: { data: V2PriceAttributionResponse }) {
     const facts: Array<{ label: string; value: string }> = [
         { label: "Anchor", value: data.anchor_kind ? ANCHOR_KIND_LABELS[data.anchor_kind] : "—" },
         { label: "Lag", value: formatLag(data) },
@@ -106,7 +106,7 @@ function AnchorFacts({ data }: { data: EarningsPriceAttributionResponse }) {
     );
 }
 
-function UtteranceRefs({ refs }: { refs: Array<EarningsPriceUtteranceRef> }) {
+function UtteranceRefs({ refs }: { refs: Array<V2PriceUtteranceRef> }) {
     if (refs.length === 0) return <span className="text-muted-foreground">—</span>;
 
     return (
@@ -122,7 +122,7 @@ function UtteranceRefs({ refs }: { refs: Array<EarningsPriceUtteranceRef> }) {
     );
 }
 
-function TopMinutes({ data }: { data: EarningsPriceAttributionResponse }) {
+function TopMinutes({ data }: { data: V2PriceAttributionResponse }) {
     if (data.top_minutes.length === 0) return null;
 
     return (
@@ -143,7 +143,7 @@ function TopMinutes({ data }: { data: EarningsPriceAttributionResponse }) {
     );
 }
 
-function CumulativeChart({ data }: { data: EarningsPriceAttributionResponse }) {
+function CumulativeChart({ data }: { data: V2PriceAttributionResponse }) {
     const rows = data.buckets.map(bucket => ({
         cumulative: bucket.cumulative_return_bps,
         minute: formatMinute(bucket.bucket),
@@ -175,7 +175,7 @@ function CumulativeChart({ data }: { data: EarningsPriceAttributionResponse }) {
     );
 }
 
-function BucketTable({ data }: { data: EarningsPriceAttributionResponse }) {
+function BucketTable({ data }: { data: V2PriceAttributionResponse }) {
     return (
         <Table>
             <TableHeader>
@@ -203,7 +203,7 @@ function BucketTable({ data }: { data: EarningsPriceAttributionResponse }) {
 }
 
 export type PriceAttributionViewProps = {
-    data: EarningsPriceAttributionResponse | null;
+    data: null | V2PriceAttributionResponse;
     error: unknown;
     isLoading: boolean;
 };
@@ -246,8 +246,8 @@ export function PriceAttributionView({ data, error, isLoading }: PriceAttributio
  * "Price moves" tab: minute returns of the call window next to the utterances spoken in each
  * minute; refetched every minute while the call may be live.
  */
-export function PriceAttributionTab({ event, selector }: CallTabProps) {
-    const { data, error, isLoading } = useEarningsPriceAttribution(selector, { live: isEarningsEventLiveish(event) });
+export function PriceAttributionTab({ event, eventId }: CallTabProps) {
+    const { data, error, isLoading } = useV2PriceAttribution(eventId, { live: isEarningsEventLiveish(event) });
 
     return <PriceAttributionView data={data} error={error} isLoading={isLoading} />;
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { EarningsCompanyDocument, EarningsEvent, JsonValue } from "@/lib/api/types";
+import type { JsonValue, V2Event, V2InvestorDocument } from "@/lib/api/types";
 
 import { callCalendarDate, eventLabel } from "@/lib/earnings/format";
 
@@ -137,7 +137,7 @@ export type TreeDocument = {
 
 /** The events-list fields a call row needs. */
 export type CallEvent = Pick<
-    EarningsEvent,
+    V2Event,
     | "call_time_source"
     | "event_id"
     | "event_title"
@@ -511,7 +511,7 @@ export function allKeys(tree: ReadonlyArray<TreeNode<unknown>>): Array<string> {
 }
 
 /** Where a row opens: the stored copy (a permanent public URL), else the page it was found on (a link-only webcast row). */
-export function documentHref(doc: Pick<EarningsCompanyDocument, "source_url" | "url">) {
+export function documentHref(doc: Pick<V2InvestorDocument, "source_url" | "url">) {
     return doc.url ?? doc.source_url;
 }
 
@@ -529,11 +529,12 @@ export function documentPageHref(url: string, page: null | number) {
 
 export type DocumentPage = { n: number; text: string; title: null | string };
 
-/** The pages of a pages JSON (`{ pages: [{ n, title, text, sections }] }`); anything else → `[]`. */
+/** The pages of v2's `pages` array (`expand=pages`) or a pages JSON (`{ pages: [{ n, title, text, sections }] }`); anything else → `[]`. */
 export function pagesOf(pagesJson: JsonValue | undefined): Array<DocumentPage> {
-    if (!pagesJson || typeof pagesJson !== "object" || Array.isArray(pagesJson)) return [];
-
-    const pages = pagesJson.pages;
+    // v2's `pages` (`expand=pages`) is the array itself; a stored pages file holds it under `pages`.
+    const pages = Array.isArray(pagesJson)
+        ? pagesJson
+        : pagesJson && typeof pagesJson === "object" ? pagesJson.pages : undefined;
 
     if (!Array.isArray(pages)) return [];
 

@@ -2,7 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 
-import type { EarningsEvent } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const SKELETON_ROWS = 8;
 
 /** The calendar's and the company page's table: `Skeleton` rows while the first page loads. */
-export function EventsTable<T extends EarningsEvent>({
+export function EventsTable<T extends V2Event>({
     columns,
     events,
     isLoading,

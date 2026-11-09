@@ -4,10 +4,10 @@ import type * as React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { EarningsDocumentSearchResponse, SearchCoverage } from "@/lib/api/types";
+import type { SearchCoverage, V2InvestorDocumentSearchHit, V2InvestorDocumentSearchResponse } from "@/lib/api/types";
 
 import { ApiRequestError } from "@/lib/api/errors";
-import { useEarningsDocumentSearch } from "@/lib/api/queries";
+import { useV2InvestorDocumentSearch } from "@/lib/api/queries";
 import { SEARCH_MODES } from "@/lib/earnings/labels";
 import { DocumentSearch, DocumentSearchResults } from "@/routes/$ticker/documents/-components/document-search";
 
@@ -26,8 +26,8 @@ vi.mock("@tanstack/react-router", () => ({
 
 // The results body is rendered with its data directly: keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
-    useEarningsDocumentSearch: vi.fn(),
-    useEarningsSearch: vi.fn(),
+    useV2InvestorDocumentSearch: vi.fn(),
+    useV2TranscriptSearch: vi.fn(),
 }));
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
@@ -36,7 +36,7 @@ vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
 
 afterEach(cleanup);
 
-const HIT: EarningsDocumentSearchResponse["hits"][number] = {
+const HIT: V2InvestorDocumentSearchHit = {
     category: "reports",
     chunk_index: 3,
     cik: "0000000001",
@@ -52,7 +52,6 @@ const HIT: EarningsDocumentSearchResponse["hits"][number] = {
     score: 0.8123,
     section: "annual_reports",
     symbol: "ACME",
-    table: "company_documents",
     text: "Our capital allocation priorities remain investment, dividends and buybacks.",
     text_truncated: false,
     title: "Annual Report 2025",
@@ -66,12 +65,12 @@ const COMPLETE: SearchCoverage = {
     reasons: [],
 };
 
+/** A v2 answer: one page of hits, the index coverage in `meta.index`, the query in `meta.query`. */
 const answer = (
-    hits: EarningsDocumentSearchResponse["hits"],
+    hits: Array<V2InvestorDocumentSearchHit>,
     query: string,
     coverage: SearchCoverage = COMPLETE,
-    mode: EarningsDocumentSearchResponse["mode"] = "lexical",
-): EarningsDocumentSearchResponse => ({ coverage, hits, mode, query });
+): V2InvestorDocumentSearchResponse => ({ data: hits, has_more: false, meta: { index: coverage, query }, next_cursor: null });
 
 describe("DocumentSearchResults", () => {
     it("shows each passage with its document, year and page and opens the PDF at that page", () => {
@@ -102,7 +101,6 @@ describe("DocumentSearchResults", () => {
             ...HIT,
             event_id: "11111111-1111-4111-8111-111111111111",
             page: null,
-            table: "event_documents" as const,
             title: null,
             url: null,
             year: null,
@@ -175,10 +173,10 @@ describe("DocumentSearchResults", () => {
 });
 
 describe("DocumentSearch", () => {
-    it("defaults to Keyword and re-runs the submitted query with a new mode", () => {
-        const search = vi.mocked(useEarningsDocumentSearch);
+    it("defaults to Keyword and re-runs the submitted query with a new mode, scoped to the company", () => {
+        const search = vi.mocked(useV2InvestorDocumentSearch);
 
-        search.mockReturnValue({ data: null, error: null, isFetching: false } as unknown as ReturnType<typeof useEarningsDocumentSearch>);
+        search.mockReturnValue({ data: null, error: null, isFetching: false } as unknown as ReturnType<typeof useV2InvestorDocumentSearch>);
 
         render(<DocumentSearch identifier="ACME" />);
 
@@ -188,26 +186,24 @@ describe("DocumentSearch", () => {
 
         fireEvent.click(screen.getByRole("button", { name: "Search" }));
 
-        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: undefined, mode: "lexical", q: "FY2027" }));
-
-        // "Match case" belongs to Exact only.
-        expect(screen.queryByRole("button", { name: "Match case" })).toBeNull();
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ company: "ACME", mode: "lexical", q: "FY2027" }));
 
         fireEvent.click(screen.getByRole("button", { name: "Exact" }));
 
-        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: "true", mode: "literal", q: "FY2027" }));
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ company: "ACME", mode: "literal", q: "FY2027" }));
 
-        fireEvent.click(screen.getByRole("button", { name: "Match case" }));
+        // v2 has no case switch and no source filter.
+        expect(screen.queryByRole("button", { name: "Match case" })).toBeNull();
 
-        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: "false", mode: "literal", q: "FY2027" }));
+        expect(screen.queryByRole("button", { name: "IR library" })).toBeNull();
 
         fireEvent.click(screen.getByRole("button", { name: "Keyword" }));
 
-        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: undefined, mode: "lexical", q: "FY2027" }));
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ mode: "lexical", q: "FY2027" }));
     });
 
     it("offers only the Keyword and Exact chips (no meaning or hybrid mode)", () => {
-        vi.mocked(useEarningsDocumentSearch).mockReturnValue({ data: null, error: null, isFetching: false } as unknown as ReturnType<typeof useEarningsDocumentSearch>);
+        vi.mocked(useV2InvestorDocumentSearch).mockReturnValue({ data: null, error: null, isFetching: false } as unknown as ReturnType<typeof useV2InvestorDocumentSearch>);
 
         render(<DocumentSearch identifier="ACME" />);
 

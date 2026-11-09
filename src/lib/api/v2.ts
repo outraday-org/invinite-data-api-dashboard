@@ -3,9 +3,14 @@
  * parameter is a 400 `unknown_parameter`, so an unset one is never sent), the `expand` lists and the company
  * coverage's words.
  */
-import type { V2CompanyCoverage, V2CompanyExpand, V2FilerExpand } from "./types";
+import type { V2CompanyCoverage, V2CompanyExpand, V2EventExpand, V2FilerExpand, V2SlidesInclude } from "./types";
 
 export const V2_COMPANY_EXPANDS = ["coverage"] as const satisfies ReadonlyArray<V2CompanyExpand>;
+
+export const V2_EVENT_EXPANDS = ["calendar", "observations"] as const satisfies ReadonlyArray<V2EventExpand>;
+
+/** `GET /v2/events/{event_id}/slides?include=` (the timeline is opt-in in v2). */
+export const V2_SLIDES_INCLUDES = ["markdown", "timeline"] as const satisfies ReadonlyArray<V2SlidesInclude>;
 
 export const V2_FILER_EXPANDS = [
     "lifecycle",

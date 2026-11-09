@@ -5,7 +5,7 @@ import type * as Recharts from "recharts";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { EarningsPriceAttributionResponse } from "@/lib/api/types";
+import type { V2PriceAttributionResponse } from "@/lib/api/types";
 
 import { ApiRequestError } from "@/lib/api/errors";
 import {
@@ -40,7 +40,7 @@ const OPENING = { speaker_label: "A", start_ms: 65_000, text: "Revenue grew 12% 
 
 const GUIDANCE = { speaker_label: "B", start_ms: 130_000, text: "We now expect full-year margins of 30%." };
 
-const ATTRIBUTION: EarningsPriceAttributionResponse = {
+const ATTRIBUTION: V2PriceAttributionResponse = {
     anchor_kind: "t0_wallclock",
     anchor_lag_ms: 4200,
     anchor_uncertainty_s: 2,
@@ -85,7 +85,7 @@ const ATTRIBUTION: EarningsPriceAttributionResponse = {
 };
 
 // While the call runs: the minute rows so far, no summary yet.
-const LIVE_ATTRIBUTION: EarningsPriceAttributionResponse = {
+const LIVE_ATTRIBUTION: V2PriceAttributionResponse = {
     ...ATTRIBUTION,
     anchor_kind: null,
     anchor_lag_ms: null,

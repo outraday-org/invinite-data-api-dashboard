@@ -1,8 +1,8 @@
-import type { EarningsGuidanceItem, EarningsSearchCaseSensitive, EarningsSearchMode, HitMatch, MatchSpan } from "@/lib/api/types";
+import type { HitMatch, MatchSpan, SearchMode, SecSearchCaseSensitive, V2GuidanceItem } from "@/lib/api/types";
 
 import { formatNumberEnCompact } from "@/lib/utils";
 
-type Direction = EarningsGuidanceItem["direction"];
+type Direction = V2GuidanceItem["direction"];
 
 /** Labels of the API's normalized guidance / KPI vocabulary (`metric_normalized`). */
 const METRIC_LABELS: Record<string, string> = {
@@ -52,20 +52,20 @@ export const DIRECTION_STYLES: Record<Direction, { className: string; label: str
     withdrawn: { className: "bg-amber-500/15 text-amber-700 dark:text-amber-400", label: "Withdrawn" },
 };
 
-export const PERIOD_KIND_LABELS: Record<EarningsGuidanceItem["period_kind"], string> = {
+export const PERIOD_KIND_LABELS: Record<V2GuidanceItem["period_kind"], string> = {
     fiscal_year: "Fiscal year",
     half: "Half year",
     other: "Other",
     quarter: "Quarter",
 };
 
-export const BASIS_LABELS: Record<EarningsGuidanceItem["basis"], string> = {
+export const BASIS_LABELS: Record<V2GuidanceItem["basis"], string> = {
     gaap: "GAAP",
     non_gaap: "Non-GAAP",
     unknown: "—",
 };
 
-export const REVIEW_STATUS_LABELS: Record<EarningsGuidanceItem["review_status"], string> = {
+export const REVIEW_STATUS_LABELS: Record<NonNullable<V2GuidanceItem["review_status"]>, string> = {
     approved: "Approved",
     auto: "Auto",
     needs_review: "Needs review",
@@ -187,7 +187,7 @@ export function formatGuidanceValue(value: null | number, unit: null | string, c
 }
 
 /** "low – high", one value when both are equal or only one is set; nothing → "—". */
-export function formatGuidanceRange(item: Pick<EarningsGuidanceItem, "currency" | "high" | "low" | "unit">) {
+export function formatGuidanceRange(item: Pick<V2GuidanceItem, "currency" | "high" | "low" | "unit">) {
     const { currency, high, low, unit } = item;
 
     if (low === null && high === null) return "—";
@@ -288,7 +288,7 @@ export function highlightSpans(text: string, spans: ReadonlyArray<MatchSpan>): A
 }
 
 /** The mode chips' labels; exhaustive over the API's mode enum (the server functions' zod enum is its keys). */
-export const SEARCH_MODE_LABELS: Record<EarningsSearchMode, string> = {
+export const SEARCH_MODE_LABELS: Record<SearchMode, string> = {
     lexical: "Keyword",
     literal: "Exact",
 };
@@ -297,16 +297,16 @@ export const SEARCH_MODE_LABELS: Record<EarningsSearchMode, string> = {
 export type ListsEvery<TAll, TListed> = [Exclude<TAll, TListed>] extends [never] ? true : never;
 
 /** Every search mode in chip order (Keyword first, the API default). */
-export const SEARCH_MODES = ["lexical", "literal"] as const satisfies ReadonlyArray<EarningsSearchMode>;
+export const SEARCH_MODES = ["lexical", "literal"] as const satisfies ReadonlyArray<SearchMode>;
 
 // Compile-time: a mode the API adds fails here until it is listed above (and labelled in SEARCH_MODE_LABELS).
-export const SEARCH_MODES_COMPLETE: ListsEvery<EarningsSearchMode, (typeof SEARCH_MODES)[number]> = true;
+export const SEARCH_MODES_COMPLETE: ListsEvery<SearchMode, (typeof SEARCH_MODES)[number]> = true;
 
-/** The API's `case_sensitive` string enum (`mode=literal` only). */
-export const SEARCH_CASE_SENSITIVE_VALUES = ["true", "false"] as const satisfies ReadonlyArray<EarningsSearchCaseSensitive>;
+/** The SEC search's `case_sensitive` string enum (`mode=literal` only). */
+export const SEARCH_CASE_SENSITIVE_VALUES = ["true", "false"] as const satisfies ReadonlyArray<SecSearchCaseSensitive>;
 
 export const SEARCH_CASE_SENSITIVE_COMPLETE: ListsEvery<
-    EarningsSearchCaseSensitive,
+    SecSearchCaseSensitive,
     (typeof SEARCH_CASE_SENSITIVE_VALUES)[number]
 > = true;
 

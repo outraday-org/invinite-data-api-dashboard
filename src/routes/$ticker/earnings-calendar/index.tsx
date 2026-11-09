@@ -3,15 +3,15 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 
-import type { EarningsEvent } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 import type { CalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useEarningsCalendarInfinite } from "@/lib/api/queries";
+import { useV2EventsInfinite } from "@/lib/api/queries";
 import { calendarWindow, eventLabel, isCallToday, SESSION_LABELS } from "@/lib/earnings/format";
 import { AvailabilityIcons } from "@/routes/$ticker/earnings-calls/-components/availability-icons";
-import { CalendarFilters, DATE_STATUSES, validateCalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
+import { CalendarFilters, matchesCalendarSearch, validateCalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 import { CalendarCallCell, CalendarReportCell, CalendarStatusBadge } from "@/routes/$ticker/earnings-calls/-components/calendar-semantics";
 import { CallStatusBadge } from "@/routes/$ticker/earnings-calls/-components/call-status-badge";
 import { EventLink } from "@/routes/$ticker/earnings-calls/-components/event-link";
@@ -44,25 +44,24 @@ function EarningsCalendarPage() {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useEarningsCalendarInfinite({
-        calendarStatus: search.calendarStatus ? [search.calendarStatus] : undefined,
+    } = useV2EventsInfinite({
+        // The market calendar: no `company`, a New York day window (≤ 92 days without a company).
         dateKind: search.dateKind,
-        eventType: search.eventType,
-        from: range.from,
+        expand: ["calendar"],
         limit: 50,
-        session: search.session,
-        sort: "asc",
-        // "All statuses" includes cancelled calls (omitted, the API would drop them).
-        status: search.status ? [search.status] : [...DATE_STATUSES],
-        to: range.to,
+        scheduledAtGte: range.from,
+        scheduledAtLte: range.to,
+        sort: "scheduled_at",
+        type: search.eventType,
     });
 
+    // Session and event status have no `/v2/events` parameter: they filter the loaded rows.
     const events = React.useMemo(
-        () => data?.pages.flatMap(page => page.events) ?? [],
-        [data],
+        () => (data?.pages.flatMap(page => page.data) ?? []).filter(event => matchesCalendarSearch(event, search)),
+        [data, search],
     );
 
-    const columns = React.useMemo<Array<ColumnDef<EarningsEvent>>>(
+    const columns = React.useMemo<Array<ColumnDef<V2Event>>>(
         () => [
             {
                 cell: ({ row }) => <CalendarCallCell event={row.original} />,
@@ -138,10 +137,11 @@ function EarningsCalendarPage() {
                 <div className="flex flex-col gap-1">
                     <div>Earnings Calendar</div>
                     <div className="text-muted-foreground text-sm">
-                        Calls of all covered US companies by New York day. Estimated = a vendor or
-                        history estimate, unconfirmed = a first-party date without a time,
-                        confirmed = a first-party start time. The report (results release) is shown apart from
-                        the call: its day and before open / after close come from the results filing&apos;s acceptance.
+                        Calls of all covered US companies by New York call day (at most 92 days at once). Estimated = a
+                        vendor or history estimate, unconfirmed = a first-party date without a time, confirmed = a
+                        first-party start time. The report (results release) is shown apart from the call: its day and
+                        before open / after close come from the results filing&apos;s acceptance. Session and event
+                        status filter the loaded rows.
                     </div>
                 </div>
                 <CalendarFilters
@@ -174,7 +174,7 @@ function EarningsCalendarPage() {
 
                                 {!isLoading && events.length === 0 && (
                                     <div className="text-muted-foreground w-full text-center text-xs p-2">
-                                        {search.dateKind === "report" ? "No reports in this window." : "No calls in this window."}
+                                        {hasNextPage ? "No matching calls loaded yet." : "No calls in this window."}
                                     </div>
                                 )}
                             </ScrollArea>

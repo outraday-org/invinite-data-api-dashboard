@@ -5,7 +5,7 @@ import { formatMs } from "@/lib/earnings/format";
 /**
  * Pure pieces of the live price chart (`live-price-chart.tsx`; another basename, so
  * `./live-price-chart` resolves to the component): the minute rows of
- * `GET /v1/earnings-calls/price-attribution` seed the line (no second-level backlog exists for a
+ * `GET /v2/events/{event_id}/price-attribution` seed the line (no second-level backlog exists for a
  * late join), the `price_tick` frames continue it, both on the transcript clock when it is known.
  *
  * - The clock: a tick's `call_ms` = its `at` on the transcript clock, so `at − call_ms` is the

@@ -4,12 +4,12 @@
  * 503 not_ready and two calendar events (one with a report and a call, one whose call expired date-only).
  */
 import type {
-    EarningsEvent,
     JsonValue,
     SecDocumentResponse,
     SecFilersResponse,
     SecFilingManifestResponse,
     SecFilingsResponse,
+    V2Event,
 } from "@/lib/api/types";
 
 export const SEC_FILINGS: SecFilingsResponse = {
@@ -796,7 +796,7 @@ export const SEC_LIFECYCLE_NOT_READY_BODY: { [key: string]: JsonValue } = {
     },
 };
 
-export const CALENDAR_EVENT: EarningsEvent = {
+export const CALENDAR_EVENT: V2Event = {
     calendar: {
         call: {
             at: "2026-11-04T13:30:00.000Z",
@@ -858,7 +858,7 @@ export const CALENDAR_EVENT: EarningsEvent = {
     webcast_url: null,
 };
 
-export const CALENDAR_EVENT_EXPIRED_CALL: EarningsEvent = {
+export const CALENDAR_EVENT_EXPIRED_CALL: V2Event = {
     calendar: {
         call: {
             at: null,

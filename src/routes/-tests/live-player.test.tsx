@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { EarningsEventResponse } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 
 import { INITIAL_LIVE_TRANSCRIPT } from "@/lib/live/live-transcript-reducer";
 import { LIVE_WAITING_FOR_TEXT_TEXT } from "@/routes/$ticker/earnings-calls/-components/live/live-audio-section";
@@ -77,8 +77,8 @@ vi.mock("@/lib/live/live-clients", async importOriginal => ({
 vi.mock("@/lib/api/queries", () => ({
     isEarningsEventLiveish: () => true,
     useApiBaseUrl: () => "https://api.example.com",
-    useEarningsLiveStream: () => ({ data: mocks.stream, error: null, refetch: () => Promise.resolve({ data: mocks.stream, isError: false }) }),
-    useEarningsPriceAttribution: () => ({ data: undefined }),
+    useV2LiveAudio: () => ({ data: mocks.stream, error: null, refetch: () => Promise.resolve({ data: mocks.stream, isError: false }) }),
+    useV2PriceAttribution: () => ({ data: undefined }),
 }));
 
 vi.mock("@/lib/live/use-live-transcript", () => ({ useLiveTranscript: () => mocks.transcript }));
@@ -87,7 +87,7 @@ vi.mock("@/routes/$ticker/earnings-calls/-components/live/live-price-chart", () 
 
 vi.mock("@tanstack/react-router", () => ({ Link: () => null }));
 
-const EVENT = { event_id: "evt", has_transcript: false, symbol: "AAPL" } as unknown as EarningsEventResponse;
+const EVENT = { event_id: "evt", has_transcript: false, symbol: "AAPL" } as unknown as V2Event;
 
 function segment(seq: number, startMs: number, text: string) {
     return { endMs: startMs + 4_000, seq, speakerLabel: "spk00", startMs, text };

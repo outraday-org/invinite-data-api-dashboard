@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
 
-import type { EarningsSlideTimelineEntry } from "@/lib/api/types";
+import type { V2SlideTimelineEntry } from "@/lib/api/types";
 
 import { Button } from "@/components/ui/button";
 import { indexAt } from "@/lib/earnings/follow-along";
@@ -16,7 +16,7 @@ import { useCallAudio, useCallPlayback } from "./audio-context";
  * the call from it (the first click loads the recording). Without a recording (`has_audio`
  * false) it is a plain carousel.
  */
-export function SlideTimeline({ timeline }: { timeline: Array<EarningsSlideTimelineEntry> }) {
+export function SlideTimeline({ timeline }: { timeline: Array<V2SlideTimelineEntry> }) {
     const { loaded, seekMs } = useCallAudio();
 
     const { positionMs } = useCallPlayback();
@@ -62,7 +62,7 @@ const SlideTimelineView = React.memo(function SlideTimelineView({
     index: number;
     onShow: (next: number) => void;
     seekMs: ((ms: number) => void) | null;
-    timeline: Array<EarningsSlideTimelineEntry>;
+    timeline: Array<V2SlideTimelineEntry>;
 }) {
     const slide = timeline[index];
 

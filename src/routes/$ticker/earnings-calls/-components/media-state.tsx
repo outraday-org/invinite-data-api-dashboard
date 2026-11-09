@@ -19,14 +19,15 @@ export function NoTranscriptNotice({ captureStatus }: { captureStatus: string })
     return <Notice title={NO_TRANSCRIPT_TITLE}>{reason}</Notice>;
 }
 
-// The answers IDA's media routes give by design (`code` = the body's `error`).
+// The answers IDA's v2 media operations give by design (`code` = the problem's `code`). The REST plan gate is a 403
+// `plan_required` (`isTierError`, checked first), so a 403 `forbidden` here is the audio refusal.
 const MEDIA_CODES: Partial<Record<string, { badge: string; title: string }>> = {
     // One answer for an unlicensed company and a recording not served yet (not marked, failed, too long).
-    audio_unavailable: {
+    forbidden: {
         badge: "Unavailable",
         title: "Audio for this call is not available (not licensed for delivery, or the recording is not ready yet)",
     },
-    media_unavailable: { badge: "Unavailable", title: "Media temporarily unavailable" },
+    unavailable: { badge: "Unavailable", title: "Media temporarily unavailable" },
 };
 
 /**

@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
-import type { EarningsCompanyDocument } from "@/lib/api/types";
+import type { V2InvestorDocument } from "@/lib/api/types";
 import type { DocumentsSearch } from "@/lib/earnings/documents";
 
 import { SecFilingSearch } from "@/components/sec/sec-filing-search";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isTierError } from "@/lib/api/errors";
-import { useCompanyDetails, useEarningsCompanyDocumentsInfinite, useEarningsEventsInfinite } from "@/lib/api/queries";
+import { useCompanyDetails, useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
 import { buildDocumentTree, callEntries, eventTitleMap, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
 import { MediaState, Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
@@ -26,7 +26,8 @@ export const Route = createFileRoute("/$ticker/documents/")({
     validateSearch: validateDocumentsSearch,
 });
 
-const PAGE_SIZE = 100;
+// The API's largest page (`/v2/investor-documents`, `/v2/events`).
+const PAGE_SIZE = 200;
 
 // The events list feeds the call rows: every event type, newest first, the API's largest page.
 const EVENTS_PAGE_SIZE = 200;
@@ -38,7 +39,7 @@ function LibraryError({ error }: { error: unknown }) {
     return <MediaState error={error} notFound="No earnings-call coverage for this company" title="Failed to load the documents" />;
 }
 
-/** The search sources: the company's own documents (`/documents/search`) or its SEC filings (`/v1/sec/search`). */
+/** The search sources: the company's own documents (`/v2/search/investor-documents`) or its SEC filings (`/v1/sec/search`). */
 const SEARCH_SOURCES = [
     { label: "Company documents", value: "company" },
     { label: "SEC filings", value: "sec" },
@@ -69,21 +70,22 @@ function DocumentsPage() {
 
     const navigate = Route.useNavigate();
 
-    const [textOf, setTextOf] = React.useState<EarningsCompanyDocument | null>(null);
+    const [textOf, setTextOf] = React.useState<null | V2InvestorDocument>(null);
 
     const [searchSource, setSearchSource] = React.useState<SearchSource>("company");
 
-    const library = useEarningsCompanyDocumentsInfinite({
-        category: search.category ? [search.category] : undefined,
-        identifier: ticker,
-        include: ["calls"],
+    // The IR library and every call's documents in one list (`source: company | call`).
+    const library = useV2InvestorDocumentsInfinite({
+        category: search.category,
+        company: ticker,
+        fiscalYear: search.year,
         kind: search.kind ? [search.kind] : undefined,
         limit: PAGE_SIZE,
-        section: search.section ? [search.section] : undefined,
-        year: search.year,
     });
 
-    const events = useEarningsEventsInfinite({ eventType: "all", identifier: ticker, limit: EVENTS_PAGE_SIZE, sort: "desc" });
+    const events = useV2EventsInfinite({ company: ticker, limit: EVENTS_PAGE_SIZE, sort: "-scheduled_at", type: "all" });
+
+    const { data: details } = useCompanyDetails(ticker);
 
     // No totals in the API: load every page of both, so the counts and the text filter see everything.
     useLoadAllPages({ ...library, hasNextPage: Boolean(library.hasNextPage) });
@@ -92,9 +94,13 @@ function DocumentsPage() {
 
     const { data, error, isLoading } = library;
 
-    const documents = React.useMemo(() => data?.pages.flatMap(page => page.documents) ?? [], [data]);
+    // `/v2/investor-documents` has no section filter: the IR section filters the loaded rows.
+    const documents = React.useMemo(
+        () => (data?.pages.flatMap(page => page.data) ?? []).filter(doc => !search.section || doc.section === search.section),
+        [data, search.section],
+    );
 
-    const eventList = React.useMemo(() => events.data?.pages.flatMap(page => page.events) ?? [], [events.data]);
+    const eventList = React.useMemo(() => events.data?.pages.flatMap(page => page.data) ?? [], [events.data]);
 
     const calls = React.useMemo(() => filterCallEntries(callEntries(eventList, documents), search), [documents, eventList, search]);
 
@@ -106,7 +112,8 @@ function DocumentsPage() {
         [calls, documents, eventTitles, search.q],
     );
 
-    const company = data?.pages[0]?.company;
+    // v2 lists name no company: its name comes from the company details the layout already loads.
+    const companyName = details?.companies[0]?.name ?? null;
 
     const onFilterChange = (patch: Partial<DocumentsSearch>) => {
         // The text filter updates as you type: replace the history entry instead of adding one per keystroke.
@@ -155,7 +162,7 @@ function DocumentsPage() {
                                 {!isLoading && !error && (
                                     <span className="text-muted-foreground font-normal">
                                         {` · ${documents.length}${loadingMore ? "+" : ""} document${documents.length === 1 ? "" : "s"}`}
-                                        {company ? ` · ${company.name}` : ""}
+                                        {companyName ? ` · ${companyName}` : ""}
                                     </span>
                                 )}
                             </div>
@@ -178,7 +185,7 @@ function DocumentsPage() {
                                             <DocumentTree
                                                 filtering={Boolean(search.q)}
                                                 onShowText={setTextOf}
-                                                ticker={company?.symbol ?? ticker}
+                                                ticker={ticker}
                                                 tree={tree}
                                             />
                                         )}

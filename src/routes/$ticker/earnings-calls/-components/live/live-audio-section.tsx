@@ -2,7 +2,7 @@ import type * as React from "react";
 
 import { Pause, Play } from "lucide-react";
 
-import type { EarningsLiveStreamResponse } from "@/lib/api/types";
+import type { V2LiveAudioResponse } from "@/lib/api/types";
 import type { LiveAudioMode } from "@/lib/live/live-sync";
 import type { LiveAudio } from "@/lib/live/use-live-audio";
 
@@ -33,9 +33,10 @@ function streamErrorText(error: unknown): string {
     if (isTierError(error)) return LIVE_AUDIO_TIER_TEXT;
 
     if (error instanceof ApiRequestError) {
-        if (error.code === "audio_unavailable") return "Audio for this company is not available under the current licence";
+        // v2: 403 `forbidden` = audio not available (unlicensed / taken down), 503 `unavailable` = media outage.
+        if (error.code === "forbidden") return "Audio for this company is not available under the current licence";
 
-        if (error.code === "media_unavailable") return "Live audio is temporarily unavailable";
+        if (error.code === "unavailable") return "Live audio is temporarily unavailable";
 
         if (error.status === 404) return "No live audio found for this call";
     }
@@ -56,7 +57,7 @@ export function LiveAudioSection({
 }: {
     audio: LiveAudio;
     mode: LiveAudioMode;
-    stream: EarningsLiveStreamResponse | null;
+    stream: null | V2LiveAudioResponse;
     streamError: unknown;
 }) {
     if (stream === null) return <Note>{streamError ? streamErrorText(streamError) : "Asking for the live stream…"}</Note>;

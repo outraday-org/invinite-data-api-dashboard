@@ -3381,6 +3381,306 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v2/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List events
+         * @description Events (earnings calls by default; `type=all` or a list opts into investor days, conferences, AGMs and other events), keyset-paged by `scheduled_at` with the event id as tiebreaker. With `company=` every date of that company is listed; without `company=` the list is a calendar: the `scheduled_at` window defaults to today through today + 14 days (New York calendar days) and may span at most 92 days (a wider window is a 400 `invalid_parameter`); `status=live` alone needs no window. Expired calendar rows (an estimate that never became a call, a duplicate, a non-call issuer) are omitted; `GET /v2/events/{event_id}` still serves them.
+         */
+        get: operations["listEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an event
+         * @description The event (FREE: never a paid sub-object). `expand=calendar` adds the calendar object, `expand=observations` the date / time observations. Served whatever its status, expired calendar rows included. 404 `not_found` for an unknown or not served event id; 400 `invalid_parameter` for a value that is no event id.
+         */
+        get: operations["getEvent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/audio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an event's recording
+         * @description The recording's permanent public URL. 403 `forbidden` whenever no recording can be served (opted out, not recorded, not released yet) — one answer for every reason; 404 `not_found` for an unknown event.
+         */
+        get: operations["getAudio"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/comparison": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Compare an event with a prior one
+         * @description The comparison of this event with the company’s previous call, as derived by the pipeline (one comparison per event). `prior` may name that previous call; any other event id answers 404 `not_found`, because no other pair is derived. An event without a derived comparison (its company’s first call, or not derived yet) answers 404 `not_found` with the reason in `detail`.
+         */
+        get: operations["getEventComparison"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/live-audio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an event's live audio URL
+         * @description A temporary playlist URL of the event's live audio (HLS). `status` says whether the stream is `available`, `not_started` (ask again), `ended` (still playable for a while) or `disabled`; `url` and `expires_at` are null unless a URL was issued. The URL is a short-lived credential (`Cache-Control: private`). 403 `forbidden` when the company opted out of audio; 503 `unavailable` while live audio is not configured.
+         */
+        get: operations["getLiveAudio"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/press-release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an event's press release
+         * @description The event's results press release with its body text. `news_id` is null until press releases are linked to news items. 404 `not_found` when the event has no press release.
+         */
+        get: operations["getPressRelease"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/price-attribution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an event's price attribution
+         * @description Minute price returns of the call with the utterances spoken in each minute; while the call is live the rows grow once a minute (`live`), the post-call run replaces them (`settled`). 404 `not_found` until the first minute is derived.
+         */
+        get: operations["getPriceAttribution"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/prosody": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an event's speech prosody
+         * @description Per-speaker delivery features of one section (`section`, default `all`). 404 `not_found` when the event has no transcript or its features are not derived yet.
+         */
+        get: operations["getProsody"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/qa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List an event's Q&A pairs
+         * @description Analyst questions and management answers in call order (keyset on the pair's sequence); `include=scores` adds the answer scores. 404 `not_found` when the event has no transcript. An empty first page reads `meta.coverage.state` `pending` until the call's statistics are derived (they follow the Q&A), else `complete` (a call without questions).
+         */
+        get: operations["listQa"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/slides": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an event's slides
+         * @description The event's slide deck: `pages` (one page or a range, e.g. `3` or `1-5`) narrows the slides, `include=markdown` adds each page's text, `include=timeline` the player's slide changes (opt-in). Image URLs are permanent public URLs. 404 `not_found` when the event has no deck; 503 `unavailable` while media is unavailable.
+         */
+        get: operations["getSlides"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an event's call statistics
+         * @description Call statistics derived from the transcript. 404 `not_found` when the event has no transcript or its statistics are not derived yet; `detail` says which.
+         */
+        get: operations["getEventStats"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/transcript": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an event's transcript
+         * @description Speaker turns of the current transcript version (or `version`). `layer=cleaned` serves the cleaned text in the same row (`end_ms` and `speaker_confidence` null); `include=words` adds `words[]` per turn (null on the cleaned layer) and is billed by turn count. 404 `not_found` when the event has no transcript, for an unknown or unpublished version, or a version without a cleaned layer; `detail` says which.
+         */
+        get: operations["getTranscript"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/transcript-diff": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Diff two transcript versions
+         * @description Word-level changes from version `from` to version `to` (the cleaned layer when both versions have one). 404 `not_found` for an unknown or unpublished version; 400 `invalid_parameter` (`param: from`) when the versions differ too much to diff.
+         */
+        get: operations["getTranscriptDiff"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/transcript-text": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an event's transcript as text
+         * @description The transcript as text blocks: `split=none` one `full` block, `split=sections` the prepared remarks and the Q&A (a version without stored sections: one `full` block). 404 `not_found` as for the transcript.
+         */
+        get: operations["getTranscriptText"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/{event_id}/transcript-versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List an event's transcript versions
+         * @description The event's published transcript versions, oldest first, each with its PDF. An event without a transcript answers an empty list.
+         */
+        get: operations["listTranscriptVersions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v2/filers": {
         parameters: {
             query?: never;
@@ -3427,6 +3727,77 @@ export interface paths {
         };
         /** List fiscal periods */
         get: operations["listFiscalPeriods"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/guidance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List guidance items */
+        get: operations["listGuidance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/investor-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List investor documents */
+        get: operations["listInvestorDocuments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/investor-documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an investor document
+         * @description One investor document from either source (`company` = the IR library, `call` = an event's documents); `expand=pages` inlines the per-page text (`pages`, otherwise null). 404 `not_found` for an unknown or not served document id.
+         */
+        get: operations["getInvestorDocument"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/kpis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List KPI mentions */
+        get: operations["listKpis"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3529,6 +3900,46 @@ export interface paths {
         };
         /** Get a person */
         get: operations["getPerson"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/search/investor-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search investor documents
+         * @description Ranked passages from company-published investor documents (IR library and call documents) with page numbers (`mode=lexical` by default, `literal` for exact text). Answers ONE page: `limit` is capped at 20, `has_more` is false and `next_cursor` null (the ranking is a top-N, not a stable cursor order); narrow `company` or `kind` to find more.
+         */
+        get: operations["searchInvestorDocuments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/search/transcripts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Search transcripts
+         * @description Ranked passages from earnings-call transcripts and slides (`mode=lexical` by default, `literal` for exact text). Answers ONE page: `limit` is capped at 8, `has_more` is false and `next_cursor` null (the ranking is a top-N, not a stable cursor order); narrow `company`, `event`, `type` or the `conference_date` window to find more. Without `company` and `event` the window defaults to the last 365 days.
+         */
+        get: operations["searchTranscripts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4747,6 +5158,1400 @@ export interface components {
             rule: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * Event
+         * @description One corporate event (earnings call by default)
+         */
+        Event: {
+            /**
+             * Format: uuid
+             * @description Stable event identifier
+             */
+            event_id: string;
+            /**
+             * @description Always `us`
+             * @enum {string}
+             */
+            source: "us";
+            /** @description 10-digit CIK */
+            cik: string;
+            /** @description Ticker symbol */
+            symbol: string;
+            /** @description Company name */
+            company_name: string;
+            /** @description Listing exchange */
+            exchange: null | string;
+            /**
+             * @description Event type
+             * @enum {string}
+             */
+            event_type: "agm" | "conference" | "earnings_call" | "investor_day" | "other";
+            /** @description Name of an investor day, conference or shareholder meeting; null for earnings calls */
+            event_title: null | string;
+            /** @description Fiscal year of the reported period */
+            fiscal_year: null | number;
+            /** @description Fiscal quarter of the reported period */
+            fiscal_quarter: null | number;
+            /**
+             * Format: date-time
+             * @description Scheduled start (ISO 8601 UTC). A date-only event (call_time_source null) is stored at 00:00:00Z of its calendar date: read its UTC date; do not convert it to tz.
+             */
+            scheduled_at: string;
+            /** @description Company timezone (IANA) */
+            tz: string;
+            /**
+             * @description How firm the date is
+             * @enum {string}
+             */
+            date_status: "cancelled" | "confirmed" | "estimated" | "postponed" | "unconfirmed";
+            /** @description Source of the start time (wire, edgar, ir_feed, human, provisional, vendor, estimate); null = date only */
+            call_time_source: null | string;
+            /** @description Confidence of the start time (high, low) */
+            call_time_confidence: null | string;
+            /**
+             * @description Market session
+             * @enum {string|null}
+             */
+            session: "amc" | "bmo" | "intraday" | null;
+            /**
+             * Format: date-time
+             * @description When the live call started (first spoken words)
+             */
+            started_at: null | string;
+            /**
+             * Format: date-time
+             * @description When the call ended
+             */
+            ended_at: null | string;
+            /**
+             * Format: date-time
+             * @description When the results press release was filed
+             */
+            results_released_at: null | string;
+            /** @description Capture state of the call */
+            capture_status: string;
+            /**
+             * @description Why the calendar row expired, set only while `capture_status` is `expired` (a final status: an estimate that never became a call, a duplicate, a non-call issuer, …); null otherwise. Appended 2026-11
+             * @enum {string|null}
+             */
+            expired_reason?: "agent_different_date" | "agent_no_call" | "agent_no_webcast" | "date_passed" | "duplicate" | "early_results_filing" | "inactive_company" | "never_planned" | "non_call_issuer" | "release_names_no_call" | "superseded_by_reschedule" | "superseded_estimate" | null;
+            /** @description How often the call was rescheduled */
+            reschedule_count: number;
+            /** @description A transcript is available */
+            has_transcript: boolean;
+            /** @description Audio is available */
+            has_audio: boolean;
+            /** @description A slide deck is available */
+            has_slides: boolean;
+            /** @description The results press release is available */
+            has_press_release: boolean;
+            /** @description Further event documents are available */
+            has_documents: boolean;
+            /** @description Webcast page of an upcoming dated call; null once published */
+            webcast_url: null | string;
+            /** @description The company's public broadcast on a video platform (YouTube, Vimeo). Embed `embed_url` when `embeddable` is not false; otherwise link `url`. Present before, during and after the event; null = none known. */
+            video: null | {
+                /** @description The platform's video id */
+                video_id: string;
+                /** @description Watch page */
+                url: string;
+                /** @description Privacy-enhanced player URL (YouTube: youtube-nocookie.com; Vimeo: dnt=1) */
+                embed_url: string;
+                /** @description Video title */
+                title: null | string;
+                /** @description Channel or account that published it */
+                channel: null | string;
+                /** @description Thumbnail image */
+                thumbnail_url: null | string;
+                /** @description false = the owner disabled or restricted embedding (link `url`); null = not checked yet */
+                embeddable: boolean | null;
+            };
+            /** @description Date / time observations, oldest first (at most 50) */
+            observations?: Array<{
+                /** @description Source class of the observation */
+                observed_source: string;
+                /**
+                 * Format: date-time
+                 * @description When we observed it (ISO 8601 UTC)
+                 */
+                observed_at: string;
+                /**
+                 * Format: date-time
+                 * @description Start time it announced
+                 */
+                starts_at: null | string;
+                /** @description Timezone it stated */
+                tz: null | string;
+                /** @description scheduled, postponed or cancelled */
+                status_hint: null | string;
+                /** @description Kind of announcement */
+                announcement_kind: null | string;
+            }> | null;
+            /** @description The calendar semantics of the event (appended 2026-11): the report (results release) and the call kept apart, the event status beside `date_status`, citations and coverage warnings — as the customer view computes them. A report date can exist without a call; a call time is never inferred from the release or the filing acceptance. */
+            calendar?: null | {
+                /**
+                 * @description Event status, most decisive first: cancelled, postponed, reported (results out), confirmed (first-party time), announced (first-party date), estimated
+                 * @enum {string|null}
+                 */
+                status: "announced" | "cancelled" | "confirmed" | "estimated" | "postponed" | "reported" | null;
+                /** @description The call (null fields when no call is expected) */
+                call: {
+                    /**
+                     * @description Call status: the event statuses without reported, plus held, no_call, expired, not_expected (a non-call issuer)
+                     * @enum {string|null}
+                     */
+                    status: "announced" | "cancelled" | "confirmed" | "estimated" | "expired" | "held" | "no_call" | "not_expected" | "postponed" | null;
+                    /**
+                     * Format: date
+                     * @description Call day (YYYY-MM-DD; New York day of a timed call)
+                     */
+                    date: null | string;
+                    /**
+                     * Format: date-time
+                     * @description Call start (ISO 8601 UTC); null for a date-only call or a filing-time stand-in
+                     */
+                    at: null | string;
+                    /**
+                     * @description How good `at` is
+                     * @enum {string|null}
+                     */
+                    time_quality: "date_only" | "estimate" | "first_party" | "first_party_low" | "none" | "provisional" | "vendor" | null;
+                    /**
+                     * @description Where the call date comes from
+                     * @enum {string|null}
+                     */
+                    date_basis: "estimate" | "first_party" | "none" | "provisional" | "vendor" | null;
+                    /** @description The observation that states the date / time */
+                    source: {
+                        /** @description Source type (wire, edgar, ir_feed, ir_page, vendor, …) */
+                        type: null | string;
+                        /** @description A citable URL or accession; null for a vendor row */
+                        ref: null | string;
+                        /**
+                         * Format: date-time
+                         * @description When it was observed
+                         */
+                        observed_at: null | string;
+                        /** @description The zone the time was stated in */
+                        tz: null | string;
+                        /** @description true = the zone was inferred, not stated */
+                        tz_inferred: boolean | null;
+                    } | null;
+                };
+                /** @description The results release */
+                report: {
+                    /**
+                     * Format: date
+                     * @description Report day (New York); null before the results
+                     */
+                    date: null | string;
+                    /**
+                     * @description bmo (before 09:30 New York) / amc (from 16:00) from the results filing's acceptance, unknown otherwise; exact is reserved for a stated release time
+                     * @enum {string|null}
+                     */
+                    time_kind: "amc" | "bmo" | "exact" | "unknown" | null;
+                    /**
+                     * @description filing_acceptance (the results filing's acceptance) or none
+                     * @enum {string|null}
+                     */
+                    quality: "filing_acceptance" | "none" | null;
+                    /** @description The results filing */
+                    source: null | {
+                        /** @description Accession number */
+                        accession: null | string;
+                        /** @description Form (8-K, 6-K, …) */
+                        form: null | string;
+                        /**
+                         * Format: date-time
+                         * @description EDGAR acceptance
+                         */
+                        accepted_at: null | string;
+                    };
+                };
+                /**
+                 * @description stated / inferred / unknown fiscal year and quarter
+                 * @enum {string|null}
+                 */
+                fiscal_period_quality: "inferred" | "stated" | "unknown" | null;
+                /** @description Coverage warnings, in a fixed order */
+                warnings: Array<"call_suppressed_non_call_issuer" | "call_time_filing_stand_in" | "call_time_low_confidence" | "call_time_provisional" | "call_time_vendor" | "date_only_call" | "estimate_expired" | "fiscal_period_inferred" | "fiscal_period_unknown" | "report_time_from_filing_acceptance">;
+            };
+        };
+        /** EventStats */
+        EventStats: {
+            event: {
+                /**
+                 * Format: uuid
+                 * @description Event identifier
+                 */
+                event_id: string;
+                /** @description 10-digit CIK */
+                cik: string;
+                /** @description Ticker symbol */
+                symbol: string;
+                /**
+                 * Format: date-time
+                 * @description Scheduled start (ISO 8601 UTC)
+                 */
+                conference_date: string;
+            };
+            /** @description A call took place (null = unknown) */
+            call_happened: boolean | null;
+            /** @description Length of the call */
+            call_length_ms: null | number;
+            /** @description Seconds from the results release to the call start */
+            release_to_call_gap_s: null | number;
+            /** @description Length of the prepared remarks */
+            prepared_remarks_ms: null | number;
+            /** @description Length of the Q&A */
+            qa_ms: null | number;
+            /** @description Q&A share of the call 0..1 */
+            qa_share: null | number;
+            /** @description Analyst questions */
+            question_count: number;
+            /** @description Distinct analysts who asked */
+            analyst_count: number;
+            /** @description Management's share of the Q&A words 0..1 */
+            mgmt_word_share_qa: null | number;
+            /** @description The call took no questions */
+            zero_questions: boolean;
+            /** @description Prepared remarks were posted before the call */
+            prepared_remarks_posted_in_advance: boolean;
+            /** @description Distinct speakers */
+            speaker_count: number;
+            /** @description Share of words by unnamed speakers 0..1 */
+            unknown_speaker_word_share: null | number;
+        };
+        /** EventComparison */
+        EventComparison: {
+            event: {
+                /**
+                 * Format: uuid
+                 * @description Event identifier
+                 */
+                event_id: string;
+                /** @description 10-digit CIK */
+                cik: string;
+                /** @description Ticker symbol */
+                symbol: string;
+                /**
+                 * Format: date-time
+                 * @description Scheduled start (ISO 8601 UTC)
+                 */
+                conference_date: string;
+            };
+            /** @description The prior call compared against */
+            prior_event: null | {
+                /**
+                 * Format: uuid
+                 * @description Prior event identifier
+                 */
+                event_id: string;
+                /**
+                 * Format: date-time
+                 * @description Prior call's scheduled start
+                 */
+                conference_date: string;
+            };
+            /** @description Semantic similarity to the prior call 0..1 */
+            similarity: null | number;
+            /** @description Topics new on this call; null = topic comparison was skipped, [] = none found */
+            new_topics: Array<{
+                /** @description Topic */
+                topic: string;
+                /** @description Verbatim evidence */
+                evidence: string;
+                /** @description Where the evidence was spoken (ms) */
+                start_ms: null | number;
+            }> | null;
+            /** @description Topics of the prior call not discussed; null = topic comparison was skipped, [] = none found */
+            dropped_topics: Array<{
+                /** @description Topic */
+                topic: string;
+                /** @description Verbatim evidence */
+                evidence: string;
+                /** @description Where the evidence was spoken (ms) */
+                start_ms: null | number;
+            }> | null;
+            /** @description Hedging language (Loughran-McDonald) */
+            hedging: {
+                /** @description Rate on this call */
+                level: null | number;
+                /** @description Change versus the prior call */
+                change: null | number;
+            };
+            /** @description Uncertainty language (Loughran-McDonald) */
+            uncertainty: {
+                /** @description Rate on this call */
+                level: null | number;
+                /** @description Change versus the prior call */
+                change: null | number;
+            };
+            /** @description Share of sentences with concrete numbers */
+            numeric_specificity: {
+                /** @description Rate on this call */
+                level: null | number;
+                /** @description Change versus the prior call */
+                change: null | number;
+            };
+            /**
+             * @description Model judgement
+             * @enum {string|null}
+             */
+            tone_shift: "more_cautious" | "more_positive" | "unchanged" | null;
+            /** @description Deck comparison; null without both decks */
+            slide_diff: {
+                /** @description Pages of this call's deck */
+                current_pages: number;
+                /** @description Pages of the prior deck */
+                prior_pages: number;
+                /** @description current − prior */
+                page_delta: number;
+                /** @description Slide titles new on this deck */
+                new_titles: Array<string>;
+                /** @description Titles no longer present */
+                dropped_titles: Array<string>;
+                /** @description Titles on both decks */
+                shared_titles: number;
+            } | null;
+            /** @description Short summary of what changed */
+            summary: null | string;
+        };
+        /**
+         * PressRelease
+         * @description The results press release of an event (decision 4)
+         */
+        PressRelease: {
+            /** @description The archival news item */
+            news_id: null | string;
+            /**
+             * Format: uuid
+             * @description Event identifier
+             */
+            event_id: string;
+            /** @description Release headline */
+            title: null | string;
+            /**
+             * Format: date-time
+             * @description When it was published
+             */
+            published_at: null | string;
+            /**
+             * @description edgar = 8-K exhibit, wire = newswire, ir_page = the company's IR site
+             * @enum {string}
+             */
+            origin: "edgar" | "ir_page" | "wire";
+            /** @description Source URL (EDGAR, wire or IR host), unchanged */
+            url: string;
+            /** @description SEC accession number (edgar) */
+            accession_number: null | string;
+            /** @description People named in the release */
+            participants: Array<{
+                /** @description Name */
+                name: string;
+                /** @description Title */
+                title: null | string;
+                /** @description executive or ir_contact */
+                role: null | string;
+            }> | null;
+            /** @description sec, wire, confirmed_domain, unconfirmed (AI-approved) or internal; null = not assessed */
+            trust_tier: null | string;
+            /** @description Release text */
+            body_text: string;
+        };
+        /** QaPair */
+        QaPair: {
+            /** @description Position in the Q&A session (1-based) */
+            seq: number;
+            analyst: {
+                /** @description Speaker label */
+                speaker_label: string;
+                /**
+                 * Format: uuid
+                 * @description Cross-call person identifier; null = unresolved
+                 */
+                person_id: null | string;
+                /** @description Speaker name */
+                name: null | string;
+                /** @description Analyst firm */
+                firm: null | string;
+            };
+            /** @description Question text */
+            question: string;
+            /** @description Question start (ms into the call); null = untimed */
+            question_start_ms: null | number;
+            /** @description Question end (ms) */
+            question_end_ms: null | number;
+            /** @description Executives who answered */
+            answers: Array<{
+                /** @description Speaker label */
+                speaker_label: string;
+                /**
+                 * Format: uuid
+                 * @description Cross-call person identifier; null = unresolved
+                 */
+                person_id: null | string;
+                /** @description Speaker name */
+                name: null | string;
+                /** @description Executive title */
+                title: null | string;
+            }>;
+            /** @description Answer text */
+            answer: string;
+            /** @description Answer start (ms) */
+            answer_start_ms: null | number;
+            /** @description Answer end (ms) */
+            answer_end_ms: null | number;
+            /** @description A follow-up of the previous question */
+            is_follow_up: boolean;
+            /** @description Only with include=scores: the pair's descriptive scores, or null while the pair is not scored (or its score belongs to an older transcript version) */
+            scores?: null | {
+                /** @description Where the analyst sat in the call's question order (1 = first called on; a follow-up keeps its analyst's order) */
+                analyst_casting_order: number;
+                /** @description Question tone −1..1 from the Loughran-McDonald word lists (positive minus negative words over the question length); null without the lexicon */
+                question_tone: null | number;
+                /** @description How hard the question was, 0 (softball) to 1 (pointed, quantified, adversarial); null when the scorer's evidence was rejected */
+                difficulty: null | number;
+                /** @description How far the answer stayed from the question, 0 (direct) to 1 (no substantive content); null when the scorer's evidence was rejected */
+                evasiveness: null | number;
+                /** @description evasiveness ≥ 0.7 — the answer did not answer the question */
+                non_answer: boolean;
+                /** @description Verbatim quotes from the pair's own text behind each score; non_answer names the kind of non-answer (not_addressed, no_guidance_policy, restated_question, deferred, partial) or null */
+                evidence: {
+                    difficulty: Array<string>;
+                    evasiveness: Array<string>;
+                    /** @description Kind of non-answer, null for an answered question */
+                    non_answer: null | string;
+                };
+                /** @description Scoring model and rubric version (<model>@rubric-v<n>) */
+                scored_by: string;
+            };
+        };
+        /** Slides */
+        Slides: {
+            event: {
+                /**
+                 * Format: uuid
+                 * @description Event identifier
+                 */
+                event_id: string;
+                /** @description 10-digit CIK */
+                cik: string;
+                /** @description Ticker symbol */
+                symbol: string;
+                /**
+                 * Format: date-time
+                 * @description Scheduled start (ISO 8601 UTC)
+                 */
+                conference_date: string;
+            };
+            /** @description The deck PDF; null for slides captured from the webcast player (page images only) */
+            deck: null | {
+                /** @description Permanent public URL of the deck PDF */
+                url: string;
+                /** @description Page count; null = unknown */
+                pages: null | number;
+                /** @description Where the deck was found */
+                origin: string;
+                /** @description The company's original URL */
+                source_url: null | string;
+                /**
+                 * @description sec, wire, confirmed_domain, unconfirmed (AI-approved) or internal; null = not assessed
+                 * @enum {string|null}
+                 */
+                trust_tier: "confirmed_domain" | "internal" | "sec" | "unconfirmed" | "wire" | null;
+            };
+            /** @description Pages in order; [] until the pages are rendered */
+            slides: Array<{
+                /** @description 1-based page number */
+                page: number;
+                /** @description Slide title */
+                title: null | string;
+                /** @description Permanent public URL of the page image */
+                image_url: string;
+                /** @description Page text (only with include=markdown) */
+                markdown?: null | string;
+            }>;
+            /** @description Player slides keyed to the call audio (ms from the audio's start), ascending; [] when the webcast player showed no slides */
+            timeline?: Array<{
+                /** @description When the slide appeared, in ms from the start of the event's audio file */
+                at_ms: number;
+                /** @description Permanent public URL of the slide screenshot */
+                image_url: string;
+            }> | null;
+        };
+        /** Audio */
+        Audio: {
+            event: {
+                /**
+                 * Format: uuid
+                 * @description Event identifier
+                 */
+                event_id: string;
+                /** @description 10-digit CIK */
+                cik: string;
+                /** @description Ticker symbol */
+                symbol: string;
+                /**
+                 * Format: date-time
+                 * @description Scheduled start (ISO 8601 UTC)
+                 */
+                conference_date: string;
+            };
+            /** @description Permanent public URL of the recording; the file carries one forensic watermark that identifies it */
+            url: string;
+            /** @description Length of the recording */
+            duration_seconds: null | number;
+            /** @description File size */
+            bytes: null | number;
+            /** @description Audio codec (e.g. mp3) */
+            codec: null | string;
+            /**
+             * @description How the audio was captured
+             * @enum {string|null}
+             */
+            capture_path: "browser_audio" | "dial_in" | "direct_download" | "hls_sniff" | "manual_upload" | null;
+        };
+        /** LiveAudio */
+        LiveAudio: {
+            event: {
+                /**
+                 * Format: uuid
+                 * @description Event identifier
+                 */
+                event_id: string;
+                /** @description 10-digit CIK */
+                cik: string;
+                /** @description Ticker symbol */
+                symbol: string;
+                /**
+                 * Format: date-time
+                 * @description Scheduled start (ISO 8601 UTC)
+                 */
+                conference_date: string;
+            };
+            /**
+             * @description available = the call is live and its audio streams now; ended = the call ended, the stream stays playable for a while; not_started = the call is about to start (or started without audio yet), ask again; disabled = no live audio for this call
+             * @enum {string}
+             */
+            status: "available" | "disabled" | "ended" | "not_started";
+            /** @description HLS playlist URL (available / ended only); a bearer credential, do not share or cache. Request a fresh one before expires_at */
+            url: null | string;
+            /**
+             * Format: date-time
+             * @description When the playlist URL stops working (ISO 8601 UTC)
+             */
+            expires_at: null | string;
+            /** @description Wall clock of call ms 0 (ISO 8601 UTC): #EXT-X-PROGRAM-DATE-TIME minus call_t0 = the live transcript's start_ms */
+            call_t0: null | string;
+            /**
+             * @description Length of one HLS segment in seconds
+             * @enum {integer}
+             */
+            segment_seconds: 2;
+            /**
+             * @description WebSocket channel to subscribe to with event_id for the synced live transcript
+             * @enum {string}
+             */
+            live_channel: "earnings-calls.live";
+        };
+        /** Prosody */
+        Prosody: {
+            event: {
+                /**
+                 * Format: uuid
+                 * @description Event identifier
+                 */
+                event_id: string;
+                /** @description 10-digit CIK */
+                cik: string;
+                /** @description Ticker symbol */
+                symbol: string;
+                /**
+                 * Format: date-time
+                 * @description Scheduled start (ISO 8601 UTC)
+                 */
+                conference_date: string;
+            };
+            /**
+             * @description The requested section
+             * @enum {string}
+             */
+            section: "all" | "prepared" | "qa";
+            /** @description The whole-call aggregate (label `*`) first, then one row per speaker */
+            speakers: Array<{
+                speaker: {
+                    /** @description Speaker label; `*` = the whole-call aggregate */
+                    label: string;
+                    /** @description Speaker name */
+                    name: null | string;
+                    /** @description Speaker title */
+                    title: null | string;
+                    /** @description operator, executive, analyst, ir_host or unknown */
+                    role: null | string;
+                };
+                /**
+                 * @description Section
+                 * @enum {string}
+                 */
+                section: "all" | "prepared" | "qa";
+                /** @description Words per minute */
+                speech_rate_wpm: null | number;
+                /** @description Pauses */
+                pause_count: null | number;
+                /** @description Mean pause length */
+                pause_mean_ms: null | number;
+                /** @description 95th-percentile pause length */
+                pause_p95_ms: null | number;
+                /** @description Filler words per word */
+                filler_rate: null | number;
+                /** @description Mean time from question end to answer start */
+                time_to_answer_mean_ms: null | number;
+                /** @description 95th-percentile time to answer */
+                time_to_answer_p95_ms: null | number;
+                /** @description Mean pitch (acoustic) */
+                pitch_mean_hz: null | number;
+                /** @description Pitch standard deviation (acoustic) */
+                pitch_sd_hz: null | number;
+                /** @description Mean energy (acoustic) */
+                energy_mean_db: null | number;
+                /** @description Speaking time */
+                spoken_ms: number;
+                /** @description Words */
+                word_count: number;
+                /** @description Pitch / energy were measured */
+                acoustic_available: boolean;
+            }>;
+        };
+        /** PriceAttribution */
+        PriceAttribution: {
+            event: {
+                /**
+                 * Format: uuid
+                 * @description Event identifier
+                 */
+                event_id: string;
+                /** @description 10-digit CIK */
+                cik: string;
+                /** @description Ticker symbol */
+                symbol: string;
+                /**
+                 * Format: date-time
+                 * @description Scheduled start (ISO 8601 UTC)
+                 */
+                conference_date: string;
+            };
+            /** @description true = the minute rows were written live, as each minute closed during the call; the post-call run replaces them */
+            live: boolean;
+            /** @description true = the post-call run read the bars after the market settled; false while live or before the bars settled */
+            settled: boolean;
+            /**
+             * @description How the recording was anchored to wall-clock time; null until the summary is written
+             * @enum {string|null}
+             */
+            anchor_kind: "started_at" | "t0_wallclock" | null;
+            /** @description Lag applied to the anchor, ms */
+            anchor_lag_ms: null | number;
+            /**
+             * @description Where the anchor lag came from
+             * @enum {string|null}
+             */
+            lag_kind: "dialin_offset" | "none" | "playlist" | null;
+            /** @description Uncertainty of the anchor, seconds */
+            anchor_uncertainty_s: null | number;
+            /**
+             * @description Market session of the call start (New York); pre / post-market bars are thin
+             * @enum {string|null}
+             */
+            session: "post" | "pre" | "regular" | null;
+            /** @description One-minute bars in the window (while live: the minute rows so far) */
+            bar_count: number;
+            /** @description Return over the whole window, basis points */
+            end_of_window_return_bps: null | number;
+            /** @description One row per minute with a bar, oldest first; minutes without a bar are absent */
+            buckets: Array<{
+                /**
+                 * Format: date-time
+                 * @description The minute (ISO 8601 UTC)
+                 */
+                bucket: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the one-minute bar (ISO 8601 UTC)
+                 */
+                bar_start: string;
+                /** @description The minute's return in basis points */
+                return_bps: number;
+                /** @description Return since the start of the window, basis points */
+                cumulative_return_bps: number;
+                /** @description Up to 5 utterances spoken in that minute */
+                utterance_refs: Array<{
+                    /** @description Utterance start, ms from the start of the recording */
+                    start_ms: number;
+                    /** @description Transcript speaker label */
+                    speaker_label: string;
+                    /** @description What was said */
+                    text: string;
+                }>;
+            }>;
+            /** @description Up to 5 minutes with the largest absolute return, largest first */
+            top_minutes: Array<{
+                /**
+                 * Format: date-time
+                 * @description The minute (ISO 8601 UTC)
+                 */
+                bucket: string;
+                /** @description The minute's return in basis points */
+                return_bps: number;
+                /** @description Up to 5 utterances spoken in that minute */
+                utterance_refs: Array<{
+                    /** @description Utterance start, ms from the start of the recording */
+                    start_ms: number;
+                    /** @description Transcript speaker label */
+                    speaker_label: string;
+                    /** @description What was said */
+                    text: string;
+                }>;
+            }>;
+        };
+        /**
+         * Transcript
+         * @description An event's transcript as speaker turns
+         */
+        Transcript: {
+            event: components["schemas"]["EventRef"];
+            /** @description Version served */
+            version: number;
+            /**
+             * @description live = provisional during / right after the call; final; corrected
+             * @enum {string}
+             */
+            version_kind: "corrected" | "final" | "live";
+            /**
+             * Format: date-time
+             * @description When this version was published
+             */
+            published_at: string;
+            /** @description Words in this version */
+            word_count: number;
+            /** @description Call-relative start (ms) of the first Q&A turn (the operator's hand-over or the first analyst question), the boundary between prepared_remarks and questions_and_answers. Null = no Q&A found, an untimed transcript or a live version */
+            qa_start_ms: null | number;
+            /**
+             * @description raw = as recognised; cleaned = edited for reading
+             * @enum {string}
+             */
+            layer: "cleaned" | "raw";
+            /**
+             * PdfDocument
+             * @description Permanent URL of the branded PDF of this version; shared, immutable, deleted on takedown. Carries the notice page; see /status/licensing → PDF documents. Null = no PDF (not rendered yet, or none for this version)
+             */
+            pdf: null | {
+                /**
+                 * Format: uri
+                 * @description Permanent public URL, shown inline; no API key and no expiry
+                 */
+                url: string;
+                /** @description Transcript version or news revision the PDF was rendered from */
+                version: number;
+                /** @description SHA-256 of the PDF file (lowercase hex) */
+                sha256: string;
+                /** @description File size in bytes */
+                bytes: number;
+                /** @description Pages, including the notice page */
+                pages: number;
+                /**
+                 * Format: date-time
+                 * @description When the PDF was rendered
+                 */
+                generated_at: string;
+            };
+            /** @description Speaker turns in call order */
+            turns: Array<components["schemas"]["TranscriptTurn"]>;
+        };
+        /** EventRef */
+        EventRef: {
+            /**
+             * Format: uuid
+             * @description Event identifier
+             */
+            event_id: string;
+            /** @description 10-digit CIK */
+            cik: string;
+            /** @description Ticker symbol */
+            symbol: string;
+            /**
+             * Format: date-time
+             * @description Scheduled start (ISO 8601 UTC)
+             */
+            conference_date: string;
+        };
+        /**
+         * TranscriptTurn
+         * @description One speaker turn
+         */
+        TranscriptTurn: {
+            /** @description Speaker label */
+            speaker_label: string;
+            /** @description Speaker name */
+            name: null | string;
+            /** @description Title */
+            title: null | string;
+            /** @description Role */
+            role: null | string;
+            /** @description Person */
+            person_id: null | string;
+            /** @description Call-relative start; null on an untimed (company-document) transcript */
+            start_ms: null | number;
+            /** @description Call-relative end; null on the cleaned layer */
+            end_ms: null | number;
+            /** @description Speaker attribution confidence; null on the cleaned layer */
+            speaker_confidence: null | number;
+            /** @description Text of the turn */
+            text: string;
+            /** @description With `include=words` */
+            words?: Array<components["schemas"]["TranscriptWord"]> | null;
+        };
+        /**
+         * TranscriptWord
+         * @description One recognised word
+         */
+        TranscriptWord: {
+            /** @description Word */
+            w: string;
+            /** @description Start ms; null when untimed */
+            s: null | number;
+            /** @description End ms; null when untimed */
+            e: null | number;
+            /** @description Confidence */
+            c: null | number;
+        };
+        /**
+         * TranscriptText
+         * @description An event's transcript as plain text
+         */
+        TranscriptText: {
+            event: components["schemas"]["EventRef"];
+            /** @description Version served */
+            version: number;
+            /** @description Call-relative start of the Q&A */
+            qa_start_ms: null | number;
+            /** @description One block (split=none) or two (split=sections) */
+            blocks: Array<{
+                /**
+                 * @description full with split=none; prepared_remarks / questions_and_answers with split=sections
+                 * @enum {string}
+                 */
+                section: "full" | "prepared_remarks" | "questions_and_answers";
+                /** @description Plain text */
+                text: string;
+            }>;
+        };
+        /** TranscriptVersion */
+        TranscriptVersion: {
+            /** @description Version number (1 = first published) */
+            version: number;
+            /**
+             * @description Kind of version
+             * @enum {string}
+             */
+            version_kind: "corrected" | "final" | "live";
+            /**
+             * Format: date-time
+             * @description When the version was published
+             */
+            published_at: string;
+            /** @description Words in the version */
+            word_count: number;
+            /** @description Why the version was published (e.g. replay_upgrade, company_transcript <sha8>) */
+            change_note: null | string;
+            /** @description `human` or `system:<stage>` for a corrected version, else null */
+            corrected_by: null | string;
+            /**
+             * PdfDocument
+             * @description Permanent URL of the branded PDF of this version; shared, immutable, deleted on takedown. Carries the notice page; see /status/licensing → PDF documents. Null = no PDF (not rendered yet, or none for this version)
+             */
+            pdf: null | {
+                /**
+                 * Format: uri
+                 * @description Permanent public URL, shown inline; no API key and no expiry
+                 */
+                url: string;
+                /** @description Transcript version or news revision the PDF was rendered from */
+                version: number;
+                /** @description SHA-256 of the PDF file (lowercase hex) */
+                sha256: string;
+                /** @description File size in bytes */
+                bytes: number;
+                /** @description Pages, including the notice page */
+                pages: number;
+                /**
+                 * Format: date-time
+                 * @description When the PDF was rendered
+                 */
+                generated_at: string;
+            };
+        };
+        /** TranscriptDiff */
+        TranscriptDiff: {
+            /**
+             * Format: uuid
+             * @description Event identifier
+             */
+            event_id: string;
+            /** @description Older version */
+            from: number;
+            /** @description Newer version */
+            to: number;
+            /** @description Word-level changes in call order (at most 5000); [] = identical */
+            changes: Array<{
+                /**
+                 * @description add = only in `to`, del = only in `from`
+                 * @enum {string}
+                 */
+                op: "add" | "del";
+                /** @description Start (ms into the call) of the speaker turn the change starts in; null = untimed */
+                at_ms: null | number;
+                /** @description Added / removed words */
+                text: string;
+            }>;
+            /** @description More than 5000 changes; the rest are omitted */
+            truncated: boolean;
+            stats: {
+                /** @description Words added (all changes, before truncation) */
+                added_words: number;
+                /** @description Words removed (all changes, before truncation) */
+                removed_words: number;
+            };
+        };
+        /** TranscriptSearchHit */
+        TranscriptSearchHit: {
+            /**
+             * Format: uuid
+             * @description Event identifier (use with the other earnings routes)
+             */
+            event_id: string;
+            /** @description 10-digit CIK */
+            cik: string;
+            /** @description Ticker symbol */
+            symbol: string;
+            /**
+             * Format: date-time
+             * @description Scheduled start (ISO 8601 UTC)
+             */
+            conference_date: string;
+            /** @description Fiscal year of the reported period */
+            fiscal_year: null | number;
+            /** @description Fiscal quarter of the reported period */
+            fiscal_quarter: null | number;
+            /**
+             * @description Where the passage comes from
+             * @enum {string}
+             */
+            type: "prepared" | "presentation" | "qa" | "transcript";
+            speaker: {
+                /** @description Speaker label of the transcript (A, B, …); null for slide text */
+                label: null | string;
+                /** @description Speaker name */
+                name: null | string;
+                /** @description Speaker title */
+                title: null | string;
+            };
+            /** @description Offset of the passage in the call audio; null for slide text and transcripts without word timings */
+            start_ms: null | number;
+            /** @description End offset of the passage */
+            end_ms: null | number;
+            /** @description Position of the passage among the call's transcript (or slide) passages; null for a passage indexed before positions were stored */
+            chunk_index: null | number;
+            /** @description The passage, cut to at most 600 characters on word boundaries around the first match */
+            text: string;
+            /** @description true = text is shorter than the passage */
+            text_truncated: boolean;
+            /** @description Relevance per mode: lexical = BM25 (an answer attached to its question scores 0.99 × the question), else ts_rank_cd (4 decimals), literal = 0 (hits are ordered newest call first) */
+            score: number;
+            match: components["schemas"]["HitMatch"];
+            /** @description The recording's permanent URL opening at the passage (#t=<seconds>); null without the PRO plan, without a servable recording, without start_ms or for an audio opt-out. */
+            audio_url: null | string;
+            /** @description Slide of a presentation passage; null for spoken passages */
+            slide: null | {
+                /** @description 1-based page of the deck */
+                page: number;
+                /** @description Permanent public page image URL; null without the PRO plan or without an image */
+                image_url: null | string;
+            };
+        };
+        /**
+         * GuidanceItem
+         * @description One guidance item (field union of the v1 extraction and history rows)
+         */
+        GuidanceItem: {
+            company: components["schemas"]["CompanyRef"];
+            /**
+             * Format: uuid
+             * @description Guidance item identifier
+             */
+            id: null | string;
+            /** @description Metric as stated */
+            metric: null | string;
+            /** @description Normalized metric (guidance/history vocabulary) */
+            metric_normalized: null | string;
+            /** @description Guided period (e.g. Q1 FY2027, FY2027) */
+            period_label: string;
+            /**
+             * @description Kind of period
+             * @enum {string}
+             */
+            period_kind: "fiscal_year" | "half" | "other" | "quarter";
+            /** @description Low end, base units */
+            low: null | number;
+            /** @description High end, base units */
+            high: null | number;
+            /** @description Midpoint (or point guidance), base units */
+            midpoint: null | number;
+            /** @description usd, pct, shares, ratio or other */
+            unit: null | string;
+            /** @description ISO currency */
+            currency: null | string;
+            /**
+             * @description Accounting basis
+             * @enum {string}
+             */
+            basis: "gaap" | "non_gaap" | "unknown";
+            /**
+             * @description Versus the prior call's guidance
+             * @enum {string}
+             */
+            direction: "lowered" | "maintained" | "new" | "raised" | "unknown" | "withdrawn";
+            /**
+             * Format: uuid
+             * @description The prior call's item
+             */
+            prior_item_id: null | string;
+            /** @description Calibrated confidence 0..1 (not a probability) */
+            confidence: number;
+            /** @description Call and press release agree */
+            cross_validated: boolean | null;
+            /**
+             * @description Review state
+             * @enum {string|null}
+             */
+            review_status: "approved" | "auto" | "needs_review" | null;
+            /** @description Citations */
+            sources: Array<{
+                /**
+                 * @description Where the sentence comes from
+                 * @enum {string}
+                 */
+                origin: "press_release" | "transcript";
+                /** @description The verbatim source sentence */
+                sentence: string;
+                /** @description Where it was spoken (ms into the call) */
+                start_ms: null | number;
+                speaker: {
+                    /** @description Speaker label of the transcript (A, B, …); null for press-release text */
+                    label: null | string;
+                    /** @description Speaker name (participants route) */
+                    name: null | string;
+                    /** @description Speaker title */
+                    title: null | string;
+                };
+            }> | null;
+            /**
+             * Format: uuid
+             * @description The call that gave the guidance
+             */
+            event_id: null | string;
+            /**
+             * Format: date-time
+             * @description When the call was scheduled
+             */
+            conference_date: null | string;
+            /** @description Fiscal year of the call */
+            fiscal_year: null | number;
+            /** @description Fiscal quarter of the call */
+            fiscal_quarter: null | number;
+            /** @description Difference to the prior call's item for the same metric / period / basis; null = none */
+            change_vs_prior: {
+                /** @description low − prior low */
+                low_delta: null | number;
+                /** @description high − prior high */
+                high_delta: null | number;
+                /** @description midpoint − prior midpoint */
+                midpoint_delta: null | number;
+            } | null;
+        };
+        /**
+         * KpiMention
+         * @description One KPI mention in a call
+         */
+        KpiMention: {
+            company: components["schemas"]["CompanyRef"];
+            /** @description Event */
+            event_id: string;
+            /**
+             * Format: date
+             * @description Call date
+             */
+            conference_date: null | string;
+            /** @description Order in the call / release */
+            seq: number;
+            /** @description Metric as stated */
+            metric: string;
+            /** @description Normalized metric; null = outside the dictionary */
+            metric_normalized: null | string;
+            /** @description Value, base units */
+            value: null | number;
+            /** @description As spoken ('$1.2 billion', '14%') */
+            value_text: string;
+            /** @description Unit */
+            unit: null | string;
+            /** @description Reported period */
+            period_label: null | string;
+            /** @description The verbatim source sentence */
+            source_sentence: string;
+            /** @description Where it was spoken (ms into the call) */
+            start_ms: null | number;
+            speaker: {
+                /** @description Speaker label of the transcript (A, B, …); null for press-release text */
+                label: null | string;
+                /** @description Speaker name (participants route) */
+                name: null | string;
+                /** @description Speaker title */
+                title: null | string;
+            };
+            /**
+             * @description transcript or press_release
+             * @enum {string}
+             */
+            origin: "press_release" | "transcript";
+            /** @description The SEC filing with the same figure; null for press-release mentions and unlinked ones */
+            filing_link: null | {
+                /**
+                 * @description press_release (8-K) or periodic_filing
+                 * @enum {string}
+                 */
+                target: "periodic_filing" | "press_release";
+                /**
+                 * @description SEC form
+                 * @enum {string}
+                 */
+                form: "8-K" | "10-K" | "10-Q";
+                /** @description SEC accession number */
+                accession_number: string;
+                /** @description sec.gov document (the EX-99.1 or the filing's primary document) */
+                document_url: string;
+                /** @description The filing's EDGAR index folder */
+                edgar_index_url: string;
+                /**
+                 * @description Kind of figure
+                 * @enum {string}
+                 */
+                figure_kind: "money" | "per_share" | "percent";
+                /** @description The filing's value, base units */
+                matched_value: number;
+                /**
+                 * @description exact or rounded
+                 * @enum {string}
+                 */
+                match_kind: "exact" | "rounded";
+                /**
+                 * @description figures (text) or xbrl
+                 * @enum {string}
+                 */
+                matched_by: "figures" | "xbrl";
+                /** @description Candidates with the same key (1 = unambiguous) */
+                candidate_count: number;
+                /** @description ±120 chars around the figure (press_release only) */
+                snippet: null | string;
+                /** @description XBRL concept, e.g. us-gaap:Revenues (xbrl only) */
+                concept: null | string;
+                /** @description The XBRL fact's period (xbrl only) */
+                fact_period: null | {
+                    /** @description Fiscal year of the filing */
+                    fy: null | number;
+                    /** @description Fiscal period of the filing (Q1..Q3, FY) */
+                    fp: null | string;
+                    /**
+                     * Format: date
+                     * @description Period start (null = instant)
+                     */
+                    start: null | string;
+                    /**
+                     * Format: date
+                     * @description Period end
+                     */
+                    end: string;
+                };
+            };
+        };
+        /**
+         * InvestorDocument
+         * @description One investor document (company-published or attached to an event)
+         */
+        InvestorDocument: {
+            /**
+             * Format: uuid
+             * @description Document identifier
+             */
+            document_id: string;
+            /**
+             * @description company = the IR library; call = a document of one earnings call
+             * @enum {string}
+             */
+            source: "call" | "company";
+            /**
+             * @description IR site section the document is filed in; null on a call document
+             * @enum {string|null}
+             */
+            section: "annual_reports" | "esg" | "events_archive" | "faq" | "governance" | "other" | "presentations_archive" | "press_releases" | "proxy" | "quarterly_results" | "sec_filings" | null;
+            /**
+             * @description Document kind
+             * @enum {string}
+             */
+            kind: "annual_report" | "ceo_letter" | "cfo_commentary" | "company_transcript" | "conference_presentation" | "earnings_deck" | "esg_report" | "fact_sheet" | "financial_data" | "governance" | "infographic" | "investor_day_deck" | "other" | "prepared_remarks" | "press_release" | "proxy_statement" | "proxy_supplement" | "sec_filing" | "shareholder_letter" | "webcast";
+            /** @description Year the document belongs to; null = undated */
+            year: null | number;
+            /**
+             * @description Period within the year
+             * @enum {string|null}
+             */
+            period: "FY" | "H1" | "H2" | "Q1" | "Q2" | "Q3" | "Q4" | null;
+            /** @description Folder of the document tree, e.g. earnings/fy2027/q2, events/2026/09-10-<event>, reports/2025, governance, shareholder/tax; null = not placed yet */
+            group: null | string;
+            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "May 18, 2025 · GTC Taipei 2025" (an event's name) */
+            group_label: null | string;
+            /**
+             * @description Spine folder of the tree: earnings, events, reports, presentations, governance, esg, shareholder, other; null = not placed yet
+             * @enum {string|null}
+             */
+            category: "earnings" | "esg" | "events" | "governance" | "other" | "presentations" | "reports" | "shareholder" | null;
+            /**
+             * Format: uuid
+             * @description The event the document belongs to
+             */
+            event_id: null | string;
+            /**
+             * @description Type of that event
+             * @enum {string|null}
+             */
+            event_type: "agm" | "conference" | "earnings_call" | "investor_day" | "other" | null;
+            /**
+             * Format: date
+             * @description The item's own date on the site (a call document: the call's New York day)
+             */
+            event_date: null | string;
+            /**
+             * Format: date
+             * @description EDGAR filing date of a call's SEC filing link (kind sec_filing, e.g. the 10-K filed after the call); null for every other document or when unknown
+             */
+            filing_date: null | string;
+            /** @description Document title */
+            title: null | string;
+            /** @description The link label on the IR site */
+            source_label: null | string;
+            /** @description The original URL on the company's IR site */
+            source_url: string;
+            /** @description The IR page that listed the document; null on a call document */
+            page_url: null | string;
+            /**
+             * @description How the IR section was read (a call document: where it was found)
+             * @enum {string}
+             */
+            origin: "agent" | "agent_archive" | "edgar_exhibit" | "edgar_filing" | "html_page" | "ir_listing" | "ir_site" | "json_feed" | "notified_listing" | "playbook_pattern" | "q4_event" | "q4_events_feed" | "q4_reports" | "q4_reports_feed";
+            /** @description company = a transcript the issuer published itself; null = not assessed */
+            producer: null | string;
+            /**
+             * @description Classification confidence
+             * @enum {string}
+             */
+            confidence: "high" | "low" | "medium";
+            /**
+             * @description sec, wire, confirmed_domain, unconfirmed (AI-approved) or internal
+             * @enum {string|null}
+             */
+            trust_tier: "confirmed_domain" | "internal" | "sec" | "unconfirmed" | "wire" | null;
+            /** @description MIME type of the stored file */
+            content_type: null | string;
+            /** @description File size */
+            bytes: null | number;
+            /** @description With `expand=pages` on the member route */
+            pages: Array<{
+                [key: string]: unknown;
+            }> | null;
+            /**
+             * @description On a link-only `webcast` row: whether the replay page still plays; null for files
+             * @enum {string|null}
+             */
+            link_status: "expired" | "live" | null;
+            /** @description Permanent public download URL; null for a link-only row (use source_url) */
+            url: null | string;
+            /** @description Permanent public URL of the per-page text (JSON); null before the text was extracted */
+            pages_url: null | string;
+            /**
+             * Format: date-time
+             * @description When we first stored the document
+             */
+            created_at: null | string;
+            /**
+             * Format: date-time
+             * @description Last change of the stored document
+             */
+            updated_at: null | string;
+            /** @description SEC accession number (EDGAR documents) */
+            accession_number: null | string;
+            /** @description Extracted text, capped; null for company documents, spreadsheets and link-only rows */
+            body_text: null | string;
+        };
+        /** InvestorDocumentSearchHit */
+        InvestorDocumentSearchHit: {
+            /** @description Relevance per mode: lexical = ts_rank_cd (4 decimals), literal = 0 (hits are ordered newest year first) */
+            score: number;
+            match: components["schemas"]["HitMatch"];
+            /**
+             * Format: uuid
+             * @description Document identifier (GET /v2/investor-documents/{document_id})
+             */
+            document_id: string;
+            /**
+             * Format: uuid
+             * @description The event the document belongs to
+             */
+            event_id: null | string;
+            /** @description 10-digit CIK with leading zeros */
+            cik: string;
+            /** @description Ticker symbol */
+            symbol: string;
+            /** @description Document kind */
+            kind: null | string;
+            /** @description IR site section (company documents) */
+            section: null | string;
+            /** @description Year of the document */
+            year: null | number;
+            /** @description Period within the year (Q1–Q4, H1, H2, FY) */
+            period: null | string;
+            /** @description 1-based page of the passage */
+            page: null | number;
+            /** @description Nearest heading above the passage */
+            heading: null | string;
+            /** @description Position of the passage among the document's passages */
+            chunk_index: null | number;
+            /** @description The passage (≤ 600 characters, cut on word boundaries around the first match) */
+            text: string;
+            /** @description true = text is shorter than the passage */
+            text_truncated: boolean;
+            /** @description Document title */
+            title: null | string;
+            /** @description Folder of the document tree, e.g. earnings/fy2027/q2, events/2026/09-10-<event>, reports/2025, governance, shareholder/tax; null = not placed yet */
+            group: null | string;
+            /** @description Human label of `group`, e.g. "Q2 FY2027", "Reports 2025", "May 18, 2025 · GTC Taipei 2025" (an event's name) */
+            group_label: null | string;
+            /**
+             * @description Spine folder of the tree: earnings, events, reports, presentations, governance, esg, shareholder, other; null = not placed yet
+             * @enum {string|null}
+             */
+            category: "earnings" | "esg" | "events" | "governance" | "other" | "presentations" | "reports" | "shareholder" | null;
+            /** @description Permanent public URL of the stored file; null for a link-only row */
+            url: null | string;
         };
         /**
          * Me
@@ -14551,6 +16356,53 @@ export interface operations {
             500: components["responses"]["InternalServerError"];
         };
     };
+    getAudio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Audio"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     getCompany: {
         parameters: {
             query?: {
@@ -14609,6 +16461,164 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    getEvent: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Optional objects to include: `calendar`, `observations` (comma list)
+                 * @example calendar
+                 */
+                expand?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Event"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getEventComparison: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Prior event id (default the previous call)
+                 * @example evt_01J8Z3QW
+                 */
+                prior?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventComparison"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getEventStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EventStats"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     getFiler: {
         parameters: {
             query?: {
@@ -14654,6 +16664,106 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FilerDetail"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getInvestorDocument: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Optional objects to include: `pages` (comma list)
+                 * @example pages
+                 */
+                expand?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Document id
+                 * @example doc_01JC7Q2M
+                 */
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvestorDocument"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getLiveAudio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LiveAudio"];
                 };
             };
             304: components["responses"]["NotModified"];
@@ -14795,6 +16905,390 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Person"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getPressRelease: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PressRelease"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getPriceAttribution: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceAttribution"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getProsody: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Section
+                 * @example all
+                 */
+                section?: "all" | "prepared" | "qa";
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Prosody"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getSlides: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Pages or ranges
+                 * @example 1-5
+                 */
+                pages?: string;
+                /**
+                 * @description Optional members: timeline, markdown
+                 * @example timeline
+                 */
+                include?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Slides"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getTranscript: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Version (default current)
+                 * @example 2
+                 */
+                version?: number;
+                /**
+                 * @description Layer
+                 * @example raw
+                 */
+                layer?: "cleaned" | "raw";
+                /**
+                 * @description Optional members: words
+                 * @example words
+                 */
+                include?: "words";
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Transcript"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getTranscriptDiff: {
+        parameters: {
+            query: {
+                /**
+                 * @description Older version
+                 * @example 1
+                 */
+                from: number;
+                /**
+                 * @description Newer version
+                 * @example 2
+                 */
+                to: number;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscriptDiff"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getTranscriptText: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Version (default current)
+                 * @example 2
+                 */
+                version?: number;
+                /**
+                 * @description none = one block; sections = two
+                 * @example none
+                 */
+                split?: "none" | "sections";
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranscriptText"];
                 };
             };
             304: components["responses"]["NotModified"];
@@ -16195,6 +18689,136 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listEvents: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                "company"?: string;
+                /**
+                 * @description Event types (default earnings_call) — any of `earnings_call`, `investor_day`, `conference`, `agm`, `other`, `all`, comma-separated
+                 * @example earnings_call
+                 */
+                "type"?: string;
+                /**
+                 * @description Status — any of `upcoming`, `live`, `ended`, comma-separated
+                 * @example upcoming
+                 */
+                "status"?: string;
+                /**
+                 * @description `scheduled_at` on or after this value
+                 * @example 2026-11-01
+                 */
+                "scheduled_at.gte"?: string;
+                /**
+                 * @description `scheduled_at` after this value
+                 * @example 2026-11-01
+                 */
+                "scheduled_at.gt"?: string;
+                /**
+                 * @description `scheduled_at` on or before this value
+                 * @example 2026-11-01
+                 */
+                "scheduled_at.lte"?: string;
+                /**
+                 * @description `scheduled_at` before this value
+                 * @example 2026-11-01
+                 */
+                "scheduled_at.lt"?: string;
+                /**
+                 * @description Fiscal year
+                 * @example 2026
+                 */
+                "fiscal_year"?: number;
+                /**
+                 * @description Fiscal quarter
+                 * @example 3
+                 */
+                "fiscal_quarter"?: number;
+                /**
+                 * @description Date certainty
+                 * @example any
+                 */
+                "date_kind"?: "any" | "confirmed" | "estimated";
+                /**
+                 * @description Optional objects to include: `calendar` (comma list)
+                 * @example calendar
+                 */
+                "expand"?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `scheduled_at`
+                 * @example scheduled_at
+                 */
+                "sort"?: "-scheduled_at" | "scheduled_at";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Event"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listEventTypeCatalog: {
         parameters: {
             query?: {
@@ -16502,6 +19126,301 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listGuidance: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                company?: string;
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event?: string;
+                /**
+                 * @description Normalized metric, comma list
+                 * @example revenue
+                 */
+                metric?: string;
+                /**
+                 * @description Period kinds, comma list
+                 * @example quarter
+                 */
+                period_kind?: string;
+                /**
+                 * @description Bases, comma list
+                 * @example gaap
+                 */
+                basis?: string;
+                /**
+                 * @description Review status: `any` (default) = every served item, whatever its state (`auto`, `needs_review`, `approved`); `approved` = reviewed and approved items only
+                 * @example any
+                 */
+                review?: "any" | "approved";
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-conference_date`
+                 * @example -conference_date
+                 */
+                sort?: "-conference_date" | "conference_date";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["GuidanceItem"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listInvestorDocuments: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                company?: string;
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event?: string;
+                /**
+                 * @description Categories, comma list
+                 * @example presentations
+                 */
+                category?: string;
+                /**
+                 * @description Kinds, comma list
+                 * @example investor_presentation
+                 */
+                kind?: string;
+                /**
+                 * @description Fiscal year
+                 * @example 2026
+                 */
+                fiscal_year?: number;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-filing_date`
+                 * @example -filing_date
+                 */
+                sort?: "-event_date" | "-filing_date" | "event_date" | "filing_date";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["InvestorDocument"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listKpis: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                company?: string;
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event?: string;
+                /**
+                 * @description Normalized metric, comma list
+                 * @example subscribers
+                 */
+                metric?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-conference_date`
+                 * @example -conference_date
+                 */
+                sort?: "-conference_date" | "conference_date";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["KpiMention"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -16934,6 +19853,82 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listQa: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Optional members: scores
+                 * @example scores
+                 */
+                include?: "scores";
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["QaPair"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listSectionCatalog: {
         parameters: {
             query?: {
@@ -17065,6 +20060,77 @@ export interface operations {
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["Split"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listTranscriptVersions: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["TranscriptVersion"]>;
                         /** @description true when a next page exists */
                         has_more: boolean;
                         /** @description Opaque cursor of the next page; null on the last page */
@@ -18662,6 +21728,205 @@ export interface operations {
             404: components["responses"]["NotFoundError"];
             500: components["responses"]["InternalServerError"];
             503: components["responses"]["ServiceUnavailableError"];
+        };
+    };
+    searchInvestorDocuments: {
+        parameters: {
+            query: {
+                /**
+                 * @description Query
+                 * @example capital allocation
+                 */
+                q: string;
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                company?: string;
+                /**
+                 * @description Kinds, comma list
+                 * @example investor_presentation
+                 */
+                kind?: string;
+                /**
+                 * @description Mode
+                 * @example lexical
+                 */
+                mode?: "lexical" | "literal";
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["InvestorDocumentSearchHit"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                            /** @description The query */
+                            query?: string;
+                            index?: components["schemas"]["SearchCoverage"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    searchTranscripts: {
+        parameters: {
+            query: {
+                /**
+                 * @description Query
+                 * @example gross margin
+                 */
+                "q": string;
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                "company"?: string;
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                "event"?: string;
+                /**
+                 * @description Text types — any of `transcript`, `qa`, `prepared`, `presentation`, comma-separated
+                 * @example qa
+                 */
+                "type"?: string;
+                /**
+                 * @description Mode
+                 * @example lexical
+                 */
+                "mode"?: "lexical" | "literal";
+                /**
+                 * @description `conference_date` on or after this value
+                 * @example 2026-01-01
+                 */
+                "conference_date.gte"?: string;
+                /**
+                 * @description `conference_date` after this value
+                 * @example 2026-01-01
+                 */
+                "conference_date.gt"?: string;
+                /**
+                 * @description `conference_date` on or before this value
+                 * @example 2026-01-01
+                 */
+                "conference_date.lte"?: string;
+                /**
+                 * @description `conference_date` before this value
+                 * @example 2026-01-01
+                 */
+                "conference_date.lt"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["TranscriptSearchHit"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                            /** @description The query */
+                            query?: string;
+                            index?: components["schemas"]["SearchCoverage"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
         };
     };
     secDatasets: {

@@ -13,9 +13,9 @@ type Kind = "guidance" | "kpi";
 
 /**
  * Guidance & KPIs tab: forward guidance (consolidated items with citations and a per-metric
- * history) or every reported KPI with its SEC filing link (`kind=guidance | kpi`).
+ * history) or every reported KPI with its SEC filing link (`/v2/guidance?event=` | `/v2/kpis?event=`).
  */
-export function GuidanceTab({ event, selector }: CallTabProps) {
+export function GuidanceTab({ event, eventId }: CallTabProps) {
     const [kind, setKind] = React.useState<Kind>("guidance");
 
     const [history, setHistory] = React.useState<GuidanceHistoryTarget | null>(null);
@@ -32,17 +32,18 @@ export function GuidanceTab({ event, selector }: CallTabProps) {
             {kind === "guidance"
                 ? (
                         <GuidanceTable
-                            onMetricClick={item => setHistory({
+                            eventId={eventId}
+                            // Only a normalized metric has a history (the table offers no click otherwise).
+                            onMetricClick={item => item.metric_normalized && setHistory({
                                 basis: item.basis,
                                 metric: item.metric_normalized,
                                 periodKind: item.period_kind,
                             })}
-                            selector={selector}
                         />
                     )
-                : <KpiTable selector={selector} />}
+                : <KpiTable eventId={eventId} />}
 
-            <GuidanceHistoryPanel identifier={event.symbol} onClose={() => setHistory(null)} target={history} />
+            <GuidanceHistoryPanel company={event.symbol} onClose={() => setHistory(null)} target={history} />
         </div>
     );
 }

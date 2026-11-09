@@ -2,7 +2,7 @@ import type HlsType from "hls.js";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import type { EarningsLiveStreamResponse } from "@/lib/api/types";
+import type { V2LiveAudioResponse } from "@/lib/api/types";
 
 import { LIVE_STREAM_REFRESH_BEFORE_MS, msUntilRefresh } from "@/lib/earnings/media-timing";
 
@@ -22,7 +22,7 @@ import {
 import { JUMP_TO_LIVE_AFTER_S, mediaTimeForCallMs, positionToCallMs, secondsBehindEdge } from "./position-to-call-ms";
 
 /**
- * The live audio of one call: hls.js on the URL of `GET /v1/earnings-calls/live/stream`
+ * The live audio of one call: hls.js on the URL of `GET /v2/events/{event_id}/live-audio`
  * (an `EVENT` playlist served by the edge Worker), or the browser's native HLS where there is
  * no MSE (Safari). Modelled on the admin console's `use-live-audio.ts`.
  *
@@ -145,7 +145,7 @@ function hlsFragments(hls: HlsType | null): ReadonlyArray<PlaylistFragment> {
 }
 
 /** The URL a stream answer lets us play (`available` / `ended`), else null. */
-function playableUrl(stream: EarningsLiveStreamResponse | null): null | string {
+function playableUrl(stream: null | V2LiveAudioResponse): null | string {
     return stream !== null && (stream.status === "available" || stream.status === "ended") ? stream.url : null;
 }
 
@@ -156,8 +156,8 @@ export type UseLiveAudioInput = {
     mode: LiveAudioMode;
     /** The newest released FINAL (`newestReleasedFinal`), never a partial. */
     newestFinal: null | { endMs: number; startMs: number };
-    refreshStream: () => Promise<EarningsLiveStreamResponse | null>;
-    stream: EarningsLiveStreamResponse | null;
+    refreshStream: () => Promise<null | V2LiveAudioResponse>;
+    stream: null | V2LiveAudioResponse;
 };
 
 export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stream }: UseLiveAudioInput) {

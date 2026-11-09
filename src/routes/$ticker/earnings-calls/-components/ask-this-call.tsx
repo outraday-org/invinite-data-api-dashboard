@@ -3,12 +3,12 @@ import { ExternalLink, FileText, ImageIcon, Play, Search } from "lucide-react";
 import * as React from "react";
 
 import type {
-    EarningsSearchHit,
-    EarningsSearchMode,
-    EarningsSearchResponse,
-    EarningsSearchType,
     HitMatch,
     SearchCoverage,
+    SearchMode,
+    V2TranscriptSearchHit,
+    V2TranscriptSearchResponse,
+    V2TranscriptSearchType,
 } from "@/lib/api/types";
 
 import { HighlightedText, SearchCoverageNote, SpanHighlightedText } from "@/components/search/search-highlight";
@@ -18,7 +18,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
-import { useEarningsSearch } from "@/lib/api/queries";
+import { useV2TranscriptSearch } from "@/lib/api/queries";
 import { formatFiscalPeriod, formatMs } from "@/lib/earnings/format";
 import { MATCH_TYPE_LABELS } from "@/lib/earnings/labels";
 
@@ -38,14 +38,14 @@ const SEARCH_LIMIT = 8;
 
 const MIN_QUERY_LENGTH = 2;
 
-const TYPE_LABELS: Record<EarningsSearchType, string> = {
-    preparedRemarks: "Prepared remarks",
+const TYPE_LABELS: Record<V2TranscriptSearchType, string> = {
+    prepared: "Prepared remarks",
     presentation: "Slides",
     qa: "Q&A",
     transcript: "Transcript",
 };
 
-const TYPES = Object.keys(TYPE_LABELS) as Array<EarningsSearchType>;
+const TYPES = Object.keys(TYPE_LABELS) as Array<V2TranscriptSearchType>;
 
 const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
 
@@ -65,7 +65,7 @@ export function MatchBadge({ match }: { match: HitMatch }) {
  * The score of a mode: literal is always 0 (newest first, none shown); keyword ranks (BM25 / `ts_rank_cd`, often
  * < 0.01) need the API's 4 decimals.
  */
-export function SearchScore({ mode, score }: { mode: EarningsSearchMode; score: number }) {
+export function SearchScore({ mode, score }: { mode: SearchMode; score: number }) {
     if (mode === "literal") return null;
 
     return (
@@ -75,12 +75,15 @@ export function SearchScore({ mode, score }: { mode: EarningsSearchMode; score: 
     );
 }
 
-/** "No passages found" is a genuine no-result only with complete coverage; otherwise the coverage note says why. */
-export function SearchEmptyState({ coverage }: { coverage: SearchCoverage }) {
-    return coverage.completeness === "complete" ? <div className="text-muted-foreground">No passages found</div> : null;
+/**
+ * "No passages found" is a genuine no-result only with complete coverage; otherwise the coverage note says why. No
+ * coverage in the answer (`meta.index` absent) = nothing to doubt.
+ */
+export function SearchEmptyState({ coverage }: { coverage: null | SearchCoverage }) {
+    return coverage === null || coverage.completeness === "complete" ? <div className="text-muted-foreground">No passages found</div> : null;
 }
 
-function SlideLink({ slide }: { slide: EarningsSearchHit["slide"] }) {
+function SlideLink({ slide }: { slide: V2TranscriptSearchHit["slide"] }) {
     if (!slide) return null;
 
     if (!slide.image_url) return <span className="text-muted-foreground">{`Slide ${slide.page}`}</span>;
@@ -95,7 +98,7 @@ function SlideLink({ slide }: { slide: EarningsSearchHit["slide"] }) {
 }
 
 /** Call page: play the hit in the page's `<audio>`, else scroll the transcript to it. */
-function EventHitActions({ hit, onJumpToTranscript }: { hit: EarningsSearchHit; onJumpToTranscript: (startMs: number) => void }) {
+function EventHitActions({ hit, onJumpToTranscript }: { hit: V2TranscriptSearchHit; onJumpToTranscript: (startMs: number) => void }) {
     const { loaded, playUrl, seekMs } = useCallAudio();
 
     const { audio_url: audioUrl, start_ms: startMs } = hit;
@@ -128,7 +131,7 @@ function EventHitActions({ hit, onJumpToTranscript }: { hit: EarningsSearchHit; 
 }
 
 /** Company calls list: the hit's call page, the audio in a new tab. */
-function CompanyHitActions({ hit }: { hit: EarningsSearchHit }) {
+function CompanyHitActions({ hit }: { hit: V2TranscriptSearchHit }) {
     return (
         <div className="flex flex-wrap items-center gap-3">
             {hit.audio_url
@@ -155,7 +158,7 @@ function CompanyHitActions({ hit }: { hit: EarningsSearchHit }) {
     );
 }
 
-function HitCard({ hit, mode, query, scope }: { hit: EarningsSearchHit; mode: EarningsSearchMode; query: string; scope: AskScope }) {
+function HitCard({ hit, mode, query, scope }: { hit: V2TranscriptSearchHit; mode: SearchMode; query: string; scope: AskScope }) {
     return (
         <li className="flex flex-col gap-1.5 rounded-md border p-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -163,7 +166,7 @@ function HitCard({ hit, mode, query, scope }: { hit: EarningsSearchHit; mode: Ea
                 <MatchBadge match={hit.match} />
                 {scope.kind === "company" && (
                     <EventLink className="font-medium underline-offset-4 hover:underline" event={hit}>
-                        {`${hit.conference_date} · ${formatFiscalPeriod(hit)}`}
+                        {`${hit.conference_date.slice(0, 10)} · ${formatFiscalPeriod(hit)}`}
                     </EventLink>
                 )}
                 {hit.speaker.name && (
@@ -193,12 +196,10 @@ export function SearchError({ badRequest, error, tier }: { badRequest?: string; 
     }
 
     if (error instanceof ApiRequestError) {
-        if (error.code === "search_disabled") return <Notice badge="Disabled" title="Search is disabled on this environment" />;
-
         if (error.status === 400) return <Notice badge="Invalid query" title={badRequest ?? error.message} />;
 
-        // 429 (rate limited) and 503 search_unavailable: the API's own message.
-        if (error.status === 429 || error.code === "search_unavailable") {
+        // 429 (rate limited) and 503 `unavailable` (search not switched on, or down): the API's own detail.
+        if (error.status === 429 || error.code === "unavailable") {
             return <Notice badge={error.status === 429 ? "Rate limited" : "Unavailable"} title={error.message} />;
         }
     }
@@ -213,7 +214,7 @@ export function AskResults({
     isLoading,
     scope,
 }: {
-    data: EarningsSearchResponse | null;
+    data: null | V2TranscriptSearchResponse;
     error: unknown;
     isLoading: boolean;
     scope: AskScope;
@@ -224,25 +225,30 @@ export function AskResults({
 
     if (!data) return null;
 
+    // v2: the hits are `data`, the index coverage `meta.index`, the query `meta.query`; the mode is each hit's match.
+    const coverage = data.meta.index ?? null;
+
+    const query = data.meta.query ?? "";
+
     return (
         <>
-            {data.hits.length === 0
-                ? <SearchEmptyState coverage={data.coverage} />
+            {data.data.length === 0
+                ? <SearchEmptyState coverage={coverage} />
                 : (
                         <ul className="flex flex-col gap-2">
-                            {data.hits.map(hit => (
+                            {data.data.map(hit => (
                                 <HitCard
                                     hit={hit}
                                     // A hit has no id: call + position + type is unique within one answer.
                                     key={`${hit.event_id}:${hit.type}:${hit.start_ms ?? hit.slide?.page ?? ""}:${hit.text.slice(0, 32)}`}
-                                    mode={data.mode}
-                                    query={data.query}
+                                    mode={hit.match.type}
+                                    query={query}
                                     scope={scope}
                                 />
                             ))}
                         </ul>
                     )}
-            <SearchCoverageNote coverage={data.coverage} />
+            {coverage && <SearchCoverageNote coverage={coverage} />}
         </>
     );
 }
@@ -257,11 +263,11 @@ export function AskThisCall({ scope }: { scope: AskScope }) {
 
     const [query, setQuery] = React.useState("");
 
-    const [type, setType] = React.useState<EarningsSearchType | undefined>(undefined);
+    const [type, setType] = React.useState<undefined | V2TranscriptSearchType>(undefined);
 
-    const { data, error, isFetching } = useEarningsSearch({
-        eventId: scope.kind === "event" ? scope.eventId : undefined,
-        identifier: scope.kind === "company" ? scope.identifier : undefined,
+    const { data, error, isFetching } = useV2TranscriptSearch({
+        company: scope.kind === "company" ? scope.identifier : undefined,
+        event: scope.kind === "event" ? scope.eventId : undefined,
         limit: SEARCH_LIMIT,
         mode: "lexical",
         q: query,

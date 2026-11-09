@@ -19,17 +19,23 @@ vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
     useCallPlayback: () => ({ durationMs: null, playing: true, positionMs: audio.positionMs }),
 }));
 
-// The Slides tab's request, stubbed: an answer of an IDA released before `timeline`, with a
-// player deck (no PDF viewer) on a permanent public URL.
+// The Slides tab's request, stubbed: an answer without `timeline` (opt-in in v2, absent unless asked), with a
+// player deck (no PDF viewer) on a permanent public URL; the call is recorded to check `include`.
+const slides = vi.hoisted(() => ({ calls: [] as Array<unknown> }));
+
 vi.mock("@/lib/api/queries", () => ({
-    useEarningsSlides: () => ({
-        data: {
-            deck: { origin: "player", pages: 1, trust_tier: null, url: "https://storage-prod.invinite.com/slides/t/deck.pdf" },
-            event: {},
-            slides: [{ image_url: "https://storage-prod.invinite.com/slides/t/page-1.webp", markdown: null, page: 1, title: "Cover" }],
-        },
-        error: null,
-    }),
+    useV2Slides: (input: unknown) => {
+        slides.calls.push(input);
+
+        return {
+            data: {
+                deck: { origin: "player", pages: 1, trust_tier: null, url: "https://storage-prod.invinite.com/slides/t/deck.pdf" },
+                event: {},
+                slides: [{ image_url: "https://storage-prod.invinite.com/slides/t/page-1.webp", markdown: null, page: 1, title: "Cover" }],
+            },
+            error: null,
+        };
+    },
 }));
 
 afterEach(cleanup);
@@ -128,9 +134,12 @@ describe("SlideTimeline", () => {
 
 describe("SlidesTab", () => {
     it("renders the page strip when the API answers no timeline", () => {
-        const props = { selector: { eventId: "e1" } } as CallTabProps;
+        const props = { eventId: "e1" } as CallTabProps;
 
         render(<SlidesTab {...props} />);
+
+        // v2: the timeline is opt-in, so the tab asks for it (and the page markdown) by the event id.
+        expect(slides.calls.at(-1)).toEqual({ eventId: "e1", include: ["markdown", "timeline"] });
 
         expect(screen.getByRole("img", { name: "Cover" })).toBeInTheDocument();
 
@@ -138,7 +147,7 @@ describe("SlidesTab", () => {
     });
 
     it("shows the stored public URLs as they are, with no expiry text", () => {
-        const props = { selector: { eventId: "e1" } } as CallTabProps;
+        const props = { eventId: "e1" } as CallTabProps;
 
         render(<SlidesTab {...props} />);
 

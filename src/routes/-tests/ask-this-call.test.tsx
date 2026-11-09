@@ -4,9 +4,9 @@ import type * as React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { EarningsSearchResponse, SearchCoverage } from "@/lib/api/types";
+import type { SearchCoverage, V2TranscriptSearchHit, V2TranscriptSearchResponse } from "@/lib/api/types";
 
-import { useEarningsSearch } from "@/lib/api/queries";
+import { useV2TranscriptSearch } from "@/lib/api/queries";
 import { AskResults, AskThisCall, SpanHighlightedText } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -15,8 +15,8 @@ vi.mock("@tanstack/react-router", () => ({
 
 // The results body is rendered with its data directly: keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
-    useEarningsDocumentSearch: vi.fn(),
-    useEarningsSearch: vi.fn(),
+    useV2InvestorDocumentSearch: vi.fn(),
+    useV2TranscriptSearch: vi.fn(),
 }));
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
@@ -27,11 +27,11 @@ afterEach(cleanup);
 
 const SCOPE = { eventId: "11111111-1111-4111-8111-111111111111", kind: "event", onJumpToTranscript: vi.fn() } as const;
 
-const HIT: EarningsSearchResponse["hits"][number] = {
+const HIT: V2TranscriptSearchHit = {
     audio_url: null,
     chunk_index: 7,
     cik: "0000000001",
-    conference_date: "2026-10-20",
+    conference_date: "2026-10-20T21:00:00.000Z",
     end_ms: 65_000,
     event_id: SCOPE.eventId,
     fiscal_quarter: 3,
@@ -53,6 +53,14 @@ const coverage = (completeness: SearchCoverage["completeness"], reasons: SearchC
     reasons,
 });
 
+/** A v2 answer: one page of hits, the index coverage in `meta.index`, the query in `meta.query`. */
+const answer = (index: SearchCoverage, hits: Array<V2TranscriptSearchHit>): V2TranscriptSearchResponse => ({
+    data: hits,
+    has_more: false,
+    meta: { index, query: "margins" },
+    next_cursor: null,
+});
+
 describe("SpanHighlightedText", () => {
     // "📈" is one code point but two UTF-16 units: offsets applied with string.slice would mark " margi".
     it("marks code-point spans exactly with an emoji before the match", () => {
@@ -65,8 +73,14 @@ describe("SpanHighlightedText", () => {
 });
 
 describe("AskResults", () => {
+    it("reads \"No passages found\" when the answer carries no index coverage", () => {
+        render(<AskResults data={{ data: [], has_more: false, meta: {}, next_cursor: null }} error={null} isLoading={false} scope={SCOPE} />);
+
+        expect(screen.getByText("No passages found")).toBeInTheDocument();
+    });
+
     it("shows the match badge, the span and the 4-decimal keyword score", () => {
-        render(<AskResults data={{ coverage: coverage("complete"), hits: [HIT], mode: "lexical", query: "margins" }} error={null} isLoading={false} scope={SCOPE} />);
+        render(<AskResults data={answer(coverage("complete"), [HIT])} error={null} isLoading={false} scope={SCOPE} />);
 
         expect(screen.getByText("keyword")).toBeInTheDocument();
 
@@ -78,7 +92,7 @@ describe("AskResults", () => {
     it("guesses the highlight from the query for a keyword hit without spans (an attached answer)", () => {
         const attachedAnswer = { ...HIT, match: { lexical_rank: 2, spans: [], type: "lexical" as const } };
 
-        render(<AskResults data={{ coverage: coverage("complete"), hits: [attachedAnswer], mode: "lexical", query: "margins" }} error={null} isLoading={false} scope={SCOPE} />);
+        render(<AskResults data={answer(coverage("complete"), [attachedAnswer])} error={null} isLoading={false} scope={SCOPE} />);
 
         expect(screen.getByText("keyword")).toBeInTheDocument();
 
@@ -89,7 +103,7 @@ describe("AskResults", () => {
     it("badges an exact hit and shows no score for literal", () => {
         const exact = { ...HIT, match: { lexical_rank: 1, spans: [{ end: 14, start: 6 }], type: "literal" as const }, score: 0 };
 
-        render(<AskResults data={{ coverage: coverage("complete"), hits: [exact], mode: "literal", query: "margins" }} error={null} isLoading={false} scope={SCOPE} />);
+        render(<AskResults data={answer(coverage("complete"), [exact])} error={null} isLoading={false} scope={SCOPE} />);
 
         expect(screen.getByText("exact")).toBeInTheDocument();
 
@@ -99,7 +113,7 @@ describe("AskResults", () => {
     it("explains unreadable coverage instead of an empty answer", () => {
         render(
             <AskResults
-                data={{ coverage: { completeness: "unknown", lexical: null, reasons: ["coverage_unavailable"] }, hits: [], mode: "lexical", query: "margins" }}
+                data={answer({ completeness: "unknown", lexical: null, reasons: ["coverage_unavailable"] }, [])}
                 error={null}
                 isLoading={false}
                 scope={SCOPE}
@@ -113,14 +127,14 @@ describe("AskResults", () => {
 
     it("reads \"No passages found\" only with complete coverage", () => {
         const { rerender } = render(
-            <AskResults data={{ coverage: coverage("complete"), hits: [], mode: "lexical", query: "margins" }} error={null} isLoading={false} scope={SCOPE} />,
+            <AskResults data={answer(coverage("complete"), [])} error={null} isLoading={false} scope={SCOPE} />,
         );
 
         expect(screen.getByText("No passages found")).toBeInTheDocument();
 
         rerender(
             <AskResults
-                data={{ coverage: coverage("partial", ["lexical_backfill_pending"]), hits: [], mode: "lexical", query: "margins" }}
+                data={answer(coverage("partial", ["lexical_backfill_pending"]), [])}
                 error={null}
                 isLoading={false}
                 scope={SCOPE}
@@ -131,7 +145,7 @@ describe("AskResults", () => {
 
         expect(screen.getByText("Search index is still being built for this company — results may be incomplete")).toBeInTheDocument();
 
-        rerender(<AskResults data={{ coverage: coverage("unknown"), hits: [], mode: "lexical", query: "margins" }} error={null} isLoading={false} scope={SCOPE} />);
+        rerender(<AskResults data={answer(coverage("unknown"), [])} error={null} isLoading={false} scope={SCOPE} />);
 
         expect(screen.queryByText("No passages found")).toBeNull();
 
@@ -141,7 +155,7 @@ describe("AskResults", () => {
 
 describe("AskThisCall", () => {
     it("is a keyword search box: \"Search this call\" sends mode=lexical on submit, never another mode", () => {
-        const search = vi.mocked(useEarningsSearch).mockReturnValue({ data: null, error: null, isFetching: false } as unknown as ReturnType<typeof useEarningsSearch>);
+        const search = vi.mocked(useV2TranscriptSearch).mockReturnValue({ data: null, error: null, isFetching: false } as unknown as ReturnType<typeof useV2TranscriptSearch>);
 
         render(<AskThisCall scope={SCOPE} />);
 
@@ -149,7 +163,7 @@ describe("AskThisCall", () => {
 
         fireEvent.click(screen.getByRole("button", { name: "Search" }));
 
-        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ eventId: SCOPE.eventId, mode: "lexical", q: "gross margin" }));
+        expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ event: SCOPE.eventId, mode: "lexical", q: "gross margin" }));
 
         expect(search.mock.calls.every(([input]) => input.mode === "lexical")).toBe(true);
     });

@@ -3,14 +3,15 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 
-import type { EarningsEventWithObservations } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useEarningsEventsInfinite } from "@/lib/api/queries";
+import { ApiRequestError } from "@/lib/api/errors";
+import { useV2EventsInfinite } from "@/lib/api/queries";
 import { eventLabel, formatInstant, isUpcoming } from "@/lib/earnings/format";
 import { DocumentSearch } from "@/routes/$ticker/documents/-components/document-search";
 import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
@@ -49,18 +50,19 @@ function EarningsCallsPage() {
         hasNextPage,
         isFetchingNextPage,
         isLoading,
-    } = useEarningsEventsInfinite({
-        // Investor days, conferences and AGMs too (badge + title per row).
-        eventType: "all",
-        identifier: ticker,
+    } = useV2EventsInfinite({
+        company: ticker,
         limit: 40,
-        sort: "desc",
+        sort: "-scheduled_at",
+        // Investor days, conferences and AGMs too (badge + title per row).
+        type: "all",
     });
 
-    const covered = data?.pages[0]?.covered ?? true;
+    // A company outside the in-house coverage answers 404 `not_covered`.
+    const covered = !(error instanceof ApiRequestError && error.code === "not_covered");
 
     const { past, upcoming } = React.useMemo(() => {
-        const all = data?.pages.flatMap(page => page.events) ?? [];
+        const all = data?.pages.flatMap(page => page.data) ?? [];
 
         return {
             past: all.filter(event => !isUpcoming(event, now)),
@@ -74,7 +76,7 @@ function EarningsCallsPage() {
 
     const events = tab === "upcoming" ? upcoming : past;
 
-    const columns = React.useMemo<Array<ColumnDef<EarningsEventWithObservations>>>(
+    const columns = React.useMemo<Array<ColumnDef<V2Event>>>(
         () => [
             {
                 cell: ({ row }) => (
@@ -126,7 +128,7 @@ function EarningsCallsPage() {
         [],
     );
 
-    if (error) {
+    if (error && covered) {
         return (
             <div className="space-y-4 relative flex flex-col h-0 grow">
                 <ErrorState error={error} title="Failed to load earnings calls" />
