@@ -51946,7 +51946,7 @@
         "tags": [
           "Status"
         ],
-        "description": "Whether each product works: a status and its uptime per product family, plus the coverage universe. Uptime is the share of requests answered without a server error, measured by the API per product family; a window with too little traffic to judge shows no figure. Status reflects the last 24 hours.",
+        "description": "Whether each product works: a status and its uptime per product family, the same plus the 7-day p50 / p95 latency per v2 docs group (`groups`), and the coverage universe. Uptime is the share of requests answered without a server error, measured by the API per product family; a window with too little traffic to judge shows no figure. Status reflects the last 24 hours.",
         "security": [],
         "x-cli": {
           "group": "status",
@@ -52032,6 +52032,87 @@
                             "type": "number",
                             "nullable": true,
                             "description": "Share of requests answered without a server error over the last 90 days (3 decimals); null with too little traffic to judge"
+                          }
+                        }
+                      }
+                    },
+                    "groups": {
+                      "type": "array",
+                      "nullable": true,
+                      "description": "Status, uptime and 7-day p50 / p95 latency per docs group of the v2 API (v1 routes count in the group of the v2 operation that replaces them); null while unavailable",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "group",
+                          "name",
+                          "status",
+                          "uptime_7d",
+                          "uptime_30d",
+                          "uptime_90d",
+                          "p50_ms_7d",
+                          "p95_ms_7d"
+                        ],
+                        "properties": {
+                          "group": {
+                            "type": "string",
+                            "enum": [
+                              "companies",
+                              "reference",
+                              "catalog",
+                              "financials",
+                              "metrics",
+                              "filings",
+                              "documents",
+                              "holdings",
+                              "insider_trades",
+                              "ipos",
+                              "events",
+                              "call_analytics",
+                              "transcripts",
+                              "guidance",
+                              "investor_documents",
+                              "news",
+                              "webhooks"
+                            ],
+                            "description": "Docs group of the v2 API"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Docs group title (e.g. Insider trades)"
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "operational",
+                              "degraded",
+                              "outage"
+                            ],
+                            "description": "Over the last 24 hours; too little traffic to judge reads as operational"
+                          },
+                          "uptime_7d": {
+                            "type": "number",
+                            "nullable": true,
+                            "description": "Share of requests answered without a server error over the last 7 days (3 decimals); null with too little traffic to judge"
+                          },
+                          "uptime_30d": {
+                            "type": "number",
+                            "nullable": true,
+                            "description": "Share of requests answered without a server error over the last 30 days (3 decimals); null with too little traffic to judge"
+                          },
+                          "uptime_90d": {
+                            "type": "number",
+                            "nullable": true,
+                            "description": "Share of requests answered without a server error over the last 90 days (3 decimals); null with too little traffic to judge"
+                          },
+                          "p50_ms_7d": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "p50 latency over the last 7 days in ms, as the upper bound of its latency bucket (25, 50, 100, 200, 400, 800, 1600, 3200, 6400 or 12800); null with too little traffic to judge or above 12800"
+                          },
+                          "p95_ms_7d": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "p95 latency over the last 7 days in ms, as the upper bound of its latency bucket (25, 50, 100, 200, 400, 800, 1600, 3200, 6400 or 12800); null with too little traffic to judge or above 12800"
                           }
                         }
                       }
@@ -52688,6 +52769,22 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "cik": "0000320193",
+                      "ticker": "AAPL",
+                      "name": "Apple Inc.",
+                      "exchange": "XNAS",
+                      "sector": "Technology",
+                      "fiscal_year_end": null,
+                      "logo_url": "https://storage.invinite.com/company_logos/AAPL.png"
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {}
                 }
               }
             }
@@ -52833,6 +52930,46 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Company"
+                },
+                "example": {
+                  "ticker": "AAPL",
+                  "cik": "0000320193",
+                  "name": "Apple Inc.",
+                  "description": "Apple is among the largest companies in the world, with a broad portfolio of hardware and software products targeted at consumers and businesses. Apple's iPhone accounts for the majority of the firm's sales, and Apple's other products, such…",
+                  "category": "",
+                  "sector": "Technology",
+                  "industry": "Consumer Electronics",
+                  "sic": "",
+                  "sic_sector": "",
+                  "sic_industry": "",
+                  "fama_sector": null,
+                  "fama_industry": null,
+                  "exchange": "XNAS",
+                  "currency": "USD",
+                  "cusip": "",
+                  "composite_figi": "BBG000B9XRY4",
+                  "is_delisted": false,
+                  "list_date": "1980-12-12",
+                  "employees": 167000,
+                  "market_cap": 4975383151340,
+                  "shares_outstanding": 14532182000,
+                  "insider_own_pct": 0.06,
+                  "insider_own_shares": 9335365,
+                  "inst_own_pct": 63.09,
+                  "inst_own_shares": 9168782400,
+                  "short_float_pct": 0.91,
+                  "short_float_shares": 131591865,
+                  "homepage_url": "https://www.apple.com",
+                  "investor_relations_url": "https://www.apple.com",
+                  "logo_url": "https://storage.invinite.com/company_logos/AAPL.png",
+                  "brand_colors": [
+                    "#000000"
+                  ],
+                  "street": "ONE APPLE PARK WAY",
+                  "city": "CUPERTINO",
+                  "state": "California",
+                  "zip_code": "95014",
+                  "country_code": "US"
                 }
               }
             }
@@ -53083,6 +53220,27 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "cik": "0001453746",
+                      "name": "ADAMS STREET TRUEST - BERKSHIRE FUND V LP Zinc Series",
+                      "entity_type": "other",
+                      "sic": null,
+                      "phase": null,
+                      "forms": [],
+                      "stated_tickers": [],
+                      "listing": null
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {
+                    "coverage": {
+                      "state": "complete"
+                    }
+                  }
                 }
               }
             }
@@ -53226,6 +53384,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FilerDetail"
+                },
+                "example": {
+                  "cik": "0000102909",
+                  "name": "VANGUARD GROUP INC",
+                  "entity_type": "other",
+                  "sic": null,
+                  "state_of_incorporation": null,
+                  "fiscal_year_end": "12-31",
+                  "phase": null,
+                  "listing": null
                 }
               }
             }
@@ -53474,6 +53642,32 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "person_id": "f42e6e2a-73a4-446d-908b-e4c57b65167b",
+                      "kind": "analyst",
+                      "name": "Richard Kramer",
+                      "current_firm": "Arete Research",
+                      "current_title": "Analyst, Arete Research",
+                      "appearance_count": 4,
+                      "aliases": [
+                        "Rete"
+                      ],
+                      "firm": "Irate Research",
+                      "appearances": 1,
+                      "questions": 3,
+                      "first_seen": "2026-11-02T22:00:00.000Z",
+                      "last_seen": "2026-11-02T22:00:00.000Z",
+                      "mean_difficulty": 0.552,
+                      "scored_question_count": 5,
+                      "role": "analyst"
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {}
                 }
               }
             }
@@ -53613,6 +53807,23 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Person"
+                },
+                "example": {
+                  "person_id": "9b135e05-d7c2-4d23-9c89-728501ad8e58",
+                  "kind": "executive",
+                  "name": "Satya Nadella",
+                  "current_firm": null,
+                  "current_title": "chairman and chief executive officer, Microsoft",
+                  "appearance_count": 5,
+                  "aliases": [],
+                  "firm": null,
+                  "appearances": 5,
+                  "questions": 0,
+                  "first_seen": "2025-10-29T00:00:00.000Z",
+                  "last_seen": "2026-10-28T21:30:00.000Z",
+                  "mean_difficulty": null,
+                  "scored_question_count": 0,
+                  "role": "executive"
                 }
               }
             }
@@ -53833,6 +54044,30 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                      "speaker_label": "spk00",
+                      "person_id": "6682be14-22ff-45d6-820e-c0018cdfc35f",
+                      "name": "Operator",
+                      "title": null,
+                      "firm": null,
+                      "role": "operator",
+                      "confidence": 1,
+                      "resolved_by": "llm",
+                      "evidence": [
+                        {
+                          "quote": "At this time, all participants are in a listen-only mode.",
+                          "start_ms": 800
+                        }
+                      ]
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {}
                 }
               }
             }
@@ -54049,6 +54284,24 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "company": {
+                        "cik": "0000320193",
+                        "ticker": "AAPL"
+                      },
+                      "fiscal_year": 2026,
+                      "fiscal_quarter": 4,
+                      "calendar_year": 2026,
+                      "calendar_quarter": 3,
+                      "period_end": "2026-09-26"
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDIwLTA5LTI2IDAwOjAwOjAwIiwiMzIwMTkzIiwyMDIwLDRdLCJmIjoiOTA2Zjg5ZTVmZGQ3NjEwYiJ9",
+                  "meta": {}
                 }
               }
             }
@@ -54307,6 +54560,26 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "company": {
+                        "cik": "0000320193",
+                        "ticker": "AAPL"
+                      },
+                      "ex_dividend_date": "2026-11-12",
+                      "declaration_date": "2026-11-02",
+                      "cash_amount": 0.27,
+                      "dividend_type": "CD",
+                      "frequency": 4,
+                      "pay_date": "2026-11-16",
+                      "record_date": "2026-11-12"
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDIwLTExLTA2IDAwOjAwOjAwIiwiQUFQTCIsIkU4NjMxYWRkYTNkOTQ3NzlhOTBkMTRmNTNkNzdlZmUzZWVjODVkMGZkM2U2ZjlhMDY5ODQwN2I3ODdmZTc2MWZiIl0sImYiOiI5NjBkYTc0OWZkYmRiNmQ2In0",
+                  "meta": {}
                 }
               }
             }
@@ -54518,6 +54791,22 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "company": {
+                        "cik": "0000320193",
+                        "ticker": "AAPL"
+                      },
+                      "execution_date": "2020-08-31",
+                      "split_from": 1,
+                      "split_to": 4
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {}
                 }
               }
             }
@@ -54762,6 +55051,19 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "day": "2023-01-02",
+                      "event_name": "New Year's Day",
+                      "start_time": null,
+                      "end_time": null
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI0LTEyLTI1IDAwOjAwOjAwIl0sImYiOiIxNTIzYTY1ZTcxY2EwMDE0In0",
+                  "meta": {}
                 }
               }
             }
@@ -54953,6 +55255,20 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "metric_id": "bs_accounts_and_financing_receivable_current",
+                      "name": "Accounts and Financing Receivable, Current",
+                      "statement": "balance-sheet",
+                      "unit": "usd",
+                      "description": null
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyJic19kZWJ0X3NlY3VyaXRpZXNfbm9uY3VycmVudCJdLCJmIjoiMzcxNzcwMjgxZDVhMThjOSJ9",
+                  "meta": {}
                 }
               }
             }
@@ -55144,6 +55460,18 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "form": "10-K",
+                      "section_id": "part_i-item_1",
+                      "title": "Business"
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIxMC1RXHUwMDAwcGFydF9pLWl0ZW1fMiJdLCJmIjoiNTgyMTE0MzI2YTc1OTk4OSJ9",
+                  "meta": {}
                 }
               }
             }
@@ -55325,6 +55653,18 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "form": "10-K",
+                      "description": "Annual report",
+                      "family": "periodic"
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {}
                 }
               }
             }
@@ -55505,6 +55845,18 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "event_type": "agm",
+                      "label": "AGM",
+                      "description": "An annual general (shareholder) meeting"
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {}
                 }
               }
             }
@@ -55685,6 +56037,18 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "kind": "annual_report",
+                      "label": "Annual report",
+                      "category": "reports"
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {}
                 }
               }
             }
@@ -55887,6 +56251,45 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "metric_id": "bs_accounts_and_financing_receivable_current",
+                      "statement": "balance-sheet",
+                      "label": "Accounts and Financing Receivable, Current",
+                      "rule": {
+                        "rule_id": "r_091d526fbda8d54ba69e69ea",
+                        "statement_restriction": "BalanceSheets",
+                        "unit": "usd",
+                        "hierarchy": {
+                          "depth": 4,
+                          "parent": "bs_total_receivables_current",
+                          "sibling_order": 1,
+                          "global_order": 15
+                        },
+                        "kind": "period_derivation",
+                        "evaluation_order": 278,
+                        "ordered_alias_position": null,
+                        "declared_taxonomy": null,
+                        "alias_role": null,
+                        "declared_alias": null,
+                        "formula_definition": null,
+                        "required_operands": [],
+                        "sign_policy": "as_reported",
+                        "notes": "",
+                        "observed_since": null,
+                        "historical_effective_since": null
+                      }
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyJic19hY2N1bXVsYXRlZF9vdGhlcl9jb21wcmVoZW5zaXZlX2luY29tZV9sb3NzXHUwMDAwcl8wMGQ4MjE4ZTQ2OGU2NDQ4MzA2ZDY5YzkiXSwiZiI6ImU0ZWM3ZWFiMWI4YjQ3YzAifQ",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete"
+                    }
+                  }
                 }
               }
             }
@@ -55993,6 +56396,27 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Me"
+                },
+                "example": {
+                  "account": {
+                    "id": "acct_7f3a9c21",
+                    "name": "Example Capital"
+                  },
+                  "plan": "pro",
+                  "limits": {
+                    "requests_per_second": 100,
+                    "requests_per_minute": 1000
+                  },
+                  "credits": {
+                    "included": 4000000,
+                    "used": 170752,
+                    "remaining": 3829248,
+                    "resets_at": "2026-11-28T12:43:10.000Z",
+                    "prepaid_balance_usd": 0
+                  },
+                  "allowed_families": [
+                    "Companies"
+                  ]
                 }
               }
             }
@@ -56112,6 +56536,48 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Usage"
+                },
+                "example": {
+                  "window_days": 30,
+                  "period": {
+                    "tier": "pro",
+                    "included_credits": 4000000,
+                    "used_credits": 170752,
+                    "resets_at": "2026-11-28T12:43:10.000Z",
+                    "prepaid_balance_usd": 0
+                  },
+                  "daily": [
+                    {
+                      "date": "2026-10-11",
+                      "requests": 0,
+                      "credits": 0,
+                      "errors": {
+                        "402": 0,
+                        "403": 0,
+                        "429": 0,
+                        "4xx": 0,
+                        "5xx": 0
+                      }
+                    }
+                  ],
+                  "by_family": [
+                    {
+                      "family": "earnings_calls",
+                      "label": "Earnings Calls",
+                      "requests": 200,
+                      "credits": 464
+                    }
+                  ],
+                  "by_key": [
+                    {
+                      "caller": "key",
+                      "label": "test",
+                      "key_hint": "invd_3f2...a91c",
+                      "requests": 317,
+                      "credits": 548
+                    }
+                  ],
+                  "truncated": false
                 }
               }
             }
@@ -60282,6 +60748,41 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "accession": "0001354457-26-001062",
+                      "company": {
+                        "cik": "0000320193",
+                        "ticker": "AAPL"
+                      },
+                      "form": "25-NSE",
+                      "filing_date": "2026-11-09",
+                      "report_date": null,
+                      "filed_at": "2026-11-09T22:00:55Z",
+                      "items": [],
+                      "primary_document": null,
+                      "roles": [
+                        "subject_company"
+                      ],
+                      "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/320193/000135445726001062/0001354457-26-001062-index.htm"
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKaFpuUmxjaUk2V3lJeU1ESTJMVEE1TFRJNUlpd2lNREF3TVRFME1ETTJNUzB5Tmkwd016Z3dNamNpWFN3aVppSTZJamcxTnpOaU1EZzBaakV5TnpWak1qTWlmUSIsMjUsMCwwXSwiZiI6ImU4ZTc1MmM2NGY0NTlhNDMifQ",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete"
+                    },
+                    "form_facet": [
+                      {
+                        "form": "10-K",
+                        "count": 31,
+                        "newest_filing_date": "2026-11-03"
+                      }
+                    ]
+                  }
                 }
               }
             }
@@ -60427,6 +60928,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FilingDetail"
+                },
+                "example": {
+                  "accession": "0000320193-26-000026",
+                  "company": {
+                    "cik": "0000320193",
+                    "ticker": "AAPL"
+                  },
+                  "form": "10-K",
+                  "filing_date": "2026-11-03",
+                  "report_date": "2026-09-26",
+                  "filed_at": "2026-11-03T13:05:15Z",
+                  "items": [],
+                  "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000026/0000320193-26-000026-index.htm"
                 }
               }
             }
@@ -61012,6 +61526,30 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReviewChain"
+                },
+                "example": {
+                  "accession": "0000320193-26-000026",
+                  "nodes": [
+                    {
+                      "accession": "0000320193-26-000026",
+                      "depth": 0,
+                      "form": null,
+                      "filing_date": null,
+                      "report_date": null,
+                      "file_number": null,
+                      "holding": null
+                    }
+                  ],
+                  "edges": [],
+                  "twins": [],
+                  "completeness": {
+                    "truncated": false,
+                    "max_depth": 1,
+                    "max_nodes": 100,
+                    "unresolved_edges": 0,
+                    "unresolved_review_nodes": [],
+                    "not_held_nodes": []
+                  }
                 }
               }
             }
@@ -61309,6 +61847,79 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "version_id": "d7bbe5c0-8708-521f-a720-15ef6d1bd1fa",
+                      "accession": "0000320193-25-000079",
+                      "filename": "aapl-20250927.htm",
+                      "form": "10-K",
+                      "filing_date": "2025-10-31",
+                      "text": "to successfully manage future introductions and transitions of products and services, which can materially adversely affect the Company’s business, reputation, results of operations, financial condition and stock price.\nThe Company depends …",
+                      "score": 0.01276426,
+                      "match": {
+                        "type": "lexical",
+                        "lexical_rank": 1,
+                        "spans": [
+                          {
+                            "start": 728,
+                            "end": 734
+                          }
+                        ]
+                      },
+                      "document_spans": [
+                        {
+                          "start": 728,
+                          "end": 734,
+                          "document_start": 41830,
+                          "document_end": 41836,
+                          "blocks": [
+                            {
+                              "block_id": "b00136",
+                              "start": 345,
+                              "end": 351
+                            }
+                          ]
+                        }
+                      ],
+                      "citation": {
+                        "version_id": "d7bbe5c0-8708-521f-a720-15ef6d1bd1fa",
+                        "accession": "0000320193-25-000079",
+                        "filename": "aapl-20250927.htm",
+                        "source": {
+                          "url": "https://storage.invinite.com/sec/18cf21cf542b9c42832192ccfdaef882/aapl-20250927.htm"
+                        }
+                      }
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {
+                    "coverage": {
+                      "state": "partial"
+                    },
+                    "query": "supply chain risk",
+                    "mode": "lexical",
+                    "index": {
+                      "completeness": "partial",
+                      "lexical": {
+                        "state": "ready",
+                        "indexed": 31,
+                        "pending": 0,
+                        "failed": 0,
+                        "not_indexed_by_policy": 6
+                      },
+                      "reasons": [
+                        "held_gap"
+                      ],
+                      "forms_indexed": [
+                        "10-K*"
+                      ],
+                      "matches": null,
+                      "hint": null
+                    }
+                  }
                 }
               }
             }
@@ -61495,6 +62106,25 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "dataset": "f13",
+                      "release": "01jun2026-31aug2026",
+                      "released_at": "2026-09-14",
+                      "forms": [
+                        "13F-HR"
+                      ]
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {
+                    "coverage": {
+                      "state": "complete"
+                    }
+                  }
                 }
               }
             }
@@ -61665,6 +62295,133 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DocumentVersion"
+                },
+                "example": {
+                  "version": {
+                    "id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                    "accession": "0000320193-26-000026",
+                    "filename": "aapl-20260926.htm",
+                    "sha256": "1a5080d66b9ca5da8092f703b989aac11764cd2f2fbbbb1127c078f25a1ab50c",
+                    "created_at": "2026-11-03T17:44:33.530Z",
+                    "media_kind": "html",
+                    "block_count": 730,
+                    "page_count": 65
+                  },
+                  "source": {
+                    "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000026/aapl-20260926.htm",
+                    "content_type": "html",
+                    "content_sha256": "bc6e71908b83b5260b23271176e4b8b709094670cb0f3bd8a9a44a9c91df8cbb",
+                    "form": "10-K",
+                    "role": "primary",
+                    "filed_at": "2026-11-03T13:05:15Z"
+                  },
+                  "quality": {
+                    "decoding": "ascii",
+                    "footnote_marks": {
+                      "ambiguous": 0,
+                      "resolved": 7,
+                      "unresolved": 0
+                    },
+                    "headerless_tables": 10,
+                    "multi_page_tables": 0,
+                    "page_break_rule": "css",
+                    "page_breaks": {
+                      "collapsed": 0,
+                      "hr": 0,
+                      "page_tag": 0,
+                      "style": 64
+                    },
+                    "pages": 65,
+                    "pages_vs_contents": 0,
+                    "printed_labels": {
+                      "absent": 2,
+                      "accepted": 63
+                    },
+                    "printed_labels_trusted": true,
+                    "table_continuations": 4,
+                    "toc": {
+                      "agree": 37,
+                      "disagree": 0,
+                      "no_page_in_toc": 4,
+                      "no_printed_label": 0,
+                      "unresolved_target": 0
+                    }
+                  },
+                  "selection": {
+                    "status": "ok",
+                    "reason": null,
+                    "first_ordinal": 1,
+                    "last_ordinal": 63,
+                    "truncated": false,
+                    "next_block": null,
+                    "candidates": [],
+                    "blocks": null,
+                    "pages": "1-3",
+                    "printed": null,
+                    "neighbors": null,
+                    "footnotes": false
+                  },
+                  "toc": [
+                    {
+                      "block_id": "b00046",
+                      "check": "no_page_in_toc",
+                      "observed_printed": "1",
+                      "page": null,
+                      "resolved_by": "anchor",
+                      "target_id": "ie59c230427654e04baa2d272b23a8a12_10",
+                      "title": "Part I"
+                    }
+                  ],
+                  "blocks": [
+                    {
+                      "anchor": {
+                        "annotated_id": null,
+                        "html_id": null,
+                        "ids": [
+                          "ie59c230427654e04baa2d272b23a8a12_1"
+                        ],
+                        "line": null,
+                        "xpath": "/html/body/div[5]"
+                      },
+                      "footnote_links": [],
+                      "footnote_refs": [],
+                      "heading_level": 5,
+                      "heading_source": "style",
+                      "id": "b00001",
+                      "kind": "heading",
+                      "neighbors": {
+                        "next": "b00002",
+                        "prev": null
+                      },
+                      "page": {
+                        "ordinal": 1,
+                        "printed": null
+                      },
+                      "page_end": null,
+                      "section_path": [],
+                      "text": "UNITED STATES",
+                      "xbrl": [],
+                      "citation": {
+                        "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                        "block_id": "b00001",
+                        "page": 1,
+                        "printed": null,
+                        "page_end": null,
+                        "printed_end": null
+                      }
+                    }
+                  ],
+                  "pages": [
+                    {
+                      "block_ids": [
+                        "b00001"
+                      ],
+                      "ordinal": 1,
+                      "printed": null,
+                      "printed_source": null
+                    }
+                  ],
+                  "footnotes": []
                 }
               }
             }
@@ -61994,6 +62751,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DocumentFigure"
+                },
+                "example": {
+                  "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                  "figure": {
+                    "alt": "1676",
+                    "bbox": null,
+                    "caption": null,
+                    "declared_height": 450,
+                    "declared_width": 680,
+                    "height": 900,
+                    "image_filename": "aapl-20260926_g2.jpg",
+                    "image_key": "sec/4765d5384d6b2195ff48ff775f9244f9/aapl-20260926_g2.jpg",
+                    "image_sha256": "4acfe5a82a765c03c4e3c3c6c3ce6ab6194ba61c8877e4bc6a03e1d7dc2b29b5",
+                    "image_status": "stored",
+                    "mime": "image/jpeg",
+                    "ocr_text": null,
+                    "src": "aapl-20260926_g2.jpg",
+                    "width": 1360
+                  },
+                  "image": {
+                    "url": "https://storage.invinite.com/sec/4765d5384d6b2195ff48ff775f9244f9/aapl-20260926_g2.jpg"
+                  },
+                  "citation": {
+                    "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                    "block_id": "b00280",
+                    "page": 25,
+                    "printed": "23",
+                    "page_end": null,
+                    "printed_end": null
+                  }
                 }
               }
             }
@@ -62192,6 +62979,37 @@
                           "$ref": "#/components/schemas/MetaSource"
                         }
                       }
+                    }
+                  }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "fact_id": null,
+                      "document_version": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                      "concept": "OperatingIncomeLoss",
+                      "status": "placed",
+                      "html_tag_id": "f-1124",
+                      "xpath": "/html/body/ix:continuation[21]/ix:nonnumeric[2]/div[2]/table/tr[9]/td[23]/span/ix:nonfraction",
+                      "block_id": "b00624",
+                      "xbrl_ordinal": 41,
+                      "table_row": 8,
+                      "table_col": 34,
+                      "page": null,
+                      "pdf_box": null,
+                      "source_sha256": "bc6e71908b83b5260b23271176e4b8b709094670cb0f3bd8a9a44a9c91df8cbb",
+                      "legacy_id": "f-1124",
+                      "rendition_url": "https://storage.invinite.com/filing_htmls/cc8314ba120a95c0f0e5a59df49834f5/320193_0000320193-26-000026_10-K_2026-11-03.html"
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsIjA1ODI3ODkyLTQ2YjQtNTVjNi05ZmFlLWQ3YWUzMDQ5MDg3OCIsMjUsMCwwXSwiZiI6IjA1NGM4MDM5NTJlZjE2M2QifQ",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete"
+                    },
+                    "source": {
+                      "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f"
                     }
                   }
                 }
@@ -62465,6 +63283,42 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "accession_number": "0002012383-26-003238",
+                      "calendar_year": 2026,
+                      "calendar_quarter": 2,
+                      "cik_company": "0000320193",
+                      "name_company": "APPLE INC",
+                      "ticker_company": "AAPL",
+                      "cusip_company": "037833100",
+                      "cik_institution": "0002012383",
+                      "name_institution": "BlackRock, Inc.",
+                      "dollar_value": 336524794350,
+                      "filing_date": "2026-08-07",
+                      "investment_discretion": null,
+                      "link_to_filing_details": "https://www.sec.gov/Archives/edgar/data/2012383/000201238326003238/0002012383-26-003238-index.htm",
+                      "period_end": "2026-06-30",
+                      "put_call": null,
+                      "shares_or_principal_amount": 1162996939,
+                      "shares_or_principal_amount_type": "SH",
+                      "voting_authority_none": 114810748,
+                      "voting_authority_shared": 0,
+                      "voting_authority_sole": 1048186191
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lNekV6TkRRME9ETXlaVFF4WmpCbE1HUTRPVGhqTW1Sa0lpd2ljQ0k2SWpJd01qWXRNVEV0TURsVU1qTTZNelE2TWpjdU9UVTJOekkzS3pBd09qQXdJaXdpYXlJNld5SXhOekl4TlRVM05EWTBNaUlzSWpNMU5ESXdOQ0lzSWpBek56Z3pNekV3TUh4d2IzTnBk…",
+                  "meta": {
+                    "coverage": {
+                      "state": "partial",
+                      "through": "2026-11-09"
+                    },
+                    "pinned_at": "2026-11-09T23:34:27.956Z",
+                    "counting": "One row per manager and position as that manager reported it in its effective 13F snapshot (amendments applied); rows are never summed across managers"
+                  }
                 }
               }
             }
@@ -62708,6 +63562,44 @@
                           "$ref": "#/components/schemas/MetaSource"
                         }
                       }
+                    }
+                  }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "cik_institution": "0001005354",
+                      "name_institution": "VIRGINIA RETIREMENT SYSTEMS ET Al",
+                      "cik_company": "0000320193",
+                      "name_company": null,
+                      "ticker_company": "AAPL",
+                      "cusip_company": "037833100",
+                      "type": "added",
+                      "change_dollar_value": 694399822,
+                      "change_shares_or_principal_amount_absolute": 2281283,
+                      "change_shares_or_principal_amount_percent": 2.3665939797832256,
+                      "shares_or_principal_amount_new": 3245235,
+                      "shares_or_principal_amount_old": 963952,
+                      "accession_number": "0001005354-26-000003",
+                      "calendar_year": 2026,
+                      "calendar_quarter": 2,
+                      "dollar_value": 939041200,
+                      "filing_date": "2026-08-25",
+                      "investment_discretion": null,
+                      "period_end": "2026-06-30",
+                      "put_call": null,
+                      "shares_or_principal_amount_type": "SH",
+                      "voting_authority_none": null,
+                      "voting_authority_shared": null,
+                      "voting_authority_sole": null
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lOakV5T0RneE1XUTROakl4TXpCallUaG1NV1ExTXpabUlpd2ljQ0k2SWpJd01qWXRNVEV0TURsVU1qTTZNelE2TWpndU9URTROVFV3S3pBd09qQXdJaXdpYXlJNld5SXhNelU0TXpNeElpd2lNRE0zT0RNek1UQXdmSEJ2YzJsMGFXOXVmRk5JSWwxOSIsOSww…",
+                  "meta": {
+                    "coverage": {
+                      "state": "partial",
+                      "through": "2026-11-09"
                     }
                   }
                 }
@@ -62984,6 +63876,36 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": "2d6993a157cabb83110415f6d3cca3f4:a2d0149c7e5bd4696684:0",
+                      "accession_number": "0001140361-26-042149",
+                      "cik": "0000320193",
+                      "filed_at": "2026-11-05T23:30:13.000Z",
+                      "period_of_report": "2026-11-03",
+                      "reporting_person_name": "Newstead Jennifer",
+                      "reporting_person_is_director": false,
+                      "reporting_person_is_officer": true,
+                      "reporting_person_is_ten_percent_owner": false,
+                      "reporting_person_is_other": false,
+                      "reporting_person_officer_title": "SVP, GC and Government Affairs",
+                      "reporting_person_other_text": null,
+                      "security_title": "Common Stock",
+                      "acquired_disposed": "D",
+                      "coding_code": "S",
+                      "shares": 2399,
+                      "share_price": 325.75,
+                      "total": 781475,
+                      "shares_owned_following_transaction": 29997,
+                      "shares_owned_before_transaction": 32396,
+                      "side": "sell"
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTEwLTA1IDIyOjM5OjEwIiwiZjg0NGRjMWI4ODBmMzQ0OGQ0ODJkYTI0NWQ2NGVhYjI6NWFlNTk4NzlmMGNlZTBlYmYyMzA6MCJdLCJmIjoiYjdmMDJmNWJlYjU2ZWIxZSJ9",
+                  "meta": {}
                 }
               }
             }
@@ -63119,6 +64041,29 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InsiderTrade"
+                },
+                "example": {
+                  "id": "2d6993a157cabb83110415f6d3cca3f4:a2d0149c7e5bd4696684:0",
+                  "accession_number": "0001140361-26-042149",
+                  "cik": "0000320193",
+                  "filed_at": "2026-11-05T23:30:13.000Z",
+                  "period_of_report": "2026-11-03",
+                  "reporting_person_name": "Newstead Jennifer",
+                  "reporting_person_is_director": false,
+                  "reporting_person_is_officer": true,
+                  "reporting_person_is_ten_percent_owner": false,
+                  "reporting_person_is_other": false,
+                  "reporting_person_officer_title": "SVP, GC and Government Affairs",
+                  "reporting_person_other_text": null,
+                  "security_title": "Common Stock",
+                  "acquired_disposed": "D",
+                  "coding_code": "S",
+                  "shares": 2399,
+                  "share_price": 325.75,
+                  "total": 781475,
+                  "shares_owned_following_transaction": 29997,
+                  "shares_owned_before_transaction": 32396,
+                  "side": "sell"
                 }
               }
             }
@@ -63396,6 +64341,58 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "ipo_id": "l-RZRA",
+                      "company": null,
+                      "issuer_name": "Rezera Inc.",
+                      "stage": "announced",
+                      "is_spac": false,
+                      "exchange": "XNAS",
+                      "proposed_symbols": [
+                        "RZRA"
+                      ],
+                      "price_range_low": 11,
+                      "price_range_high": 13,
+                      "final_price": null,
+                      "shares_offered": 16666667,
+                      "total_offer_size": 216666671,
+                      "currency": "USD",
+                      "listing_date": "2026-11-12",
+                      "sources": {
+                        "registration": null,
+                        "listing": {
+                          "listing_date": "2026-11-12",
+                          "announced_date": "2026-10-21",
+                          "currency_code": "USD",
+                          "final_issue_price": null,
+                          "highest_offer_price": 13,
+                          "ipo_status": "pending",
+                          "isin": "US76189Q1058",
+                          "issue_end_date": null,
+                          "issue_start_date": null,
+                          "issuer_name": "Rezera Inc.",
+                          "last_updated": "2026-11-09T00:00:00.000Z",
+                          "lot_size": 100,
+                          "lowest_offer_price": 11,
+                          "max_shares_offered": 16666667,
+                          "min_shares_offered": null,
+                          "primary_exchange": "XNAS",
+                          "security_description": "Ordinary Shares",
+                          "security_type": "CS",
+                          "shares_outstanding": 20776793,
+                          "ticker": "RZRA",
+                          "total_offer_size": 216666671,
+                          "us_code": "76189Q105"
+                        }
+                      }
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI5IiwibC1SWkFJIl0sImYiOiIxNTM5NWUyMjQ0OWE3NDE2In0",
+                  "meta": {}
                 }
               }
             }
@@ -63526,6 +64523,51 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Ipo"
+                },
+                "example": {
+                  "ipo_id": "l-RZRA",
+                  "company": null,
+                  "issuer_name": "Rezera Inc.",
+                  "stage": "announced",
+                  "is_spac": false,
+                  "exchange": "XNAS",
+                  "proposed_symbols": [
+                    "RZRA"
+                  ],
+                  "price_range_low": 11,
+                  "price_range_high": 13,
+                  "final_price": null,
+                  "shares_offered": 16666667,
+                  "total_offer_size": 216666671,
+                  "currency": "USD",
+                  "listing_date": "2026-11-12",
+                  "sources": {
+                    "registration": null,
+                    "listing": {
+                      "listing_date": "2026-11-12",
+                      "announced_date": "2026-10-21",
+                      "currency_code": "USD",
+                      "final_issue_price": null,
+                      "highest_offer_price": 13,
+                      "ipo_status": "pending",
+                      "isin": "US76189Q1058",
+                      "issue_end_date": null,
+                      "issue_start_date": null,
+                      "issuer_name": "Rezera Inc.",
+                      "last_updated": "2026-11-09T00:00:00.000Z",
+                      "lot_size": 100,
+                      "lowest_offer_price": 11,
+                      "max_shares_offered": 16666667,
+                      "min_shares_offered": null,
+                      "primary_exchange": "XNAS",
+                      "security_description": "Ordinary Shares",
+                      "security_type": "CS",
+                      "shares_outstanding": 20776793,
+                      "ticker": "RZRA",
+                      "total_offer_size": 216666671,
+                      "us_code": "76189Q105"
+                    }
+                  }
                 }
               }
             }
@@ -63851,6 +64893,43 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "event_id": "bd20af4b-ddd9-4e1e-a74f-80b09027177e",
+                      "source": "us",
+                      "cik": "0000320193",
+                      "symbol": "AAPL",
+                      "company_name": "Apple Inc.",
+                      "exchange": "XNAS",
+                      "event_type": "earnings_call",
+                      "event_title": null,
+                      "fiscal_year": 2004,
+                      "fiscal_quarter": 4,
+                      "scheduled_at": "2004-10-13T21:00:00.000Z",
+                      "tz": "America/Los_Angeles",
+                      "date_status": "confirmed",
+                      "call_time_source": "edgar",
+                      "call_time_confidence": "high",
+                      "session": "amc",
+                      "started_at": null,
+                      "ended_at": null,
+                      "results_released_at": "2004-10-13T20:31:13.000Z",
+                      "capture_status": "missed",
+                      "reschedule_count": 0,
+                      "has_transcript": false,
+                      "has_audio": false,
+                      "has_slides": false,
+                      "has_press_release": true,
+                      "has_documents": true,
+                      "webcast_url": "http://www.apple.com/quicktime/qtv/earningsq404/",
+                      "video": null
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDExLTAxLTE4IDIyOjAwOjAwKzAwIiwiN2Q2NWUzZDAtNGI1Mi00MDAwLTk2YzItMmNlNDczMzE5NDlhIl0sImYiOiJjZmQ3ZjkwODU3N2ZiNDQ0In0",
+                  "meta": {}
                 }
               }
             }
@@ -64001,6 +65080,36 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Event"
+                },
+                "example": {
+                  "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                  "source": "us",
+                  "cik": "0000789019",
+                  "symbol": "MSFT",
+                  "company_name": "Microsoft Corp",
+                  "exchange": "XNAS",
+                  "event_type": "earnings_call",
+                  "event_title": null,
+                  "fiscal_year": 2026,
+                  "fiscal_quarter": 4,
+                  "scheduled_at": "2026-07-29T00:00:00.000Z",
+                  "tz": "America/Los_Angeles",
+                  "date_status": "confirmed",
+                  "call_time_source": null,
+                  "call_time_confidence": null,
+                  "session": null,
+                  "started_at": null,
+                  "ended_at": null,
+                  "results_released_at": "2026-07-29T20:04:53.000Z",
+                  "capture_status": "published",
+                  "reschedule_count": 0,
+                  "has_transcript": true,
+                  "has_audio": true,
+                  "has_slides": true,
+                  "has_press_release": true,
+                  "has_documents": true,
+                  "webcast_url": null,
+                  "video": null
                 }
               }
             }
@@ -64121,6 +65230,24 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PressRelease"
+                },
+                "example": {
+                  "news_id": null,
+                  "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                  "title": "Microsoft Cloud and AI Strength Fuels Fourth Quarter Results",
+                  "published_at": "2026-07-29T20:04:53.000Z",
+                  "origin": "edgar",
+                  "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/msft-ex99_1.htm",
+                  "accession_number": "0001193125-26-323632",
+                  "participants": [
+                    {
+                      "name": "Satya Nadella",
+                      "title": "chairman and chief executive officer",
+                      "role": "executive"
+                    }
+                  ],
+                  "trust_tier": "sec",
+                  "body_text": "Exhibit 99.1\n\nMicrosoft Cloud and AI Strength Fuels Fourth Quarter Results\n\nREDMOND, Wash. — July 29, 2026 — Microsoft Corp. today announced the following results for the quarter ended June 30, 2026, as compared to the corresponding period …"
                 }
               }
             }
@@ -64312,6 +65439,41 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "seq": 1,
+                      "analyst": {
+                        "speaker_label": "spk05",
+                        "person_id": "90b1ae97-2207-48d3-8fb4-e70f165bb4b3",
+                        "name": "Carl Kierstad",
+                        "firm": "UBS"
+                      },
+                      "question": "Okay, great. Thank you, Satya. Maybe I'll start away from the numbers and ask if you could spend a minute and elaborate on your opening comments about model choice and the protection of corporate IP. Maybe I could ask this in two parts. Fir…",
+                      "question_start_ms": 2330338,
+                      "question_end_ms": 2367612,
+                      "answers": [
+                        {
+                          "speaker_label": "spk06",
+                          "person_id": "9b135e05-d7c2-4d23-9c89-728501ad8e58",
+                          "name": "Satya Nadella",
+                          "title": null
+                        }
+                      ],
+                      "answer": "Thank you, Carl. So the way we are coming at this is, at the end of the day, the goal is to have the firm be in control of their own destiny in terms of what I describe as building their human capital and their token capital, right? So at t…",
+                      "answer_start_ms": 2369608,
+                      "answer_end_ms": 2578699,
+                      "is_follow_up": false
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {
+                    "coverage": {
+                      "state": "complete"
+                    }
+                  }
                 }
               }
             }
@@ -64455,6 +65617,28 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Slides"
+                },
+                "example": {
+                  "event": {
+                    "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                    "cik": "0000789019",
+                    "symbol": "MSFT",
+                    "conference_date": "2026-07-29T00:00:00.000Z"
+                  },
+                  "deck": {
+                    "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/q4-fy2026-earnings-presentation.pdf",
+                    "pages": 23,
+                    "origin": "ir_page",
+                    "source_url": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/SlidesFY26Q4.pptx",
+                    "trust_tier": "confirmed_domain"
+                  },
+                  "slides": [
+                    {
+                      "page": 1,
+                      "title": null,
+                      "image_url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/slides/q4-fy2026-earnings-presentation/page-001.webp"
+                    }
+                  ]
                 }
               }
             }
@@ -64572,6 +65756,19 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Audio"
+                },
+                "example": {
+                  "event": {
+                    "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                    "cik": "0000789019",
+                    "symbol": "MSFT",
+                    "conference_date": "2026-07-29T00:00:00.000Z"
+                  },
+                  "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/audio/q4-fy2026-earnings-call-510kqr.mp3",
+                  "duration_seconds": 3919,
+                  "bytes": 31350117,
+                  "codec": "mp3",
+                  "capture_path": "browser_audio"
                 }
               }
             }
@@ -64687,6 +65884,20 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LiveAudio"
+                },
+                "example": {
+                  "event": {
+                    "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                    "cik": "0000789019",
+                    "symbol": "MSFT",
+                    "conference_date": "2026-07-29T00:00:00.000Z"
+                  },
+                  "status": "disabled",
+                  "url": null,
+                  "expires_at": null,
+                  "call_t0": null,
+                  "segment_seconds": 2,
+                  "live_channel": "earnings-calls.live"
                 }
               }
             }
@@ -64802,6 +66013,27 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EventStats"
+                },
+                "example": {
+                  "event": {
+                    "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                    "cik": "0000789019",
+                    "symbol": "MSFT",
+                    "conference_date": "2026-07-29T00:00:00.000Z"
+                  },
+                  "call_happened": true,
+                  "call_length_ms": 3900124,
+                  "release_to_call_gap_s": null,
+                  "prepared_remarks_ms": 2298117,
+                  "qa_ms": 1602007,
+                  "qa_share": 0.4108,
+                  "question_count": 9,
+                  "analyst_count": 6,
+                  "mgmt_word_share_qa": 0.8523,
+                  "zero_questions": false,
+                  "prepared_remarks_posted_in_advance": false,
+                  "speaker_count": 14,
+                  "unknown_speaker_word_share": 0.1591
                 }
               }
             }
@@ -64927,6 +66159,55 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EventComparison"
+                },
+                "example": {
+                  "event": {
+                    "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                    "cik": "0000789019",
+                    "symbol": "MSFT",
+                    "conference_date": "2026-07-29T00:00:00.000Z"
+                  },
+                  "prior_event": {
+                    "event_id": "1a7bc938-1338-4128-9ccb-99d6a9646ea2",
+                    "conference_date": "2026-04-29T00:00:00.000Z"
+                  },
+                  "similarity": 0.9897,
+                  "new_topics": [
+                    {
+                      "topic": "AI sovereignty and sovereign-cloud models",
+                      "evidence": "AI sovereignty is increasingly top of mind for our customers, and we are expanding our offerings to meet that need.",
+                      "start_ms": 181970
+                    }
+                  ],
+                  "dropped_topics": [
+                    {
+                      "topic": "Maia Transcribe 1 speech-to-text model",
+                      "evidence": "We introduced Maia Transcribe 1, a state-of-the-art speech-to-text model, and Maia Image 2, one of the top image generation models in the world.",
+                      "start_ms": 186794
+                    }
+                  ],
+                  "hedging": {
+                    "level": null,
+                    "change": null
+                  },
+                  "uncertainty": {
+                    "level": null,
+                    "change": null
+                  },
+                  "numeric_specificity": {
+                    "level": 4.02979,
+                    "change": -0.67415
+                  },
+                  "tone_shift": "more_cautious",
+                  "slide_diff": {
+                    "current_pages": 23,
+                    "prior_pages": 22,
+                    "page_delta": 1,
+                    "new_titles": [],
+                    "dropped_titles": [],
+                    "shared_titles": 0
+                  },
+                  "summary": "The current call adds detail on sovereign AI, new model and agent offerings, customer-embedded engineering, and a useful-life accounting change. Management described a reset to Xbox and weaker PC-market conditions, and FY27 operating margin…"
                 }
               }
             }
@@ -65060,6 +66341,39 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Prosody"
+                },
+                "example": {
+                  "event": {
+                    "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                    "cik": "0000789019",
+                    "symbol": "MSFT",
+                    "conference_date": "2026-07-29T00:00:00.000Z"
+                  },
+                  "section": "all",
+                  "speakers": [
+                    {
+                      "speaker": {
+                        "label": "spk00",
+                        "name": "Operator",
+                        "title": null,
+                        "role": "operator"
+                      },
+                      "section": "all",
+                      "speech_rate_wpm": 172.46,
+                      "pause_count": 12,
+                      "pause_mean_ms": 1024,
+                      "pause_p95_ms": 2743,
+                      "filler_rate": null,
+                      "time_to_answer_mean_ms": null,
+                      "time_to_answer_p95_ms": null,
+                      "pitch_mean_hz": 141.4,
+                      "pitch_sd_hz": 43.96,
+                      "energy_mean_db": -22.85,
+                      "spoken_ms": 85932,
+                      "word_count": 247,
+                      "acoustic_available": true
+                    }
+                  ]
                 }
               }
             }
@@ -65177,6 +66491,39 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PriceAttribution"
+                },
+                "example": {
+                  "event": {
+                    "event_id": "dd04abe1-f83f-4e92-8ddf-1f8864e7db30",
+                    "cik": "0000019617",
+                    "symbol": "JPM",
+                    "conference_date": "2026-10-13T12:30:00.000Z"
+                  },
+                  "live": false,
+                  "settled": true,
+                  "anchor_kind": "t0_wallclock",
+                  "anchor_lag_ms": 3353,
+                  "lag_kind": "playlist",
+                  "anchor_uncertainty_s": 10,
+                  "session": "pre",
+                  "bar_count": 102,
+                  "end_of_window_return_bps": 7.47,
+                  "buckets": [
+                    {
+                      "bucket": "2026-10-13T12:15:00.000Z",
+                      "bar_start": "2026-10-13T12:15:00.000Z",
+                      "return_bps": 9.57,
+                      "cumulative_return_bps": 9.57,
+                      "utterance_refs": []
+                    }
+                  ],
+                  "top_minutes": [
+                    {
+                      "bucket": "2026-10-13T13:34:00.000Z",
+                      "return_bps": -81.39,
+                      "utterance_refs": []
+                    }
+                  ]
                 }
               }
             }
@@ -65331,6 +66678,41 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Transcript"
+                },
+                "example": {
+                  "event": {
+                    "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                    "cik": "0000789019",
+                    "symbol": "MSFT",
+                    "conference_date": "2026-07-29T00:00:00.000Z"
+                  },
+                  "version": 6,
+                  "version_kind": "corrected",
+                  "published_at": "2026-10-08T18:15:34.698Z",
+                  "word_count": 9372,
+                  "qa_start_ms": 2298917,
+                  "layer": "raw",
+                  "pdf": {
+                    "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v6.pdf",
+                    "version": 6,
+                    "sha256": "50159713ebd76f19e01b323ed7ccc53eb194148c533f2ed644118f8c09b6ba52",
+                    "bytes": 80417,
+                    "pages": 14,
+                    "generated_at": "2026-11-01T23:39:36.048Z"
+                  },
+                  "turns": [
+                    {
+                      "speaker_label": "spk00",
+                      "name": "Operator",
+                      "title": null,
+                      "role": "operator",
+                      "person_id": "6682be14-22ff-45d6-820e-c0018cdfc35f",
+                      "start_ms": 800,
+                      "end_ms": 24977,
+                      "speaker_confidence": 1,
+                      "text": "At this time, all participants are in a listen-only mode. A question and answer session will follow the formal presentation. If anyone should require operator assistance, please press star zero on your telephone keypad. As a reminder, this …"
+                    }
+                  ]
                 }
               }
             }
@@ -65475,6 +66857,22 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TranscriptText"
+                },
+                "example": {
+                  "event": {
+                    "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                    "cik": "0000789019",
+                    "symbol": "MSFT",
+                    "conference_date": "2026-07-29T00:00:00.000Z"
+                  },
+                  "version": 6,
+                  "qa_start_ms": 2298917,
+                  "blocks": [
+                    {
+                      "section": "full",
+                      "text": "At this time, all participants are in a listen-only mode. A question and answer session will follow the formal presentation. If anyone should require operator assistance, please press star zero on your telephone keypad. As a reminder, this …"
+                    }
+                  ]
                 }
               }
             }
@@ -65655,6 +67053,33 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "version": 3,
+                      "version_kind": "final",
+                      "published_at": "2026-10-08T17:34:32.507Z",
+                      "word_count": 9372,
+                      "change_note": "naming",
+                      "corrected_by": null,
+                      "pdf": {
+                        "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v3.pdf",
+                        "version": 3,
+                        "sha256": "e1d777843ae18c33e86254260d18f58bfe65bb33cff758323b8f1763342076a5",
+                        "bytes": 80285,
+                        "pages": 14,
+                        "generated_at": "2026-11-01T23:42:38.503Z"
+                      }
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {
+                    "coverage": {
+                      "state": "complete"
+                    }
+                  }
                 }
               }
             }
@@ -65797,6 +67222,23 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TranscriptDiff"
+                },
+                "example": {
+                  "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
+                  "from": 3,
+                  "to": 6,
+                  "changes": [
+                    {
+                      "op": "del",
+                      "at_ms": 800,
+                      "text": "question and answer"
+                    }
+                  ],
+                  "truncated": false,
+                  "stats": {
+                    "added_words": 124,
+                    "removed_words": 112
+                  }
                 }
               }
             }
@@ -66077,6 +67519,57 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "event_id": "2463cda2-9968-411d-886c-e638d71f34b3",
+                      "cik": "0000320193",
+                      "symbol": "AAPL",
+                      "conference_date": "2026-11-02T22:00:00.000Z",
+                      "fiscal_year": 2026,
+                      "fiscal_quarter": 4,
+                      "type": "qa",
+                      "speaker": {
+                        "label": "spk01",
+                        "name": "Kevin",
+                        "title": null
+                      },
+                      "start_ms": 1905012,
+                      "end_ms": 1918637,
+                      "chunk_index": 80,
+                      "text": "Yeah, that sounds good. Let me try to address that for you. So as you alluded for the December quarter, we talked about a gross margin outlook of between 45% and 46%. As you said, when you remove the benefit of the tariff refunds in Septemb…",
+                      "text_truncated": false,
+                      "score": 5.9606,
+                      "match": {
+                        "type": "lexical",
+                        "lexical_rank": 1,
+                        "spans": [
+                          {
+                            "start": 122,
+                            "end": 127
+                          }
+                        ]
+                      },
+                      "audio_url": "https://storage.invinite.com/earnings_events/us/320193/earnings/fy2026/q4/audio/q4-fy2026-earnings-call-3289xa.mp3#t=1905",
+                      "slide": null
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {
+                    "query": "gross margin",
+                    "index": {
+                      "completeness": "complete",
+                      "lexical": {
+                        "state": "ready",
+                        "indexed": 1,
+                        "pending": 0,
+                        "failed": 0
+                      },
+                      "reasons": []
+                    }
+                  }
                 }
               }
             }
@@ -66342,6 +67835,52 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "company": {
+                        "cik": "0000320193",
+                        "ticker": "AAPL"
+                      },
+                      "id": "d356a053-77f0-4eb6-b24a-cdf115f627e6",
+                      "metric": "tax rate",
+                      "metric_normalized": "tax_rate",
+                      "period_label": "Q1 FY2027",
+                      "period_kind": "quarter",
+                      "low": null,
+                      "high": null,
+                      "midpoint": 17,
+                      "unit": "pct",
+                      "currency": null,
+                      "basis": "unknown",
+                      "direction": "new",
+                      "prior_item_id": null,
+                      "confidence": 0.5,
+                      "cross_validated": false,
+                      "review_status": "needs_review",
+                      "sources": [
+                        {
+                          "origin": "transcript",
+                          "sentence": "We expect OINE to be around $300 million, excluding any potential impact from the mark-to-market of minority investments, and our tax rate to be around 17%.",
+                          "start_ms": 751705,
+                          "speaker": {
+                            "label": "spk01",
+                            "name": "Kevin",
+                            "title": null
+                          }
+                        }
+                      ],
+                      "event_id": "2463cda2-9968-411d-886c-e638d71f34b3",
+                      "conference_date": "2026-11-02T22:00:00.000Z",
+                      "fiscal_year": 2026,
+                      "fiscal_quarter": 4,
+                      "change_vs_prior": null
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {}
                 }
               }
             }
@@ -66579,6 +68118,37 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "company": {
+                        "cik": "0000320193",
+                        "ticker": "AAPL"
+                      },
+                      "event_id": "2463cda2-9968-411d-886c-e638d71f34b3",
+                      "conference_date": "2026-11-02",
+                      "seq": 64,
+                      "metric": "Greater China revenue growth",
+                      "metric_normalized": "segment_growth:greater-china",
+                      "value": 28,
+                      "value_text": "28%",
+                      "unit": "pct",
+                      "period_label": "FY2026",
+                      "source_sentence": "And taking a step back, Greater China was up 28% for the full year.",
+                      "start_ms": 3028839,
+                      "speaker": {
+                        "label": "spk00",
+                        "name": "John Ternus",
+                        "title": "CEO, Apple"
+                      },
+                      "origin": "transcript",
+                      "filing_link": null
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTExLTAyIDIyOjAwOjAwKzAwIiwiMjQ2M2NkYTItOTk2OC00MTFkLTg4NmMtZTYzOGQ3MWYzNGIzIiw0MF0sImYiOiIzZTM3OTY5OTJkYTgyZGJkIn0",
+                  "meta": {}
                 }
               }
             }
@@ -66837,6 +68407,46 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "document_id": "1659b564-76c1-440e-a2c1-d4667487c09d",
+                      "source": "company",
+                      "section": "quarterly_results",
+                      "kind": "financial_data",
+                      "year": 2026,
+                      "period": "Q4",
+                      "group": "earnings/cy2026/undated",
+                      "group_label": "Earnings 2026 (undated)",
+                      "category": "earnings",
+                      "event_id": null,
+                      "event_type": null,
+                      "event_date": null,
+                      "filing_date": null,
+                      "title": "Trended Capital Return",
+                      "source_label": "Trended Capital Return",
+                      "source_url": "https://s2.q4cdn.com/470004039/files/doc_earnings/2026/q4/generic/Q4-26-Return-of-Capital-Timeline.pdf",
+                      "page_url": "https://investor.apple.com/investor-relations/default.aspx",
+                      "origin": "html_page",
+                      "producer": null,
+                      "confidence": "medium",
+                      "trust_tier": "confirmed_domain",
+                      "content_type": "application/pdf",
+                      "bytes": 3107664,
+                      "pages": null,
+                      "link_status": null,
+                      "url": "https://storage.invinite.com/earnings_events/us/320193/earnings/cy2026/undated/c19fe20865730795a189e739735ede98/trended-capital-return.pdf",
+                      "pages_url": "https://storage.invinite.com/earnings_events/us/320193/earnings/cy2026/undated/c19fe20865730795a189e739735ede98/text/trended-capital-return.pdf.pages.json",
+                      "created_at": "2026-11-04T17:48:23.826Z",
+                      "updated_at": "2026-11-09T08:20:31.142Z",
+                      "accession_number": null,
+                      "body_text": null
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTEwLTE2IiwiNmFjZDQ0ZWMtMTQ5Ni00NTY5LTgyZmYtMjliYWNlOWU0ZWUxIl0sImYiOiJiZDI2ZjUwZGE2Y2Y3ZDcxIn0",
+                  "meta": {}
                 }
               }
             }
@@ -66976,6 +68586,39 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InvestorDocument"
+                },
+                "example": {
+                  "document_id": "30f56e78-1702-4183-9deb-02150a8147fb",
+                  "source": "company",
+                  "section": "quarterly_results",
+                  "kind": "webcast",
+                  "year": 2026,
+                  "period": "Q1",
+                  "group": "earnings/fy2026/q1",
+                  "group_label": "Q1 FY2026",
+                  "category": "earnings",
+                  "event_id": null,
+                  "event_type": null,
+                  "event_date": null,
+                  "filing_date": null,
+                  "title": "Press Release & Webcast",
+                  "source_label": "Press Release & Webcast",
+                  "source_url": "https://microsoft.com/en-us/investor/earnings/fy-2026-q1/press-release-webcast",
+                  "page_url": "https://www.microsoft.com/en-us/Investor/earnings/FY-2026-Q1/press-release-webcast",
+                  "origin": "html_page",
+                  "producer": null,
+                  "confidence": "high",
+                  "trust_tier": "confirmed_domain",
+                  "content_type": null,
+                  "bytes": null,
+                  "pages": null,
+                  "link_status": "live",
+                  "url": null,
+                  "pages_url": null,
+                  "created_at": "2026-10-16T19:06:46.674Z",
+                  "updated_at": "2026-10-16T20:49:35.743Z",
+                  "accession_number": null,
+                  "body_text": null
                 }
               }
             }
@@ -67201,6 +68844,58 @@
                           "$ref": "#/components/schemas/SearchCoverage"
                         }
                       }
+                    }
+                  }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "score": 0.0021,
+                      "match": {
+                        "type": "lexical",
+                        "lexical_rank": 1,
+                        "spans": [
+                          {
+                            "start": 55,
+                            "end": 64
+                          }
+                        ]
+                      },
+                      "document_id": "4c9cd37c-a1cf-4504-99db-07e2df620cd1",
+                      "event_id": null,
+                      "cik": "0000320193",
+                      "symbol": "AAPL",
+                      "kind": "esg_report",
+                      "section": "esg",
+                      "year": 2026,
+                      "period": "FY",
+                      "page": 7,
+                      "heading": null,
+                      "chunk_index": 93,
+                      "text": "irtual power purchase agreements to which amounts were allocated during the Reporting Period were in accordance with such agreements, (iv) the environmental benefits of the Eligible Projects, (v) conformance of any Eligible Projects with an…",
+                      "text_truncated": false,
+                      "title": "Annual Green Bond Impact Report: Fiscal Year 2025 Update",
+                      "group": "esg/2026",
+                      "group_label": "ESG 2026",
+                      "category": "esg",
+                      "url": "https://storage.invinite.com/earnings_events/us/320193/esg/2026/annual-green-bond-impact-report-fiscal-year-2025-update.pdf"
+                    }
+                  ],
+                  "has_more": false,
+                  "next_cursor": null,
+                  "meta": {
+                    "query": "capital allocation",
+                    "index": {
+                      "completeness": "partial",
+                      "lexical": {
+                        "state": "partial",
+                        "indexed": 126,
+                        "pending": 1,
+                        "failed": 0
+                      },
+                      "reasons": [
+                        "lexical_backfill_pending"
+                      ]
                     }
                   }
                 }
@@ -67488,6 +69183,75 @@
                       }
                     }
                   }
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": "e75687fd-0dc9-4558-9c67-065c3e2b832d",
+                      "title": "Olivia Dean is Apple Music’s Artist of the Year for 2026",
+                      "description": "Apple Music named Olivia Dean its 2026 Artist of the Year, citing the British singer-songwriter’s rise after the release of The Art of Loving. She is the first UK artist to receive the honor.",
+                      "url": "https://www.apple.com/newsroom/2026/11/olivia-dean-is-apple-musics-artist-of-the-year-for-2026/",
+                      "published_at": "2026-11-09T15:59:09.485Z",
+                      "first_seen_at": "2026-11-09T16:03:12.087Z",
+                      "source": {
+                        "id": "ir",
+                        "name": "Apple Inc.",
+                        "host": "www.apple.com"
+                      },
+                      "kind": "other",
+                      "topics": [],
+                      "rights": "issuer",
+                      "is_earnings_news": false,
+                      "earnings": null,
+                      "symbols": [
+                        "AAPL"
+                      ],
+                      "ciks": [
+                        "0000320193"
+                      ],
+                      "revision": 1,
+                      "supersedes_id": null,
+                      "publications": [
+                        {
+                          "source_id": "ir:www.apple.com",
+                          "publisher": {
+                            "cik": "0000320193",
+                            "symbol": "AAPL",
+                            "name": "Apple Inc."
+                          },
+                          "url": "https://www.apple.com/newsroom/2026/11/olivia-dean-is-apple-musics-artist-of-the-year-for-2026/",
+                          "publication_type": "press_release",
+                          "published_at": "2026-11-09T15:59:09.485Z",
+                          "modified_at": "2026-11-09T15:59:42.000Z",
+                          "categories": [],
+                          "tags": []
+                        }
+                      ],
+                      "publications_truncated": false,
+                      "model_processing_allowed": true,
+                      "summary_words": 359,
+                      "attribution": {
+                        "publisher": "Apple Inc.",
+                        "publisher_host": "www.apple.com",
+                        "source_url": "https://www.apple.com/newsroom/2026/11/olivia-dean-is-apple-musics-artist-of-the-year-for-2026/",
+                        "published_at": "2026-11-09T15:59:09.485Z",
+                        "rights": "issuer",
+                        "edgar": null,
+                        "statement": "Summary written by Invinite from the publication above; not the publisher's text. Source and date above."
+                      },
+                      "pdf": {
+                        "url": "https://storage.invinite.com/earnings_events/news/us/320193/5fb26b00b4e86d3caf2d229e15ad9486/AAPL-2026-11-09-olivia-dean-is-apple-music-s-artist-of-the-year-for-2026.pdf",
+                        "version": 1,
+                        "sha256": "2a20980685cf7e396f768cb9318e2a9400051b03e81762bbf15c402d4aea6f82",
+                        "bytes": 17732,
+                        "pages": 3,
+                        "generated_at": "2026-11-09T16:10:54.105Z"
+                      }
+                    }
+                  ],
+                  "has_more": true,
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTIyVDEyOjAwOjAwLjAwMDAwMFoiLCI0NjAwMDkxNy01MjE2LTRjMTAtYWExMC0yZjQ3MTc5ZWI4YmMiXSwiZiI6Ijc3YzZjZGMzZDlhOWM5NzEifQ",
+                  "meta": {}
                 }
               }
             }
@@ -67625,6 +69389,75 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NewsItem"
+                },
+                "example": {
+                  "id": "06304274-da4a-400e-9d5c-fb4ce04f01c9",
+                  "title": "McDONALD'S REPORTS THIRD QUARTER 2026 RESULTS",
+                  "description": "McDonald's Corporation reported third-quarter 2026 results for the period ended September 30, 2026, with 1.5% comparable-sales growth, higher operating income and diluted earnings per share of $3.51.",
+                  "url": "https://www.sec.gov/Archives/edgar/data/63908/000006390826000080/exhibit991-9302026.htm",
+                  "published_at": "2026-11-04T12:00:00.000Z",
+                  "first_seen_at": "2026-11-04T12:02:16.503Z",
+                  "source": {
+                    "id": "edgar",
+                    "name": "SEC EDGAR",
+                    "host": null
+                  },
+                  "kind": "earnings_results",
+                  "topics": [],
+                  "rights": "public_record",
+                  "is_earnings_news": true,
+                  "earnings": {
+                    "fiscal_year": 2026,
+                    "fiscal_quarter": 3,
+                    "conference_date": "2026-11-04T13:30:00.000Z"
+                  },
+                  "symbols": [
+                    "MCD"
+                  ],
+                  "ciks": [
+                    "0000063908"
+                  ],
+                  "revision": 1,
+                  "supersedes_id": null,
+                  "publications": [
+                    {
+                      "source_id": "ir:corporate.mcdonalds.com",
+                      "publisher": {
+                        "cik": "0000063908",
+                        "symbol": "MCD",
+                        "name": "McDonald's Corporation"
+                      },
+                      "url": "https://corporate.mcdonalds.com/content/mcdonalds/corpmcd/our-stories/article/Q3-2026-results.html",
+                      "publication_type": "press_release",
+                      "published_at": "2026-11-04T12:00:00.000Z",
+                      "modified_at": null,
+                      "categories": [],
+                      "tags": []
+                    }
+                  ],
+                  "publications_truncated": false,
+                  "model_processing_allowed": true,
+                  "summary_words": 1278,
+                  "attribution": {
+                    "publisher": "SEC EDGAR",
+                    "publisher_host": "www.sec.gov",
+                    "source_url": "https://www.sec.gov/Archives/edgar/data/63908/000006390826000080/exhibit991-9302026.htm",
+                    "published_at": "2026-11-04T12:00:00.000Z",
+                    "rights": "public_record",
+                    "edgar": {
+                      "form": "8-K",
+                      "accession": "0000063908-26-000080"
+                    },
+                    "statement": "Summary written by Invinite from the publication above; not the publisher's text. Source and date above."
+                  },
+                  "pdf": {
+                    "url": "https://storage.invinite.com/earnings_events/news/us/63908/08c86854a426827937f1062c90f5e260/MCD-2026-11-04-mcdonald-s-reports-third-quarter-2026-results.pdf",
+                    "version": 1,
+                    "sha256": "b7661694ca034a0bc2a93b8d72e682080a766499f46cca6b0fdd5d16a9bb1efa",
+                    "bytes": 27975,
+                    "pages": 5,
+                    "generated_at": "2026-11-08T12:00:56.268Z"
+                  }
                 }
               }
             }
@@ -67767,6 +69600,40 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NewsText"
+                },
+                "example": {
+                  "item_id": "06304274-da4a-400e-9d5c-fb4ce04f01c9",
+                  "revision": 1,
+                  "title": "McDONALD'S REPORTS THIRD QUARTER 2026 RESULTS",
+                  "content_status": "available",
+                  "model_processing_allowed": true,
+                  "attribution": {
+                    "publisher": "SEC EDGAR",
+                    "publisher_host": "www.sec.gov",
+                    "source_url": "https://www.sec.gov/Archives/edgar/data/63908/000006390826000080/exhibit991-9302026.htm",
+                    "published_at": "2026-11-04T12:00:00.000Z",
+                    "rights": "public_record",
+                    "edgar": {
+                      "form": "8-K",
+                      "accession": "0000063908-26-000080"
+                    },
+                    "statement": "Summary written by Invinite from the publication above; not the publisher's text. Source and date above."
+                  },
+                  "blocks": [
+                    {
+                      "block_id": "7476f31f-742d-8dc7-885a-c3702a316557",
+                      "index": 0,
+                      "heading": null,
+                      "kind": "paragraph",
+                      "text": "Global Systemwide sales grew 4% to more than $38 billion in the quarter. Loyalty-member purchases across 70 markets totaled $41 billion over the trailing twelve-month period and exceeded $11 billion in the quarter. Consolidated operating in…"
+                    }
+                  ],
+                  "coverage": {
+                    "blocks_total": 18,
+                    "blocks_through": 18
+                  },
+                  "has_more": false,
+                  "next_cursor": null
                 }
               }
             }
