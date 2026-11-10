@@ -6061,6 +6061,10 @@ export interface components {
             html_tag_id: null | string;
             /** @description Metric id of the parent line */
             parent_id: null | string;
+            /** @description The number as filed when `value` differs from it: `value` is on today's split basis for per-share and weighted share counts, this is the filer's figure on the basis of its own filing; null when they are equal */
+            value_as_reported: null | number;
+            /** @description The stock-split factor applied to the filed number to reach `value` (0.25 = a 4-for-1 split since the filing for a per-share value); null when no split applies */
+            split_factor: null | number;
         };
         /**
          * FormulaMember
@@ -6294,7 +6298,7 @@ export interface components {
         };
         /** AsReportedDetailedLineItem */
         AsReportedDetailedLineItem: {
-            /** @description Fact value (as filed unless `display_sign=cash_flow_direction`) */
+            /** @description Fact value on today's split basis (per-share values and weighted share counts are adjusted for later stock splits, see `value_as_reported` / `split_factor`); as filed otherwise, unless `display_sign=cash_flow_direction` */
             value: number;
             /** @description true when Invinite computed the value (a Q4, TTM or YTD derivation, see `formula`); false = the company reported it */
             derived: boolean;
@@ -6318,6 +6322,21 @@ export interface components {
             accession: null | string;
             /** @description Anchor of the fact in the filing's HTML (null on a derived fact) */
             html_tag_id: null | string;
+            /** @description The value as first filed when a later filing changed it (a restatement or reclassification), on the basis of that filing and signed like `value`; null when the first filing reported the same number (a coarser later repeat counts as the same) or the fact is derived. Only the first and the latest filing are kept: an intermediate value is not available */
+            original_value: null | number;
+            /** @description The company's caption in the first filing when a later filing changed it; null when unchanged or not known */
+            original_label: null | string;
+            /**
+             * Format: date
+             * @description Filing date of the first filing; set only when `original_value` or `original_label` is
+             */
+            original_filing_date: null | string;
+            /** @description Accession number of the first filing (a 10-K / 10-Q or an amendment); null when no original is served or that filing cannot be identified */
+            original_accession: null | string;
+            /** @description The number as filed when `value` differs from it: `value` is on today's split basis for per-share and weighted share counts, this is the filer's figure on the basis of its own filing; null when they are equal */
+            value_as_reported: null | number;
+            /** @description The stock-split factor applied to the filed number to reach `value` (0.25 = a 4-for-1 split since the filing for a per-share value); null when no split applies */
+            split_factor: null | number;
         };
         /**
          * AsReportedPresentationPeriod
@@ -19848,6 +19867,109 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "company": {
+                     *             "cik": "0000320193",
+                     *             "ticker": "AAPL"
+                     *           },
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "period": "annual",
+                     *           "period_start": "2025-09-28",
+                     *           "period_end": "2026-09-26",
+                     *           "calendar_year": 2026,
+                     *           "calendar_quarter": 3,
+                     *           "currency": "USD",
+                     *           "source": {
+                     *             "accession": "0000320193-26-000026",
+                     *             "form": "10-K",
+                     *             "filed_at": "2026-11-03T13:05:15Z",
+                     *             "restated": false
+                     *           },
+                     *           "statements": {
+                     *             "income_statement": {
+                     *               "facts": {
+                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": {
+                     *                   "value": 478834000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "CostOfGoodsAndServicesSold": {
+                     *                   "value": 245232000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "GrossProfit": {
+                     *                   "value": 233602000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "ResearchAndDevelopmentExpense": {
+                     *                   "value": 45765000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "SellingGeneralAndAdministrativeExpense": {
+                     *                   "value": 29774000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "OperatingExpenses": {
+                     *                   "value": 75539000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "OperatingIncomeLoss": {
+                     *                   "value": 158063000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "NonoperatingIncomeExpense": {
+                     *                   "value": 1174000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {
+                     *                   "value": 159237000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncomeTaxExpenseBenefit": {
+                     *                   "value": 27062000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "NetIncomeLoss": {
+                     *                   "value": 132175000000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "EarningsPerShareBasic": {
+                     *                   "value": 9.01,
+                     *                   "derived": false
+                     *                 },
+                     *                 "EarningsPerShareDiluted": {
+                     *                   "value": 8.98,
+                     *                   "derived": false
+                     *                 },
+                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": {
+                     *                   "value": 14661935000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": {
+                     *                   "value": 14720306000,
+                     *                   "derived": false
+                     *                 },
+                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments": {
+                     *                   "value": 159237000000,
+                     *                   "derived": true
+                     *                 }
+                     *               }
+                     *             }
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "currency": "USD",
+                     *         "basis": "as_reported",
+                     *         "point_in_time": null
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["AsReportedPeriod"]>;
@@ -20005,6 +20127,315 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "company": {
+                     *             "cik": "0000320193",
+                     *             "ticker": "AAPL"
+                     *           },
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "period": "annual",
+                     *           "period_start": "2025-09-28",
+                     *           "period_end": "2026-09-26",
+                     *           "calendar_year": 2026,
+                     *           "calendar_quarter": 3,
+                     *           "currency": "USD",
+                     *           "source": {
+                     *             "accession": "0000320193-26-000026",
+                     *             "form": "10-K",
+                     *             "filed_at": "2026-11-03T13:05:15Z",
+                     *             "restated": false
+                     *           },
+                     *           "statements": {
+                     *             "income_statement": {
+                     *               "facts": {
+                     *                 "RevenueFromContractWithCustomerExcludingAssessedTax": {
+                     *                   "value": 478834000000,
+                     *                   "derived": false,
+                     *                   "label": "Net sales",
+                     *                   "company_label": "Total net sales",
+                     *                   "decimals": -6,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-76",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "CostOfGoodsAndServicesSold": {
+                     *                   "value": 245232000000,
+                     *                   "derived": false,
+                     *                   "label": "Cost of sales",
+                     *                   "company_label": "Total cost of sales",
+                     *                   "decimals": -6,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-85",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "GrossProfit": {
+                     *                   "value": 233602000000,
+                     *                   "derived": false,
+                     *                   "label": "Gross margin",
+                     *                   "company_label": "Gross margin",
+                     *                   "decimals": -6,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-88",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "ResearchAndDevelopmentExpense": {
+                     *                   "value": 45765000000,
+                     *                   "derived": false,
+                     *                   "label": "Research and development",
+                     *                   "company_label": "Research and development",
+                     *                   "decimals": -6,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-91",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "SellingGeneralAndAdministrativeExpense": {
+                     *                   "value": 29774000000,
+                     *                   "derived": false,
+                     *                   "label": "Selling, general and administrative",
+                     *                   "company_label": "Selling, general and administrative",
+                     *                   "decimals": -6,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-94",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "OperatingExpenses": {
+                     *                   "value": 75539000000,
+                     *                   "derived": false,
+                     *                   "label": "Total operating expenses",
+                     *                   "company_label": "Total operating expenses",
+                     *                   "decimals": -6,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-97",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "OperatingIncomeLoss": {
+                     *                   "value": 158063000000,
+                     *                   "derived": false,
+                     *                   "label": "Operating income",
+                     *                   "company_label": "Operating income",
+                     *                   "decimals": -6,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-100",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "NonoperatingIncomeExpense": {
+                     *                   "value": 1174000000,
+                     *                   "derived": false,
+                     *                   "label": "Other income/(expense), net",
+                     *                   "company_label": "Other income/(expense), net",
+                     *                   "decimals": -6,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-103",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesExtraordinaryItemsNoncontrollingInterest": {
+                     *                   "value": 159237000000,
+                     *                   "derived": false,
+                     *                   "label": "Income before provision for income taxes",
+                     *                   "company_label": "Income before provision for income taxes",
+                     *                   "decimals": -6,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-106",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "IncomeTaxExpenseBenefit": {
+                     *                   "value": 27062000000,
+                     *                   "derived": false,
+                     *                   "label": "Provision for income taxes",
+                     *                   "company_label": "Provision for income taxes",
+                     *                   "decimals": -6,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-109",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "NetIncomeLoss": {
+                     *                   "value": 132175000000,
+                     *                   "derived": false,
+                     *                   "label": "Net income",
+                     *                   "company_label": "Net income",
+                     *                   "decimals": -6,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-112",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "EarningsPerShareBasic": {
+                     *                   "value": 9.01,
+                     *                   "derived": false,
+                     *                   "label": "Basic (in dollars per share)",
+                     *                   "company_label": "Basic",
+                     *                   "decimals": 2,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-115",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "EarningsPerShareDiluted": {
+                     *                   "value": 8.98,
+                     *                   "derived": false,
+                     *                   "label": "Diluted (in dollars per share)",
+                     *                   "company_label": "Diluted",
+                     *                   "decimals": 2,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-118",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "WeightedAverageNumberOfSharesOutstandingBasic": {
+                     *                   "value": 14661935000,
+                     *                   "derived": false,
+                     *                   "label": "Basic (in shares)",
+                     *                   "company_label": "Basic",
+                     *                   "decimals": -3,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-121",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "WeightedAverageNumberOfDilutedSharesOutstanding": {
+                     *                   "value": 14720306000,
+                     *                   "derived": false,
+                     *                   "label": "Diluted (in shares)",
+                     *                   "company_label": "Diluted",
+                     *                   "decimals": -3,
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-124",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 },
+                     *                 "IncomeLossFromContinuingOperationsBeforeIncomeTaxesMinorityInterestAndIncomeLossFromEquityMethodInvestments": {
+                     *                   "value": 159237000000,
+                     *                   "derived": true,
+                     *                   "label": null,
+                     *                   "company_label": null,
+                     *                   "decimals": null,
+                     *                   "formula": {
+                     *                     "formula_str": "320193|IncomeLossFromContinuingOperationsBeforeIncomeTaxesDomestic|2025-09-28T00:00:00|2026-09-26T00:00:00|-|- + 320193|IncomeLossFromContinuingOperationsBeforeIncomeTaxesForeign|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-",
+                     *                     "members": [
+                     *                       {
+                     *                         "type": "reported",
+                     *                         "value": 63732000000,
+                     *                         "concept": "IncomeLossFromContinuingOperationsBeforeIncomeTaxesDomestic",
+                     *                         "start_date": "2025-09-28",
+                     *                         "end_date": "2026-09-26",
+                     *                         "instant_date": null,
+                     *                         "segment": null,
+                     *                         "fiscal_period_type": null
+                     *                       }
+                     *                     ]
+                     *                   },
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": null,
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null,
+                     *                   "original_value": null,
+                     *                   "original_label": null,
+                     *                   "original_filing_date": null,
+                     *                   "original_accession": null
+                     *                 }
+                     *               }
+                     *             }
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "currency": "USD",
+                     *         "basis": "as_reported",
+                     *         "point_in_time": null
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["AsReportedDetailedPeriod"]>;
@@ -20162,6 +20593,53 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "company": {
+                     *             "cik": "0000320193",
+                     *             "ticker": "AAPL"
+                     *           },
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "period": "annual",
+                     *           "period_start": "2025-09-28",
+                     *           "period_end": "2026-09-26",
+                     *           "calendar_year": 2026,
+                     *           "calendar_quarter": 3,
+                     *           "currency": "USD",
+                     *           "source": {
+                     *             "accession": "0000320193-26-000026",
+                     *             "form": "10-K",
+                     *             "filed_at": "2026-11-03T13:05:15Z",
+                     *             "restated": false
+                     *           },
+                     *           "statements": {
+                     *             "income_statement": {
+                     *               "facts": [
+                     *                 {
+                     *                   "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+                     *                   "label": "Net sales",
+                     *                   "value": 478834000000,
+                     *                   "derived": false,
+                     *                   "company_label": "Total net sales",
+                     *                   "depth": 0
+                     *                 }
+                     *               ]
+                     *             }
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "currency": "USD",
+                     *         "basis": "as_reported",
+                     *         "point_in_time": null
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["AsReportedPresentationPeriod"]>;
@@ -20961,6 +21439,44 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "fact_id": "320193|is_total_revenue|annual|2026|4",
+                     *       "company": {
+                     *         "cik": "0000320193",
+                     *         "ticker": "AAPL"
+                     *       },
+                     *       "metric_id": "is_total_revenue",
+                     *       "value": 478834000000,
+                     *       "unit": "usd",
+                     *       "rule": {},
+                     *       "operands": [
+                     *         {
+                     *           "id": "320193|RevenueFromContractWithCustomerExcludingAssessedTax|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-",
+                     *           "type": "reported",
+                     *           "weighted_value": "478834000000",
+                     *           "depth": 1,
+                     *           "status": "resolved",
+                     *           "tier": "raw",
+                     *           "stored_value": "478834000000"
+                     *         }
+                     *       ],
+                     *       "source_facts": [
+                     *         {
+                     *           "basis": "stored_row",
+                     *           "concept": "Revenues",
+                     *           "segment": null,
+                     *           "accession": "0000320193-26-000026",
+                     *           "annotated_anchor": null,
+                     *           "candidate_count": 0,
+                     *           "place": {
+                     *             "outcome": "source_not_found",
+                     *             "reason": "no_retained_filing_fact"
+                     *           }
+                     *         }
+                     *       ]
+                     *     }
+                     */
                     "application/json": components["schemas"]["FactExplanation"];
                 };
             };
@@ -22409,6 +22925,57 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "company": {
+                     *             "cik": "0000320193",
+                     *             "ticker": "AAPL"
+                     *           },
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "period": "annual",
+                     *           "period_start": "2025-09-28",
+                     *           "period_end": "2026-09-26",
+                     *           "calendar_year": 2026,
+                     *           "calendar_quarter": 3,
+                     *           "currency": "USD",
+                     *           "source": {
+                     *             "accession": "0000320193-26-000026",
+                     *             "form": "10-K",
+                     *             "filed_at": "2026-11-03T13:05:15Z",
+                     *             "restated": false
+                     *           },
+                     *           "statements": {
+                     *             "income_statement": {
+                     *               "facts": {
+                     *                 "is_total_revenue": 478834000000,
+                     *                 "is_revenue_from_contract_with_customer": 478834000000,
+                     *                 "is_cost_of_revenue": 245232000000,
+                     *                 "is_cost_of_product_and_service_sold": 245232000000,
+                     *                 "is_other_cost_of_revenue": 0,
+                     *                 "is_gross_profit": 233602000000,
+                     *                 "is_operating_expenses": 75539000000,
+                     *                 "is_operating_costs_and_expenses": 50665000000,
+                     *                 "is_research_and_development_expenses": 45765000000,
+                     *                 "is_depreciation_and_amortization_expenses": 4900000000,
+                     *                 "is_other_operating_costs_and_expenses": 0,
+                     *                 "is_selling_general_and_administrative_expenses": 29774000000
+                     *               }
+                     *             }
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "currency": "USD",
+                     *         "basis": "standardized",
+                     *         "point_in_time": null
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["StandardizedPeriod"]>;
@@ -22556,6 +23123,257 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "company": {
+                     *             "cik": "0000320193",
+                     *             "ticker": "AAPL"
+                     *           },
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "period": "annual",
+                     *           "period_start": "2025-09-28",
+                     *           "period_end": "2026-09-26",
+                     *           "calendar_year": 2026,
+                     *           "calendar_quarter": 3,
+                     *           "currency": "USD",
+                     *           "source": {
+                     *             "accession": "0000320193-26-000026",
+                     *             "form": "10-K",
+                     *             "filed_at": "2026-11-03T13:05:15Z",
+                     *             "restated": false
+                     *           },
+                     *           "statements": {
+                     *             "income_statement": {
+                     *               "facts": {
+                     *                 "is_total_revenue": {
+                     *                   "value": 478834000000,
+                     *                   "unit": "usd",
+                     *                   "fact_id": "320193|is_total_revenue|annual|2026|4",
+                     *                   "formula": {
+                     *                     "formula_str": "320193|RevenueFromContractWithCustomerExcludingAssessedTax|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-",
+                     *                     "members": [
+                     *                       {
+                     *                         "type": "reported",
+                     *                         "value": 478834000000,
+                     *                         "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+                     *                         "start_date": "2025-09-28",
+                     *                         "end_date": "2026-09-26",
+                     *                         "instant_date": null,
+                     *                         "segment": null,
+                     *                         "fiscal_period_type": null
+                     *                       }
+                     *                     ]
+                     *                   },
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": null,
+                     *                   "parent_id": null,
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null
+                     *                 },
+                     *                 "is_revenue_from_contract_with_customer": {
+                     *                   "value": 478834000000,
+                     *                   "unit": "usd",
+                     *                   "fact_id": "320193|is_revenue_from_contract_with_customer|annual|2026|4",
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-76",
+                     *                   "parent_id": "is_total_revenue",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null
+                     *                 },
+                     *                 "is_cost_of_revenue": {
+                     *                   "value": 245232000000,
+                     *                   "unit": "usd",
+                     *                   "fact_id": "320193|is_cost_of_revenue|annual|2026|4",
+                     *                   "formula": {
+                     *                     "formula_str": "320193|CostOfGoodsAndServicesSold|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-",
+                     *                     "members": [
+                     *                       {
+                     *                         "type": "reported",
+                     *                         "value": 245232000000,
+                     *                         "concept": "CostOfGoodsAndServicesSold",
+                     *                         "start_date": "2025-09-28",
+                     *                         "end_date": "2026-09-26",
+                     *                         "instant_date": null,
+                     *                         "segment": null,
+                     *                         "fiscal_period_type": null
+                     *                       }
+                     *                     ]
+                     *                   },
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": null,
+                     *                   "parent_id": null,
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null
+                     *                 },
+                     *                 "is_cost_of_product_and_service_sold": {
+                     *                   "value": 245232000000,
+                     *                   "unit": "usd",
+                     *                   "fact_id": "320193|is_cost_of_product_and_service_sold|annual|2026|4",
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-85",
+                     *                   "parent_id": "is_cost_of_revenue",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null
+                     *                 },
+                     *                 "is_other_cost_of_revenue": {
+                     *                   "value": 0,
+                     *                   "unit": "usd",
+                     *                   "fact_id": "320193|is_other_cost_of_revenue|annual|2026|4",
+                     *                   "formula": {
+                     *                     "formula_str": "320193|is_cost_of_revenue|annual|2026|4 - 320193|is_cost_of_product_and_service_sold|annual|2026|4",
+                     *                     "members": [
+                     *                       {
+                     *                         "type": "standardized",
+                     *                         "value": 245232000000,
+                     *                         "metric_id": "is_cost_of_product_and_service_sold",
+                     *                         "fiscal_period_type": "annual",
+                     *                         "fiscal_year": 2026,
+                     *                         "fiscal_quarter": 4
+                     *                       }
+                     *                     ]
+                     *                   },
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": null,
+                     *                   "parent_id": "is_cost_of_revenue",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null
+                     *                 },
+                     *                 "is_gross_profit": {
+                     *                   "value": 233602000000,
+                     *                   "unit": "usd",
+                     *                   "fact_id": "320193|is_gross_profit|annual|2026|4",
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-88",
+                     *                   "parent_id": null,
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null
+                     *                 },
+                     *                 "is_operating_expenses": {
+                     *                   "value": 75539000000,
+                     *                   "unit": "usd",
+                     *                   "fact_id": "320193|is_operating_expenses|annual|2026|4",
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-97",
+                     *                   "parent_id": null,
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null
+                     *                 },
+                     *                 "is_operating_costs_and_expenses": {
+                     *                   "value": 50665000000,
+                     *                   "unit": "usd",
+                     *                   "fact_id": "320193|is_operating_costs_and_expenses|annual|2026|4",
+                     *                   "formula": {
+                     *                     "formula_str": "320193|ResearchAndDevelopmentExpense|2025-09-28T00:00:00|2026-09-26T00:00:00|-|- + 320193|DepreciationAndAmortization|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-",
+                     *                     "members": [
+                     *                       {
+                     *                         "type": "reported",
+                     *                         "value": 45765000000,
+                     *                         "concept": "ResearchAndDevelopmentExpense",
+                     *                         "start_date": "2025-09-28",
+                     *                         "end_date": "2026-09-26",
+                     *                         "instant_date": null,
+                     *                         "segment": null,
+                     *                         "fiscal_period_type": null
+                     *                       }
+                     *                     ]
+                     *                   },
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": null,
+                     *                   "parent_id": "is_operating_expenses",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null
+                     *                 },
+                     *                 "is_research_and_development_expenses": {
+                     *                   "value": 45765000000,
+                     *                   "unit": "usd",
+                     *                   "fact_id": "320193|is_research_and_development_expenses|annual|2026|4",
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-91",
+                     *                   "parent_id": "is_operating_costs_and_expenses",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null
+                     *                 },
+                     *                 "is_depreciation_and_amortization_expenses": {
+                     *                   "value": 4900000000,
+                     *                   "unit": "usd",
+                     *                   "fact_id": "320193|is_depreciation_and_amortization_expenses|annual|2026|4",
+                     *                   "formula": {
+                     *                     "formula_str": "320193|AmortizationOfDeferredCharges|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-",
+                     *                     "members": [
+                     *                       {
+                     *                         "type": "reported",
+                     *                         "value": 4900000000,
+                     *                         "concept": "AmortizationOfDeferredCharges",
+                     *                         "start_date": "2025-09-28",
+                     *                         "end_date": "2026-09-26",
+                     *                         "instant_date": null,
+                     *                         "segment": null,
+                     *                         "fiscal_period_type": null
+                     *                       }
+                     *                     ]
+                     *                   },
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": null,
+                     *                   "parent_id": "is_operating_costs_and_expenses",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null
+                     *                 },
+                     *                 "is_other_operating_costs_and_expenses": {
+                     *                   "value": 0,
+                     *                   "unit": "usd",
+                     *                   "fact_id": "320193|is_other_operating_costs_and_expenses|annual|2026|4",
+                     *                   "formula": {
+                     *                     "formula_str": "320193|is_operating_costs_and_expenses|annual|2026|4 - 320193|is_research_and_development_expenses|annual|2026|4 - 320193|is_depreciation_and_amortization_expenses|annual|2026|4",
+                     *                     "members": [
+                     *                       {
+                     *                         "type": "standardized",
+                     *                         "value": 4900000000,
+                     *                         "metric_id": "is_depreciation_and_amortization_expenses",
+                     *                         "fiscal_period_type": "annual",
+                     *                         "fiscal_year": 2026,
+                     *                         "fiscal_quarter": 4
+                     *                       }
+                     *                     ]
+                     *                   },
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": null,
+                     *                   "parent_id": "is_operating_costs_and_expenses",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null
+                     *                 },
+                     *                 "is_selling_general_and_administrative_expenses": {
+                     *                   "value": 29774000000,
+                     *                   "unit": "usd",
+                     *                   "fact_id": "320193|is_selling_general_and_administrative_expenses|annual|2026|4",
+                     *                   "formula": null,
+                     *                   "accession": "0000320193-26-000026",
+                     *                   "html_tag_id": "f-94",
+                     *                   "parent_id": "is_operating_expenses",
+                     *                   "value_as_reported": null,
+                     *                   "split_factor": null
+                     *                 }
+                     *               }
+                     *             }
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "currency": "USD",
+                     *         "basis": "standardized",
+                     *         "point_in_time": null
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["StandardizedDetailedPeriod"]>;
@@ -22703,6 +23521,55 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "company": {
+                     *             "cik": "0000320193",
+                     *             "ticker": "AAPL"
+                     *           },
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "period": "annual",
+                     *           "period_start": "2025-09-28",
+                     *           "period_end": "2026-09-26",
+                     *           "calendar_year": 2026,
+                     *           "calendar_quarter": 3,
+                     *           "currency": "USD",
+                     *           "source": {
+                     *             "accession": "0000320193-26-000026",
+                     *             "form": "10-K",
+                     *             "filed_at": "2026-11-03T13:05:15Z",
+                     *             "restated": false
+                     *           },
+                     *           "statements": {
+                     *             "income_statement": {
+                     *               "facts": [
+                     *                 {
+                     *                   "metric_id": "is_total_revenue",
+                     *                   "value": 478834000000,
+                     *                   "children": [
+                     *                     {
+                     *                       "metric_id": "is_revenue_from_contract_with_customer",
+                     *                       "value": 478834000000
+                     *                     }
+                     *                   ]
+                     *                 }
+                     *               ]
+                     *             }
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "currency": "USD",
+                     *         "basis": "standardized",
+                     *         "point_in_time": null
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["StandardizedPresentationPeriod"]>;
@@ -24379,6 +25246,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "company": {
+                     *             "cik": "0000320193",
+                     *             "ticker": "AAPL"
+                     *           },
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "period": "annual",
+                     *           "period_start": "2025-09-28",
+                     *           "period_end": "2026-09-26",
+                     *           "calendar_year": 2026,
+                     *           "calendar_quarter": 3,
+                     *           "horizon": 10,
+                     *           "facts": {
+                     *             "cagr_cash_from_operating_activities": 0.0816,
+                     *             "cagr_total_assets": 0.0232,
+                     *             "cagr_total_revenue": 0.083,
+                     *             "cagr_cash_from_investing_activities": -0.0932,
+                     *             "cagr_gross_profit": 0.1073,
+                     *             "cagr_total_liabilities": 0.0422,
+                     *             "cagr_cash_from_financing_activities": 0.2006,
+                     *             "cagr_ebitda": 0.0908,
+                     *             "cagr_total_equity": -0.0134,
+                     *             "cagr_free_cash_flow": 0.0978,
+                     *             "cagr_operating_income_ebit": 0.1017,
+                     *             "cagr_shareholders_equity": -0.0134,
+                     *             "cagr_dividend_per_share": 0.0697,
+                     *             "cagr_ebt": 0.1,
+                     *             "cagr_net_income": 0.1121,
+                     *             "cagr_basic_eps": 0.1575,
+                     *             "cagr_diluted_eps": 0.1576
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDE4LTA5LTI5IiwiMzIwMTkzIiwyMDE4LDQsMTBdLCJmIjoiODJlMWE5MGZkYjBjM2JhZiJ9",
+                     *       "meta": {}
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["CagrPeriod"]>;
@@ -25953,6 +26862,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "company": {
+                     *             "cik": "0000320193",
+                     *             "ticker": "AAPL"
+                     *           },
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "period": "annual",
+                     *           "period_start": "2025-09-28",
+                     *           "period_end": "2026-09-26",
+                     *           "calendar_year": 2026,
+                     *           "calendar_quarter": 3,
+                     *           "basis": "yoy",
+                     *           "facts": {
+                     *             "growth_cash_from_operating_activities": 0.3015,
+                     *             "growth_total_assets": 0.1261,
+                     *             "growth_total_revenue": 0.1506,
+                     *             "growth_cash_from_investing_activities": -2.1372,
+                     *             "growth_gross_profit": 0.1967,
+                     *             "growth_total_liabilities": 0.0243,
+                     *             "growth_cash_from_financing_activities": 0.056,
+                     *             "growth_ebitda": 0.1917,
+                     *             "growth_total_equity": 0.5203,
+                     *             "growth_free_cash_flow": 0.3775,
+                     *             "growth_operating_income_ebit": 0.188,
+                     *             "growth_shareholders_equity": 0.5203,
+                     *             "growth_dividend_per_share": 0.0394,
+                     *             "growth_ebt": 0.1997,
+                     *             "growth_net_income": 0.18,
+                     *             "growth_basic_eps": 0.2029,
+                     *             "growth_diluted_eps": 0.2038
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {}
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["GrowthPeriod"]>;
@@ -27913,6 +28864,57 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "company": {
+                     *             "cik": "0000320193",
+                     *             "ticker": "AAPL"
+                     *           },
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "period": "annual",
+                     *           "period_start": "2025-09-28",
+                     *           "period_end": "2026-09-26",
+                     *           "calendar_year": 2026,
+                     *           "calendar_quarter": 3,
+                     *           "ratios": {
+                     *             "leverage": {
+                     *               "ratio_debt_to_assets_ratio": 0.2,
+                     *               "ratio_debt_to_equity_ratio": 0.73,
+                     *               "ratio_long_term_debt_to_total_assets_ratio": 0.17,
+                     *               "ratio_long_term_debt_to_total_equity_ratio": 0.61
+                     *             },
+                     *             "valuation": {
+                     *               "ratio_price_to_earnings_ratio": 37.5,
+                     *               "ratio_price_to_sales_ratio": 10.35,
+                     *               "ratio_price_to_cash_flow_ratio": 34.16,
+                     *               "ratio_price_to_book_ratio": 44.22
+                     *             },
+                     *             "liquidity": {
+                     *               "ratio_quick_ratio": 0.59,
+                     *               "ratio_current_ratio": 1.02,
+                     *               "ratio_inventory_turnover": 16.86,
+                     *               "ratio_asset_turnover": 1.18
+                     *             },
+                     *             "profitability": {
+                     *               "ratio_return_on_assets_pct": 32.67,
+                     *               "ratio_return_on_equity_pct": 117.92,
+                     *               "ratio_return_on_invested_capital_pct": 95.82,
+                     *               "ratio_gross_margin_pct": 48.79,
+                     *               "ratio_operating_margin_pct": 33.01,
+                     *               "ratio_ebitda_margin_pct": 34.03,
+                     *               "ratio_net_margin_pct": 27.6
+                     *             }
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {}
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["RatioPeriod"]>;
@@ -28116,6 +29118,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "company": {
+                     *             "cik": "0000320193",
+                     *             "ticker": "AAPL"
+                     *           },
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "period": "annual",
+                     *           "period_start": "2025-09-28",
+                     *           "period_end": "2026-09-26",
+                     *           "calendar_year": 2026,
+                     *           "calendar_quarter": 3,
+                     *           "metric_id": "is_total_revenue",
+                     *           "segment_id": "seg_revenue_product",
+                     *           "value": 35577000000,
+                     *           "dimensions": [
+                     *             {
+                     *               "axis": "srt:ProductOrServiceAxis",
+                     *               "member": "aapl:WearablesHomeandAccessoriesMember"
+                     *             }
+                     *           ]
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI2IiwiMzIwMTkzIiwyMDI2LDQsIjMyMDE5M3xpc19yZXNlYXJjaF9hbmRfZGV2ZWxvcG1lbnRfZXhwZW5zZXN8YW5udWFsfDIwMjZ8NHxzZWdfcmVzZWFyY2hfYW5kX2RldmVsb3BtZW50X2V4cGVuc2VzX2J1c2luZXNzX3NlZ21lbnR8SmFwYW5TZWdtZW50TWVtYmVyIl0s…",
+                     *       "meta": {}
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["Segment"]>;
@@ -28231,6 +29264,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "company": {
+                     *             "cik": "0000320193",
+                     *             "ticker": "AAPL"
+                     *           },
+                     *           "fiscal_year": 2026,
+                     *           "fiscal_quarter": 4,
+                     *           "period": "annual",
+                     *           "period_start": "2025-09-28",
+                     *           "period_end": "2026-09-26",
+                     *           "calendar_year": 2026,
+                     *           "calendar_quarter": 3,
+                     *           "metric_id": "is_total_revenue",
+                     *           "segment_id": "seg_revenue_product",
+                     *           "value": 35577000000,
+                     *           "dimensions": [
+                     *             {
+                     *               "axis": "srt:ProductOrServiceAxis",
+                     *               "member": "aapl:WearablesHomeandAccessoriesMember"
+                     *             }
+                     *           ],
+                     *           "metric": "RevenueFromContractWithCustomerExcludingAssessedTax",
+                     *           "accession": "0000320193-26-000026",
+                     *           "html_tag_id": "f-384",
+                     *           "html_label": "Net sales",
+                     *           "unit": "usd"
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI2IiwiMzIwMTkzIiwyMDI2LDQsIjMyMDE5M3xpc19yZXNlYXJjaF9hbmRfZGV2ZWxvcG1lbnRfZXhwZW5zZXN8YW5udWFsfDIwMjZ8NHxzZWdfcmVzZWFyY2hfYW5kX2RldmVsb3BtZW50X2V4cGVuc2VzX2J1c2luZXNzX3NlZ21lbnR8SmFwYW5TZWdtZW50TWVtYmVyIl0s…",
+                     *       "meta": {}
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["SegmentDetailed"]>;
