@@ -1,19 +1,21 @@
 import { FileText } from "lucide-react";
 
-import type { JsonValue, SecFilingsResponse, SecManagerPortfolioResponse, V2FilerResponse } from "@/lib/api/types";
+import type { JsonValue, V2FilerResponse, V2FilingsResponse, V2HoldingsResponse } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
-import { isGenuineEmpty } from "@/lib/sec/readiness";
+import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { listOf, reviewStatusOf, scalarEntries } from "@/lib/sec/source";
+import { formatNumberEn } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 import type { SecPanelTarget } from "./sec-source-panel";
 
 import { SecReadinessNotice } from "./sec-readiness-notice";
+import { V2MetaLine } from "./v2-meta-line";
 
 function Facts({ entries }: { entries: Array<[string, string]> }) {
     if (entries.length === 0) return null;
@@ -30,7 +32,7 @@ function Facts({ entries }: { entries: Array<[string, string]> }) {
     );
 }
 
-const PHASE_LABELS: Record<NonNullable<V2FilerResponse["phase"]>, string> = {
+export const PHASE_LABELS: Record<NonNullable<V2FilerResponse["phase"]>, string> = {
     former: "Former issuer",
     manager: "13F manager",
     other: "Other filer",
@@ -39,7 +41,7 @@ const PHASE_LABELS: Record<NonNullable<V2FilerResponse["phase"]>, string> = {
 };
 
 /**
- * A failed `/v2/filers/{cik}` request: 404 `not_covered` and 503 `unavailable` are states of their own; 403 `excluded`,
+ * A failed `/v1/filers/{cik}` request: 404 `not_covered` and 503 `unavailable` are states of their own; 403 `excluded`,
  * the plan gate (`plan_required`) and anything else go through `SecReadinessNotice`.
  */
 function V2FilerErrorNotice({ error, title }: { error: unknown; title: string }) {
@@ -53,7 +55,7 @@ function V2FilerErrorNotice({ error, title }: { error: unknown; title: string })
 }
 
 /**
- * The filer's identity (pure, `GET /v2/filers/{cik}`): name, CIK, the verified listing (or "No ticker" — a pre-IPO
+ * The filer's identity (pure, `GET /v1/filers/{cik}`): name, CIK, the verified listing (or "No ticker" — a pre-IPO
  * issuer, a SPAC, a manager), phase, entity type, SIC, state of incorporation, fiscal year end.
  */
 export function SecFilerHeader({ cik, data, error, isLoading }: { cik: string; data: null | V2FilerResponse; error: unknown; isLoading: boolean }) {
@@ -126,7 +128,7 @@ function TextList({ empty, items, title }: { empty: string; items: ReadonlyArray
 }
 
 /**
- * The issuer lifecycle (pure, `GET /v2/filers/{cik}?expand=lifecycle,proposed_symbols,former_names,successors`): phase,
+ * The issuer lifecycle (pure, `GET /v1/filers/{cik}?expand=lifecycle,proposed_symbols,former_names,successors`): phase,
  * kind, first public sighting, registration tracks (each with its review status stated, never assumed), pending
  * actions, proposed symbols of a pending IPO, successors, former names and warnings. A filer without lifecycle
  * evidence (`lifecycle: null`) says so; a refused request is its notice.
@@ -187,8 +189,8 @@ export function SecLifecycleView({ data, error, isLoading }: { data: null | V2Fi
 }
 
 /**
- * A filer's filings (pure): every loaded cursor page, the `form_facet` filter, a row opens the accession's documents
- * in the source panel; `withheld` counts are said, and "No filings" only for a ready answer.
+ * A filer's filings (pure, `GET /v1/filings?company=<cik>`): every loaded cursor page, the `meta.form_facet` filter, a
+ * row opens the accession's documents in the source panel; "No filings" only for a complete answer.
  */
 export function SecFilingsView({
     error,
@@ -209,7 +211,7 @@ export function SecFilingsView({
     onFormChange: (form: null | string) => void;
     onMore: () => void;
     onOpen: (target: SecPanelTarget) => void;
-    pages: ReadonlyArray<SecFilingsResponse>;
+    pages: ReadonlyArray<V2FilingsResponse>;
 }) {
     if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the filings" />;
 
@@ -219,28 +221,23 @@ export function SecFilingsView({
 
     if (!first) return null;
 
-    const filings = pages.flatMap(page => page.filings ?? []);
+    const filings = pages.flatMap(page => page.data);
 
-    const facet = first.form_facet ?? [];
-
-    const withheld = scalarEntries(first.withheld).filter(([, value]) => value !== "0");
+    const facet = first.meta.form_facet ?? [];
 
     const options = [
         { label: "All forms", value: "all" },
-        ...facet.flatMap(entry => (entry.form ? [{ label: `${entry.form} (${entry.count ?? 0})`, value: entry.form }] : [])),
+        ...facet.map(entry => ({ label: `${entry.form} (${entry.count})`, value: entry.form })),
     ];
 
     return (
         <section aria-label="Filings" className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
                 <FilterSelect className="w-[200px]" onValueChange={value => onFormChange(value === "all" ? null : value)} options={options} value={form ?? "all"} />
-                {withheld.length > 0 && (
-                    <span className="text-muted-foreground text-xs">{`Withheld: ${withheld.map(([key, value]) => `${value} ${key}`).join(", ")}`}</span>
-                )}
             </div>
-            <SecReadinessNotice readiness={pages.at(-1)?.readiness} />
+            <SecReadinessNotice coverage={pages.at(-1)?.meta.coverage} />
             {filings.length === 0
-                ? (isGenuineEmpty(first.readiness) && <div className="text-muted-foreground text-xs">No filings.</div>)
+                ? (isV2GenuineEmpty(first.meta.coverage) && <div className="text-muted-foreground text-xs">No filings.</div>)
                 : (
                         <table className="w-full text-xs">
                             <thead className="text-muted-foreground text-left">
@@ -254,37 +251,31 @@ export function SecFilingsView({
                                 </tr>
                             </thead>
                             <tbody>
-                                {filings.map((filing) => {
-                                    const { accession } = filing;
-
-                                    if (!accession) return null;
-
-                                    return (
-                                        <tr key={accession}>
-                                            <td className="p-1 font-medium">{filing.form ?? "—"}</td>
-                                            <td className="p-1">{filing.filing_date ?? "—"}</td>
-                                            <td className="p-1">{filing.report_date ?? "—"}</td>
-                                            <td className="p-1 tabular-nums">{accession}</td>
-                                            <td className="p-1">{(filing.roles ?? []).join(", ") || "—"}</td>
-                                            <td className="flex items-center justify-end gap-2 p-1">
-                                                {filing.edgar_index_url?.startsWith("https://www.sec.gov/") && (
-                                                    <a className="underline-offset-4 hover:underline" href={filing.edgar_index_url} rel="noopener noreferrer" target="_blank">
-                                                        EDGAR
-                                                    </a>
-                                                )}
-                                                <Button
-                                                    onClick={() => onOpen({ accession, kind: "filing", title: `${filing.form ?? "Filing"} · ${accession}` })}
-                                                    size="xs"
-                                                    type="button"
-                                                    variant="outline"
-                                                >
-                                                    <FileText />
-                                                    Documents
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
+                                {filings.map(filing => (
+                                    <tr key={filing.accession}>
+                                        <td className="p-1 font-medium">{filing.form}</td>
+                                        <td className="p-1">{filing.filing_date}</td>
+                                        <td className="p-1">{filing.report_date ?? "—"}</td>
+                                        <td className="p-1 tabular-nums">{filing.accession}</td>
+                                        <td className="p-1">{filing.roles.join(", ") || "—"}</td>
+                                        <td className="flex items-center justify-end gap-2 p-1">
+                                            {filing.edgar_index_url.startsWith("https://www.sec.gov/") && (
+                                                <a className="underline-offset-4 hover:underline" href={filing.edgar_index_url} rel="noopener noreferrer" target="_blank">
+                                                    EDGAR
+                                                </a>
+                                            )}
+                                            <Button
+                                                onClick={() => onOpen({ accession: filing.accession, kind: "filing", title: `${filing.form} · ${filing.accession}` })}
+                                                size="xs"
+                                                type="button"
+                                                variant="outline"
+                                            >
+                                                <FileText />
+                                                Documents
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     )}
@@ -298,40 +289,79 @@ export function SecFilingsView({
     );
 }
 
-/** A 13F manager's portfolio page with its provenance: `pinned_at`, `page_status`, `coverage` (pure). */
-export function SecPortfolioView({ data, error, isLoading }: { data: null | SecManagerPortfolioResponse; error: unknown; isLoading: boolean }) {
-    if (error) return <SecReadinessNotice error={error} title="Failed to load the 13F portfolio" />;
+const usd = new Intl.NumberFormat("en", { currency: "USD", maximumFractionDigits: 0, style: "currency" });
 
-    if (isLoading && !data) return <Skeleton className="h-24 w-full" />;
+/**
+ * A 13F manager's portfolio for one quarter (pure, `GET /v1/holdings?filer=<cik>&period_end=`): the provenance line
+ * (`meta.coverage`, `pinned_at`, `counting`, `meta.source`), the positions by dollar value, "More positions" by cursor.
+ */
+export function SecPortfolioView({
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    onMore,
+    pages,
+}: {
+    error: unknown;
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+    isLoading: boolean;
+    onMore: () => void;
+    pages: ReadonlyArray<V2HoldingsResponse>;
+}) {
+    if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the 13F portfolio" />;
 
-    if (!data) return null;
+    if (isLoading && pages.length === 0) return <Skeleton className="h-24 w-full" />;
 
-    const rows = data.rows ?? [];
+    const first = pages.at(0);
+
+    if (!first) return null;
+
+    const rows = pages.flatMap(page => page.data);
 
     return (
         <section aria-label="13F portfolio" className="flex flex-col gap-2">
-            <SecReadinessNotice readiness={data.readiness} />
-            <Facts
-                entries={[
-                    ["pinned at", data.pinned_at ?? "—"],
-                    ["page status", data.page_status ?? "—"],
-                    ["counting policy", data.counting_policy ?? "—"],
-                    ...scalarEntries(data.coverage).map(([key, value]): [string, string] => [`coverage ${key}`, value]),
-                ]}
-            />
-            {(data.disclosure_limitations ?? []).length > 0 && (
-                <div className="text-muted-foreground text-xs">{(data.disclosure_limitations ?? []).join(" · ")}</div>
-            )}
+            <SecReadinessNotice coverage={pages.at(-1)?.meta.coverage} />
+            <V2MetaLine meta={first.meta} />
             {rows.length === 0
-                ? <div className="text-muted-foreground text-xs">{data.page_status === "complete_empty" ? "The manager reported no positions." : "No rows on this page."}</div>
+                ? (isV2GenuineEmpty(first.meta.coverage) && <div className="text-muted-foreground text-xs">The manager reported no positions for this quarter.</div>)
                 : (
-                        <ul className="flex flex-col gap-1">
-                            {rows.map((row, index) => (
-                                // Rows carry no id of their own; the API orders them.
-                                <li className="rounded-md border p-2" key={index}><Facts entries={scalarEntries(row)} /></li>
-                            ))}
-                        </ul>
+                        <table className="w-full text-xs">
+                            <thead className="text-muted-foreground text-left">
+                                <tr>
+                                    <th className="p-1 font-normal">Company</th>
+                                    <th className="p-1 font-normal">CUSIP</th>
+                                    <th className="p-1 text-right font-normal">Shares / principal</th>
+                                    <th className="p-1 text-right font-normal">Value</th>
+                                    <th className="p-1 font-normal">Put / call</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map((row, index) => (
+                                    // A position has no id of its own (one CUSIP can be held twice: shares and an option).
+                                    <tr key={`${row.cusip_company}-${row.put_call ?? ""}-${index}`}>
+                                        <td className="p-1">
+                                            <span className="font-medium">{row.ticker_company ?? "—"}</span>
+                                            {row.name_company && <span className="text-muted-foreground">{` · ${row.name_company}`}</span>}
+                                        </td>
+                                        <td className="p-1 tabular-nums">{row.cusip_company}</td>
+                                        <td className="p-1 text-right tabular-nums">
+                                            {row.shares_or_principal_amount === null ? "—" : formatNumberEn(row.shares_or_principal_amount)}
+                                        </td>
+                                        <td className="p-1 text-right tabular-nums">{row.dollar_value === null ? "—" : usd.format(row.dollar_value)}</td>
+                                        <td className="p-1">{row.put_call ?? "—"}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     )}
+            {error ? <SecReadinessNotice error={error} title="Failed to load more positions" /> : null}
+            {hasNextPage && (
+                <Button className="self-center" disabled={isFetchingNextPage} onClick={onMore} size="sm" type="button" variant="outline">
+                    {isFetchingNextPage ? "Loading…" : "More positions"}
+                </Button>
+            )}
         </section>
     );
 }

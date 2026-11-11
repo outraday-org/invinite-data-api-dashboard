@@ -1,6 +1,6 @@
 /**
- * View models of the SEC document store answers (`/v1/sec/*` and the v2 SEC family, backend tasks/data-api-v2 task 6:
- * `toV2FilingDocuments`, `toMetaSource`; a v2 document version carries the same canonical blocks). The spec types most nested objects as free JSON
+ * View models of the SEC family answers (`/v1/filings/{accession}` documents, `/v1/document-versions/{id}` blocks,
+ * `/v1/search/filings` hits, `meta.source`). The spec types most nested objects as free JSON
  * (`additionalProperties`), so every field is read through a guard here — never cast — and a missing or
  * differently-typed field reads as absent, never as a made-up value. Shapes: the live answers of 2026-11-05 (backend
  * delivery-integration task 5 plan) and secdoors' `as_json` (block `page {ordinal, printed}`, `neighbors`,
@@ -49,70 +49,6 @@ export function publicUrlOf(value: JsonValue | undefined): null | string {
     const url = textOf(recordOf(value), "url");
 
     return url?.startsWith("https://") ? url : null;
-}
-
-export type SecCanonical = {
-    reason: null | string;
-    status: null | string;
-    textReady: boolean;
-    versionId: null | string;
-    visualReady: boolean;
-};
-
-/** One document of a filing manifest (`documents[]` of `/v1/sec/filings/{accession}`). */
-export type SecManifestDocument = {
-    availability: null | string;
-    canonical: null | SecCanonical;
-    description: null | string;
-    docType: null | string;
-    filename: string;
-    mimeType: null | string;
-    /** The permanent public copy; null = none yet (never a fabricated link, never a sec.gov fetch). */
-    publicUrl: null | string;
-    role: null | string;
-    sequence: null | number;
-    /** The document's true size (`size_bytes`), not the stored (compressed) size. */
-    sizeBytes: null | number;
-    tooLarge: boolean;
-};
-
-function toCanonical(value: JsonValue | undefined): null | SecCanonical {
-    if (!isRecord(value)) return null;
-
-    return {
-        reason: textOf(value, "reason"),
-        status: textOf(value, "status"),
-        textReady: boolOf(value, "text_ready") === true,
-        versionId: textOf(value, "version_id"),
-        visualReady: boolOf(value, "visual_ready") === true,
-    };
-}
-
-export function toManifestDocuments(documents: ReadonlyArray<JsonValue> | undefined): Array<SecManifestDocument> {
-    return (documents ?? []).filter(isRecord).flatMap((doc) => {
-        const filename = textOf(doc, "filename");
-
-        if (!filename) return [];
-
-        return [{
-            availability: textOf(doc, "availability"),
-            canonical: toCanonical(doc.canonical),
-            description: textOf(doc, "description"),
-            docType: textOf(doc, "doc_type"),
-            filename,
-            mimeType: textOf(doc, "mime_type"),
-            publicUrl: publicUrlOf(doc.source),
-            role: textOf(doc, "role"),
-            sequence: numberOf(doc, "sequence"),
-            sizeBytes: numberOf(doc, "size_bytes"),
-            tooLarge: boolOf(doc, "too_large") === true,
-        }];
-    });
-}
-
-/** A readable document of the manifest = one with a canonical version. */
-export function hasCanonicalVersion(doc: SecManifestDocument) {
-    return Boolean(doc.canonical?.versionId);
 }
 
 export type SecPage = { ordinal: number; printed: null | string };
@@ -215,7 +151,7 @@ export function citationText(citation: SecCitation, trusted: boolean) {
     return [`version ${citation.versionId}`, `block ${citation.blockId}`, page].filter(Boolean).join(" · ");
 }
 
-/** The pinned version of a document answer (v1 `version.version_id`, v2 `version.id`). */
+/** The pinned version of a document answer (`version.id`; the older `version.version_id` spelling read too). */
 export function versionIdOf(version: JsonValue | undefined) {
     const record = recordOf(version);
 
@@ -223,7 +159,7 @@ export function versionIdOf(version: JsonValue | undefined) {
 }
 
 /**
- * The EDGAR page of the document (v1 `source.sec_url`, v2 `source.url`) — an outbound link only, never fetched by this
+ * The EDGAR page of the document (`source.url`; the older `source.sec_url` read too) — an outbound link only, never fetched by this
  * app; anything but a `https://www.sec.gov/` URL is not shown.
  */
 export function secUrlOf(source: JsonValue | undefined) {
@@ -234,9 +170,9 @@ export function secUrlOf(source: JsonValue | undefined) {
     return url?.startsWith("https://www.sec.gov/") ? url : null;
 }
 
-/** One document of a v2 filing (`GET /v2/filings/{accession}?expand=documents`). */
+/** One document of a filing (`GET /v1/filings/{accession}?expand=documents`). */
 export type V2FilingDocumentView = {
-    /** The document version serving its content (`GET /v2/document-versions/{id}`); null = not readable yet. */
+    /** The document version serving its content (`GET /v1/document-versions/{id}`); null = not readable yet. */
     currentVersionId: null | string;
     description: null | string;
     filename: string;
@@ -298,20 +234,6 @@ export function metaSourceParts(source: null | V2MetaSourceView): Array<string> 
     ].filter(part => typeof part === "string");
 }
 
-const ROLE_LABELS: Partial<Record<string, string>> = {
-    exhibit: "Exhibit",
-    graphic: "Graphic",
-    primary: "Primary document",
-    rendering: "Rendering",
-    xbrl: "XBRL",
-};
-
-export function roleLabel(role: null | string) {
-    if (!role) return "—";
-
-    return ROLE_LABELS[role] ?? role.replaceAll("_", " ");
-}
-
 const BLOCK_ID = /^b(\d+)$/;
 
 /** An open-ended block range from `blockId` (the store clamps the end to the version's last block). */
@@ -343,20 +265,18 @@ export function blocksLeadingTo(blockId: string, context: number) {
     return blocksFrom(before ? before.slice(0, before.indexOf("-")) : blockId);
 }
 
-/** One SEC search hit as the views need it; `blockId` / `page` = its first cited block (the passage's place). */
+/** One SEC search hit as the views need it; `blockId` = the first block of its first span (the passage's place). */
 export type SecHitView = {
     accession: null | string;
     blockId: null | string;
     filename: null | string;
-    filerCik: null | string;
-    filerName: null | string;
     filingDate: null | string;
     form: null | string;
-    page: null | SecPage;
     publicUrl: null | string;
     versionId: null | string;
 };
 
+/** A `GET /v1/search/filings` hit: the cited block from `document_spans[].blocks[].block_id`, the original from `citation.source.url`. */
 export function toSecHitView(hit: { [key: string]: JsonValue | undefined }): SecHitView {
     const record: JsonRecord = {};
 
@@ -364,19 +284,17 @@ export function toSecHitView(hit: { [key: string]: JsonValue | undefined }): Sec
 
     const citation = recordOf(record.citation);
 
-    const firstCited = toBlocks(listOf(record.cited)).at(0);
-
-    const filer = recordOf(record.filer);
+    const blockId = listOf(record.document_spans)
+        .flatMap(span => listOf(recordOf(span).blocks))
+        .map(block => textOf(recordOf(block), "block_id"))
+        .find(id => id !== null) ?? null;
 
     return {
         accession: textOf(record, "accession") ?? textOf(citation, "accession"),
-        blockId: firstCited?.citation?.blockId ?? firstCited?.id ?? null,
+        blockId,
         filename: textOf(record, "filename") ?? textOf(citation, "filename"),
-        filerCik: textOf(filer, "cik"),
-        filerName: textOf(filer, "name") ?? textOf(filer, "name_as_filed"),
         filingDate: textOf(record, "filing_date"),
         form: textOf(record, "form"),
-        page: firstCited?.page ?? null,
         publicUrl: publicUrlOf(citation.source),
         versionId: textOf(record, "version_id") ?? textOf(citation, "version_id"),
     };

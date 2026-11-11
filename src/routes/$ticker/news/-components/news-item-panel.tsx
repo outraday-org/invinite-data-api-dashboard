@@ -96,8 +96,8 @@ function Developments({ developments }: { developments: ReadonlyArray<NewsDevelo
  * The item panel's body (pure: tested in `src/routes/-tests/news-page.test.tsx`): the header (kind, source, publisher,
  * the attribution block with date and source link) → the lede → Invinite's summary (the text blocks) → the
  * announcements read from the item → the branded PDF. v2 (backend tasks/data-api-v2 task 8): the item is the list row
- * with its `pdf` (owner decision 2026-11-09), the summary comes from `/v2/news/{id}/text`, the developments from
- * `/v2/announcements?item=`; the v1 detail's sightings, companies, source word count and `superseded_by` are not in
+ * with its `pdf` (owner decision 2026-11-09), the summary comes from `/v1/news/{id}/text`, the developments from
+ * `/v1/announcements?item=`; the v1 detail's sightings, companies, source word count and `superseded_by` are not in
  * the v2 contract (lead decision G4), so the panel shows none of them — never an empty section.
  */
 export function NewsItemView({

@@ -153,7 +153,7 @@ function firstSourceKind(sourceId: string): NewsSourceFilter | null {
 }
 
 /**
- * The list's filters applied to one item (the live feed: `news.live` filters only tickers, kinds, sources and earnings,
+ * The list's filters applied to one item (the live feed: the stream's `news` channel filters only tickers, kinds, sources and earnings,
  * so a pushed item is re-checked here before it joins the list). The scope (ticker / market) is the subscription's.
  */
 export function matchesNewsFilters(item: NewsItemPublic, filters: NewsFilters): boolean {

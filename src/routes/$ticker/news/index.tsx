@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { isTierError } from "@/lib/api/errors";
-import { useApiBaseUrl, useCompanyDetails, useNewsPage } from "@/lib/api/queries";
+import { useApiBaseUrl, useNewsPage, useV2Company } from "@/lib/api/queries";
 import { useLiveNews } from "@/lib/live/use-live-news";
 import { issuerLabels, matchesNewsFilters, mergeLiveItems, validateNewsSearch } from "@/lib/news/labels";
 import { firstNewsPage, newsPageCursor, newsPageNumber, newsPagerFor, nextNewsPage, previousNewsPage } from "@/lib/news/pager";
@@ -32,7 +32,7 @@ export const Route = createFileRoute("/$ticker/news/")({
 
 const PAGE_SIZE = 50;
 
-/** The list's request state: `/v2/news` is FREE, so a plan gate is unexpected but still a notice, not an error. */
+/** The list's request state: `/v1/news` is FREE, so a plan gate is unexpected but still a notice, not an error. */
 function ListError({ error }: { error: unknown }) {
     if (isTierError(error)) return <Notice badge="FREE" title="Your plan does not include news" />;
 
@@ -86,7 +86,7 @@ export function NewsPageView({
     emptyText?: string;
     error: unknown;
     /**
-     * Rows of the loaded page the page-side filters hid (source, earnings, Company-published: `/v2/news` has no
+     * Rows of the loaded page the page-side filters hid (source, earnings, Company-published: `/v1/news` has no
      * parameter for them), so a page can show fewer rows than it loaded, or none.
      */
     hiddenByFilters?: number;
@@ -144,11 +144,11 @@ function NewsPage() {
 
     // "Company-published" keeps the items the company published itself (its verified publications, by CIK) among the
     // ones that mention it: v2 has no publisher filter, so it filters the loaded page (as source and earnings do).
-    const company = useCompanyDetails(ticker).data?.companies[0];
+    const company = useV2Company(ticker).data;
 
     const publisherCik = search.published ? company?.cik.replace(/^0+/, "") : undefined;
 
-    // `/v2/news` filters by company, kind, topic and the published window; v2 has no market-wide feed (decision 15:
+    // `/v1/news` filters by company, kind, topic and the published window; v2 has no market-wide feed (decision 15:
     // a company scope is required), so a stale `?scope=market` URL reads the company's news.
     const listInput: NewsListInput = {
         company: ticker,
@@ -185,7 +185,7 @@ function NewsPage() {
         topic: search.topic,
     };
 
-    // The filters `/v2/news` has no parameter for (source, earnings, Company-published + its type / category / tag) are
+    // The filters `/v1/news` has no parameter for (source, earnings, Company-published + its type / category / tag) are
     // applied to the loaded page; a page may then show fewer rows than PAGE_SIZE.
     const listed = fetched.filter(item => matchesNewsFilters(item, filters));
 

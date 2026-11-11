@@ -9,7 +9,7 @@
  * seroval) but revive it as a plain `Error`, so `status`, `code` and `body` are own fields
  * and the client side recovers the class with `fromSerialized`.
  *
- * Two body shapes: v1 `{ error, message, code? }` and the RFC 9457 problem of `/v2/*` (and `/health`, `/status*`)
+ * Two body shapes: the legacy `{ error, message, code? }` (still read) and the RFC 9457 problem of `/v1/*` (and `/health`, `/status*`)
  * `{ type, title, status, detail, code, param?, errors?, request_id, docs_url }` — read as `error` = the problem
  * `code`, `message` = `detail`, `requestId` = `request_id` (shown in the error toasts).
  */
@@ -37,7 +37,7 @@ export class ApiRequestError extends Error {
 
     code: string;
 
-    /** `body.code`: the reason behind the state (`/v1/sec/*`), else null. */
+    /** `body.code`: the reason behind the state (a problem's `code`), else null. */
     reason: null | string;
 
     /** `body.requestId`: the problem body's `request_id`, else null. */
@@ -62,7 +62,7 @@ export class ApiRequestError extends Error {
     }
 }
 
-/** An RFC 9457 problem (`/v2/*`): `title` + `detail` + `code`, no v1 `error` field. */
+/** An RFC 9457 problem (`/v1/*`): `title` + `detail` + `code`, no legacy `error` field. */
 function isProblem(record: Record<string, unknown>) {
     return typeof record.error !== "string" && typeof record.code === "string" && typeof record.detail === "string" && typeof record.title === "string";
 }

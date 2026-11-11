@@ -21,17 +21,17 @@ const LEGACY_10K = {
 // The legacy form-type list (a subset of AAPL's forms).
 const LEGACY_FORMS = ["10-K", "10-Q", "10-K/A"];
 
-// Live `/v1/company/fiscal-periods?identifier=AAPL` periods (2026-11-06).
+// `/v1/fiscal-periods?company=AAPL` rows (the values of the live periods of 2026-11-06).
 const AAPL_PERIODS: Array<CompanyFiscalPeriod> = [
-    { calendar_quarter: 3, calendar_year: 2026, fiscal_quarter: 4, fiscal_year: 2026, period_end: "2026-09-26" },
-    { calendar_quarter: 2, calendar_year: 2026, fiscal_quarter: 3, fiscal_year: 2026, period_end: "2026-06-27" },
+    { calendar_quarter: 3, calendar_year: 2026, company: { cik: "0000320193", ticker: "AAPL" }, fiscal_quarter: 4, fiscal_year: 2026, period_end: "2026-09-26" },
+    { calendar_quarter: 2, calendar_year: 2026, company: { cik: "0000320193", ticker: "AAPL" }, fiscal_quarter: 3, fiscal_year: 2026, period_end: "2026-06-27" },
 ];
 
 const periods = fiscalPeriodIndex(AAPL_PERIODS);
 
 const rowOf = (accession: string): V2Filing => V2_FILINGS.data.find(row => row.accession === accession)!;
 
-describe("$ticker/filings rows from /v2/filings", () => {
+describe("$ticker/filings rows from /v1/filings", () => {
     it("carries the legacy row's accession, form, filing date, period end and fiscal / calendar quarter", () => {
         const row = toFilingListRow(rowOf(LEGACY_10K.accession_number), periods);
 

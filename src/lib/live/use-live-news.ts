@@ -7,13 +7,13 @@ import type { NewsServerFrame, NewsSubscribeOptions } from "./ws-frames";
 import { liveWsUrl, NEWS_LIVE_CHANNEL, newsSubscribeFrame, parseNewsFrame } from "./ws-frames";
 
 /**
- * New news items over the data API's `/v1/ws` channel `news.live` (backend earnings tasks/inhouse-news-pipeline task
+ * New news items over the data API's `/v1/stream` channel `news` (backend earnings tasks/inhouse-news-pipeline task
  * 17), for the News page's "Live" switch.
  *
  * THE BROWSER OPENS THE SOCKET WITH THE STORED API KEY, as `use-live-transcript.ts` (owner decision 2026-10-09): the
  * URL carries the key — never logged, never put in an error.
  *
- * FLOW. On `open`: `subscribe { channel: "news.live", tickers?, kinds?, sources?, earnings_only? }` (no tickers = the
+ * FLOW. On `open`: `subscribe { channel: "news", tickers?, kinds?, sources?, earnings_only? }` (no tickers = the
  * whole market). Each `news_item` frame is collected newest first, one per id; the page merges them on top of its
  * first page. Missed items are not replayed: after a reconnect the next `subscribed` calls `onResubscribed` (the page
  * refetches its list).
@@ -38,7 +38,7 @@ function reconnectDelayMs(attempt: number) {
     return Math.min(30_000, 1_000 * 2 ** Math.max(0, attempt - 1));
 }
 
-/** `/v1/ws` admission close codes (IDA `routes/websocket/filings.ts`): final. */
+/** `/v1/stream` admission close codes (IDA `routes/websocket/filings.ts`): final. */
 const ADMISSION_CLOSE: Partial<Record<number, LiveNewsStop>> = {
     4001: { kind: "error", message: "The API key was rejected by the live feed" },
     4003: { kind: "plan", message: "Your plan does not include the live news feed" },

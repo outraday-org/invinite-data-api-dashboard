@@ -1,8 +1,8 @@
 import type { V2AsReportedPresentationNode, V2StandardizedPresentationNode } from "@/lib/api/types";
 
-/** A standardized presentation node of `/v2/financials/standardized/presentation` (`metric_id`, `value`, `children?`). */
+/** A standardized presentation node of `/v1/financials/standardized/presentation` (`metric_id`, `value`, `children?`). */
 export type StandardizedPresentationFactRaw = V2StandardizedPresentationNode;
-/** An as-reported presentation node of `/v2/financials/as-reported/presentation` (`concept`, `label`, `is_total?`, …). */
+/** An as-reported presentation node of `/v1/financials/as-reported/presentation` (`concept`, `label`, `is_total?`, …). */
 export type AsReportedPresentationFactRaw = V2AsReportedPresentationNode;
 
 export type PresentationFact

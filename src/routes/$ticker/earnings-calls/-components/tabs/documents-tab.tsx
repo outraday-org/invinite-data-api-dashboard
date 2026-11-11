@@ -79,7 +79,7 @@ function FilingsTable({ filings }: { filings: Array<V2InvestorDocument> }) {
     );
 }
 
-/** "Show text": the document by id (`/v2/investor-documents/{id}`: `body_text` is served on the member route only). */
+/** "Show text": the document by id (`/v1/investor-documents/{id}`: `body_text` is served on the member route only). */
 function DocumentText({ doc }: { doc: V2InvestorDocument }) {
     const { data, error, isLoading } = useV2InvestorDocument(doc.document_id);
 
@@ -118,7 +118,7 @@ function AlsoOnThisCall({ event, onTabChange }: Pick<CallTabProps, "event" | "on
 }
 
 /**
- * Documents tab: the call's investor documents (`/v2/investor-documents?event=`, every page) with a kind filter, links
+ * Documents tab: the call's investor documents (`/v1/investor-documents?event=`, every page) with a kind filter, links
  * and their text. v2 lists no page count (`pages` is the inlined text of the member route), so there is no Pages column.
  */
 export function DocumentsTab({ event, eventId, onTabChange }: CallTabProps) {

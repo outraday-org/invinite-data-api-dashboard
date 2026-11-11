@@ -1,4 +1,4 @@
-import type { HitMatch, MatchSpan, SearchMode, SecSearchCaseSensitive, V2GuidanceItem } from "@/lib/api/types";
+import type { HitMatch, MatchSpan, SearchMode, V2GuidanceItem } from "@/lib/api/types";
 
 import { formatNumberEnCompact } from "@/lib/utils";
 
@@ -301,14 +301,6 @@ export const SEARCH_MODES = ["lexical", "literal"] as const satisfies ReadonlyAr
 
 // Compile-time: a mode the API adds fails here until it is listed above (and labelled in SEARCH_MODE_LABELS).
 export const SEARCH_MODES_COMPLETE: ListsEvery<SearchMode, (typeof SEARCH_MODES)[number]> = true;
-
-/** The SEC search's `case_sensitive` string enum (`mode=literal` only). */
-export const SEARCH_CASE_SENSITIVE_VALUES = ["true", "false"] as const satisfies ReadonlyArray<SecSearchCaseSensitive>;
-
-export const SEARCH_CASE_SENSITIVE_COMPLETE: ListsEvery<
-    SecSearchCaseSensitive,
-    (typeof SEARCH_CASE_SENSITIVE_VALUES)[number]
-> = true;
 
 /** A hit's match badge: how it matched (keyword or exact). */
 export const MATCH_TYPE_LABELS: Record<HitMatch["type"], string> = {

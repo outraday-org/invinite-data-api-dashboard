@@ -1,6 +1,6 @@
 /**
  * The live price line of one call, as a PURE reducer, kept next to the transcript reducer and
- * fed by `use-live-transcript.ts` from the `/v1/ws` `price_tick` frames (`toPriceTick` in
+ * fed by `use-live-transcript.ts` from the `/v1/stream` `price_tick` frames (`toPriceTick` in
  * `ws-frames.ts`). Prices are only for the chart: nothing here touches the transcript.
  *
  * - Ticks are ordered by `at` (the bar's second). The API sends ≤ 1 per second and only for

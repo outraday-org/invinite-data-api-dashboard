@@ -10,7 +10,7 @@ import { Notice } from "./media-state";
 
 /**
  * The live player's place on the call page, above the tabs: `LivePlayer` while the call is
- * capturing (`capture_status`) or listed by `/v2/events?status=live` (asked only for a call that may be live).
+ * capturing (`capture_status`) or listed by `/v1/events?status=live` (asked only for a call that may be live).
  * Once shown it stays for the page's life, so after the end its "final transcript in progress"
  * note remains while the event refetch (every 30 s) waits for `has_transcript`. Keyed by event:
  * a navigation always builds fresh hls.js / WebSocket instances.

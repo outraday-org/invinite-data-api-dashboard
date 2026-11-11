@@ -122,7 +122,7 @@ export function DocumentSearchResults({
 }
 
 /**
- * Search over one company's documents (`/v2/search/investor-documents`, one page): its calls' documents and its IR
+ * Search over one company's documents (`/v1/search/investor-documents`, one page): its calls' documents and its IR
  * library, by keywords (default; every word must match) or exact text (the API's case-sensitive default: v2 has no
  * case switch, and no source filter). Runs on submit, never per keystroke; a mode chip re-runs the submitted query.
  */

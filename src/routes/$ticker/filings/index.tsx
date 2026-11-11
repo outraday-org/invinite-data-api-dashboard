@@ -20,7 +20,7 @@ export const Route = createFileRoute("/$ticker/filings/")({
     component: FilingsPage,
 });
 
-/** Filings per page of `/v2/filings` (one page per `next_cursor`). */
+/** Filings per page of `/v1/filings` (one page per `next_cursor`). */
 const FILINGS_PAGE = 40;
 
 function FilingsPage() {
@@ -35,7 +35,7 @@ function FilingsPage() {
     // The SEC store's documents of one accession (the source panel).
     const [secTarget, setSecTarget] = React.useState<null | SecPanelTarget>(null);
 
-    // `/v2/filings?company=<ticker>`, newest filed first by default (`-filed_at`), one page per `next_cursor`.
+    // `/v1/filings?company=<ticker>`, newest filed first by default (`-filed_at`), one page per `next_cursor`.
     const {
         data: pagedData,
         error: errorPaged,
@@ -96,7 +96,7 @@ function FilingsPage() {
                     onOpenHtml={filing => setHtmlDialog({ ...filing, ticker })}
                     onOpenSecDocuments={filing => setSecTarget({
                         accession: filing.accessionNumber,
-                        kind: "v2-filing",
+                        kind: "filing",
                         title: `${ticker} · ${filing.formType} · ${filing.accessionNumber}`,
                     })}
                     onSortToggle={() => setSortDirection(prev => (prev === "desc" ? "asc" : "desc"))}
@@ -119,7 +119,7 @@ function FilingsPage() {
 
                     setSecTarget({
                         accession: filing.accessionNumber,
-                        kind: "v2-filing",
+                        kind: "filing",
                         title: `${filing.ticker} · ${filing.formType} · ${filing.accessionNumber}`,
                     });
                 }}

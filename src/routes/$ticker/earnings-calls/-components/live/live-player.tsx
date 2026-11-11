@@ -43,8 +43,8 @@ function writeStoredLiveMode(mode: LiveAudioMode): void {
 }
 
 /**
- * The live player of a call in progress: the live audio (`GET /v2/events/{event_id}/live-audio`,
- * hls.js) and the live transcript (`/v1/ws` `earnings-calls.live`), modelled on the admin
+ * The live player of a call in progress: the live audio (`GET /v1/events/{event_id}/live-audio`,
+ * hls.js) and the live transcript (`/v1/stream` `events.live`), modelled on the admin
  * console's `live-player.tsx`.
  *
  * - Before "Tune in", or without live audio, the transcript runs at the edge as it arrives.

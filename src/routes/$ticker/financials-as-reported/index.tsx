@@ -14,7 +14,7 @@ export const Route = createFileRoute("/$ticker/financials-as-reported/")({
     component: AsReportedFinancialsPage,
 });
 
-/** Periods per page of `/v2/financials/as-reported*` (one row per period; "Load more" adds older ones). */
+/** Periods per page of `/v1/financials/as-reported*` (one row per period; "Load more" adds older ones). */
 const STATEMENT_PAGE = 8;
 
 const DISPLAY_SIGN_OPTIONS: Array<{ label: string; value: V2DisplaySign }> = [
@@ -41,7 +41,7 @@ function AsReportedFinancialsPage() {
 
     const [displaySign, setDisplaySign] = React.useState<V2DisplaySign>("as_filed");
 
-    // `/v2/financials/as-reported[/detailed|/presentation]`; `reported_only` / `display_sign` sent only when changed
+    // `/v1/financials/as-reported[/detailed|/presentation]`; `reported_only` / `display_sign` sent only when changed
     // from the API defaults (false / as_filed), so the default view keeps one cache key.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2FinancialsInfinite({
         basis: "as-reported",

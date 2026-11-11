@@ -32,13 +32,13 @@ export const CALENDAR_STATUSES = [
     "estimated",
 ] as const satisfies ReadonlyArray<V2CalendarStatus>;
 
-/** `date_kind` of `/v2/events` = date certainty (`any` is the default, never sent). */
+/** `date_kind` of `/v1/events` = date certainty (`any` is the default, never sent). */
 const DATE_KINDS = ["confirmed", "estimated"] as const satisfies ReadonlyArray<V2DateKind>;
 
 // Every field optional: a bare `/$ticker/earnings-calendar` link means "around today";
 // an invalid value falls back to its default instead of failing the route.
 const calendarSearchSchema = z.object({
-    // `calendarStatus` and `session` have no `/v2/events` filter: they filter the loaded rows (`matchesCalendarSearch`).
+    // `calendarStatus` and `session` have no `/v1/events` filter: they filter the loaded rows (`matchesCalendarSearch`).
     calendarStatus: z.enum(CALENDAR_STATUSES).optional().catch(undefined),
     // Date certainty (`date_kind`); omitted = any.
     dateKind: z.enum(DATE_KINDS).optional().catch(undefined),
@@ -117,7 +117,7 @@ export function FilterSelect<T extends string>({
 }
 
 /**
- * Whether a loaded row passes the filters `/v2/events` has no parameter for: the session and the event status
+ * Whether a loaded row passes the filters `/v1/events` has no parameter for: the session and the event status
  * (`calendar.status`, `expand=calendar`).
  */
 export function matchesCalendarSearch(

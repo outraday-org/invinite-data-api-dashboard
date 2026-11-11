@@ -13,7 +13,7 @@ type Kind = "guidance" | "kpi";
 
 /**
  * Guidance & KPIs tab: forward guidance (consolidated items with citations and a per-metric
- * history) or every reported KPI with its SEC filing link (`/v2/guidance?event=` | `/v2/kpis?event=`).
+ * history) or every reported KPI with its SEC filing link (`/v1/guidance?event=` | `/v1/kpis?event=`).
  */
 export function GuidanceTab({ event, eventId }: CallTabProps) {
     const [kind, setKind] = React.useState<Kind>("guidance");

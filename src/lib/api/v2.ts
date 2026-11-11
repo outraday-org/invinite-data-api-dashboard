@@ -1,5 +1,5 @@
 /**
- * Pure helpers of the Data API v2 calls (`/v2/*`, backend tasks/data-api-v2 task 4): the query builder (an unknown
+ * Pure helpers of the Data API v2 calls (`/v1/*`, backend tasks/data-api-v2 task 4): the query builder (an unknown
  * parameter is a 400 `unknown_parameter`, so an unset one is never sent), the `expand` lists and the company
  * coverage's words.
  */
@@ -20,7 +20,7 @@ export const V2_COMPANY_EXPANDS = ["coverage"] as const satisfies ReadonlyArray<
 
 export const V2_EVENT_EXPANDS = ["calendar", "observations"] as const satisfies ReadonlyArray<V2EventExpand>;
 
-/** `GET /v2/events/{event_id}/slides?include=` (the timeline is opt-in in v2). */
+/** `GET /v1/events/{event_id}/slides?include=` (the timeline is opt-in in v2). */
 export const V2_SLIDES_INCLUDES = ["markdown", "timeline"] as const satisfies ReadonlyArray<V2SlidesInclude>;
 
 export const V2_FILER_EXPANDS = [
@@ -30,10 +30,10 @@ export const V2_FILER_EXPANDS = [
     "successors",
 ] as const satisfies ReadonlyArray<V2FilerExpand>;
 
-/** `GET /v2/filings/{accession}?expand=`. */
+/** `GET /v1/filings/{accession}?expand=`. */
 export const V2_FILING_EXPANDS = ["documents", "parties", "relations"] as const satisfies ReadonlyArray<V2FilingExpand>;
 
-/** The offering stages of `GET /v2/ipos` (`stage=`), in lifecycle order; compile-time exhaustive over the contract enum. */
+/** The offering stages of `GET /v1/ipos` (`stage=`), in lifecycle order; compile-time exhaustive over the contract enum. */
 export const V2_IPO_STAGES = [
     "announced",
     "registered",
@@ -61,7 +61,7 @@ export const V2_STATEMENT_KEYS: Record<StatementType, V2StatementKey> = {
     "income-statement": "income_statement",
 };
 
-/** `category=` of `GET /v2/metrics/ratios` (any of). */
+/** `category=` of `GET /v1/metrics/ratios` (any of). */
 export const V2_RATIO_CATEGORIES = [
     "profitability",
     "liquidity",
@@ -82,7 +82,7 @@ export function v2Expand(values: ReadonlyArray<string> | undefined) {
     return unique.length > 0 ? unique.join(",") : undefined;
 }
 
-// The families of `expand=coverage` (IDA `src/routes/v2/companies/companies.ts` COVERAGE_FAMILIES).
+// The families of `expand=coverage` (IDA `src/routes/v1/companies/companies.ts` COVERAGE_FAMILIES).
 const FAMILY_LABELS: Partial<Record<string, string>> = {
     dividends: "dividends",
     financials: "financials",

@@ -38,7 +38,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 // Keep the server functions (TanStack Start) unloaded; the page's two lists are set per test.
 vi.mock("@/lib/api/queries", () => ({
-    useCompanyDetails: vi.fn(() => ({ data: { companies: [{ cik: "0000000001", name: "Acme Corp" }] } })),
+    useV2Company: vi.fn(() => ({ data: { cik: "0000000001", name: "Acme Corp" } })),
     useV2EventsInfinite: vi.fn(),
     useV2InvestorDocument: vi.fn(() => ({ data: null, error: null, isLoading: false })),
     useV2InvestorDocumentSearch: vi.fn(),
@@ -51,7 +51,7 @@ afterEach(cleanup);
 
 const PUBLIC_URL = "https://storage-prod.invinite.com/earnings/ir-documents/0123456789abcdef0123456789abcdef/annual-report.pdf";
 
-// A `/v2/investor-documents` row: `pages` is null in lists (v2 has no page count), `body_text` too.
+// A `/v1/investor-documents` row: `pages` is null in lists (v2 has no page count), `body_text` too.
 const base: V2InvestorDocument = {
     accession_number: null,
     body_text: null,

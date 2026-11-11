@@ -44,7 +44,7 @@ describe("no direct SEC / LLM traffic", () => {
         expect(sec.filter(({ text }) => /\bfetch\(|new XMLHttpRequest|new WebSocket/.test(text)).map(({ path }) => path)).toEqual([]);
     });
 
-    it("every /v1/sec server function goes through the data API client", () => {
+    it("every SEC server function goes through the data API client", () => {
         const serverFunctions = files.find(({ path }) => path === join("lib", "api", "server-functions.ts"));
 
         expect(serverFunctions?.text).toContain("createApiClient(");

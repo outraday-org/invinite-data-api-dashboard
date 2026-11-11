@@ -66,7 +66,7 @@ function ParticipantRows({ group, participants }: { group: RoleGroup; participan
 }
 
 /**
- * Participants tab: the call's speakers (`/v2/participants?event=`) grouped by role (management = executives + IR host)
+ * Participants tab: the call's speakers (`/v1/participants?event=`) grouped by role (management = executives + IR host)
  * with how each name was resolved and its evidence. v2 serves no participation flags vs the prior call (new CFO, first
  * appearances): that section of v1 is gone.
  */

@@ -33,7 +33,7 @@ export function primaryDocumentUrl(data: null | V2FilingDetailResponse, primaryF
 }
 
 /**
- * The HTML view's body (pure): the primary document of `/v2/filings/{accession}?expand=documents` at its permanent
+ * The HTML view's body (pure): the primary document of `/v1/filings/{accession}?expand=documents` at its permanent
  * public URL, the filing's honest state while it loads / failed, or "No public copy yet" with the documents reader.
  */
 export function FilingHtmlBody({

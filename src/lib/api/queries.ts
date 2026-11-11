@@ -1,6 +1,6 @@
 import type { InfiniteData, UseQueryOptions } from "@tanstack/react-query";
 
-import { queryOptions, useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import { queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -12,18 +12,7 @@ import type {
     CompanyFiscalPeriod,
     FiscalPeriodType,
     SearchMode,
-    SecDocumentResponse,
-    SecExportResponse,
-    SecFigureResponse,
-    SecFilersResponse,
-    SecFilingManifestResponse,
-    SecFilingsOrder,
-    SecFilingsResponse,
-    SecManagerPortfolioResponse,
-    SecSearchCaseSensitive,
     SecSearchMode,
-    SecSearchResponse,
-    SecSectionsResponse,
     StatementType,
     V2AnnouncementsResponse,
     V2AudioResponse,
@@ -47,8 +36,10 @@ import type {
     V2FactResponse,
     V2FilerExpand,
     V2FilerResponse,
+    V2FilersResponse,
     V2FilingDetailResponse,
     V2FilingExpand,
+    V2FilingSearchResponse,
     V2FilingsResponse,
     V2FilingsSort,
     V2FinancialsBasis,
@@ -105,19 +96,7 @@ import type {
 import { ApiRequestError, errorDescription, rethrowApiError, retryUnlessApiError } from "./errors";
 import {
     getApiBaseUrl,
-    getCompanyDetails,
     getCompanyFiscalPeriods,
-    getSecDocument,
-    getSecExport,
-    getSecExportFile,
-    getSecFigure,
-    getSecFilers,
-    getSecFilingManifest,
-    getSecFilings,
-    getSecManagerPortfolio,
-    getSecSearch,
-    getSecSections,
-    getSecVersion,
     getV2Announcements,
     getV2AsReported,
     getV2AsReportedDetailed,
@@ -134,8 +113,10 @@ import {
     getV2EventStats,
     getV2Fact,
     getV2Filer,
+    getV2Filers,
     getV2Filing,
     getV2Filings,
+    getV2FilingSearch,
     getV2Growth,
     getV2Guidance,
     getV2HoldingChanges,
@@ -195,14 +176,6 @@ export const companySearchOptions = (query: string) =>
         staleTime: 5 * 60 * 1000,
     });
 
-export const companyDetailsOptions = (identifier: string) =>
-    queryOptions({
-        enabled: identifier.trim().length > 0,
-        queryFn: () => getCompanyDetails({ data: { identifier } }),
-        queryKey: ["company", "details", identifier],
-        staleTime: 5 * 60 * 1000,
-    });
-
 // Helper to show error toast (a v2 problem's request id appended: `errorDescription`)
 function useErrorToast(error: Error | null, message: string) {
     React.useEffect(() => {
@@ -235,27 +208,6 @@ export function useCompanySearch(query: string) {
     );
 
     useErrorToast(result.error, "Failed to search companies");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
-}
-
-export function useCompanyDetails(identifier: string) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const result = useQuery(
-        queryOptions({
-            ...companyDetailsOptions(identifier),
-            enabled: hasHydrated && identifier.trim().length > 0,
-            queryFn: () =>
-                getCompanyDetails({ data: { apiKey: apiKey ?? undefined, identifier } }),
-            queryKey: [...companyDetailsOptions(identifier).queryKey, String(apiKeyUpdatedAt)],
-        }),
-    );
-
-    useErrorToast(result.error, "Failed to load company details");
 
     return {
         ...result,
@@ -314,7 +266,7 @@ const nextCursorOf = (lastPage: { next_cursor?: null | string }) => lastPage.nex
 
 /**
  * The infinite twin of `useEarningsQuery` over a cursor list: the first page asks without a cursor, the next ones with
- * the last page's `next_cursor` (`/v2/news` pages by cursor with a pager instead: `useNewsPage`).
+ * the last page's `next_cursor` (`/v1/news` pages by cursor with a pager instead: `useNewsPage`).
  */
 function useEarningsInfinite<TPage extends { next_cursor?: null | string }>(options: {
     enabled: boolean;
@@ -357,7 +309,7 @@ export function isEarningsEventLiveish(event: Pick<V2Event, "capture_status" | "
     return !event.has_transcript && LIVE_CAPTURE_STATUSES.has(event.capture_status);
 }
 
-// News (IDA `/v2/news*`, backend tasks/data-api-v2 task 8; the page since backend earnings inhouse-news-pipeline task 17)
+// News (IDA `/v1/news*`, backend tasks/data-api-v2 task 8; the page since backend earnings inhouse-news-pipeline task 17)
 
 export type NewsListInput = {
     /** The company (ticker): v2 lists a company's news only. */
@@ -464,45 +416,28 @@ export function useApiBaseUrl() {
     return result.data?.url ?? null;
 }
 
-// SEC document store (`/v1/sec/*`). Every hook is status-aware (`errorMessage: null`, no toast): the readiness
-// states are page states (`SecReadinessNotice`), never an empty result. A `202 pending` answer is asked again every
-// 30 s (not billed) until the store has it.
+// SEC family (filers, filing search; the filings / documents / holdings hooks are further down). Every hook is
+// status-aware (`errorMessage: null`, no toast): 403 `excluded` / 404 `not_covered` / 503 `unavailable` are page
+// states (`SecReadinessNotice`), never an empty result.
 
 const SEC_STALE_MS = 10 * 60 * 1000;
 
 const SEC_PENDING_REFETCH_MS = 30 * 1000;
 
-const refetchWhilePending = (query: { state: { data?: { readiness: { status: string } } } }) =>
-    query.state.data?.readiness.status === "pending" ? SEC_PENDING_REFETCH_MS : false;
+/** The filer registry by name (`GET /v1/filers?q=`, one page of ≤ 50): idle until `q` has ≥ 2 characters. */
+export function useV2Filers(input: { limit?: number; q: string }) {
+    const q = input.q.trim();
 
-/** CIK / name lookup (`/v1/sec/filers`): idle until `name` (≥ 2 characters) or `ticker` is set. */
-export function useSecFilers(input: { limit?: number; name?: string; ticker?: string }) {
-    const name = input.name?.trim() ?? "";
-
-    const ticker = input.ticker?.trim() ?? "";
-
-    return useEarningsQuery<SecFilersResponse>({
-        enabled: name.length >= 2 || ticker.length > 0,
+    return useEarningsQuery<V2FilersResponse>({
+        enabled: q.length >= 2,
         errorMessage: null,
-        load: apiKey => getSecFilers({ data: { apiKey, limit: input.limit, name: name || undefined, ticker: ticker || undefined } }),
-        queryKey: ["sec", "filers", name, ticker, input.limit ?? ""],
-        refetchInterval: refetchWhilePending,
+        load: apiKey => getV2Filers({ data: { apiKey, limit: input.limit, q } }),
+        queryKey: ["v2", "filers", q, input.limit ?? ""],
         staleTime: SEC_STALE_MS,
     });
 }
 
-/** One filer's filings (ticker or CIK), newest first by default, one page per `next_cursor`. */
-export function useSecFilingsInfinite(input: { form?: string; identifier: string; limit?: number; order?: SecFilingsOrder }) {
-    return useEarningsInfinite<SecFilingsResponse>({
-        enabled: input.identifier.trim().length > 0,
-        errorMessage: null,
-        fetchPage: (cursor, apiKey) => getSecFilings({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["sec", "filings", input.identifier, input.form ?? "", input.order ?? "", input.limit ?? ""],
-        staleTime: SEC_STALE_MS,
-    });
-}
-
-/** Every fiscal period of a company, once per identifier: labels `/v1/sec/filings` rows by `report_date`. */
+/** Every fiscal period of a company, once per identifier: labels `/v1/filings` rows by `report_date`. */
 export function useCompanyFiscalPeriods(identifier: string) {
     return useEarningsQuery<Array<CompanyFiscalPeriod>>({
         enabled: identifier.trim().length > 0,
@@ -513,94 +448,30 @@ export function useCompanyFiscalPeriods(identifier: string) {
     });
 }
 
-/** A filing's document manifest; idle for a null accession (the panel is closed). */
-export function useSecFilingManifest(accession: null | string) {
-    return useEarningsQuery<SecFilingManifestResponse>({
-        enabled: Boolean(accession),
-        errorMessage: null,
-        load: apiKey => getSecFilingManifest({ data: { accession: accession ?? "", apiKey } }),
-        queryKey: ["sec", "filing", accession ?? ""],
-        refetchInterval: refetchWhilePending,
-        staleTime: SEC_STALE_MS,
-    });
-}
-
-type SecBlockSelection = { blocks?: string; footnotes?: boolean; limit?: number; neighbors?: number };
-
-/** What the reader shows: a document of a filing (its head version) or one pinned version (a citation). */
-export type SecDocumentTarget
-    = | { accession: string; filename: string; kind: "document" }
-        | { kind: "version"; versionId: string };
-
-const selectionKey = (s: SecBlockSelection) => [s.blocks ?? "", s.footnotes ?? "", s.limit ?? "", s.neighbors ?? ""] as const;
-
-/** The selected blocks of a document / version; idle for a null target. */
-export function useSecDocumentBlocks(target: null | SecDocumentTarget, selection: SecBlockSelection) {
-    return useEarningsQuery<SecDocumentResponse>({
-        enabled: target !== null,
-        errorMessage: null,
-        load: (apiKey) => {
-            if (target?.kind === "version") return getSecVersion({ data: { ...selection, apiKey, versionId: target.versionId } });
-
-            return getSecDocument({ data: { ...selection, accession: target?.accession ?? "", apiKey, filename: target?.filename ?? "" } });
-        },
-        queryKey: [
-            "sec",
-            "blocks",
-            target?.kind ?? "",
-            target?.kind === "version" ? target.versionId : `${target?.accession ?? ""}/${target?.filename ?? ""}`,
-            ...selectionKey(selection),
-        ],
-        refetchInterval: refetchWhilePending,
-        staleTime: SEC_STALE_MS,
-    });
-}
-
-/** A figure of a pinned version (`image.url` = its permanent public image, or null). */
-export function useSecFigure(target: null | { blockId: string; versionId: string }) {
-    return useEarningsQuery<SecFigureResponse>({
-        enabled: target !== null,
-        errorMessage: null,
-        load: apiKey => getSecFigure({ data: { apiKey, blockId: target?.blockId ?? "", versionId: target?.versionId ?? "" } }),
-        queryKey: ["sec", "figure", target?.versionId ?? "", target?.blockId ?? ""],
-        refetchInterval: refetchWhilePending,
-        staleTime: SEC_STALE_MS,
-    });
-}
-
-export function useSecSections(versionId: null | string) {
-    return useEarningsQuery<SecSectionsResponse>({
-        enabled: Boolean(versionId),
-        errorMessage: null,
-        load: apiKey => getSecSections({ data: { apiKey, versionId: versionId ?? "" } }),
-        queryKey: ["sec", "sections", versionId ?? ""],
-        refetchInterval: refetchWhilePending,
-        staleTime: SEC_STALE_MS,
-    });
-}
-
 export type SecSearchInput = {
-    caseSensitive?: SecSearchCaseSensitive;
-    cik?: string;
+    /** `mode=literal` only. */
+    caseSensitive?: boolean;
+    /** Ticker or CIK; empty = no request (the search stays scoped to one company). */
+    company: string;
     form?: string;
     limit?: number;
     mode: SecSearchMode;
     q: string;
 };
 
-/** SEC filing search (100 credits a page): runs once `q` is set (on submit); "More results" follows `next_cursor`. */
-export function useSecSearchInfinite(input: SecSearchInput) {
-    return useEarningsInfinite<SecSearchResponse>({
-        enabled: input.q.trim().length > 0,
+/** SEC filing search (`GET /v1/search/filings`): runs once `q` and `company` are set (on submit); "More results" follows `next_cursor`. */
+export function useV2FilingSearchInfinite(input: SecSearchInput) {
+    return useEarningsInfinite<V2FilingSearchResponse>({
+        enabled: input.q.trim().length > 0 && input.company.trim().length > 0,
         errorMessage: null,
-        fetchPage: (cursor, apiKey) => getSecSearch({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        fetchPage: (cursor, apiKey) => getV2FilingSearch({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
         queryKey: [
-            "sec",
-            "search",
+            "v2",
+            "search-filings",
             input.q,
             input.mode,
-            input.mode === "literal" ? input.caseSensitive ?? "" : "",
-            input.cik ?? "",
+            input.mode === "literal" ? String(input.caseSensitive ?? "") : "",
+            input.company,
             input.form ?? "",
             input.limit ?? "",
         ],
@@ -608,40 +479,7 @@ export function useSecSearchInfinite(input: SecSearchInput) {
     });
 }
 
-export function useSecExport(exportId: null | string) {
-    return useEarningsQuery<SecExportResponse>({
-        enabled: Boolean(exportId),
-        errorMessage: null,
-        load: apiKey => getSecExport({ data: { apiKey, exportId: exportId ?? "" } }),
-        queryKey: ["sec", "export", exportId ?? ""],
-        refetchInterval: refetchWhilePending,
-        staleTime: SEC_STALE_MS,
-    });
-}
-
-/** The export file as bytes from the server function (the key never reaches a URL); a MUTATION, run on a click. */
-export function useSecExportFileDownload() {
-    const apiKey = useApiKeyStore(s => s.apiKey);
-
-    return useMutation({
-        mutationFn: (exportId: string) => getSecExportFile({ data: { apiKey: apiKey ?? undefined, exportId } }).catch(rethrowApiError),
-        retry: false,
-    });
-}
-
-/** A 13F manager's portfolio page for one period end; idle for a null period (the CIK page asks on a click). */
-export function useSecManagerPortfolio(cik: string, periodEnd: null | string) {
-    return useEarningsQuery<SecManagerPortfolioResponse>({
-        enabled: Boolean(periodEnd) && cik.length > 0,
-        errorMessage: null,
-        load: apiKey => getSecManagerPortfolio({ data: { apiKey, cik, limit: 25, periodEnd: periodEnd ?? "" } }),
-        queryKey: ["sec", "portfolio", cik, periodEnd ?? ""],
-        refetchInterval: refetchWhilePending,
-        staleTime: SEC_STALE_MS,
-    });
-}
-
-// Data API v2 (`/v2/*`, backend tasks/data-api-v2 task 4). Every hook revives the problem+json error
+// Data API (`/v1/*`, the redesigned contract of backend tasks/data-api-v2, served under `/v1` since task 12). Every hook revives the problem+json error
 // (`ApiRequestError` with `code` / `requestId`) and never retries an API answer. The lists page by `next_cursor`
 // (`useEarningsInfinite`: the cursor is the page param and never part of the key; the filters are, so a changed
 // filter starts over at page 1 and never sends an old cursor = 400 `cursor_mismatch`).
@@ -707,8 +545,8 @@ export function useV2MarketHolidaysInfinite(input: V2MarketHolidaysInput) {
     });
 }
 
-// Events family (`/v2/events*`, `/v2/guidance`, `/v2/kpis`, `/v2/participants`, `/v2/investor-documents*`,
-// `/v2/search/*`, backend tasks/data-api-v2 task 7). Every per-event hook takes the event id ("" keeps it idle); a
+// Events family (`/v1/events*`, `/v1/guidance`, `/v1/kpis`, `/v1/participants`, `/v1/investor-documents*`,
+// `/v1/search/*`, backend tasks/data-api-v2 task 7). Every per-event hook takes the event id ("" keeps it idle); a
 // status-aware one (`errorMessage: null`) leaves 404 `not_found` ("not derived yet"), 403 `forbidden` (audio) and 503
 // `unavailable` (media) to the page (`MediaState`).
 
@@ -730,7 +568,7 @@ export type V2EventsInput = {
 };
 
 /**
- * `GET /v2/events` by cursor: a company's events (`company`) or the calendar window (no company, ≤ 92 days). A 404
+ * `GET /v1/events` by cursor: a company's events (`company`) or the calendar window (no company, ≤ 92 days). A 404
  * `not_covered` (company outside the coverage) is a page state, never a toast.
  */
 export function useV2EventsInfinite(input: V2EventsInput) {
@@ -1104,8 +942,8 @@ export function useV2InvestorDocumentSearch(input: V2InvestorDocumentSearchInput
     });
 }
 
-// SEC family on v2 (`/v2/filings*`, `/v2/document-versions/*`, `/v2/holdings`, `/v2/holding-changes`,
-// `/v2/insider-trades`, `/v2/ipos`, backend tasks/data-api-v2 task 6). Every hook is status-aware (`errorMessage:
+// SEC family on v2 (`/v1/filings*`, `/v1/document-versions/*`, `/v1/holdings`, `/v1/holding-changes`,
+// `/v1/insider-trades`, `/v1/ipos`, backend tasks/data-api-v2 task 6). Every hook is status-aware (`errorMessage:
 // null`): 403 `excluded` / 404 `not_covered` / 503 `unavailable` and the plan gate are page states
 // (`SecReadinessNotice`, `secErrorState`). A list whose first page says `meta.coverage.state: pending` (`data: []`)
 // is asked again every 30 s until the store has it.
@@ -1279,7 +1117,7 @@ export function useV2IposInfinite(input: V2IposInput) {
     });
 }
 
-// Financials + Metrics groups on v2 (`/v2/financials/*`, `/v2/metrics/*`, `/v2/segments*`, `/v2/facts/*`, backend
+// Financials + Metrics groups on v2 (`/v1/financials/*`, `/v1/metrics/*`, `/v1/segments*`, `/v1/facts/*`, backend
 // tasks/data-api-v2 task 5). Status-aware (`errorMessage: null`): the plan gate of a PRO view (403 `plan_required`) and
 // 404 `not_covered` are page states. A first page with `meta.coverage.state: pending` (`data: []`: the statement table
 // is filled after a release) is asked again every 30 s.

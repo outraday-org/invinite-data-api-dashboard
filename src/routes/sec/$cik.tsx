@@ -7,21 +7,24 @@ import { SecFilerHeader, SecFilingsView, SecLifecycleView, SecPortfolioView } fr
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
 import { NotFound } from "@/components/ui/not-found";
-import { useSecFilingsInfinite, useSecManagerPortfolio, useV2Filer } from "@/lib/api/queries";
+import { useV2Filer, useV2FilingsInfinite, useV2HoldingsInfinite } from "@/lib/api/queries";
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import { latest13fPeriodEnd } from "@/lib/sec/source";
 
 /**
  * One SEC filer by CIK — outside `$ticker` on purpose: a pre-IPO issuer, a SPAC or a 13F manager without an exchange
  * listing has no ticker, and none is invented (no asset row, no fake `$ticker`). Reached from the landing page's filer
- * lookup (`/v1/sec/filers`) and the company overview's CIK. Identity + lifecycle = one `GET /v2/filers/{cik}` with every
- * expansion; the filings list and the 13F portfolio stay on `/v1/sec/*` (data-api-v2 task 6 moves them).
+ * lookup (`/v1/filers?q=`) and the company overview's CIK. Identity + lifecycle = one `GET /v1/filers/{cik}` with every
+ * expansion; the filings = `GET /v1/filings?company=<cik>`; a 13F manager's portfolio = `GET /v1/holdings?filer=<cik>`
+ * for one quarter, asked on a click.
  */
 export const Route = createFileRoute("/sec/$cik")({
     component: SecFilerPage,
 });
 
 const FILINGS_PAGE = 40;
+
+const PORTFOLIO_PAGE = 25;
 
 const MANAGER_FORMS = new Set(["13F-HR", "13F-HR/A", "13F-NT", "13F-NT/A"]);
 
@@ -39,15 +42,16 @@ function SecFilerPage() {
 
     const filer = useV2Filer(cik, V2_FILER_EXPANDS);
 
-    const filings = useSecFilingsInfinite({ form: form ?? undefined, identifier: cik, limit: FILINGS_PAGE });
+    const filings = useV2FilingsInfinite({ company: cik, form: form ? [form] : undefined, limit: FILINGS_PAGE });
 
-    const portfolio = useSecManagerPortfolio(cik, period);
+    // Idle (no scope) until a quarter is picked.
+    const portfolio = useV2HoldingsInfinite({ filer: period ? cik : undefined, limit: PORTFOLIO_PAGE, periodEnd: period ?? undefined });
 
     if (!cik) return <NotFound />;
 
-    const facet = filings.data?.pages[0]?.form_facet ?? [];
+    const facet = filings.data?.pages[0]?.meta.form_facet ?? [];
 
-    const isManager = facet.some(entry => entry.form !== undefined && MANAGER_FORMS.has(entry.form));
+    const isManager = filer.data?.phase === "manager" || facet.some(entry => MANAGER_FORMS.has(entry.form));
 
     return (
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 lg:px-8">
@@ -69,7 +73,14 @@ function SecFilerPage() {
                         )}
                         {period && <span className="text-muted-foreground text-xs">{`Period ending ${period}`}</span>}
                     </div>
-                    <SecPortfolioView data={portfolio.data} error={portfolio.error} isLoading={portfolio.isLoading} />
+                    <SecPortfolioView
+                        error={portfolio.error}
+                        hasNextPage={Boolean(portfolio.hasNextPage)}
+                        isFetchingNextPage={portfolio.isFetchingNextPage}
+                        isLoading={portfolio.isLoading}
+                        onMore={() => void portfolio.fetchNextPage()}
+                        pages={portfolio.data?.pages ?? []}
+                    />
                 </section>
             )}
 

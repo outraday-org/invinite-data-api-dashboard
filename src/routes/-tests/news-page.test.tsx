@@ -18,11 +18,11 @@ vi.mock("@tanstack/react-router", () => ({
 // Keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
     useApiBaseUrl: vi.fn(() => null),
-    useCompanyDetails: vi.fn(() => ({ data: null })),
     useNewsAnnouncements: vi.fn(),
     useNewsItem: vi.fn(),
     useNewsPage: vi.fn(),
     useNewsText: vi.fn(),
+    useV2Company: vi.fn(() => ({ data: null })),
 }));
 
 afterEach(() => {
@@ -198,7 +198,7 @@ const DEVELOPMENT: Omit<NewsDevelopment, "item_id"> = {
 
 const PDF = { bytes: 184_233, generated_at: "2026-10-30T00:03:11.000Z", pages: 3, sha256: "ab", url: "https://storage.example.com/r1.pdf", version: 1 };
 
-describe("NewsItemView (v2: the item row + /text blocks + /v2/announcements?item=)", () => {
+describe("NewsItemView (v2: the item row + /text blocks + /v1/announcements?item=)", () => {
     it("shows the attribution block above an EDGAR item's summary (form + accession)", () => {
         const item = edgarItem();
 

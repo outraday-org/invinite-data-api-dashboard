@@ -7,7 +7,7 @@ import { useV2InvestorDocument } from "@/lib/api/queries";
 import { documentKindLabel, pagesOf } from "@/lib/earnings/documents";
 import { MediaState, Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
-/** The per-page text of one document (`/v2/investor-documents/{id}?expand=pages`); a file over 2 MB links its pages file instead. */
+/** The per-page text of one document (`/v1/investor-documents/{id}?expand=pages`); a file over 2 MB links its pages file instead. */
 function DocumentPages({ documentId }: { documentId: string }) {
     const { data, error, isLoading } = useV2InvestorDocument(documentId, { pages: true });
 

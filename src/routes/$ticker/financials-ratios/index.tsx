@@ -17,7 +17,7 @@ export const Route = createFileRoute("/$ticker/financials-ratios/")({
     component: FinancialRatiosPage,
 });
 
-/** Periods per page of `/v2/metrics/ratios` (one row per period). */
+/** Periods per page of `/v1/metrics/ratios` (one row per period). */
 const RATIOS_PAGE = 8;
 
 const ALL = "all";
@@ -100,7 +100,7 @@ function FinancialRatiosPage() {
 
     const [category, setCategory] = React.useState<typeof ALL | V2RatioCategory>(ALL);
 
-    // `/v2/metrics/ratios?company=<ticker>&period=<type>[&category=<one>]`, newest first.
+    // `/v1/metrics/ratios?company=<ticker>&period=<type>[&category=<one>]`, newest first.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2RatiosInfinite({
         category: category === ALL ? undefined : [category],
         company: ticker,

@@ -4,8 +4,9 @@ import type { LivePriceTick } from "./live-prices-reducer";
 import type { LiveSegment, LiveSpeakerAssignment, LiveSpeakerNames } from "./live-transcript-reducer";
 
 /**
- * The `/v1/ws` frames of the data API's live earnings-call channel, as zod schemas. Names and
- * shapes mirror IDA `src/routes/websocket/types/earningsMessages.ts` — change both or neither.
+ * The `WS /v1/stream` frames of the data API's live earnings-call channel `events.live`, as zod schemas. Names and
+ * shapes mirror IDA `src/routes/websocket/types/earningsMessages.ts` — change both or neither (the stream renames the
+ * registry's channel names at its edge, both ways: IDA `src/lib/v1/stream.ts`).
  *
  * Client → server: `subscribe` / `unsubscribe` only (IDA answers any other frame, a `ping`
  * included, with `bad_message`; keep-alive is the server's WebSocket-protocol ping, which the
@@ -13,7 +14,7 @@ import type { LiveSegment, LiveSpeakerAssignment, LiveSpeakerNames } from "./liv
  * and the odd application-level `{ type: "ping" }` on the same socket, which are ignored.
  */
 
-export const EARNINGS_LIVE_CHANNEL = "earnings-calls.live";
+export const EARNINGS_LIVE_CHANNEL = "events.live";
 
 export const EARNINGS_WS_ERROR_CODES = [
     "bad_message",
@@ -311,11 +312,11 @@ export function unsubscribeFrame(subscriptionId: string) {
 }
 
 /**
- * `wss://<api>/v1/ws?api_key=<key>` from the API base URL (`http` → `ws`, `https` → `wss`).
+ * `wss://<api>/v1/stream?api_key=<key>` from the API base URL (`http` → `ws`, `https` → `wss`).
  * The result carries the key: never log it, never put it in an error message.
  */
 export function liveWsUrl(baseUrl: string, apiKey: string): string {
-    const url = new URL("/v1/ws", baseUrl);
+    const url = new URL("/v1/stream", baseUrl);
 
     url.protocol = url.protocol === "http:" ? "ws:" : "wss:";
 
@@ -324,12 +325,12 @@ export function liveWsUrl(baseUrl: string, apiKey: string): string {
     return url.toString();
 }
 
-// ── News (`news.live`, backend earnings tasks/inhouse-news-pipeline task 16 / 17) ──────────────────────────────────
+// ── News (`news`, backend earnings tasks/inhouse-news-pipeline task 16 / 17) ──────────────────────────────────
 // Mirrors IDA `src/routes/websocket/types/newsMessages.ts` and the spec's `WebSocket*News*` schemas — change both or
-// neither. Every news frame carries `channel: "news.live"`; its `error` / `subscribed` / `unsubscribed` share their
+// neither. Every news frame carries `channel: "news"`; its `error` / `subscribed` / `unsubscribed` share their
 // `type` with the earnings frames above, so news frames are told apart by `channel`, never parsed as earnings ones.
 
-export const NEWS_LIVE_CHANNEL = "news.live";
+export const NEWS_LIVE_CHANNEL = "news";
 
 export const NEWS_WS_ERROR_CODES = ["bad_message", "forbidden_tier", "channel_unavailable", "unavailable"] as const;
 
@@ -426,7 +427,7 @@ export type NewsSubscribeOptions = {
     tickers?: ReadonlyArray<string>;
 };
 
-/** The `news.live` subscribe frame; an empty filter is left out (no filter = every item). */
+/** The `news` subscribe frame; an empty filter is left out (no filter = every item). */
 export function newsSubscribeFrame({ earningsOnly, kinds, sources, tickers }: NewsSubscribeOptions = {}) {
     return {
         channel: NEWS_LIVE_CHANNEL,

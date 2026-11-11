@@ -55,7 +55,7 @@ function EarningsCalendarPage() {
         type: search.eventType,
     });
 
-    // Session and event status have no `/v2/events` parameter: they filter the loaded rows.
+    // Session and event status have no `/v1/events` parameter: they filter the loaded rows.
     const events = React.useMemo(
         () => (data?.pages.flatMap(page => page.data) ?? []).filter(event => matchesCalendarSearch(event, search)),
         [data, search],

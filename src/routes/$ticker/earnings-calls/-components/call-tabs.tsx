@@ -43,7 +43,7 @@ export type TranscriptJump = { ms: number; nonce: number };
 /** What every tab panel gets. */
 export type CallTabProps = {
     event: V2Event;
-    /** The event every per-event read names (`/v2/events/{event_id}/…`). */
+    /** The event every per-event read names (`/v1/events/{event_id}/…`). */
     eventId: string;
     /** The Transcript tab clears the pending jump once it has scrolled (or told why it could not). */
     onTranscriptJumpHandled: () => void;

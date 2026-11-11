@@ -16,7 +16,7 @@ export const Route = createFileRoute("/$ticker/financials-cagr/")({
     component: FinancialCagrPage,
 });
 
-/** Periods per page of `/v2/metrics/cagr`: one row per period and horizon (every horizon = three rows per period). */
+/** Periods per page of `/v1/metrics/cagr`: one row per period and horizon (every horizon = three rows per period). */
 const CAGR_PERIODS = 8;
 
 type HorizonFilter = "3" | "5" | "10" | "all";
@@ -88,7 +88,7 @@ function FinancialCagrPage() {
 
     const [horizon, setHorizon] = React.useState<HorizonFilter>("all");
 
-    // `/v2/metrics/cagr?company=<ticker>&period=annual[&horizon=3|5|10]` (v1 `period_years`; CAGR is annual only).
+    // `/v1/metrics/cagr?company=<ticker>&period=annual[&horizon=3|5|10]` (v1 `period_years`; CAGR is annual only).
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2CagrInfinite({
         company: ticker,
         horizon: HORIZONS[horizon],

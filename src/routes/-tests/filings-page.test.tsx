@@ -12,9 +12,6 @@ import { FilingHtmlBody, primaryDocumentUrl } from "@/routes/$ticker/filings/-co
 
 // Pure views: keep the server functions (TanStack Start) and the HTML fetcher unloaded.
 vi.mock("@/lib/api/queries", () => ({
-    useSecDocumentBlocks: vi.fn(),
-    useSecFigure: vi.fn(),
-    useSecFilingManifest: vi.fn(),
     useV2DocumentFigure: vi.fn(),
     useV2DocumentVersion: vi.fn(),
     useV2Filing: vi.fn(),
@@ -28,7 +25,7 @@ afterEach(cleanup);
 
 const PUBLIC_URL = "https://storage.invinite.com/sec/4765d5384d6b2195ff48ff775f9244f9/aapl-20260926.htm";
 
-// `/v2/filings/0000320193-26-000026?expand=documents` (the API mapper over the recorded manifest, 2026-11-09).
+// `/v1/filings/0000320193-26-000026?expand=documents` (the API mapper over the recorded manifest, 2026-11-09).
 const FILING_10K: V2FilingDetailResponse = V2_FILING_10K;
 
 // The same filing before its primary document has a public copy.
@@ -78,7 +75,7 @@ describe("filings row", () => {
     });
 });
 
-describe("HTML view (lazy /v2/filings/{accession}?expand=documents)", () => {
+describe("HTML view (lazy /v1/filings/{accession}?expand=documents)", () => {
     it("renders the primary document at its permanent public URL", () => {
         expect(primaryDocumentUrl(FILING_10K, ROW.primaryDocument)).toBe(PUBLIC_URL);
 

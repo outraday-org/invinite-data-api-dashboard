@@ -20,7 +20,7 @@ export const Route = createFileRoute("/$ticker/ipos/")({
     component: IposPage,
 });
 
-/** Offerings per page of `/v2/ipos` (one page per `next_cursor`). */
+/** Offerings per page of `/v1/ipos` (one page per `next_cursor`). */
 const IPOS_PAGE = 50;
 
 const ALL = "all";
@@ -200,7 +200,7 @@ export function IposView({
 function IposPage() {
     const [stage, setStage] = React.useState<StageFilter>(ALL);
 
-    // `/v2/ipos` market-wide (no `company`): one row per offering, newest listing first (`-listing_date`).
+    // `/v1/ipos` market-wide (no `company`): one row per offering, newest listing first (`-listing_date`).
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2IposInfinite({
         limit: IPOS_PAGE,
         sort: "-listing_date",

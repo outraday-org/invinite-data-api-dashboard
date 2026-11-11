@@ -15,11 +15,11 @@ export const Route = createFileRoute("/$ticker/segmented-financials/")({
     component: SegmentedFinancialsPage,
 });
 
-/** Segment facts per page of `/v2/segments` (one row per fact, many per period: the maximum page). */
+/** Segment facts per page of `/v1/segments` (one row per fact, many per period: the maximum page). */
 const SEGMENTS_PAGE = 200;
 
 /**
- * The segments list (pure). `/v2/segments` has no `segment_id` filter (v1 had one): the segment picker filters the
+ * The segments list (pure). `/v1/segments` has no `segment_id` filter (v1 had one): the segment picker filters the
  * loaded rows and says when it hid them all. A column is shown only once every fact of its period is loaded.
  */
 export function SegmentsView({
@@ -72,7 +72,7 @@ function SegmentedFinancialsPage() {
 
     const [segmentId, setSegmentId] = React.useState<"all" | SegmentedFinancialsSegmentId>("all");
 
-    // `/v2/segments?company=<ticker>&period=<type>`, newest first; the segment picker filters the loaded rows.
+    // `/v1/segments?company=<ticker>&period=<type>`, newest first; the segment picker filters the loaded rows.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2SegmentsInfinite({
         company: ticker,
         limit: SEGMENTS_PAGE,

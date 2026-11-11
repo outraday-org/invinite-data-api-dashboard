@@ -12,7 +12,7 @@ export function listItems(text: string): Array<string> {
 }
 
 /**
- * Invinite's summary of the publication from its blocks (`GET /v2/news/{id}/text`, in order): a `heading` block as a
+ * Invinite's summary of the publication from its blocks (`GET /v1/news/{id}/text`, in order): a `heading` block as a
  * heading, a `list` block as a list (one item per line), anything else as a paragraph. Rendered as React elements —
  * no HTML is ever injected.
  */

@@ -42,7 +42,7 @@ function formatDelta(delta: null | number, unit: null | string, currency: null |
 const callDay = (conferenceDate: null | string) => conferenceDate?.slice(0, 10) ?? "—";
 
 function HistoryBody({ company, target }: { company: string; target: GuidanceHistoryTarget }) {
-    // The company's items for the metric across its calls, newest call first (`/v2/guidance`, every review state).
+    // The company's items for the metric across its calls, newest call first (`/v1/guidance`, every review state).
     const query = useV2GuidanceInfinite({
         basis: target.basis,
         company,

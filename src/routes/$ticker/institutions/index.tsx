@@ -220,7 +220,7 @@ function InstitutionsPage() {
         [quarters],
     );
 
-    // `/v2/holdings?company=` and `/v2/holding-changes?company=`, both for the picked quarter (none = server default).
+    // `/v1/holdings?company=` and `/v1/holding-changes?company=`, both for the picked quarter (none = server default).
     const holdings = useV2HoldingsInfinite({ company: ticker, limit: THIRTEEN_F_PAGE, periodEnd });
 
     const changes = useV2HoldingChangesInfinite({ company: ticker, limit: THIRTEEN_F_PAGE, periodEnd });

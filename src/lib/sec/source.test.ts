@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { SEC_DOCUMENT, SEC_MANIFEST } from "./sec-fixtures";
 import {
     blocksBefore,
     blocksFrom,
@@ -14,52 +13,20 @@ import {
     scalarEntries,
     secUrlOf,
     toBlocks,
-    toManifestDocuments,
     toMetaSource,
     toSecHitView,
     toSelection,
     toV2FilingDocuments,
     versionIdOf,
 } from "./source";
-import { V2_DOCUMENT_VERSION, V2_FILING_10K } from "./v2-fixtures";
-
-describe("toManifestDocuments", () => {
-    const docs = toManifestDocuments(SEC_MANIFEST.documents);
-
-    it("keeps the true size, role, MIME and both readiness flags; a null source has no public URL", () => {
-        const exhibit = docs.find(doc => doc.filename === "a8-kex991q4202609262026.htm");
-
-        expect(exhibit).toMatchObject({
-            canonical: { status: "published", textReady: true, versionId: "402affed-8245-5fe1-814d-d025f60db4ac", visualReady: true },
-            mimeType: "text/html",
-            publicUrl: null,
-            role: "exhibit",
-            sizeBytes: 172036,
-        });
-    });
-
-    it("a graphic is visual without text and has no canonical version to read", () => {
-        const graphic = docs.find(doc => doc.filename === "aapl-20261102_g1.jpg");
-
-        expect(graphic?.canonical).toMatchObject({ textReady: false, versionId: null, visualReady: true });
-    });
-
-    it("only an https public copy counts", () => {
-        const [doc] = toManifestDocuments([{ filename: "a.htm", source: { url: "http://x/a.htm" } }]);
-
-        expect(doc.publicUrl).toBeNull();
-
-        expect(toManifestDocuments([{ filename: "a.htm", source: { url: "https://storage-prod.invinite.com/sec/t/a.htm" } }])[0].publicUrl)
-            .toBe("https://storage-prod.invinite.com/sec/t/a.htm");
-    });
-});
+import { V2_DOCUMENT_VERSION, V2_FILING_10K, V2_FILING_SEARCH } from "./v2-fixtures";
 
 describe("blocks and page labels", () => {
-    const blocks = toBlocks(SEC_DOCUMENT.blocks);
+    const blocks = toBlocks(V2_DOCUMENT_VERSION.blocks);
 
     it("reads page, neighbours, footnote refs and the citation of each block", () => {
         expect(blocks[1]).toMatchObject({
-            citation: { blockId: "b00002", page: 1, printed: null, versionId: "402affed-8245-5fe1-814d-d025f60db4ac" },
+            citation: { blockId: "b00002", page: 1, printed: null, versionId: "8be0b759-1a9d-5f89-8308-bd86185f5e1f" },
             footnoteRefs: [],
             id: "b00002",
             kind: "heading",
@@ -80,7 +47,7 @@ describe("blocks and page labels", () => {
     });
 
     it("trust comes from quality.printed_labels_trusted; absent = untrusted", () => {
-        expect(printedLabelsTrusted(SEC_DOCUMENT.quality)).toBe(true);
+        expect(printedLabelsTrusted(V2_DOCUMENT_VERSION.quality)).toBe(true);
 
         expect(printedLabelsTrusted({})).toBe(false);
 
@@ -96,13 +63,13 @@ describe("blocks and page labels", () => {
     });
 
     it("selection names the next block of a truncated page", () => {
-        expect(toSelection(SEC_DOCUMENT.selection)).toEqual({ nextBlock: "b00007", truncated: true });
+        expect(toSelection(V2_DOCUMENT_VERSION.selection)).toEqual({ nextBlock: "b00003", truncated: true });
     });
 
     it("EDGAR is an outbound link only for www.sec.gov", () => {
-        expect(secUrlOf(SEC_DOCUMENT.source)).toMatch(/^https:\/\/www\.sec\.gov\//);
+        expect(secUrlOf(V2_DOCUMENT_VERSION.source)).toMatch(/^https:\/\/www\.sec\.gov\//);
 
-        expect(secUrlOf({ sec_url: "https://evil.example/x" })).toBeNull();
+        expect(secUrlOf({ url: "https://evil.example/x" })).toBeNull();
     });
 });
 
@@ -129,30 +96,21 @@ describe("block ranges (paging inside one version)", () => {
 });
 
 describe("toSecHitView", () => {
-    it("reads filer, place and citation of a hit; the cited block gives block id and page", () => {
-        const view = toSecHitView({
-            accession: "0000320193-26-000024",
-            citation: { source: null, version_id: "v1" },
-            cited: [{ citation: { block_id: "b00042", page: 3, printed: "3", version_id: "v1" }, id: "b00042", page: { ordinal: 3, printed: "3" } }],
-            filename: "a.htm",
-            filer: { cik: "320193", name: "Apple Inc." },
-            filing_date: "2026-11-02",
-            form: "8-K",
-            version_id: "v1",
+    it("reads place and citation of a /v1/search/filings hit; the first span's first block is the cited block", () => {
+        expect(toSecHitView(V2_FILING_SEARCH.data[0])).toEqual({
+            accession: "0000320193-25-000079",
+            blockId: "b00136",
+            filename: "aapl-20250927.htm",
+            filingDate: "2025-10-31",
+            form: "10-K",
+            publicUrl: "https://storage.invinite.com/sec/18cf21cf542b9c42832192ccfdaef882/aapl-20250927.htm",
+            versionId: "d7bbe5c0-8708-521f-a720-15ef6d1bd1fa",
         });
+    });
 
-        expect(view).toEqual({
-            accession: "0000320193-26-000024",
-            blockId: "b00042",
-            filename: "a.htm",
-            filerCik: "320193",
-            filerName: "Apple Inc.",
-            filingDate: "2026-11-02",
-            form: "8-K",
-            page: { ordinal: 3, printed: "3" },
-            publicUrl: null,
-            versionId: "v1",
-        });
+    it("a hit without spans has no block; a non-https original is not linked", () => {
+        expect(toSecHitView({ citation: { source: { url: "http://x/a.htm" } }, document_spans: [], version_id: "v1" }))
+            .toMatchObject({ blockId: null, publicUrl: null, versionId: "v1" });
     });
 });
 

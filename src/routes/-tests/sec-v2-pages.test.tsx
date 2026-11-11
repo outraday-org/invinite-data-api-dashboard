@@ -27,7 +27,7 @@ const list = { hasNextPage: false, isFetchingNextPage: false, isLoading: false, 
 
 const problem = (status: number, code: string, detail: string) => new ApiRequestError(status, { error: code, message: detail });
 
-describe("Institutions (`/v2/holdings`, `/v2/holding-changes`)", () => {
+describe("Institutions (`/v1/holdings`, `/v1/holding-changes`)", () => {
     it("ownership rows name the institution; the line shows coverage through, the snapshot and the counting rule", () => {
         render(<HoldingsList state={{ ...list, error: null, pages: [V2_HOLDINGS] }} />);
 
@@ -91,7 +91,7 @@ describe("Institutions (`/v2/holdings`, `/v2/holding-changes`)", () => {
     });
 });
 
-describe("Insider trades (`/v2/insider-trades`)", () => {
+describe("Insider trades (`/v1/insider-trades`)", () => {
     it("side as Buy / Sell, the officer title, no empty line for a filled page", () => {
         render(<InsiderTradesView {...list} error={null} pages={[V2_INSIDER_TRADES]} />);
 
@@ -125,7 +125,7 @@ describe("Insider trades (`/v2/insider-trades`)", () => {
     });
 });
 
-describe("IPOs (`/v2/ipos`, one row per offering)", () => {
+describe("IPOs (`/v1/ipos`, one row per offering)", () => {
     it("stage, exchange MIC, price range or final price, and the registration / listing source badges", () => {
         render(<IposView {...list} error={null} pages={[V2_IPOS]} />);
 

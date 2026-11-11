@@ -24,7 +24,7 @@ import {
     SidebarMenu,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useCompanyDetails } from "@/lib/api/queries";
+import { useV2Company } from "@/lib/api/queries";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/$ticker")({
@@ -67,9 +67,7 @@ function TickerLayout() {
 
     const isMarketRoute = marketPaths.some(path => pathname === path || pathname.startsWith(`${path}/`));
 
-    const { data, error } = useCompanyDetails(ticker);
-
-    const company = data?.companies[0];
+    const { data: company, error } = useV2Company(ticker);
 
     return (
         <>

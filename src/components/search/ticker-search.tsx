@@ -46,7 +46,7 @@ export function TickerSearch({ defaultTicker = "", placeholder = "Search company
 
     const { data, isFetching } = useCompanySearch(debouncedQuery);
 
-    const companies = React.useMemo(() => data?.companies ?? [], [data]);
+    const companies = React.useMemo(() => data?.data ?? [], [data]);
 
     const [anchorStyle, setAnchorStyle] = React.useState<null | React.CSSProperties>(null);
 

@@ -209,7 +209,7 @@ describe("price ticks", () => {
 describe("client frames and the socket URL", () => {
     it("builds the subscribe frame with partials, prices off by default and a since_seq ≥ -1", () => {
         expect(subscribeFrame("e1", 12)).toStrictEqual({
-            channel: "earnings-calls.live",
+            channel: "events.live",
             event_id: "e1",
             partials: true,
             prices: false,
@@ -227,13 +227,13 @@ describe("client frames and the socket URL", () => {
     });
 
     it("maps the API base URL to the WebSocket URL", () => {
-        expect(liveWsUrl("https://api.data.invinite.com", "k 1")).toBe("wss://api.data.invinite.com/v1/ws?api_key=k+1");
+        expect(liveWsUrl("https://api.data.invinite.com", "k 1")).toBe("wss://api.data.invinite.com/v1/stream?api_key=k+1");
 
-        expect(liveWsUrl("http://localhost:3000/", "abc")).toBe("ws://localhost:3000/v1/ws?api_key=abc");
+        expect(liveWsUrl("http://localhost:3000/", "abc")).toBe("ws://localhost:3000/v1/stream?api_key=abc");
     });
 });
 
-describe("news.live frames (mirrors IDA types/newsMessages.ts)", () => {
+describe("news frames (mirrors IDA types/newsMessages.ts)", () => {
     const raw = (frame: object) => JSON.stringify(frame);
 
     it("parses every news server frame by its channel", () => {
@@ -241,7 +241,7 @@ describe("news.live frames (mirrors IDA types/newsMessages.ts)", () => {
             { channel: NEWS_LIVE_CHANNEL, filters: { ciks: [], earnings_only: false, kinds: [], sources: [], tickers: ["NVDA"] }, type: "subscribed" },
             { channel: NEWS_LIVE_CHANNEL, item: newsroomItem(), type: "news_item" },
             { channel: NEWS_LIVE_CHANNEL, type: "unsubscribed" },
-            { channel: NEWS_LIVE_CHANNEL, code: "forbidden_tier", message: "news.live needs the STANDARD plan", type: "error" },
+            { channel: NEWS_LIVE_CHANNEL, code: "forbidden_tier", message: "news needs the STANDARD plan", type: "error" },
             { channel: NEWS_LIVE_CHANNEL, code: "channel_unavailable", message: "off", type: "error" },
         ];
 

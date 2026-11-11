@@ -20,7 +20,7 @@ export const Route = createFileRoute("/$ticker/insider-trades/")({
     component: InsiderTradesPage,
 });
 
-/** Trades per page of `/v2/insider-trades` (one page per `next_cursor`). */
+/** Trades per page of `/v1/insider-trades` (one page per `next_cursor`). */
 const INSIDER_PAGE = 50;
 
 const ALL = "all";
@@ -168,7 +168,7 @@ function InsiderTradesPage() {
 
     const [to, setTo] = React.useState("");
 
-    // `/v2/insider-trades?company=<ticker>`, newest filed first; the day range = `filed_at.gte` / `.lt` the next midnight.
+    // `/v1/insider-trades?company=<ticker>`, newest filed first; the day range = `filed_at.gte` / `.lt` the next midnight.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2InsiderTradesInfinite({
         company: ticker,
         from: from || undefined,

@@ -1,12 +1,9 @@
 /**
- * The readiness / error states of the SEC views, classified once. v2 (`/v2/filings*`, holdings, insider trades, IPOs,
- * document versions; backend tasks/data-api-v2 task 6): a 200 carries `meta.coverage.state` (`pending` with
- * `data: []`, `partial`, `complete`) — `v2CoverageState` —, and the refusals are problems: 403 `excluded`, 404
- * `not_covered`, 503 `unavailable` (`V2_PROBLEM_STATUS`). v1 (`/v1/sec/*`, the `/sec/$cik` page and the documents
- * search): The API answers 200 ready /
- * partial, 202 pending (the route body), 403 excluded / 404 unknown / 424 failed / 503 not_ready (`SecStoreError`),
- * 400 refusals, 409 `restart_required` (a stale cursor) and 413 `too_large`; the REST plan gate is `403 Forbidden`.
- * None of these is an empty result: "no results" is only a ready answer (and, for search, complete coverage).
+ * The readiness / error states of the SEC views, classified once (`/v1/filings*`, `/v1/filers*`, holdings, insider
+ * trades, IPOs, document versions, filing search). A 200 carries `meta.coverage.state` (`pending` with `data: []`,
+ * `partial`, `complete`) — `v2CoverageState` —, and the refusals are problems: 403 `excluded`, 404 `not_covered`,
+ * 503 `unavailable` (`V2_PROBLEM_STATUS`), 400 refusals and 409 / 413; the REST plan gate is 403 `plan_required`.
+ * None of these is an empty result: "no results" is only a complete answer (and, for search, complete coverage).
  */
 import type { SecReadinessStatus, SecSearchCoverage, V2MetaCoverage } from "@/lib/api/types";
 
@@ -46,7 +43,7 @@ export const V2_PROBLEM_STATUS: Readonly<Partial<Record<string, SecReadinessStat
     unavailable: "not_ready",
 };
 
-/** The state of a failed SEC request, v1 or v2 (an `ApiRequestError` revived by the hooks). */
+/** The state of a failed SEC request (an `ApiRequestError` revived by the hooks). */
 export function secErrorState(error: unknown): SecState {
     if (isTierError(error)) return { kind: "tier" };
 
@@ -65,13 +62,6 @@ export function secErrorState(error: unknown): SecState {
     if (error.status === 400) return { kind: "bad_request", message: error.message };
 
     return { error, kind: "error" };
-}
-
-/** The state of an answer that arrived (200 / 202): null when it is `ready` (render the body as is). */
-export function secAnswerState(readiness: { reason: null | string; status: SecReadinessStatus }): null | SecState {
-    if (readiness.status === "ready") return null;
-
-    return { kind: "readiness", message: null, reason: readiness.reason, status: readiness.status };
 }
 
 /**
@@ -150,7 +140,10 @@ export function coverageReasonText(reason: string) {
     return COVERAGE_REASON_TEXT[reason] ?? "Results may be incomplete";
 }
 
-/** "No results" is genuine only for a ready answer whose coverage (if any) is complete. */
-export function isGenuineEmpty(readiness: { status: SecReadinessStatus }, coverage?: null | Pick<SecSearchCoverage, "completeness">) {
-    return readiness.status === "ready" && (!coverage || coverage.completeness === "complete");
+/** A search's "no results" is genuine only for a complete page coverage AND a complete index (`meta.index`). */
+export function isSearchGenuineEmpty(
+    coverage: null | Pick<V2MetaCoverage, "state"> | undefined,
+    index: null | Pick<SecSearchCoverage, "completeness"> | undefined,
+) {
+    return isV2GenuineEmpty(coverage) && index?.completeness === "complete";
 }

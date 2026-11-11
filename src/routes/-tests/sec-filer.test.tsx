@@ -7,9 +7,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { V2FilerResponse } from "@/lib/api/types";
 
 import { cikOf, SecFilerMatches } from "@/components/sec/sec-filer-lookup";
-import { SecFilerHeader, SecFilingsView, SecLifecycleView } from "@/components/sec/sec-filer-views";
+import { SecFilerHeader, SecFilingsView, SecLifecycleView, SecPortfolioView } from "@/components/sec/sec-filer-views";
 import { ApiRequestError } from "@/lib/api/errors";
-import { SEC_FILERS, SEC_FILINGS } from "@/lib/sec/sec-fixtures";
+import { V2_FILERS, V2_FILINGS, V2_HOLDINGS, V2_HOLDINGS_PENDING } from "@/lib/sec/v2-fixtures";
 
 vi.mock("@tanstack/react-router", () => ({
     Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => (
@@ -18,7 +18,7 @@ vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => vi.fn(),
 }));
 
-vi.mock("@/lib/api/queries", () => ({ useSecFilers: vi.fn() }));
+vi.mock("@/lib/api/queries", () => ({ useV2Filers: vi.fn() }));
 
 afterEach(cleanup);
 
@@ -31,14 +31,25 @@ describe("tickerless filer selection", () => {
         expect(cikOf("0")).toBeNull();
     });
 
-    it("name matches link to /sec/$cik — a filer without a ticker included, labelled 'No ticker'", () => {
-        render(<SecFilerMatches data={SEC_FILERS} error={null} isLoading={false} />);
+    it("name matches link to /sec/$cik (zeros dropped) — a filer without a ticker included, labelled 'No ticker'", () => {
+        render(<SecFilerMatches data={V2_FILERS} error={null} isLoading={false} />);
 
-        expect(screen.getByRole("link", { name: "3LP Appleton Industrial MM LLC" })).toHaveAttribute("href", "/sec/2063464");
+        expect(screen.getByRole("link", { name: "ADAMS STREET TRUEST - BERKSHIRE FUND V LP Zinc Series" })).toHaveAttribute("href", "/sec/1453746");
 
-        expect(screen.getAllByText("No ticker")).toHaveLength(2);
+        expect(screen.getAllByText("No ticker")).toHaveLength(1);
 
-        expect(screen.getAllByText("needs review")).toHaveLength(2);
+        // A listed filer shows its verified listing, not every stated ticker.
+        expect(screen.getByText("BRK-B")).toBeInTheDocument();
+
+        expect(screen.queryByText("BRK-A")).toBeNull();
+
+        expect(screen.getByText("Public")).toBeInTheDocument();
+    });
+
+    it("no match on a complete page is a genuine no-match", () => {
+        render(<SecFilerMatches data={{ ...V2_FILERS, data: [] }} error={null} isLoading={false} />);
+
+        expect(screen.getByText("No SEC filer matches this name.")).toBeInTheDocument();
     });
 
     it("the header of a tickerless filer says so and invents no ticker", () => {
@@ -158,7 +169,7 @@ describe("SecFilingsView", () => {
                 onFormChange={() => undefined}
                 onMore={() => undefined}
                 onOpen={onOpen}
-                pages={[SEC_FILINGS]}
+                pages={[V2_FILINGS]}
             />,
         );
 
@@ -172,7 +183,7 @@ describe("SecFilingsView", () => {
     });
 
     it("an excluded filer (403) is its state, not 'No filings'", () => {
-        const error = new ApiRequestError(403, { code: "scope_excluded", error: "excluded", message: "x" });
+        const error = new ApiRequestError(403, { error: "excluded", message: "x", requestId: "req_1" });
 
         render(
             <SecFilingsView
@@ -191,5 +202,37 @@ describe("SecFilingsView", () => {
         expect(screen.getByText("Outside the SEC store's coverage")).toBeInTheDocument();
 
         expect(screen.queryByText("No filings.")).toBeNull();
+    });
+});
+
+describe("SecPortfolioView (`/v1/holdings?filer=`)", () => {
+    const view = (props: Partial<Parameters<typeof SecPortfolioView>[0]>) => (
+        <SecPortfolioView error={null} hasNextPage={false} isFetchingNextPage={false} isLoading={false} onMore={() => undefined} pages={[]} {...props} />
+    );
+
+    it("lists the positions with the page's provenance; 'More positions' while a cursor remains", () => {
+        const onMore = vi.fn();
+
+        render(view({ hasNextPage: true, onMore, pages: [V2_HOLDINGS] }));
+
+        expect(screen.getByText("AAPL")).toBeInTheDocument();
+
+        expect(screen.getByText("037833100")).toBeInTheDocument();
+
+        expect(screen.getByText("$412,000,000,000")).toBeInTheDocument();
+
+        expect(screen.getByTestId("v2-meta-line")).toHaveTextContent("through 2026-09-30");
+
+        fireEvent.click(screen.getByRole("button", { name: "More positions" }));
+
+        expect(onMore).toHaveBeenCalledOnce();
+    });
+
+    it("a pending quarter is its notice, never 'no positions'", () => {
+        render(view({ pages: [V2_HOLDINGS_PENDING] }));
+
+        expect(screen.getByText("Being prepared — asked again in 30 s")).toBeInTheDocument();
+
+        expect(screen.queryByText(/reported no positions/)).toBeNull();
     });
 });

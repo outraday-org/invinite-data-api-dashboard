@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import type { V2Event, V2EventCalendar } from "@/lib/api/types";
 
-import { CALENDAR_EVENT, CALENDAR_EVENT_EXPIRED_CALL } from "@/lib/sec/sec-fixtures";
+import { CALENDAR_EVENT, CALENDAR_EVENT_EXPIRED_CALL } from "@/lib/earnings/calendar-fixtures";
 import { matchesCalendarSearch, validateCalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 import {
     CalendarCallCell,
@@ -96,7 +96,7 @@ describe("validateCalendarSearch", () => {
         expect(validateCalendarSearch({ calendarStatus: "held", dateKind: "report" })).toMatchObject({ calendarStatus: undefined, dateKind: undefined });
     });
 
-    it("filters the loaded rows by session and event status (no `/v2/events` parameter)", () => {
+    it("filters the loaded rows by session and event status (no `/v1/events` parameter)", () => {
         const row = { calendar: { status: "confirmed" as const }, session: "amc" as const };
 
         expect(matchesCalendarSearch(row, {})).toBe(true);

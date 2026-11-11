@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isTierError } from "@/lib/api/errors";
-import { useCompanyDetails, useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
+import { useV2Company, useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
 import { buildDocumentTree, callEntries, eventTitleMap, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
 import { MediaState, Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
@@ -26,7 +26,7 @@ export const Route = createFileRoute("/$ticker/documents/")({
     validateSearch: validateDocumentsSearch,
 });
 
-// The API's largest page (`/v2/investor-documents`, `/v2/events`).
+// The API's largest page (`/v1/investor-documents`, `/v1/events`).
 const PAGE_SIZE = 200;
 
 // The events list feeds the call rows: every event type, newest first, the API's largest page.
@@ -39,7 +39,7 @@ function LibraryError({ error }: { error: unknown }) {
     return <MediaState error={error} notFound="No earnings-call coverage for this company" title="Failed to load the documents" />;
 }
 
-/** The search sources: the company's own documents (`/v2/search/investor-documents`) or its SEC filings (`/v1/sec/search`). */
+/** The search sources: the company's own documents (`/v1/search/investor-documents`) or its SEC filings (`/v1/search/filings`). */
 const SEARCH_SOURCES = [
     { label: "Company documents", value: "company" },
     { label: "SEC filings", value: "sec" },
@@ -47,17 +47,13 @@ const SEARCH_SOURCES = [
 
 type SearchSource = (typeof SEARCH_SOURCES)[number]["value"];
 
-/** SEC filing search scoped to the company's CIK (from the company details the layout already loads). */
+/** SEC filing search scoped to the company (`company=<ticker>`). */
 function SecFilingsSource({ ticker }: { ticker: string }) {
     const [target, setTarget] = React.useState<null | SecPanelTarget>(null);
 
-    const { data } = useCompanyDetails(ticker);
-
-    const cik = data?.companies[0]?.cik.replace(/^0+/, "") ?? null;
-
     return (
         <>
-            <SecFilingSearch cik={cik || null} onOpen={setTarget} />
+            <SecFilingSearch company={ticker} onOpen={setTarget} />
             <SecSourceDialog onClose={() => setTarget(null)} target={target} />
         </>
     );
@@ -85,7 +81,7 @@ function DocumentsPage() {
 
     const events = useV2EventsInfinite({ company: ticker, limit: EVENTS_PAGE_SIZE, sort: "-scheduled_at", type: "all" });
 
-    const { data: details } = useCompanyDetails(ticker);
+    const { data: details } = useV2Company(ticker);
 
     // No totals in the API: load every page of both, so the counts and the text filter see everything.
     useLoadAllPages({ ...library, hasNextPage: Boolean(library.hasNextPage) });
@@ -94,7 +90,7 @@ function DocumentsPage() {
 
     const { data, error, isLoading } = library;
 
-    // `/v2/investor-documents` has no section filter: the IR section filters the loaded rows.
+    // `/v1/investor-documents` has no section filter: the IR section filters the loaded rows.
     const documents = React.useMemo(
         () => (data?.pages.flatMap(page => page.data) ?? []).filter(doc => !search.section || doc.section === search.section),
         [data, search.section],
@@ -113,7 +109,7 @@ function DocumentsPage() {
     );
 
     // v2 lists name no company: its name comes from the company details the layout already loads.
-    const companyName = details?.companies[0]?.name ?? null;
+    const companyName = details?.name ?? null;
 
     const onFilterChange = (patch: Partial<DocumentsSearch>) => {
         // The text filter updates as you type: replace the history entry instead of adding one per keystroke.

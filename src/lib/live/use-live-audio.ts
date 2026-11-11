@@ -22,7 +22,7 @@ import {
 import { JUMP_TO_LIVE_AFTER_S, mediaTimeForCallMs, positionToCallMs, secondsBehindEdge } from "./position-to-call-ms";
 
 /**
- * The live audio of one call: hls.js on the URL of `GET /v2/events/{event_id}/live-audio`
+ * The live audio of one call: hls.js on the URL of `GET /v1/events/{event_id}/live-audio`
  * (an `EVENT` playlist served by the edge Worker), or the browser's native HLS where there is
  * no MSE (Safari). Modelled on the admin console's `use-live-audio.ts`.
  *

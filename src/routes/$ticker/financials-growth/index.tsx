@@ -17,7 +17,7 @@ export const Route = createFileRoute("/$ticker/financials-growth/")({
     component: FinancialGrowthPage,
 });
 
-/** Periods per page of `/v2/metrics/growth`: one row per period and basis (both bases = two rows per period). */
+/** Periods per page of `/v1/metrics/growth`: one row per period and basis (both bases = two rows per period). */
 const GROWTH_PERIODS = 8;
 
 const ALL = "all";
@@ -87,7 +87,7 @@ function FinancialGrowthPage() {
 
     const [basis, setBasis] = React.useState<typeof ALL | V2GrowthBasis>(ALL);
 
-    // `/v2/metrics/growth?company=<ticker>&period=<type>[&basis=yoy|qoq]` (v1 `growth_type`), newest first.
+    // `/v1/metrics/growth?company=<ticker>&period=<type>[&basis=yoy|qoq]` (v1 `growth_type`), newest first.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2GrowthInfinite({
         basis: basis === ALL ? undefined : basis,
         company: ticker,

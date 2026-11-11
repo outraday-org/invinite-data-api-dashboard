@@ -41,7 +41,7 @@ const list = { error: null, hasNextPage: false, isFetchingNextPage: false, isLoa
 
 const problem = (status: number, code: string, detail: string) => new ApiRequestError(status, { error: code, message: detail });
 
-describe("Statements (`/v2/financials/*`)", () => {
+describe("Statements (`/v1/financials/*`)", () => {
     it("summary (standardized): one line per metric, one column per period, the filing in the header tooltip, Load more by cursor", () => {
         const onLoadMore = vi.fn();
 
@@ -222,7 +222,7 @@ describe("Statement adapters", () => {
     });
 });
 
-describe("Metrics (`/v2/metrics/*`, `/v2/segments`)", () => {
+describe("Metrics (`/v1/metrics/*`, `/v1/segments`)", () => {
     it("ratios: one line per metric × category (leverage = v1 solvency), `_pct` as a percent", () => {
         expect(ratioRows(V2_RATIOS.data).map(row => [row.group, row.label])).toEqual([
             // `formatMetricId` drops the first word (the statement prefix of a standardized id), as on v1.

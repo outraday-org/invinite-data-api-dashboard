@@ -86,7 +86,7 @@ const block = (index: number, kind: V2NewsBlock["kind"], text: string, heading: 
     text,
 });
 
-/** Invinite's summary of `newsroomItem()` in blocks (`GET /v2/news/{id}/text`). */
+/** Invinite's summary of `newsroomItem()` in blocks (`GET /v1/news/{id}/text`). */
 export const SUMMARY_BLOCKS: Array<V2NewsBlock> = [
     block(0, "paragraph", "NVIDIA introduced Rubin, its next data-center platform."),
     block(1, "heading", "Availability"),
@@ -94,7 +94,7 @@ export const SUMMARY_BLOCKS: Array<V2NewsBlock> = [
     block(3, "list", "• Six new chips\n• One rack-scale system", "Availability"),
 ];
 
-/** `GET /v2/news/{id}/text` of `item` (summary available unless overridden). */
+/** `GET /v1/news/{id}/text` of `item` (summary available unless overridden). */
 export function newsText(item: NewsItemPublic, overrides: Partial<V2NewsText> = {}): V2NewsText {
     return {
         attribution: item.attribution,

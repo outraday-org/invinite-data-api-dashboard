@@ -16,7 +16,7 @@ afterEach(cleanup);
 
 const EVENT_ID = "6f1c2b9e-0d4a-4c1b-9a6e-2f3b4c5d6e7f";
 
-// A `/v2/investor-documents?event=` row (`source: "call"`; `pages` is null in lists, `body_text` too).
+// A `/v1/investor-documents?event=` row (`source: "call"`; `pages` is null in lists, `body_text` too).
 const base: V2InvestorDocument = {
     accession_number: null,
     body_text: null,
@@ -84,7 +84,7 @@ const mockDocuments = (documents: Array<V2InvestorDocument>) =>
     } as never);
 
 describe("DocumentsTab", () => {
-    it("asks the event's documents by id (`/v2/investor-documents?event=`), every page", () => {
+    it("asks the event's documents by id (`/v1/investor-documents?event=`), every page", () => {
         mockDocuments([base]);
 
         render(<DocumentsTab {...props} />);

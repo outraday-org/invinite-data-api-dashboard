@@ -1,12 +1,15 @@
 /**
- * v2 SEC family answers for tests only (backend tasks/data-api-v2 task 6): the filings rows, the 10-K manifest and the
- * document version are the API mappers' output over their recorded door fixtures of 2026-11-09
- * (`invinite-data-api/src/lib/v2/sec/fixtures/`, trimmed); holdings, changes, insider trades and IPOs are written in
- * the contract's shape.
+ * SEC family answers for tests only (`/v1/filings*`, `/v1/document-versions/*`, `/v1/filers`, `/v1/search/filings`,
+ * holdings, insider trades, IPOs): the filings rows, the 10-K manifest and the document version are the API mappers'
+ * output over their recorded door fixtures of 2026-11-09 (`invinite-data-api/src/lib/v1/sec/fixtures/`, trimmed); the
+ * filer page and the search page are the pinned spec's captured examples (`openapi.json`, 2026-11-11; the listed
+ * filer added); holdings, changes, insider trades and IPOs are written in the contract's shape.
  */
 import type {
     V2DocumentVersionResponse,
+    V2FilersResponse,
     V2FilingDetailResponse,
+    V2FilingSearchResponse,
     V2FilingsResponse,
     V2HoldingChangesResponse,
     V2HoldingsResponse,
@@ -307,5 +310,70 @@ export const V2_IPOS: V2IposResponse = {
     ],
     has_more: false,
     meta: {},
+    next_cursor: null,
+};
+
+/** `GET /v1/filers?q=` (the spec example + a listed filer): one page, no cursor. */
+export const V2_FILERS: V2FilersResponse = {
+    data: [
+        {
+            cik: "0001453746",
+            entity_type: "other",
+            forms: [],
+            listing: null,
+            name: "ADAMS STREET TRUEST - BERKSHIRE FUND V LP Zinc Series",
+            phase: null,
+            sic: null,
+            stated_tickers: [],
+        },
+        {
+            cik: "0001067983",
+            entity_type: "operating",
+            forms: ["10-K", "13F-HR"],
+            listing: { exchange: "XNYS", ticker: "BRK-B" },
+            name: "BERKSHIRE HATHAWAY INC",
+            phase: "public",
+            sic: "6331",
+            stated_tickers: ["BRK-A", "BRK-B"],
+        },
+    ],
+    has_more: false,
+    meta: { coverage: { state: "complete" } },
+    next_cursor: null,
+};
+
+/** `GET /v1/search/filings?q=supply%20chain%20risk&company=AAPL` (the spec example): a partial index. */
+export const V2_FILING_SEARCH: V2FilingSearchResponse = {
+    data: [{
+        accession: "0000320193-25-000079",
+        citation: {
+            accession: "0000320193-25-000079",
+            filename: "aapl-20250927.htm",
+            source: { url: "https://storage.invinite.com/sec/18cf21cf542b9c42832192ccfdaef882/aapl-20250927.htm" },
+            version_id: "d7bbe5c0-8708-521f-a720-15ef6d1bd1fa",
+        },
+        document_spans: [{ blocks: [{ block_id: "b00136", end: 351, start: 345 }], document_end: 41836, document_start: 41830, end: 734, start: 728 }],
+        filename: "aapl-20250927.htm",
+        filing_date: "2025-10-31",
+        form: "10-K",
+        match: { lexical_rank: 1, spans: [{ end: 13, start: 7 }], type: "lexical" },
+        score: 0.01276426,
+        text: "Global supply chain disruptions can materially adversely affect the Company’s business.",
+        version_id: "d7bbe5c0-8708-521f-a720-15ef6d1bd1fa",
+    }],
+    has_more: false,
+    meta: {
+        coverage: { state: "partial" },
+        index: {
+            completeness: "partial",
+            forms_indexed: ["10-K*"],
+            hint: null,
+            lexical: { failed: 0, indexed: 31, not_indexed_by_policy: 6, pending: 0, state: "ready" },
+            matches: null,
+            reasons: ["held_gap"],
+        },
+        mode: "lexical",
+        query: "supply chain risk",
+    },
     next_cursor: null,
 };

@@ -12,7 +12,7 @@ export const Route = createFileRoute("/$ticker/financials-standardized/")({
     component: StandardizedFinancialsPage,
 });
 
-/** Periods per page of `/v2/financials/standardized*` (one row per period; "Load more" adds older ones). */
+/** Periods per page of `/v1/financials/standardized*` (one row per period; "Load more" adds older ones). */
 const STATEMENT_PAGE = 8;
 
 const VIEW_SUBTITLES: Record<V2FinancialsView, string> = {
@@ -30,7 +30,7 @@ function StandardizedFinancialsPage() {
 
     const [view, setView] = React.useState<V2FinancialsView>("presentation");
 
-    // `/v2/financials/standardized[/detailed|/presentation]?company=<ticker>&statement=<one>&period=<type>`, newest first.
+    // `/v1/financials/standardized[/detailed|/presentation]?company=<ticker>&statement=<one>&period=<type>`, newest first.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2FinancialsInfinite({
         basis: "standardized",
         company: ticker,

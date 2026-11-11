@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { LiveDot } from "@/routes/$ticker/earnings-calls/-components/live-dot";
 
 /**
- * The "Live" switch (default off): on = new items arrive over `news.live` and join the top of the list. The state pill
+ * The "Live" switch (default off): on = new items arrive over the stream's `news` channel and join the top of the list. The state pill
  * says whether the subscription is up; a stop (plan, connection limit, not enabled) turns the switch off and the page
  * shows why.
  */

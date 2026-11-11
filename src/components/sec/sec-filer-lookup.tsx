@@ -2,16 +2,16 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { Search } from "lucide-react";
 import * as React from "react";
 
-import type { SecFilersResponse } from "@/lib/api/types";
+import type { V2FilersResponse } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSecFilers } from "@/lib/api/queries";
-import { isGenuineEmpty } from "@/lib/sec/readiness";
-import { recordOf, textOf } from "@/lib/sec/source";
+import { useV2Filers } from "@/lib/api/queries";
+import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 
+import { PHASE_LABELS } from "./sec-filer-views";
 import { SecReadinessNotice } from "./sec-readiness-notice";
 
 const CIK_PATTERN = /^\d{1,10}$/;
@@ -24,42 +24,41 @@ export function cikOf(input: string): null | string {
 }
 
 /** The name matches (pure): each opens `/sec/$cik` — a filer without a ticker included, never a fake `$ticker`. */
-export function SecFilerMatches({ data, error, isLoading }: { data: null | SecFilersResponse; error: unknown; isLoading: boolean }) {
+export function SecFilerMatches({ data, error, isLoading }: { data: null | V2FilersResponse; error: unknown; isLoading: boolean }) {
     if (error) return <SecReadinessNotice error={error} title="Filer lookup failed" />;
 
     if (isLoading && !data) return <Skeleton className="h-16 w-full" />;
 
     if (!data) return null;
 
-    const matches = data.matches ?? [];
+    const matches = data.data;
 
     return (
         <div className="flex flex-col gap-2">
-            <SecReadinessNotice readiness={data.readiness} />
+            <SecReadinessNotice coverage={data.meta.coverage} />
             {matches.length === 0
-                ? (isGenuineEmpty(data.readiness) && <div className="text-muted-foreground text-xs">No SEC filer matches this name.</div>)
+                ? (isV2GenuineEmpty(data.meta.coverage) && <div className="text-muted-foreground text-xs">No SEC filer matches this name.</div>)
                 : (
                         <ul className="flex flex-col gap-1">
                             {matches.map((match) => {
-                                const { cik } = match;
+                                // The registry pads the CIK to 10 digits; the page URL takes it without the zeros.
+                                const cik = cikOf(match.cik);
 
                                 if (!cik) return null;
 
-                                const tickers = match.stated_tickers ?? [];
-
-                                const scope = textOf(recordOf(match.scope), "status");
+                                const tickers = match.listing ? [match.listing.ticker] : match.stated_tickers;
 
                                 return (
                                     <li className="flex flex-wrap items-center gap-2 text-sm" key={cik}>
                                         <Link className="font-medium underline-offset-4 hover:underline" params={{ cik }} to="/sec/$cik">
-                                            {match.name ?? `CIK ${cik}`}
+                                            {match.name || `CIK ${cik}`}
                                         </Link>
                                         <span className="text-muted-foreground text-xs tabular-nums">{`CIK ${cik}`}</span>
                                         {tickers.length > 0
                                             ? tickers.map(ticker => <Badge key={ticker} variant="secondary">{ticker}</Badge>)
                                             : <Badge variant="outline">No ticker</Badge>}
                                         {match.entity_type && <span className="text-muted-foreground text-xs">{match.entity_type}</span>}
-                                        {scope && scope !== "eligible" && <Badge variant="outline">{scope.replaceAll("_", " ")}</Badge>}
+                                        {match.phase && <Badge variant="outline">{PHASE_LABELS[match.phase]}</Badge>}
                                     </li>
                                 );
                             })}
@@ -70,7 +69,7 @@ export function SecFilerMatches({ data, error, isLoading }: { data: null | SecFi
 }
 
 /**
- * Find an SEC filer by CIK or name (`/v1/sec/filers`, 1 credit): pre-IPO issuers, SPACs and 13F managers without an
+ * Find an SEC filer by CIK or name (`/v1/filers?q=`, one page of ≤ 50): pre-IPO issuers, SPACs and 13F managers without an
  * exchange listing are reachable here, outside the `$ticker` pages.
  */
 export function SecFilerLookup() {
@@ -80,7 +79,7 @@ export function SecFilerLookup() {
 
     const [name, setName] = React.useState("");
 
-    const { data, error, isFetching } = useSecFilers({ limit: 20, name });
+    const { data, error, isFetching } = useV2Filers({ limit: 20, q: name });
 
     const submit = (event: React.FormEvent) => {
         event.preventDefault();

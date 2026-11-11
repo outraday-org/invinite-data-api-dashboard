@@ -2,7 +2,7 @@
  * The live transcript's state, as a PURE reducer. Ported from the admin console
  * (`invinite/admin-dashboard/src/components/earnings-calls/live-transcript-reducer.ts`,
  * with its suite) — keep the two in step. The admin console feeds it a REST backlog + Ably;
- * here `use-live-transcript.ts` feeds it the `/v1/ws` `earnings-calls.live` frames: replayed
+ * here `use-live-transcript.ts` feeds it the `/v1/stream` `events.live` frames: replayed
  * and live `transcript_segment`s are `final` / `partial`, `speaker_names` is `speakerNames`,
  * and a `backlog` with no segments marks the subscription start, the call's end and an
  * accepted gap (the API already reorders finals and reports each jump as a `gap` frame).

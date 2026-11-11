@@ -15,13 +15,13 @@ import {
 } from "./ws-frames";
 
 /**
- * The live transcript of one call over the data API's `/v1/ws` channel `earnings-calls.live`
+ * The live transcript of one call over the data API's `/v1/stream` channel `events.live`
  * (modelled on the admin console's `use-live-transcript.ts`, which reads a REST backlog + Ably).
  *
  * ─────────────────────────────────────────────────────────────────────────────
  * THE BROWSER OPENS THE SOCKET WITH THE STORED API KEY (owner decision 2026-10-09).
  *
- * `wss://<api>/v1/ws?api_key=<key>` — the one place the key leaves the server functions. This
+ * `wss://<api>/v1/stream?api_key=<key>` — the one place the key leaves the server functions. This
  * app runs on Netlify (serverless), which cannot hold a long-lived server-side socket, and the
  * key is the user's own and already in this browser's localStorage. The URL is never logged
  * and never put in an error. A key change (`apiKeyUpdatedAt`) closes the socket and opens a
@@ -72,7 +72,7 @@ function reconnectDelayMs(attempt: number) {
 
 const LIVE_TRANSCRIPT_TIER_TEXT = "PRO plan required for the live transcript";
 
-/** `/v1/ws` admission close codes (IDA `routes/websocket/filings.ts`): final, no reconnect. */
+/** `/v1/stream` admission close codes (IDA `routes/websocket/filings.ts`): final, no reconnect. */
 const ADMISSION_CLOSE_TEXT: Partial<Record<number, string>> = {
     4001: "The API key was rejected by the live transcript",
     4003: LIVE_TRANSCRIPT_TIER_TEXT,

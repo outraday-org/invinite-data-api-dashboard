@@ -1,17 +1,17 @@
 import { ExternalLink, FileText, Search } from "lucide-react";
 import * as React from "react";
 
-import type { SecSearchHit, SecSearchMode, SecSearchResponse } from "@/lib/api/types";
+import type { SecSearchMode, V2FilingSearchHit, V2FilingSearchResponse } from "@/lib/api/types";
 
 import { HighlightedText, SearchCoverageNote, SpanHighlightedText } from "@/components/search/search-highlight";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSecSearchInfinite } from "@/lib/api/queries";
+import { useV2FilingSearchInfinite } from "@/lib/api/queries";
 import { MATCH_TYPE_LABELS, SEARCH_MODE_LABELS, SEARCH_MODES } from "@/lib/earnings/labels";
-import { isGenuineEmpty } from "@/lib/sec/readiness";
-import { pageLabel, toSecHitView } from "@/lib/sec/source";
+import { isSearchGenuineEmpty } from "@/lib/sec/readiness";
+import { toSecHitView } from "@/lib/sec/source";
 
 import type { SecPanelTarget } from "./sec-source-panel";
 
@@ -24,13 +24,13 @@ const MIN_QUERY_LENGTH = 2;
 /** The lead of every SEC answer: cited passages, never facts or a prose answer. */
 export const SEC_SEARCH_LEAD = "Passages from SEC filings as filed, cited by document version and block — not verified facts.";
 
-/** 503 not_ready (`search_provider_not_registered`): search is off by owner decision until the index is built. */
+/** 503 `unavailable`: search is off (or down) until the index is built. */
 export const SEC_SEARCH_OFF = "SEC filing search is not switched on yet";
 
 const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
 
 function SecHitCard({ hit, mode, onOpen, query }: {
-    hit: SecSearchHit;
+    hit: V2FilingSearchHit;
     mode: SecSearchMode;
     onOpen: (target: SecPanelTarget) => void;
     query: string;
@@ -41,14 +41,7 @@ function SecHitCard({ hit, mode, onOpen, query }: {
 
     const text = hit.text ?? "";
 
-    const source = [
-        view.filerName ?? (view.filerCik ? `CIK ${view.filerCik}` : null),
-        view.form,
-        view.filingDate,
-        view.filename,
-        // Search hits carry no quality block: the printed label is not trusted here, the ordinal is shown.
-        pageLabel(view.page, false),
-    ].filter(Boolean).join(" · ");
+    const source = [view.form, view.filingDate, view.filename].filter(Boolean).join(" · ");
 
     const { blockId, versionId } = view;
 
@@ -91,9 +84,10 @@ function SecHitCard({ hit, mode, onOpen, query }: {
 }
 
 /**
- * The answer body (pure): every loaded page's hits, the coverage note of the last page, a readiness notice for a
- * pending / partial answer, "No passages found" only for a ready answer with complete coverage, "More results"
- * while `next_cursor` is set. An error is its state (503 not_ready = search not switched on), never an empty list.
+ * The answer body (pure): every loaded page's hits, the index coverage note of the last page (`meta.index`), a notice
+ * for a pending / partial page (`meta.coverage`), "No passages found" only for a complete answer with a complete
+ * index, "More results" while `next_cursor` is set. An error is its state (503 `unavailable` = search not switched
+ * on), never an empty list.
  */
 export function SecSearchResults({
     error,
@@ -111,7 +105,7 @@ export function SecSearchResults({
     isLoading: boolean;
     onMore: () => void;
     onOpen: (target: SecPanelTarget) => void;
-    pages: ReadonlyArray<SecSearchResponse>;
+    pages: ReadonlyArray<V2FilingSearchResponse>;
     query: string;
 }) {
     if (error && pages.length === 0) {
@@ -124,17 +118,17 @@ export function SecSearchResults({
 
     if (!last) return null;
 
-    const hits = pages.flatMap(page => page.hits ?? []);
+    const hits = pages.flatMap(page => page.data);
 
-    const coverage = last.coverage ?? null;
+    const searchIndex = last.meta.index ?? null;
 
-    const mode = last.mode ?? "lexical";
+    const mode = last.meta.mode ?? "lexical";
 
     return (
         <>
-            <SecReadinessNotice readiness={last.readiness} titles={{ not_ready: SEC_SEARCH_OFF }} />
+            <SecReadinessNotice coverage={last.meta.coverage} />
             {hits.length === 0
-                ? (isGenuineEmpty(last.readiness, coverage ?? { completeness: "unknown" }) && <div className="text-muted-foreground">No passages found</div>)
+                ? (isSearchGenuineEmpty(last.meta.coverage, searchIndex) && <div className="text-muted-foreground">No passages found</div>)
                 : (
                         <ul className="flex flex-col gap-2">
                             {hits.map((hit, index) => (
@@ -149,7 +143,7 @@ export function SecSearchResults({
                             ))}
                         </ul>
                     )}
-            <SearchCoverageNote coverage={coverage ?? { completeness: "unknown", reasons: [] }} />
+            <SearchCoverageNote coverage={searchIndex ?? { completeness: "unknown", reasons: [] }} />
             {error ? <SecReadinessNotice error={error} title="Failed to load more results" /> : null}
             {hasNextPage && (
                 <Button className="self-center" disabled={isFetchingNextPage} onClick={onMore} size="sm" type="button" variant="outline">
@@ -161,11 +155,11 @@ export function SecSearchResults({
 }
 
 /**
- * SEC filing search over one filer (`/v1/sec/search?cik=`, 100 credits a page): keywords (`lexical`, default) or exact
+ * SEC filing search over one company (`/v1/search/filings?company=`, 100 credits a page): keywords (`lexical`, default) or exact
  * text (`literal`, + "Match case"). Runs on submit; a mode chip re-runs the submitted query. A hit opens its cited
  * version / block in the source panel.
  */
-export function SecFilingSearch({ cik, onOpen }: { cik: null | string; onOpen: (target: SecPanelTarget) => void }) {
+export function SecFilingSearch({ company, onOpen }: { company: string; onOpen: (target: SecPanelTarget) => void }) {
     const [draft, setDraft] = React.useState("");
 
     const [query, setQuery] = React.useState("");
@@ -174,16 +168,16 @@ export function SecFilingSearch({ cik, onOpen }: { cik: null | string; onOpen: (
 
     const [matchCase, setMatchCase] = React.useState(true);
 
-    const result = useSecSearchInfinite({
-        caseSensitive: mode === "literal" ? (matchCase ? "true" : "false") : undefined,
-        cik: cik ?? undefined,
+    const result = useV2FilingSearchInfinite({
+        caseSensitive: mode === "literal" ? matchCase : undefined,
+        // No company = no request (a search must stay scoped to this company).
+        company,
         limit: SEARCH_LIMIT,
         mode,
-        // No CIK = no request (a search must stay scoped to this company).
-        q: cik ? query : "",
+        q: query,
     });
 
-    const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH && Boolean(cik);
+    const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH && company.trim().length > 0;
 
     const submit = (event: React.FormEvent) => {
         event.preventDefault();
@@ -232,7 +226,6 @@ export function SecFilingSearch({ cik, onOpen }: { cik: null | string; onOpen: (
                 )}
                 <span className="text-muted-foreground ml-auto text-[0.625rem]">100 credits per search page</span>
             </div>
-            {!cik && <div className="text-muted-foreground text-xs">Looking up the company&apos;s CIK…</div>}
             {query && (
                 <>
                     <div className="text-muted-foreground text-xs">{SEC_SEARCH_LEAD}</div>

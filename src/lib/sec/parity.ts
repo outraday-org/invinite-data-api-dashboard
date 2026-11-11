@@ -1,10 +1,9 @@
 /**
- * The `$ticker/filings` list on `/v2/filings` (backend tasks/data-api-v2 task 6; before it `/v1/sec/filings`, which
- * replaced the retired legacy filings family in delivery-integration task 7):
+ * The `$ticker/filings` list on `/v1/filings` (backend tasks/data-api-v2 task 6, served under `/v1` since task 12):
  * - a row: `accession`→accession number, `form`→form type, `filing_date`, `report_date`→period end;
- * - fiscal / calendar year + quarter: the `/v1/company/fiscal-periods` period whose `period_end` = `report_date`;
+ * - fiscal / calendar year + quarter: the `/v1/fiscal-periods` period whose `period_end` = `report_date`;
  * - the form-type picker: `meta.form_facet[].form`;
- * - the HTML view: the primary document's public `source_url` of `/v2/filings/{accession}?expand=documents`, loaded
+ * - the HTML view: the primary document's public `source_url` of `/v1/filings/{accession}?expand=documents`, loaded
  *   when a row is opened.
  */
 import type { CompanyFiscalPeriod, V2Filing, V2FormFacet } from "@/lib/api/types";
@@ -31,7 +30,7 @@ export function fiscalPeriodIndex(periods: ReadonlyArray<CompanyFiscalPeriod>): 
     return new Map(periods.map(period => [period.period_end.slice(0, 10), period]));
 }
 
-/** One `/v2/filings` row as the list shows it; null = not listable (no accession / form / filing date). */
+/** One `/v1/filings` row as the list shows it; null = not listable (no accession / form / filing date). */
 export function toFilingListRow(row: V2Filing, periods: ReadonlyMap<string, CompanyFiscalPeriod>): FilingListRow | null {
     if (!row.accession || !row.form || !row.filing_date) return null;
 

@@ -9,7 +9,7 @@ import { formatStartedAgo } from "@/lib/earnings/format";
 import { EventLink } from "./event-link";
 import { LiveDot } from "./live-dot";
 
-/** "Live now": events being captured right now (`/v2/events?status=live&type=all`, refetched every 15 s); hidden when none. */
+/** "Live now": events being captured right now (`/v1/events?status=live&type=all`, refetched every 15 s); hidden when none. */
 export function LiveNowStrip() {
     const { data, dataUpdatedAt, error } = useV2LiveEvents();
 
