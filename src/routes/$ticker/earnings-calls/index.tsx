@@ -23,6 +23,7 @@ import { CallTime } from "./-components/call-time";
 import { EventLink } from "./-components/event-link";
 import { EventTypeBadge } from "./-components/event-type-badge";
 import { EventsTable } from "./-components/events-table";
+import { LiveNowStrip } from "./-components/live-now-strip";
 
 export const Route = createFileRoute("/$ticker/earnings-calls/")({
     component: EarningsCallsPage,
@@ -164,6 +165,11 @@ function EarningsCallsPage() {
                     )
                 : (
                         <div className="flex flex-col h-0 grow gap-2">
+                            {/* Only while this company has an event live; nothing otherwise. */}
+                            <div className="shrink-0">
+                                <LiveNowStrip ticker={ticker} />
+                            </div>
+
                             {/* Company-wide search: transcripts ("Search this call", hits link to their call) or documents. */}
                             <div className="shrink-0 max-h-[45vh] overflow-y-auto flex flex-col gap-1">
                                 <Tabs onValueChange={value => setSearchScope(value as SearchScope)} value={searchScope}>

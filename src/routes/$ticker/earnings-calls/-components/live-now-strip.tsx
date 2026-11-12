@@ -9,11 +9,17 @@ import { formatStartedAgo } from "@/lib/earnings/format";
 import { EventLink } from "./event-link";
 import { LiveDot } from "./live-dot";
 
-/** "Live now": events being captured right now (`/v1/events?status=live&type=all`, refetched every 15 s); hidden when none. */
-export function LiveNowStrip() {
+/**
+ * "Live now": events being captured right now (`/v1/events?status=live&type=all`, refetched every 15 s); hidden when none.
+ * With `ticker` only that company's live events (matched by symbol, the market-wide answer filtered: one shared query),
+ * and an error is silent — the strip exists there only while the company is live.
+ */
+export function LiveNowStrip({ ticker }: { ticker?: string } = {}) {
     const { data, dataUpdatedAt, error } = useV2LiveEvents();
 
     if (error) {
+        if (ticker) return null;
+
         return (
             <div className="text-muted-foreground text-xs">
                 {isTierError(error)
@@ -23,7 +29,9 @@ export function LiveNowStrip() {
         );
     }
 
-    const events: Array<V2Event> = data?.data ?? [];
+    const symbol = ticker?.toUpperCase();
+
+    const events: Array<V2Event> = (data?.data ?? []).filter(event => !symbol || event.symbol.toUpperCase() === symbol);
 
     if (events.length === 0) return null;
 
