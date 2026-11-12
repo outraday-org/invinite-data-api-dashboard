@@ -12,11 +12,11 @@ type FiscalFields = Pick<V2Event, "fiscal_quarter" | "fiscal_year">;
 type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 
 /**
- * "Oct 29, 2026 · 4:30 PM ET" in the company's timezone; only the date ("Oct 29, 2026")
- * when the start time is unknown (`call_time_source === null`: a date-only event's
- * `scheduled_at` is midnight UTC of its calendar date — read it in UTC, never in `tz`).
+ * "Oct 29, 2026 · 4:30 PM ET" in the viewer's timezone (`timeZone`, default = the browser's), never the
+ * company's `tz`; only the date ("Oct 29, 2026") when the start time is unknown (`call_time_source === null`:
+ * a date-only event's `scheduled_at` is midnight UTC of its calendar date — read it in UTC).
  */
-export function formatCallTime(event: CallTimeFields) {
+export function formatCallTime(event: CallTimeFields, timeZone?: string) {
     const at = new Date(event.scheduled_at);
 
     if (Number.isNaN(at.getTime())) return event.scheduled_at;
@@ -24,7 +24,7 @@ export function formatCallTime(event: CallTimeFields) {
     const date = new Intl.DateTimeFormat("en-US", {
         day: "numeric",
         month: "short",
-        timeZone: event.call_time_source === null ? "UTC" : event.tz,
+        timeZone: event.call_time_source === null ? "UTC" : timeZone,
         year: "numeric",
     }).format(at);
 
@@ -33,7 +33,7 @@ export function formatCallTime(event: CallTimeFields) {
     const time = new Intl.DateTimeFormat("en-US", {
         hour: "numeric",
         minute: "2-digit",
-        timeZone: event.tz,
+        timeZone,
         timeZoneName: "shortGeneric",
     }).format(at).replace(/\u202F/g, " "); // ICU's narrow no-break space before AM / PM
 

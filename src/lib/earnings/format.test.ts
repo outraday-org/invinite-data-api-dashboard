@@ -22,9 +22,19 @@ describe("formatCallTime", () => {
             call_time_source: "wire",
             scheduled_at: "2026-10-29T20:30:00.000Z",
             tz: "America/New_York",
-        });
+        }, "America/New_York");
 
         expect(value).toBe("Oct 29, 2026 · 4:30 PM ET");
+    });
+
+    it("shows a timed call in the viewer's zone, not the company's tz", () => {
+        const value = formatCallTime({
+            call_time_source: "wire",
+            scheduled_at: "2026-11-11T12:00:00.000Z",
+            tz: "Asia/Taipei",
+        }, "Europe/Berlin");
+
+        expect(value).toBe("Nov 11, 2026 · 1:00 PM Germany Time");
     });
 
     it("shows a date-only event's UTC calendar date, never the previous day in tz", () => {

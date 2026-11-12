@@ -82,7 +82,7 @@ export function CalendarReportCell({ calendar }: { calendar: null | undefined | 
 }
 
 /**
- * The call column: the existing call time (company zone) with the call's time quality and source type, or "No call"
+ * The call column: the call time (viewer's zone) with the call's time quality and source type, or "No call"
  * for a report-only event (never a time taken from the release).
  */
 export function CalendarCallCell({ event }: { event: V2Event }) {
