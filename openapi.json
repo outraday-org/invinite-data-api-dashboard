@@ -2,8 +2,8 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Invinite API",
-    "description": "Invinite financial data API. Each operation has a base credit cost: `x-credits` is the base cost; responses add 1 credit per started 1,000 rows beyond the first 1,000; `X-Credits-Charged` reports the final debit and `X-Credits-Remaining` what is left of the plan's included credits after it. A `304 Not Modified` costs nothing. `GET /v1/me/usage` returns your account's usage by day, product family and key (it costs no credits).\n\n**Coverage.** Financial data covers SEC registrants and US listings; a foreign suffix (`SAP.DE`, `VOD.L`) or a crypto pair (`X:BTCUSD`) is not a known company and answers 404. A known company with no data in a family (for example no statements yet) answers 404 with `code: not_covered`; an empty page of a covered company stays 200 with an empty list. `GET /v1/companies` lists every known company.\n\n## Webhooks\n\nAccounts on LITE and above subscribe with `POST /v1/webhooks` to the `event.*` lifecycle events (filtered by company) and, on STANDARD and above, to `news.published` (one delivery per new news item, filtered by the companies it mentions); see `x-webhooks` for each `data` object. What a subscription may hold depends on the plan (a create / update beyond it is refused with the plan's limit; `event.test` needs no subscription — the test route and the disabled notice send it to any subscription):\n\n| Plan | Webhooks | Events | CIKs per webhook | Keywords per webhook |\n|---|---|---|---|---|\n| FREE | 0 | — | — | — |\n| LITE | 5 | `.scheduled`, `.rescheduled`, `.started`, `.ended`, `.transcript_ready`, `.assets_ready` | ≤ 10 | — |\n| STANDARD | 15 | LITE + `.transcript_provisional`, `.transcript_corrected`, `.documents_updated`, `news.published` | ≤ 25 | — |\n| PRO / ENTERPRISE | 50 | STANDARD + `.guidance_flash`, `.keyword_hit` | ≤ 100 | ≤ 20 (on ≤ 10 webhooks) |\n\nEvery delivery is a `POST` with `Content-Type: application/json`, `X-Invinite-Event`, `X-Invinite-Delivery` and `X-Invinite-Signature: t=<unix seconds>,v1=<hex>` where `v1` = HMAC-SHA256(secret, `<t>.<raw body>`); during a secret rotation the header carries one `v1` per valid secret. Reject a signature older than 5 minutes. Any 2xx within 10 s acknowledges; redirects are not followed. A failed delivery is retried after 1 min, 5 min, 30 min, 2 h, 6 h, 12 h, 24 h (8 attempts in all, the same delivery id each time). A subscription is disabled after 8 consecutive dead-lettered deliveries (a final `event.test` with `notice: subscription_disabled` is sent). Deliveries are at-least-once and unordered: dedupe on the delivery id, order by `created_at`.\n\n## Licensing\n\n| Tier | display | redistribute | rag | train | audio | resell |\n| --- | --- | --- | --- | --- | --- | --- |\n| FREE | ✓ | – | – | – | – | – |\n| LITE | ✓ | – | – | – | – | – |\n| STANDARD | ✓ | – | ✓ | – | – | – |\n| PRO | ✓ | ✓ | ✓ | – | ✓ | – |\n\nInvinite data may be shown and, from PRO, redistributed inside the licensee's own product with attribution (\"Source: Invinite\" on screen or in the API response that carries it). It may never be resold, relicensed, white-labelled or offered as a data feed as the licensee's own data, at any tier, under any contract.\n\nPolicy version: 2026-10-draft. Draft — pending counsel sign-off.\n\nAudio files carry a forensic watermark that identifies the recording. Audio is subject to per-company takedown and may not be re-hosted.\n\nSEC data: Figures and filings originate from SEC EDGAR; the standardisation, mapping and derived metrics are Invinite's.\n\nNews: News text is Invinite's own summary of the issuer's or the SEC's publication (the publisher's text and media are never served); the licensee shows the attribution (publisher, source URL and date) next to it; the resale rule applies.\n\nPDF documents: Branded PDFs of transcripts and news items are permanent URLs to one shared file per version. They may be shown, downloaded and forwarded unmodified with the notice page intact; the resale rule applies unchanged. News PDFs carry Invinite's summary of the issuer's or the SEC's publication under the attribution stated on their notice page; a PDF disappears when the item is taken down or its source's reuse is denied.\n\nEvery `/v1/*` data operation carries `x-license`, the minimum use right its data ships with; `GET /status/licensing` serves the same matrix per route, rendered at [data.invinite.com/docs/licensing](https://data.invinite.com/docs/licensing). `/v1/me` and `/v1/me/usage` serve no licensed data and carry none.\n\n## Status\n\n[`/status`](/status) reports whether each product family works (a status and its uptime over 7, 30 and 90 days); [`/status/licensing`](/status/licensing) serves the licensing matrix per route. The status routes need no API key and are cached for 5 minutes. The public status page is [status.data.invinite.com](https://status.data.invinite.com): a snapshot of `/status` every 15 minutes plus an external reachability probe of the API.\n\nUptime is the share of requests answered without a server error, measured by the API per product family; a window with too little traffic to judge shows no figure. Status reflects the last 24 hours.\n\nProduct families: Company, Financials, SEC Filings, Insider Trades, Institutional Ownership, IPOs, Market, Metadata, Earnings Calls, News, WebSocket, Account.",
-    "version": "2026-11-11"
+    "description": "Invinite financial data API. Each operation has a base credit cost: `x-credits` is the base cost; responses add 1 credit per started 1,000 rows beyond the first 1,000; `X-Credits-Charged` reports the final debit and `X-Credits-Remaining` what is left of the plan's included credits after it. A `304 Not Modified` costs nothing. `GET /v1/me/usage` returns your account's usage by day, product family and key (it costs no credits).\n\n**Coverage.** Financial data covers US SEC registrants and their US listings; a symbol that is not a US SEC registrant (or a crypto pair such as `X:BTCUSD`) is not a known company and answers 404. A known company with no data in a family (for example no statements yet) answers 404 with `code: not_covered`; an empty page of a covered company stays 200 with an empty list. `GET /v1/companies` lists every known company.\n\n## Webhooks\n\nAccounts on LITE and above subscribe with `POST /v1/webhooks` to the `event.*` lifecycle events (filtered by company) and, on STANDARD and above, to `news.published` (one delivery per new news item, filtered by the companies it mentions); see `x-webhooks` for each `data` object. What a subscription may hold depends on the plan (a create / update beyond it is refused with the plan's limit; `event.test` needs no subscription — the test route and the disabled notice send it to any subscription):\n\n| Plan | Webhooks | Events | CIKs per webhook | Keywords per webhook |\n|---|---|---|---|---|\n| FREE | 0 | — | — | — |\n| LITE | 5 | `.scheduled`, `.rescheduled`, `.started`, `.ended`, `.transcript_ready`, `.assets_ready` | ≤ 10 | — |\n| STANDARD | 15 | LITE + `.transcript_provisional`, `.transcript_corrected`, `.documents_updated`, `news.published` | ≤ 25 | — |\n| PRO / ENTERPRISE | 50 | STANDARD + `.guidance_flash`, `.keyword_hit` | ≤ 100 | ≤ 20 (on ≤ 10 webhooks) |\n\nEvery delivery is a `POST` with `Content-Type: application/json`, `X-Invinite-Event`, `X-Invinite-Delivery` and `X-Invinite-Signature: t=<unix seconds>,v1=<hex>` where `v1` = HMAC-SHA256(secret, `<t>.<raw body>`); during a secret rotation the header carries one `v1` per valid secret. Reject a signature older than 5 minutes. Any 2xx within 10 s acknowledges; redirects are not followed. A failed delivery is retried after 1 min, 5 min, 30 min, 2 h, 6 h, 12 h, 24 h (8 attempts in all, the same delivery id each time). A subscription is disabled after 8 consecutive dead-lettered deliveries (a final `event.test` with `notice: subscription_disabled` is sent). Deliveries are at-least-once and unordered: dedupe on the delivery id, order by `created_at`.\n\n## Licensing\n\n| Tier | display | redistribute | rag | train | audio | resell |\n| --- | --- | --- | --- | --- | --- | --- |\n| FREE | ✓ | – | – | – | – | – |\n| LITE | ✓ | – | – | – | – | – |\n| STANDARD | ✓ | – | ✓ | – | – | – |\n| PRO | ✓ | ✓ | ✓ | – | ✓ | – |\n\nInvinite data may be shown and, from PRO, redistributed inside the licensee's own product with attribution (\"Source: Invinite\" on screen or in the API response that carries it). It may never be resold, relicensed, white-labelled or offered as a data feed as the licensee's own data, at any tier, under any contract.\n\nPolicy version: 2026-10-draft. Draft — pending counsel sign-off.\n\nAudio files carry a forensic watermark that identifies the recording. Audio is subject to per-company takedown and may not be re-hosted.\n\nSEC data: Figures and filings originate from SEC EDGAR; the standardisation, mapping and derived metrics are Invinite's.\n\nNews: News text is Invinite's own summary of the issuer's or the SEC's publication (the publisher's text and media are never served); the licensee shows the attribution (publisher, source URL and date) next to it; the resale rule applies.\n\nPDF documents: Branded PDFs of transcripts and news items are permanent URLs to one shared file per version. They may be shown, downloaded and forwarded unmodified with the notice page intact; the resale rule applies unchanged. News PDFs carry Invinite's summary of the issuer's or the SEC's publication under the attribution stated on their notice page; a PDF disappears when the item is taken down or its source's reuse is denied.\n\nEvery `/v1/*` data operation carries `x-license`, the minimum use right its data ships with; `GET /status/licensing` serves the same matrix per route, rendered at [data.invinite.com/docs/licensing](https://data.invinite.com/docs/licensing). `/v1/me` and `/v1/me/usage` serve no licensed data and carry none.\n\n## Status\n\n[`/status`](/status) reports whether each product family works (a status and its uptime over 7, 30 and 90 days); [`/status/licensing`](/status/licensing) serves the licensing matrix per route. The status routes need no API key and are cached for 5 minutes. The public status page is [status.data.invinite.com](https://status.data.invinite.com): a snapshot of `/status` every 15 minutes plus an external reachability probe of the API.\n\nUptime is the share of requests answered without a server error, measured by the API per product family; a window with too little traffic to judge shows no figure. Status reflects the last 24 hours.\n\nProduct families: Company, Financials, SEC Filings, Insider Trades, Institutional Ownership, IPOs, Market, Metadata, Earnings Calls, News, WebSocket, Account.",
+    "version": "2026-11-13"
   },
   "components": {
     "securitySchemes": {
@@ -446,8 +446,6 @@
           "sector",
           "industry",
           "sic",
-          "sic_sector",
-          "sic_industry",
           "fama_sector",
           "fama_industry",
           "exchange",
@@ -499,23 +497,15 @@
           },
           "sector": {
             "type": "string",
-            "description": "Sector classification"
+            "description": "Sector, from the issuer's SIC code (SEC mapping)"
           },
           "industry": {
             "type": "string",
-            "description": "Industry classification"
+            "description": "Industry, from the issuer's SIC code (SEC mapping)"
           },
           "sic": {
             "type": "string",
             "description": "SIC code"
-          },
-          "sic_sector": {
-            "type": "string",
-            "description": "SIC sector name"
-          },
-          "sic_industry": {
-            "type": "string",
-            "description": "SIC industry name"
           },
           "fama_sector": {
             "type": "string",
@@ -563,7 +553,7 @@
           "market_cap": {
             "type": "number",
             "nullable": true,
-            "description": "Market capitalization"
+            "description": "Market capitalization; null for ETFs (no AUM source)"
           },
           "shares_outstanding": {
             "type": "number",
@@ -5203,6 +5193,84 @@
                 "type": "boolean",
                 "nullable": true,
                 "description": "false = the owner disabled or restricted embedding (link `url`); null = not checked yet"
+              }
+            }
+          },
+          "results_filing": {
+            "type": "object",
+            "nullable": true,
+            "required": [
+              "accession",
+              "form",
+              "accepted_at",
+              "edgar_index_url"
+            ],
+            "description": "The results filing: the earnings 8-K / 6-K (or its first attributed filing) whose EDGAR acceptance stamped `results_released_at`. Read the document with the SEC filing operations by `accession`. null before the results are filed. Appended 2026-11",
+            "properties": {
+              "accession": {
+                "type": "string",
+                "description": "SEC accession number (0000320193-26-000024)"
+              },
+              "form": {
+                "type": "string",
+                "description": "Form type (8-K, 8-K/A, 6-K, 6-K/A)"
+              },
+              "accepted_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "EDGAR acceptance time (ISO 8601 UTC)"
+              },
+              "edgar_index_url": {
+                "type": "string",
+                "nullable": true,
+                "description": "The filing's EDGAR index page; null when the CIK is unknown"
+              }
+            }
+          },
+          "periodic_report": {
+            "type": "object",
+            "nullable": true,
+            "required": [
+              "accession",
+              "form",
+              "period_end",
+              "filing_date",
+              "accepted_at",
+              "edgar_index_url"
+            ],
+            "description": "The periodic report of the event's fiscal period: the 10-Q (10-QT) for a fiscal Q1–Q3, the 10-K (10-KT, 20-F, 40-F) for a fiscal Q4. null until it is filed and attributed; never an amendment. A foreign filer has none for Q1–Q3 (no quarterly form). Appended 2026-11",
+            "properties": {
+              "accession": {
+                "type": "string",
+                "description": "SEC accession number (0000320193-26-000024)"
+              },
+              "form": {
+                "type": "string",
+                "description": "Form type (10-Q, 10-QT, 10-K, 10-KT, 20-F, 40-F)"
+              },
+              "period_end": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "Period end the filing reports (YYYY-MM-DD)"
+              },
+              "filing_date": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "description": "SEC filing date (YYYY-MM-DD)"
+              },
+              "accepted_at": {
+                "type": "string",
+                "format": "date-time",
+                "nullable": true,
+                "description": "EDGAR acceptance time (ISO 8601 UTC)"
+              },
+              "edgar_index_url": {
+                "type": "string",
+                "nullable": true,
+                "description": "The filing's EDGAR index page; null when the CIK is unknown"
               }
             }
           },
@@ -11947,6 +12015,7 @@
           "status",
           "detail",
           "code",
+          "remedy",
           "request_id",
           "docs_url"
         ],
@@ -12042,6 +12111,11 @@
                 }
               }
             }
+          },
+          "remedy": {
+            "type": "string",
+            "description": "What to do next: one imperative sentence ending with a period, surface neutral (no CLI command, no HTTP status number). A per-code default when the operation gives none",
+            "example": "Pass a limit of at most 200, or walk the pages with next_cursor."
           },
           "request_id": {
             "type": "string",
@@ -12191,7 +12265,7 @@
                 },
                 "example": {
                   "status": "ok",
-                  "timestamp": "2026-11-08T12:01:37.982Z"
+                  "timestamp": "2026-11-13T06:48:43.244Z"
                 }
               }
             }
@@ -12412,23 +12486,35 @@
                   }
                 },
                 "example": {
-                  "generated_at": "2026-11-08T12:02:03.701Z",
+                  "generated_at": "2026-11-13T06:48:43.369Z",
                   "services": [
                     {
                       "family": "company",
                       "status": "operational",
-                      "uptime_7d": 0.956,
-                      "uptime_30d": 0.985,
-                      "uptime_90d": 0.985
+                      "uptime_7d": 1,
+                      "uptime_30d": 1,
+                      "uptime_90d": 1
                     }
                   ],
                   "universe": {
                     "companies": 6225,
                     "earnings_calls": {
                       "scope": "all",
-                      "companies": 5535
+                      "companies": 5532
                     }
-                  }
+                  },
+                  "groups": [
+                    {
+                      "group": "companies",
+                      "name": "Companies",
+                      "status": "operational",
+                      "uptime_7d": 1,
+                      "uptime_30d": 1,
+                      "uptime_90d": 1,
+                      "p50_ms_7d": 25,
+                      "p95_ms_7d": 1600
+                    }
+                  ]
                 }
               }
             }
@@ -12837,7 +12923,7 @@
                     "companies": 6225,
                     "earnings_calls": {
                       "scope": "all",
-                      "companies": 5535
+                      "companies": 5532
                     }
                   }
                 }
@@ -13044,7 +13130,19 @@
                   ],
                   "has_more": false,
                   "next_cursor": null,
-                  "meta": {}
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -13198,10 +13296,8 @@
                   "description": "Apple is among the largest companies in the world, with a broad portfolio of hardware and software products targeted at consumers and businesses. Apple's iPhone accounts for the majority of the firm's sales, and Apple's other products, such…",
                   "category": "",
                   "sector": "Technology",
-                  "industry": "Consumer Electronics",
-                  "sic": "",
-                  "sic_sector": "",
-                  "sic_industry": "",
+                  "industry": "Electronic Computers",
+                  "sic": "3571",
                   "fama_sector": null,
                   "fama_industry": null,
                   "exchange": "XNAS",
@@ -13214,9 +13310,9 @@
                   "market_cap": 4975383151340,
                   "shares_outstanding": 14532182000,
                   "insider_own_pct": 0.06,
-                  "insider_own_shares": 9335365,
-                  "inst_own_pct": 63.09,
-                  "inst_own_shares": 9168782400,
+                  "insider_own_shares": 9332966,
+                  "inst_own_pct": 63.38,
+                  "inst_own_shares": 9211218265,
                   "short_float_pct": 0.91,
                   "short_float_shares": 131591865,
                   "homepage_url": "https://www.apple.com",
@@ -13229,7 +13325,16 @@
                   "city": "CUPERTINO",
                   "state": "California",
                   "zip_code": "95014",
-                  "country_code": "US"
+                  "country_code": "US",
+                  "filer_cik": "0000320193",
+                  "coverage": {
+                    "families": [
+                      {
+                        "family": "financials",
+                        "through": "2026-09-26"
+                      }
+                    ]
+                  }
                 }
               }
             }
@@ -13498,7 +13603,15 @@
                   "next_cursor": null,
                   "meta": {
                     "coverage": {
-                      "state": "complete"
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
                     }
                   }
                 }
@@ -13653,7 +13766,16 @@
                   "state_of_incorporation": null,
                   "fiscal_year_end": "12-31",
                   "phase": null,
-                  "listing": null
+                  "listing": null,
+                  "lifecycle": null,
+                  "proposed_symbols": [],
+                  "former_names": [
+                    {
+                      "name": "VANGUARD GROUP INC",
+                      "until": null
+                    }
+                  ],
+                  "successors": []
                 }
               }
             }
@@ -13927,7 +14049,19 @@
                   ],
                   "has_more": false,
                   "next_cursor": null,
-                  "meta": {}
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -14310,7 +14444,7 @@
                     {
                       "event_id": "cfbcf4f8-6d4d-41ef-9197-1c91ff2aef8c",
                       "speaker_label": "spk00",
-                      "person_id": "6682be14-22ff-45d6-820e-c0018cdfc35f",
+                      "person_id": "1695c8d2-ce64-4c91-8de4-d9ec847e655e",
                       "name": "Operator",
                       "title": null,
                       "firm": null,
@@ -14327,7 +14461,19 @@
                   ],
                   "has_more": false,
                   "next_cursor": null,
-                  "meta": {}
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -14560,8 +14706,20 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDIwLTA5LTI2IDAwOjAwOjAwIiwiMzIwMTkzIiwyMDIwLDRdLCJmIjoiOTA2Zjg5ZTVmZGQ3NjEwYiJ9",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDIwLTA5LTI2IDAwOjAwOjAwIiwiMzIwMTkzIiwyMDIwLDRdLCJmIjoiNjExNjM5Y2FmYjU4ODM1ZCJ9",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -14838,8 +14996,20 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDIwLTExLTA2IDAwOjAwOjAwIiwiQUFQTCIsIkU4NjMxYWRkYTNkOTQ3NzlhOTBkMTRmNTNkNzdlZmUzZWVjODVkMGZkM2U2ZjlhMDY5ODQwN2I3ODdmZTc2MWZiIl0sImYiOiI5NjBkYTc0OWZkYmRiNmQ2In0",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDIwLTExLTA2IDAwOjAwOjAwIiwiQUFQTCIsIkU4NjMxYWRkYTNkOTQ3NzlhOTBkMTRmNTNkNzdlZmUzZWVjODVkMGZkM2U2ZjlhMDY5ODQwN2I3ODdmZTc2MWZiIl0sImYiOiI1NzY5ZmIyNTE5MzQ2YWY1In0",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -15066,7 +15236,19 @@
                   ],
                   "has_more": false,
                   "next_cursor": null,
-                  "meta": {}
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -15322,8 +15504,20 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI0LTEyLTI1IDAwOjAwOjAwIl0sImYiOiIxNTIzYTY1ZTcxY2EwMDE0In0",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI0LTEyLTI1IDAwOjAwOjAwIl0sImYiOiIwY2ZjYTJmYmVmYWRmM2YyIn0",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -15527,8 +15721,20 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyJic19kZWJ0X3NlY3VyaXRpZXNfbm9uY3VycmVudCJdLCJmIjoiMzcxNzcwMjgxZDVhMThjOSJ9",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyJic19kZWJ0X3NlY3VyaXRpZXNfbm9uY3VycmVudCJdLCJmIjoiZGI2ZDQzMjVjNjhhNDJlYSJ9",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -15730,8 +15936,20 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIxMC1RXHUwMDAwcGFydF9pLWl0ZW1fMiJdLCJmIjoiNTgyMTE0MzI2YTc1OTk4OSJ9",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIxMC1RXHUwMDAwcGFydF9pLWl0ZW1fMiJdLCJmIjoiOWZlNzBhNWRmMTMyYTIxMyJ9",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -15924,7 +16142,19 @@
                   ],
                   "has_more": false,
                   "next_cursor": null,
-                  "meta": {}
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -16116,7 +16346,19 @@
                   ],
                   "has_more": false,
                   "next_cursor": null,
-                  "meta": {}
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -16308,7 +16550,19 @@
                   ],
                   "has_more": false,
                   "next_cursor": null,
-                  "meta": {}
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -16529,7 +16783,7 @@
                           "global_order": 15
                         },
                         "kind": "period_derivation",
-                        "evaluation_order": 278,
+                        "evaluation_order": 294,
                         "ordered_alias_position": null,
                         "declared_taxonomy": null,
                         "alias_role": null,
@@ -16544,10 +16798,18 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyJic19hY2N1bXVsYXRlZF9vdGhlcl9jb21wcmVoZW5zaXZlX2luY29tZV9sb3NzXHUwMDAwcl8wMGQ4MjE4ZTQ2OGU2NDQ4MzA2ZDY5YzkiXSwiZiI6ImU0ZWM3ZWFiMWI4YjQ3YzAifQ",
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyJic19hY2N1bXVsYXRlZF9vdGhlcl9jb21wcmVoZW5zaXZlX2luY29tZV9sb3NzXHUwMDAwcl8wMGQ4MjE4ZTQ2OGU2NDQ4MzA2ZDY5YzkiXSwiZiI6ImVhZGQ2NTljNzMxZmM3OTQifQ",
                   "meta": {
                     "coverage": {
-                      "state": "complete"
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
                     }
                   }
                 }
@@ -16669,8 +16931,8 @@
                   },
                   "credits": {
                     "included": 4000000,
-                    "used": 170752,
-                    "remaining": 3829248,
+                    "used": 271017,
+                    "remaining": 3728983,
                     "resets_at": "2026-11-28T12:43:10.000Z",
                     "prepaid_balance_usd": 0
                   },
@@ -16802,13 +17064,13 @@
                   "period": {
                     "tier": "pro",
                     "included_credits": 4000000,
-                    "used_credits": 170752,
+                    "used_credits": 271017,
                     "resets_at": "2026-11-28T12:43:10.000Z",
                     "prepaid_balance_usd": 0
                   },
                   "daily": [
                     {
-                      "date": "2026-10-11",
+                      "date": "2026-10-15",
                       "requests": 0,
                       "credits": 0,
                       "errors": {
@@ -16822,19 +17084,19 @@
                   ],
                   "by_family": [
                     {
-                      "family": "earnings_calls",
-                      "label": "Earnings Calls",
-                      "requests": 200,
-                      "credits": 464
+                      "family": "sec_filings",
+                      "label": "SEC Filings",
+                      "requests": 6454,
+                      "credits": 199585
                     }
                   ],
                   "by_key": [
                     {
                       "caller": "key",
-                      "label": "test",
+                      "label": "Deleted key",
                       "key_hint": "invd_3f2...a91c",
-                      "requests": 317,
-                      "credits": 548
+                      "requests": 3081,
+                      "credits": 96434
                     }
                   ],
                   "truncated": false
@@ -17221,14 +17483,46 @@
                             "is_revenue_from_contract_with_customer": 478834000000,
                             "is_cost_of_revenue": 245232000000,
                             "is_cost_of_product_and_service_sold": 245232000000,
-                            "is_other_cost_of_revenue": 0,
                             "is_gross_profit": 233602000000,
                             "is_operating_expenses": 75539000000,
-                            "is_operating_costs_and_expenses": 50665000000,
+                            "is_operating_costs_and_expenses": 45765000000,
                             "is_research_and_development_expenses": 45765000000,
-                            "is_depreciation_and_amortization_expenses": 4900000000,
-                            "is_other_operating_costs_and_expenses": 0,
-                            "is_selling_general_and_administrative_expenses": 29774000000
+                            "is_selling_general_and_administrative_expenses": 29774000000,
+                            "is_selling_and_marketing_expenses": 21134000000,
+                            "is_general_and_administrative_expenses": 8640000000,
+                            "is_other_operating_expenses": 0
+                          }
+                        },
+                        "balance_sheet": {
+                          "facts": {
+                            "bs_total_assets": 404548000000,
+                            "bs_total_current_assets": 173857000000,
+                            "bs_cash_and_cash_equivalents_and_st_investments": 56722000000,
+                            "bs_cash_and_cash_equivalents": 36305000000,
+                            "bs_short_term_investments": 20417000000,
+                            "bs_total_receivables_current": 83713000000,
+                            "bs_accounts_and_financing_receivable_current": 43817000000,
+                            "bs_accounts_receivable_current": 43817000000,
+                            "bs_nontrade_receivables_current": 39896000000,
+                            "bs_inventory_current": 14541000000,
+                            "bs_other_current_assets": 18881000000,
+                            "bs_total_noncurrent_assets": 230691000000
+                          }
+                        },
+                        "cash_flow": {
+                          "facts": {
+                            "cfs_cash_from_operating_activities": 145097000000,
+                            "cfs_income_incl_noncontrolling_interest": 132175000000,
+                            "cfs_adjustments_to_reconcile_net_income_to_cash": 27780000000,
+                            "cfs_depreciation_depletion_and_amortization": 13423000000,
+                            "cfs_depreciation": 8700000000,
+                            "cfs_amortization_of_intangible_assets": 4900000000,
+                            "cfs_employee_benefit_and_share_based_compensation": 13789000000,
+                            "cfs_shared_based_compensation": 13789000000,
+                            "cfs_other_noncash_income_expense": 568000000,
+                            "cfs_changes_in_operating_capital": -728000000,
+                            "cfs_changes_in_operating_assets": -12899000000,
+                            "cfs_changes_in_receivables": -3994000000
                           }
                         }
                       }
@@ -17239,7 +17533,18 @@
                   "meta": {
                     "currency": "USD",
                     "basis": "standardized",
-                    "point_in_time": null
+                    "point_in_time": null,
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
                   }
                 }
               }
@@ -17638,23 +17943,9 @@
                               "value": 478834000000,
                               "unit": "usd",
                               "fact_id": "320193|is_total_revenue|annual|2026|4",
-                              "formula": {
-                                "formula_str": "320193|RevenueFromContractWithCustomerExcludingAssessedTax|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-",
-                                "members": [
-                                  {
-                                    "type": "reported",
-                                    "value": 478834000000,
-                                    "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
-                                    "start_date": "2025-09-28",
-                                    "end_date": "2026-09-26",
-                                    "instant_date": null,
-                                    "segment": null,
-                                    "fiscal_period_type": null
-                                  }
-                                ]
-                              },
+                              "formula": null,
                               "accession": "0000320193-26-000026",
-                              "html_tag_id": null,
+                              "html_tag_id": "f-76",
                               "parent_id": null,
                               "value_as_reported": null,
                               "split_factor": null
@@ -17675,17 +17966,20 @@
                               "unit": "usd",
                               "fact_id": "320193|is_cost_of_revenue|annual|2026|4",
                               "formula": {
-                                "formula_str": "320193|CostOfGoodsAndServicesSold|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-",
+                                "formula_str": "320193|is_cost_of_product_and_service_sold|annual|2026|4",
                                 "members": [
                                   {
-                                    "type": "reported",
+                                    "type": "standardized",
                                     "value": 245232000000,
-                                    "concept": "CostOfGoodsAndServicesSold",
-                                    "start_date": "2025-09-28",
-                                    "end_date": "2026-09-26",
+                                    "metric_id": "is_cost_of_product_and_service_sold",
+                                    "fiscal_period_type": "annual",
+                                    "fiscal_year": 2026,
+                                    "fiscal_quarter": 4,
+                                    "concept": null,
+                                    "start_date": null,
+                                    "end_date": null,
                                     "instant_date": null,
-                                    "segment": null,
-                                    "fiscal_period_type": null
+                                    "segment": null
                                   }
                                 ]
                               },
@@ -17702,29 +17996,6 @@
                               "formula": null,
                               "accession": "0000320193-26-000026",
                               "html_tag_id": "f-85",
-                              "parent_id": "is_cost_of_revenue",
-                              "value_as_reported": null,
-                              "split_factor": null
-                            },
-                            "is_other_cost_of_revenue": {
-                              "value": 0,
-                              "unit": "usd",
-                              "fact_id": "320193|is_other_cost_of_revenue|annual|2026|4",
-                              "formula": {
-                                "formula_str": "320193|is_cost_of_revenue|annual|2026|4 - 320193|is_cost_of_product_and_service_sold|annual|2026|4",
-                                "members": [
-                                  {
-                                    "type": "standardized",
-                                    "value": 245232000000,
-                                    "metric_id": "is_cost_of_product_and_service_sold",
-                                    "fiscal_period_type": "annual",
-                                    "fiscal_year": 2026,
-                                    "fiscal_quarter": 4
-                                  }
-                                ]
-                              },
-                              "accession": "0000320193-26-000026",
-                              "html_tag_id": null,
                               "parent_id": "is_cost_of_revenue",
                               "value_as_reported": null,
                               "split_factor": null
@@ -17752,21 +18023,24 @@
                               "split_factor": null
                             },
                             "is_operating_costs_and_expenses": {
-                              "value": 50665000000,
+                              "value": 45765000000,
                               "unit": "usd",
                               "fact_id": "320193|is_operating_costs_and_expenses|annual|2026|4",
                               "formula": {
-                                "formula_str": "320193|ResearchAndDevelopmentExpense|2025-09-28T00:00:00|2026-09-26T00:00:00|-|- + 320193|DepreciationAndAmortization|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-",
+                                "formula_str": "320193|is_research_and_development_expenses|annual|2026|4",
                                 "members": [
                                   {
-                                    "type": "reported",
+                                    "type": "standardized",
                                     "value": 45765000000,
-                                    "concept": "ResearchAndDevelopmentExpense",
-                                    "start_date": "2025-09-28",
-                                    "end_date": "2026-09-26",
+                                    "metric_id": "is_research_and_development_expenses",
+                                    "fiscal_period_type": "annual",
+                                    "fiscal_year": 2026,
+                                    "fiscal_quarter": 4,
+                                    "concept": null,
+                                    "start_date": null,
+                                    "end_date": null,
                                     "instant_date": null,
-                                    "segment": null,
-                                    "fiscal_period_type": null
+                                    "segment": null
                                   }
                                 ]
                               },
@@ -17787,54 +18061,6 @@
                               "value_as_reported": null,
                               "split_factor": null
                             },
-                            "is_depreciation_and_amortization_expenses": {
-                              "value": 4900000000,
-                              "unit": "usd",
-                              "fact_id": "320193|is_depreciation_and_amortization_expenses|annual|2026|4",
-                              "formula": {
-                                "formula_str": "320193|AmortizationOfDeferredCharges|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-",
-                                "members": [
-                                  {
-                                    "type": "reported",
-                                    "value": 4900000000,
-                                    "concept": "AmortizationOfDeferredCharges",
-                                    "start_date": "2025-09-28",
-                                    "end_date": "2026-09-26",
-                                    "instant_date": null,
-                                    "segment": null,
-                                    "fiscal_period_type": null
-                                  }
-                                ]
-                              },
-                              "accession": "0000320193-26-000026",
-                              "html_tag_id": null,
-                              "parent_id": "is_operating_costs_and_expenses",
-                              "value_as_reported": null,
-                              "split_factor": null
-                            },
-                            "is_other_operating_costs_and_expenses": {
-                              "value": 0,
-                              "unit": "usd",
-                              "fact_id": "320193|is_other_operating_costs_and_expenses|annual|2026|4",
-                              "formula": {
-                                "formula_str": "320193|is_operating_costs_and_expenses|annual|2026|4 - 320193|is_research_and_development_expenses|annual|2026|4 - 320193|is_depreciation_and_amortization_expenses|annual|2026|4",
-                                "members": [
-                                  {
-                                    "type": "standardized",
-                                    "value": 4900000000,
-                                    "metric_id": "is_depreciation_and_amortization_expenses",
-                                    "fiscal_period_type": "annual",
-                                    "fiscal_year": 2026,
-                                    "fiscal_quarter": 4
-                                  }
-                                ]
-                              },
-                              "accession": "0000320193-26-000026",
-                              "html_tag_id": null,
-                              "parent_id": "is_operating_costs_and_expenses",
-                              "value_as_reported": null,
-                              "split_factor": null
-                            },
                             "is_selling_general_and_administrative_expenses": {
                               "value": 29774000000,
                               "unit": "usd",
@@ -17843,6 +18069,481 @@
                               "accession": "0000320193-26-000026",
                               "html_tag_id": "f-94",
                               "parent_id": "is_operating_expenses",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "is_selling_and_marketing_expenses": {
+                              "value": 21134000000,
+                              "unit": "usd",
+                              "fact_id": "320193|is_selling_and_marketing_expenses|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-1111",
+                              "parent_id": "is_selling_general_and_administrative_expenses",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "is_general_and_administrative_expenses": {
+                              "value": 8640000000,
+                              "unit": "usd",
+                              "fact_id": "320193|is_general_and_administrative_expenses|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-1117",
+                              "parent_id": "is_selling_general_and_administrative_expenses",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "is_other_operating_expenses": {
+                              "value": 0,
+                              "unit": "usd",
+                              "fact_id": "320193|is_other_operating_expenses|annual|2026|4",
+                              "formula": {
+                                "formula_str": "320193|is_operating_expenses|annual|2026|4 - 320193|is_operating_costs_and_expenses|annual|2026|4 - 320193|is_selling_general_and_administrative_expenses|annual|2026|4",
+                                "members": [
+                                  {
+                                    "type": "standardized",
+                                    "value": 45765000000,
+                                    "metric_id": "is_operating_costs_and_expenses",
+                                    "fiscal_period_type": "annual",
+                                    "fiscal_year": 2026,
+                                    "fiscal_quarter": 4,
+                                    "concept": null,
+                                    "start_date": null,
+                                    "end_date": null,
+                                    "instant_date": null,
+                                    "segment": null
+                                  }
+                                ]
+                              },
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": null,
+                              "parent_id": "is_operating_expenses",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            }
+                          }
+                        },
+                        "balance_sheet": {
+                          "facts": {
+                            "bs_total_assets": {
+                              "value": 404548000000,
+                              "unit": "usd",
+                              "fact_id": "320193|bs_total_assets|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-181",
+                              "parent_id": null,
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "bs_total_current_assets": {
+                              "value": 173857000000,
+                              "unit": "usd",
+                              "fact_id": "320193|bs_total_current_assets|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-169",
+                              "parent_id": "bs_total_assets",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "bs_cash_and_cash_equivalents_and_st_investments": {
+                              "value": 56722000000,
+                              "unit": "usd",
+                              "fact_id": "320193|bs_cash_and_cash_equivalents_and_st_investments|annual|2026|4",
+                              "formula": {
+                                "formula_str": "320193|bs_cash_and_cash_equivalents|annual|2026|4 + 320193|bs_short_term_investments|annual|2026|4",
+                                "members": [
+                                  {
+                                    "type": "standardized",
+                                    "value": 36305000000,
+                                    "metric_id": "bs_cash_and_cash_equivalents",
+                                    "fiscal_period_type": "annual",
+                                    "fiscal_year": 2026,
+                                    "fiscal_quarter": 4,
+                                    "concept": null,
+                                    "start_date": null,
+                                    "end_date": null,
+                                    "instant_date": null,
+                                    "segment": null
+                                  }
+                                ]
+                              },
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": null,
+                              "parent_id": "bs_total_current_assets",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "bs_cash_and_cash_equivalents": {
+                              "value": 36305000000,
+                              "unit": "usd",
+                              "fact_id": "320193|bs_cash_and_cash_equivalents|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-157",
+                              "parent_id": "bs_cash_and_cash_equivalents_and_st_investments",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "bs_short_term_investments": {
+                              "value": 20417000000,
+                              "unit": "usd",
+                              "fact_id": "320193|bs_short_term_investments|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-159",
+                              "parent_id": "bs_cash_and_cash_equivalents_and_st_investments",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "bs_total_receivables_current": {
+                              "value": 83713000000,
+                              "unit": "usd",
+                              "fact_id": "320193|bs_total_receivables_current|annual|2026|4",
+                              "formula": {
+                                "formula_str": "320193|bs_accounts_and_financing_receivable_current|annual|2026|4 + 320193|bs_nontrade_receivables_current|annual|2026|4",
+                                "members": [
+                                  {
+                                    "type": "standardized",
+                                    "value": 43817000000,
+                                    "metric_id": "bs_accounts_and_financing_receivable_current",
+                                    "fiscal_period_type": "annual",
+                                    "fiscal_year": 2026,
+                                    "fiscal_quarter": 4,
+                                    "concept": null,
+                                    "start_date": null,
+                                    "end_date": null,
+                                    "instant_date": null,
+                                    "segment": null
+                                  }
+                                ]
+                              },
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": null,
+                              "parent_id": "bs_total_current_assets",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "bs_accounts_and_financing_receivable_current": {
+                              "value": 43817000000,
+                              "unit": "usd",
+                              "fact_id": "320193|bs_accounts_and_financing_receivable_current|annual|2026|4",
+                              "formula": {
+                                "formula_str": "320193|bs_accounts_receivable_current|annual|2026|4",
+                                "members": [
+                                  {
+                                    "type": "standardized",
+                                    "value": 43817000000,
+                                    "metric_id": "bs_accounts_receivable_current",
+                                    "fiscal_period_type": "annual",
+                                    "fiscal_year": 2026,
+                                    "fiscal_quarter": 4,
+                                    "concept": null,
+                                    "start_date": null,
+                                    "end_date": null,
+                                    "instant_date": null,
+                                    "segment": null
+                                  }
+                                ]
+                              },
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": null,
+                              "parent_id": "bs_total_receivables_current",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "bs_accounts_receivable_current": {
+                              "value": 43817000000,
+                              "unit": "usd",
+                              "fact_id": "320193|bs_accounts_receivable_current|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-161",
+                              "parent_id": "bs_accounts_and_financing_receivable_current",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "bs_nontrade_receivables_current": {
+                              "value": 39896000000,
+                              "unit": "usd",
+                              "fact_id": "320193|bs_nontrade_receivables_current|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-163",
+                              "parent_id": "bs_total_receivables_current",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "bs_inventory_current": {
+                              "value": 14541000000,
+                              "unit": "usd",
+                              "fact_id": "320193|bs_inventory_current|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-165",
+                              "parent_id": "bs_total_current_assets",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "bs_other_current_assets": {
+                              "value": 18881000000,
+                              "unit": "usd",
+                              "fact_id": "320193|bs_other_current_assets|annual|2026|4",
+                              "formula": {
+                                "formula_str": "320193|bs_total_current_assets|annual|2026|4 - 320193|bs_cash_and_cash_equivalents_and_st_investments|annual|2026|4 - 320193|bs_total_receivables_current|annual|2026|4 - 320193|bs_inventory_current|annual|2026|4",
+                                "members": [
+                                  {
+                                    "type": "standardized",
+                                    "value": 56722000000,
+                                    "metric_id": "bs_cash_and_cash_equivalents_and_st_investments",
+                                    "fiscal_period_type": "annual",
+                                    "fiscal_year": 2026,
+                                    "fiscal_quarter": 4,
+                                    "concept": null,
+                                    "start_date": null,
+                                    "end_date": null,
+                                    "instant_date": null,
+                                    "segment": null
+                                  }
+                                ]
+                              },
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": null,
+                              "parent_id": "bs_total_current_assets",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "bs_total_noncurrent_assets": {
+                              "value": 230691000000,
+                              "unit": "usd",
+                              "fact_id": "320193|bs_total_noncurrent_assets|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-179",
+                              "parent_id": "bs_total_assets",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            }
+                          }
+                        },
+                        "cash_flow": {
+                          "facts": {
+                            "cfs_cash_from_operating_activities": {
+                              "value": 145097000000,
+                              "unit": "usd",
+                              "fact_id": "320193|cfs_cash_from_operating_activities|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-307",
+                              "parent_id": null,
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "cfs_income_incl_noncontrolling_interest": {
+                              "value": 132175000000,
+                              "unit": "usd",
+                              "fact_id": "320193|cfs_income_incl_noncontrolling_interest|annual|2026|4",
+                              "formula": {
+                                "formula_str": "coalesce(320193|is_income_incl_noncontrolling_interest|annual|2026|4, 320193|is_net_income|annual|2026|4 + 0)",
+                                "members": [
+                                  {
+                                    "type": "standardized",
+                                    "value": 132175000000,
+                                    "metric_id": "is_income_incl_noncontrolling_interest",
+                                    "fiscal_period_type": "annual",
+                                    "fiscal_year": 2026,
+                                    "fiscal_quarter": 4,
+                                    "concept": null,
+                                    "start_date": null,
+                                    "end_date": null,
+                                    "instant_date": null,
+                                    "segment": null
+                                  }
+                                ]
+                              },
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": null,
+                              "parent_id": "cfs_cash_from_operating_activities",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "cfs_adjustments_to_reconcile_net_income_to_cash": {
+                              "value": 27780000000,
+                              "unit": "usd",
+                              "fact_id": "320193|cfs_adjustments_to_reconcile_net_income_to_cash|annual|2026|4",
+                              "formula": {
+                                "formula_str": "320193|cfs_depreciation_depletion_and_amortization|annual|2026|4 + 320193|cfs_employee_benefit_and_share_based_compensation|annual|2026|4 + 320193|cfs_other_noncash_income_expense|annual|2026|4",
+                                "members": [
+                                  {
+                                    "type": "standardized",
+                                    "value": 13423000000,
+                                    "metric_id": "cfs_depreciation_depletion_and_amortization",
+                                    "fiscal_period_type": "annual",
+                                    "fiscal_year": 2026,
+                                    "fiscal_quarter": 4,
+                                    "concept": null,
+                                    "start_date": null,
+                                    "end_date": null,
+                                    "instant_date": null,
+                                    "segment": null
+                                  }
+                                ]
+                              },
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": null,
+                              "parent_id": "cfs_cash_from_operating_activities",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "cfs_depreciation_depletion_and_amortization": {
+                              "value": 13423000000,
+                              "unit": "usd",
+                              "fact_id": "320193|cfs_depreciation_depletion_and_amortization|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-280",
+                              "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "cfs_depreciation": {
+                              "value": 8700000000,
+                              "unit": "usd",
+                              "fact_id": "320193|cfs_depreciation|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-655",
+                              "parent_id": "cfs_depreciation_depletion_and_amortization",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "cfs_amortization_of_intangible_assets": {
+                              "value": 4900000000,
+                              "unit": "usd",
+                              "fact_id": "320193|cfs_amortization_of_intangible_assets|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-693",
+                              "parent_id": "cfs_depreciation_depletion_and_amortization",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "cfs_employee_benefit_and_share_based_compensation": {
+                              "value": 13789000000,
+                              "unit": "usd",
+                              "fact_id": "320193|cfs_employee_benefit_and_share_based_compensation|annual|2026|4",
+                              "formula": {
+                                "formula_str": "320193|cfs_shared_based_compensation|annual|2026|4",
+                                "members": [
+                                  {
+                                    "type": "standardized",
+                                    "value": 13789000000,
+                                    "metric_id": "cfs_shared_based_compensation",
+                                    "fiscal_period_type": "annual",
+                                    "fiscal_year": 2026,
+                                    "fiscal_quarter": 4,
+                                    "concept": null,
+                                    "start_date": null,
+                                    "end_date": null,
+                                    "instant_date": null,
+                                    "segment": null
+                                  }
+                                ]
+                              },
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": null,
+                              "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "cfs_shared_based_compensation": {
+                              "value": 13789000000,
+                              "unit": "usd",
+                              "fact_id": "320193|cfs_shared_based_compensation|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-283",
+                              "parent_id": "cfs_employee_benefit_and_share_based_compensation",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "cfs_other_noncash_income_expense": {
+                              "value": 568000000,
+                              "unit": "usd",
+                              "fact_id": "320193|cfs_other_noncash_income_expense|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-286",
+                              "parent_id": "cfs_adjustments_to_reconcile_net_income_to_cash",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "cfs_changes_in_operating_capital": {
+                              "value": -728000000,
+                              "unit": "usd",
+                              "fact_id": "320193|cfs_changes_in_operating_capital|annual|2026|4",
+                              "formula": {
+                                "formula_str": "320193|cfs_changes_in_operating_assets|annual|2026|4 + 320193|cfs_changes_in_operating_liabilities|annual|2026|4",
+                                "members": [
+                                  {
+                                    "type": "standardized",
+                                    "value": -12899000000,
+                                    "metric_id": "cfs_changes_in_operating_assets",
+                                    "fiscal_period_type": "annual",
+                                    "fiscal_year": 2026,
+                                    "fiscal_quarter": 4,
+                                    "concept": null,
+                                    "start_date": null,
+                                    "end_date": null,
+                                    "instant_date": null,
+                                    "segment": null
+                                  }
+                                ]
+                              },
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": null,
+                              "parent_id": "cfs_cash_from_operating_activities",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "cfs_changes_in_operating_assets": {
+                              "value": -12899000000,
+                              "unit": "usd",
+                              "fact_id": "320193|cfs_changes_in_operating_assets|annual|2026|4",
+                              "formula": {
+                                "formula_str": "320193|cfs_changes_in_receivables|annual|2026|4 + 320193|cfs_changes_in_inventories|annual|2026|4",
+                                "members": [
+                                  {
+                                    "type": "standardized",
+                                    "value": -3994000000,
+                                    "metric_id": "cfs_changes_in_receivables",
+                                    "fiscal_period_type": "annual",
+                                    "fiscal_year": 2026,
+                                    "fiscal_quarter": 4,
+                                    "concept": null,
+                                    "start_date": null,
+                                    "end_date": null,
+                                    "instant_date": null,
+                                    "segment": null
+                                  }
+                                ]
+                              },
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": null,
+                              "parent_id": "cfs_changes_in_operating_capital",
+                              "value_as_reported": null,
+                              "split_factor": null
+                            },
+                            "cfs_changes_in_receivables": {
+                              "value": -3994000000,
+                              "unit": "usd",
+                              "fact_id": "320193|cfs_changes_in_receivables|annual|2026|4",
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-289",
+                              "parent_id": "cfs_changes_in_operating_assets",
                               "value_as_reported": null,
                               "split_factor": null
                             }
@@ -17856,7 +18557,18 @@
                   "meta": {
                     "currency": "USD",
                     "basis": "standardized",
-                    "point_in_time": null
+                    "point_in_time": null,
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
                   }
                 }
               }
@@ -18257,7 +18969,50 @@
                               "children": [
                                 {
                                   "metric_id": "is_revenue_from_contract_with_customer",
-                                  "value": 478834000000
+                                  "value": 478834000000,
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "balance_sheet": {
+                          "facts": [
+                            {
+                              "metric_id": "bs_total_assets",
+                              "value": 404548000000,
+                              "children": [
+                                {
+                                  "metric_id": "bs_total_current_assets",
+                                  "value": 173857000000,
+                                  "children": [
+                                    {
+                                      "metric_id": "bs_cash_and_cash_equivalents_and_st_investments",
+                                      "value": 56722000000,
+                                      "children": [
+                                        {
+                                          "metric_id": "bs_cash_and_cash_equivalents",
+                                          "value": 36305000000,
+                                          "children": []
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        "cash_flow": {
+                          "facts": [
+                            {
+                              "metric_id": "cfs_cash_from_operating_activities",
+                              "value": 145097000000,
+                              "children": [
+                                {
+                                  "metric_id": "cfs_income_incl_noncontrolling_interest",
+                                  "value": 132175000000,
+                                  "children": []
                                 }
                               ]
                             }
@@ -18271,7 +19026,18 @@
                   "meta": {
                     "currency": "USD",
                     "basis": "standardized",
-                    "point_in_time": null
+                    "point_in_time": null,
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
                   }
                 }
               }
@@ -18757,6 +19523,110 @@
                               "derived": true
                             }
                           }
+                        },
+                        "balance_sheet": {
+                          "facts": {
+                            "CashAndCashEquivalentsAtCarryingValue": {
+                              "value": 36305000000,
+                              "derived": false
+                            },
+                            "MarketableSecuritiesCurrent": {
+                              "value": 20417000000,
+                              "derived": false
+                            },
+                            "AccountsReceivableNetCurrent": {
+                              "value": 43817000000,
+                              "derived": false
+                            },
+                            "NontradeReceivablesCurrent": {
+                              "value": 39896000000,
+                              "derived": false
+                            },
+                            "InventoryNet": {
+                              "value": 14541000000,
+                              "derived": false
+                            },
+                            "OtherAssetsCurrent": {
+                              "value": 18881000000,
+                              "derived": false
+                            },
+                            "AssetsCurrent": {
+                              "value": 173857000000,
+                              "derived": false
+                            },
+                            "MarketableSecuritiesNoncurrent": {
+                              "value": 80213000000,
+                              "derived": false
+                            },
+                            "PropertyPlantAndEquipmentNet": {
+                              "value": 52084000000,
+                              "derived": false
+                            },
+                            "IntangibleAssetExcludingGoodwillAfterAccumulatedAmortizationNoncurrent": {
+                              "value": 20278000000,
+                              "derived": false
+                            },
+                            "OtherAssetsNoncurrent": {
+                              "value": 78116000000,
+                              "derived": false
+                            },
+                            "AssetsNoncurrent": {
+                              "value": 230691000000,
+                              "derived": false
+                            }
+                          }
+                        },
+                        "cash_flow": {
+                          "facts": {
+                            "NetIncomeLoss": {
+                              "value": 132175000000,
+                              "derived": false
+                            },
+                            "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": {
+                              "value": 36305000000,
+                              "derived": false
+                            },
+                            "DepreciationDepletionAndAmortization": {
+                              "value": 13423000000,
+                              "derived": false
+                            },
+                            "ShareBasedCompensation": {
+                              "value": 13789000000,
+                              "derived": false
+                            },
+                            "OtherNoncashIncomeExpense": {
+                              "value": -568000000,
+                              "derived": false
+                            },
+                            "IncreaseDecreaseInAccountsReceivable": {
+                              "value": 3994000000,
+                              "derived": false
+                            },
+                            "IncreaseDecreaseInOtherReceivables": {
+                              "value": 6716000000,
+                              "derived": false
+                            },
+                            "IncreaseDecreaseInInventories": {
+                              "value": 8905000000,
+                              "derived": false
+                            },
+                            "IncreaseDecreaseInOtherOperatingAssets": {
+                              "value": 21117000000,
+                              "derived": false
+                            },
+                            "IncreaseDecreaseInAccountsPayable": {
+                              "value": 12171000000,
+                              "derived": false
+                            },
+                            "IncreaseDecreaseInOtherOperatingLiabilities": {
+                              "value": 13703000000,
+                              "derived": false
+                            },
+                            "NetCashProvidedByUsedInOperatingActivities": {
+                              "value": 145097000000,
+                              "derived": false
+                            }
+                          }
                         }
                       }
                     }
@@ -18766,7 +19636,18 @@
                   "meta": {
                     "currency": "USD",
                     "basis": "as_reported",
-                    "point_in_time": null
+                    "point_in_time": null,
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
                   }
                 }
               }
@@ -19444,12 +20325,407 @@
                                     "end_date": "2026-09-26",
                                     "instant_date": null,
                                     "segment": null,
-                                    "fiscal_period_type": null
+                                    "fiscal_period_type": null,
+                                    "metric_id": null,
+                                    "fiscal_year": null,
+                                    "fiscal_quarter": null
                                   }
                                 ]
                               },
                               "accession": "0000320193-26-000026",
                               "html_tag_id": null,
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            }
+                          }
+                        },
+                        "balance_sheet": {
+                          "facts": {
+                            "CashAndCashEquivalentsAtCarryingValue": {
+                              "value": 36305000000,
+                              "derived": false,
+                              "label": "Cash and cash equivalents",
+                              "company_label": "Cash and cash equivalents",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-157",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "MarketableSecuritiesCurrent": {
+                              "value": 20417000000,
+                              "derived": false,
+                              "label": "Marketable securities",
+                              "company_label": "Marketable securities",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-159",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "AccountsReceivableNetCurrent": {
+                              "value": 43817000000,
+                              "derived": false,
+                              "label": "Accounts receivable, net",
+                              "company_label": "Accounts receivable, net",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-161",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "NontradeReceivablesCurrent": {
+                              "value": 39896000000,
+                              "derived": false,
+                              "label": "Vendor non-trade receivables",
+                              "company_label": "Vendor non-trade receivables",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-163",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "InventoryNet": {
+                              "value": 14541000000,
+                              "derived": false,
+                              "label": "Inventories",
+                              "company_label": "Inventories",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-165",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "OtherAssetsCurrent": {
+                              "value": 18881000000,
+                              "derived": false,
+                              "label": "Other current assets",
+                              "company_label": "Other current assets",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-167",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "AssetsCurrent": {
+                              "value": 173857000000,
+                              "derived": false,
+                              "label": "Total current assets",
+                              "company_label": "Total current assets",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-169",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "MarketableSecuritiesNoncurrent": {
+                              "value": 80213000000,
+                              "derived": false,
+                              "label": "Marketable securities",
+                              "company_label": "Marketable securities",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-171",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "PropertyPlantAndEquipmentNet": {
+                              "value": 52084000000,
+                              "derived": false,
+                              "label": "Property, plant and equipment, net",
+                              "company_label": "Property, plant and equipment, net",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-173",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "IntangibleAssetExcludingGoodwillAfterAccumulatedAmortizationNoncurrent": {
+                              "value": 20278000000,
+                              "derived": false,
+                              "label": "Non-current portion of intangible assets",
+                              "company_label": "Intangible assets, net",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-175",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "OtherAssetsNoncurrent": {
+                              "value": 78116000000,
+                              "derived": false,
+                              "label": "Other non-current assets",
+                              "company_label": "Other non-current assets",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-177",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "AssetsNoncurrent": {
+                              "value": 230691000000,
+                              "derived": false,
+                              "label": "Total non-current assets",
+                              "company_label": "Total non-current assets",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-179",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            }
+                          }
+                        },
+                        "cash_flow": {
+                          "facts": {
+                            "NetIncomeLoss": {
+                              "value": 132175000000,
+                              "derived": false,
+                              "label": "Net income",
+                              "company_label": "Net income",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-112",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": {
+                              "value": 36305000000,
+                              "derived": false,
+                              "label": "Cash, cash equivalents, and restricted cash and cash equivalents, beginning balances",
+                              "company_label": "Cash, cash equivalents, and restricted cash and cash equivalents",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-355",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "DepreciationDepletionAndAmortization": {
+                              "value": 13423000000,
+                              "derived": false,
+                              "label": "Depreciation and amortization",
+                              "company_label": "Depreciation and amortization",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-280",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "ShareBasedCompensation": {
+                              "value": 13789000000,
+                              "derived": false,
+                              "label": "Share-based compensation expense",
+                              "company_label": "Share-based compensation expense",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-283",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "OtherNoncashIncomeExpense": {
+                              "value": -568000000,
+                              "derived": false,
+                              "label": "Other",
+                              "company_label": "Other",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-286",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "IncreaseDecreaseInAccountsReceivable": {
+                              "value": 3994000000,
+                              "derived": false,
+                              "label": "Accounts receivable, net",
+                              "company_label": "Accounts receivable, net",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-289",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "IncreaseDecreaseInOtherReceivables": {
+                              "value": 6716000000,
+                              "derived": false,
+                              "label": "Vendor non-trade receivables",
+                              "company_label": "Vendor non-trade receivables",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-292",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "IncreaseDecreaseInInventories": {
+                              "value": 8905000000,
+                              "derived": false,
+                              "label": "Inventories",
+                              "company_label": "Inventories",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-295",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "IncreaseDecreaseInOtherOperatingAssets": {
+                              "value": 21117000000,
+                              "derived": false,
+                              "label": "Other current and non-current assets",
+                              "company_label": "Other current and non-current assets",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-298",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "IncreaseDecreaseInAccountsPayable": {
+                              "value": 12171000000,
+                              "derived": false,
+                              "label": "Accounts payable",
+                              "company_label": "Accounts payable",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-301",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "IncreaseDecreaseInOtherOperatingLiabilities": {
+                              "value": 13703000000,
+                              "derived": false,
+                              "label": "Other current and non-current liabilities",
+                              "company_label": "Other current and non-current liabilities",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-304",
+                              "value_as_reported": null,
+                              "split_factor": null,
+                              "original_value": null,
+                              "original_label": null,
+                              "original_filing_date": null,
+                              "original_accession": null
+                            },
+                            "NetCashProvidedByUsedInOperatingActivities": {
+                              "value": 145097000000,
+                              "derived": false,
+                              "label": "Cash generated by operating activities",
+                              "company_label": "Cash generated by operating activities",
+                              "decimals": -6,
+                              "formula": null,
+                              "accession": "0000320193-26-000026",
+                              "html_tag_id": "f-307",
                               "value_as_reported": null,
                               "split_factor": null,
                               "original_value": null,
@@ -19467,7 +20743,18 @@
                   "meta": {
                     "currency": "USD",
                     "basis": "as_reported",
-                    "point_in_time": null
+                    "point_in_time": null,
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
                   }
                 }
               }
@@ -19894,7 +21181,70 @@
                               "value": 478834000000,
                               "derived": false,
                               "company_label": "Total net sales",
-                              "depth": 0
+                              "depth": 0,
+                              "is_total": false,
+                              "children": []
+                            }
+                          ]
+                        },
+                        "balance_sheet": {
+                          "facts": [
+                            {
+                              "concept": "AssetsAbstract",
+                              "label": "ASSETS:",
+                              "depth": 0,
+                              "children": [
+                                {
+                                  "concept": "AssetsCurrentAbstract",
+                                  "label": "Current assets:",
+                                  "depth": 1,
+                                  "children": [
+                                    {
+                                      "concept": "CashAndCashEquivalentsAtCarryingValue",
+                                      "label": "Cash and cash equivalents",
+                                      "value": 36305000000,
+                                      "derived": false,
+                                      "company_label": "Cash and cash equivalents",
+                                      "depth": 2,
+                                      "is_total": false,
+                                      "children": []
+                                    }
+                                  ],
+                                  "value": null,
+                                  "derived": false,
+                                  "company_label": null,
+                                  "is_total": false
+                                }
+                              ],
+                              "value": null,
+                              "derived": false,
+                              "company_label": null,
+                              "is_total": false
+                            }
+                          ]
+                        },
+                        "cash_flow": {
+                          "facts": [
+                            {
+                              "concept": "NetCashProvidedByUsedInOperatingActivitiesContinuingOperationsAbstract",
+                              "label": "Operating activities:",
+                              "depth": 0,
+                              "children": [
+                                {
+                                  "concept": "NetIncomeLoss",
+                                  "label": "Net income",
+                                  "value": 132175000000,
+                                  "derived": false,
+                                  "company_label": "Net income",
+                                  "depth": 1,
+                                  "is_total": false,
+                                  "children": []
+                                }
+                              ],
+                              "value": null,
+                              "derived": false,
+                              "company_label": null,
+                              "is_total": false
                             }
                           ]
                         }
@@ -19906,7 +21256,18 @@
                   "meta": {
                     "currency": "USD",
                     "basis": "as_reported",
-                    "point_in_time": null
+                    "point_in_time": null,
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
                   }
                 }
               }
@@ -20233,12 +21594,12 @@
                           "ratio_asset_turnover": 1.18
                         },
                         "profitability": {
-                          "ratio_return_on_assets_pct": 32.67,
-                          "ratio_return_on_equity_pct": 117.92,
+                          "ratio_return_on_assets_pct": 34.61,
+                          "ratio_return_on_equity_pct": 142.26,
                           "ratio_return_on_invested_capital_pct": 95.82,
                           "ratio_gross_margin_pct": 48.79,
                           "ratio_operating_margin_pct": 33.01,
-                          "ratio_ebitda_margin_pct": 34.03,
+                          "ratio_ebitda_margin_pct": 35.81,
                           "ratio_net_margin_pct": 27.6
                         }
                       }
@@ -20246,7 +21607,19 @@
                   ],
                   "has_more": false,
                   "next_cursor": null,
-                  "meta": {}
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -20554,8 +21927,7 @@
                         "growth_cash_from_investing_activities": -2.1372,
                         "growth_gross_profit": 0.1967,
                         "growth_total_liabilities": 0.0243,
-                        "growth_cash_from_financing_activities": 0.056,
-                        "growth_ebitda": 0.1917,
+                        "growth_ebitda": 0.1847,
                         "growth_total_equity": 0.5203,
                         "growth_free_cash_flow": 0.3775,
                         "growth_operating_income_ebit": 0.188,
@@ -20570,7 +21942,19 @@
                   ],
                   "has_more": false,
                   "next_cursor": null,
-                  "meta": {}
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -20876,11 +22260,9 @@
                         "cagr_cash_from_operating_activities": 0.0816,
                         "cagr_total_assets": 0.0232,
                         "cagr_total_revenue": 0.083,
-                        "cagr_cash_from_investing_activities": -0.0932,
                         "cagr_gross_profit": 0.1073,
                         "cagr_total_liabilities": 0.0422,
-                        "cagr_cash_from_financing_activities": 0.2006,
-                        "cagr_ebitda": 0.0908,
+                        "cagr_ebitda": 0.0929,
                         "cagr_total_equity": -0.0134,
                         "cagr_free_cash_flow": 0.0978,
                         "cagr_operating_income_ebit": 0.1017,
@@ -20894,8 +22276,20 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDE4LTA5LTI5IiwiMzIwMTkzIiwyMDE4LDQsMTBdLCJmIjoiODJlMWE5MGZkYjBjM2JhZiJ9",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDE4LTA5LTI5IiwiMzIwMTkzIiwyMDE4LDQsMTBdLCJmIjoiODAzYzY5ZThlOGZmOTdkYyJ9",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -21213,8 +22607,20 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI2IiwiMzIwMTkzIiwyMDI2LDQsIjMyMDE5M3xpc19yZXNlYXJjaF9hbmRfZGV2ZWxvcG1lbnRfZXhwZW5zZXN8YW5udWFsfDIwMjZ8NHxzZWdfcmVzZWFyY2hfYW5kX2RldmVsb3BtZW50X2V4cGVuc2VzX2J1c2luZXNzX3NlZ21lbnR8SmFwYW5TZWdtZW50TWVtYmVyIl0s…",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI2IiwiMzIwMTkzIiwyMDI2LDQsIjMyMDE5M3xpc19yZXNlYXJjaF9hbmRfZGV2ZWxvcG1lbnRfZXhwZW5zZXN8YW5udWFsfDIwMjZ8NHxzZWdfcmVzZWFyY2hfYW5kX2RldmVsb3BtZW50X2V4cGVuc2VzX2J1c2luZXNzX3NlZ21lbnR8UmVzdE9mQXNpYVBhY2lmaWNTZWdt…",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -21539,8 +22945,20 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI2IiwiMzIwMTkzIiwyMDI2LDQsIjMyMDE5M3xpc19yZXNlYXJjaF9hbmRfZGV2ZWxvcG1lbnRfZXhwZW5zZXN8YW5udWFsfDIwMjZ8NHxzZWdfcmVzZWFyY2hfYW5kX2RldmVsb3BtZW50X2V4cGVuc2VzX2J1c2luZXNzX3NlZ21lbnR8SmFwYW5TZWdtZW50TWVtYmVyIl0s…",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI2IiwiMzIwMTkzIiwyMDI2LDQsIjMyMDE5M3xpc19yZXNlYXJjaF9hbmRfZGV2ZWxvcG1lbnRfZXhwZW5zZXN8YW5udWFsfDIwMjZ8NHxzZWdfcmVzZWFyY2hfYW5kX2RldmVsb3BtZW50X2V4cGVuc2VzX2J1c2luZXNzX3NlZ21lbnR8UmVzdE9mQXNpYVBhY2lmaWNTZWdt…",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -21705,29 +23123,59 @@
                   "metric_id": "is_total_revenue",
                   "value": 478834000000,
                   "unit": "usd",
-                  "rule": {},
-                  "operands": [
-                    {
-                      "id": "320193|RevenueFromContractWithCustomerExcludingAssessedTax|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-",
-                      "type": "reported",
-                      "weighted_value": "478834000000",
+                  "rule": {
+                    "rule_id": "r_8b92b021e8bd4f2207e85b87",
+                    "metric_id": "is_total_revenue",
+                    "metric_name": "Total Revenue",
+                    "statement": "income_statement",
+                    "statement_restriction": "StatementsOfIncome",
+                    "unit": "usd",
+                    "hierarchy": {
                       "depth": 1,
-                      "status": "resolved",
-                      "tier": "raw",
-                      "stored_value": "478834000000"
+                      "parent": null,
+                      "sibling_order": 1,
+                      "global_order": 1
+                    },
+                    "kind": "alias",
+                    "evaluation_order": 105,
+                    "ordered_alias_position": 1,
+                    "declared_taxonomy": "us_gaap",
+                    "alias_role": "alternate",
+                    "declared_alias": "RevenueFromContractWithCustomerExcludingAssessedTax",
+                    "formula_definition": null,
+                    "required_operands": [],
+                    "sign_policy": "as_reported",
+                    "notes": "ASC 606 filers tag RevenueFromContractWithCustomerExcludingAssessedTax as the top line; it is taken only where Revenues is absent (fact-correctness task 5).",
+                    "observed_since": null,
+                    "historical_effective_since": null,
+                    "current": true,
+                    "selection": {
+                      "alias_position": 1,
+                      "candidate_count": 1,
+                      "expected_statement": "StatementsOfIncome"
                     }
-                  ],
+                  },
+                  "operands": [],
                   "source_facts": [
                     {
-                      "basis": "stored_row",
-                      "concept": "Revenues",
+                      "basis": "receipt",
+                      "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
                       "segment": null,
                       "accession": "0000320193-26-000026",
-                      "annotated_anchor": null,
-                      "candidate_count": 0,
-                      "place": {
-                        "outcome": "source_not_found",
-                        "reason": "no_retained_filing_fact"
+                      "annotated_anchor": "f-76",
+                      "candidate_count": 1,
+                      "raw": {
+                        "id": "320193|RevenueFromContractWithCustomerExcludingAssessedTax|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-",
+                        "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+                        "value": "478834000000",
+                        "unit": "usd",
+                        "start_date": "2025-09-28T00:00:00",
+                        "end_date": "2026-09-26T00:00:00",
+                        "instant_date": null,
+                        "accession": "0000320193-26-000026",
+                        "annotated_anchor": "f-76",
+                        "initial_value": "478834000000",
+                        "initial_filing_date": "2026-11-03T08:05:15"
                       }
                     }
                   ]
@@ -22038,28 +23486,30 @@
                 "example": {
                   "data": [
                     {
-                      "accession": "0001354457-26-001062",
+                      "accession": "0001140361-26-043484",
                       "company": {
                         "cik": "0000320193",
                         "ticker": "AAPL"
                       },
-                      "form": "25-NSE",
-                      "filing_date": "2026-11-09",
-                      "report_date": null,
-                      "filed_at": "2026-11-09T22:00:55Z",
+                      "form": "4",
+                      "filing_date": "2026-11-12",
+                      "report_date": "2026-11-10",
+                      "filed_at": "2026-11-12T23:58:20Z",
                       "items": [],
                       "primary_document": null,
                       "roles": [
-                        "subject_company"
+                        "issuer"
                       ],
-                      "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/320193/000135445726001062/0001354457-26-001062-index.htm"
+                      "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/320193/000114036126043484/0001140361-26-043484-index.htm"
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKaFpuUmxjaUk2V3lJeU1ESTJMVEE1TFRJNUlpd2lNREF3TVRFME1ETTJNUzB5Tmkwd016Z3dNamNpWFN3aVppSTZJamcxTnpOaU1EZzBaakV5TnpWak1qTWlmUSIsMjUsMCwwXSwiZiI6ImU4ZTc1MmM2NGY0NTlhNDMifQ",
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKaFpuUmxjaUk2V3lJeU1ESTJMVEE1TFRJNUlpd2lNREF3TVRFME1ETTJNUzB5Tmkwd016Z3dNamdpWFN3aVppSTZJamcxTnpOaU1EZzBaakV5TnpWak1qTWlmUSIsMjUsMCwwXSwiZiI6Ijg0NmY4MDhhNmU4MmMzOGEifQ",
                   "meta": {
                     "coverage": {
-                      "state": "complete"
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
                     },
                     "form_facet": [
                       {
@@ -22067,7 +23517,13 @@
                         "count": 31,
                         "newest_filing_date": "2026-11-03"
                       }
-                    ]
+                    ],
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
                   }
                 }
               }
@@ -22226,7 +23682,30 @@
                   "report_date": "2026-09-26",
                   "filed_at": "2026-11-03T13:05:15Z",
                   "items": [],
-                  "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000026/0000320193-26-000026-index.htm"
+                  "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000026/0000320193-26-000026-index.htm",
+                  "documents": [
+                    {
+                      "filename": "aapl-20260926.htm",
+                      "type": "10-K",
+                      "description": "10-K",
+                      "current_version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                      "source_url": "https://storage.invinite.com/sec/4765d5384d6b2195ff48ff775f9244f9/aapl-20260926.htm"
+                    }
+                  ],
+                  "parties": [
+                    {
+                      "cik": "0000320193",
+                      "role": "filer",
+                      "name": "Apple Inc."
+                    }
+                  ],
+                  "relations": [
+                    {
+                      "from": "0000320193-26-000026-xbrl.zip",
+                      "to": "aapl-20260926.htm",
+                      "relation": "xbrl_of"
+                    }
+                  ]
                 }
               }
             }
@@ -23183,7 +24662,9 @@
                   "next_cursor": null,
                   "meta": {
                     "coverage": {
-                      "state": "partial"
+                      "state": "partial",
+                      "through": null,
+                      "retry_after_s": null
                     },
                     "query": "supply chain risk",
                     "mode": "lexical",
@@ -23204,6 +24685,12 @@
                       ],
                       "matches": null,
                       "hint": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
                     }
                   }
                 }
@@ -23408,7 +24895,15 @@
                   "next_cursor": null,
                   "meta": {
                     "coverage": {
-                      "state": "complete"
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
                     }
                   }
                 }
@@ -24289,13 +25784,18 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsIjA1ODI3ODkyLTQ2YjQtNTVjNi05ZmFlLWQ3YWUzMDQ5MDg3OCIsMjUsMCwwXSwiZiI6IjA1NGM4MDM5NTJlZjE2M2QifQ",
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsIjA1ODI3ODkyLTQ2YjQtNTVjNi05ZmFlLWQ3YWUzMDQ5MDg3OCIsMjUsMCwwXSwiZiI6ImUyZTMzYzcyZjAyZWQzM2MifQ",
                   "meta": {
                     "coverage": {
-                      "state": "complete"
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
                     },
                     "source": {
-                      "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f"
+                      "version_id": "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+                      "dataset_release": "2026q3",
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
                     }
                   }
                 }
@@ -24596,14 +26096,21 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lNekV6TkRRME9ETXlaVFF4WmpCbE1HUTRPVGhqTW1Sa0lpd2ljQ0k2SWpJd01qWXRNVEV0TURsVU1qTTZNelE2TWpjdU9UVTJOekkzS3pBd09qQXdJaXdpYXlJNld5SXhOekl4TlRVM05EWTBNaUlzSWpNMU5ESXdOQ0lzSWpBek56Z3pNekV3TUh4d2IzTnBk…",
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lNekV6TkRRME9ETXlaVFF4WmpCbE1HUTRPVGhqTW1Sa0lpd2ljQ0k2SWpJd01qWXRNVEV0TVROVU1EWTZORGc2TlRVdU1qTXhNVFEyS3pBd09qQXdJaXdpYXlJNld5SXhOekl4TlRVM05EWTBNaUlzSWpNMU5ESXdOQ0lzSWpBek56Z3pNekV3TUh4d2IzTnBk…",
                   "meta": {
                     "coverage": {
                       "state": "partial",
-                      "through": "2026-11-09"
+                      "through": "2026-11-10",
+                      "retry_after_s": null
                     },
-                    "pinned_at": "2026-11-09T23:34:27.956Z",
-                    "counting": "One row per manager and position as that manager reported it in its effective 13F snapshot (amendments applied); rows are never summed across managers"
+                    "pinned_at": "2026-11-13T06:48:55.231Z",
+                    "counting": "One row per manager and position as that manager reported it in its effective 13F snapshot (amendments applied); rows are never summed across managers",
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
                   }
                 }
               }
@@ -24881,11 +26388,18 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lOakV5T0RneE1XUTROakl4TXpCallUaG1NV1ExTXpabUlpd2ljQ0k2SWpJd01qWXRNVEV0TURsVU1qTTZNelE2TWpndU9URTROVFV3S3pBd09qQXdJaXdpYXlJNld5SXhNelU0TXpNeElpd2lNRE0zT0RNek1UQXdmSEJ2YzJsMGFXOXVmRk5JSWwxOSIsOSww…",
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lOakV5T0RneE1XUTROakl4TXpCallUaG1NV1ExTXpabUlpd2ljQ0k2SWpJd01qWXRNVEV0TVROVU1EWTZORGc2TlRZdU1EZ3pORFl3S3pBd09qQXdJaXdpYXlJNld5SXhOVEl5T0RjM0lpd2lNRE0zT0RNek1UQXdmSEJ2YzJsMGFXOXVmRk5JSWwxOSIsMTIs…",
                   "meta": {
                     "coverage": {
                       "state": "partial",
-                      "through": "2026-11-09"
+                      "through": "2026-11-10",
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
                     }
                   }
                 }
@@ -25166,11 +26680,11 @@
                 "example": {
                   "data": [
                     {
-                      "id": "2d6993a157cabb83110415f6d3cca3f4:a2d0149c7e5bd4696684:0",
-                      "accession_number": "0001140361-26-042149",
+                      "id": "a5bb573e79089a2ada1ba1ac1418d291:fefc0d0e43e4a3453f1e:0",
+                      "accession_number": "0001140361-26-043484",
                       "cik": "0000320193",
-                      "filed_at": "2026-11-05T23:30:13.000Z",
-                      "period_of_report": "2026-11-03",
+                      "filed_at": "2026-11-12T23:58:20.000Z",
+                      "period_of_report": "2026-11-10",
                       "reporting_person_name": "Newstead Jennifer",
                       "reporting_person_is_director": false,
                       "reporting_person_is_officer": true,
@@ -25182,16 +26696,28 @@
                       "acquired_disposed": "D",
                       "coding_code": "S",
                       "shares": 2399,
-                      "share_price": 325.75,
-                      "total": 781475,
-                      "shares_owned_following_transaction": 29997,
-                      "shares_owned_before_transaction": 32396,
+                      "share_price": 351.36,
+                      "total": 842913,
+                      "shares_owned_following_transaction": 27598,
+                      "shares_owned_before_transaction": 29997,
                       "side": "sell"
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTEwLTA1IDIyOjM5OjEwIiwiZjg0NGRjMWI4ODBmMzQ0OGQ0ODJkYTI0NWQ2NGVhYjI6NWFlNTk4NzlmMGNlZTBlYmYyMzA6MCJdLCJmIjoiYjdmMDJmNWJlYjU2ZWIxZSJ9",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTEwLTA1IDIyOjM5OjEwIiwiZjg0NGRjMWI4ODBmMzQ0OGQ0ODJkYTI0NWQ2NGVhYjI6NmU3NjhkNmRlNWUyMDhiOGIzMDI6MCJdLCJmIjoiOWMyNzljYzNiNzYxZjkzOSJ9",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -25329,11 +26855,11 @@
                   "$ref": "#/components/schemas/InsiderTrade"
                 },
                 "example": {
-                  "id": "2d6993a157cabb83110415f6d3cca3f4:a2d0149c7e5bd4696684:0",
-                  "accession_number": "0001140361-26-042149",
+                  "id": "a5bb573e79089a2ada1ba1ac1418d291:fefc0d0e43e4a3453f1e:0",
+                  "accession_number": "0001140361-26-043484",
                   "cik": "0000320193",
-                  "filed_at": "2026-11-05T23:30:13.000Z",
-                  "period_of_report": "2026-11-03",
+                  "filed_at": "2026-11-12T23:58:20.000Z",
+                  "period_of_report": "2026-11-10",
                   "reporting_person_name": "Newstead Jennifer",
                   "reporting_person_is_director": false,
                   "reporting_person_is_officer": true,
@@ -25345,10 +26871,10 @@
                   "acquired_disposed": "D",
                   "coding_code": "S",
                   "shares": 2399,
-                  "share_price": 325.75,
-                  "total": 781475,
-                  "shares_owned_following_transaction": 29997,
-                  "shares_owned_before_transaction": 32396,
+                  "share_price": 351.36,
+                  "total": 842913,
+                  "shares_owned_following_transaction": 27598,
+                  "shares_owned_before_transaction": 29997,
                   "side": "sell"
                 }
               }
@@ -25631,54 +27157,116 @@
                 "example": {
                   "data": [
                     {
-                      "ipo_id": "l-RZRA",
-                      "company": null,
-                      "issuer_name": "Rezera Inc.",
-                      "stage": "announced",
+                      "ipo_id": "r-0002130357-333-299633",
+                      "company": {
+                        "cik": "0002130357",
+                        "ticker": null
+                      },
+                      "issuer_name": "Anthropic, PBC",
+                      "stage": "price_range",
                       "is_spac": false,
                       "exchange": "XNAS",
                       "proposed_symbols": [
-                        "RZRA"
+                        "ANT"
                       ],
-                      "price_range_low": 11,
-                      "price_range_high": 13,
+                      "price_range_low": 70,
+                      "price_range_high": 78,
                       "final_price": null,
-                      "shares_offered": 16666667,
-                      "total_offer_size": 216666671,
+                      "shares_offered": 825000000,
+                      "total_offer_size": 66000000000,
                       "currency": "USD",
-                      "listing_date": "2026-11-12",
+                      "listing_date": "2026-11-19",
                       "sources": {
-                        "registration": null,
+                        "registration": {
+                          "cik": "0002130357",
+                          "company_name": "Anthropic, PBC",
+                          "track_key": "333-299633",
+                          "form_family": "S-1",
+                          "stage": "price_range",
+                          "is_spac": false,
+                          "proposed_symbols": [
+                            {
+                              "symbol": "ANT",
+                              "exchange": "XNAS",
+                              "security_class": "common",
+                              "source": "regex",
+                              "ipo_calendar_match": true
+                            }
+                          ],
+                          "exchange": null,
+                          "price_range_low": "70.0000",
+                          "price_range_high": "78.0000",
+                          "shares_offered": 825000000,
+                          "final_offer_price": null,
+                          "final_shares_offered": null,
+                          "first_public_at": "2026-10-26T13:00:11.000Z",
+                          "price_range_at": "2026-11-10T11:29:24.000Z",
+                          "exchange_approved_at": null,
+                          "effective_at": null,
+                          "priced_at": null,
+                          "withdrawn_at": null,
+                          "first_trade_date": null,
+                          "filings": [
+                            {
+                              "accession_number": "0001628280-26-067168",
+                              "form_type": "S-1",
+                              "signal": "registration",
+                              "filed_at": "2026-10-26T13:00:11.000Z",
+                              "filing_date": "2026-10-26",
+                              "html_url": "https://storage.invinite.com/filing_htmls/2130357_0001628280-26-067168_S-1_2026-10-26.html"
+                            }
+                          ],
+                          "ipo_pending": {
+                            "status": "open",
+                            "open_reason": "ipo_calendar_match",
+                            "opened_at": "2026-11-03T20:36:57.566Z",
+                            "closed_at": null,
+                            "close_reason": null,
+                            "exchange": null
+                          }
+                        },
                         "listing": {
-                          "listing_date": "2026-11-12",
-                          "announced_date": "2026-10-21",
+                          "listing_date": "2026-11-19",
+                          "announced_date": "2026-10-26",
                           "currency_code": "USD",
                           "final_issue_price": null,
-                          "highest_offer_price": 13,
+                          "highest_offer_price": 80,
                           "ipo_status": "pending",
-                          "isin": "US76189Q1058",
+                          "isin": "US03703U1079",
                           "issue_end_date": null,
                           "issue_start_date": null,
-                          "issuer_name": "Rezera Inc.",
-                          "last_updated": "2026-11-09T00:00:00.000Z",
+                          "issuer_name": "Anthropic PBC",
+                          "last_updated": "2026-11-12T00:00:00.000Z",
                           "lot_size": 100,
-                          "lowest_offer_price": 11,
-                          "max_shares_offered": 16666667,
+                          "lowest_offer_price": 70,
+                          "max_shares_offered": 825000000,
                           "min_shares_offered": null,
                           "primary_exchange": "XNAS",
-                          "security_description": "Ordinary Shares",
+                          "security_description": "Ordinary Shares - Class A",
                           "security_type": "CS",
-                          "shares_outstanding": 20776793,
-                          "ticker": "RZRA",
-                          "total_offer_size": 216666671,
-                          "us_code": "76189Q105"
+                          "shares_outstanding": 7427991791,
+                          "ticker": "ANT",
+                          "total_offer_size": 66000000000,
+                          "us_code": "03703U107"
                         }
                       }
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI5IiwibC1SWkFJIl0sImYiOiIxNTM5NWUyMjQ0OWE3NDE2In0",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTEwLTAxIiwibC1DSFdNIl0sImYiOiIxMzAzN2QwNGE4MTM0YTdkIn0",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -25811,47 +27399,97 @@
                   "$ref": "#/components/schemas/Ipo"
                 },
                 "example": {
-                  "ipo_id": "l-RZRA",
-                  "company": null,
-                  "issuer_name": "Rezera Inc.",
-                  "stage": "announced",
+                  "ipo_id": "r-0002130357-333-299633",
+                  "company": {
+                    "cik": "0002130357",
+                    "ticker": null
+                  },
+                  "issuer_name": "Anthropic, PBC",
+                  "stage": "price_range",
                   "is_spac": false,
                   "exchange": "XNAS",
                   "proposed_symbols": [
-                    "RZRA"
+                    "ANT"
                   ],
-                  "price_range_low": 11,
-                  "price_range_high": 13,
+                  "price_range_low": 70,
+                  "price_range_high": 78,
                   "final_price": null,
-                  "shares_offered": 16666667,
-                  "total_offer_size": 216666671,
+                  "shares_offered": 825000000,
+                  "total_offer_size": 66000000000,
                   "currency": "USD",
-                  "listing_date": "2026-11-12",
+                  "listing_date": "2026-11-19",
                   "sources": {
-                    "registration": null,
+                    "registration": {
+                      "cik": "0002130357",
+                      "company_name": "Anthropic, PBC",
+                      "track_key": "333-299633",
+                      "form_family": "S-1",
+                      "stage": "price_range",
+                      "is_spac": false,
+                      "proposed_symbols": [
+                        {
+                          "symbol": "ANT",
+                          "exchange": "XNAS",
+                          "security_class": "common",
+                          "source": "regex",
+                          "ipo_calendar_match": true
+                        }
+                      ],
+                      "exchange": null,
+                      "price_range_low": "70.0000",
+                      "price_range_high": "78.0000",
+                      "shares_offered": 825000000,
+                      "final_offer_price": null,
+                      "final_shares_offered": null,
+                      "first_public_at": "2026-10-26T13:00:11.000Z",
+                      "price_range_at": "2026-11-10T11:29:24.000Z",
+                      "exchange_approved_at": null,
+                      "effective_at": null,
+                      "priced_at": null,
+                      "withdrawn_at": null,
+                      "first_trade_date": null,
+                      "filings": [
+                        {
+                          "accession_number": "0001628280-26-067168",
+                          "form_type": "S-1",
+                          "signal": "registration",
+                          "filed_at": "2026-10-26T13:00:11.000Z",
+                          "filing_date": "2026-10-26",
+                          "html_url": "https://storage.invinite.com/filing_htmls/2130357_0001628280-26-067168_S-1_2026-10-26.html"
+                        }
+                      ],
+                      "ipo_pending": {
+                        "status": "open",
+                        "open_reason": "ipo_calendar_match",
+                        "opened_at": "2026-11-03T20:36:57.566Z",
+                        "closed_at": null,
+                        "close_reason": null,
+                        "exchange": null
+                      }
+                    },
                     "listing": {
-                      "listing_date": "2026-11-12",
-                      "announced_date": "2026-10-21",
+                      "listing_date": "2026-11-19",
+                      "announced_date": "2026-10-26",
                       "currency_code": "USD",
                       "final_issue_price": null,
-                      "highest_offer_price": 13,
+                      "highest_offer_price": 80,
                       "ipo_status": "pending",
-                      "isin": "US76189Q1058",
+                      "isin": "US03703U1079",
                       "issue_end_date": null,
                       "issue_start_date": null,
-                      "issuer_name": "Rezera Inc.",
-                      "last_updated": "2026-11-09T00:00:00.000Z",
+                      "issuer_name": "Anthropic PBC",
+                      "last_updated": "2026-11-12T00:00:00.000Z",
                       "lot_size": 100,
-                      "lowest_offer_price": 11,
-                      "max_shares_offered": 16666667,
+                      "lowest_offer_price": 70,
+                      "max_shares_offered": 825000000,
                       "min_shares_offered": null,
                       "primary_exchange": "XNAS",
-                      "security_description": "Ordinary Shares",
+                      "security_description": "Ordinary Shares - Class A",
                       "security_type": "CS",
-                      "shares_outstanding": 20776793,
-                      "ticker": "RZRA",
-                      "total_offer_size": 216666671,
-                      "us_code": "76189Q105"
+                      "shares_outstanding": 7427991791,
+                      "ticker": "ANT",
+                      "total_offer_size": 66000000000,
+                      "us_code": "03703U107"
                     }
                   }
                 }
@@ -26183,7 +27821,7 @@
                 "example": {
                   "data": [
                     {
-                      "event_id": "bd20af4b-ddd9-4e1e-a74f-80b09027177e",
+                      "event_id": "2463cda2-9968-411d-886c-e638d71f34b3",
                       "source": "us",
                       "cik": "0000320193",
                       "symbol": "AAPL",
@@ -26191,31 +27829,90 @@
                       "exchange": "XNAS",
                       "event_type": "earnings_call",
                       "event_title": null,
-                      "fiscal_year": 2004,
+                      "fiscal_year": 2026,
                       "fiscal_quarter": 4,
-                      "scheduled_at": "2004-10-13T21:00:00.000Z",
+                      "scheduled_at": "2026-11-02T22:00:00.000Z",
                       "tz": "America/Los_Angeles",
                       "date_status": "confirmed",
                       "call_time_source": "edgar",
                       "call_time_confidence": "high",
                       "session": "amc",
-                      "started_at": null,
-                      "ended_at": null,
-                      "results_released_at": "2004-10-13T20:31:13.000Z",
-                      "capture_status": "missed",
+                      "started_at": "2026-11-02T22:06:00.034Z",
+                      "ended_at": "2026-11-02T22:59:26.325Z",
+                      "results_released_at": "2026-11-02T21:30:23.000Z",
+                      "capture_status": "published",
+                      "expired_reason": null,
                       "reschedule_count": 0,
-                      "has_transcript": false,
-                      "has_audio": false,
+                      "has_transcript": true,
+                      "has_audio": true,
                       "has_slides": false,
                       "has_press_release": true,
                       "has_documents": true,
-                      "webcast_url": "http://www.apple.com/quicktime/qtv/earningsq404/",
-                      "video": null
+                      "webcast_url": null,
+                      "video": null,
+                      "results_filing": {
+                        "accession": "0000320193-26-000024",
+                        "form": "8-K",
+                        "accepted_at": "2026-11-02T21:30:23.000Z",
+                        "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000024/0000320193-26-000024-index.htm"
+                      },
+                      "periodic_report": {
+                        "accession": "0000320193-26-000026",
+                        "form": "10-K",
+                        "period_end": "2026-09-26",
+                        "filing_date": "2026-11-03",
+                        "accepted_at": "2026-11-03T13:05:15.000Z",
+                        "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000026/0000320193-26-000026-index.htm"
+                      },
+                      "calendar": {
+                        "status": "reported",
+                        "call": {
+                          "status": "held",
+                          "date": "2026-11-02",
+                          "at": "2026-11-02T22:00:00.000Z",
+                          "time_quality": "first_party",
+                          "date_basis": "first_party",
+                          "source": {
+                            "type": "edgar",
+                            "ref": "0000320193-26-000024",
+                            "observed_at": "2026-11-02T21:30:23.000Z",
+                            "tz": "America/Los_Angeles",
+                            "tz_inferred": false
+                          }
+                        },
+                        "report": {
+                          "date": "2026-11-02",
+                          "time_kind": "amc",
+                          "quality": "filing_acceptance",
+                          "source": {
+                            "accession": "0000320193-26-000024",
+                            "form": "8-K",
+                            "accepted_at": "2026-11-02T21:30:23.000Z"
+                          }
+                        },
+                        "fiscal_period_quality": "stated",
+                        "warnings": [
+                          "report_time_from_filing_acceptance"
+                        ]
+                      },
+                      "observations": null
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDExLTAxLTE4IDIyOjAwOjAwKzAwIiwiN2Q2NWUzZDAtNGI1Mi00MDAwLTk2YzItMmNlNDczMzE5NDlhIl0sImYiOiJjZmQ3ZjkwODU3N2ZiNDQ0In0",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDIwLTEwLTI5IDIxOjAwOjAwKzAwIiwiOGJhNmRkMWUtODBhZC00MDQ1LWExYjItNTdkOWQyZmMwNTRiIl0sImYiOiI1ZTkxZGJjYTBjMTVlMTNjIn0",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -26388,6 +28085,7 @@
                   "ended_at": null,
                   "results_released_at": "2026-07-29T20:04:53.000Z",
                   "capture_status": "published",
+                  "expired_reason": null,
                   "reschedule_count": 0,
                   "has_transcript": true,
                   "has_audio": true,
@@ -26395,7 +28093,62 @@
                   "has_press_release": true,
                   "has_documents": true,
                   "webcast_url": null,
-                  "video": null
+                  "video": null,
+                  "results_filing": {
+                    "accession": "0001193125-26-323632",
+                    "form": "8-K",
+                    "accepted_at": "2026-07-29T20:04:53.000Z",
+                    "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+                  },
+                  "periodic_report": {
+                    "accession": "0001193125-26-323660",
+                    "form": "10-K",
+                    "period_end": "2026-06-30",
+                    "filing_date": "2026-07-29",
+                    "accepted_at": "2026-07-29T20:08:01.000Z",
+                    "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+                  },
+                  "calendar": {
+                    "status": "reported",
+                    "call": {
+                      "status": "announced",
+                      "date": "2026-07-29",
+                      "at": null,
+                      "time_quality": "date_only",
+                      "date_basis": "first_party",
+                      "source": {
+                        "type": "edgar",
+                        "ref": "0001193125-26-323632",
+                        "observed_at": "2026-07-29T20:04:53.000Z",
+                        "tz": "America/Los_Angeles",
+                        "tz_inferred": false
+                      }
+                    },
+                    "report": {
+                      "date": "2026-07-29",
+                      "time_kind": "amc",
+                      "quality": "filing_acceptance",
+                      "source": {
+                        "accession": "0001193125-26-323632",
+                        "form": "8-K",
+                        "accepted_at": "2026-07-29T20:04:53.000Z"
+                      }
+                    },
+                    "fiscal_period_quality": "stated",
+                    "warnings": [
+                      "date_only_call"
+                    ]
+                  },
+                  "observations": [
+                    {
+                      "observed_source": "edgar",
+                      "observed_at": "2026-07-29T20:04:53.000Z",
+                      "starts_at": "2026-07-29T21:30:00.000Z",
+                      "tz": "America/Los_Angeles",
+                      "status_hint": "scheduled",
+                      "announcement_kind": "results_with_call_details"
+                    }
+                  ]
                 }
               }
             }
@@ -26440,7 +28193,9 @@
           "columns": [
             "event_id",
             "symbol",
-            "scheduled_at"
+            "scheduled_at",
+            "results_filing.accession",
+            "periodic_report.accession"
           ]
         },
         "x-example-params": []
@@ -26750,14 +28505,23 @@
                       "answer": "Thank you, Carl. So the way we are coming at this is, at the end of the day, the goal is to have the firm be in control of their own destiny in terms of what I describe as building their human capital and their token capital, right? So at t…",
                       "answer_start_ms": 2369608,
                       "answer_end_ms": 2578699,
-                      "is_follow_up": false
+                      "is_follow_up": false,
+                      "scores": null
                     }
                   ],
                   "has_more": false,
                   "next_cursor": null,
                   "meta": {
                     "coverage": {
-                      "state": "complete"
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
                     }
                   }
                 }
@@ -26922,9 +28686,11 @@
                     {
                       "page": 1,
                       "title": null,
-                      "image_url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/slides/q4-fy2026-earnings-presentation/page-001.webp"
+                      "image_url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/slides/q4-fy2026-earnings-presentation/page-001.webp",
+                      "markdown": null
                     }
-                  ]
+                  ],
+                  "timeline": []
                 }
               }
             }
@@ -27993,11 +29759,19 @@
                       "name": "Operator",
                       "title": null,
                       "role": "operator",
-                      "person_id": "6682be14-22ff-45d6-820e-c0018cdfc35f",
+                      "person_id": "1695c8d2-ce64-4c91-8de4-d9ec847e655e",
                       "start_ms": 800,
                       "end_ms": 24977,
                       "speaker_confidence": 1,
-                      "text": "At this time, all participants are in a listen-only mode. A question and answer session will follow the formal presentation. If anyone should require operator assistance, please press star zero on your telephone keypad. As a reminder, this …"
+                      "text": "At this time, all participants are in a listen-only mode. A question and answer session will follow the formal presentation. If anyone should require operator assistance, please press star zero on your telephone keypad. As a reminder, this …",
+                      "words": [
+                        {
+                          "w": "At",
+                          "s": 800,
+                          "e": 880,
+                          "c": 0.789
+                        }
+                      ]
                     }
                   ]
                 }
@@ -28365,7 +30139,15 @@
                   "next_cursor": null,
                   "meta": {
                     "coverage": {
-                      "state": "complete"
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
                     }
                   }
                 }
@@ -28857,6 +30639,17 @@
                         "failed": 0
                       },
                       "reasons": []
+                    },
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
                     }
                   }
                 }
@@ -29169,7 +30962,19 @@
                   ],
                   "has_more": false,
                   "next_cursor": null,
-                  "meta": {}
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -29436,8 +31241,20 @@
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTExLTAyIDIyOjAwOjAwKzAwIiwiMjQ2M2NkYTItOTk2OC00MTFkLTg4NmMtZTYzOGQ3MWYzNGIzIiw0MF0sImYiOiIzZTM3OTY5OTJkYTgyZGJkIn0",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTExLTAyIDIyOjAwOjAwKzAwIiwiMjQ2M2NkYTItOTk2OC00MTFkLTg4NmMtZTYzOGQ3MWYzNGIzIiw0MF0sImYiOiJlNDRlYzczYzRjZDY2MmE2In0",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -29700,42 +31517,54 @@
                 "example": {
                   "data": [
                     {
-                      "document_id": "1659b564-76c1-440e-a2c1-d4667487c09d",
+                      "document_id": "8d0e7d06-a9b3-425e-84db-8f4a0ab5f3fe",
                       "source": "company",
-                      "section": "quarterly_results",
-                      "kind": "financial_data",
+                      "section": "annual_reports",
+                      "kind": "annual_report",
                       "year": 2026,
-                      "period": "Q4",
-                      "group": "earnings/cy2026/undated",
-                      "group_label": "Earnings 2026 (undated)",
-                      "category": "earnings",
+                      "period": "FY",
+                      "group": "reports/2026",
+                      "group_label": "Reports 2026",
+                      "category": "reports",
                       "event_id": null,
                       "event_type": null,
-                      "event_date": null,
+                      "event_date": "2026-11-06",
                       "filing_date": null,
-                      "title": "Trended Capital Return",
-                      "source_label": "Trended Capital Return",
-                      "source_url": "https://s2.q4cdn.com/470004039/files/doc_earnings/2026/q4/generic/Q4-26-Return-of-Capital-Timeline.pdf",
-                      "page_url": "https://investor.apple.com/investor-relations/default.aspx",
+                      "title": "2026 Annual Report",
+                      "source_label": "pdf (FWP filing, , Nov 06, 2026,",
+                      "source_url": "https://d18rn0p25nwr6d.cloudfront.net/CIK-0000320193/ab147e3a-3afc-421f-af4c-04fbe210e795.pdf",
+                      "page_url": "https://investor.apple.com/sec-filings/default.aspx",
                       "origin": "html_page",
                       "producer": null,
                       "confidence": "medium",
                       "trust_tier": "confirmed_domain",
                       "content_type": "application/pdf",
-                      "bytes": 3107664,
+                      "bytes": 154706,
                       "pages": null,
                       "link_status": null,
-                      "url": "https://storage.invinite.com/earnings_events/us/320193/earnings/cy2026/undated/c19fe20865730795a189e739735ede98/trended-capital-return.pdf",
-                      "pages_url": "https://storage.invinite.com/earnings_events/us/320193/earnings/cy2026/undated/c19fe20865730795a189e739735ede98/text/trended-capital-return.pdf.pages.json",
-                      "created_at": "2026-11-04T17:48:23.826Z",
-                      "updated_at": "2026-11-09T08:20:31.142Z",
+                      "url": "https://storage.invinite.com/earnings_events/us/320193/reports/2026/5940a7fad378e0453d6f70ed9653dd0d/2026-annual-report.pdf",
+                      "pages_url": "https://storage.invinite.com/earnings_events/us/320193/reports/2026/5940a7fad378e0453d6f70ed9653dd0d/text/2026-annual-report.pdf.pages.json",
+                      "created_at": "2026-11-07T11:01:44.345Z",
+                      "updated_at": "2026-11-10T01:12:23.779Z",
                       "accession_number": null,
                       "body_text": null
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTEwLTE2IiwiNmFjZDQ0ZWMtMTQ5Ni00NTY5LTgyZmYtMjliYWNlOWU0ZWUxIl0sImYiOiJiZDI2ZjUwZGE2Y2Y3ZDcxIn0",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTEwLTE2IiwiYWM1NGZkZjktNTE5ZC00NDFlLWIwYWEtOWI0MDZlZTQ3YjdlIl0sImYiOiJlYWQ4M2Y5YTg5ODFiYjI4In0",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
@@ -30175,16 +32004,25 @@
                   "meta": {
                     "query": "capital allocation",
                     "index": {
-                      "completeness": "partial",
+                      "completeness": "complete",
                       "lexical": {
-                        "state": "partial",
-                        "indexed": 126,
-                        "pending": 1,
+                        "state": "ready",
+                        "indexed": 206,
+                        "pending": 0,
                         "failed": 0
                       },
-                      "reasons": [
-                        "lexical_backfill_pending"
-                      ]
+                      "reasons": []
+                    },
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
                     }
                   }
                 }
@@ -30476,12 +32314,12 @@
                 "example": {
                   "data": [
                     {
-                      "id": "e75687fd-0dc9-4558-9c67-065c3e2b832d",
-                      "title": "Olivia Dean is Apple Music’s Artist of the Year for 2026",
-                      "description": "Apple Music named Olivia Dean its 2026 Artist of the Year, citing the British singer-songwriter’s rise after the release of The Art of Loving. She is the first UK artist to receive the honor.",
-                      "url": "https://www.apple.com/newsroom/2026/11/olivia-dean-is-apple-musics-artist-of-the-year-for-2026/",
-                      "published_at": "2026-11-09T15:59:09.485Z",
-                      "first_seen_at": "2026-11-09T16:03:12.087Z",
+                      "id": "97e64c4c-a80a-4386-a935-abddab953b9f",
+                      "title": "Apple TV introduces new Sign Language interpretation feature",
+                      "description": "Apple announced that its Apple TV app will add sign language interpretation for selected titles starting November 13, debuting alongside the global streaming release of Being Heumann.",
+                      "url": "https://www.apple.com/newsroom/2026/11/apple-tv-introduces-new-sign-language-interpretation-feature/",
+                      "published_at": "2026-11-10T16:00:26.015Z",
+                      "first_seen_at": "2026-11-10T16:02:54.100Z",
                       "source": {
                         "id": "ir",
                         "name": "Apple Inc.",
@@ -30508,39 +32346,51 @@
                             "symbol": "AAPL",
                             "name": "Apple Inc."
                           },
-                          "url": "https://www.apple.com/newsroom/2026/11/olivia-dean-is-apple-musics-artist-of-the-year-for-2026/",
+                          "url": "https://www.apple.com/newsroom/2026/11/apple-tv-introduces-new-sign-language-interpretation-feature/",
                           "publication_type": "press_release",
-                          "published_at": "2026-11-09T15:59:09.485Z",
-                          "modified_at": "2026-11-09T15:59:42.000Z",
+                          "published_at": "2026-11-10T16:00:26.015Z",
+                          "modified_at": "2026-11-10T16:02:21.000Z",
                           "categories": [],
                           "tags": []
                         }
                       ],
                       "publications_truncated": false,
                       "model_processing_allowed": true,
-                      "summary_words": 359,
+                      "summary_words": 634,
                       "attribution": {
                         "publisher": "Apple Inc.",
                         "publisher_host": "www.apple.com",
-                        "source_url": "https://www.apple.com/newsroom/2026/11/olivia-dean-is-apple-musics-artist-of-the-year-for-2026/",
-                        "published_at": "2026-11-09T15:59:09.485Z",
+                        "source_url": "https://www.apple.com/newsroom/2026/11/apple-tv-introduces-new-sign-language-interpretation-feature/",
+                        "published_at": "2026-11-10T16:00:26.015Z",
                         "rights": "issuer",
                         "edgar": null,
                         "statement": "Summary written by Invinite from the publication above; not the publisher's text. Source and date above."
                       },
                       "pdf": {
-                        "url": "https://storage.invinite.com/earnings_events/news/us/320193/5fb26b00b4e86d3caf2d229e15ad9486/AAPL-2026-11-09-olivia-dean-is-apple-music-s-artist-of-the-year-for-2026.pdf",
+                        "url": "https://storage.invinite.com/earnings_events/news/us/320193/ca2e41f16f2e858e602fe955b1552f12/AAPL-2026-11-10-apple-tv-introduces-new-sign-language-interpretation-feature.pdf",
                         "version": 1,
-                        "sha256": "2a20980685cf7e396f768cb9318e2a9400051b03e81762bbf15c402d4aea6f82",
-                        "bytes": 17732,
-                        "pages": 3,
-                        "generated_at": "2026-11-09T16:10:54.105Z"
+                        "sha256": "f051fe6569fadce33148dbc84f657a68a660c794d3386e11b9aa6f834caeb3f4",
+                        "bytes": 23362,
+                        "pages": 4,
+                        "generated_at": "2026-11-10T16:12:41.210Z"
                       }
                     }
                   ],
                   "has_more": true,
-                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTIyVDEyOjAwOjAwLjAwMDAwMFoiLCI0NjAwMDkxNy01MjE2LTRjMTAtYWExMC0yZjQ3MTc5ZWI4YmMiXSwiZiI6Ijc3YzZjZGMzZDlhOWM5NzEifQ",
-                  "meta": {}
+                  "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI5VDEyOjAwOjAwLjAwMDAwMFoiLCJkNWExNTQwMS1lZTQ1LTQzYmEtOWE0OC1kZmQwMzQzYTRhMGEiXSwiZiI6IjhhOTBkYmE5ZGE5OGVmMTYifQ",
+                  "meta": {
+                    "coverage": {
+                      "state": "complete",
+                      "through": null,
+                      "retry_after_s": null
+                    },
+                    "source": {
+                      "dataset_release": "2026q3",
+                      "version_id": null,
+                      "accession": "0000320193-26-000026",
+                      "fetched_at": null
+                    }
+                  }
                 }
               }
             }
