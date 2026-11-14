@@ -4825,7 +4825,21 @@
           "share_price",
           "total",
           "shares_owned_following_transaction",
-          "side"
+          "side",
+          "transaction_date",
+          "deemed_execution_date",
+          "owner_cik",
+          "direct_indirect",
+          "nature_of_ownership",
+          "is_derivative",
+          "conversion_exercise_price",
+          "exercise_date",
+          "expiration_date",
+          "underlying_security_title",
+          "underlying_shares",
+          "footnotes",
+          "is_10b5_1",
+          "source"
         ],
         "properties": {
           "id": {
@@ -4923,9 +4937,117 @@
               "buy",
               "sell"
             ]
+          },
+          "transaction_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2026-11-10",
+            "description": "Date of the transaction (YYYY-MM-DD); sec_api rows (realtime Form 4 feed) leave it null"
+          },
+          "deemed_execution_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Deemed execution date (YYYY-MM-DD) when the filing states one"
+          },
+          "owner_cik": {
+            "type": "string",
+            "nullable": true,
+            "example": "0001496686",
+            "description": "CIK of the reporting owner (10 digits); one row per owner of a joint filing; sec_api rows (realtime Form 4 feed) leave it null"
+          },
+          "direct_indirect": {
+            "type": "string",
+            "enum": [
+              "D",
+              "I"
+            ],
+            "nullable": true,
+            "example": "D",
+            "description": "Ownership form: D = direct, I = indirect; sec_api rows (realtime Form 4 feed) leave it null"
+          },
+          "nature_of_ownership": {
+            "type": "string",
+            "nullable": true,
+            "description": "Nature of an indirect ownership as filed (e.g. By Trust)"
+          },
+          "is_derivative": {
+            "type": "boolean",
+            "example": false,
+            "description": "true = a derivative-security line (option, RSU, warrant); false = a non-derivative line (sec_api rows are always false)"
+          },
+          "conversion_exercise_price": {
+            "type": "number",
+            "nullable": true,
+            "description": "Conversion or exercise price of a derivative security"
+          },
+          "exercise_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the derivative becomes exercisable (YYYY-MM-DD)"
+          },
+          "expiration_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Expiration date of the derivative (YYYY-MM-DD)"
+          },
+          "underlying_security_title": {
+            "type": "string",
+            "nullable": true,
+            "description": "Title of the security underlying a derivative"
+          },
+          "underlying_shares": {
+            "type": "number",
+            "nullable": true,
+            "description": "Number of underlying shares of a derivative"
+          },
+          "footnotes": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/InsiderTradeFootnote"
+            },
+            "description": "The filing's footnotes referenced by this line; sec_api rows (realtime Form 4 feed) leave it null"
+          },
+          "is_10b5_1": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "true = the filer marked the transaction as made under a Rule 10b5-1 trading plan; sec_api rows (realtime Form 4 feed) leave it null"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "sec_api",
+              "f345"
+            ],
+            "example": "sec_api",
+            "description": "Origin of the row: sec_api = the realtime Form 4 feed; f345 = the SEC insider transactions dataset (Forms 3, 4, 5), whose rows carry the fields above"
           }
         },
         "title": "InsiderTrade"
+      },
+      "InsiderTradeFootnote": {
+        "type": "object",
+        "description": "One footnote of an insider filing",
+        "required": [
+          "id",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "F1",
+            "description": "Footnote id as filed (F1, F2, …)"
+          },
+          "text": {
+            "type": "string",
+            "description": "Footnote text"
+          }
+        },
+        "title": "InsiderTradeFootnote"
       },
       "Ipo": {
         "type": "object",
@@ -27308,6 +27430,38 @@
           {
             "schema": {
               "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "transaction_date.gte",
+            "required": false,
+            "description": "`transaction_date` on or after this value (rows without a transaction date are excluded)",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "in": "query",
+            "name": "transaction_date.lte",
+            "required": false,
+            "description": "`transaction_date` on or before this value (rows without a transaction date are excluded)",
+            "example": "2025-01-01"
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "is_derivative",
+            "required": false,
+            "description": "true = only derivative-security lines; false = only non-derivative lines",
+            "example": false
+          },
+          {
+            "schema": {
+              "type": "string",
               "enum": [
                 "filed_at",
                 "-filed_at"
@@ -27468,7 +27622,21 @@
                       "total": 842913,
                       "shares_owned_following_transaction": 27598,
                       "shares_owned_before_transaction": 29997,
-                      "side": "sell"
+                      "side": "sell",
+                      "transaction_date": null,
+                      "deemed_execution_date": null,
+                      "owner_cik": null,
+                      "direct_indirect": null,
+                      "nature_of_ownership": null,
+                      "is_derivative": false,
+                      "conversion_exercise_price": null,
+                      "exercise_date": null,
+                      "expiration_date": null,
+                      "underlying_security_title": null,
+                      "underlying_shares": null,
+                      "footnotes": null,
+                      "is_10b5_1": null,
+                      "source": "sec_api"
                     }
                   ],
                   "has_more": true,
@@ -27643,7 +27811,21 @@
                   "total": 842913,
                   "shares_owned_following_transaction": 27598,
                   "shares_owned_before_transaction": 29997,
-                  "side": "sell"
+                  "side": "sell",
+                  "transaction_date": null,
+                  "deemed_execution_date": null,
+                  "owner_cik": null,
+                  "direct_indirect": null,
+                  "nature_of_ownership": null,
+                  "is_derivative": false,
+                  "conversion_exercise_price": null,
+                  "exercise_date": null,
+                  "expiration_date": null,
+                  "underlying_security_title": null,
+                  "underlying_shares": null,
+                  "footnotes": null,
+                  "is_10b5_1": null,
+                  "source": "sec_api"
                 }
               }
             }

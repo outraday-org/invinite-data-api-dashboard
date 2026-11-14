@@ -3,6 +3,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiRequestError } from "@/lib/api/errors";
+import { formatEnDateTime } from "@/lib/date";
 import { V2_FUND_HOLDINGS, V2_HOLDING_CHANGES, V2_HOLDINGS, V2_HOLDINGS_PENDING, V2_INSIDER_TRADES, V2_IPOS } from "@/lib/sec/v2-fixtures";
 import { insiderRoles, InsiderTradesView } from "@/routes/$ticker/insider-trades/index";
 import { changePercentText, FundHoldingsList, HoldingChangesList, HoldingsList } from "@/routes/$ticker/institutions/index";
@@ -133,6 +134,28 @@ describe("Insider trades (`/v1/insider-trades`)", () => {
         expect(within(row).getByText("$254.12")).toBeInTheDocument();
 
         expect(screen.queryByText(/No insider trades/)).toBeNull();
+    });
+
+    it("Form 3/4/5 dataset row: transaction date, owner CIK and the derivative flag; a sec-api row shows dashes", () => {
+        render(<InsiderTradesView {...list} error={null} pages={[V2_INSIDER_TRADES]} />);
+
+        expect(screen.getByRole("columnheader", { name: "Traded" })).toBeInTheDocument();
+
+        expect(screen.getByRole("columnheader", { name: "Owner CIK" })).toBeInTheDocument();
+
+        const dataset = screen.getByText("Adams Katherine L").closest("tr")!;
+
+        expect(within(dataset).getByText(formatEnDateTime("2026-10-15"))).toBeInTheDocument();
+
+        expect(within(dataset).getByText("0001631982")).toBeInTheDocument();
+
+        expect(within(dataset).getByText("Derivative")).toBeInTheDocument();
+
+        const secApi = screen.getByText("Cook Timothy D").closest("tr")!;
+
+        expect(within(secApi).queryByText("Derivative")).toBeNull();
+
+        expect(within(secApi).getAllByText("—").length).toBeGreaterThanOrEqual(3);
     });
 
     it("roles: every flag in words, 'Other' text kept, none = dash", () => {

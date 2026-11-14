@@ -67,9 +67,21 @@ const COLUMNS: Array<ColumnDef<V2InsiderTrade>> = [
         header: "Filed",
     },
     {
+        // The Form 3/4/5 dataset's transaction date (release 5.7); realtime sec-api rows carry none.
+        accessorKey: "transaction_date",
+        cell: ({ row }) => (row.original.transaction_date ? formatEnDateTime(row.original.transaction_date) : "—"),
+        header: "Traded",
+    },
+    {
         accessorKey: "reporting_person_name",
         cell: ({ row }) => <div className="truncate">{row.original.reporting_person_name}</div>,
         header: "Insider",
+    },
+    {
+        // One row per reporting owner of a joint filing; sec-api rows carry no owner CIK.
+        accessorKey: "owner_cik",
+        cell: ({ row }) => <div className="tabular-nums">{row.original.owner_cik ?? "—"}</div>,
+        header: "Owner CIK",
     },
     {
         cell: ({ row }) => <div className="truncate">{insiderRoles(row.original)}</div>,
@@ -87,6 +99,11 @@ const COLUMNS: Array<ColumnDef<V2InsiderTrade>> = [
             <Badge variant={row.original.side === "buy" ? "secondary" : "outline"}>{SIDE_LABELS[row.original.side]}</Badge>
         ),
         header: "Side",
+    },
+    {
+        accessorKey: "is_derivative",
+        cell: ({ row }) => (row.original.is_derivative ? <Badge variant="outline">Derivative</Badge> : "—"),
+        header: "Derivative",
     },
     {
         accessorKey: "coding_code",

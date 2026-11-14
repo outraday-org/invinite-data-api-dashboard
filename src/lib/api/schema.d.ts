@@ -4002,6 +4002,74 @@ export interface components {
              * @enum {string}
              */
             side: "buy" | "sell";
+            /**
+             * Format: date
+             * @description Date of the transaction (YYYY-MM-DD); sec_api rows (realtime Form 4 feed) leave it null
+             * @example 2026-11-10
+             */
+            transaction_date: null | string;
+            /**
+             * Format: date
+             * @description Deemed execution date (YYYY-MM-DD) when the filing states one
+             */
+            deemed_execution_date: null | string;
+            /**
+             * @description CIK of the reporting owner (10 digits); one row per owner of a joint filing; sec_api rows (realtime Form 4 feed) leave it null
+             * @example 0001496686
+             */
+            owner_cik: null | string;
+            /**
+             * @description Ownership form: D = direct, I = indirect; sec_api rows (realtime Form 4 feed) leave it null
+             * @example D
+             * @enum {string|null}
+             */
+            direct_indirect: "D" | "I" | null;
+            /** @description Nature of an indirect ownership as filed (e.g. By Trust) */
+            nature_of_ownership: null | string;
+            /**
+             * @description true = a derivative-security line (option, RSU, warrant); false = a non-derivative line (sec_api rows are always false)
+             * @example false
+             */
+            is_derivative: boolean;
+            /** @description Conversion or exercise price of a derivative security */
+            conversion_exercise_price: null | number;
+            /**
+             * Format: date
+             * @description Date the derivative becomes exercisable (YYYY-MM-DD)
+             */
+            exercise_date: null | string;
+            /**
+             * Format: date
+             * @description Expiration date of the derivative (YYYY-MM-DD)
+             */
+            expiration_date: null | string;
+            /** @description Title of the security underlying a derivative */
+            underlying_security_title: null | string;
+            /** @description Number of underlying shares of a derivative */
+            underlying_shares: null | number;
+            /** @description The filing's footnotes referenced by this line; sec_api rows (realtime Form 4 feed) leave it null */
+            footnotes: Array<components["schemas"]["InsiderTradeFootnote"]> | null;
+            /** @description true = the filer marked the transaction as made under a Rule 10b5-1 trading plan; sec_api rows (realtime Form 4 feed) leave it null */
+            is_10b5_1: boolean | null;
+            /**
+             * @description Origin of the row: sec_api = the realtime Form 4 feed; f345 = the SEC insider transactions dataset (Forms 3, 4, 5), whose rows carry the fields above
+             * @example sec_api
+             * @enum {string}
+             */
+            source: "f345" | "sec_api";
+        };
+        /**
+         * InsiderTradeFootnote
+         * @description One footnote of an insider filing
+         */
+        InsiderTradeFootnote: {
+            /**
+             * @description Footnote id as filed (F1, F2, …)
+             * @example F1
+             */
+            id: string;
+            /** @description Footnote text */
+            text: string;
         };
         /**
          * Ipo
@@ -9895,7 +9963,21 @@ export interface operations {
                      *       "total": 842913,
                      *       "shares_owned_following_transaction": 27598,
                      *       "shares_owned_before_transaction": 29997,
-                     *       "side": "sell"
+                     *       "side": "sell",
+                     *       "transaction_date": null,
+                     *       "deemed_execution_date": null,
+                     *       "owner_cik": null,
+                     *       "direct_indirect": null,
+                     *       "nature_of_ownership": null,
+                     *       "is_derivative": false,
+                     *       "conversion_exercise_price": null,
+                     *       "exercise_date": null,
+                     *       "expiration_date": null,
+                     *       "underlying_security_title": null,
+                     *       "underlying_shares": null,
+                     *       "footnotes": null,
+                     *       "is_10b5_1": null,
+                     *       "source": "sec_api"
                      *     }
                      */
                     "application/json": components["schemas"]["InsiderTrade"];
@@ -15385,6 +15467,21 @@ export interface operations {
                  */
                 "filed_at.lt"?: string;
                 /**
+                 * @description `transaction_date` on or after this value (rows without a transaction date are excluded)
+                 * @example 2025-01-01
+                 */
+                "transaction_date.gte"?: string;
+                /**
+                 * @description `transaction_date` on or before this value (rows without a transaction date are excluded)
+                 * @example 2025-01-01
+                 */
+                "transaction_date.lte"?: string;
+                /**
+                 * @description true = only derivative-security lines; false = only non-derivative lines
+                 * @example false
+                 */
+                "is_derivative"?: boolean;
+                /**
                  * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-filed_at`
                  * @example -filed_at
                  */
@@ -15454,7 +15551,21 @@ export interface operations {
                      *           "total": 842913,
                      *           "shares_owned_following_transaction": 27598,
                      *           "shares_owned_before_transaction": 29997,
-                     *           "side": "sell"
+                     *           "side": "sell",
+                     *           "transaction_date": null,
+                     *           "deemed_execution_date": null,
+                     *           "owner_cik": null,
+                     *           "direct_indirect": null,
+                     *           "nature_of_ownership": null,
+                     *           "is_derivative": false,
+                     *           "conversion_exercise_price": null,
+                     *           "exercise_date": null,
+                     *           "expiration_date": null,
+                     *           "underlying_security_title": null,
+                     *           "underlying_shares": null,
+                     *           "footnotes": null,
+                     *           "is_10b5_1": null,
+                     *           "source": "sec_api"
                      *         }
                      *       ],
                      *       "has_more": true,
