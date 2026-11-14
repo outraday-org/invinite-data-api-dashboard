@@ -4,6 +4,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 
 import type {
+    V2FundHolding,
+    V2FundHoldingsResponse,
     V2Holding,
     V2HoldingChange,
     V2HoldingChangesResponse,
@@ -15,7 +17,7 @@ import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { V2ListTable } from "@/components/sec/v2-list-table";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useV2HoldingChangesInfinite, useV2HoldingsInfinite } from "@/lib/api/queries";
+import { useV2FundHoldingsInfinite, useV2HoldingChangesInfinite, useV2HoldingsInfinite } from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { latest13fPeriodEnd, recentQuarterEnds } from "@/lib/sec/source";
@@ -124,6 +126,45 @@ const CHANGE_COLUMNS: Array<ColumnDef<V2HoldingChange>> = [
     },
 ];
 
+const fundCell = (row: V2FundHolding) => {
+    const name = row.series_id == null ? (row.registrant_name ?? row.fund_key) : (row.series_name ?? row.fund_key);
+
+    return (
+        <div className="truncate" title={[row.registrant_name, row.series_id ?? row.fund_key].filter(Boolean).join(" · ")}>
+            {name}
+        </div>
+    );
+};
+
+/** `pct_nav` is already percent (7.1 = 7.1 % of the fund's net assets). */
+const percentOfNav = (value: null | number) =>
+    value === null || !Number.isFinite(value) ? "—" : `${formatNumberEn(value, { maximumFractionDigits: 2 })}%`;
+
+const FUND_COLUMNS: Array<ColumnDef<V2FundHolding>> = [
+    { accessorKey: "report_date", cell: ({ row }) => day(row.original.report_date ?? null), header: "Report Date" },
+    { accessorKey: "fund_key", cell: ({ row }) => fundCell(row.original), header: "Fund" },
+    {
+        accessorKey: "class_tickers",
+        cell: ({ row }) => row.original.class_tickers.join(", ") || "—",
+        header: "Tickers",
+    },
+    {
+        accessorKey: "balance",
+        cell: ({ row }) => right(count(row.original.balance ?? null)),
+        header: () => <div className="text-right">Shares</div>,
+    },
+    {
+        accessorKey: "value_usd",
+        cell: ({ row }) => right(money(row.original.value_usd ?? null)),
+        header: () => <div className="text-right">Value</div>,
+    },
+    {
+        accessorKey: "pct_nav",
+        cell: ({ row }) => right(percentOfNav(row.original.pct_nav ?? null)),
+        header: () => <div className="text-right">% of Fund</div>,
+    },
+];
+
 type ListState<TPage> = {
     error: unknown;
     hasNextPage: boolean;
@@ -138,7 +179,10 @@ type ListState<TPage> = {
  * the answer's coverage (`pending` = still being filled, `partial`), its provenance (`pinned_at`, `counting`,
  * `meta.source`), the rows and "Load more".
  */
-export function ThirteenFList<TRow, TPage extends V2HoldingChangesResponse | V2HoldingsResponse>({
+export function ThirteenFList<
+    TRow,
+    TPage extends V2FundHoldingsResponse | V2HoldingChangesResponse | V2HoldingsResponse,
+>({
     columns,
     emptyText,
     errorTitle,
@@ -205,6 +249,20 @@ export function HoldingChangesList({ state }: { state: ListState<V2HoldingChange
     );
 }
 
+/** N-PORT funds / ETFs holding this company (`/v1/fund-holdings`, one row per fund, its latest public report). */
+export function FundHoldingsList({ state }: { state: ListState<V2FundHoldingsResponse> }) {
+    return (
+        <ThirteenFList
+            columns={FUND_COLUMNS}
+            emptyText="No fund reported this company in its latest N-PORT report."
+            errorTitle="Failed to load fund holders"
+            loadingText="Loading fund holders..."
+            rowsOf={page => page.data}
+            state={state}
+        />
+    );
+}
+
 function InstitutionsPage() {
     const { ticker } = Route.useParams();
 
@@ -225,13 +283,17 @@ function InstitutionsPage() {
 
     const changes = useV2HoldingChangesInfinite({ company: ticker, limit: THIRTEEN_F_PAGE, periodEnd });
 
+    // `/v1/fund-holdings?company=`: each fund's latest N-PORT report on or before the picked quarter (none = today).
+    const funds = useV2FundHoldingsInfinite({ company: ticker, limit: THIRTEEN_F_PAGE, periodEnd });
+
     return (
         <div className="space-y-4 relative flex flex-col h-0 grow">
             <div className="flex flex-wrap items-end justify-between gap-2">
                 <div className="flex flex-col gap-1">
                     <div>Institutions</div>
                     <div className="text-muted-foreground text-sm">
-                        13F holders of this company and their position changes vs the prior quarter.
+                        13F holders of this company, their position changes vs the prior quarter, and the funds / ETFs
+                        holding it (N-PORT).
                     </div>
                 </div>
                 <FilterSelect className="w-[220px]" onValueChange={setPeriod} options={periodOptions} value={period} />
@@ -241,6 +303,7 @@ function InstitutionsPage() {
                 <TabsList variant="line">
                     <TabsTrigger className="h-[34px] text-sm" value="ownership">Ownership</TabsTrigger>
                     <TabsTrigger className="h-[34px] text-sm" value="transactions">Transactions</TabsTrigger>
+                    <TabsTrigger className="h-[34px] text-sm" value="funds">Funds</TabsTrigger>
                 </TabsList>
 
                 <TabsContent className="grow relative mt-2" value="ownership">
@@ -265,6 +328,19 @@ function InstitutionsPage() {
                             isLoading: changes.isLoading,
                             onLoadMore: () => changes.fetchNextPage(),
                             pages: changes.data?.pages ?? [],
+                        }}
+                    />
+                </TabsContent>
+
+                <TabsContent className="grow relative mt-2" value="funds">
+                    <FundHoldingsList
+                        state={{
+                            error: funds.error,
+                            hasNextPage: funds.hasNextPage,
+                            isFetchingNextPage: funds.isFetchingNextPage,
+                            isLoading: funds.isLoading,
+                            onLoadMore: () => funds.fetchNextPage(),
+                            pages: funds.data?.pages ?? [],
                         }}
                     />
                 </TabsContent>

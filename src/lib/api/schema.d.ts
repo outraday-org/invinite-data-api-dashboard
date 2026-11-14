@@ -886,6 +886,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/fund-holdings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List N-PORT fund holdings
+         * @description N-PORT fund and ETF positions from the funds' quarterly public reports (about 60 days after the report date): by issuer (`company=`, one row per fund holding it, from each fund's latest report on or before `period_end`, its positions in the issuer summed), by fund (`filer=` registrant CIK, `series=` when the registrant files for several funds: that fund's positions) or by filing (`accession=`, an NPORT-P filing's reported holdings as filed); exactly one of `company`, `filer` or `accession` (`series` alone needs `filer`). `period_end` defaults to today. Order: value in USD, descending (`company=`, `filer=`), the filing's line order (`accession=`); several companies are read one after another. A fund row is not a 13F `Holding` (different row type, R16): `/v1/holdings` keeps the 13F managers.
+         */
+        get: operations["listFundHoldings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/guidance": {
         parameters: {
             query?: never;
@@ -2054,6 +2074,13 @@ export interface components {
              * @enum {string}
              */
             role: "analyst" | "executive" | "operator" | "other";
+            /** @description Permanent public URL of the person's image: a photo (executives and investor-relations hosts, from the company's website or proxy statement), else the logo of the company or the analyst's firm. Null when none is known or speaker images are not yet published; show initials then */
+            image_url?: null | string;
+            /**
+             * @description What `image_url` shows: photo (the person), company_logo (the company of an executive or investor-relations host) or firm_logo (the analyst's firm); null exactly when `image_url` is null
+             * @enum {string|null}
+             */
+            image_kind?: "company_logo" | "firm_logo" | "photo" | null;
         };
         /**
          * Participation
@@ -2091,6 +2118,13 @@ export interface components {
                 /** @description Where the quote starts (ms into the call) */
                 start_ms: number;
             }>;
+            /** @description Permanent public URL of the person's image: a photo (executives and investor-relations hosts, from the company's website or proxy statement), else the logo of the company or the analyst's firm. Null when none is known or speaker images are not yet published; show initials then */
+            image_url?: null | string;
+            /**
+             * @description What `image_url` shows: photo (the person), company_logo (the company of an executive or investor-relations host) or firm_logo (the analyst's firm); null exactly when `image_url` is null
+             * @enum {string|null}
+             */
+            image_kind?: "company_logo" | "firm_logo" | "photo" | null;
         };
         /** FiscalPeriod */
         FiscalPeriod: {
@@ -3708,6 +3742,50 @@ export interface components {
             voting_authority_shared?: null | number;
             /** @description Votes with sole authority */
             voting_authority_sole?: null | number;
+        };
+        /** FundHolding */
+        FundHolding: {
+            /** @description The fund: its SEC series id, or cik:<registrant CIK> for a unit investment trust that files without a series */
+            fund_key: string;
+            /** @description SEC series id (S + 9 digits); null for a fund without a series */
+            series_id?: null | string;
+            /** @description Fund (series) name as reported */
+            series_name?: null | string;
+            /** @description Registrant (trust) CIK, 10 digits */
+            registrant_cik?: null | string;
+            /** @description Registrant (trust) name as reported */
+            registrant_name?: null | string;
+            /** @description Tickers of the fund's share classes (SEC Series and Class list; a unit trust's own SEC-stated tickers) */
+            class_tickers: Array<string>;
+            /**
+             * Format: date
+             * @description Date the holdings are reported as of (YYYY-MM-DD)
+             */
+            report_date?: null | string;
+            /** @description NPORT-P accession number of the report */
+            accession_number: string;
+            /** @description Issuer CIK of the holding, 10 digits; null when it did not resolve (or on accession= rows, as filed) */
+            issuer_cik?: null | string;
+            /** @description Issuer name */
+            issuer_name?: null | string;
+            /** @description Holding CUSIP; null on company= rows (a fund's positions in the issuer summed) */
+            cusip?: null | string;
+            /** @description Holding ISIN; null on company= rows */
+            isin?: null | string;
+            /** @description Holding ticker (company= rows: the requested company's ticker; else as the fund stated it) */
+            ticker?: null | string;
+            /** @description Value in USD as the fund reported it; null when none was stated */
+            value_usd?: null | number;
+            /** @description Percent of the fund's net assets (7.1 = 7.1 %) */
+            pct_nav?: null | number;
+            /** @description Shares, principal or contracts held (see unit); null when the summed positions state different units */
+            balance?: null | number;
+            /** @description Unit of balance: NS shares, PA principal amount, NC contracts, OU other */
+            unit?: null | string;
+            /** @description N-PORT asset category (EC equity common, EP equity preferred, DBT debt, …) */
+            asset_cat?: null | string;
+            /** @description How issuer_cik was found: cusip_cache, isin, ticker, not_equity (no issuer for a non-equity holding) or unresolved; null on accession= rows */
+            issuer_resolution?: null | string;
         };
         /** InsiderTrade */
         InsiderTrade: {
@@ -10401,7 +10479,9 @@ export interface operations {
                      *       "last_seen": "2026-10-28T21:30:00.000Z",
                      *       "mean_difficulty": null,
                      *       "scored_question_count": 0,
-                     *       "role": "executive"
+                     *       "role": "executive",
+                     *       "image_url": null,
+                     *       "image_kind": null
                      *     }
                      */
                     "application/json": components["schemas"]["Person"];
@@ -14380,6 +14460,113 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listFundHoldings: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                company?: string;
+                /**
+                 * @description Fund registrant CIK (one): its fund portfolio
+                 * @example 0000036405
+                 */
+                filer?: string;
+                /**
+                 * @description SEC series id of one fund (S + 9 digits; a unit investment trust without a series: cik:<registrant CIK>); with filer=, required when the registrant files for more than one fund
+                 * @example S000002277
+                 */
+                series?: string;
+                /**
+                 * @description NPORT-P filing: its reported holdings as filed
+                 * @example 0001752724-26-123456
+                 */
+                accession?: string;
+                /**
+                 * @description Each fund's latest report on or before this date
+                 * @example 2026-06-30
+                 */
+                period_end?: string;
+                /**
+                 * @description Sort field: `-value_usd` (the only order the store serves); the id tiebreaker is always appended
+                 * @example -value_usd
+                 */
+                sort?: "-value_usd";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 1 000 on 13F rows)
+                 * @example 100
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["FundHolding"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                            /**
+                             * Format: date-time
+                             * @description Instant the page reads the fund reports at
+                             */
+                            pinned_at?: null | string;
+                            /** @description How fund positions are counted (documented rule) */
+                            counting?: null | string;
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listGrowth: {
         parameters: {
             query: {
@@ -16291,7 +16478,9 @@ export interface operations {
                      *               "quote": "At this time, all participants are in a listen-only mode.",
                      *               "start_ms": 800
                      *             }
-                     *           ]
+                     *           ],
+                     *           "image_url": null,
+                     *           "image_kind": null
                      *         }
                      *       ],
                      *       "has_more": false,
@@ -16426,7 +16615,9 @@ export interface operations {
                      *           "last_seen": "2026-11-02T22:00:00.000Z",
                      *           "mean_difficulty": 0.552,
                      *           "scored_question_count": 5,
-                     *           "role": "analyst"
+                     *           "role": "analyst",
+                     *           "image_url": null,
+                     *           "image_kind": null
                      *         }
                      *       ],
                      *       "has_more": false,

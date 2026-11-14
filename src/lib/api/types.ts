@@ -95,6 +95,8 @@ export type V2DocumentVersionResponse = SecJson<ApiResponse<"/v1/document-versio
 export type V2DocumentFigureResponse = SecJson<ApiResponse<"/v1/document-versions/{version_id}/figures/{block_id}", "get">>;
 export type V2HoldingsResponse = ApiResponse<"/v1/holdings", "get">;
 export type V2HoldingChangesResponse = ApiResponse<"/v1/holding-changes", "get">;
+/** N-PORT fund holdings, their own collection (Data API release 5.7). */
+export type V2FundHoldingsResponse = ApiResponse<"/v1/fund-holdings", "get">;
 export type V2InsiderTradesResponse = ApiResponse<"/v1/insider-trades", "get">;
 export type V2IposResponse = ApiResponse<"/v1/ipos", "get">;
 
@@ -110,6 +112,7 @@ export type V2Holding = V2HoldingsResponse["data"][number];
 export type V2HoldingChange = V2HoldingChangesResponse["data"][number];
 export type V2HoldingChangeType = V2HoldingChange["type"];
 export type V2HoldingsInstruments = NonNullable<ApiQuery<"/v1/holdings">["instruments"]>;
+export type V2FundHolding = V2FundHoldingsResponse["data"][number];
 export type V2InsiderTrade = V2InsiderTradesResponse["data"][number];
 export type V2InsiderSide = V2InsiderTrade["side"];
 export type V2Ipo = V2IposResponse["data"][number];

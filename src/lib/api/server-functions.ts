@@ -30,6 +30,7 @@ import type {
     V2FilingSearchResponse,
     V2FilingsResponse,
     V2FilingsSort,
+    V2FundHoldingsResponse,
     V2GrowthResponse,
     V2GuidanceBasis,
     V2GuidancePeriodKind,
@@ -958,6 +959,32 @@ export const getV2Holdings = createServerFn({ method: "GET" })
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/holdings", {
             params: { query: v2Query({ accession, company, cursor, filer, instruments, limit, period_end: periodEnd }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2FundHoldingsSchema = z.object({
+    accession: accessionSchema.optional(),
+    apiKey: apiKeySchema,
+    company: z.string().trim().min(1).optional(),
+    cursor: cursorSchema,
+    filer: z.string().trim().regex(/^\d{1,10}$/).optional(),
+    limit: v2ThirteenFLimitSchema,
+    periodEnd: z.iso.date().optional(),
+    series: z.string().trim().regex(/^(S\d{9}|cik:\d{1,10})$/).optional(),
+});
+
+/** N-PORT fund positions of exactly one scope (`company` | `filer` [+ `series`] | `accession`); `period_end` omitted = today. */
+export const getV2FundHoldings = createServerFn({ method: "GET" })
+    .inputValidator(v2FundHoldingsSchema)
+    .handler(async ({ data }): Promise<V2FundHoldingsResponse> => {
+        const { accession, apiKey, company, cursor, filer, limit, periodEnd, series } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/fund-holdings", {
+            params: { query: v2Query({ accession, company, cursor, filer, limit, period_end: periodEnd, series }) },
         });
 
         if (error) throwApiError(error, response);

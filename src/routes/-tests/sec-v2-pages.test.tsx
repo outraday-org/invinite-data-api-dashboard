@@ -3,9 +3,9 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiRequestError } from "@/lib/api/errors";
-import { V2_HOLDING_CHANGES, V2_HOLDINGS, V2_HOLDINGS_PENDING, V2_INSIDER_TRADES, V2_IPOS } from "@/lib/sec/v2-fixtures";
+import { V2_FUND_HOLDINGS, V2_HOLDING_CHANGES, V2_HOLDINGS, V2_HOLDINGS_PENDING, V2_INSIDER_TRADES, V2_IPOS } from "@/lib/sec/v2-fixtures";
 import { insiderRoles, InsiderTradesView } from "@/routes/$ticker/insider-trades/index";
-import { changePercentText, HoldingChangesList, HoldingsList } from "@/routes/$ticker/institutions/index";
+import { changePercentText, FundHoldingsList, HoldingChangesList, HoldingsList } from "@/routes/$ticker/institutions/index";
 import { IposView, ipoSymbolText, offerPriceText } from "@/routes/$ticker/ipos/index";
 
 // The page modules' routes need a router; the pure views do not.
@@ -15,6 +15,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 // Keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
+    useV2FundHoldingsInfinite: vi.fn(),
     useV2HoldingChangesInfinite: vi.fn(),
     useV2HoldingsInfinite: vi.fn(),
     useV2InsiderTradesInfinite: vi.fn(),
@@ -88,6 +89,34 @@ describe("Institutions (`/v1/holdings`, `/v1/holding-changes`)", () => {
         render(<HoldingsList state={{ ...list, error: problem(404, "not_covered", "Unknown company"), pages: [] }} />);
 
         expect(screen.getByText("Not known to the SEC store")).toBeInTheDocument();
+    });
+});
+
+describe("Institutions: Funds tab (`/v1/fund-holdings`)", () => {
+    it("one row per fund: the series name (a unit trust: its registrant), class tickers, value and percent of the fund", () => {
+        render(<FundHoldingsList state={{ ...list, error: null, pages: [V2_FUND_HOLDINGS] }} />);
+
+        expect(screen.getByText("Vanguard 500 Index Fund")).toHaveAttribute("title", "Vanguard Index Funds · S000002277");
+
+        expect(screen.getByText("SPDR S&P 500 ETF Trust")).toHaveAttribute("title", "SPDR S&P 500 ETF Trust · cik:884394");
+
+        expect(screen.getByText("VFIAX, VOO")).toBeInTheDocument();
+
+        expect(screen.getByText("$98,765,432,100.00")).toBeInTheDocument();
+
+        expect(screen.getByText("7.12%")).toBeInTheDocument();
+    });
+
+    it("a complete empty answer is a genuine empty; 503 is a state", () => {
+        render(<FundHoldingsList state={{ ...list, error: null, pages: [{ ...V2_FUND_HOLDINGS, data: [] }] }} />);
+
+        expect(screen.getByText("No fund reported this company in its latest N-PORT report.")).toBeInTheDocument();
+
+        cleanup();
+
+        render(<FundHoldingsList state={{ ...list, error: problem(503, "unavailable", "Switched off"), pages: [] }} />);
+
+        expect(screen.queryByText(/No fund reported/)).toBeNull();
     });
 });
 

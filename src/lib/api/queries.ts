@@ -44,6 +44,7 @@ import type {
     V2FilingsSort,
     V2FinancialsBasis,
     V2FinancialsView,
+    V2FundHoldingsResponse,
     V2GrowthBasis,
     V2GrowthResponse,
     V2GuidanceBasis,
@@ -117,6 +118,7 @@ import {
     getV2Filing,
     getV2Filings,
     getV2FilingSearch,
+    getV2FundHoldings,
     getV2Growth,
     getV2Guidance,
     getV2HoldingChanges,
@@ -1054,6 +1056,18 @@ export function useV2HoldingsInfinite(input: V2HoldingsInput) {
             input.instruments ?? "",
             input.limit ?? "",
         ],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** N-PORT funds / ETFs holding a company (one row per fund, its latest report on or before `period_end`; omitted = today). */
+export function useV2FundHoldingsInfinite(input: { company: string; limit?: number; periodEnd?: string }) {
+    return useEarningsInfinite<V2FundHoldingsResponse>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2FundHoldings({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "fund-holdings", input.company, input.periodEnd ?? "", input.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
