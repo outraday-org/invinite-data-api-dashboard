@@ -1238,6 +1238,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/offerings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Form D private offerings
+         * @description Form D private offerings (Regulation D and Section 4(a)(5) exempt offerings) from the SEC's quarterly Form D data sets, five years held: one row per offering (SEC's Form D file number; every amendment folds into it) with the latest filing's facts — issuer and co-issuers, exemptions as filed, industry group, security types, offering / sold / remaining amounts (USD), investors, related persons — and the held filing history. Filters: `company=` (one issuer CIK or listed ticker), `filed_at.gte|lte` (latest filing date), `exemption=`, `industry=`, `total_sold.gte`, `is_amendment`. Order: latest filing date descending, then offering id. An issuer CIK the SEC registry and the data set do not know answers 404; a known issuer without offerings an empty page. Form D is research data, not limited to listed companies: `company=` answers any Form D issuer CIK (funds, private companies; a ticker resolves only for a listed company), and the list is not gated by the coverage of the financial families.
+         */
+        get: operations["listOfferings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/offerings/{offering_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a Form D private offering
+         * @description One Form D private offering by its id (the Form D file number, e.g. `021-528681`), with the latest filing's facts and the held filing history; an unknown id answers 404. Form D is research data, not limited to listed companies: `company=` answers any Form D issuer CIK (funds, private companies; a ticker resolves only for a listed company), and the list is not gated by the coverage of the financial families.
+         */
+        get: operations["getOffering"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/participants": {
         parameters: {
             query?: never;
@@ -1952,6 +1992,8 @@ export interface components {
                 /** @description Exchange (MIC) */
                 exchange: null | string;
             };
+            /** @description Number of Form D private offerings naming the filer (`phase=pre_ipo` lists); null on other lists and while Form D data is not served (optional: answers captured before release 5.7 lack it) */
+            private_offerings_count?: null | number;
         };
         /**
          * FilerDetail
@@ -2012,6 +2054,8 @@ export interface components {
             }> | null;
             /** @description With `expand=fund`: the registered investment company's fund series (SEC N-CEN census, risk/return prospectus data, N-PORT net assets); null for a filer without fund series and while fund data is not served */
             fund?: components["schemas"]["FilerFund"] | null;
+            /** @description With `expand=private_offerings`: summary of the filer's Form D private offerings (GET /v1/offerings?company=); null for a filer without Form D offerings and while Form D data is not served. Only for filers the SEC registry knows */
+            private_offerings?: components["schemas"]["FilerPrivateOfferings"] | null;
         };
         /**
          * ProposedTicker
@@ -2188,6 +2232,30 @@ export interface components {
             ten_year: null | number;
             /** @description Average annual total return since inception (fraction) */
             since_inception: null | number;
+        };
+        /**
+         * FilerPrivateOfferings
+         * @description Summary of the Form D offerings naming the filer (primary issuer or co-issuer)
+         */
+        FilerPrivateOfferings: {
+            /** @description Number of offerings */
+            count: number;
+            /**
+             * Format: date
+             * @description Earliest filing date over the offerings
+             */
+            first_filed: null | string;
+            /**
+             * Format: date
+             * @description Latest filing date over the offerings
+             */
+            latest_filed: null | string;
+            /** @description Sum of the amounts sold the offerings state (USD); null when none states one */
+            total_sold: null | number;
+            /** @description Exemptions claimed by the latest offering, as filed */
+            latest_exemptions: Array<string>;
+            /** @description Offering id of the latest offering (GET /v1/offerings/{offering_id}) */
+            latest_offering_id: null | string;
         };
         /**
          * Person
@@ -4297,6 +4365,117 @@ export interface components {
             total_offer_size: null | number;
             /** @description CUSIP; null when Massive has no value */
             us_code: null | string;
+        };
+        /**
+         * Offering
+         * @description One Form D private offering (Regulation D / Section 4(a)(5) exempt offering): the latest filing's facts and the held filing history
+         */
+        Offering: {
+            /**
+             * @description Offering id: SEC's Form D file number (one per offering; every amendment keeps it), or the first accession number for an offering whose filings state none
+             * @example 021-528681
+             */
+            offering_id: string;
+            /** @description Form D file number (021-…); null when the offering is keyed by its first accession */
+            file_number: null | string;
+            /** @description Accession number of the earliest held filing of the offering */
+            first_accession: string;
+            /** @description Accession number of the latest filing (the row's facts are from it) */
+            latest_accession: string;
+            /** @description Accession numbers of the held filings, in filing order */
+            accessions: Array<string>;
+            /**
+             * @description Primary issuer CIK, 10 digits
+             * @example 0001991882
+             */
+            primary_issuer_cik: string;
+            /** @description Primary issuer name as filed */
+            issuer_name: null | string;
+            /** @description CIKs of the other issuers of the offering, 10 digits */
+            co_issuer_ciks: Array<string>;
+            /**
+             * Format: date
+             * @description Filing date of the earliest held filing
+             */
+            filed_first: null | string;
+            /**
+             * Format: date
+             * @description Filing date of the latest filing
+             */
+            filed_latest: null | string;
+            /**
+             * Format: date
+             * @description Date of first sale as filed
+             */
+            sale_date: null | string;
+            /** @description The first sale has yet to occur */
+            first_sale_yet_to_occur: boolean | null;
+            /** @description Number of held amendments (D/A) */
+            amendment_count: number;
+            /** @description The original Form D is inside the held window (five years of quarterly data sets); false = the history starts with an amendment */
+            original_held: boolean;
+            /** @description The latest filing is an amendment (D/A) */
+            is_amendment: boolean;
+            /** @description Federal exemptions and exclusions claimed, as filed: 06b (Rule 506(b)), 06c (Rule 506(c)), 04 (Rule 504), 4a5, 3C, 3C.1, 3C.7, … */
+            exemptions: Array<string>;
+            /** @description Industry group as filed (Pooled Investment Fund, Other Technology, …) */
+            industry_group: null | string;
+            /** @description Investment fund type as filed (Hedge Fund, Private Equity Fund, …) */
+            investment_fund_type: null | string;
+            /** @description The issuer is registered (or must register) under the Investment Company Act of 1940 */
+            is_40_act: boolean | null;
+            /** @description Types of securities offered */
+            security_types: Array<"debt" | "equity" | "mineral_property" | "option_to_acquire" | "other" | "pooled_investment_fund" | "security_to_be_acquired" | "tenant_in_common">;
+            /** @description The offering is made in connection with a business combination */
+            is_business_combination: boolean | null;
+            /** @description The offering is expected to last more than one year */
+            more_than_one_year: boolean | null;
+            /** @description Minimum investment accepted from an outside investor (USD) */
+            min_investment: null | number;
+            /** @description Total offering amount (USD); null when indefinite */
+            total_offering_amount: null | number;
+            /** @description Total amount sold (USD) */
+            total_sold: null | number;
+            /** @description Total amount remaining to be sold (USD); null when indefinite */
+            total_remaining: null | number;
+            /** @description The offering amount is stated as indefinite */
+            indefinite_amount: boolean;
+            /** @description Securities were sold to non-accredited investors */
+            has_non_accredited: boolean | null;
+            /** @description Number of non-accredited investors who invested */
+            non_accredited_count: null | number;
+            /** @description Total number of investors who invested */
+            investor_count: null | number;
+            /** @description Issuer revenue range as filed (No Revenues, $1 - $1,000,000, Decline to Disclose, …) */
+            revenue_range: null | string;
+            /** @description Issuer net asset value range as filed (funds) */
+            net_asset_value_range: null | string;
+            /** @description Sales commissions (USD) */
+            sales_commission: null | number;
+            /** @description Finders' fees (USD) */
+            finders_fee: null | number;
+            /** @description Related persons as filed */
+            related_persons: Array<components["schemas"]["OfferingRelatedPerson"]>;
+            /** @description SIC code of the issuer */
+            sic_code: null | string;
+            /** @description Jurisdiction of incorporation as filed */
+            jurisdiction: null | string;
+            /** @description Entity type as filed (Corporation, Limited Partnership, …) */
+            entity_type: null | string;
+            /** @description Year of incorporation as filed (a year, or Over Five Years / Within Last Five Years) */
+            year_of_inc: null | string;
+        };
+        /**
+         * OfferingRelatedPerson
+         * @description A related person of a Form D offering (executive officer, director, promoter) as filed
+         */
+        OfferingRelatedPerson: {
+            /** @description Name as filed (first, middle, last) */
+            name: string;
+            /** @description Relationships as filed: Executive Officer, Director, Promoter */
+            relationships: Array<string>;
+            /** @description Clarification of the relationship as filed */
+            clarification: null | string;
         };
         /**
          * Event
@@ -9731,7 +9910,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Optional objects to include: `lifecycle`, `proposed_symbols`, `former_names`, `successors`, `fund` (comma list)
+                 * @description Optional objects to include: `lifecycle`, `proposed_symbols`, `former_names`, `successors`, `fund`, `private_offerings` (comma list)
                  * @example lifecycle
                  */
                 expand?: string;
@@ -10655,6 +10834,59 @@ export interface operations {
                      *     }
                      */
                     "application/json": components["schemas"]["NewsText"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getOffering: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Offering id: the Form D file number, or the first accession number of an offering whose filings state none
+                 * @example 021-528681
+                 */
+                offering_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Offering"];
                 };
             };
             304: components["responses"]["NotModified"];
@@ -16659,6 +16891,120 @@ export interface operations {
                         meta: {
                             coverage?: components["schemas"]["MetaCoverage"];
                             source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listOfferings: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Issuer: a CIK (all digits, any padding; any Form D issuer, listed or not) or the ticker of a listed company — ONE value; matches the primary issuer and co-issuers. Without it: every offering
+                 * @example 0001991882
+                 */
+                "company"?: string;
+                /**
+                 * @description Latest filing on or after this date
+                 * @example 2026-01-01
+                 */
+                "filed_at.gte"?: string;
+                /**
+                 * @description Latest filing on or before this date
+                 * @example 2026-09-30
+                 */
+                "filed_at.lte"?: string;
+                /**
+                 * @description Offerings claiming this exemption, as filed (06b, 06c, 04, 3C.7, …)
+                 * @example 06c
+                 */
+                "exemption"?: string;
+                /**
+                 * @description Industry group as filed (case-insensitive exact match)
+                 * @example Pooled Investment Fund
+                 */
+                "industry"?: string;
+                /**
+                 * @description Total amount sold at least this many USD
+                 * @example 1000000
+                 */
+                "total_sold.gte"?: number;
+                /**
+                 * @description true = offerings whose latest filing is an amendment (D/A); false = an original Form D
+                 * @example false
+                 */
+                "is_amendment"?: boolean;
+                /**
+                 * @description Sort field: `-filed_latest` (the only order the store serves); the offering id tiebreaker is always appended
+                 * @example -filed_latest
+                 */
+                "sort"?: "-filed_latest";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Offering"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            /**
+                             * Format: date-time
+                             * @description Instant the page reads the offerings at
+                             */
+                            pinned_at?: null | string;
                         };
                     };
                 };

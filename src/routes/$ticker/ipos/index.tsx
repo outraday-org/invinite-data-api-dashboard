@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import * as React from "react";
 
 import type { V2Ipo, V2IposResponse, V2IpoStage } from "@/lib/api/types";
@@ -74,6 +74,13 @@ export function offerPriceText(ipo: Pick<V2Ipo, "currency" | "final_price" | "pr
     return formatOfferAmount(low ?? high, ipo.currency);
 }
 
+/** The issuer's SEC CIK (unpadded) for its `/sec/$cik` page: the company row's, else the registration track's. */
+export function ipoIssuerCik(ipo: Pick<V2Ipo, "company" | "sources">) {
+    const cik = ipo.company?.cik ?? ipo.sources.registration?.cik ?? null;
+
+    return cik && /^\d{1,10}$/.test(cik) && Number(cik) > 0 ? String(Number(cik)) : null;
+}
+
 /** The listed ticker, else the proposed symbols (marked as proposed), else "—". */
 export function ipoSymbolText(ipo: Pick<V2Ipo, "company" | "proposed_symbols" | "sources">) {
     const listed = ipo.company?.ticker ?? ipo.sources.listing?.ticker;
@@ -96,12 +103,29 @@ const COLUMNS: Array<ColumnDef<V2Ipo>> = [
     },
     {
         accessorKey: "issuer_name",
-        cell: ({ row }) => (
-            <div className="flex items-center gap-1">
-                <span className="truncate">{row.original.issuer_name || "—"}</span>
-                {row.original.is_spac && <Badge variant="outline">SPAC</Badge>}
-            </div>
-        ),
+        cell: ({ row }) => {
+            const cik = ipoIssuerCik(row.original);
+
+            const name = row.original.issuer_name || "—";
+
+            return (
+                <div className="flex items-center gap-1">
+                    {cik
+                        ? (
+                                <Link
+                                    className="truncate underline-offset-4 hover:underline"
+                                    params={{ cik }}
+                                    title="SEC filer: identity, lifecycle, filings and Form D private offerings"
+                                    to="/sec/$cik"
+                                >
+                                    {name}
+                                </Link>
+                            )
+                        : <span className="truncate">{name}</span>}
+                    {row.original.is_spac && <Badge variant="outline">SPAC</Badge>}
+                </div>
+            );
+        },
         header: "Issuer",
     },
     {

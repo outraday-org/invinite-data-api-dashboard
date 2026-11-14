@@ -53,6 +53,7 @@ import type {
     V2NewsItem,
     V2NewsListResponse,
     V2NewsText,
+    V2OfferingsResponse,
     V2ParticipantsResponse,
     V2PressReleaseResponse,
     V2PriceAttributionResponse,
@@ -1057,6 +1058,28 @@ export const getV2Ipos = createServerFn({ method: "GET" })
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/ipos", {
             params: { query: v2Query({ company, cursor, limit, sort, stage: v2Expand(stage) }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2OfferingsSchema = z.object({
+    apiKey: apiKeySchema,
+    company: z.string().trim().min(1).optional(),
+    cursor: cursorSchema,
+    limit: v2LimitSchema,
+});
+
+/** Form D private offerings, newest latest filing first; `company` = ONE issuer CIK (any Form D issuer) or a listed ticker. */
+export const getV2Offerings = createServerFn({ method: "GET" })
+    .inputValidator(v2OfferingsSchema)
+    .handler(async ({ data }): Promise<V2OfferingsResponse> => {
+        const { apiKey, company, cursor, limit } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/offerings", {
+            params: { query: v2Query({ company, cursor, limit }) },
         });
 
         if (error) throwApiError(error, response);

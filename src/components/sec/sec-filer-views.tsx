@@ -1,6 +1,17 @@
+import type { ReactNode } from "react";
+
 import { FileText } from "lucide-react";
 
-import type { JsonValue, V2FilerFundSeries, V2FilerResponse, V2FilingsResponse, V2HoldingsResponse } from "@/lib/api/types";
+import type {
+    JsonValue,
+    V2FilerFundSeries,
+    V2FilerPrivateOfferings,
+    V2FilerResponse,
+    V2FilingsResponse,
+    V2HoldingsResponse,
+    V2Offering,
+    V2OfferingsResponse,
+} from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -270,6 +281,130 @@ export function SecFundView({ data }: { data: null | V2FilerResponse }) {
                             </tbody>
                         </table>
                     )}
+        </section>
+    );
+}
+
+const EXEMPTION_LABELS: Record<string, string> = {
+    "3C": "ICA 3(c)",
+    "04": "Rule 504",
+    "4a5": "Sec. 4(a)(5)",
+    "06b": "Rule 506(b)",
+    "06c": "Rule 506(c)",
+};
+
+/** A Form D exemption as filed (`06b`, `3C.7`, …) → a short label; an unknown code stays as filed. */
+export function exemptionLabel(code: string) {
+    if (EXEMPTION_LABELS[code]) return EXEMPTION_LABELS[code];
+
+    const ica = /^3C\.(\d+)$/.exec(code);
+
+    return ica ? `ICA 3(c)(${ica[1]})` : code;
+}
+
+const offeringUsd = (value: null | number) => (value === null ? "—" : `$${formatNumberEnCompact(value)}`);
+
+/** The offering size: "Indefinite" when stated so, else the amount (USD). */
+export function offeringAmountText(offering: Pick<V2Offering, "indefinite_amount" | "total_offering_amount">) {
+    return offering.indefinite_amount ? "Indefinite" : offeringUsd(offering.total_offering_amount);
+}
+
+/**
+ * A filer's Form D private offerings (pure): the summary of `GET /v1/filers/{cik}?expand=private_offerings` and the
+ * offerings of `GET /v1/offerings?company=<cik>` (newest latest filing first, "More offerings" by cursor). Amounts are
+ * USD; exemptions as filed with a short label. `summary: null` (no Form D, or Form D data not served) renders nothing.
+ */
+export function SecPrivateOfferingsView({
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    onMore,
+    pages,
+    summary,
+}: {
+    error: unknown;
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+    isLoading: boolean;
+    onMore: () => void;
+    pages: ReadonlyArray<V2OfferingsResponse>;
+    summary: null | V2FilerPrivateOfferings;
+}) {
+    if (!summary) return null;
+
+    const rows = pages.flatMap(page => page.data);
+
+    const facts: Array<[string, string]> = [["offerings", String(summary.count)]];
+
+    if (summary.first_filed) facts.push(["first filed", summary.first_filed]);
+
+    if (summary.latest_filed) facts.push(["latest filed", summary.latest_filed]);
+
+    if (summary.total_sold !== null) facts.push(["total sold", offeringUsd(summary.total_sold)]);
+
+    if (summary.latest_exemptions.length > 0) facts.push(["latest exemptions", summary.latest_exemptions.map(exemptionLabel).join(", ")]);
+
+    let body: ReactNode = null;
+
+    if (summary.count > 0) {
+        if (error && pages.length === 0) body = <SecReadinessNotice error={error} title="Failed to load the private offerings" />;
+        else if (isLoading && pages.length === 0) body = <Skeleton className="h-16 w-full" />;
+        else {
+            body = (
+                <table className="w-full text-xs">
+                    <thead className="text-muted-foreground text-left">
+                        <tr>
+                            <th className="p-1 font-normal">Latest filing</th>
+                            <th className="p-1 font-normal">Offering</th>
+                            <th className="p-1 font-normal">Industry</th>
+                            <th className="p-1 font-normal">Exemptions</th>
+                            <th className="p-1 text-right font-normal">Offering size</th>
+                            <th className="p-1 text-right font-normal">Sold</th>
+                            <th className="p-1 text-right font-normal">Investors</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rows.map(offering => (
+                            <tr key={offering.offering_id}>
+                                <td className="p-1 tabular-nums">{offering.filed_latest ?? "—"}</td>
+                                <td className="p-1">
+                                    <span className="font-medium tabular-nums" title={`Latest accession ${offering.latest_accession}`}>
+                                        {offering.offering_id}
+                                    </span>
+                                    {offering.amendment_count > 0 && (
+                                        <Badge className="ml-1" variant="outline">
+                                            {`${offering.amendment_count} amendment${offering.amendment_count === 1 ? "" : "s"}`}
+                                        </Badge>
+                                    )}
+                                </td>
+                                <td className="p-1">{offering.industry_group ?? "—"}</td>
+                                <td className="p-1" title={offering.exemptions.join(", ")}>
+                                    {offering.exemptions.length > 0 ? offering.exemptions.map(exemptionLabel).join(", ") : "—"}
+                                </td>
+                                <td className="p-1 text-right tabular-nums">{offeringAmountText(offering)}</td>
+                                <td className="p-1 text-right tabular-nums">{offeringUsd(offering.total_sold)}</td>
+                                <td className="p-1 text-right tabular-nums">
+                                    {offering.investor_count === null ? "—" : formatNumberEn(offering.investor_count)}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            );
+        }
+    }
+
+    return (
+        <section aria-label="Private offerings" className="flex flex-col gap-2">
+            <Facts entries={facts} />
+            {body}
+            {error && pages.length > 0 ? <SecReadinessNotice error={error} title="Failed to load more offerings" /> : null}
+            {hasNextPage && (
+                <Button className="self-center" disabled={isFetchingNextPage} onClick={onMore} size="sm" type="button" variant="outline">
+                    {isFetchingNextPage ? "Loading…" : "More offerings"}
+                </Button>
+            )}
         </section>
     );
 }

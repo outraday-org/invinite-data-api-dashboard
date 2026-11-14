@@ -69,6 +69,7 @@ import type {
     V2NewsItem,
     V2NewsListResponse,
     V2NewsText,
+    V2OfferingsResponse,
     V2ParticipantsResponse,
     V2PressReleaseResponse,
     V2PriceAttributionResponse,
@@ -134,6 +135,7 @@ import {
     getV2News,
     getV2NewsItem,
     getV2NewsText,
+    getV2Offerings,
     getV2Participants,
     getV2PressRelease,
     getV2PriceAttribution,
@@ -1126,6 +1128,20 @@ export function useV2IposInfinite(input: V2IposInput) {
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2Ipos({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
         queryKey: ["v2", "ipos", input.company ?? "", key(input.stage), input.sort ?? "", input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** A filer's Form D private offerings by cursor (`company` = its CIK); idle while `enabled` is false. */
+export function useV2OfferingsInfinite(input: { company: string; enabled?: boolean; limit?: number }) {
+    const { enabled = true, ...query } = input;
+
+    return useEarningsInfinite<V2OfferingsResponse>({
+        enabled: enabled && query.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2Offerings({ data: { ...query, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "offerings", query.company, query.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });

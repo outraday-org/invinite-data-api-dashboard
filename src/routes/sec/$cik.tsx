@@ -3,11 +3,18 @@ import * as React from "react";
 
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 
-import { SecFilerHeader, SecFilingsView, SecFundView, SecLifecycleView, SecPortfolioView } from "@/components/sec/sec-filer-views";
+import {
+    SecFilerHeader,
+    SecFilingsView,
+    SecFundView,
+    SecLifecycleView,
+    SecPortfolioView,
+    SecPrivateOfferingsView,
+} from "@/components/sec/sec-filer-views";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
 import { NotFound } from "@/components/ui/not-found";
-import { useV2Filer, useV2FilingsInfinite, useV2HoldingsInfinite } from "@/lib/api/queries";
+import { useV2Filer, useV2FilingsInfinite, useV2HoldingsInfinite, useV2OfferingsInfinite } from "@/lib/api/queries";
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import { latest13fPeriodEnd } from "@/lib/sec/source";
 
@@ -15,7 +22,8 @@ import { latest13fPeriodEnd } from "@/lib/sec/source";
  * One SEC filer by CIK — outside `$ticker` on purpose: a pre-IPO issuer, a SPAC or a 13F manager without an exchange
  * listing has no ticker, and none is invented (no asset row, no fake `$ticker`). Reached from the landing page's filer
  * lookup (`/v1/filers?q=`) and the company overview's CIK. Identity + lifecycle = one `GET /v1/filers/{cik}` with every
- * expansion (`fund` = a fund registrant's series, its own block when the filer has any); the filings = `GET /v1/filings?company=<cik>`; a 13F manager's portfolio = `GET /v1/holdings?filer=<cik>`
+ * expansion (`fund` = a fund registrant's series, its own block when the filer has any; `private_offerings` = the
+ * summary of its Form D private offerings, whose rows then come from `GET /v1/offerings?company=<cik>`); the filings = `GET /v1/filings?company=<cik>`; a 13F manager's portfolio = `GET /v1/holdings?filer=<cik>`
  * for one quarter, asked on a click.
  */
 export const Route = createFileRoute("/sec/$cik")({
@@ -25,6 +33,8 @@ export const Route = createFileRoute("/sec/$cik")({
 const FILINGS_PAGE = 40;
 
 const PORTFOLIO_PAGE = 25;
+
+const OFFERINGS_PAGE = 25;
 
 const MANAGER_FORMS = new Set(["13F-HR", "13F-HR/A", "13F-NT", "13F-NT/A"]);
 
@@ -47,6 +57,15 @@ function SecFilerPage() {
     // Idle (no scope) until a quarter is picked.
     const portfolio = useV2HoldingsInfinite({ filer: period ? cik : undefined, limit: PORTFOLIO_PAGE, periodEnd: period ?? undefined });
 
+    const privateOfferings = filer.data?.private_offerings ?? null;
+
+    // The offerings list costs a request: only for a filer whose summary names at least one offering.
+    const offerings = useV2OfferingsInfinite({
+        company: cik,
+        enabled: (privateOfferings?.count ?? 0) > 0,
+        limit: OFFERINGS_PAGE,
+    });
+
     if (!cik) return <NotFound />;
 
     const facet = filings.data?.pages[0]?.meta.form_facet ?? [];
@@ -66,6 +85,21 @@ function SecFilerPage() {
                 <section className="flex flex-col gap-2">
                     <div className="font-medium">Fund</div>
                     <SecFundView data={filer.data} />
+                </section>
+            )}
+
+            {privateOfferings && (
+                <section className="flex flex-col gap-2">
+                    <div className="font-medium">Private offerings (Form D)</div>
+                    <SecPrivateOfferingsView
+                        error={offerings.error}
+                        hasNextPage={Boolean(offerings.hasNextPage)}
+                        isFetchingNextPage={offerings.isFetchingNextPage}
+                        isLoading={offerings.isLoading}
+                        onMore={() => void offerings.fetchNextPage()}
+                        pages={offerings.data?.pages ?? []}
+                        summary={privateOfferings}
+                    />
                 </section>
             )}
 

@@ -7,9 +7,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { V2FilerResponse } from "@/lib/api/types";
 
 import { cikOf, SecFilerMatches } from "@/components/sec/sec-filer-lookup";
-import { SecFilerHeader, SecFilingsView, SecFundView, SecLifecycleView, SecPortfolioView } from "@/components/sec/sec-filer-views";
+import {
+    exemptionLabel,
+    offeringAmountText,
+    SecFilerHeader,
+    SecFilingsView,
+    SecFundView,
+    SecLifecycleView,
+    SecPortfolioView,
+    SecPrivateOfferingsView,
+} from "@/components/sec/sec-filer-views";
 import { ApiRequestError } from "@/lib/api/errors";
-import { V2_FILERS, V2_FILINGS, V2_HOLDINGS, V2_HOLDINGS_PENDING } from "@/lib/sec/v2-fixtures";
+import { V2_FILERS, V2_FILINGS, V2_HOLDINGS, V2_HOLDINGS_PENDING, V2_OFFERINGS } from "@/lib/sec/v2-fixtures";
 
 vi.mock("@tanstack/react-router", () => ({
     Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => (
@@ -340,5 +349,64 @@ describe("SecPortfolioView (`/v1/holdings?filer=`)", () => {
         expect(screen.getByText("Being prepared — asked again in 30 s")).toBeInTheDocument();
 
         expect(screen.queryByText(/reported no positions/)).toBeNull();
+    });
+});
+
+describe("Private offerings (`/v1/filers/{cik}?expand=private_offerings` + `/v1/offerings?company=`)", () => {
+    const summary = {
+        count: 2,
+        first_filed: "2024-06-03",
+        latest_exemptions: ["06c", "3C.7"],
+        latest_filed: "2026-03-12",
+        latest_offering_id: "021-528681",
+        total_sold: 87_500_000,
+    };
+
+    const state = { error: null, hasNextPage: true, isFetchingNextPage: false, isLoading: false, onMore: () => undefined };
+
+    it("the summary facts, one row per offering (file number or accession, amendments, labelled exemptions, USD) and More", () => {
+        render(<SecPrivateOfferingsView {...state} pages={[V2_OFFERINGS]} summary={summary} />);
+
+        expect(screen.getByText("latest exemptions:").nextSibling).toHaveTextContent("Rule 506(c), ICA 3(c)(7)");
+
+        expect(screen.getByText("total sold:").nextSibling).toHaveTextContent("$87.50 M");
+
+        const amended = screen.getByText("021-528681").closest("tr")!;
+
+        expect(amended).toHaveTextContent("1 amendment");
+
+        expect(amended).toHaveTextContent("$150.00 M");
+
+        expect(amended).toHaveTextContent("42");
+
+        const indefinite = screen.getByText("0001991882-24-000002").closest("tr")!;
+
+        expect(indefinite).toHaveTextContent("Indefinite");
+
+        expect(indefinite).toHaveTextContent("Rule 506(b)");
+
+        expect(screen.getByRole("button", { name: "More offerings" })).toBeInTheDocument();
+    });
+
+    it("null summary (no Form D, or Form D not served) renders nothing; a zero count shows the summary only", () => {
+        const { container } = render(<SecPrivateOfferingsView {...state} pages={[]} summary={null} />);
+
+        expect(container).toBeEmptyDOMElement();
+
+        render(<SecPrivateOfferingsView {...state} hasNextPage={false} pages={[]} summary={{ ...summary, count: 0, total_sold: null }} />);
+
+        expect(screen.getByText("offerings:").nextSibling).toHaveTextContent("0");
+
+        expect(screen.queryByRole("table")).toBeNull();
+    });
+
+    it("labels: known codes, ICA 3(c)(n), unknown codes as filed; offering size", () => {
+        expect(exemptionLabel("04")).toBe("Rule 504");
+
+        expect(exemptionLabel("3C.1")).toBe("ICA 3(c)(1)");
+
+        expect(exemptionLabel("06")).toBe("06");
+
+        expect(offeringAmountText({ indefinite_amount: false, total_offering_amount: null })).toBe("—");
     });
 });

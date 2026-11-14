@@ -29,6 +29,7 @@ export const V2_FILER_EXPANDS = [
     "former_names",
     "successors",
     "fund",
+    "private_offerings",
 ] as const satisfies ReadonlyArray<V2FilerExpand>;
 
 /** `GET /v1/filings/{accession}?expand=`. */

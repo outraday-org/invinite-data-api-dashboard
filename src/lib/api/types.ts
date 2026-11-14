@@ -79,13 +79,15 @@ export type V2Successor = NonNullable<V2FilerResponse["successors"]>[number];
 /** `expand=fund` (Data API release 5.7): a fund registrant's series (N-CEN census, prospectus fees / returns, N-PORT net assets). */
 export type V2FilerFund = NonNullable<V2FilerResponse["fund"]>;
 export type V2FilerFundSeries = V2FilerFund["series"][number];
+/** `expand=private_offerings` (Data API release 5.7): summary of the filer's Form D private offerings. */
+export type V2FilerPrivateOfferings = NonNullable<V2FilerResponse["private_offerings"]>;
 export type V2DividendsSort = NonNullable<ApiQuery<"/v1/dividends">["sort"]>;
 export type V2SplitsSort = NonNullable<ApiQuery<"/v1/splits">["sort"]>;
 export type V2MarketHolidaysSort = NonNullable<ApiQuery<"/v1/market-holidays">["sort"]>;
 /** `GET /v1/companies/{company}?expand=` values the dashboard asks for. */
 export type V2CompanyExpand = "coverage";
 /** `GET /v1/filers/{cik}?expand=` values. */
-export type V2FilerExpand = "former_names" | "fund" | "lifecycle" | "proposed_symbols" | "successors";
+export type V2FilerExpand = "former_names" | "fund" | "lifecycle" | "private_offerings" | "proposed_symbols" | "successors";
 
 // Data API v2 SEC family (`/v1/filings*`, `/v1/document-versions/*`, `/v1/holdings`, `/v1/holding-changes`,
 // `/v1/insider-trades*`, `/v1/ipos*`, backend tasks/data-api-v2 task 6). Readiness is `meta.coverage.state` on a 200
@@ -102,6 +104,8 @@ export type V2HoldingChangesResponse = ApiResponse<"/v1/holding-changes", "get">
 export type V2FundHoldingsResponse = ApiResponse<"/v1/fund-holdings", "get">;
 export type V2InsiderTradesResponse = ApiResponse<"/v1/insider-trades", "get">;
 export type V2IposResponse = ApiResponse<"/v1/ipos", "get">;
+/** Form D private offerings (Data API release 5.7, tag IPOs). */
+export type V2OfferingsResponse = ApiResponse<"/v1/offerings", "get">;
 
 export type V2Filing = V2FilingsResponse["data"][number];
 export type V2FilingDetail = V2FilingDetailResponse;
@@ -121,6 +125,7 @@ export type V2InsiderSide = V2InsiderTrade["side"];
 export type V2Ipo = V2IposResponse["data"][number];
 export type V2IpoStage = V2Ipo["stage"];
 export type V2IposSort = NonNullable<ApiQuery<"/v1/ipos">["sort"]>;
+export type V2Offering = V2OfferingsResponse["data"][number];
 /** `meta.coverage` of a v2 list: `pending` (data empty, still filling) / `partial` / `complete`. */
 export type V2MetaCoverage = NonNullable<V2HoldingsResponse["meta"]["coverage"]>;
 /** `meta.source`: the documented provenance (dataset release, document version, accession, fetch time). */

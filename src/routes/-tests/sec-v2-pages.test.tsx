@@ -7,11 +7,14 @@ import { formatEnDateTime } from "@/lib/date";
 import { V2_FUND_HOLDINGS, V2_HOLDING_CHANGES, V2_HOLDINGS, V2_HOLDINGS_PENDING, V2_INSIDER_TRADES, V2_IPOS } from "@/lib/sec/v2-fixtures";
 import { insiderRoles, InsiderTradesView } from "@/routes/$ticker/insider-trades/index";
 import { changePercentText, FundHoldingsList, HoldingChangesList, HoldingsList } from "@/routes/$ticker/institutions/index";
-import { IposView, ipoSymbolText, offerPriceText } from "@/routes/$ticker/ipos/index";
+import { ipoIssuerCik, IposView, ipoSymbolText, offerPriceText } from "@/routes/$ticker/ipos/index";
 
 // The page modules' routes need a router; the pure views do not.
 vi.mock("@tanstack/react-router", () => ({
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
+    Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => (
+        <a href={Object.entries(params).reduce((path, [key, value]) => path.replace(`$${key}`, value), to)}>{children}</a>
+    ),
 }));
 
 // Keep the server functions (TanStack Start) unloaded.
@@ -206,6 +209,20 @@ describe("IPOs (`/v1/ipos`, one row per offering)", () => {
         expect(within(listed).getByText("NEWCO")).toBeInTheDocument();
 
         expect(within(listed).getByText("Listing")).toBeInTheDocument();
+    });
+
+    it("the issuer links to its SEC filer page (/sec/$cik: identity, filings, Form D private offerings)", () => {
+        render(<IposView {...list} error={null} pages={[V2_IPOS]} />);
+
+        expect(screen.getByRole("link", { name: "Rezera Inc" })).toHaveAttribute("href", "/sec/2156369");
+
+        expect(screen.getByRole("link", { name: "NewCo Holdings" })).toHaveAttribute("href", "/sec/1234567");
+
+        const [registration, listing] = V2_IPOS.data;
+
+        expect(ipoIssuerCik({ ...registration, company: null })).toBe("2156369");
+
+        expect(ipoIssuerCik({ ...listing, company: null, sources: { ...listing.sources, registration: null } })).toBeNull();
     });
 
     it("price and symbol words", () => {
