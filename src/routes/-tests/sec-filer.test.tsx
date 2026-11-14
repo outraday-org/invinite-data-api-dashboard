@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { V2FilerResponse } from "@/lib/api/types";
 
 import { cikOf, SecFilerMatches } from "@/components/sec/sec-filer-lookup";
-import { SecFilerHeader, SecFilingsView, SecLifecycleView, SecPortfolioView } from "@/components/sec/sec-filer-views";
+import { SecFilerHeader, SecFilingsView, SecFundView, SecLifecycleView, SecPortfolioView } from "@/components/sec/sec-filer-views";
 import { ApiRequestError } from "@/lib/api/errors";
 import { V2_FILERS, V2_FILINGS, V2_HOLDINGS, V2_HOLDINGS_PENDING } from "@/lib/sec/v2-fixtures";
 
@@ -152,6 +152,112 @@ describe("SecLifecycleView", () => {
         expect(screen.getByText("Acme Holdings Inc (until 2024-05-01)")).toBeInTheDocument();
 
         expect(screen.getByText("listing unconfirmed")).toBeInTheDocument();
+    });
+});
+
+const FUND_SERIES = {
+    advisers: [],
+    authorized_participant_count: 0,
+    creation_cash_pct_avg: null,
+    creation_unit_shares: null,
+    exchange: null,
+    expense_ratio_as_of: null,
+    expense_ratio_class_id: null,
+    expense_ratio_gross: null,
+    expense_ratio_net: null,
+    fund_key: "S000000000",
+    is_etf: null,
+    is_fund_of_funds: null,
+    is_index: null,
+    is_money_market: null,
+    is_target_date: null,
+    latest_report_date: null,
+    ncen_accession_number: null,
+    ncen_report_period: null,
+    net_assets_as_of: null,
+    net_assets_scope: null,
+    net_assets_usd: null,
+    nport_accession_number: null,
+    redeemed_creation_unit_shares: null,
+    registrant_cik: "0000036405",
+    returns: [],
+    rr_accession_number: null,
+    rr_report_period: null,
+    series_id: null,
+    series_name: null,
+    share_classes: [],
+} satisfies NonNullable<V2FilerResponse["fund"]>["series"][number];
+
+describe("SecFundView (`expand=fund`)", () => {
+    it("one row per series: name + ETF flag, exchange, class tickers, expense ratio, net assets with scope and date, returns", () => {
+        const data: V2FilerResponse = {
+            ...TICKERLESS_FILER,
+            fund: {
+                investment_company_type: "N-1A",
+                series: [
+                    {
+                        ...FUND_SERIES,
+                        exchange: "XNAS",
+                        expense_ratio_class_id: "C000092055",
+                        expense_ratio_net: 0.0003,
+                        fund_key: "S000002277",
+                        is_etf: true,
+                        net_assets_as_of: "2026-09-30",
+                        net_assets_scope: "series",
+                        net_assets_usd: 1_543_210_987_654.32,
+                        returns: [
+                            { as_of: "2025-12-31", class_id: "C000007773", five_year: 0.1, one_year: 0.2, since_inception: null, ten_year: 0.12 },
+                            { as_of: "2025-12-31", class_id: "C000092055", five_year: 0.1452, one_year: 0.2499, since_inception: null, ten_year: 0.1308 },
+                        ],
+                        series_id: "S000002277",
+                        series_name: "Vanguard 500 Index Fund",
+                        share_classes: [
+                            { class_id: "C000007773", class_name: "Admiral Shares", ticker: "VFIAX" },
+                            { class_id: "C000092055", class_name: "ETF Shares", ticker: "VOO" },
+                            { class_id: "C000007774", class_name: "Institutional", ticker: null },
+                        ],
+                    },
+                    { ...FUND_SERIES, fund_key: "cik:884394", net_assets_scope: "fund", net_assets_usd: 712_345_678_901.23, series_name: null },
+                ],
+                series_count: 2,
+            },
+        };
+
+        render(<SecFundView data={data} />);
+
+        expect(screen.getByText("Vanguard 500 Index Fund")).toHaveAttribute("title", "S000002277");
+
+        expect(screen.getByText("ETF")).toBeInTheDocument();
+
+        expect(screen.getByText("XNAS")).toBeInTheDocument();
+
+        expect(screen.getByText("VFIAX, VOO")).toBeInTheDocument();
+
+        expect(screen.getByText("0.03%")).toBeInTheDocument();
+
+        expect(screen.getByText("$1.54 T · series total, all classes · as of 2026-09-30")).toBeInTheDocument();
+
+        // The expense ratio's class (VOO) supplies the returns, not the first class listed.
+        expect(screen.getByText("24.99%")).toBeInTheDocument();
+
+        expect(screen.getByText("13.08%")).toBeInTheDocument();
+
+        // A unit trust without a series name reads its fund key; no fees = a dash.
+        expect(screen.getByText("cik:884394")).toBeInTheDocument();
+
+        expect(screen.getByText("$712.35 B · fund")).toBeInTheDocument();
+
+        expect(screen.getByText("N-1A")).toBeInTheDocument();
+    });
+
+    it("renders nothing for a filer without fund series (fund: null) or without the expansion", () => {
+        const { container, rerender } = render(<SecFundView data={{ ...TICKERLESS_FILER, fund: null }} />);
+
+        expect(container).toBeEmptyDOMElement();
+
+        rerender(<SecFundView data={TICKERLESS_FILER} />);
+
+        expect(container).toBeEmptyDOMElement();
     });
 });
 

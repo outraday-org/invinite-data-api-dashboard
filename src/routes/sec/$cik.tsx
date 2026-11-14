@@ -3,7 +3,7 @@ import * as React from "react";
 
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 
-import { SecFilerHeader, SecFilingsView, SecLifecycleView, SecPortfolioView } from "@/components/sec/sec-filer-views";
+import { SecFilerHeader, SecFilingsView, SecFundView, SecLifecycleView, SecPortfolioView } from "@/components/sec/sec-filer-views";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
 import { NotFound } from "@/components/ui/not-found";
@@ -15,7 +15,7 @@ import { latest13fPeriodEnd } from "@/lib/sec/source";
  * One SEC filer by CIK — outside `$ticker` on purpose: a pre-IPO issuer, a SPAC or a 13F manager without an exchange
  * listing has no ticker, and none is invented (no asset row, no fake `$ticker`). Reached from the landing page's filer
  * lookup (`/v1/filers?q=`) and the company overview's CIK. Identity + lifecycle = one `GET /v1/filers/{cik}` with every
- * expansion; the filings = `GET /v1/filings?company=<cik>`; a 13F manager's portfolio = `GET /v1/holdings?filer=<cik>`
+ * expansion (`fund` = a fund registrant's series, its own block when the filer has any); the filings = `GET /v1/filings?company=<cik>`; a 13F manager's portfolio = `GET /v1/holdings?filer=<cik>`
  * for one quarter, asked on a click.
  */
 export const Route = createFileRoute("/sec/$cik")({
@@ -61,6 +61,13 @@ function SecFilerPage() {
                 <div className="font-medium">Lifecycle</div>
                 <SecLifecycleView data={filer.data} error={filer.error} isLoading={filer.isLoading} />
             </section>
+
+            {filer.data?.fund && (
+                <section className="flex flex-col gap-2">
+                    <div className="font-medium">Fund</div>
+                    <SecFundView data={filer.data} />
+                </section>
+            )}
 
             {isManager && (
                 <section className="flex flex-col gap-2">

@@ -1867,7 +1867,7 @@ export interface components {
             list_date: null | string;
             /** @description Employee headcount */
             employees: null | number;
-            /** @description Market capitalization; null for ETFs (no AUM source) */
+            /** @description Market capitalization; for an ETF: fund net assets from its latest public N-PORT report (single-class funds only), else null */
             market_cap: null | number;
             /** @description Shares outstanding */
             shares_outstanding: null | number;
@@ -2010,6 +2010,8 @@ export interface components {
                 /** @description Succession kind */
                 kind: null | string;
             }> | null;
+            /** @description With `expand=fund`: the registered investment company's fund series (SEC N-CEN census, risk/return prospectus data, N-PORT net assets); null for a filer without fund series and while fund data is not served */
+            fund?: components["schemas"]["FilerFund"] | null;
         };
         /**
          * ProposedTicker
@@ -2026,6 +2028,166 @@ export interface components {
             source: null | string;
             /** @description The ticker and issuer name are also on the listing calendar (`sources.listing` of GET /v1/ipos) — a hint, not an identity */
             ipo_calendar_match: boolean;
+        };
+        /**
+         * FilerFund
+         * @description A registered investment company's fund series (SEC N-CEN, risk/return prospectus data, N-PORT)
+         */
+        FilerFund: {
+            /**
+             * @description Registration form of the investment company: N-1A (open-end fund, ETF) or N-2 (closed-end fund); null when mixed or unknown
+             * @example N-1A
+             */
+            investment_company_type: null | string;
+            /** @description Number of fund series */
+            series_count: number;
+            /** @description The fund series */
+            series: Array<components["schemas"]["FilerFundSeries"]>;
+        };
+        /**
+         * FilerFundSeries
+         * @description One fund series of a registered investment company
+         */
+        FilerFundSeries: {
+            /**
+             * @description The fund: its SEC series id, or cik:<registrant CIK> for a unit investment trust that files without a series
+             * @example S000002277
+             */
+            fund_key: string;
+            /** @description SEC series id (S + 9 digits); null for a fund without a series */
+            series_id: null | string;
+            /** @description Fund (series) name as reported */
+            series_name: null | string;
+            /** @description Registrant (trust) CIK, 10 digits */
+            registrant_cik: string;
+            /** @description Exchange-traded fund (N-CEN) */
+            is_etf: boolean | null;
+            /** @description Index fund (N-CEN) */
+            is_index: boolean | null;
+            /** @description Fund of funds (N-CEN) */
+            is_fund_of_funds: boolean | null;
+            /** @description Money market fund (N-CEN) */
+            is_money_market: boolean | null;
+            /** @description Target-date fund (N-CEN) */
+            is_target_date: boolean | null;
+            /**
+             * @description Exchange the fund's shares list on (MIC), as stated in N-CEN; null when none or unmapped
+             * @example ARCX
+             */
+            exchange: null | string;
+            /** @description Share classes with their tickers */
+            share_classes: Array<components["schemas"]["FilerFundShareClass"]>;
+            /** @description Investment advisers (N-CEN) */
+            advisers: Array<components["schemas"]["FilerFundAdviser"]>;
+            /**
+             * @description Net annual expense ratio from the prospectus (fraction: 0.0003 = 0.03 %); null without prospectus fee data
+             * @example 0.0003
+             */
+            expense_ratio_net: null | number;
+            /** @description Gross annual expense ratio from the prospectus (fraction) */
+            expense_ratio_gross: null | number;
+            /**
+             * Format: date
+             * @description Date the expense ratio is stated as of
+             */
+            expense_ratio_as_of: null | string;
+            /** @description SEC class id the expense ratio belongs to */
+            expense_ratio_class_id: null | string;
+            /** @description Average annual total returns per share class (prospectus) */
+            returns: Array<components["schemas"]["FilerFundReturn"]>;
+            /** @description Shares per creation unit (ETF, N-CEN) */
+            creation_unit_shares: null | number;
+            /** @description Shares per redeemed creation unit (ETF, N-CEN) */
+            redeemed_creation_unit_shares: null | number;
+            /** @description Average cash share of creation baskets in percent (16.39 = 16.39 %, N-CEN) */
+            creation_cash_pct_avg: null | number;
+            /** @description Number of authorized participants (ETF, N-CEN) */
+            authorized_participant_count: number;
+            /** @description Net assets in USD from the latest public N-PORT report */
+            net_assets_usd: null | number;
+            /**
+             * Format: date
+             * @description Report date of the net assets
+             */
+            net_assets_as_of: null | string;
+            /**
+             * @description fund = the fund's net assets; series = the total of a multi-class fund (never one class's assets)
+             * @enum {string|null}
+             */
+            net_assets_scope: "fund" | "series" | null;
+            /**
+             * Format: date
+             * @description Report date of the newest public N-PORT report
+             */
+            latest_report_date: null | string;
+            /**
+             * Format: date
+             * @description Period end of the N-CEN report the census comes from
+             */
+            ncen_report_period: null | string;
+            /**
+             * Format: date
+             * @description Period end of the prospectus risk/return data the fees and returns come from
+             */
+            rr_report_period: null | string;
+            /** @description Accession number of the N-CEN report */
+            ncen_accession_number: null | string;
+            /** @description Accession number of the prospectus filing (risk/return data) */
+            rr_accession_number: null | string;
+            /** @description Accession number of the N-PORT report the net assets come from */
+            nport_accession_number: null | string;
+        };
+        /**
+         * FilerFundShareClass
+         * @description One share class of a fund series
+         */
+        FilerFundShareClass: {
+            /**
+             * @description SEC class id (C + 9 digits)
+             * @example C000007593
+             */
+            class_id: string;
+            /** @description Ticker of the class as the filer stated it */
+            ticker: null | string;
+            /** @description Class name as reported */
+            class_name: null | string;
+        };
+        /**
+         * FilerFundAdviser
+         * @description One investment adviser of a fund series (N-CEN)
+         */
+        FilerFundAdviser: {
+            /** @description Adviser name as reported */
+            name: null | string;
+            /** @description Adviser CRD number */
+            crd: null | string;
+            /** @description Adviser LEI */
+            lei: null | string;
+            /** @description Whether the adviser is an affiliated person of the fund */
+            is_affiliated: boolean | null;
+            /** @description Adviser role as reported: Advisor, Subadvisor, Terminated Advisor, … */
+            role: null | string;
+        };
+        /**
+         * FilerFundReturn
+         * @description Average annual total returns of one share class from the fund's prospectus (fractions: 0.1541 = 15.41 %)
+         */
+        FilerFundReturn: {
+            /** @description SEC class id the returns belong to */
+            class_id: string;
+            /**
+             * Format: date
+             * @description Period end the returns are stated as of
+             */
+            as_of: null | string;
+            /** @description 1-year average annual total return (fraction) */
+            one_year: null | number;
+            /** @description 5-year average annual total return (fraction) */
+            five_year: null | number;
+            /** @description 10-year average annual total return (fraction) */
+            ten_year: null | number;
+            /** @description Average annual total return since inception (fraction) */
+            since_inception: null | number;
         };
         /**
          * Person
@@ -9501,7 +9663,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Optional objects to include: `lifecycle`, `proposed_symbols`, `former_names`, `successors` (comma list)
+                 * @description Optional objects to include: `lifecycle`, `proposed_symbols`, `former_names`, `successors`, `fund` (comma list)
                  * @example lifecycle
                  */
                 expand?: string;

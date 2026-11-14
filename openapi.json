@@ -553,7 +553,7 @@
           "market_cap": {
             "type": "number",
             "nullable": true,
-            "description": "Market capitalization; null for ETFs (no AUM source)"
+            "description": "Market capitalization; for an ETF: fund net assets from its latest public N-PORT report (single-class funds only), else null"
           },
           "shares_outstanding": {
             "type": "number",
@@ -906,6 +906,15 @@
               }
             },
             "nullable": true
+          },
+          "fund": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FilerFund"
+              }
+            ],
+            "nullable": true,
+            "description": "With `expand=fund`: the registered investment company's fund series (SEC N-CEN census, risk/return prospectus data, N-PORT net assets); null for a filer without fund series and while fund data is not served"
           }
         },
         "title": "FilerDetail"
@@ -946,6 +955,352 @@
           }
         },
         "title": "ProposedTicker"
+      },
+      "FilerFund": {
+        "type": "object",
+        "description": "A registered investment company's fund series (SEC N-CEN, risk/return prospectus data, N-PORT)",
+        "required": [
+          "investment_company_type",
+          "series_count",
+          "series"
+        ],
+        "properties": {
+          "investment_company_type": {
+            "type": "string",
+            "example": "N-1A",
+            "nullable": true,
+            "description": "Registration form of the investment company: N-1A (open-end fund, ETF) or N-2 (closed-end fund); null when mixed or unknown"
+          },
+          "series_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of fund series"
+          },
+          "series": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilerFundSeries"
+            },
+            "description": "The fund series"
+          }
+        },
+        "title": "FilerFund"
+      },
+      "FilerFundSeries": {
+        "type": "object",
+        "description": "One fund series of a registered investment company",
+        "required": [
+          "fund_key",
+          "series_id",
+          "series_name",
+          "registrant_cik",
+          "is_etf",
+          "is_index",
+          "is_fund_of_funds",
+          "is_money_market",
+          "is_target_date",
+          "exchange",
+          "share_classes",
+          "advisers",
+          "expense_ratio_net",
+          "expense_ratio_gross",
+          "expense_ratio_as_of",
+          "expense_ratio_class_id",
+          "returns",
+          "creation_unit_shares",
+          "redeemed_creation_unit_shares",
+          "creation_cash_pct_avg",
+          "authorized_participant_count",
+          "net_assets_usd",
+          "net_assets_as_of",
+          "net_assets_scope",
+          "latest_report_date",
+          "ncen_report_period",
+          "rr_report_period",
+          "ncen_accession_number",
+          "rr_accession_number",
+          "nport_accession_number"
+        ],
+        "properties": {
+          "fund_key": {
+            "type": "string",
+            "example": "S000002277",
+            "description": "The fund: its SEC series id, or cik:<registrant CIK> for a unit investment trust that files without a series"
+          },
+          "series_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "SEC series id (S + 9 digits); null for a fund without a series"
+          },
+          "series_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Fund (series) name as reported"
+          },
+          "registrant_cik": {
+            "type": "string",
+            "description": "Registrant (trust) CIK, 10 digits"
+          },
+          "is_etf": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Exchange-traded fund (N-CEN)"
+          },
+          "is_index": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Index fund (N-CEN)"
+          },
+          "is_fund_of_funds": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Fund of funds (N-CEN)"
+          },
+          "is_money_market": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Money market fund (N-CEN)"
+          },
+          "is_target_date": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Target-date fund (N-CEN)"
+          },
+          "exchange": {
+            "type": "string",
+            "example": "ARCX",
+            "nullable": true,
+            "description": "Exchange the fund's shares list on (MIC), as stated in N-CEN; null when none or unmapped"
+          },
+          "share_classes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilerFundShareClass"
+            },
+            "description": "Share classes with their tickers"
+          },
+          "advisers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilerFundAdviser"
+            },
+            "description": "Investment advisers (N-CEN)"
+          },
+          "expense_ratio_net": {
+            "type": "number",
+            "example": 0.0003,
+            "nullable": true,
+            "description": "Net annual expense ratio from the prospectus (fraction: 0.0003 = 0.03 %); null without prospectus fee data"
+          },
+          "expense_ratio_gross": {
+            "type": "number",
+            "nullable": true,
+            "description": "Gross annual expense ratio from the prospectus (fraction)"
+          },
+          "expense_ratio_as_of": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Date the expense ratio is stated as of"
+          },
+          "expense_ratio_class_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "SEC class id the expense ratio belongs to"
+          },
+          "returns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FilerFundReturn"
+            },
+            "description": "Average annual total returns per share class (prospectus)"
+          },
+          "creation_unit_shares": {
+            "type": "number",
+            "nullable": true,
+            "description": "Shares per creation unit (ETF, N-CEN)"
+          },
+          "redeemed_creation_unit_shares": {
+            "type": "number",
+            "nullable": true,
+            "description": "Shares per redeemed creation unit (ETF, N-CEN)"
+          },
+          "creation_cash_pct_avg": {
+            "type": "number",
+            "nullable": true,
+            "description": "Average cash share of creation baskets in percent (16.39 = 16.39 %, N-CEN)"
+          },
+          "authorized_participant_count": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of authorized participants (ETF, N-CEN)"
+          },
+          "net_assets_usd": {
+            "type": "number",
+            "nullable": true,
+            "description": "Net assets in USD from the latest public N-PORT report"
+          },
+          "net_assets_as_of": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Report date of the net assets"
+          },
+          "net_assets_scope": {
+            "type": "string",
+            "enum": [
+              "fund",
+              "series"
+            ],
+            "nullable": true,
+            "description": "fund = the fund's net assets; series = the total of a multi-class fund (never one class's assets)"
+          },
+          "latest_report_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Report date of the newest public N-PORT report"
+          },
+          "ncen_report_period": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Period end of the N-CEN report the census comes from"
+          },
+          "rr_report_period": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Period end of the prospectus risk/return data the fees and returns come from"
+          },
+          "ncen_accession_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "Accession number of the N-CEN report"
+          },
+          "rr_accession_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "Accession number of the prospectus filing (risk/return data)"
+          },
+          "nport_accession_number": {
+            "type": "string",
+            "nullable": true,
+            "description": "Accession number of the N-PORT report the net assets come from"
+          }
+        },
+        "title": "FilerFundSeries"
+      },
+      "FilerFundShareClass": {
+        "type": "object",
+        "description": "One share class of a fund series",
+        "required": [
+          "class_id",
+          "ticker",
+          "class_name"
+        ],
+        "properties": {
+          "class_id": {
+            "type": "string",
+            "example": "C000007593",
+            "description": "SEC class id (C + 9 digits)"
+          },
+          "ticker": {
+            "type": "string",
+            "nullable": true,
+            "description": "Ticker of the class as the filer stated it"
+          },
+          "class_name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Class name as reported"
+          }
+        },
+        "title": "FilerFundShareClass"
+      },
+      "FilerFundAdviser": {
+        "type": "object",
+        "description": "One investment adviser of a fund series (N-CEN)",
+        "required": [
+          "name",
+          "crd",
+          "lei",
+          "is_affiliated",
+          "role"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Adviser name as reported"
+          },
+          "crd": {
+            "type": "string",
+            "nullable": true,
+            "description": "Adviser CRD number"
+          },
+          "lei": {
+            "type": "string",
+            "nullable": true,
+            "description": "Adviser LEI"
+          },
+          "is_affiliated": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Whether the adviser is an affiliated person of the fund"
+          },
+          "role": {
+            "type": "string",
+            "nullable": true,
+            "description": "Adviser role as reported: Advisor, Subadvisor, Terminated Advisor, …"
+          }
+        },
+        "title": "FilerFundAdviser"
+      },
+      "FilerFundReturn": {
+        "type": "object",
+        "description": "Average annual total returns of one share class from the fund's prospectus (fractions: 0.1541 = 15.41 %)",
+        "required": [
+          "class_id",
+          "as_of",
+          "one_year",
+          "five_year",
+          "ten_year",
+          "since_inception"
+        ],
+        "properties": {
+          "class_id": {
+            "type": "string",
+            "description": "SEC class id the returns belong to"
+          },
+          "as_of": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Period end the returns are stated as of"
+          },
+          "one_year": {
+            "type": "number",
+            "nullable": true,
+            "description": "1-year average annual total return (fraction)"
+          },
+          "five_year": {
+            "type": "number",
+            "nullable": true,
+            "description": "5-year average annual total return (fraction)"
+          },
+          "ten_year": {
+            "type": "number",
+            "nullable": true,
+            "description": "10-year average annual total return (fraction)"
+          },
+          "since_inception": {
+            "type": "number",
+            "nullable": true,
+            "description": "Average annual total return since inception (fraction)"
+          }
+        },
+        "title": "FilerFundReturn"
       },
       "Person": {
         "type": "object",
@@ -13815,12 +14170,12 @@
           {
             "schema": {
               "type": "string",
-              "pattern": "^(lifecycle|proposed_symbols|former_names|successors)(,(lifecycle|proposed_symbols|former_names|successors))*$"
+              "pattern": "^(lifecycle|proposed_symbols|former_names|successors|fund)(,(lifecycle|proposed_symbols|former_names|successors|fund))*$"
             },
             "in": "query",
             "name": "expand",
             "required": false,
-            "description": "Optional objects to include: `lifecycle`, `proposed_symbols`, `former_names`, `successors` (comma list)",
+            "description": "Optional objects to include: `lifecycle`, `proposed_symbols`, `former_names`, `successors`, `fund` (comma list)",
             "example": "lifecycle"
           },
           {

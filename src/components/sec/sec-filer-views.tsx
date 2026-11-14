@@ -1,6 +1,6 @@
 import { FileText } from "lucide-react";
 
-import type { JsonValue, V2FilerResponse, V2FilingsResponse, V2HoldingsResponse } from "@/lib/api/types";
+import type { JsonValue, V2FilerFundSeries, V2FilerResponse, V2FilingsResponse, V2HoldingsResponse } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { listOf, reviewStatusOf, scalarEntries } from "@/lib/sec/source";
-import { formatNumberEn } from "@/lib/utils";
+import { formatFractionPercentCompact, formatNumberEn, formatNumberEnCompact } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 import type { SecPanelTarget } from "./sec-source-panel";
@@ -184,6 +184,92 @@ export function SecLifecycleView({ data, error, isLoading }: { data: null | V2Fi
                     {warnings.map(warning => <span key={warning}>{warning.replaceAll("_", " ")}</span>)}
                 </div>
             )}
+        </section>
+    );
+}
+
+const fraction = (value: null | number) => (value === null ? "—" : formatFractionPercentCompact(value));
+
+const NET_ASSETS_SCOPE_LABELS: Record<NonNullable<V2FilerFundSeries["net_assets_scope"]>, string> = {
+    fund: "fund",
+    series: "series total, all classes",
+};
+
+/** Net assets with their scope and report date (`series` = a multi-class fund's total, never one class's assets). */
+function netAssetsText(series: V2FilerFundSeries) {
+    if (series.net_assets_usd === null) return "—";
+
+    const scope = series.net_assets_scope ? NET_ASSETS_SCOPE_LABELS[series.net_assets_scope] : null;
+
+    return [`$${formatNumberEnCompact(series.net_assets_usd)}`, scope, series.net_assets_as_of && `as of ${series.net_assets_as_of}`]
+        .filter(Boolean)
+        .join(" · ");
+}
+
+/** The class whose returns a row shows: the expense ratio's class, else the first class with returns. */
+function returnsOf(series: V2FilerFundSeries) {
+    return series.returns.find(entry => entry.class_id === series.expense_ratio_class_id) ?? series.returns.at(0) ?? null;
+}
+
+/**
+ * A fund registrant's series (pure, `GET /v1/filers/{cik}?expand=fund`): name, ETF flag, exchange (MIC), class tickers,
+ * net expense ratio, net assets with their scope and date, 1 / 5 / 10-year returns (the expense ratio's class). Ratios
+ * and returns are fractions (0.0003 = 0.03 %). `fund: null` (not a fund, or fund data not served) renders nothing.
+ */
+export function SecFundView({ data }: { data: null | V2FilerResponse }) {
+    const fund = data?.fund ?? null;
+
+    if (!fund) return null;
+
+    return (
+        <section aria-label="Fund" className="flex flex-col gap-2">
+            <Facts
+                entries={[
+                    ...(fund.investment_company_type ? [["registration", fund.investment_company_type] as [string, string]] : []),
+                    ["series", String(fund.series_count)],
+                ]}
+            />
+            {fund.series.length === 0
+                ? <div className="text-muted-foreground text-xs">No fund series.</div>
+                : (
+                        <table className="w-full text-xs">
+                            <thead className="text-muted-foreground text-left">
+                                <tr>
+                                    <th className="p-1 font-normal">Series</th>
+                                    <th className="p-1 font-normal">Exchange</th>
+                                    <th className="p-1 font-normal">Class tickers</th>
+                                    <th className="p-1 text-right font-normal">Expense ratio</th>
+                                    <th className="p-1 font-normal">Net assets</th>
+                                    <th className="p-1 text-right font-normal">1y</th>
+                                    <th className="p-1 text-right font-normal">5y</th>
+                                    <th className="p-1 text-right font-normal">10y</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {fund.series.map((series) => {
+                                    const returns = returnsOf(series);
+
+                                    const tickers = series.share_classes.flatMap(entry => (entry.ticker ? [entry.ticker] : []));
+
+                                    return (
+                                        <tr key={series.fund_key}>
+                                            <td className="p-1">
+                                                <span className="font-medium" title={series.fund_key}>{series.series_name ?? series.fund_key}</span>
+                                                {series.is_etf && <Badge className="ml-1" variant="outline">ETF</Badge>}
+                                            </td>
+                                            <td className="p-1">{series.exchange ?? "—"}</td>
+                                            <td className="p-1">{tickers.length > 0 ? tickers.join(", ") : "—"}</td>
+                                            <td className="p-1 text-right tabular-nums">{fraction(series.expense_ratio_net)}</td>
+                                            <td className="p-1 tabular-nums">{netAssetsText(series)}</td>
+                                            <td className="p-1 text-right tabular-nums">{fraction(returns?.one_year ?? null)}</td>
+                                            <td className="p-1 text-right tabular-nums">{fraction(returns?.five_year ?? null)}</td>
+                                            <td className="p-1 text-right tabular-nums">{fraction(returns?.ten_year ?? null)}</td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    )}
         </section>
     );
 }
