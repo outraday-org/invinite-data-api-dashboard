@@ -2,12 +2,18 @@ import * as React from "react";
 
 import type { TranscriptTurn, TranscriptView } from "@/lib/earnings/transcript";
 
+import { SpeakerAvatar } from "@/components/earnings/speaker-avatar";
 import { qaStartTurnIndex, speakerName } from "@/lib/earnings/transcript";
 
 import { ActiveTurnBridge } from "../active-turn-bridge";
 import { SeekButton } from "../seek-button";
 
-function Turn({ index, turn }: { index: number; turn: TranscriptTurn }) {
+/** speaker label → its participation's public image URL (`/v1/participants?event=`); missing = initials. */
+export type SpeakerImages = ReadonlyMap<string, null | string>;
+
+const NO_IMAGES: SpeakerImages = new Map();
+
+function Turn({ images, index, turn }: { images: SpeakerImages; index: number; turn: TranscriptTurn }) {
     const detail = [turn.title, turn.name ? null : turn.role].filter(Boolean).join(" · ");
 
     return (
@@ -18,7 +24,8 @@ function Turn({ index, turn }: { index: number; turn: TranscriptTurn }) {
             data-start-ms={turn.start_ms ?? undefined}
             data-turn-index={index}
         >
-            <div className="flex flex-wrap items-baseline gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+                <SpeakerAvatar imageUrl={images.get(turn.speaker_label)} name={turn.name} speakerRole={turn.role} />
                 <span className="font-medium">{speakerName(turn)}</span>
                 {detail && <span className="text-muted-foreground">{detail}</span>}
                 <SeekButton startMs={turn.start_ms} />
@@ -68,7 +75,7 @@ function QaDivider({ qaStartMs }: { qaStartMs: number }) {
 }
 
 /** The turns, with the one being heard marked while a recording plays (`ActiveTurnBridge`). */
-function Turns({ qaStartMs, turns }: { qaStartMs: null | number; turns: ReadonlyArray<TranscriptTurn> }) {
+function Turns({ images, qaStartMs, turns }: { images: SpeakerImages; qaStartMs: null | number; turns: ReadonlyArray<TranscriptTurn> }) {
     const containerRef = React.useRef<HTMLDivElement | null>(null);
 
     const qaIndex = qaStartTurnIndex(turns, qaStartMs);
@@ -80,7 +87,7 @@ function Turns({ qaStartMs, turns }: { qaStartMs: null | number; turns: Readonly
                 // Turns have no id; their order within one answer is stable.
                 <React.Fragment key={index}>
                     {index === qaIndex && qaStartMs !== null && <QaDivider qaStartMs={qaStartMs} />}
-                    <Turn index={index} turn={turn} />
+                    <Turn images={images} index={index} turn={turn} />
                 </React.Fragment>
             ))}
         </div>
@@ -90,9 +97,18 @@ function Turns({ qaStartMs, turns }: { qaStartMs: null | number; turns: Readonly
 /**
  * The transcript body of one format (`empty` is handled by the tab). `qaStartMs` (the
  * response's `qa_start_ms`) heads the Q&A: on the sections' Q&A block, and as a divider above
- * the first Q&A turn of the speakers / cleaned formats.
+ * the first Q&A turn of the speakers / cleaned formats. Each turn of a named speaker carries its round image
+ * (`speakerImages`), else its initials; an unnamed one none (`SpeakerAvatar`).
  */
-export function TranscriptTurns({ qaStartMs, view }: { qaStartMs: null | number; view: TranscriptView }) {
+export function TranscriptTurns({
+    qaStartMs,
+    speakerImages = NO_IMAGES,
+    view,
+}: {
+    qaStartMs: null | number;
+    speakerImages?: SpeakerImages;
+    view: TranscriptView;
+}) {
     switch (view.kind) {
         case "empty":
             return null;
@@ -110,6 +126,6 @@ export function TranscriptTurns({ qaStartMs, view }: { qaStartMs: null | number;
         case "text":
             return <pre className="whitespace-pre-wrap break-words font-sans leading-relaxed">{view.text}</pre>;
         case "turns":
-            return <Turns qaStartMs={qaStartMs} turns={view.turns} />;
+            return <Turns images={speakerImages} qaStartMs={qaStartMs} turns={view.turns} />;
     }
 }

@@ -1,6 +1,7 @@
 import type { V2Participation } from "@/lib/api/types";
 import type { RoleGroup } from "@/lib/earnings/labels";
 
+import { SpeakerAvatar } from "@/components/earnings/speaker-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -52,7 +53,12 @@ function ParticipantRows({ group, participants }: { group: RoleGroup; participan
             </TableRow>
             {participants.map(participant => (
                 <TableRow key={participant.speaker_label}>
-                    <TableCell className="font-medium">{participant.name ?? <span className="text-muted-foreground">Unnamed</span>}</TableCell>
+                    <TableCell className="font-medium">
+                        <span className="flex items-center gap-2">
+                            <SpeakerAvatar imageUrl={participant.image_url} name={participant.name} size="md" speakerRole={participant.role} />
+                            {participant.name ?? <span className="text-muted-foreground">Unnamed</span>}
+                        </span>
+                    </TableCell>
                     <TableCell className="whitespace-normal">{participant.title ?? "—"}</TableCell>
                     <TableCell className="whitespace-normal">{participant.firm ?? "—"}</TableCell>
                     <TableCell><Badge variant="outline">{participant.speaker_label}</Badge></TableCell>

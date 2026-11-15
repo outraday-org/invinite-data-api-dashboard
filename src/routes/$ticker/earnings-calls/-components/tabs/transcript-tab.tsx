@@ -14,12 +14,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useV2Transcript, useV2TranscriptDiff, useV2TranscriptText, useV2TranscriptVersions } from "@/lib/api/queries";
+import { useV2Participants, useV2Transcript, useV2TranscriptDiff, useV2TranscriptText, useV2TranscriptVersions } from "@/lib/api/queries";
 import { formatInstant, formatMs } from "@/lib/earnings/format";
 import { scrollToTurn } from "@/lib/earnings/scroll-to-turn";
 import { textAnswerData, toTranscriptView, transcriptPlainText } from "@/lib/earnings/transcript";
 
 import type { CallTabProps } from "../call-tabs";
+import type { SpeakerImages } from "./transcript-turns";
 
 import { MediaState, Notice } from "../media-state";
 import { QaStart, TranscriptTurns } from "./transcript-turns";
@@ -96,11 +97,13 @@ function TranscriptBody({
     error,
     format,
     qaStartMs,
+    speakerImages,
     view,
 }: {
     error: Error | null;
     format: RenderedFormat;
     qaStartMs: null | number;
+    speakerImages: SpeakerImages;
     view: null | TranscriptView;
 }) {
     if (error) {
@@ -119,7 +122,7 @@ function TranscriptBody({
 
     if (view.kind === "empty") return <Notice title="Transcript is being prepared" />;
 
-    return <TranscriptTurns qaStartMs={qaStartMs} view={view} />;
+    return <TranscriptTurns qaStartMs={qaStartMs} speakerImages={speakerImages} view={view} />;
 }
 
 /**
@@ -149,6 +152,14 @@ export function TranscriptTab({ eventId, onTranscriptJumpHandled, transcriptJump
     const text = useV2TranscriptText({ eventId: turnFormat ? "" : eventId, split: format === "sections" ? "sections" : "none", version: requestedVersion });
 
     const transcript = turnFormat ? turns : text;
+
+    // The speakers' round images (only the turn formats show speakers); while unanswered every named turn has initials.
+    const participants = useV2Participants(turnFormat ? eventId : "");
+
+    const speakerImages = React.useMemo<SpeakerImages>(
+        () => new Map((participants.data?.data ?? []).map(participant => [participant.speaker_label, participant.image_url ?? null])),
+        [participants.data],
+    );
 
     const view = React.useMemo(() => {
         if (turnFormat) return turns.data ? toTranscriptView(format, turns.data.turns) : null;
@@ -323,7 +334,7 @@ export function TranscriptTab({ eventId, onTranscriptJumpHandled, transcriptJump
                 pdf={shownEntry?.pdf}
             />
 
-            <TranscriptBody error={transcript.error} format={format} qaStartMs={qaStartMs} view={view} />
+            <TranscriptBody error={transcript.error} format={format} qaStartMs={qaStartMs} speakerImages={speakerImages} view={view} />
 
             {compare && (
                 <Dialog onOpenChange={setCompareOpen} open={compareOpen}>
