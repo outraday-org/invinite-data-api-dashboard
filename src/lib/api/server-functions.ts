@@ -16,6 +16,8 @@ import type {
     V2DividendsSort,
     V2DocumentFigureResponse,
     V2DocumentVersionResponse,
+    V2EtfHoldingsResponse,
+    V2EtfWeightsResponse,
     V2EventComparisonResponse,
     V2EventResponse,
     V2EventsResponse,
@@ -986,6 +988,59 @@ export const getV2FundHoldings = createServerFn({ method: "GET" })
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/fund-holdings", {
             params: { query: v2Query({ accession, company, cursor, filer, limit, period_end: periodEnd, series }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const etfTickerSchema = z.string().trim().min(1).max(12);
+
+const v2EtfHoldingsSchema = z.object({
+    apiKey: apiKeySchema,
+    asOf: z.iso.date().optional(),
+    company: z.string().trim().min(1).optional(),
+    cursor: cursorSchema,
+    etf: etfTickerSchema.optional(),
+    limit: v2ThirteenFLimitSchema,
+});
+
+/**
+ * ETF composition (Data API release 5.10): exactly one of `etf` (one ETF's freshest composition; `asOf` = the one stored
+ * on or before that day) or `company` (the ETFs whose head issuer file holds it). `meta.source` / `meta.as_of` name it.
+ */
+export const getV2EtfHoldings = createServerFn({ method: "GET" })
+    .inputValidator(v2EtfHoldingsSchema)
+    .handler(async ({ data }): Promise<V2EtfHoldingsResponse> => {
+        const { apiKey, asOf, company, cursor, etf, limit } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/etf-holdings", {
+            params: { query: v2Query({ as_of: asOf, company, cursor, etf, limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+const v2EtfWeightsSchema = z.object({
+    apiKey: apiKeySchema,
+    asOf: z.iso.date().optional(),
+    cursor: cursorSchema,
+    dimension: z.string().trim().regex(/^(sector|country|asset_class)(,(sector|country|asset_class))*$/).optional(),
+    etf: etfTickerSchema,
+    limit: z.number().int().min(1).max(200).optional(),
+});
+
+/** An ETF's sector / country / asset-class weights of the same composition `getV2EtfHoldings` serves (`basis` per bucket). */
+export const getV2EtfWeights = createServerFn({ method: "GET" })
+    .inputValidator(v2EtfWeightsSchema)
+    .handler(async ({ data }): Promise<V2EtfWeightsResponse> => {
+        const { apiKey, asOf, cursor, dimension, etf, limit } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/etf-weights", {
+            params: { query: v2Query({ as_of: asOf, cursor, dimension, etf, limit }) },
         });
 
         if (error) throwApiError(error, response);

@@ -302,6 +302,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/etf-holdings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List ETF holdings (daily issuer files or N-PORT)
+         * @description The holdings of US ETFs from the freshest source per ETF, always named: the issuer's own daily (or monthly) holdings file where the store reads one, else the fund's latest public N-PORT report (quarter end, about 60 days later). `etf=` lists one ETF's positions (`meta.source`, `meta.as_of`; `as_of=` reads a stored earlier date, `meta.composition.stored_dates` lists them), order `-weight_pct`; `company=` lists the ETFs whose newest issuer file holds the company (one row per ETF, its lines of the company summed; ETFs known only from N-PORT are listed by `/v1/fund-holdings?company=`), order `-market_value_usd`. Exactly one of `etf` or `company`. A single-asset trust (GLD) has no rows by design (`meta.reason: single_asset_trust`). `EtfHolding` is not `FundHolding` (R16): `/v1/fund-holdings` serves filed N-PORT rows per report (with `accession_number` and `report_date`); this collection is the current composition of a listed ETF by ticker and falls back to N-PORT only where no issuer file is read.
+         */
+        get: operations["listEtfHoldings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/etf-weights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List ETF sector, country and asset-class weights
+         * @description Sector, country and asset-class weights of one US ETF, from the same composition `/v1/etf-holdings?etf=` answers from (`meta.source`, `meta.as_of`): sector = the issuer's stated sector, else the SEC SIC sector of the holding's issuer; country = the stated location, else the N-PORT country / ISIN prefix / registrant country (each bucket names its `basis`, `mixed` when its positions differ); weights in percent of the fund. `dimension=` one or several of sector, country, asset_class (default all). An ETF without buckets for the chosen source answers `data: []` with `meta.reason: weights_unavailable`; a single-asset trust `meta.reason: single_asset_trust`. Positions themselves: `/v1/etf-holdings`; filed N-PORT rows: `/v1/fund-holdings`.
+         */
+        get: operations["listEtfWeights"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/events": {
         parameters: {
             query?: never;
@@ -311,7 +351,7 @@ export interface paths {
         };
         /**
          * List events
-         * @description Events (earnings calls by default; `type=all` or a list opts into investor days, conferences, AGMs and other events), keyset-paged by `scheduled_at` with the event id as tiebreaker. With `company=` every date of that company is listed; without `company=` the list is a calendar: the `scheduled_at` window defaults to today through today + 14 days (New York calendar days) and may span at most 92 days (a wider window is a 400 `invalid_parameter`); `status=live` alone needs no window. Expired calendar rows (an estimate that never became a call, a duplicate, a non-call issuer) are omitted; `GET /v1/events/{event_id}` still serves them.
+         * @description Events (earnings calls by default; `type=all` or a list opts into investor days, conferences, AGMs and other events), keyset-paged by `scheduled_at` with the event id as tiebreaker. With `company=` every date of that company is listed; without `company=` the list is a calendar: the `scheduled_at` window defaults to today through today + 14 days (New York calendar days) and may span at most 92 days (a wider window is a 400 `invalid_parameter`); `status=live` alone needs no window. Expired calendar rows (an estimate that never became a call, a duplicate, a non-call issuer) are omitted, except one whose `expired_reason` is `results_without_call` (a reported quarter whose call never came); `GET /v1/events/{event_id}` still serves them. A reported quarter (`results_released_at` set) is listed even when its call date is only an estimate.
          */
         get: operations["listEvents"];
         put?: never;
@@ -895,7 +935,7 @@ export interface paths {
         };
         /**
          * List N-PORT fund holdings
-         * @description N-PORT fund and ETF positions from the funds' quarterly public reports (about 60 days after the report date): by issuer (`company=`, one row per fund holding it, from each fund's latest report on or before `period_end`, its positions in the issuer summed), by fund (`filer=` registrant CIK, `series=` when the registrant files for several funds: that fund's positions) or by filing (`accession=`, an NPORT-P filing's reported holdings as filed); exactly one of `company`, `filer` or `accession` (`series` alone needs `filer`). `period_end` defaults to today. Order: value in USD, descending (`company=`, `filer=`), the filing's line order (`accession=`); several companies are read one after another. A fund row is not a 13F `Holding` (different row type, R16): `/v1/holdings` keeps the 13F managers.
+         * @description N-PORT fund and ETF positions from the funds' quarterly public reports (about 60 days after the report date): by issuer (`company=`, one row per fund holding it, from each fund's latest report on or before `period_end`, its positions in the issuer summed), by fund (`filer=` registrant CIK, `series=` when the registrant files for several funds: that fund's positions) or by filing (`accession=`, an NPORT-P filing's reported holdings as filed); exactly one of `company`, `filer` or `accession` (`series` alone needs `filer`). `period_end` defaults to today. Order: value in USD, descending (`company=`, `filer=`), the filing's line order (`accession=`); several companies are read one after another. A fund row is not a 13F `Holding` (different row type, R16): `/v1/holdings` keeps the 13F managers. ETFs' current composition (daily issuer files, falling back to N-PORT): `/v1/etf-holdings`.
          */
         get: operations["listFundHoldings"];
         put?: never;
@@ -4017,6 +4057,87 @@ export interface components {
             /** @description How issuer_cik was found: cusip_cache, isin, ticker, not_equity (no issuer for a non-equity holding) or unresolved; null on accession= rows */
             issuer_resolution?: null | string;
         };
+        /** EtfHolding */
+        EtfHolding: {
+            /** @description The ETF's ticker */
+            etf_symbol: string;
+            /** @description The ETF's name */
+            etf_name?: null | string;
+            /** @description SEC series id of the ETF's fund (S + 9 digits); null for a unit investment trust and on company= rows */
+            series_id?: null | string;
+            /**
+             * @description issuer_daily / issuer_monthly = the issuer's holdings file, nport = the fund's latest public N-PORT report
+             * @enum {string}
+             */
+            source: "issuer_daily" | "issuer_monthly" | "nport";
+            /**
+             * Format: date
+             * @description The date the composition is stated as of
+             */
+            as_of: string;
+            /** @description Line of the position in its source (issuer file line, N-PORT source line); null on company= rows (lines summed) */
+            line?: null | number;
+            /** @description Holding name as stated (company= rows: the requested company) */
+            name?: null | string;
+            /** @description Holding ticker as stated (company= rows: the requested company's ticker) */
+            ticker?: null | string;
+            /** @description Holding CUSIP */
+            cusip?: null | string;
+            /** @description Holding ISIN */
+            isin?: null | string;
+            /** @description Holding SEDOL (issuer files only) */
+            sedol?: null | string;
+            /** @description equity, fixed_income, cash, derivative, fund, commodity, crypto or other */
+            asset_class?: null | string;
+            /** @description Shares held; null for a non-share position (principal, contracts) */
+            shares?: null | number;
+            /** @description Market value in USD as stated */
+            market_value_usd?: null | number;
+            /** @description Notional value in USD of a derivative (issuer files only) */
+            notional_value_usd?: null | number;
+            /** @description Percent of the fund (7.1 = 7.1 %; N-PORT: percent of net assets) */
+            weight_pct?: null | number;
+            /** @description Sector: as the issuer stated it, else the SEC SIC sector of the holding's issuer */
+            sector?: null | string;
+            /** @description issuer_stated, derived_sic or none */
+            sector_basis?: null | string;
+            /** @description Country (ISO alpha-2 where it maps): as stated, else derived */
+            country?: null | string;
+            /** @description issuer_stated, nport, isin_prefix, registrant or none */
+            country_basis?: null | string;
+            /** @description Issuer CIK of the holding, 10 digits; null when it did not resolve */
+            issuer_cik?: null | string;
+            /** @description How issuer_cik was found: cusip_cache, isin, ticker, not_equity or unresolved */
+            issuer_resolution?: null | string;
+        };
+        /** EtfWeight */
+        EtfWeight: {
+            /** @description The ETF's ticker */
+            etf_symbol: string;
+            /**
+             * @description The composition the weights come from
+             * @enum {string}
+             */
+            source: "issuer_daily" | "issuer_monthly" | "nport";
+            /**
+             * Format: date
+             * @description The date the composition is stated as of
+             */
+            as_of: string;
+            /**
+             * @description sector, country or asset_class
+             * @enum {string}
+             */
+            dimension: "asset_class" | "country" | "sector";
+            /** @description The bucket label (a sector, an ISO country code, an asset class; Unclassified / Cash and other) */
+            bucket: string;
+            /** @description Percent of the fund in this bucket */
+            weight_pct: number;
+            /** @description Positions in the bucket */
+            positions?: null | number;
+            /** @description issuer_stated, derived_sic, nport, isin_prefix, registrant, mixed or none */
+            basis: string;
+        };
         /** InsiderTrade */
         InsiderTrade: {
             /** @description Internal transaction ID */
@@ -4553,7 +4674,7 @@ export interface components {
              * @description Why the calendar row expired, set only while `capture_status` is `expired` (a final status: an estimate that never became a call, a duplicate, a non-call issuer, …); null otherwise. Appended 2026-11
              * @enum {string|null}
              */
-            expired_reason?: "agent_different_date" | "agent_no_call" | "agent_no_webcast" | "date_passed" | "duplicate" | "early_results_filing" | "inactive_company" | "never_planned" | "non_call_issuer" | "release_names_no_call" | "superseded_by_reschedule" | "superseded_estimate" | null;
+            expired_reason?: "agent_different_date" | "agent_no_call" | "agent_no_webcast" | "date_passed" | "duplicate" | "early_results_filing" | "inactive_company" | "never_planned" | "non_call_issuer" | "release_names_no_call" | "results_without_call" | "superseded_by_reschedule" | "superseded_estimate" | null;
             /** @description How often the call was rescheduled */
             reschedule_count: number;
             /** @description A transcript is available */
@@ -4566,7 +4687,7 @@ export interface components {
             has_press_release: boolean;
             /** @description Further event documents are available */
             has_documents: boolean;
-            /** @description Webcast page of an upcoming dated call; null once published */
+            /** @description Webcast page of an upcoming dated call; null once published and for a `not_covered` call (`calendar.call.status`) */
             webcast_url: null | string;
             /** @description The company's public broadcast on a video platform (YouTube, Vimeo). Embed `embed_url` when `embeddable` is not false; otherwise link `url`. Present before, during and after the event; null = none known. */
             video: null | {
@@ -4654,10 +4775,10 @@ export interface components {
                 /** @description The call (null fields when no call is expected) */
                 call: {
                     /**
-                     * @description Call status: the event statuses without reported, plus held, no_call, expired, not_expected (a non-call issuer)
+                     * @description Call status: the event statuses without reported, plus held, no_call, expired, not_expected (a non-call issuer), not_covered (a reported quarter of a call issuer that our coverage never saw: the call was likely held, we have no record). Clients must accept unknown enum values.
                      * @enum {string|null}
                      */
-                    status: "announced" | "cancelled" | "confirmed" | "estimated" | "expired" | "held" | "no_call" | "not_expected" | "postponed" | null;
+                    status: "announced" | "cancelled" | "confirmed" | "estimated" | "expired" | "held" | "no_call" | "not_covered" | "not_expected" | "postponed" | null;
                     /**
                      * Format: date
                      * @description Call day (YYYY-MM-DD; New York day of a timed call)
@@ -13819,6 +13940,251 @@ export interface operations {
                         meta: {
                             coverage?: components["schemas"]["MetaCoverage"];
                             source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listEtfHoldings: {
+        parameters: {
+            query?: {
+                /**
+                 * @description ETF ticker: the fund's freshest composition (one ETF)
+                 * @example SPY
+                 */
+                etf?: string;
+                /**
+                 * @description Ticker (`NVDA`) or CIK of ONE company: the ETFs holding it (from the ETFs' issuer files). Exactly one of `etf` or `company` is required.
+                 * @example NVDA
+                 */
+                company?: string;
+                /**
+                 * @description With etf=: the composition stored on or before this date (issuer files about 30 days back, older dates from the N-PORT report); default the freshest
+                 * @example 2026-11-12
+                 */
+                as_of?: string;
+                /**
+                 * @description Sort field: `-weight_pct` with etf= (default), `-market_value_usd` with company= (default); the only orders the store serves
+                 * @example -weight_pct
+                 */
+                sort?: "-market_value_usd" | "-weight_pct";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 1 000 on 13F rows)
+                 * @example 100
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["EtfHolding"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            /**
+                             * @description Which composition the rows come from (etf=): issuer_daily / issuer_monthly = the issuer's own holdings file, nport = the fund's latest public N-PORT report; null with company= (each row names its own)
+                             * @enum {string|null}
+                             */
+                            source?: "issuer_daily" | "issuer_monthly" | "nport" | null;
+                            /**
+                             * Format: date
+                             * @description The date the composition is stated as of (etf=); null with company=
+                             */
+                            as_of?: null | string;
+                            /**
+                             * @description Why the answer is partial or empty by design: single_asset_trust (a single-asset trust such as GLD holds one commodity: no rows by design), source_stale (the issuer file is more than 5 trading days old), issuer_source_unavailable (a daily-file ETF answered from its N-PORT report), weights_unavailable (etf-weights: no buckets for the chosen source)
+                             * @enum {string|null}
+                             */
+                            reason?: "issuer_source_unavailable" | "single_asset_trust" | "source_stale" | "weights_unavailable" | null;
+                            /** @description What the store holds for the ETF (etf=); null with company= */
+                            composition?: null | {
+                                /**
+                                 * Format: date
+                                 * @description Date of the newest issuer holdings file
+                                 */
+                                newest_issuer_as_of?: null | string;
+                                /**
+                                 * Format: date
+                                 * @description Report date of the fund's latest public N-PORT report
+                                 */
+                                nport_report_date?: null | string;
+                                /**
+                                 * Format: date
+                                 * @description Oldest issuer file kept (about 30 days are kept)
+                                 */
+                                stored_from?: null | string;
+                                /**
+                                 * Format: date
+                                 * @description Newest issuer file kept
+                                 */
+                                stored_to?: null | string;
+                                /** @description Every stored date (issuer files and N-PORT reports), newest first; as_of= picks one */
+                                stored_dates?: Array<{
+                                    /**
+                                     * Format: date
+                                     * @description Composition date
+                                     */
+                                    as_of: string;
+                                    /**
+                                     * @description issuer_daily / issuer_monthly / nport
+                                     * @enum {string}
+                                     */
+                                    source: "issuer_daily" | "issuer_monthly" | "nport";
+                                    /** @description ready, or quarantined / superseded for an issuer file that is not served */
+                                    status?: null | string;
+                                    /** @description Positions in that composition */
+                                    positions_count?: null | number;
+                                }>;
+                            };
+                            /** @description company=: how many ETFs the store reads an issuer file for (the ETFs this list can name) */
+                            issuer_sourced_etfs?: null | number;
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listEtfWeights: {
+        parameters: {
+            query: {
+                /**
+                 * @description ETF ticker
+                 * @example SPY
+                 */
+                etf: string;
+                /**
+                 * @description sector, country or asset_class; a comma list for several (default all three)
+                 * @example sector
+                 */
+                dimension?: string;
+                /**
+                 * @description With etf=: the composition stored on or before this date (issuer files about 30 days back, older dates from the N-PORT report); default the freshest
+                 * @example 2026-11-12
+                 */
+                as_of?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["EtfWeight"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            /**
+                             * @description Which composition the rows come from (etf=): issuer_daily / issuer_monthly = the issuer's own holdings file, nport = the fund's latest public N-PORT report; null with company= (each row names its own)
+                             * @enum {string|null}
+                             */
+                            source?: "issuer_daily" | "issuer_monthly" | "nport" | null;
+                            /**
+                             * Format: date
+                             * @description The date the composition is stated as of (etf=); null with company=
+                             */
+                            as_of?: null | string;
+                            /**
+                             * @description Why the answer is partial or empty by design: single_asset_trust (a single-asset trust such as GLD holds one commodity: no rows by design), source_stale (the issuer file is more than 5 trading days old), issuer_source_unavailable (a daily-file ETF answered from its N-PORT report), weights_unavailable (etf-weights: no buckets for the chosen source)
+                             * @enum {string|null}
+                             */
+                            reason?: "issuer_source_unavailable" | "single_asset_trust" | "source_stale" | "weights_unavailable" | null;
                         };
                     };
                 };

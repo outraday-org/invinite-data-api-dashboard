@@ -13,11 +13,17 @@ import type {
     V2HoldingsResponse,
 } from "@/lib/api/types";
 
+import { EtfHoldersList } from "@/components/sec/etf-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { V2ListTable } from "@/components/sec/v2-list-table";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useV2FundHoldingsInfinite, useV2HoldingChangesInfinite, useV2HoldingsInfinite } from "@/lib/api/queries";
+import {
+    useV2EtfHoldingsInfinite,
+    useV2FundHoldingsInfinite,
+    useV2HoldingChangesInfinite,
+    useV2HoldingsInfinite,
+} from "@/lib/api/queries";
 import { formatEnDateTime } from "@/lib/date";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { latest13fPeriodEnd, recentQuarterEnds } from "@/lib/sec/source";
@@ -286,14 +292,17 @@ function InstitutionsPage() {
     // `/v1/fund-holdings?company=`: each fund's latest N-PORT report on or before the picked quarter (none = today).
     const funds = useV2FundHoldingsInfinite({ company: ticker, limit: THIRTEEN_F_PAGE, periodEnd });
 
+    // `/v1/etf-holdings?company=`: the ETFs whose newest issuer holdings file holds it (daily; the quarter picker does not apply).
+    const etfs = useV2EtfHoldingsInfinite({ company: ticker, limit: THIRTEEN_F_PAGE });
+
     return (
         <div className="space-y-4 relative flex flex-col h-0 grow">
             <div className="flex flex-wrap items-end justify-between gap-2">
                 <div className="flex flex-col gap-1">
                     <div>Institutions</div>
                     <div className="text-muted-foreground text-sm">
-                        13F holders of this company, their position changes vs the prior quarter, and the funds / ETFs
-                        holding it (N-PORT).
+                        13F holders of this company, their position changes vs the prior quarter, the funds / ETFs
+                        holding it (N-PORT, quarter-end) and the ETFs holding it from their daily issuer files.
                     </div>
                 </div>
                 <FilterSelect className="w-[220px]" onValueChange={setPeriod} options={periodOptions} value={period} />
@@ -304,6 +313,7 @@ function InstitutionsPage() {
                     <TabsTrigger className="h-[34px] text-sm" value="ownership">Ownership</TabsTrigger>
                     <TabsTrigger className="h-[34px] text-sm" value="transactions">Transactions</TabsTrigger>
                     <TabsTrigger className="h-[34px] text-sm" value="funds">Funds</TabsTrigger>
+                    <TabsTrigger className="h-[34px] text-sm" value="etfs">ETFs (daily)</TabsTrigger>
                 </TabsList>
 
                 <TabsContent className="grow relative mt-2" value="ownership">
@@ -341,6 +351,19 @@ function InstitutionsPage() {
                             isLoading: funds.isLoading,
                             onLoadMore: () => funds.fetchNextPage(),
                             pages: funds.data?.pages ?? [],
+                        }}
+                    />
+                </TabsContent>
+
+                <TabsContent className="grow relative mt-2" value="etfs">
+                    <EtfHoldersList
+                        state={{
+                            error: etfs.error,
+                            hasNextPage: etfs.hasNextPage,
+                            isFetchingNextPage: etfs.isFetchingNextPage,
+                            isLoading: etfs.isLoading,
+                            onLoadMore: () => etfs.fetchNextPage(),
+                            pages: etfs.data?.pages ?? [],
                         }}
                     />
                 </TabsContent>

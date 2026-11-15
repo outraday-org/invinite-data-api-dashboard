@@ -26,6 +26,8 @@ import type {
     V2DividendsSort,
     V2DocumentFigureResponse,
     V2DocumentVersionResponse,
+    V2EtfHoldingsResponse,
+    V2EtfWeightsResponse,
     V2Event,
     V2EventComparisonResponse,
     V2EventsResponse,
@@ -109,6 +111,8 @@ import {
     getV2Dividends,
     getV2DocumentFigure,
     getV2DocumentVersion,
+    getV2EtfHoldings,
+    getV2EtfWeights,
     getV2Event,
     getV2EventComparison,
     getV2Events,
@@ -1070,6 +1074,35 @@ export function useV2FundHoldingsInfinite(input: { company: string; limit?: numb
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2FundHoldings({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
         queryKey: ["v2", "fund-holdings", input.company, input.periodEnd ?? "", input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/**
+ * ETF composition by cursor (Data API release 5.10): exactly one of `etf` (its freshest composition, or the one stored
+ * on or before `asOf`) or `company` (the ETFs holding it); none or both keeps it idle.
+ */
+export function useV2EtfHoldingsInfinite(input: { asOf?: string; company?: string; etf?: string; limit?: number }) {
+    const scopes = [input.etf, input.company].filter(value => value && value.trim().length > 0);
+
+    return useEarningsInfinite<V2EtfHoldingsResponse>({
+        enabled: scopes.length === 1,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2EtfHoldings({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "etf-holdings", input.etf ?? "", input.company ?? "", input.asOf ?? "", input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** An ETF's sector / country / asset-class weights by cursor (the composition `useV2EtfHoldingsInfinite` shows). */
+export function useV2EtfWeightsInfinite(input: { asOf?: string; dimension?: string; etf: string; limit?: number }) {
+    return useEarningsInfinite<V2EtfWeightsResponse>({
+        enabled: input.etf.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2EtfWeights({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "etf-weights", input.etf, input.dimension ?? "", input.asOf ?? "", input.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });

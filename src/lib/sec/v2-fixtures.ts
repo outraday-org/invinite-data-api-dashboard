@@ -7,6 +7,8 @@
  */
 import type {
     V2DocumentVersionResponse,
+    V2EtfHoldingsResponse,
+    V2EtfWeightsResponse,
     V2FilersResponse,
     V2FilingDetailResponse,
     V2FilingSearchResponse,
@@ -573,4 +575,76 @@ export const V2_OFFERINGS: V2OfferingsResponse = {
     has_more: true,
     meta: { coverage: { state: "complete" }, pinned_at: "2026-11-14T12:00:00Z" },
     next_cursor: "eyJ2IjoyfQ",
+};
+
+const SPY_DAY = { as_of: "2026-11-13", etf_symbol: "SPY", source: "issuer_daily" as const };
+
+/** `GET /v1/etf-holdings?etf=SPY` (release 5.10, written in the contract's shape): the issuer's daily file. */
+export const V2_ETF_HOLDINGS: V2EtfHoldingsResponse = {
+    data: [
+        { ...SPY_DAY, asset_class: "equity", etf_name: "SPDR S&P 500 ETF Trust", market_value_usd: 52_400_000_000, name: "NVIDIA CORP", shares: 290_000_000, ticker: "NVDA", weight_pct: 7.41 },
+        { ...SPY_DAY, asset_class: "equity", etf_name: "SPDR S&P 500 ETF Trust", market_value_usd: 46_100_000_000, name: "APPLE INC", shares: 170_000_000, ticker: "AAPL", weight_pct: 6.52 },
+    ],
+    has_more: true,
+    meta: {
+        as_of: "2026-11-13",
+        composition: {
+            newest_issuer_as_of: "2026-11-13",
+            nport_report_date: "2026-09-30",
+            stored_dates: [
+                { as_of: "2026-11-13", positions_count: 503, source: "issuer_daily", status: "ready" },
+                { as_of: "2026-11-12", positions_count: 503, source: "issuer_daily", status: "quarantined" },
+                { as_of: "2026-11-11", positions_count: 503, source: "issuer_daily", status: "ready" },
+                { as_of: "2026-09-30", positions_count: 504, source: "nport", status: null },
+            ],
+            stored_from: "2026-10-15",
+            stored_to: "2026-11-13",
+        },
+        coverage: { state: "complete" },
+        reason: null,
+        source: "issuer_daily",
+    },
+    next_cursor: "c2",
+};
+
+/** TQQQ: swap and futures lines carry a notional exposure, no weight. */
+export const V2_ETF_HOLDINGS_LEVERAGED: V2EtfHoldingsResponse = {
+    data: [
+        { as_of: "2026-11-13", asset_class: "derivative", etf_symbol: "TQQQ", market_value_usd: 1_200_000, name: "NASDAQ 100 INDEX SWAP", notional_value_usd: 9_800_000_000, source: "issuer_daily", weight_pct: null },
+    ],
+    has_more: false,
+    meta: { as_of: "2026-11-13", coverage: { state: "complete" }, reason: null, source: "issuer_daily" },
+    next_cursor: null,
+};
+
+/** GLD: a single-asset trust answers no rows by design. */
+export const V2_ETF_HOLDINGS_SINGLE_ASSET: V2EtfHoldingsResponse = {
+    data: [],
+    has_more: false,
+    meta: { as_of: "2026-11-13", coverage: { state: "complete" }, reason: "single_asset_trust", source: "issuer_daily" },
+    next_cursor: null,
+};
+
+/** `GET /v1/etf-holdings?company=NVDA`: the ETFs whose head issuer file holds it (each row its own source + as-of). */
+export const V2_ETF_HOLDERS: V2EtfHoldingsResponse = {
+    data: [
+        { ...SPY_DAY, etf_name: "SPDR S&P 500 ETF Trust", market_value_usd: 52_400_000_000, name: "NVIDIA CORP", shares: 290_000_000, ticker: "NVDA", weight_pct: 7.41 },
+        { as_of: "2026-10-31", etf_name: "Vanguard S&P 500 ETF", etf_symbol: "VOO", market_value_usd: 48_000_000_000, name: "NVIDIA CORP", shares: 265_000_000, source: "issuer_monthly", ticker: "NVDA", weight_pct: 7.2 },
+    ],
+    has_more: false,
+    meta: { as_of: null, composition: null, coverage: { state: "complete" }, issuer_sourced_etfs: 412, reason: null, source: null },
+    next_cursor: null,
+};
+
+/** `GET /v1/etf-weights?etf=SPY`: sector (issuer-stated), country (mixed basis), an Unclassified bucket. */
+export const V2_ETF_WEIGHTS: V2EtfWeightsResponse = {
+    data: [
+        { ...SPY_DAY, basis: "issuer_stated", bucket: "Information Technology", dimension: "sector", positions: 68, weight_pct: 31.2 },
+        { ...SPY_DAY, basis: "issuer_stated", bucket: "Financials", dimension: "sector", positions: 72, weight_pct: 13.1 },
+        { ...SPY_DAY, basis: "mixed", bucket: "US", dimension: "country", positions: 500, weight_pct: 99.1 },
+        { ...SPY_DAY, basis: "none", bucket: "Unclassified", dimension: "country", positions: 3, weight_pct: 0.9 },
+    ],
+    has_more: false,
+    meta: { coverage: { state: "complete" } },
+    next_cursor: null,
 };

@@ -19,6 +19,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 // Keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
+    useV2EtfHoldingsInfinite: vi.fn(),
     useV2FundHoldingsInfinite: vi.fn(),
     useV2HoldingChangesInfinite: vi.fn(),
     useV2HoldingsInfinite: vi.fn(),

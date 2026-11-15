@@ -102,6 +102,10 @@ export type V2HoldingsResponse = ApiResponse<"/v1/holdings", "get">;
 export type V2HoldingChangesResponse = ApiResponse<"/v1/holding-changes", "get">;
 /** N-PORT fund holdings, their own collection (Data API release 5.7). */
 export type V2FundHoldingsResponse = ApiResponse<"/v1/fund-holdings", "get">;
+/** ETF composition (issuer daily / monthly file, else N-PORT) and the ETFs holding a company (Data API release 5.10). */
+export type V2EtfHoldingsResponse = ApiResponse<"/v1/etf-holdings", "get">;
+/** ETF sector / country / asset-class weights of the freshest composition (Data API release 5.10). */
+export type V2EtfWeightsResponse = ApiResponse<"/v1/etf-weights", "get">;
 export type V2InsiderTradesResponse = ApiResponse<"/v1/insider-trades", "get">;
 export type V2IposResponse = ApiResponse<"/v1/ipos", "get">;
 /** Form D private offerings (Data API release 5.7, tag IPOs). */
@@ -120,6 +124,12 @@ export type V2HoldingChange = V2HoldingChangesResponse["data"][number];
 export type V2HoldingChangeType = V2HoldingChange["type"];
 export type V2HoldingsInstruments = NonNullable<ApiQuery<"/v1/holdings">["instruments"]>;
 export type V2FundHolding = V2FundHoldingsResponse["data"][number];
+export type V2EtfHolding = V2EtfHoldingsResponse["data"][number];
+/** `issuer_daily` / `issuer_monthly` = the issuer's own holdings file, `nport` = the fund's latest public N-PORT report. */
+export type V2EtfSource = V2EtfHolding["source"];
+export type V2EtfStoredDate = NonNullable<NonNullable<V2EtfHoldingsResponse["meta"]["composition"]>["stored_dates"]>[number];
+export type V2EtfWeight = V2EtfWeightsResponse["data"][number];
+export type V2EtfWeightDimension = V2EtfWeight["dimension"];
 export type V2InsiderTrade = V2InsiderTradesResponse["data"][number];
 export type V2InsiderSide = V2InsiderTrade["side"];
 export type V2Ipo = V2IposResponse["data"][number];

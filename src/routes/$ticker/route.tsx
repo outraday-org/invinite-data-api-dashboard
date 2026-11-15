@@ -9,6 +9,7 @@ import {
     LayoutDashboardIcon,
     MicIcon,
     NewspaperIcon,
+    PieChartIcon,
     SplitIcon,
     UserRoundIcon,
 } from "lucide-react";
@@ -47,6 +48,7 @@ const navItems = [
     { icon: SplitIcon, label: "Stock Splits", to: "/$ticker/stock-splits" },
     { icon: UserRoundIcon, label: "Insider Trades", to: "/$ticker/insider-trades" },
     { icon: Building2Icon, label: "Institutions", to: "/$ticker/institutions" },
+    { icon: PieChartIcon, label: "ETF Holdings", to: "/$ticker/etf-holdings" },
     { icon: CalendarDaysIcon, label: "Earnings Calendar", to: "/$ticker/earnings-calendar" },
     { icon: Building2Icon, label: "IPOs", to: "/$ticker/ipos" },
     { icon: CalendarDaysIcon, label: "Market Holidays", to: "/$ticker/market-holidays" },
