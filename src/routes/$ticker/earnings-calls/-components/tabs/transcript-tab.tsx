@@ -23,7 +23,7 @@ import type { CallTabProps } from "../call-tabs";
 import type { SpeakerImages } from "./transcript-turns";
 
 import { MediaState, Notice } from "../media-state";
-import { QaStart, TranscriptTurns } from "./transcript-turns";
+import { QaStart, TranscriptTurns, useSpeakerImages } from "./transcript-turns";
 
 // The turns (`/transcript`, raw or cleaned layer) or the text blocks (`/transcript-text`); words are the audio
 // follow view's (`audio-context.tsx`).
@@ -156,10 +156,7 @@ export function TranscriptTab({ eventId, onTranscriptJumpHandled, transcriptJump
     // The speakers' round images (only the turn formats show speakers); while unanswered every named turn has initials.
     const participants = useV2Participants(turnFormat ? eventId : "");
 
-    const speakerImages = React.useMemo<SpeakerImages>(
-        () => new Map((participants.data?.data ?? []).map(participant => [participant.speaker_label, participant.image_url ?? null])),
-        [participants.data],
-    );
+    const speakerImages = useSpeakerImages(participants.data);
 
     const view = React.useMemo(() => {
         if (turnFormat) return turns.data ? toTranscriptView(format, turns.data.turns) : null;

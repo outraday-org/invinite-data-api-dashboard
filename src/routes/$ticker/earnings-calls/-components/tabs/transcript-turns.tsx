@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import type { V2ParticipantsResponse } from "@/lib/api/types";
 import type { TranscriptTurn, TranscriptView } from "@/lib/earnings/transcript";
 
 import { SpeakerAvatar } from "@/components/earnings/speaker-avatar";
@@ -12,6 +13,14 @@ import { SeekButton } from "../seek-button";
 export type SpeakerImages = ReadonlyMap<string, null | string>;
 
 const NO_IMAGES: SpeakerImages = new Map();
+
+/** The speaker images of a `/v1/participants?event=` answer (undefined while unanswered = initials everywhere). */
+export function useSpeakerImages(participants: null | undefined | V2ParticipantsResponse): SpeakerImages {
+    return React.useMemo(
+        () => new Map((participants?.data ?? []).map(participant => [participant.speaker_label, participant.image_url ?? null])),
+        [participants],
+    );
+}
 
 function Turn({ images, index, turn }: { images: SpeakerImages; index: number; turn: TranscriptTurn }) {
     const detail = [turn.title, turn.name ? null : turn.role].filter(Boolean).join(" · ");
