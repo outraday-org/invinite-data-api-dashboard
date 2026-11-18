@@ -64,6 +64,212 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/alert-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List alert events
+         * @description The account's event log, oldest first: the cursor pull feed of every alert. `after` continues after an event id you already processed.
+         */
+        get: operations["listAlertEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/alert-events/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an alert event */
+        get: operations["getAlertEvent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/alert-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List indicator alert templates
+         * @description The built-in templates of the `indicator` alert type: key, version, inputs with their defaults, snapshot fidelity and chartlang source. Answers 503 `unavailable` while hosted scripts are switched off.
+         */
+        get: operations["listAlertTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List alerts
+         * @description The account's alerts, oldest first. Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        get: operations["listAlerts"];
+        put?: never;
+        /**
+         * Create an alert
+         * @description Creates an alert rule (201). With a `client_reference_id` the create is idempotent: a live alert with the same id is returned as it is (200). Counts against the plan's active-alert quota (403 `plan_required` when full). Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        post: operations["createAlert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/alerts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an alert */
+        get: operations["getAlert"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete an alert
+         * @description Deletes the alert (204); its events stay readable.
+         */
+        delete: operations["deleteAlert"];
+        options?: never;
+        head?: never;
+        /**
+         * Update an alert
+         * @description Changes the condition, trigger, destinations or references. With `version` the update applies only to that version (409 `conflict` otherwise). The type never changes.
+         */
+        patch: operations["updateAlert"];
+        trace?: never;
+    };
+    "/v1/alerts/{id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List an alert's events
+         * @description The alert's events, oldest first (the pull feed of one alert).
+         */
+        get: operations["listAlertEventsForAlert"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/alerts/{id}:pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pause an alert
+         * @description An active or scheduled alert stops firing until it is resumed; a paused one is unchanged.
+         */
+        post: operations["pauseAlert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/alerts/{id}:resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resume an alert
+         * @description A paused or triggered alert is armed again (scheduled while `trigger.activate_at` lies ahead); an active one is unchanged.
+         */
+        post: operations["resumeAlert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/alerts/{id}:test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a test event
+         * @description Queues one test `alert.fired` event to the alert's destinations (202).
+         */
+        post: operations["testAlert"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/alerts:batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change alerts in bulk
+         * @description Up to 500 items, each `create`, `upsert` (by `client_reference_id`), `delete`, `pause` or `resume` (by `id` or `client_reference_id`). One result per item, in order; a refused item never undoes another.
+         */
+        post: operations["batchAlerts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/announcements": {
         parameters: {
             query?: never;
@@ -234,6 +440,115 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/destinations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List destinations
+         * @description The account's webhook destinations, oldest first (secrets are never returned). Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        get: operations["listDestinations"];
+        put?: never;
+        /**
+         * Create a destination
+         * @description A webhook endpoint (https, port 443, public addresses only). The signing secret (`whsec_…`, Standard Webhooks) is in this answer only. Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        post: operations["createDestination"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/destinations/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a destination */
+        get: operations["getDestination"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a destination
+         * @description Deletes the destination (204); alerts that named it stop sending to it.
+         */
+        delete: operations["deleteDestination"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a destination
+         * @description `status: active` re-enables a disabled destination (its failure counter resets).
+         */
+        patch: operations["updateDestination"];
+        trace?: never;
+    };
+    "/v1/destinations/{id}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a destination's deliveries
+         * @description The delivery log, newest first.
+         */
+        get: operations["listDestinationDeliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/destinations/{id}:rotate-secret": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rotate a destination's secret
+         * @description A new signing secret, in this answer only; deliveries carry a signature with each secret for 24 h.
+         */
+        post: operations["rotateDestinationSecret"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/destinations/{id}:test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a test delivery
+         * @description Queues one signed `destination.test` event to the destination (202).
+         */
+        post: operations["testDestination"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/dividends": {
         parameters: {
             query?: never;
@@ -241,7 +556,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List dividends */
+        /**
+         * List dividends
+         * @description Keyed by ticker: a US ETF of either identity (SPY, TQQQ) answers like a company.
+         */
         get: operations["listDividends"];
         put?: never;
         post?: never;
@@ -725,7 +1043,7 @@ export interface paths {
         };
         /**
          * List filings
-         * @description A company’s SEC filings by filing date (newest first by default). Several companies are read one after another: all filings of the first company in the request’s order, then the next; `meta.form_facet` sums the forms of the companies read on the page. `items` is applied to the store’s pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false.
+         * @description A company’s SEC filings by filing date (newest first by default). Several companies are read one after another: all filings of the first company in the request’s order, then the next; `meta.form_facet` sums the forms of the companies read on the page. `items` is applied to the store’s pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false. For a US ETF that is a series of a multi-series trust (TQQQ), only the accessions naming its series (`series_id`) are listed, never the whole trust; an ETF that is its own SEC registrant (SPY, QQQ) lists its registrant's filings.
          */
         get: operations["listFilings"];
         put?: never;
@@ -1010,7 +1328,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List insider trades */
+        /**
+         * List insider trades
+         * @description Insider transaction lines (Form 4; Forms 3 and 5 where the SEC insider data set supplies them), newest filing first. Since release 5.7 the default result includes derivative-security lines (options, RSUs, warrants; `is_derivative: true` on the row) beside the non-derivative ones. `is_derivative=false` restores the non-derivative-only result of the releases before 5.7, which is what a buy / sell aggregate wants.
+         */
         get: operations["listInsiderTrades"];
         put?: never;
         post?: never;
@@ -1369,6 +1690,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/scripts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List scripts
+         * @description The account's scripts, oldest first, each with its latest version. Answers 503 `unavailable` while hosted scripts are switched off.
+         */
+        get: operations["listScripts"];
+        put?: never;
+        /**
+         * Upload a script
+         * @description Creates the script and its version 1, compiled server-side (≤ 10 s, one compile per account at a time — a second concurrent upload answers 429 with Retry-After; a busy compiler 503 with Retry-After). A compile error is still a 201: the version has `status: error` and `diagnostics` (line, column, message). Answers 503 `unavailable` while hosted scripts are switched off.
+         */
+        post: operations["createScript"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scripts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a script
+         * @description One script with its latest version. Answers 503 `unavailable` while hosted scripts are switched off.
+         */
+        get: operations["getScript"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a script
+         * @description Deletes the script and its versions (204). 409 `conflict` while an alert uses one of its versions (delete those alerts first). Answers 503 `unavailable` while hosted scripts are switched off.
+         */
+        delete: operations["deleteScript"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/scripts/{id}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List script versions
+         * @description The script's versions, oldest first. Answers 503 `unavailable` while hosted scripts are switched off.
+         */
+        get: operations["listScriptVersions"];
+        put?: never;
+        /**
+         * Upload a new script version
+         * @description Adds the next version of the script (at most 20 per script), compiled like the first. Existing alerts keep their version. Answers 503 `unavailable` while hosted scripts are switched off.
+         */
+        post: operations["createScriptVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/search/filings": {
         parameters: {
             query?: never;
@@ -1487,7 +1880,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List stock splits */
+        /**
+         * List stock splits
+         * @description Keyed by ticker: a US ETF of either identity (SPY, TQQQ) answers like a company.
+         */
         get: operations["listSplits"];
         put?: never;
         post?: never;
@@ -1507,94 +1903,6 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/webhooks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List webhooks */
-        get: operations["listWebhooks"];
-        put?: never;
-        /** Create a webhook */
-        post: operations["createWebhook"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/webhooks/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get a webhook */
-        get: operations["getWebhook"];
-        put?: never;
-        post?: never;
-        /** Delete a webhook */
-        delete: operations["deleteWebhook"];
-        options?: never;
-        head?: never;
-        /** Update a webhook */
-        patch: operations["updateWebhook"];
-        trace?: never;
-    };
-    "/v1/webhooks/{id}/deliveries": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List a webhook's deliveries */
-        get: operations["listWebhookDeliveries"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/webhooks/{id}:rotate-secret": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Rotate a webhook's secret */
-        post: operations["rotateWebhookSecret"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/webhooks/{id}:test": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Send a test delivery */
-        post: operations["testWebhook"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1688,7 +1996,7 @@ export interface components {
                 "application/problem+json": components["schemas"]["Problem"];
             };
         };
-        /** @description 409: idempotency_in_flight */
+        /** @description 409: idempotency_in_flight / conflict */
         Conflict: {
             headers: {
                 "X-Request-Id": components["headers"]["X-Request-Id"];
@@ -1853,7 +2161,7 @@ export interface components {
              * @example XNAS
              */
             exchange: null | string;
-            /** @description Sector */
+            /** @description Sector; null for a US ETF */
             sector: null | string;
             /**
              * @description Fiscal year end as MM-DD
@@ -1912,23 +2220,23 @@ export interface components {
         Company: {
             /** @description Ticker symbol */
             ticker: string;
-            /** @description CIK with or without leading zeros */
+            /** @description CIK with or without leading zeros; for a US ETF that is a series of a multi-series trust (TQQQ) the trust's CIK, empty ("") for such an ETF without a registrant link */
             cik: string;
             /** @description Company name */
             name: string;
             /** @description Business description */
             description: null | string;
-            /** @description High-level category */
+            /** @description High-level category (`ETF` for a series of a multi-series trust such as TQQQ) */
             category: string;
-            /** @description Sector, from the issuer's SIC code (SEC mapping) */
-            sector: string;
-            /** @description Industry, from the issuer's SIC code (SEC mapping) */
-            industry: string;
-            /** @description SIC code */
-            sic: string;
-            /** @description Fama-French sector */
+            /** @description Sector, from the issuer's SIC code (SEC mapping); null for a US ETF (no SIC-derived values are shown for a fund) */
+            sector: null | string;
+            /** @description Industry, from the issuer's SIC code (SEC mapping); null for a US ETF (no SIC-derived values are shown for a fund) */
+            industry: null | string;
+            /** @description SIC code; null for a US ETF (no SIC-derived values are shown for a fund) */
+            sic: null | string;
+            /** @description Fama-French sector, from the issuer's SIC code; null for a US ETF (no SIC-derived values are shown for a fund) */
             fama_sector: null | string;
-            /** @description Fama-French industry */
+            /** @description Fama-French industry, from the issuer's SIC code; null for a US ETF (no SIC-derived values are shown for a fund) */
             fama_industry: null | string;
             /** @description Listing exchange (null when unknown) */
             exchange: null | string;
@@ -1971,13 +2279,13 @@ export interface components {
             logo_url: null | string;
             /** @description Brand color hex codes */
             brand_colors: Array<string> | null;
-            /** @description Street address */
+            /** @description Street address; null for a US ETF */
             street: null | string;
-            /** @description City */
+            /** @description City; null for a US ETF */
             city: null | string;
-            /** @description State or province */
+            /** @description State or province; null for a US ETF */
             state: null | string;
-            /** @description Postal/ZIP code */
+            /** @description Postal/ZIP code; null for a US ETF */
             zip_code: null | string;
             /** @description ISO country code */
             country_code: null | string;
@@ -2419,7 +2727,7 @@ export interface components {
          */
         CompanyRef: {
             /**
-             * @description SEC CIK, 10 digits
+             * @description SEC CIK, 10 digits; for a US ETF that is a series of a trust (TQQQ) the trust's CIK, empty ("") for such an ETF without a registrant link
              * @example 0000320193
              */
             cik: string;
@@ -6605,112 +6913,1251 @@ export interface components {
                 };
             };
         };
-        /** Webhook */
-        Webhook: {
-            /** @description Subscription id */
+        /** Alert */
+        Alert: {
+            /** @description Alert id (`alt_…`) */
             id: string;
-            /** @description HTTPS endpoint the deliveries are POSTed to */
-            url: string;
-            events: Array<"event.assets_ready" | "event.documents_updated" | "event.ended" | "event.guidance_flash" | "event.keyword_hit" | "event.rescheduled" | "event.scheduled" | "event.started" | "event.test" | "event.transcript_corrected" | "event.transcript_provisional" | "event.transcript_ready" | "news.published">;
-            filters: {
-                /** @description 10-digit CIKs; empty = every company */
-                ciks: Array<string>;
-                /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript, and news.published (headline + lede) */
-                keywords: Array<string>;
-            };
-            /** @description false once disabled */
-            active: boolean;
-            /** @description Why the subscription was disabled */
+            /**
+             * @description The alert type
+             * @enum {string}
+             */
+            type: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
             disabled_reason: null | string;
-            /** @description Dead-lettered deliveries in a row */
-            consecutive_failures: number;
-            /** @description Last 4 characters of the signing secret */
-            secret_hint: string;
+            condition: components["schemas"]["AlertCondition"];
+            trigger: components["schemas"]["AlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
             updated_at: string;
         };
         /**
-         * WebhookCreated
-         * @description A new subscription with its secret
+         * AlertCondition
+         * @description What the alert watches; the fields depend on `type` (each field names the types that take it; any other field is refused). Companies: `ciks` / `symbols` (at most 100 in all) or, for single-company types, `cik` / `symbol`. A symbol is resolved to its CIK at create. Price types (`price`, `price_move`, `volume_spike`, `price_reminder`) and `script` watch ONE instrument: `symbol` + `asset_class`. A `script` alert runs a script version (`/v1/scripts`) at each close of `interval`; alerts with the same version, instrument, interval, inputs and frequency share one evaluation. An `indicator` alert takes a built-in `template` (`GET /v1/alert-templates`) or a structured `condition` (+ optional `filters`) on `symbol` / `interval`; alerts crossing a constant on the same indicator, instrument and interval share one evaluation whatever the threshold. Coverage: `filing_keyword`, `fundamental_metric` and `earnings_results` work only for companies whose filings and financials Invinite processes (any other company answers 404 `not_covered`); `earnings_call_keyword` takes any company with captured calls. US ETFs: `dividend`, `event_countdown` (`ex_dividend` / `dividend_payment`), `filing` and `filing_keyword` take an ETF ticker (SPY or a trust series such as TQQQ; a series ETF is stored by symbol and fires only on events that name it, never on another series' filing of its trust); `earnings_call`, `earnings_call_keyword`, `earnings_results`, `fundamental_metric`, `news`, `news_keyword` and an `earnings_call` countdown refuse an ETF of either identity (its ticker or a fund registrant's CIK) by name (400 `invalid_parameter`).
          */
-        WebhookCreated: {
-            /** @description Subscription id */
-            id: string;
-            /** @description HTTPS endpoint the deliveries are POSTed to */
-            url: string;
-            events: Array<"event.assets_ready" | "event.documents_updated" | "event.ended" | "event.guidance_flash" | "event.keyword_hit" | "event.rescheduled" | "event.scheduled" | "event.started" | "event.test" | "event.transcript_corrected" | "event.transcript_provisional" | "event.transcript_ready" | "news.published">;
-            filters: {
-                /** @description 10-digit CIKs; empty = every company */
-                ciks: Array<string>;
-                /** @description Keyword alerts (earnings_call.keyword_hit): whole-word, case-insensitive matches in live final segments and the final transcript, and news.published (headline + lede) */
-                keywords: Array<string>;
+        AlertCondition: {
+            /** @description Companies by CIK. filing, filing_keyword, news, news_keyword, earnings_call, earnings_call_keyword, dividend, halt */
+            ciks?: Array<string>;
+            /** @description Companies by ticker. Same types as `ciks`; a US ETF ticker for the types that take ETFs */
+            symbols?: Array<string>;
+            /** @description The company by CIK. fundamental_metric, earnings_results, event_countdown (1–10 digits) */
+            cik?: string;
+            /** @description The company (or, for the types that take ETFs, the US ETF) by ticker. Same types as `cik`; price types, script and indicator: the instrument (a US stock / ETF ticker, a crypto slug / ticker, or a commodity `XAUUSD` / `XAGUSD`) */
+            symbol?: string;
+            /** @description Raw SEC form types (`8-K`, `S-1`). filing, filing_keyword */
+            form_types?: Array<string>;
+            /** @description Form categories. filing */
+            form_categories?: Array<"annual_report" | "current_report" | "insider_trade" | "other" | "quarterly_report" | "registration">;
+            /** @description Also amendments (`/A`). filing */
+            include_amendments?: boolean;
+            /**
+             * @description `detected` = the moment the SEC publishes it (every filer); `processed` = after our processing. filing
+             * @enum {string}
+             */
+            stage?: "detected" | "processed";
+            /** @description Whole-word, case-insensitive keywords (2–50 characters). filing_keyword, news_keyword, earnings_call (keyword_hit), earnings_call_keyword */
+            keywords?: Array<string>;
+            /**
+             * @description Any or all keywords. Keyword types (default any)
+             * @enum {string}
+             */
+            match?: "all" | "any";
+            /**
+             * @description Where keywords are searched: filing_keyword full / risk_factors / mdna / legal_proceedings; news_keyword headline / headline_and_description; earnings_call_keyword full / prepared / qna
+             * @enum {string}
+             */
+            scope?: "full" | "headline" | "headline_and_description" | "legal_proceedings" | "mdna" | "prepared" | "qna" | "risk_factors";
+            /** @description News sources. news, news_keyword */
+            sources?: Array<string>;
+            /** @description news: news kinds; dividend: declared / ex_date / payment */
+            kinds?: Array<"call_announcement" | "capital_markets" | "declared" | "dividend" | "earnings_results" | "event_announcement" | "ex_date" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "payment" | "promo" | "results_date">;
+            /** @description Only earnings news. news, news_keyword */
+            earnings_only?: boolean;
+            /** @description Call lifecycle events. earnings_call (transcript_provisional, transcript_corrected, documents_updated need STANDARD; guidance_flash, keyword_hit PRO) */
+            events?: Array<"assets_ready" | "documents_updated" | "ended" | "guidance_flash" | "keyword_hit" | "rescheduled" | "scheduled" | "started" | "transcript_corrected" | "transcript_provisional" | "transcript_ready">;
+            /** @description Only these speakers. earnings_call_keyword */
+            speaker_roles?: Array<"analyst" | "management">;
+            /** @description Fire at this many mentions. earnings_call_keyword */
+            min_mentions?: number;
+            /** @description Mentions moved against the previous call. earnings_call_keyword */
+            mention_delta_rule?: {
+                /** @enum {string} */
+                direction: "down" | "either" | "up";
+                min_delta: number;
             };
-            /** @description false once disabled */
-            active: boolean;
-            /** @description Why the subscription was disabled */
+            /** @description Only a dividend whose amount moved by at least `min_pct` percent. dividend */
+            amount_change?: {
+                /** @enum {string} */
+                direction: "any" | "cut" | "raise";
+                min_pct: number;
+            };
+            /** @description Only these dividend types. dividend */
+            dividend_types?: Array<string>;
+            /** @description Only when the yield (percent) is above / below. dividend */
+            yield_rule?: {
+                /** @enum {string} */
+                comparator: "above" | "below";
+                pct: number;
+            };
+            /** @description Halt or resumption (empty = both). halt */
+            statuses?: Array<"halted" | "resumed">;
+            /** @description Only these halt reason codes. halt */
+            reason_codes?: Array<string>;
+            /** @description AND-combined metric thresholds. fundamental_metric */
+            rules?: Array<{
+                /** @description A metric id of GET /v1/catalog/metrics */
+                metric_id: string;
+                /** @enum {string} */
+                period_type: "annual" | "quarterly";
+                /** @enum {string} */
+                operator: "equals" | "gt" | "lt" | "not_equals";
+                /** @description Decimal string (a decimal string) */
+                value: string;
+            }>;
+            /** @description Results reports to fire on. earnings_results */
+            report_kinds?: Array<"final" | "preliminary">;
+            /** @description Year-over-year growth gates (signed percent). earnings_results */
+            yoy_rules?: Array<{
+                /** @enum {string} */
+                metric: "eps" | "revenue";
+                /** @enum {string} */
+                comparator: "above" | "below";
+                pct: number;
+            }>;
+            /**
+             * @description The event counted down to. event_countdown
+             * @enum {string}
+             */
+            event?: "dividend_payment" | "earnings_call" | "ex_dividend";
+            /** @description Days before (0 = on the day). event_countdown */
+            days_before?: number;
+            /** @description A ladder of days before. event_countdown */
+            offsets_days?: Array<number>;
+            /** @description Minutes before the call starts (event earnings_call only). event_countdown */
+            minutes_before?: number;
+            /** @description Local minute of the day the reminder fires (event_countdown: default 540 = 09:00). event_countdown, price_reminder */
+            time_of_day_minutes?: number;
+            /** @description IANA time zone (price_reminder: default America/New_York). event_countdown, price_reminder */
+            timezone?: string;
+            /** @description Tell when the event date moves (default true). event_countdown */
+            notify_on_date_change?: boolean;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved. price, price_move, volume_spike, price_reminder, script, indicator
+             * @enum {string}
+             */
+            asset_class?: "commodity" | "crypto" | "us_stock";
+            /**
+             * @description `crosses_*` fire when the price crosses `level`; `above` / `below` also fire at once when the price is already on that side. price
+             * @enum {string}
+             */
+            operator?: "above" | "below" | "crosses" | "crosses_above" | "crosses_below";
+            /** @description The price level (> 0). price */
+            level?: number;
+            /**
+             * @description Which move fires. price_move
+             * @enum {string}
+             */
+            direction?: "both" | "down" | "up";
+            /** @description The move in percent of the baseline. price_move */
+            pct?: number;
+            /**
+             * @description What the move is measured from (ignored with window_minutes); gap_open = the session open against the prior close, once per session. price_move
+             * @enum {string}
+             */
+            baseline?: "gap_open" | "intraday_open" | "prior_close" | "session_high" | "session_low";
+            /** @description Measure the move against the price this many minutes ago instead of the baseline. price_move */
+            window_minutes?: number;
+            /**
+             * @description `relative` = a closed bar's volume ≥ multiple × its baseline; `absolute` = ≥ threshold; `session` = today's cumulative volume ≥ multiple × the 20-session average daily volume (US stocks). volume_spike
+             * @enum {string}
+             */
+            mode?: "absolute" | "relative" | "session";
+            /**
+             * @description The bar evaluated at its close. volume_spike (1m, 5m, 15m, 30m, 1h, 1d, 1w, 1mo; every closed bar); script and indicator (1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w, 1mo; the plan's shortest: FREE / LITE 1h, STANDARD 5m, PRO 1m)
+             * @enum {string}
+             */
+            interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
+            /** @description Volume multiple of the baseline (relative / session). volume_spike */
+            multiple?: number;
+            /** @description Bar volume threshold, > 0 (absolute). volume_spike */
+            threshold?: number;
+            /** @description Bars in the baseline, 5–200 (rvol_slot: sessions, 2–20). volume_spike */
+            lookback_bars?: number;
+            /**
+             * @description The volume baseline: the mean or the median of the previous bars, or `rvol_slot` = the mean of the same time-of-day bar of earlier sessions (default flat_mean). volume_spike
+             * @enum {string}
+             */
+            baseline_mode?: "flat_mean" | "median" | "rvol_slot";
+            /**
+             * @description Only bars that closed up / down (default any). volume_spike
+             * @enum {string}
+             */
+            price_direction?: "any" | "down" | "up";
+            /**
+             * @description price_reminder: when the reminder fires — once at `at`, on the hour, daily or weekly at `time_of_day_minutes`. script: when the script's alerts deliver — `once_per_bar_close` (default) at most once per alert id and closed bar, `once_per_bar` the same, `every_time` every evaluation, `once` the first evaluation only. indicator: the same (`once` = this alert's first fire only). With `evaluation` pre_close: one delivery per alert id and session (`every_time`: every signal of the pass; `once`: the first only). price_reminder, script, indicator
+             * @enum {string}
+             */
+            frequency?: "daily" | "every_time" | "hourly" | "once" | "once_per_bar" | "once_per_bar_close" | "weekly";
+            /**
+             * Format: date-time
+             * @description The instant of a `once` reminder (ISO 8601 date-time with offset, e.g. 2026-12-01T14:30:00Z). price_reminder
+             */
+            at?: string;
+            /** @description Day of a weekly reminder, 0 = Sunday. price_reminder */
+            weekday?: number;
+            /** @description Several weekdays (0 = Sunday) of a daily / weekly reminder. price_reminder */
+            days?: Array<number>;
+            /** @description The script version evaluated (`scv_…`, status ok, of a script of this account). script */
+            script_version_id?: string;
+            /** @description Values for the script's declared inputs (checked against its manifest; absent = the defaults). script */
+            inputs?: {
+                [key: string]: unknown;
+            };
+            /** @description A script chain: what feeds each of the script's `input.externalSeries` inputs, by its input key (every such input must be bound; ≤ 4 `builtin_indicator`, ≤ 16 in the plan). script */
+            series_inputs?: {
+                [key: string]: components["schemas"]["ScriptSeriesInput"];
+            };
+            /** @description The producer scripts `script_output` series inputs read, producers before the nodes that read them (≤ 8 dependencies, ≤ 16,384 bytes with series_inputs). script */
+            nodes?: Array<components["schemas"]["ScriptNode"]>;
+            /** @description Only these of the script's alerts (its version's `alert_ids`); empty = all. script */
+            alert_ids?: Array<string>;
+            evaluation?: components["schemas"]["ScriptEvaluation"];
+            template?: components["schemas"]["IndicatorTemplateRef"];
+            condition?: components["schemas"]["IndicatorCondition"];
+            filters?: components["schemas"]["IndicatorFilters"];
+            resolved?: components["schemas"]["IndicatorResolved"];
+        };
+        /**
+         * ScriptSeriesInput
+         * @description What feeds one `input.externalSeries` input of a script (a script chain), one value per bar on the alert's symbol, interval and bars; a value the producer does not give that bar reads NaN.
+         */
+        ScriptSeriesInput: {
+            /**
+             * @description What feeds the input every bar: `ohlc` a bar field, `builtin_indicator` a built-in indicator's series, `script_output` a plot of a node of `nodes`
+             * @enum {string}
+             */
+            kind: "builtin_indicator" | "ohlc" | "script_output";
+            /**
+             * @description ohlc: the bar field (`hl2` = (high + low) / 2, `hlc3`, `ohlc4`, `hlcc4` = (high + low + 2 × close) / 4; no volume)
+             * @enum {string}
+             */
+            field?: "close" | "high" | "hl2" | "hlc3" | "hlcc4" | "low" | "ohlc4" | "open";
+            /** @description builtin_indicator: the built-in indicator (`rsi`, `sma`, `ema`, `macd`, `bb`, …; the indicator condition's ids) */
+            indicator_id?: string;
+            /** @description builtin_indicator: which output series (`rsi`, `macd` / `signal` / `histogram`, `upper` / `basis` / `lower`, …) */
+            series_key?: string;
+            /** @description builtin_indicator: the indicator's parameters (`length`, `source`, …; absent = its defaults) */
+            params?: {
+                [key: string]: unknown;
+            };
+            /** @description builtin_indicator, set by the platform (read-only: a value sent in a request is ignored): the system script version the series was compiled to */
+            resolved_script_version_id?: string;
+            /** @description script_output: the `node_key` of the producing node */
+            node_key?: string;
+            /** @description script_output: the plot slot of the node's script version (its `manifest.plots[].slotId`) */
+            slot_id?: string;
+        };
+        /**
+         * ScriptNode
+         * @description A producer script of a chain: evaluated on the alert's symbol, interval and bars before the scripts that read its plots.
+         */
+        ScriptNode: {
+            /** @description The node's name in this plan (unique, not `root`), named by `script_output` series inputs */
+            node_key: string;
+            /** @description The producer's script version (`scv_…`, status ok, of a script of this account) */
+            script_version_id: string;
+            /** @description Values for the producer's declared inputs (absent = the defaults) */
+            inputs?: {
+                [key: string]: unknown;
+            };
+            /** @description The producer's own `input.externalSeries` inputs (a built-in series, a bar field, or an earlier node's plot) */
+            series_inputs?: {
+                [key: string]: components["schemas"]["ScriptSeriesInput"];
+            };
+        };
+        /**
+         * ScriptEvaluation
+         * @description When a script / indicator alert evaluates: `bar_close` (default) at each close of its interval, or `pre_close` — `offset_minutes` before the US session close (16:00 New York, 13:00 on a half day, never on a weekend or market holiday) on the still-forming bar of its interval. A pre_close alert delivers ONLY its pre-close evaluations (its closed bars still advance the script; their events are not delivered), at most once per session; the fire's `reason.details` carry `phase: "pre_close"`, `offset_minutes` and `session_close`.
+         */
+        ScriptEvaluation: {
+            /**
+             * @description `bar_close` at each bar close, `pre_close` before the session close
+             * @enum {string}
+             */
+            kind: "bar_close" | "pre_close";
+            /** @description pre_close: minutes before the session close (1–720; any interval) */
+            offset_minutes?: number;
+            /**
+             * @description pre_close: the venue whose close anchors the evaluation (every US venue shares the 16:00 New York close and the US holiday calendar); optional for a US stock, required for crypto and commodities
+             * @enum {string}
+             */
+            exchange?: "AMEX" | "BATS" | "CBOE" | "NASDAQ" | "NYSE" | "NYSEARCA" | "NYSEMKT";
+        };
+        /**
+         * IndicatorTemplateRef
+         * @description A built-in template (`GET /v1/alert-templates`) and its inputs.
+         */
+        IndicatorTemplateRef: {
+            /** @description The template key (`rsi-cross`, `macd-signal-cross`, `price-sma-cross`, `ema-cross`) */
+            key: string;
+            /** @description The template version (absent = the current one) */
+            version?: number;
+            /** @description Values of the template's inputs (absent = the defaults) */
+            inputs?: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * IndicatorCondition
+         * @description A structured trigger `lhs <comparator> rhs`, evaluated at each bar close. The crossings take any right side but a zone; `entering` / `exiting` only a rectangle zone (`indicator_id: rectangle`, `series_key: band`).
+         */
+        IndicatorCondition: {
+            lhs: components["schemas"]["IndicatorOperand"];
+            /**
+             * @description The transition that fires
+             * @enum {string}
+             */
+            comparator: "crossing" | "crossing_down" | "crossing_up" | "entering" | "exiting";
+            rhs: components["schemas"]["IndicatorOperand"];
+        };
+        /**
+         * IndicatorOperand
+         * @description One side of an indicator condition (invinite's chart-condition operand): an indicator series, a price field, volume, or a constant (`value`, right side only).
+         */
+        IndicatorOperand: {
+            /**
+             * @description What the operand reads
+             * @enum {string}
+             */
+            kind: "indicator" | "price" | "value" | "volume";
+            /** @description indicator: the built-in indicator (`rsi`, `sma`, `ema`, `macd`, `bb`, …; the chart's indicator ids) */
+            indicator_id?: string;
+            /** @description indicator: which output series (`rsi`, `macd` / `signal` / `histogram`, `upper` / `basis` / `lower`, …) */
+            series_key?: string;
+            /** @description indicator: the indicator's parameters (`length`, `source`, …; absent = its defaults) */
+            params?: {
+                [key: string]: unknown;
+            };
+            /** @description indicator: the name used in the fire summary (default: id and parameters) */
+            label?: string;
+            /**
+             * @description price: the bar field (`last` = the close at bar close)
+             * @enum {string}
+             */
+            source?: "close" | "high" | "last" | "low" | "open";
+            /** @description value: the constant (right side only) */
+            value?: number;
+        };
+        /**
+         * IndicatorFilters
+         * @description State filters that gate the trigger (at most 4 comparisons in all, two levels).
+         */
+        IndicatorFilters: {
+            /**
+             * @description How the children combine
+             * @enum {string}
+             */
+            op: "and" | "or";
+            /** @description Leaves and groups */
+            children: Array<components["schemas"]["IndicatorFilterChild"]>;
+        };
+        /**
+         * IndicatorFilterChild
+         * @description A filter leaf (`kind: condition` + `condition`) or one nested group (`kind: group` + `op` + `children` of leaves).
+         */
+        IndicatorFilterChild: {
+            /**
+             * @description A leaf or a group
+             * @enum {string}
+             */
+            kind: "condition" | "group";
+            condition?: components["schemas"]["IndicatorFilterCondition"];
+            /**
+             * @description group: how its leaves combine
+             * @enum {string}
+             */
+            op?: "and" | "or";
+            /** @description group: its leaves */
+            children?: Array<components["schemas"]["IndicatorFilterLeaf"]>;
+        };
+        /**
+         * IndicatorFilterCondition
+         * @description A state comparison that must hold on the trigger bar.
+         */
+        IndicatorFilterCondition: {
+            lhs: components["schemas"]["IndicatorOperand"];
+            /**
+             * @description The state comparison
+             * @enum {string}
+             */
+            comparator: "greater_than" | "greater_than_or_equal" | "less_than" | "less_than_or_equal";
+            rhs: components["schemas"]["IndicatorOperand"];
+            /**
+             * @description Read on another timeframe of the same symbol (absent = the alert's interval)
+             * @enum {string}
+             */
+            interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
+        };
+        /**
+         * IndicatorFilterLeaf
+         * @description One filter comparison.
+         */
+        IndicatorFilterLeaf: {
+            /**
+             * @description Always `condition`
+             * @enum {string}
+             */
+            kind: "condition";
+            condition: components["schemas"]["IndicatorFilterCondition"];
+        };
+        /**
+         * IndicatorResolved
+         * @description What the platform runs for an indicator alert (set at create, read-only: a value sent in a request is ignored).
+         */
+        IndicatorResolved: {
+            /** @description The compiled system script version */
+            script_version_id: string;
+            /** @description The inputs it runs with (defaults filled in) */
+            inputs: {
+                [key: string]: unknown;
+            };
+            /**
+             * @description `shared`: a constant-threshold crossing, evaluated once per bar for every alert on the same indicator, symbol and interval whatever the threshold; `script`: its own evaluation
+             * @enum {string}
+             */
+            evaluation: "script" | "shared";
+            /** @description One-line summary of the condition */
+            summary: string;
+            /** @description shared: the crossed constant */
+            threshold?: {
+                /**
+                 * @description The crossing direction
+                 * @enum {string}
+                 */
+                comparator: "crossing" | "crossing_down" | "crossing_up";
+                /** @description The constant */
+                value: number;
+            };
+        };
+        /**
+         * AlertTrigger
+         * @description When the alert may fire
+         */
+        AlertTrigger: {
+            /**
+             * @description `once` = the alert becomes `triggered` after its first fire (default every_time)
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description Minimum bars between fires (script / indicator types), counted like chartlang: the bar of a fire must start at least cooldown_bars × the interval after the bar of the last fire, so a night or a weekend counts as time (half a bar of slack: a calendar `1mo` / `1w` / `1d` bar shorter than the nominal interval, a February or a DST day, still counts as a whole bar) */
+            cooldown_bars?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) */
+            active_window?: {
+                /** @enum {string} */
+                type: "every" | "weekly";
+                /** @description IANA time zone (weekly) */
+                timezone?: string;
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Windows repeat every N units (every) */
+                interval?: number;
+                /** @enum {string} */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+            /**
+             * @description Price types: when a crossed level arms again
+             * @enum {string}
+             */
+            rearm?: "auto" | "cross_back";
+            /** @description Price types: hysteresis in percent */
+            rearm_distance_pct?: number;
+        };
+        /**
+         * AlertQuotaUsage
+         * @description The account's alert quota and its use (every page of GET /v1/alerts carries it, whatever the filters): alerts with status active, paused or scheduled count; script and indicator alerts are a subset with their own limit. Fires are included; fires_per_day_limit is the account's fair-use cap per UTC day (null = no cap)
+         */
+        AlertQuotaUsage: {
+            /** @description Alerts that count against the quota (active, paused, scheduled) */
+            active_alerts: number;
+            /** @description The plan's active-alert quota */
+            active_alerts_limit: number;
+            /** @description Script and indicator alerts among them */
+            script_alerts: number;
+            /** @description The plan's script / indicator alert quota */
+            script_alerts_limit: number;
+            /** @description Fires per UTC day before webhook deliveries pause (events are still logged); null = no cap */
+            fires_per_day_limit: null | number;
+        };
+        /**
+         * AlertConditionInput
+         * @description What the alert watches; the fields depend on `type` (each field names the types that take it; any other field is refused). Companies: `ciks` / `symbols` (at most 100 in all) or, for single-company types, `cik` / `symbol`. A symbol is resolved to its CIK at create. Price types (`price`, `price_move`, `volume_spike`, `price_reminder`), `script` and `indicator` watch ONE instrument: `symbol` + `asset_class`. An `indicator` alert takes a built-in `template` (`GET /v1/alert-templates`) or a structured `condition` (+ optional `filters`) on `symbol` / `interval`; alerts crossing a constant on the same indicator, instrument and interval share one evaluation whatever the threshold. Coverage: `filing_keyword`, `fundamental_metric` and `earnings_results` work only for companies whose filings and financials Invinite processes (any other company answers 404 `not_covered`); `earnings_call_keyword` takes any company with captured calls. (request form) US ETFs: `dividend`, `event_countdown` (`ex_dividend` / `dividend_payment`), `filing` and `filing_keyword` take an ETF ticker (SPY or a trust series such as TQQQ; a series ETF is stored by symbol and fires only on events that name it, never on another series' filing of its trust); `earnings_call`, `earnings_call_keyword`, `earnings_results`, `fundamental_metric`, `news`, `news_keyword` and an `earnings_call` countdown refuse an ETF of either identity (its ticker or a fund registrant's CIK) by name (400 `invalid_parameter`).
+         */
+        AlertConditionInput: {
+            /** @description Companies by CIK. filing, filing_keyword, news, news_keyword, earnings_call, earnings_call_keyword, dividend, halt */
+            ciks?: Array<string>;
+            /** @description Companies by ticker. Same types as `ciks`; a US ETF ticker for the types that take ETFs */
+            symbols?: Array<string>;
+            /** @description The company by CIK. fundamental_metric, earnings_results, event_countdown (1–10 digits) */
+            cik?: string;
+            /** @description The company (or, for the types that take ETFs, the US ETF) by ticker. Same types as `cik`; price types, script and indicator: the instrument (a US stock / ETF ticker, a crypto slug / ticker, or a commodity `XAUUSD` / `XAGUSD`) */
+            symbol?: string;
+            /** @description Raw SEC form types (`8-K`, `S-1`). filing, filing_keyword */
+            form_types?: Array<string>;
+            /** @description Form categories. filing */
+            form_categories?: Array<"annual_report" | "current_report" | "insider_trade" | "other" | "quarterly_report" | "registration">;
+            /** @description Also amendments (`/A`). filing */
+            include_amendments?: boolean;
+            /**
+             * @description `detected` = the moment the SEC publishes it (every filer); `processed` = after our processing. filing
+             * @enum {string}
+             */
+            stage?: "detected" | "processed";
+            /** @description Whole-word, case-insensitive keywords (2–50 characters). filing_keyword, news_keyword, earnings_call (keyword_hit), earnings_call_keyword */
+            keywords?: Array<string>;
+            /**
+             * @description Any or all keywords. Keyword types (default any)
+             * @enum {string}
+             */
+            match?: "all" | "any";
+            /**
+             * @description Where keywords are searched: filing_keyword full / risk_factors / mdna / legal_proceedings; news_keyword headline / headline_and_description; earnings_call_keyword full / prepared / qna
+             * @enum {string}
+             */
+            scope?: "full" | "headline" | "headline_and_description" | "legal_proceedings" | "mdna" | "prepared" | "qna" | "risk_factors";
+            /** @description News sources. news, news_keyword */
+            sources?: Array<string>;
+            /** @description news: news kinds; dividend: declared / ex_date / payment */
+            kinds?: Array<"call_announcement" | "capital_markets" | "declared" | "dividend" | "earnings_results" | "event_announcement" | "ex_date" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "payment" | "promo" | "results_date">;
+            /** @description Only earnings news. news, news_keyword */
+            earnings_only?: boolean;
+            /** @description Call lifecycle events. earnings_call (transcript_provisional, transcript_corrected, documents_updated need STANDARD; guidance_flash, keyword_hit PRO) */
+            events?: Array<"assets_ready" | "documents_updated" | "ended" | "guidance_flash" | "keyword_hit" | "rescheduled" | "scheduled" | "started" | "transcript_corrected" | "transcript_provisional" | "transcript_ready">;
+            /** @description Only these speakers. earnings_call_keyword */
+            speaker_roles?: Array<"analyst" | "management">;
+            /** @description Fire at this many mentions. earnings_call_keyword */
+            min_mentions?: number;
+            /** @description Mentions moved against the previous call. earnings_call_keyword */
+            mention_delta_rule?: {
+                /** @enum {string} */
+                direction: "down" | "either" | "up";
+                min_delta: number;
+            };
+            /** @description Only a dividend whose amount moved by at least `min_pct` percent. dividend */
+            amount_change?: {
+                /** @enum {string} */
+                direction: "any" | "cut" | "raise";
+                min_pct: number;
+            };
+            /** @description Only these dividend types. dividend */
+            dividend_types?: Array<string>;
+            /** @description Only when the yield (percent) is above / below. dividend */
+            yield_rule?: {
+                /** @enum {string} */
+                comparator: "above" | "below";
+                pct: number;
+            };
+            /** @description Halt or resumption (empty = both). halt */
+            statuses?: Array<"halted" | "resumed">;
+            /** @description Only these halt reason codes. halt */
+            reason_codes?: Array<string>;
+            /** @description AND-combined metric thresholds. fundamental_metric */
+            rules?: Array<{
+                /** @description A metric id of GET /v1/catalog/metrics */
+                metric_id: string;
+                /** @enum {string} */
+                period_type: "annual" | "quarterly";
+                /** @enum {string} */
+                operator: "equals" | "gt" | "lt" | "not_equals";
+                /** @description Decimal string (a decimal string) */
+                value: string;
+            }>;
+            /** @description Results reports to fire on. earnings_results */
+            report_kinds?: Array<"final" | "preliminary">;
+            /** @description Year-over-year growth gates (signed percent). earnings_results */
+            yoy_rules?: Array<{
+                /** @enum {string} */
+                metric: "eps" | "revenue";
+                /** @enum {string} */
+                comparator: "above" | "below";
+                pct: number;
+            }>;
+            /**
+             * @description The event counted down to. event_countdown
+             * @enum {string}
+             */
+            event?: "dividend_payment" | "earnings_call" | "ex_dividend";
+            /** @description Days before (0 = on the day). event_countdown */
+            days_before?: number;
+            /** @description A ladder of days before. event_countdown */
+            offsets_days?: Array<number>;
+            /** @description Minutes before the call starts (event earnings_call only). event_countdown */
+            minutes_before?: number;
+            /** @description Local minute of the day the reminder fires (event_countdown: default 540 = 09:00). event_countdown, price_reminder */
+            time_of_day_minutes?: number;
+            /** @description IANA time zone (price_reminder: default America/New_York). event_countdown, price_reminder */
+            timezone?: string;
+            /** @description Tell when the event date moves (default true). event_countdown */
+            notify_on_date_change?: boolean;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved. price, price_move, volume_spike, price_reminder, script, indicator
+             * @enum {string}
+             */
+            asset_class?: "commodity" | "crypto" | "us_stock";
+            /**
+             * @description `crosses_*` fire when the price crosses `level`; `above` / `below` also fire at once when the price is already on that side. price
+             * @enum {string}
+             */
+            operator?: "above" | "below" | "crosses" | "crosses_above" | "crosses_below";
+            /** @description The price level (> 0). price */
+            level?: number;
+            /**
+             * @description Which move fires. price_move
+             * @enum {string}
+             */
+            direction?: "both" | "down" | "up";
+            /** @description The move in percent of the baseline. price_move */
+            pct?: number;
+            /**
+             * @description What the move is measured from (ignored with window_minutes); gap_open = the session open against the prior close, once per session. price_move
+             * @enum {string}
+             */
+            baseline?: "gap_open" | "intraday_open" | "prior_close" | "session_high" | "session_low";
+            /** @description Measure the move against the price this many minutes ago instead of the baseline. price_move */
+            window_minutes?: number;
+            /**
+             * @description `relative` = a closed bar's volume ≥ multiple × its baseline; `absolute` = ≥ threshold; `session` = today's cumulative volume ≥ multiple × the 20-session average daily volume (US stocks). volume_spike
+             * @enum {string}
+             */
+            mode?: "absolute" | "relative" | "session";
+            /**
+             * @description The bar evaluated at its close. volume_spike (1m, 5m, 15m, 30m, 1h, 1d, 1w, 1mo; every closed bar); script and indicator (1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w, 1mo; the plan's shortest: FREE / LITE 1h, STANDARD 5m, PRO 1m)
+             * @enum {string}
+             */
+            interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
+            /** @description Volume multiple of the baseline (relative / session). volume_spike */
+            multiple?: number;
+            /** @description Bar volume threshold, > 0 (absolute). volume_spike */
+            threshold?: number;
+            /** @description Bars in the baseline, 5–200 (rvol_slot: sessions, 2–20). volume_spike */
+            lookback_bars?: number;
+            /**
+             * @description The volume baseline: the mean or the median of the previous bars, or `rvol_slot` = the mean of the same time-of-day bar of earlier sessions (default flat_mean). volume_spike
+             * @enum {string}
+             */
+            baseline_mode?: "flat_mean" | "median" | "rvol_slot";
+            /**
+             * @description Only bars that closed up / down (default any). volume_spike
+             * @enum {string}
+             */
+            price_direction?: "any" | "down" | "up";
+            /**
+             * @description price_reminder: when the reminder fires — once at `at`, on the hour, daily or weekly at `time_of_day_minutes`. script: when the script's alerts deliver — `once_per_bar_close` (default) at most once per alert id and closed bar, `once_per_bar` the same, `every_time` every evaluation, `once` the first evaluation only. indicator: the same (`once` = this alert's first fire only). With `evaluation` pre_close: one delivery per alert id and session (`every_time`: every signal of the pass; `once`: the first only). price_reminder, script, indicator
+             * @enum {string}
+             */
+            frequency?: "daily" | "every_time" | "hourly" | "once" | "once_per_bar" | "once_per_bar_close" | "weekly";
+            /** @description The instant of a `once` reminder (ISO 8601 date-time with offset, e.g. 2026-12-01T14:30:00Z). price_reminder */
+            at?: string;
+            /** @description Day of a weekly reminder, 0 = Sunday. price_reminder */
+            weekday?: number;
+            /** @description Several weekdays (0 = Sunday) of a daily / weekly reminder. price_reminder */
+            days?: Array<number>;
+            /** @description The script version evaluated (`scv_…`, status ok, of a script of this account). script */
+            script_version_id?: string;
+            /** @description Values for the script's declared inputs (checked against its manifest; absent = the defaults). script */
+            inputs?: {
+                [key: string]: unknown;
+            };
+            /** @description A script chain: what feeds each of the script's `input.externalSeries` inputs, by its input key (every such input must be bound; ≤ 4 `builtin_indicator`, ≤ 16 in the plan). script */
+            series_inputs?: {
+                [key: string]: components["schemas"]["ScriptSeriesInputInput"];
+            };
+            /** @description The producer scripts `script_output` series inputs read, producers before the nodes that read them (≤ 8 dependencies, ≤ 16,384 bytes with series_inputs). script */
+            nodes?: Array<components["schemas"]["ScriptNodeInput"]>;
+            /** @description Only these of the script's alerts (its version's `alert_ids`); empty = all. script */
+            alert_ids?: Array<string>;
+            evaluation?: components["schemas"]["ScriptEvaluationInput"];
+            template?: components["schemas"]["IndicatorTemplateRef"];
+            condition?: components["schemas"]["IndicatorConditionInput"];
+            filters?: components["schemas"]["IndicatorFiltersInput"];
+        };
+        /**
+         * ScriptSeriesInputInput
+         * @description What feeds one `input.externalSeries` input of a script (a script chain), one value per bar on the alert's symbol, interval and bars; a value the producer does not give that bar reads NaN. (request form)
+         */
+        ScriptSeriesInputInput: {
+            /**
+             * @description What feeds the input every bar: `ohlc` a bar field, `builtin_indicator` a built-in indicator's series, `script_output` a plot of a node of `nodes`
+             * @enum {string}
+             */
+            kind: "builtin_indicator" | "ohlc" | "script_output";
+            /**
+             * @description ohlc: the bar field (`hl2` = (high + low) / 2, `hlc3`, `ohlc4`, `hlcc4` = (high + low + 2 × close) / 4; no volume)
+             * @enum {string}
+             */
+            field?: "close" | "high" | "hl2" | "hlc3" | "hlcc4" | "low" | "ohlc4" | "open";
+            /** @description builtin_indicator: the built-in indicator (`rsi`, `sma`, `ema`, `macd`, `bb`, …; the indicator condition's ids) */
+            indicator_id?: string;
+            /** @description builtin_indicator: which output series (`rsi`, `macd` / `signal` / `histogram`, `upper` / `basis` / `lower`, …) */
+            series_key?: string;
+            /** @description builtin_indicator: the indicator's parameters (`length`, `source`, …; absent = its defaults) */
+            params?: {
+                [key: string]: unknown;
+            };
+            /** @description script_output: the `node_key` of the producing node */
+            node_key?: string;
+            /** @description script_output: the plot slot of the node's script version (its `manifest.plots[].slotId`) */
+            slot_id?: string;
+        };
+        /**
+         * ScriptNodeInput
+         * @description A producer script of a chain: evaluated on the alert's symbol, interval and bars before the scripts that read its plots. (request form)
+         */
+        ScriptNodeInput: {
+            /** @description The node's name in this plan (unique, not `root`), named by `script_output` series inputs */
+            node_key: string;
+            /** @description The producer's script version (`scv_…`, status ok, of a script of this account) */
+            script_version_id: string;
+            /** @description Values for the producer's declared inputs (absent = the defaults) */
+            inputs?: {
+                [key: string]: unknown;
+            };
+            /** @description The producer's own `input.externalSeries` inputs (a built-in series, a bar field, or an earlier node's plot) */
+            series_inputs?: {
+                [key: string]: components["schemas"]["ScriptSeriesInputInput"];
+            };
+        };
+        /**
+         * ScriptEvaluationInput
+         * @description When a script / indicator alert evaluates: `bar_close` (default) at each close of its interval, or `pre_close` — `offset_minutes` before the US session close (16:00 New York, 13:00 on a half day, never on a weekend or market holiday) on the still-forming bar of its interval. A pre_close alert delivers ONLY its pre-close evaluations (its closed bars still advance the script; their events are not delivered), at most once per session; the fire's `reason.details` carry `phase: "pre_close"`, `offset_minutes` and `session_close`. (request form)
+         */
+        ScriptEvaluationInput: {
+            /**
+             * @description `bar_close` at each bar close, `pre_close` before the session close
+             * @enum {string}
+             */
+            kind: "bar_close" | "pre_close";
+            /** @description pre_close: minutes before the session close (1–720; any interval) */
+            offset_minutes?: number;
+            /**
+             * @description pre_close: the venue whose close anchors the evaluation (every US venue shares the 16:00 New York close and the US holiday calendar); optional for a US stock, required for crypto and commodities
+             * @enum {string}
+             */
+            exchange?: "AMEX" | "BATS" | "CBOE" | "NASDAQ" | "NYSE" | "NYSEARCA" | "NYSEMKT";
+        };
+        /**
+         * IndicatorConditionInput
+         * @description A structured trigger `lhs <comparator> rhs`, evaluated at each bar close. The crossings take any right side but a zone; `entering` / `exiting` only a rectangle zone (`indicator_id: rectangle`, `series_key: band`). (request form)
+         */
+        IndicatorConditionInput: {
+            lhs: components["schemas"]["IndicatorOperandInput"];
+            /**
+             * @description The transition that fires
+             * @enum {string}
+             */
+            comparator: "crossing" | "crossing_down" | "crossing_up" | "entering" | "exiting";
+            rhs: components["schemas"]["IndicatorOperandInput"];
+        };
+        /**
+         * IndicatorOperandInput
+         * @description One side of an indicator condition (invinite's chart-condition operand): an indicator series, a price field, volume, or a constant (`value`, right side only). (request form)
+         */
+        IndicatorOperandInput: {
+            /**
+             * @description What the operand reads
+             * @enum {string}
+             */
+            kind: "indicator" | "price" | "value" | "volume";
+            /** @description indicator: the built-in indicator (`rsi`, `sma`, `ema`, `macd`, `bb`, …; the chart's indicator ids) */
+            indicator_id?: string;
+            /** @description indicator: which output series (`rsi`, `macd` / `signal` / `histogram`, `upper` / `basis` / `lower`, …) */
+            series_key?: string;
+            /** @description indicator: the indicator's parameters (`length`, `source`, …; absent = its defaults) */
+            params?: {
+                [key: string]: unknown;
+            };
+            /** @description indicator: the name used in the fire summary (default: id and parameters) */
+            label?: string;
+            /**
+             * @description price: the bar field (`last` = the close at bar close)
+             * @enum {string}
+             */
+            source?: "close" | "high" | "last" | "low" | "open";
+            /** @description value: the constant (right side only) */
+            value?: number;
+        };
+        /**
+         * IndicatorFiltersInput
+         * @description State filters that gate the trigger (at most 4 comparisons in all, two levels). (request form)
+         */
+        IndicatorFiltersInput: {
+            /**
+             * @description How the children combine
+             * @enum {string}
+             */
+            op: "and" | "or";
+            /** @description Leaves and groups */
+            children: Array<components["schemas"]["IndicatorFilterChildInput"]>;
+        };
+        /**
+         * IndicatorFilterChildInput
+         * @description A filter leaf (`kind: condition` + `condition`) or one nested group (`kind: group` + `op` + `children` of leaves). (request form)
+         */
+        IndicatorFilterChildInput: {
+            /**
+             * @description A leaf or a group
+             * @enum {string}
+             */
+            kind: "condition" | "group";
+            condition?: components["schemas"]["IndicatorFilterConditionInput"];
+            /**
+             * @description group: how its leaves combine
+             * @enum {string}
+             */
+            op?: "and" | "or";
+            /** @description group: its leaves */
+            children?: Array<components["schemas"]["IndicatorFilterLeafInput"]>;
+        };
+        /**
+         * IndicatorFilterConditionInput
+         * @description A state comparison that must hold on the trigger bar. (request form)
+         */
+        IndicatorFilterConditionInput: {
+            lhs: components["schemas"]["IndicatorOperandInput"];
+            /**
+             * @description The state comparison
+             * @enum {string}
+             */
+            comparator: "greater_than" | "greater_than_or_equal" | "less_than" | "less_than_or_equal";
+            rhs: components["schemas"]["IndicatorOperandInput"];
+            /**
+             * @description Read on another timeframe of the same symbol (absent = the alert's interval)
+             * @enum {string}
+             */
+            interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
+        };
+        /**
+         * IndicatorFilterLeafInput
+         * @description One filter comparison. (request form)
+         */
+        IndicatorFilterLeafInput: {
+            /**
+             * @description Always `condition`
+             * @enum {string}
+             */
+            kind: "condition";
+            condition: components["schemas"]["IndicatorFilterConditionInput"];
+        };
+        /**
+         * AlertTriggerInput
+         * @description When the alert may fire (request form)
+         */
+        AlertTriggerInput: {
+            /**
+             * @description `once` = the alert becomes `triggered` after its first fire (default every_time)
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description Minimum bars between fires (script / indicator types), counted like chartlang: the bar of a fire must start at least cooldown_bars × the interval after the bar of the last fire, so a night or a weekend counts as time (half a bar of slack: a calendar `1mo` / `1w` / `1d` bar shorter than the nominal interval, a February or a DST day, still counts as a whole bar) */
+            cooldown_bars?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /** @description The alert becomes `expired` then (ISO 8601 date-time with offset, e.g. 2026-12-01T14:30:00Z) */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /** @description The alert is `scheduled` until then (ISO 8601 date-time with offset, e.g. 2026-12-01T14:30:00Z) */
+            activate_at?: string;
+            /** @description No fires until then (ISO 8601 date-time with offset, e.g. 2026-12-01T14:30:00Z) */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) */
+            active_window?: {
+                /** @enum {string} */
+                type: "every" | "weekly";
+                /** @description IANA time zone (weekly) */
+                timezone?: string;
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /** @description Start of the first window (every) (ISO 8601 date-time with offset, e.g. 2026-12-01T14:30:00Z) */
+                anchor_at?: string;
+                /** @description Windows repeat every N units (every) */
+                interval?: number;
+                /** @enum {string} */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+            /**
+             * @description Price types: when a crossed level arms again
+             * @enum {string}
+             */
+            rearm?: "auto" | "cross_back";
+            /** @description Price types: hysteresis in percent */
+            rearm_distance_pct?: number;
+        };
+        /** AlertTestAccepted */
+        AlertTestAccepted: {
+            /** @description The queued test event (`evt_…`) */
+            event_id: string;
+        };
+        /** AlertBatchResponse */
+        AlertBatchResponse: {
+            results: Array<components["schemas"]["AlertBatchResult"]>;
+        };
+        /** AlertBatchResult */
+        AlertBatchResult: {
+            /** @description Position of the item in the request */
+            index: number;
+            /** @description The item's op */
+            op: string;
+            ok: boolean;
+            /**
+             * @description What happened; null when refused
+             * @enum {string|null}
+             */
+            result: "created" | "deleted" | "paused" | "resumed" | "unchanged" | "updated" | null;
+            /** @description The alert after the item; null for delete and refusals */
+            alert: components["schemas"]["Alert"] | null;
+            /** @description Why the item was refused; null when ok */
+            error: components["schemas"]["AlertBatchError"] | null;
+        };
+        /** AlertBatchError */
+        AlertBatchError: {
+            /** @description A problem code (`invalid_parameter`, `not_found`, `not_covered`, `plan_required`, `conflict`) */
+            code: string;
+            detail: string;
+            param: null | string;
+            remedy: string;
+        };
+        /**
+         * AlertBatchItem
+         * @description `create` / `upsert`: the create fields (`upsert` needs `client_reference_id`); `delete` / `pause` / `resume`: `id` or `client_reference_id`
+         */
+        AlertBatchItem: {
+            /** @enum {string} */
+            op: "create" | "delete" | "pause" | "resume" | "upsert";
+            /** @description The alert (delete / pause / resume) */
+            id?: string;
+            /** @description upsert: apply only to this version */
+            version?: number;
+            /** @enum {string} */
+            type?: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+            condition?: components["schemas"]["AlertConditionInput"];
+            trigger?: components["schemas"]["AlertTriggerInput"];
+            /** @description Destination ids (≤ 10) */
+            destination_ids?: Array<string>;
+            /** @description Your id; a second create with it returns the live alert */
+            client_reference_id?: string;
+            /** @description Your end user's id (filters lists and events) */
+            external_user_id?: string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata?: {
+                [key: string]: unknown;
+            };
+        };
+        /** AlertEvent */
+        AlertEvent: {
+            /** @description Event id (`evt_…`; the `webhook-id` of its deliveries) */
+            id: string;
+            /** @enum {string} */
+            type: "account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "destination.disabled" | "destination.test";
+            /** @description Null for account events */
+            alert_id: null | string;
+            external_user_id: null | string;
+            /** Format: date-time */
+            occurred_at: string;
+            /** @description The event body as delivered (`data` of the webhook) */
+            payload: {
+                [key: string]: unknown;
+            };
+        };
+        /** Destination */
+        Destination: {
+            /** @description Destination id (`dst_…`) */
+            id: string;
+            /**
+             * @description One event per request, or batches
+             * @enum {string}
+             */
+            kind: "batch_webhook" | "webhook";
+            /** @description HTTPS endpoint */
+            url: string;
+            description: null | string;
+            /**
+             * @description Body format
+             * @enum {string}
+             */
+            preset: "claude_routine" | "standard";
+            /** @enum {string} */
+            status: "active" | "disabled";
+            /** @description Why it was disabled (`manual`, failures) */
             disabled_reason: null | string;
-            /** @description Dead-lettered deliveries in a row */
             consecutive_failures: number;
             /** @description Last 4 characters of the signing secret */
             secret_hint: string;
+            /** @description Names of the custom headers (values are never returned) */
+            header_names: Array<string>;
+            /** @description Custom body template */
+            body_template: null | string;
+            /** @description Events per minute this destination receives at most (a token bucket across all delivery machines); events over it stay queued and go out as the bucket refills, never dropped */
+            max_events_per_minute: number;
+            /** @description Digest window: new events are held until the oldest is this many seconds old, then go out together as ONE alert.fired.batch (≤ 500 events / 1 MB per request); retries are not held. Not with preset claude_routine; null = off */
+            digest_seconds: null | number;
+            /**
+             * Format: date-time
+             * @description The rotated-out secret signs until then
+             */
+            previous_secret_expires_at: null | string;
             /** Format: date-time */
             created_at: string;
             /** Format: date-time */
             updated_at: string;
-            /** @description Signing secret; shown once */
+        };
+        /**
+         * DestinationCreated
+         * @description A new destination with its secret
+         */
+        DestinationCreated: {
+            /** @description Destination id (`dst_…`) */
+            id: string;
+            /**
+             * @description One event per request, or batches
+             * @enum {string}
+             */
+            kind: "batch_webhook" | "webhook";
+            /** @description HTTPS endpoint */
+            url: string;
+            description: null | string;
+            /**
+             * @description Body format
+             * @enum {string}
+             */
+            preset: "claude_routine" | "standard";
+            /** @enum {string} */
+            status: "active" | "disabled";
+            /** @description Why it was disabled (`manual`, failures) */
+            disabled_reason: null | string;
+            consecutive_failures: number;
+            /** @description Last 4 characters of the signing secret */
+            secret_hint: string;
+            /** @description Names of the custom headers (values are never returned) */
+            header_names: Array<string>;
+            /** @description Custom body template */
+            body_template: null | string;
+            /** @description Events per minute this destination receives at most (a token bucket across all delivery machines); events over it stay queued and go out as the bucket refills, never dropped */
+            max_events_per_minute: number;
+            /** @description Digest window: new events are held until the oldest is this many seconds old, then go out together as ONE alert.fired.batch (≤ 500 events / 1 MB per request); retries are not held. Not with preset claude_routine; null = off */
+            digest_seconds: null | number;
+            /**
+             * Format: date-time
+             * @description The rotated-out secret signs until then
+             */
+            previous_secret_expires_at: null | string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** @description Signing secret (`whsec_…`); shown once */
             secret: string;
         };
-        /** WebhookSecret */
-        WebhookSecret: {
-            /** @description Signing secret (whsec_…). Returned ONCE — store it; it is never shown again. */
+        /** DestinationSecret */
+        DestinationSecret: {
+            /** @description Signing secret (`whsec_…`). Returned ONCE — store it. */
             secret: string;
             /**
              * Format: date-time
-             * @description Deliveries are signed with both secrets until then
+             * @description Deliveries carry a signature with both secrets until then
              */
             previous_secret_expires_at: string;
         };
-        /**
-         * WebhookTestAccepted
-         * @description The queued test delivery; it shows in `GET /v1/webhooks/{id}/deliveries`
-         */
-        WebhookTestAccepted: {
-            /**
-             * Format: uuid
-             * @description Id of the queued delivery (= `X-Invinite-Delivery`)
-             */
+        /** DestinationTestAccepted */
+        DestinationTestAccepted: {
+            /** @description The queued `destination.test` event */
+            event_id: string;
+            /** @description Its delivery (`dlv_…`); it shows in the delivery log */
             delivery_id: string;
-            /**
-             * @description The test event
-             * @enum {string}
-             */
-            event: "event.test";
         };
-        /** WebhookDelivery */
-        WebhookDelivery: {
-            /**
-             * Format: uuid
-             * @description Same id on every retry (X-Invinite-Delivery)
-             */
-            delivery_id: string;
+        /** DestinationDelivery */
+        DestinationDelivery: {
+            /** @description Delivery id (`dlv_…`) */
+            id: string;
+            event_id: string;
+            batch_id: null | string;
             /** @enum {string} */
-            event: "event.assets_ready" | "event.documents_updated" | "event.ended" | "event.guidance_flash" | "event.keyword_hit" | "event.rescheduled" | "event.scheduled" | "event.started" | "event.test" | "event.transcript_corrected" | "event.transcript_provisional" | "event.transcript_ready" | "news.published";
-            /** @description 1-based attempt number */
-            attempt: number;
-            /** @enum {string} */
-            status: "blocked_address" | "delivered" | "dropped" | "failed" | "subscription_inactive" | "timeout";
-            /** @description HTTP status your endpoint answered */
-            response_status: null | number;
+            status: "dead" | "failed" | "in_flight" | "pending" | "succeeded";
+            attempts: number;
+            /** @description HTTP status your endpoint answered last */
+            last_status: null | number;
+            last_error: null | string;
             duration_ms: null | number;
             /** Format: date-time */
-            at: string;
-            /**
-             * Format: date-time
-             * @description When the next attempt runs; null = final
-             */
             next_attempt_at: null | string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            delivered_at: null | string;
+        };
+        /**
+         * AlertTemplate
+         * @description A built-in template of the `indicator` alert type.
+         */
+        AlertTemplate: {
+            /** @description The template key (`condition.template.key`) */
+            key: string;
+            /** @description Its current version */
+            version: number;
+            /** @description `builtin:<key>@<version>` */
+            source_key: string;
+            /** @description Display name */
+            title: string;
+            /** @description What it alerts on */
+            description: string;
+            /**
+             * @description `exact`: its state restores from a snapshot after a restart; `lossy`: it warms up from history again (crossovers)
+             * @enum {string}
+             */
+            fidelity: "exact" | "lossy";
+            /** @description Its inputs, in order */
+            inputs: Array<components["schemas"]["AlertTemplateInput"]>;
+            /** @description The chartlang source */
+            source: string;
+        };
+        /**
+         * AlertTemplateInput
+         * @description One input of a template.
+         */
+        AlertTemplateInput: {
+            /** @description The input's key in `template.inputs` */
+            name: string;
+            /**
+             * @description Its kind
+             * @enum {string}
+             */
+            kind: "bool" | "enum" | "float" | "int";
+            /** @description Display name */
+            title: string;
+            /** @description The default value (number, string or boolean) */
+            default: unknown;
+            /** @description Smallest value (numbers) */
+            min?: number;
+            /** @description Largest value (numbers) */
+            max?: number;
+            /** @description The allowed values (enum) */
+            options?: Array<string>;
+        };
+        /** Script */
+        Script: {
+            /** @description Script id (`scr_…`) */
+            id: string;
+            name: string;
+            description: null | string;
+            /** @description Versions so far (at most 20) */
+            version_count: number;
+            /** @description The newest version (null only for a script whose first upload failed to store) */
+            latest_version: components["schemas"]["ScriptVersion"] | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /** ScriptVersion */
+        ScriptVersion: {
+            /** @description Script version id (`scv_…`); the `script_version_id` of a `script` alert */
+            id: string;
+            /** @description Script id (`scr_…`) */
+            script_id: string;
+            /** @description 1, 2, … per script (at most 20) */
+            version: number;
+            /**
+             * @description `ok` = compiled, usable in alerts; `error` = see `diagnostics`
+             * @enum {string}
+             */
+            status: "error" | "ok";
+            /** @description The chartlang compiler that built it (pinned per version) */
+            compiler_version: string;
+            /** @description SHA-256 (hex) of `source` */
+            source_sha256: string;
+            /** @description The source as uploaded */
+            source: string;
+            /** @description Compile errors (status error) or warnings */
+            diagnostics: Array<components["schemas"]["ScriptDiagnostic"]>;
+            /** @description The compiler's manifest (name, kind, inputs, alertConditions, requestedIntervals, …); null when the compile failed */
+            manifest: null | {
+                [key: string]: unknown;
+            };
+            /** @description The ids a `script` alert's `condition.alert_ids` can name: the `defineAlertCondition` ids and the `alert()` callsite ids */
+            alert_ids: Array<string>;
+            /** Format: date-time */
+            created_at: string;
+        };
+        /** ScriptDiagnostic */
+        ScriptDiagnostic: {
+            /** @description 1-based line of the source */
+            line: number;
+            /** @description 1-based column of the source */
+            column: number;
+            message: string;
+            /** @description The compiler's diagnostic code (`unbounded-loop`, `type-error`, `import-not-allowed`, `compile-timeout`, …) */
+            code: string;
+            /** @enum {string} */
+            severity: "error" | "warning";
         };
         /**
          * Me
@@ -7133,6 +8580,63 @@ export interface components {
              */
             reason: "call_not_live" | "max_duration" | "no_transcript" | "requested" | "rescheduled" | "transcript_ready";
         };
+        /** @description Client frame: follow the account's alert events (the rows of GET /v1/alert-events) live. One alerts subscription per connection; a second subscribe replaces it. No filter = every event of the account. after = the id of the last event you hold: up to 1,000 missed events are replayed first */
+        WebSocketSubscribeAlerts: {
+            /** @enum {string} */
+            type: "subscribe";
+            /** @enum {string} */
+            channel: "alerts";
+            /** @description Only these alerts (alt_ ids) */
+            alert_ids?: Array<string>;
+            /** @description Only the events of this end user (B2B2C) */
+            external_user_id?: string;
+            /** @description Only these event types */
+            types?: Array<"account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "destination.disabled" | "destination.test">;
+            /** @description An event id (evt_) of this account: replay the matching events after it, then go live */
+            after?: string;
+        };
+        /** @description Client frame: stop following alert events */
+        WebSocketUnsubscribeAlerts: {
+            /** @enum {string} */
+            type: "unsubscribe";
+            /** @enum {string} */
+            channel: "alerts";
+        };
+        /** @description The alerts subscription is active, with its filters (a replay, if asked for, follows) */
+        WebSocketAlertsSubscribedEvent: {
+            /** @enum {string} */
+            type: "subscribed";
+            /** @enum {string} */
+            channel: "alerts";
+            filters: {
+                alert_ids: Array<string>;
+                external_user_id: null | string;
+                types: Array<string>;
+            };
+        };
+        /** @description One alert event of the account (replayed or live), exactly the row GET /v1/alert-events returns. No credits */
+        WebSocketAlertEventEvent: {
+            /** @enum {string} */
+            type: "alert_event";
+            /** @enum {string} */
+            channel: "alerts";
+            event: components["schemas"]["AlertEvent"];
+        };
+        /** @description More than 1,000 events were missed: the replay stopped at last_event_id; read the rest with GET /v1/alert-events?after=<last_event_id>. Live events continue */
+        WebSocketAlertsReplayTruncatedEvent: {
+            /** @enum {string} */
+            type: "replay_truncated";
+            /** @enum {string} */
+            channel: "alerts";
+            last_event_id: string;
+        };
+        /** @description The alerts subscription ended (on request) */
+        WebSocketAlertsUnsubscribedEvent: {
+            /** @enum {string} */
+            type: "unsubscribed";
+            /** @enum {string} */
+            channel: "alerts";
+        };
         /** @description Client frame: subscribe to the live transcript of one earnings call, by event_id or by cik (the call that is live or starts within ±2 h), or with scope: all_live (no event_id / cik) to every call being captured live — keyword hits only, never segments, one subscription slot. Requires the PRO plan. */
         StreamSubscribeEarningsCall: {
             /** @enum {string} */
@@ -7188,10 +8692,10 @@ export interface components {
             /** Format: uuid */
             subscription_id?: string;
             /**
-             * @description news for a refusal of a news frame (channel_unavailable = live news is switched off; read GET /v1/news)
+             * @description news for a refusal of a news frame (channel_unavailable = live news is switched off; read GET /v1/news); alerts for a refusal of an alerts frame (channel_unavailable = alerts are switched off)
              * @enum {string}
              */
-            channel?: "news";
+            channel?: "alerts" | "news";
         };
         /** @description Client frame: follow new news items. One news subscription per connection; a second subscribe replaces the filters. No filter = every item. tickers and ciks together = either; every other filter narrows */
         StreamSubscribeNews: {
@@ -7397,21 +8901,21 @@ export interface components {
             /** @enum {string} */
             channel: "news";
         };
-        WebhookEnvelope: {
+        AlertWebhookEnvelope: {
             /**
-             * Format: uuid
-             * @description Delivery id (= X-Invinite-Delivery); dedupe on it
+             * @description Event type
+             * @enum {string}
              */
-            id: string;
-            /** @enum {string} */
-            event: "event.assets_ready" | "event.documents_updated" | "event.ended" | "event.guidance_flash" | "event.keyword_hit" | "event.rescheduled" | "event.scheduled" | "event.started" | "event.test" | "event.transcript_corrected" | "event.transcript_provisional" | "event.transcript_ready" | "news.published";
+            type: "account.fire_cap_reached" | "alert.fired" | "alert.fired.batch" | "alert.status_changed" | "destination.disabled" | "destination.test";
             /**
              * Format: date-time
-             * @description When the event happened; deliveries are NOT ordered — order by this and the event phase
+             * @description When the event happened (a batch: when it was sent). Deliveries are NOT ordered: order by this
              */
-            created_at: string;
-            /** @description Event-specific, see each x-webhooks entry */
-            data: Record<string, never>;
+            timestamp: string;
+            /** @description Type-specific, see each x-webhooks entry */
+            data: {
+                [key: string]: unknown;
+            };
         };
         /**
          * Problem
@@ -7444,7 +8948,7 @@ export interface components {
              * @example invalid_parameter
              * @enum {string}
              */
-            code: "cursor_mismatch" | "excluded" | "forbidden" | "idempotency_in_flight" | "insufficient_credits" | "internal" | "invalid_parameter" | "not_covered" | "not_found" | "plan_required" | "rate_limited" | "unauthorized" | "unavailable" | "unknown_parameter";
+            code: "conflict" | "cursor_mismatch" | "excluded" | "forbidden" | "idempotency_in_flight" | "insufficient_credits" | "internal" | "invalid_parameter" | "not_covered" | "not_found" | "plan_required" | "rate_limited" | "unauthorized" | "unavailable" | "unknown_parameter";
             /**
              * @description The query parameter the problem is about
              * @example limit
@@ -7458,7 +8962,7 @@ export interface components {
                  * @description Code
                  * @enum {string}
                  */
-                code: "cursor_mismatch" | "excluded" | "forbidden" | "idempotency_in_flight" | "insufficient_credits" | "internal" | "invalid_parameter" | "not_covered" | "not_found" | "plan_required" | "rate_limited" | "unauthorized" | "unavailable" | "unknown_parameter";
+                code: "conflict" | "cursor_mismatch" | "excluded" | "forbidden" | "idempotency_in_flight" | "insufficient_credits" | "internal" | "invalid_parameter" | "not_covered" | "not_found" | "plan_required" | "rate_limited" | "unauthorized" | "unavailable" | "unknown_parameter";
                 /** @description Explanation */
                 detail: string;
             }>;
@@ -7483,7 +8987,73 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-    createWebhook: {
+    batchAlerts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "items": [
+                 *         {
+                 *           "op": "upsert",
+                 *           "client_reference_id": "watchlist-msft-div",
+                 *           "type": "dividend",
+                 *           "condition": {
+                 *             "symbols": [
+                 *               "MSFT"
+                 *             ],
+                 *             "kinds": [
+                 *               "declared"
+                 *             ]
+                 *           }
+                 *         },
+                 *         {
+                 *           "op": "pause",
+                 *           "client_reference_id": "watchlist-aapl-8k"
+                 *         }
+                 *       ]
+                 *     }
+                 */
+                "application/json": {
+                    items: Array<components["schemas"]["AlertBatchItem"]>;
+                };
+            };
+        };
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertBatchResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    createAlert: {
         parameters: {
             query?: never;
             header?: {
@@ -7500,29 +9070,145 @@ export interface operations {
             content: {
                 /**
                  * @example {
-                 *       "url": "https://hooks.example.com/invinite",
-                 *       "events": [
-                 *         "event.transcript_ready",
-                 *         "news.published"
+                 *       "type": "filing",
+                 *       "condition": {
+                 *         "symbols": [
+                 *           "AAPL"
+                 *         ],
+                 *         "form_types": [
+                 *           "8-K"
+                 *         ],
+                 *         "stage": "detected"
+                 *       },
+                 *       "trigger": {
+                 *         "mode": "every_time"
+                 *       },
+                 *       "destination_ids": [
+                 *         "dst_01JD2Q4X7Y8Z9A0B1C2D3E4F5G"
                  *       ],
-                 *       "filters": {
-                 *         "ciks": [
-                 *           "0000320193"
-                 *         ]
+                 *       "client_reference_id": "watchlist-aapl-8k",
+                 *       "external_user_id": "user_8812",
+                 *       "metadata": {
+                 *         "list": "tech"
                  *       }
+                 *     }
+                 */
+                "application/json": {
+                    /**
+                     * @description The alert type
+                     * @enum {string}
+                     */
+                    type: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+                    condition: components["schemas"]["AlertConditionInput"];
+                    trigger?: components["schemas"]["AlertTriggerInput"];
+                    /** @description Destination ids (≤ 10) */
+                    destination_ids?: Array<string>;
+                    /** @description Your id; a second create with it returns the live alert */
+                    client_reference_id?: string;
+                    /** @description Your end user's id (filters lists and events) */
+                    external_user_id?: string;
+                    /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+                    metadata?: {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description The live alert with the same client_reference_id (nothing created) */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Alert"];
+                };
+            };
+            /** @description The resource */
+            201: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Alert"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    createDestination: {
+        parameters: {
+            query?: never;
+            header?: {
+                /**
+                 * @description Replays the first answer for 24 h; 409 while in flight (R13)
+                 * @example 6f1c0f3e-7b7a-4a8e-9d63-3c1b2f0e9a11
+                 */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "url": "https://hooks.example.com/invinite-alerts",
+                 *       "description": "Production alert receiver"
                  *     }
                  */
                 "application/json": {
                     /** @description https endpoint (port 443, public addresses only) */
                     url: string;
-                    /** @description Event names to receive (the plan decides which; `event.test` needs no subscription — every subscription receives it) */
-                    events: Array<string>;
-                    filters?: {
-                        /** @description Only these companies (at most 10 / 25 / 100 on LITE / STANDARD / PRO); a news item matches when it mentions any of them */
-                        ciks?: Array<string>;
-                        /** @description Keyword alerts (PRO, with event.keyword_hit in events): whole-word, case-insensitive matches; with news.published they also narrow news items to those whose headline or lede names one */
-                        keywords?: Array<string>;
+                    /**
+                     * @description Default webhook
+                     * @enum {string}
+                     */
+                    kind?: "batch_webhook" | "webhook";
+                    description?: string;
+                    /** @description Custom request headers (≤ 20; stored encrypted) */
+                    headers?: {
+                        [key: string]: string;
                     };
+                    /** @description Custom body template (≤ 16 KB) */
+                    body_template?: string;
+                    /**
+                     * @description Default standard
+                     * @enum {string}
+                     */
+                    preset?: "claude_routine" | "standard";
+                    /** @description Events per minute this destination receives at most (a token bucket across all delivery machines); events over it stay queued and go out as the bucket refills, never dropped; default 600 */
+                    max_events_per_minute?: number;
+                    /** @description Digest window: new events are held until the oldest is this many seconds old, then go out together as ONE alert.fired.batch (≤ 500 events / 1 MB per request); retries are not held. Not with preset claude_routine; default null (off) */
+                    digest_seconds?: null | number;
                 };
             };
         };
@@ -7543,7 +9229,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WebhookCreated"];
+                    "application/json": components["schemas"]["DestinationCreated"];
                 };
             };
             400: components["responses"]["BadRequest"];
@@ -7557,14 +9243,126 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
-    deleteWebhook: {
+    createScript: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "name": "EMA cross",
+                 *       "description": "Fast EMA crossing above the slow one",
+                 *       "source": "import { defineIndicator, input } from \"@invinite-org/chartlang-core\";\n\nexport default defineIndicator({\n    name: \"EMA cross\",\n    apiVersion: 1,\n    overlay: true,\n    inputs: { fast: input.int(9, { min: 1, max: 200 }), slow: input.int(21, { min: 2, max: 500 }) },\n    compute({ bar, ta, alert, inputs }) {\n        const fast = ta.ema(bar.close, inputs.fast);\n        const slow = ta.ema(bar.close, inputs.slow);\n        if (ta.crossover(fast, slow).current) alert(\"EMA cross up at \" + bar.close);\n    }\n});\n"
+                 *     }
+                 */
+                "application/json": {
+                    name: string;
+                    description?: string;
+                    /** @description chartlang (TypeScript) source, ≤ 200 KB; the only import allowed is `@invinite-org/chartlang-core` */
+                    source: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The resource */
+            201: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Script"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    createScriptVersion: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 /**
-                 * @description Webhook id
-                 * @example k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r
+                 * @description Script id
+                 * @example scr_01JD2Q4X7Y8Z9A0B1C2D3E4F5G
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "source": "import { defineIndicator, input } from \"@invinite-org/chartlang-core\";\n\nexport default defineIndicator({\n    name: \"EMA cross\",\n    apiVersion: 1,\n    overlay: true,\n    inputs: { fast: input.int(9, { min: 1, max: 200 }), slow: input.int(21, { min: 2, max: 500 }) },\n    compute({ bar, ta, alert, inputs }) {\n        const fast = ta.ema(bar.close, inputs.fast);\n        const slow = ta.ema(bar.close, inputs.slow);\n        if (ta.crossover(fast, slow).current) alert(\"EMA cross up at \" + bar.close);\n    }\n});\n"
+                 *     }
+                 */
+                "application/json": {
+                    /** @description chartlang (TypeScript) source, ≤ 200 KB; the only import allowed is `@invinite-org/chartlang-core` */
+                    source: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The resource */
+            201: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScriptVersion"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    deleteAlert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Alert id
+                 * @example alt_01JD2Q5Z8K3M7N9P4R6T1V0W2X
                  */
                 id: string;
             };
@@ -7601,11 +9399,194 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    deleteDestination: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Destination id
+                 * @example dst_01JD2Q4X7Y8Z9A0B1C2D3E4F5G
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Done */
+            204: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    deleteScript: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Script id
+                 * @example scr_01JD2Q4X7Y8Z9A0B1C2D3E4F5G
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Done */
+            204: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getAlert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Alert id
+                 * @example alt_01JD2Q5Z8K3M7N9P4R6T1V0W2X
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Alert"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getAlertEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Alert event id
+                 * @example evt_01JD2Q6A1B2C3D4E5F6G7H8J9K
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertEvent"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     getAsReportedFinancials: {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -7980,7 +9961,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -8852,7 +10833,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -9205,7 +11186,7 @@ export interface operations {
             header?: never;
             path: {
                 /**
-                 * @description Ticker or CIK
+                 * @description Ticker or CIK. A US ETF that is a series of a multi-series trust (TQQQ) answers its ETF profile by ticker: `cik` / `filer_cik` its trust's CIK, `category` `ETF`, every SIC-derived, address and company-only field null
                  * @example AAPL
                  */
                 company: string;
@@ -9282,6 +11263,53 @@ export interface operations {
                      *     }
                      */
                     "application/json": components["schemas"]["Company"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getDestination: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Destination id
+                 * @example dst_01JD2Q4X7Y8Z9A0B1C2D3E4F5G
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Destination"];
                 };
             };
             304: components["responses"]["NotModified"];
@@ -11007,6 +13035,63 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "offering_id": "021-528681",
+                     *       "file_number": "021-528681",
+                     *       "first_accession": "0001991882-24-000001",
+                     *       "latest_accession": "0001991882-26-000001",
+                     *       "accessions": [
+                     *         "0001991882-24-000001"
+                     *       ],
+                     *       "primary_issuer_cik": "0001991882",
+                     *       "issuer_name": "Southview Timberland Fund LLC",
+                     *       "co_issuer_ciks": [],
+                     *       "filed_first": "2024-11-05",
+                     *       "filed_latest": "2026-09-30",
+                     *       "sale_date": "2025-01-20",
+                     *       "first_sale_yet_to_occur": null,
+                     *       "amendment_count": 2,
+                     *       "original_held": true,
+                     *       "is_amendment": true,
+                     *       "exemptions": [
+                     *         "06c"
+                     *       ],
+                     *       "industry_group": "Other Real Estate",
+                     *       "investment_fund_type": null,
+                     *       "is_40_act": null,
+                     *       "security_types": [
+                     *         "equity"
+                     *       ],
+                     *       "is_business_combination": false,
+                     *       "more_than_one_year": false,
+                     *       "min_investment": 100000,
+                     *       "total_offering_amount": 50000000,
+                     *       "total_sold": 4665000,
+                     *       "total_remaining": 45335000,
+                     *       "indefinite_amount": false,
+                     *       "has_non_accredited": false,
+                     *       "non_accredited_count": null,
+                     *       "investor_count": 16,
+                     *       "revenue_range": "Decline to Disclose",
+                     *       "net_asset_value_range": null,
+                     *       "sales_commission": 0,
+                     *       "finders_fee": 0,
+                     *       "related_persons": [
+                     *         {
+                     *           "name": "John Brenard",
+                     *           "relationships": [
+                     *             "Executive Officer"
+                     *           ],
+                     *           "clarification": null
+                     *         }
+                     *       ],
+                     *       "sic_code": null,
+                     *       "jurisdiction": "DELAWARE",
+                     *       "entity_type": "Limited Liability Company",
+                     *       "year_of_inc": "2023"
+                     *     }
+                     */
                     "application/json": components["schemas"]["Offering"];
                 };
             };
@@ -11426,6 +13511,53 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    getScript: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Script id
+                 * @example scr_01JD2Q4X7Y8Z9A0B1C2D3E4F5G
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Script"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     getSlides: {
         parameters: {
             query?: {
@@ -11514,7 +13646,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -11755,7 +13887,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -12560,7 +14692,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -13067,53 +15199,6 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
-    getWebhook: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /**
-                 * @description Webhook id
-                 * @example k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r
-                 */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description The resource */
-            200: {
-                headers: {
-                    "X-Request-Id": components["headers"]["X-Request-Id"];
-                    "ETag": components["headers"]["ETag"];
-                    "Cache-Control": components["headers"]["Cache-Control"];
-                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
-                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
-                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
-                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
-                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
-                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
-                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
-                    "RateLimit": components["headers"]["RateLimit"];
-                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Webhook"];
-                };
-            };
-            304: components["responses"]["NotModified"];
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            402: components["responses"]["PaymentRequired"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            429: components["responses"]["TooManyRequests"];
-            500: components["responses"]["InternalError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
     healthGet: {
         parameters: {
             query?: never;
@@ -13151,11 +15236,320 @@ export interface operations {
             };
         };
     };
+    listAlertEvents: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Only the events of this alert
+                 * @example alt_01JD2Q5Z8K3M7N9P4R6T1V0W2X
+                 */
+                alert_id?: string;
+                /**
+                 * @description Only events of this type
+                 * @example alert.fired
+                 */
+                type?: "account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "destination.disabled" | "destination.test";
+                /**
+                 * @description Only the events of this end user's alerts
+                 * @example user_8812
+                 */
+                external_user_id?: string;
+                /**
+                 * @description Continue after this event id
+                 * @example evt_01JD2Q6A1B2C3D4E5F6G7H8J9K
+                 */
+                after?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["AlertEvent"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listAlertEventsForAlert: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Only events of this type
+                 * @example alert.fired
+                 */
+                type?: "account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "destination.disabled" | "destination.test";
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Alert id
+                 * @example alt_01JD2Q5Z8K3M7N9P4R6T1V0W2X
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["AlertEvent"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listAlerts: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Only alerts in this status
+                 * @example active
+                 */
+                status?: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+                /**
+                 * @description Only alerts of this type
+                 * @example filing
+                 */
+                type?: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+                /**
+                 * @description Only alerts of this end user (your own id, set at create)
+                 * @example user_8812
+                 */
+                external_user_id?: string;
+                /**
+                 * @description The alert with this client reference id
+                 * @example watchlist-aapl-8k
+                 */
+                client_reference_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Alert"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                            quota?: components["schemas"]["AlertQuotaUsage"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listAlertTemplates: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["AlertTemplate"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listAnnouncements: {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -13275,7 +15669,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -13650,11 +16044,146 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listDestinationDeliveries: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Destination id
+                 * @example dst_01JD2Q4X7Y8Z9A0B1C2D3E4F5G
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["DestinationDelivery"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listDestinations: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Destination"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listDividends: {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -13964,7 +16493,7 @@ export interface operations {
                  */
                 etf?: string;
                 /**
-                 * @description Ticker (`NVDA`) or CIK of ONE company: the ETFs holding it (from the ETFs' issuer files). Exactly one of `etf` or `company` is required.
+                 * @description Ticker (`NVDA`) or CIK of ONE company: the ETFs holding it (from the ETFs' issuer files). Exactly one of `etf` or `company` is required. A US ETF that is its own registrant (SPY) is found by its CIK; a series of a multi-series trust (TQQQ) answers one 404 `not_covered` naming it (holders are found by issuer CIK, which would mix its trust's other series).
                  * @example NVDA
                  */
                 company?: string;
@@ -14019,6 +16548,64 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "etf_symbol": "SPY",
+                     *           "etf_name": "SPDR S&P 500 ETF TRUST",
+                     *           "series_id": null,
+                     *           "source": "issuer_daily",
+                     *           "as_of": "2026-11-12",
+                     *           "line": 1,
+                     *           "name": "APPLE INC",
+                     *           "ticker": "AAPL",
+                     *           "cusip": "037833100",
+                     *           "isin": null,
+                     *           "sedol": "2046251",
+                     *           "asset_class": "equity",
+                     *           "shares": 178410117,
+                     *           "market_value_usd": null,
+                     *           "notional_value_usd": null,
+                     *           "weight_pct": 7.904389,
+                     *           "sector": "Technology",
+                     *           "sector_basis": "derived_sic",
+                     *           "country": "US",
+                     *           "country_basis": "nport",
+                     *           "issuer_cik": "0000320193",
+                     *           "issuer_resolution": "cusip_cache"
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2laR0ZoTURFMU5tRmlNR1F4TUdFNVptUTRaR1ExWlRjMElpd2ljQ0k2SWpJd01qWXRNVEV0TVRWVU1UZzZNelk2TWpZdU9UWXlOVGMyS3pBd09qQXdJaXdpYXlJNld5SXdMalU1TmpJMUlpd2lNalVpWFN3aWN5STZJbk51WVhBNk1UcHBjM04xWlhKZlpHRnBi…",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null
+                     *         },
+                     *         "source": "issuer_daily",
+                     *         "as_of": "2026-11-12",
+                     *         "reason": null,
+                     *         "composition": {
+                     *           "newest_issuer_as_of": "2026-11-12",
+                     *           "nport_report_date": "2026-06-30",
+                     *           "stored_from": "2026-11-12",
+                     *           "stored_to": "2026-11-12",
+                     *           "stored_dates": [
+                     *             {
+                     *               "as_of": "2026-11-12",
+                     *               "source": "issuer_daily",
+                     *               "status": "ready",
+                     *               "positions_count": 505
+                     *             }
+                     *           ]
+                     *         },
+                     *         "issuer_sourced_etfs": null,
+                     *         "snapshot_changed": false
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["EtfHolding"]>;
@@ -14086,6 +16673,8 @@ export interface operations {
                             };
                             /** @description company=: how many ETFs the store reads an issuer file for (the ETFs this list can name) */
                             issuer_sourced_etfs?: null | number;
+                            /** @description true when the composition (etf=) or the ETFs holding the company (company=) changed since the first page of this walk (a newer issuer file arrived): restart from the first page for one consistent answer */
+                            snapshot_changed?: boolean | null;
                         };
                     };
                 };
@@ -14160,6 +16749,36 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "etf_symbol": "SPY",
+                     *           "source": "issuer_daily",
+                     *           "as_of": "2026-11-12",
+                     *           "dimension": "asset_class",
+                     *           "bucket": "equity",
+                     *           "weight_pct": 99.871328,
+                     *           "positions": 504,
+                     *           "basis": "issuer_stated"
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null
+                     *         },
+                     *         "source": "issuer_daily",
+                     *         "as_of": "2026-11-12",
+                     *         "reason": null,
+                     *         "weight_pct_sum": 99.967472,
+                     *         "weight_basis": "stated"
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["EtfWeight"]>;
@@ -14185,6 +16804,13 @@ export interface operations {
                              * @enum {string|null}
                              */
                             reason?: "issuer_source_unavailable" | "single_asset_trust" | "source_stale" | "weights_unavailable" | null;
+                            /** @description What the buckets of one dimension sum to, in percent (every weighted position once). About 100 for a plain fund; a leveraged or inverse fund is far from 100 (swaps and futures count at notional exposure in the Derivatives bucket): draw a pie chart only when this is about 100. null without buckets */
+                            weight_pct_sum?: null | number;
+                            /**
+                             * @description How the position weights were stated: stated = the issuer file states each weight, net_assets = market value over the stated net assets, sum = market value over the sum of the non-derivative positions, nport = the N-PORT percent of net assets, none = no weight was stated or derivable (then reason is weights_unavailable)
+                             * @enum {string|null}
+                             */
+                            weight_basis?: "net_assets" | "none" | "nport" | "stated" | "sum" | null;
                         };
                     };
                 };
@@ -14204,7 +16830,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -14932,7 +17558,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -15099,7 +17725,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 company: string;
@@ -15306,7 +17932,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 company?: string;
@@ -15413,7 +18039,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -15576,7 +18202,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 company?: string;
@@ -15741,7 +18367,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 company?: string;
@@ -15883,7 +18509,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 company?: string;
@@ -16035,7 +18661,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -16075,7 +18701,7 @@ export interface operations {
                  */
                 "transaction_date.lte"?: string;
                 /**
-                 * @description true = only derivative-security lines; false = only non-derivative lines
+                 * @description Omitted = derivative-security lines (options, RSUs, warrants) AND non-derivative lines, the default since release 5.7; true = only derivative-security lines; false = only non-derivative lines (the result of the releases before 5.7: use it for a buy / sell aggregate)
                  * @example false
                  */
                 "is_derivative"?: boolean;
@@ -16213,7 +18839,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 company?: string;
@@ -16397,7 +19023,7 @@ export interface operations {
                  */
                 "listing_date.lt"?: string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -16592,7 +19218,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 company?: string;
@@ -17078,7 +19704,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -17276,7 +19902,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Issuer: a CIK (all digits, any padding; any Form D issuer, listed or not) or the ticker of a listed company — ONE value; matches the primary issuer and co-issuers. Without it: every offering
+                 * @description Issuer: a CIK (all digits, any padding; any Form D issuer, listed or not) or the ticker of a listed company — ONE value; matches the primary issuer and co-issuers. Without it: every offering. A US ETF answers one 404 `not_covered` naming it, whatever identifier names it — a ticker of either identity (SPY, TQQQ) or the CIK of an ETF that is its own registrant (SPY's): no Form D data exists for a fund. A CIK of no listed company (a private issuer) still reads the Form D data
                  * @example 0001991882
                  */
                 "company"?: string;
@@ -17356,6 +19982,77 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "offering_id": "021-599503",
+                     *           "file_number": "021-599503",
+                     *           "first_accession": "0001104659-26-112421",
+                     *           "latest_accession": "0001104659-26-112421",
+                     *           "accessions": [
+                     *             "0001104659-26-112421"
+                     *           ],
+                     *           "primary_issuer_cik": "0002122354",
+                     *           "issuer_name": "Third Point Private Capital Income Fund",
+                     *           "co_issuer_ciks": [],
+                     *           "filed_first": "2026-09-30",
+                     *           "filed_latest": "2026-09-30",
+                     *           "sale_date": null,
+                     *           "first_sale_yet_to_occur": true,
+                     *           "amendment_count": 0,
+                     *           "original_held": true,
+                     *           "is_amendment": false,
+                     *           "exemptions": [
+                     *             "06b"
+                     *           ],
+                     *           "industry_group": "Pooled Investment Fund",
+                     *           "investment_fund_type": "Other Investment Fund",
+                     *           "is_40_act": false,
+                     *           "security_types": [
+                     *             "pooled_investment_fund"
+                     *           ],
+                     *           "is_business_combination": false,
+                     *           "more_than_one_year": true,
+                     *           "min_investment": 10000,
+                     *           "total_offering_amount": null,
+                     *           "total_sold": 0,
+                     *           "total_remaining": null,
+                     *           "indefinite_amount": true,
+                     *           "has_non_accredited": false,
+                     *           "non_accredited_count": null,
+                     *           "investor_count": 0,
+                     *           "revenue_range": null,
+                     *           "net_asset_value_range": "Decline to Disclose",
+                     *           "sales_commission": 0,
+                     *           "finders_fee": 0,
+                     *           "related_persons": [
+                     *             {
+                     *               "name": "Daniel Loeb",
+                     *               "relationships": [
+                     *                 "Executive Officer"
+                     *               ],
+                     *               "clarification": "Managing Member of Third Point Advisors L.L.C. the Ultimate Managing Member of the Issuer's Investment Advisor"
+                     *             }
+                     *           ],
+                     *           "sic_code": null,
+                     *           "jurisdiction": "DELAWARE",
+                     *           "entity_type": "Other - Statutory Trust",
+                     *           "year_of_inc": "2025"
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lOekF3TWpRM1pqWmhNRGxsWmpBM05ETmpZVEkxWldSaElpd2ljQ0k2SWpJd01qWXRNVEV0TVRkVU1UTTZORFk2TkRBdU9UWXhNemt3S3pBd09qQXdJaXdpYXlJNld5SXlNREkyTFRBNUxUTXdJaXdpTURJeExUVTVPVFEzT1NKZGZRIiwyNSwwLDBdLCJmIjoi…",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null
+                     *         },
+                     *         "pinned_at": "2026-11-17T13:46:40.961Z"
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["Offering"]>;
@@ -17515,7 +20212,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 company?: string;
@@ -17774,7 +20471,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -17943,6 +20640,141 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listScripts: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Script"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listScriptVersions: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Script id
+                 * @example scr_01JD2Q4X7Y8Z9A0B1C2D3E4F5G
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["ScriptVersion"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listSectionCatalog: {
         parameters: {
             query?: {
@@ -18047,7 +20879,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -18205,7 +21037,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company": string;
@@ -18368,7 +21200,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 company: string;
@@ -18582,149 +21414,14 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
-    listWebhookDeliveries: {
-        parameters: {
-            query?: {
-                /**
-                 * @description Rows per page (default 25, max 200)
-                 * @example 25
-                 */
-                limit?: number;
-                /**
-                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
-                 * @example eyJ2IjoyfQ
-                 */
-                cursor?: string;
-            };
-            header?: never;
-            path: {
-                /**
-                 * @description Webhook id
-                 * @example k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r
-                 */
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description A page of rows */
-            200: {
-                headers: {
-                    "X-Request-Id": components["headers"]["X-Request-Id"];
-                    "ETag": components["headers"]["ETag"];
-                    "Cache-Control": components["headers"]["Cache-Control"];
-                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
-                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
-                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
-                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
-                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
-                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
-                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
-                    "RateLimit": components["headers"]["RateLimit"];
-                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
-                    "Link": components["headers"]["Link"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description The rows of this page */
-                        data: Array<components["schemas"]["WebhookDelivery"]>;
-                        /** @description true when a next page exists */
-                        has_more: boolean;
-                        /** @description Opaque cursor of the next page; null on the last page */
-                        next_cursor: null | string;
-                        /** @description Page metadata */
-                        meta: {
-                            coverage?: components["schemas"]["MetaCoverage"];
-                            source?: components["schemas"]["MetaSource"];
-                        };
-                    };
-                };
-            };
-            304: components["responses"]["NotModified"];
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            402: components["responses"]["PaymentRequired"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            429: components["responses"]["TooManyRequests"];
-            500: components["responses"]["InternalError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    listWebhooks: {
-        parameters: {
-            query?: {
-                /**
-                 * @description Rows per page (default 25, max 200)
-                 * @example 25
-                 */
-                limit?: number;
-                /**
-                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
-                 * @example eyJ2IjoyfQ
-                 */
-                cursor?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description A page of rows */
-            200: {
-                headers: {
-                    "X-Request-Id": components["headers"]["X-Request-Id"];
-                    "ETag": components["headers"]["ETag"];
-                    "Cache-Control": components["headers"]["Cache-Control"];
-                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
-                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
-                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
-                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
-                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
-                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
-                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
-                    "RateLimit": components["headers"]["RateLimit"];
-                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
-                    "Link": components["headers"]["Link"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @description The rows of this page */
-                        data: Array<components["schemas"]["Webhook"]>;
-                        /** @description true when a next page exists */
-                        has_more: boolean;
-                        /** @description Opaque cursor of the next page; null on the last page */
-                        next_cursor: null | string;
-                        /** @description Page metadata */
-                        meta: {
-                            coverage?: components["schemas"]["MetaCoverage"];
-                            source?: components["schemas"]["MetaSource"];
-                        };
-                    };
-                };
-            };
-            304: components["responses"]["NotModified"];
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            402: components["responses"]["PaymentRequired"];
-            403: components["responses"]["Forbidden"];
-            429: components["responses"]["TooManyRequests"];
-            500: components["responses"]["InternalError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    rotateWebhookSecret: {
+    pauseAlert: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 /**
-                 * @description Webhook id
-                 * @example k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r
+                 * @description Alert id
+                 * @example alt_01JD2Q5Z8K3M7N9P4R6T1V0W2X
                  */
                 id: string;
             };
@@ -18748,7 +21445,95 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WebhookSecret"];
+                    "application/json": components["schemas"]["Alert"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    resumeAlert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Alert id
+                 * @example alt_01JD2Q5Z8K3M7N9P4R6T1V0W2X
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Alert"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    rotateDestinationSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Destination id
+                 * @example dst_01JD2Q4X7Y8Z9A0B1C2D3E4F5G
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DestinationSecret"];
                 };
             };
             400: components["responses"]["BadRequest"];
@@ -18780,7 +21565,7 @@ export interface operations {
                  */
                 "case_sensitive"?: boolean;
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -18975,7 +21760,7 @@ export interface operations {
                  */
                 q: string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 company?: string;
@@ -19125,7 +21910,7 @@ export interface operations {
                  */
                 "q": string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -19232,7 +22017,7 @@ export interface operations {
                  */
                 "q": string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -19456,7 +22241,7 @@ export interface operations {
                              * @description Product family
                              * @enum {string}
                              */
-                            family: "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "sec_filings";
+                            family: "alerts" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "sec_filings";
                             /**
                              * @description Over the last 24 hours; too little traffic to judge reads as operational
                              * @enum {string}
@@ -19475,7 +22260,7 @@ export interface operations {
                              * @description Docs group of the v2 API
                              * @enum {string}
                              */
-                            group: "call_analytics" | "catalog" | "companies" | "documents" | "events" | "filings" | "financials" | "guidance" | "holdings" | "insider_trades" | "investor_documents" | "ipos" | "metrics" | "news" | "reference" | "transcripts" | "webhooks";
+                            group: "alert_events" | "alerts" | "call_analytics" | "catalog" | "companies" | "destinations" | "documents" | "events" | "filings" | "financials" | "guidance" | "holdings" | "insider_trades" | "investor_documents" | "ipos" | "metrics" | "news" | "reference" | "scripts" | "transcripts";
                             /** @description Docs group title (e.g. Insider trades) */
                             name: string;
                             /**
@@ -19654,7 +22439,7 @@ export interface operations {
                              * @description Product family
                              * @enum {string}
                              */
-                            family: "account" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "sec_filings" | "websocket";
+                            family: "account" | "alerts" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "sec_filings" | "websocket";
                             routes: Array<{
                                 /** @description Fastify route pattern; `#` = WebSocket channel */
                                 route: string;
@@ -19681,14 +22466,14 @@ export interface operations {
             500: components["responses"]["InternalServerError"];
         };
     };
-    testWebhook: {
+    testAlert: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 /**
-                 * @description Webhook id
-                 * @example k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r
+                 * @description Alert id
+                 * @example alt_01JD2Q5Z8K3M7N9P4R6T1V0W2X
                  */
                 id: string;
             };
@@ -19696,7 +22481,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The test delivery is queued */
+            /** @description Accepted */
             202: {
                 headers: {
                     "X-Request-Id": components["headers"]["X-Request-Id"];
@@ -19712,7 +22497,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["WebhookTestAccepted"];
+                    "application/json": components["schemas"]["AlertTestAccepted"];
                 };
             };
             400: components["responses"]["BadRequest"];
@@ -19726,39 +22511,96 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
-    updateWebhook: {
+    testDestination: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 /**
-                 * @description Webhook id
-                 * @example k57a8x2b4c6d8e0f2g4h6j8k0m2n4p6r
+                 * @description Destination id
+                 * @example dst_01JD2Q4X7Y8Z9A0B1C2D3E4F5G
                  */
                 id: string;
             };
             cookie?: never;
         };
-        /** @description Any of the four fields; at least one */
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DestinationTestAccepted"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    updateAlert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Alert id
+                 * @example alt_01JD2Q5Z8K3M7N9P4R6T1V0W2X
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Any of the fields; at least one */
         requestBody: {
             content: {
                 /**
                  * @example {
-                 *       "events": [
-                 *         "event.transcript_ready"
-                 *       ],
-                 *       "active": true
+                 *       "version": 1,
+                 *       "condition": {
+                 *         "symbols": [
+                 *           "AAPL",
+                 *           "MSFT"
+                 *         ],
+                 *         "form_types": [
+                 *           "8-K"
+                 *         ]
+                 *       }
                  *     }
                  */
                 "application/json": {
-                    /** @description Replaces the keyword list (empty = no keyword alerts; PRO only) */
-                    keywords?: Array<string>;
-                    /** @description Replaces the company filter (empty = every company; at most 10 / 25 / 100 on LITE / STANDARD / PRO) */
-                    ciks?: Array<string>;
-                    /** @description Replaces the event list */
-                    events?: Array<string>;
-                    /** @description true re-enables a disabled subscription (its failure counter resets); false pauses it (disabled_reason: paused) */
-                    active?: boolean;
+                    /** @description Apply only to this version (409 conflict otherwise) */
+                    version?: number;
+                    condition?: components["schemas"]["AlertConditionInput"];
+                    trigger?: components["schemas"]["AlertTriggerInput"];
+                    /** @description Destination ids (≤ 10) */
+                    destination_ids?: Array<string>;
+                    /** @description Your id; a second create with it returns the live alert */
+                    client_reference_id?: null | string;
+                    /** @description Your end user's id (filters lists and events) */
+                    external_user_id?: null | string;
+                    /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+                    metadata?: {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -19779,7 +22621,87 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Webhook"];
+                    "application/json": components["schemas"]["Alert"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    updateDestination: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Destination id
+                 * @example dst_01JD2Q4X7Y8Z9A0B1C2D3E4F5G
+                 */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Any of the fields; at least one */
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "status": "active"
+                 *     }
+                 */
+                "application/json": {
+                    url?: string;
+                    /**
+                     * @description Switches between one event per request (webhook) and alert.fired.batch (batch_webhook)
+                     * @enum {string}
+                     */
+                    kind?: "batch_webhook" | "webhook";
+                    description?: null | string;
+                    /** @description Replaces the custom headers (null removes them) */
+                    headers?: null | {
+                        [key: string]: string;
+                    };
+                    /** @description null removes it */
+                    body_template?: null | string;
+                    /** @enum {string} */
+                    preset?: "claude_routine" | "standard";
+                    /** @description Events per minute this destination receives at most (a token bucket across all delivery machines); events over it stay queued and go out as the bucket refills, never dropped */
+                    max_events_per_minute?: number;
+                    /** @description Digest window: new events are held until the oldest is this many seconds old, then go out together as ONE alert.fired.batch (≤ 500 events / 1 MB per request); retries are not held. Not with preset claude_routine; null turns it off */
+                    digest_seconds?: null | number;
+                    /**
+                     * @description active re-enables; disabled pauses it
+                     * @enum {string}
+                     */
+                    status?: "active" | "disabled";
+                };
+            };
+        };
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Destination"];
                 };
             };
             400: components["responses"]["BadRequest"];
