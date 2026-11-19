@@ -6,7 +6,7 @@ import type { V2FilingsResponse } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
-import { useCompanyFiscalPeriods, useV2FilingsInfinite } from "@/lib/api/queries";
+import { useCompanyFiscalPeriods, useInstrument, useV2FilingsInfinite } from "@/lib/api/queries";
 import { fiscalPeriodIndex, formTypesOfFacet, toFilingListRow } from "@/lib/sec/parity";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 
@@ -35,7 +35,7 @@ function FilingsPage() {
     // The SEC store's documents of one accession (the source panel).
     const [secTarget, setSecTarget] = React.useState<null | SecPanelTarget>(null);
 
-    // `/v1/filings?company=<ticker>`, newest filed first by default (`-filed_at`), one page per `next_cursor`.
+    // `/v1/filings?symbol=<ticker>`, newest filed first by default (`-filed_at`), one page per `next_cursor`.
     const {
         data: pagedData,
         error: errorPaged,
@@ -44,14 +44,17 @@ function FilingsPage() {
         isFetchingNextPage,
         isLoading: loadingPaged,
     } = useV2FilingsInfinite({
-        company: ticker,
         form: formTypeFilter ? [formTypeFilter] : undefined,
         limit: FILINGS_PAGE,
         sort: sortDirection === "desc" ? "-filed_at" : "filed_at",
+        symbol: ticker,
     });
 
-    // Fiscal / calendar quarters by `report_date` = `period_end` (one request set per company, never per row).
-    const { data: fiscalPeriods } = useCompanyFiscalPeriods(ticker);
+    // Fiscal / calendar quarters by `report_date` = `period_end` (one request set per company, never per row); only for
+    // an instrument that has fiscal periods (a fund's filings stay unlabelled, no 404 per page view).
+    const { data: instrument } = useInstrument(ticker);
+
+    const { data: fiscalPeriods } = useCompanyFiscalPeriods(instrument?.datasets.includes("fiscal_periods") ? ticker : "");
 
     const periods = React.useMemo(() => fiscalPeriodIndex(fiscalPeriods ?? []), [fiscalPeriods]);
 

@@ -2,9 +2,13 @@ import { useNavigate, useParams, useRouterState } from "@tanstack/react-router";
 import { SearchIcon } from "lucide-react";
 import * as React from "react";
 
+import type { V2Dataset } from "@/lib/api/types";
+
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useCompanySearch } from "@/lib/api/queries";
+import { useInstrumentSearch } from "@/lib/api/queries";
+import { instrumentBadges, servesSection } from "@/lib/instruments";
 import { useTickerStore } from "@/lib/stores/ticker-store";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +17,11 @@ type TickerSearchProps = {
     placeholder?: string;
 };
 
-export function TickerSearch({ defaultTicker = "", placeholder = "Search company" }: TickerSearchProps) {
+/**
+ * The ⌘K search over everything exchange-traded (`GET /v1/instruments?q=`, Data API 7.0): stocks, ETFs, closed-end
+ * funds and ETNs, each hit with its type badge ("Trust" for an exchange-traded trust such as GLD).
+ */
+export function TickerSearch({ defaultTicker = "", placeholder = "Search stocks, ETFs and funds" }: TickerSearchProps) {
     const navigate = useNavigate();
 
     const currentTicker = useParams({ select: params => params.ticker, strict: false });
@@ -44,9 +52,9 @@ export function TickerSearch({ defaultTicker = "", placeholder = "Search company
         return () => window.clearTimeout(timer);
     }, [trimmedQuery, debounceMs]);
 
-    const { data, isFetching } = useCompanySearch(debouncedQuery);
+    const { data, isFetching } = useInstrumentSearch(debouncedQuery);
 
-    const companies = React.useMemo(() => data?.data ?? [], [data]);
+    const instruments = React.useMemo(() => data?.data ?? [], [data]);
 
     const [anchorStyle, setAnchorStyle] = React.useState<null | React.CSSProperties>(null);
 
@@ -124,17 +132,19 @@ export function TickerSearch({ defaultTicker = "", placeholder = "Search company
         return () => window.removeEventListener("keydown", onKeyDown);
     }, []);
 
-    const goToTicker = (ticker: string) => {
+    /** `datasets` of the picked hit: the section is kept only when the new instrument has it (unknown = typed). */
+    const goToTicker = (ticker: string, datasets?: ReadonlyArray<V2Dataset>) => {
         setOpen(false);
 
         const normalizedTicker = ticker.toUpperCase();
 
         setLastTicker(normalizedTicker);
 
-        // stay on the same sidebar item: /<old>/news/… → /<new>/news (deeper paths and search are company-specific)
+        // stay on the same sidebar item: /<old>/news/… → /<new>/news (deeper paths and search are instrument-specific),
+        // unless the new instrument has no such section (AAPL's financials → SPY opens SPY's overview)
         const section = currentTicker ? pathname.split("/")[2] : undefined;
 
-        if (section) {
+        if (section && (datasets === undefined || servesSection(datasets, section))) {
             navigate({ href: `/${encodeURIComponent(normalizedTicker)}/${section}` });
 
             return;
@@ -156,7 +166,7 @@ export function TickerSearch({ defaultTicker = "", placeholder = "Search company
             <DialogTrigger
                 render={(
                     <button
-                        aria-label="Search tickers"
+                        aria-label="Search stocks, ETFs and funds"
                         className={cn(
                             "bg-input/20 cursor-text dark:bg-input/30 border-input hover:bg-input/30 dark:hover:bg-input/40 focus-visible:border-ring focus-visible:ring-ring/30 flex h-9 w-full items-center justify-between gap-3 rounded-md border px-3 text-left text-sm outline-none transition-colors focus-visible:ring-2 md:w-[520px]",
                         )}
@@ -198,30 +208,30 @@ export function TickerSearch({ defaultTicker = "", placeholder = "Search company
                                 </div>
                             )}
 
-                            {!isFetching && companies.length === 0 && (
+                            {!isFetching && instruments.length === 0 && (
                                 <div className="text-muted-foreground px-2 py-2 text-xs">
-                                    No companies found
+                                    Nothing found
                                 </div>
                             )}
 
-                            {!isFetching && companies.length > 0 && companies.map((company) => {
-                                const logoUrl = company.logo_url ?? null;
+                            {!isFetching && instruments.length > 0 && instruments.map((instrument) => {
+                                const logoUrl = instrument.logo_url ?? null;
 
                                 return (
                                     <button
                                         className="hover:bg-accent hover:text-accent-foreground flex w-full items-center gap-2 rounded-md px-2 py-2 text-left text-sm"
-                                        key={company.ticker}
-                                        onClick={() => goToTicker(company.ticker)}
+                                        key={instrument.symbol}
+                                        onClick={() => goToTicker(instrument.symbol, instrument.datasets)}
                                         type="button"
                                     >
                                         <div className="relative size-6 shrink-0">
                                             <div className="bg-muted text-muted-foreground flex size-6 items-center justify-center rounded-md text-[10px] font-semibold">
-                                                {company.ticker.slice(0, 1)}
+                                                {instrument.symbol.slice(0, 1)}
                                             </div>
                                             {logoUrl
                                                 ? (
                                                         <img
-                                                            alt={`${company.ticker} logo`}
+                                                            alt={`${instrument.symbol} logo`}
                                                             className="absolute inset-0 size-6 rounded-md bg-background object-contain"
                                                             loading="lazy"
                                                             onError={(e) => {
@@ -234,9 +244,14 @@ export function TickerSearch({ defaultTicker = "", placeholder = "Search company
                                                 : null}
                                         </div>
 
-                                        <div className="min-w-14 font-medium">{company.ticker}</div>
-                                        <div className="text-muted-foreground line-clamp-1 leading-[1.6] text-xs">
-                                            {company.name}
+                                        <div className="min-w-14 font-medium">{instrument.symbol}</div>
+                                        <div className="text-muted-foreground line-clamp-1 grow leading-[1.6] text-xs">
+                                            {instrument.name}
+                                        </div>
+                                        <div className="flex shrink-0 gap-1">
+                                            {instrumentBadges(instrument).map(badge => (
+                                                <Badge data-testid="search-badge" key={badge} variant="outline">{badge}</Badge>
+                                            ))}
                                         </div>
                                     </button>
                                 );

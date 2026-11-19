@@ -1,0 +1,344 @@
+import type { ColumnDef } from "@tanstack/react-table";
+
+import { Link } from "@tanstack/react-router";
+
+import type { FundListState } from "@/components/sec/fund-views";
+import type {
+    V2Holder,
+    V2HolderChange,
+    V2HolderChangesResponse,
+    V2HolderChangeType,
+    V2HolderSection,
+    V2HolderSource,
+    V2HoldersResponse,
+} from "@/lib/api/types";
+
+import { count, money, right, weightText } from "@/components/sec/fund-views";
+import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
+import { V2ListTable } from "@/components/sec/v2-list-table";
+import { V2MetaLine } from "@/components/sec/v2-meta-line";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { formatEnDateTime } from "@/lib/date";
+import {
+    HOLDER_SECTION_STATE_LABELS,
+    HOLDER_SOURCE_LABELS,
+    HOLDER_SOURCE_NOTES,
+    holderReasonText,
+} from "@/lib/sec/fund";
+import { isV2GenuineEmpty } from "@/lib/sec/readiness";
+import { formatNumberEn } from "@/lib/utils";
+
+/**
+ * Who holds a security (Data API 7.0, `/v1/holders`, owner decision 12): ONE row schema (`Holder`) for the three
+ * sources — 13F managers, N-PORT funds, ETF issuer files — rendered by one table whose columns follow the source.
+ * Without `source=` the API answers an overview: each source's top rows one after another in `data`, described by
+ * `meta.sections[]`; the sources overlap, so they are never merged or summed. Pure views (state in, markup out).
+ */
+
+const day = (value: null | string | undefined) => (value ? formatEnDateTime(value, { hideTime: true }) : "—");
+
+/** The holder's name; a listed fund links to its page (`holder.symbols`), an unlisted fund is text only (decision 13). */
+function HolderCell({ holder }: { holder: V2Holder["holder"] }) {
+    const name = holder.name ?? holder.registrant_name ?? holder.cik ?? holder.fund_key ?? "—";
+
+    const title = [holder.registrant_name, holder.series_id ?? holder.fund_key, holder.cik ? `CIK ${holder.cik}` : null]
+        .filter(Boolean)
+        .join(" · ");
+
+    const symbol = holder.symbols.at(0);
+
+    return (
+        <div className="flex min-w-0 items-center gap-2">
+            {symbol
+                ? (
+                        <Link className="truncate font-medium underline-offset-4 hover:underline" params={{ ticker: symbol }} title={title} to="/$ticker">
+                            {name}
+                        </Link>
+                    )
+                : <span className="truncate" title={title}>{name}</span>}
+            {holder.issuer_file_as_of && (
+                <Badge title="This fund also has an issuer holdings file, a fresher source than its N-PORT report" variant="outline">
+                    {`Issuer file ${holder.issuer_file_as_of}`}
+                </Badge>
+            )}
+        </div>
+    );
+}
+
+const tickersText = (holder: V2Holder["holder"]) => {
+    const tickers = holder.symbols.length > 0 ? holder.symbols : (holder.class_tickers ?? []);
+
+    return tickers.join(", ") || "—";
+};
+
+const sharesTypeText = (row: Pick<V2Holder, "put_call" | "shares_type">) => [row.shares_type, row.put_call].filter(Boolean).join(" · ") || "—";
+
+const AS_OF: ColumnDef<V2Holder> = { cell: ({ row }) => day(row.original.as_of), header: "As of", id: "as_of" };
+
+const FILED: ColumnDef<V2Holder> = { cell: ({ row }) => day(row.original.filing_date), header: "Filed", id: "filing_date" };
+
+const HOLDER: ColumnDef<V2Holder> = { cell: ({ row }) => <HolderCell holder={row.original.holder} />, header: "Holder", id: "holder" };
+
+const TICKERS: ColumnDef<V2Holder> = { cell: ({ row }) => tickersText(row.original.holder), header: "Tickers", id: "tickers" };
+
+const SHARES: ColumnDef<V2Holder> = {
+    cell: ({ row }) => right(count(row.original.shares)),
+    header: () => <div className="text-right">Shares</div>,
+    id: "shares",
+};
+
+const SHARES_TYPE: ColumnDef<V2Holder> = { cell: ({ row }) => sharesTypeText(row.original), header: "Unit", id: "shares_type" };
+
+const VALUE: ColumnDef<V2Holder> = {
+    cell: ({ row }) => right(money(row.original.value_usd)),
+    header: () => <div className="text-right">Value</div>,
+    id: "value_usd",
+};
+
+const WEIGHT: ColumnDef<V2Holder> = {
+    cell: ({ row }) => right(weightText(row.original.weight_pct)),
+    header: () => <div className="text-right">% of Fund</div>,
+    id: "weight_pct",
+};
+
+/** The columns of one source: 13F has no fund weight or tickers; an issuer file has no filing. */
+export const HOLDER_COLUMNS: Record<V2HolderSource, Array<ColumnDef<V2Holder>>> = {
+    "13f": [AS_OF, FILED, HOLDER, SHARES, SHARES_TYPE, VALUE],
+    "issuer_file": [AS_OF, HOLDER, TICKERS, SHARES, VALUE, WEIGHT],
+    "nport": [AS_OF, FILED, HOLDER, TICKERS, SHARES, SHARES_TYPE, VALUE, WEIGHT],
+};
+
+const EMPTY_TEXT: Record<V2HolderSource, string> = {
+    "13f": "No institutional holders reported for this quarter.",
+    "issuer_file": "No ETF with an issuer holdings file holds this security.",
+    "nport": "No fund reported this security in its latest N-PORT report.",
+};
+
+type Page = V2HolderChangesResponse | V2HoldersResponse;
+
+/**
+ * One holder list (pure): the request's honest state (403 `excluded`, 404 `not_covered`, 503 `unavailable`, plan gate),
+ * the answer's coverage (`pending` = still being filled, `partial`), its provenance (`pinned_at`, `counting`,
+ * `meta.source`), the rows and "Load more".
+ */
+function HolderListFrame<TPage extends Page, TRow>({
+    columns,
+    emptyText,
+    errorTitle,
+    loadingText,
+    note,
+    rowsOf,
+    state,
+}: {
+    columns: Array<ColumnDef<TRow>>;
+    emptyText: string;
+    errorTitle: string;
+    loadingText: string;
+    note?: null | string;
+    rowsOf: (page: TPage) => Array<TRow>;
+    state: FundListState<TPage>;
+}) {
+    const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
+
+    if (error && pages.length === 0) return <SecReadinessNotice error={error} title={errorTitle} />;
+
+    const meta = pages.at(0)?.meta;
+
+    return (
+        <div className="flex flex-col gap-2 h-full">
+            <SecReadinessNotice coverage={meta?.coverage} />
+            <V2MetaLine meta={meta && { counting: "counting" in meta ? meta.counting : null, coverage: meta.coverage, pinned_at: "pinned_at" in meta ? meta.pinned_at : null }} />
+            {note && <div className="text-muted-foreground text-xs" data-testid="holders-note">{note}</div>}
+            <V2ListTable
+                columns={columns}
+                emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
+                emptyText={emptyText}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                isLoading={isLoading}
+                loadingText={loadingText}
+                onLoadMore={onLoadMore}
+                rows={pages.flatMap(rowsOf)}
+            />
+            {error ? <SecReadinessNotice error={error} title={errorTitle} /> : null}
+        </div>
+    );
+}
+
+/** The scope line of the issuer-file source: never presented as complete (only ETFs with an issuer file). */
+function issuerFileNote(meta: undefined | V2HoldersResponse["meta"]): string {
+    const funds = meta?.funds_with_issuer_file;
+
+    return `Daily, from the issuer holdings files of ${funds == null ? "the ETFs in scope" : `${formatNumberEn(funds)} ETFs`} — not every ETF. The Funds (N-PORT) tab lists the funds known from their N-PORT reports.`;
+}
+
+/** The full list of ONE source (`/v1/holders?symbol=&source=`), by cursor. */
+export function HoldersList({ source, state }: { source: V2HolderSource; state: FundListState<V2HoldersResponse> }) {
+    const meta = state.pages.at(0)?.meta;
+
+    const reason = holderReasonText(meta?.reason);
+
+    const note = source === "issuer_file" ? [issuerFileNote(meta), reason].filter(Boolean).join(" ") : reason;
+
+    return (
+        <HolderListFrame<V2HoldersResponse, V2Holder>
+            columns={HOLDER_COLUMNS[source]}
+            emptyText={EMPTY_TEXT[source]}
+            errorTitle={`Failed to load the ${HOLDER_SOURCE_LABELS[source]} holders`}
+            loadingText="Loading holders..."
+            note={note}
+            rowsOf={page => page.data}
+            state={state}
+        />
+    );
+}
+
+export const CHANGE_TYPE_LABELS: Record<V2HolderChangeType, string> = {
+    added: "Added",
+    new: "New position",
+    reduced: "Reduced",
+    sold_out: "Sold out",
+    unchanged: "Unchanged",
+};
+
+/** `shares_change_pct` is a fraction (+1 = a new position, −1 = sold out). */
+export function changePercentText(fraction: null | number) {
+    if (fraction === null || !Number.isFinite(fraction)) return "—";
+
+    const percent = fraction * 100;
+
+    return `${percent > 0 ? "+" : ""}${formatNumberEn(percent, { maximumFractionDigits: 2 })}%`;
+}
+
+const CHANGE_COLUMNS: Array<ColumnDef<V2HolderChange>> = [
+    { cell: ({ row }) => day(row.original.as_of), header: "Period End", id: "as_of" },
+    { cell: ({ row }) => day(row.original.filing_date), header: "Filed", id: "filing_date" },
+    { cell: ({ row }) => CHANGE_TYPE_LABELS[row.original.type], header: "Type", id: "type" },
+    { cell: ({ row }) => <HolderCell holder={row.original.holder} />, header: "Institution", id: "holder" },
+    {
+        cell: ({ row }) => right(money(row.original.value_change_usd)),
+        header: () => <div className="text-right">Change $</div>,
+        id: "value_change_usd",
+    },
+    {
+        cell: ({ row }) => right(count(row.original.shares_change)),
+        header: () => <div className="text-right">Change Shares</div>,
+        id: "shares_change",
+    },
+    {
+        cell: ({ row }) => right(changePercentText(row.original.shares_change_pct)),
+        header: () => <div className="text-right">Change %</div>,
+        id: "shares_change_pct",
+    },
+    {
+        cell: ({ row }) => right(count(row.original.shares)),
+        header: () => <div className="text-right">New Position</div>,
+        id: "shares",
+    },
+    {
+        cell: ({ row }) => right(count(row.original.shares_prior)),
+        header: () => <div className="text-right">Old Position</div>,
+        id: "shares_prior",
+    },
+    {
+        cell: ({ row }) => right(money(row.original.value_usd)),
+        header: () => <div className="text-right">Value</div>,
+        id: "value_usd",
+    },
+];
+
+/** 13F position changes of the security's holders vs the prior quarter (`/v1/holder-changes`). */
+export function HolderChangesList({ state }: { state: FundListState<V2HolderChangesResponse> }) {
+    return (
+        <HolderListFrame<V2HolderChangesResponse, V2HolderChange>
+            columns={CHANGE_COLUMNS}
+            emptyText="No position changes for this quarter."
+            errorTitle="Failed to load the 13F changes"
+            loadingText="Loading 13F changes..."
+            rowsOf={page => page.data}
+            state={state}
+        />
+    );
+}
+
+/** "12 shown of 774", "25 shown, more available", "3 holders". */
+export function sectionCountText(section: V2HolderSection): string {
+    if (section.total != null && section.total > section.rows) return `${formatNumberEn(section.rows)} shown of ${formatNumberEn(section.total)}`;
+
+    if (section.has_more) return `${formatNumberEn(section.rows)} shown, more available`;
+
+    return `${formatNumberEn(section.rows)} ${section.rows === 1 ? "holder" : "holders"}`;
+}
+
+/** One source of the overview: its title, state, as-of, count, reason, top rows and "Show all". */
+function HolderSectionView({ onShowAll, rows, section }: { onShowAll: (source: V2HolderSource) => void; rows: Array<V2Holder>; section: V2HolderSection }) {
+    const reason = holderReasonText(section.reason);
+
+    return (
+        <section aria-label={HOLDER_SOURCE_LABELS[section.source]} className="flex flex-col gap-2" data-testid={`holders-section-${section.source}`}>
+            <div className="flex flex-wrap items-center gap-2">
+                <div className="text-sm font-medium">{HOLDER_SOURCE_LABELS[section.source]}</div>
+                <Badge variant={section.state === "complete" ? "secondary" : "outline"}>{HOLDER_SECTION_STATE_LABELS[section.state]}</Badge>
+                {section.as_of && <span className="text-muted-foreground text-xs">{`as of ${section.as_of}`}</span>}
+                <span className="text-muted-foreground text-xs">{sectionCountText(section)}</span>
+                {section.has_more && (
+                    <Button onClick={() => onShowAll(section.source)} size="xs" type="button" variant="outline">
+                        Show all
+                    </Button>
+                )}
+            </div>
+            <div className="text-muted-foreground text-xs">{HOLDER_SOURCE_NOTES[section.source]}</div>
+            {reason && <div className="text-muted-foreground text-xs">{reason}</div>}
+            {rows.length > 0 && (
+                // `V2ListTable` scrolls inside a sized flex column: the header plus up to ~10 rows.
+                <div className="flex flex-col" style={{ height: Math.min(400, 44 + rows.length * 37) }}>
+                    <V2ListTable
+                        columns={HOLDER_COLUMNS[section.source]}
+                        emptyIsGenuine={false}
+                        emptyText=""
+                        hasNextPage={false}
+                        isFetchingNextPage={false}
+                        isLoading={false}
+                        loadingText=""
+                        onLoadMore={() => undefined}
+                        rows={rows}
+                    />
+                </div>
+            )}
+        </section>
+    );
+}
+
+/**
+ * The overview (`/v1/holders?symbol=` without `source`, owner decision 12): one block per `meta.sections[]` entry in
+ * the API's order, each with its own state, as-of and count — never one merged list. "Show all" opens that source's
+ * full list (`onShowAll`).
+ */
+export function HoldersOverview({ onShowAll, state }: { onShowAll: (source: V2HolderSource) => void; state: FundListState<V2HoldersResponse> }) {
+    const { error, isLoading, pages } = state;
+
+    if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the holders" />;
+
+    if (isLoading && pages.length === 0) return <div className="text-muted-foreground text-sm">Loading holders...</div>;
+
+    const page = pages.at(0);
+
+    if (!page) return null;
+
+    const sections = page.meta.sections ?? [];
+
+    return (
+        <div className="flex flex-col gap-6" data-testid="holders-overview">
+            <V2MetaLine meta={{ pinned_at: page.meta.pinned_at }} />
+            {sections.map(section => (
+                <HolderSectionView
+                    key={section.source}
+                    onShowAll={onShowAll}
+                    rows={page.data.filter(row => row.source === section.source)}
+                    section={section}
+                />
+            ))}
+        </div>
+    );
+}

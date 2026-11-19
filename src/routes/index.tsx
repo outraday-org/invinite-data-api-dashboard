@@ -19,8 +19,8 @@ function IndexPage() {
 
     const routeCards = [
         {
-            body: "Company profile, market stats, and key details.",
-            title: "Company Overview",
+            body: "A stock's company profile or a fund's profile (net assets, expense ratio, classes, composition).",
+            title: "Overview",
             to: "/$ticker",
         },
         {
@@ -44,8 +44,8 @@ function IndexPage() {
             to: "/$ticker/dividends",
         },
         {
-            body: "Corporate stock split history.",
-            title: "Stock Splits",
+            body: "Split history of a stock or a fund.",
+            title: "Splits",
             to: "/$ticker/stock-splits",
         },
         {
@@ -54,9 +54,9 @@ function IndexPage() {
             to: "/$ticker/insider-trades",
         },
         {
-            body: "Institutional ownership snapshots.",
-            title: "Institutions",
-            to: "/$ticker/institutions",
+            body: "Who holds it: 13F managers, N-PORT funds and ETF issuer files, each source on its own.",
+            title: "Holders",
+            to: "/$ticker/holders",
         },
         {
             body: "Upcoming and past calls across the market, live now.",
@@ -98,8 +98,9 @@ function IndexPage() {
                     Financial Data Dashboard
                 </h1>
                 <p className="text-muted-foreground max-w-3xl text-lg">
-                    Demo project for using the Invinite API. Enter a ticker to view company info,
-                    standardized financial statements, and SEC filings.
+                    Demo project for using the Invinite API. Enter a ticker — a stock, an ETF, a closed-end fund or an
+                    ETN — to view what the API serves for it: company or fund profile, financial statements, holdings,
+                    holders and SEC filings. The Funds page lists every listed fund.
                 </p>
                 <p className="text-muted-foreground text-sm">
                     Use the search bar to jump to any ticker. Cards below use

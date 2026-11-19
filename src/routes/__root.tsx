@@ -1,6 +1,6 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createRootRoute, HeadContent, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Link, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { PanelLeftIcon } from "lucide-react";
 import * as React from "react";
@@ -62,8 +62,8 @@ function RootLayout() {
         select: state => state.location.pathname,
     });
 
-    // The tickerless SEC filer page (`/sec/$cik`) has no company sidebar.
-    const showSidebarTrigger = pathname !== "/" && !pathname.startsWith("/sec/");
+    // The tickerless pages (`/sec/$cik`, `/funds`) have no instrument sidebar.
+    const showSidebarTrigger = pathname !== "/" && !pathname.startsWith("/sec/") && pathname !== "/funds";
 
     return (
         <>
@@ -80,7 +80,8 @@ function RootLayout() {
                         )}
                     </div>
                     <TickerSearch />
-                    <div className="justify-self-end">
+                    <div className="justify-self-end flex items-center gap-3">
+                        <Link className="text-muted-foreground hover:text-foreground text-sm" to="/funds">Funds</Link>
                         <ApiKeyDialogButton />
                     </div>
                 </div>

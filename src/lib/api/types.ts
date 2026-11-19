@@ -10,14 +10,49 @@ type ApiResponse<TPath extends keyof paths, TPathValue extends keyof paths[TPath
 type ApiQuery<TPath extends keyof paths>
     = paths[TPath] extends { get: { parameters: { query?: infer Q } } } ? NonNullable<Q> : never;
 
-// Companies (`GET /v1/companies`, `/v1/fiscal-periods`): the redesigned list envelope `{ data, has_more, next_cursor,
-// meta }`. One company's details are `V2CompanyResponse` (`GET /v1/companies/{company}`).
-export type CompanySearchResponse = ApiResponse<"/v1/companies", "get">;
+// Fiscal periods (`GET /v1/fiscal-periods`): the list envelope `{ data, has_more, next_cursor, meta }`. One company's
+// details are `V2CompanyResponse` (`GET /v1/companies/{company}`).
 export type CompanyFiscalPeriodsResponse = ApiResponse<"/v1/fiscal-periods", "get">;
-
-// Derived entity types
-export type Company = CompanySearchResponse["data"][number];
 export type CompanyFiscalPeriod = CompanyFiscalPeriodsResponse["data"][number];
+
+// Instruments and funds (Data API 7.0, backend tasks/instruments-and-funds-api tasks 3–4). An instrument is one
+// exchange-traded US symbol with ONE `type` (`stock | etf | closed_end_fund | etn`); a fund carries `structure`
+// (`registered_fund` | `exchange_traded_trust`, owner decision 11). `datasets` = the data families that exist for it:
+// the only source of the dashboard's navigation.
+export type V2InstrumentsResponse = ApiResponse<"/v1/instruments", "get">;
+export type V2Instrument = ApiResponse<"/v1/instruments/{symbol}", "get">;
+export type V2InstrumentType = V2Instrument["type"];
+export type V2FundStructure = NonNullable<V2Instrument["structure"]>;
+export type V2Dataset = V2Instrument["datasets"][number];
+export type V2FundsResponse = ApiResponse<"/v1/funds", "get">;
+export type V2FundListItem = V2FundsResponse["data"][number];
+export type V2FundType = V2FundListItem["type"];
+export type V2Fund = ApiResponse<"/v1/funds/{fund}", "get">;
+/** A fund's composition: the issuer's own daily / monthly file, else its latest N-PORT report (`source` + `as_of`). */
+export type V2FundPositionsResponse = ApiResponse<"/v1/funds/{fund}/holdings", "get">;
+export type V2FundPosition = V2FundPositionsResponse["data"][number];
+/** `issuer_daily` / `issuer_monthly` = the issuer's own holdings file, `nport` = the fund's latest public N-PORT report. */
+export type V2FundSource = V2FundPosition["source"];
+export type V2FundStoredDate = NonNullable<NonNullable<V2FundPositionsResponse["meta"]["composition"]>["stored_dates"]>[number];
+/** The sector / country / asset-class buckets of the same composition. */
+export type V2FundWeightsResponse = ApiResponse<"/v1/funds/{fund}/weights", "get">;
+export type V2FundWeight = V2FundWeightsResponse["data"][number];
+export type V2FundWeightDimension = V2FundWeight["dimension"];
+/** `meta.reason` of the composition and the weights (one vocabulary; the weights add `weights_unavailable`). */
+export type V2FundCompositionReason = NonNullable<V2FundWeightsResponse["meta"]["reason"]>;
+/** Who holds a security: one row schema for 13F managers, N-PORT funds and ETF issuer files. */
+export type V2HoldersResponse = ApiResponse<"/v1/holders", "get">;
+export type V2Holder = V2HoldersResponse["data"][number];
+export type V2HolderSource = V2Holder["source"];
+/** One source of the overview (no `source=`, owner decision 12). */
+export type V2HolderSection = NonNullable<V2HoldersResponse["meta"]["sections"]>[number];
+export type V2HolderSectionState = V2HolderSection["state"];
+export type V2HoldersInstruments = NonNullable<ApiQuery<"/v1/holders">["instruments"]>;
+export type V2HolderChangesResponse = ApiResponse<"/v1/holder-changes", "get">;
+export type V2HolderChange = V2HolderChangesResponse["data"][number];
+export type V2HolderChangeType = V2HolderChange["type"];
+/** A 13F manager's portfolio (the same `Holder` row). */
+export type V2FilerHoldingsResponse = ApiResponse<"/v1/filers/{cik}/holdings", "get">;
 
 // A JSON value. The spec types free-form fields (`InvestorDocument.pages[]`, SEC nested objects) as `unknown`, which a
 // server function's return type rejects (TanStack Start only accepts provably serialisable values); the API answers
@@ -89,7 +124,7 @@ export type V2CompanyExpand = "coverage";
 /** `GET /v1/filers/{cik}?expand=` values. */
 export type V2FilerExpand = "former_names" | "fund" | "lifecycle" | "private_offerings" | "proposed_symbols" | "successors";
 
-// Data API v2 SEC family (`/v1/filings*`, `/v1/document-versions/*`, `/v1/holdings`, `/v1/holding-changes`,
+// Data API v2 SEC family (`/v1/filings*`, `/v1/document-versions/*`, `/v1/holders`, `/v1/holder-changes`,
 // `/v1/insider-trades*`, `/v1/ipos*`, backend tasks/data-api-v2 task 6). Readiness is `meta.coverage.state` on a 200
 // (`data: []` while pending); 403 `excluded` / 404 `not_covered` / 503 `unavailable` are problems.
 export type V2FilingsResponse = ApiResponse<"/v1/filings", "get">;
@@ -98,14 +133,6 @@ export type V2FilingDetailResponse = SecJson<ApiResponse<"/v1/filings/{accession
 /** The canonical document content (blocks / pages / footnotes / toc / quality) is free JSON: narrowed to `JsonValue`. */
 export type V2DocumentVersionResponse = SecJson<ApiResponse<"/v1/document-versions/{version_id}", "get">>;
 export type V2DocumentFigureResponse = SecJson<ApiResponse<"/v1/document-versions/{version_id}/figures/{block_id}", "get">>;
-export type V2HoldingsResponse = ApiResponse<"/v1/holdings", "get">;
-export type V2HoldingChangesResponse = ApiResponse<"/v1/holding-changes", "get">;
-/** N-PORT fund holdings, their own collection (Data API release 5.7). */
-export type V2FundHoldingsResponse = ApiResponse<"/v1/fund-holdings", "get">;
-/** ETF composition (issuer daily / monthly file, else N-PORT) and the ETFs holding a company (Data API release 5.10). */
-export type V2EtfHoldingsResponse = ApiResponse<"/v1/etf-holdings", "get">;
-/** ETF sector / country / asset-class weights of the freshest composition (Data API release 5.10). */
-export type V2EtfWeightsResponse = ApiResponse<"/v1/etf-weights", "get">;
 export type V2InsiderTradesResponse = ApiResponse<"/v1/insider-trades", "get">;
 export type V2IposResponse = ApiResponse<"/v1/ipos", "get">;
 /** Form D private offerings (Data API release 5.7, tag IPOs). */
@@ -119,17 +146,6 @@ export type V2FormFacet = NonNullable<V2FilingsResponse["meta"]["form_facet"]>[n
 export type V2FilingsSort = Extract<NonNullable<ApiQuery<"/v1/filings">["sort"]>, "-filed_at" | "filed_at">;
 /** `GET /v1/filings/{accession}?expand=` values. */
 export type V2FilingExpand = "documents" | "parties" | "relations";
-export type V2Holding = V2HoldingsResponse["data"][number];
-export type V2HoldingChange = V2HoldingChangesResponse["data"][number];
-export type V2HoldingChangeType = V2HoldingChange["type"];
-export type V2HoldingsInstruments = NonNullable<ApiQuery<"/v1/holdings">["instruments"]>;
-export type V2FundHolding = V2FundHoldingsResponse["data"][number];
-export type V2EtfHolding = V2EtfHoldingsResponse["data"][number];
-/** `issuer_daily` / `issuer_monthly` = the issuer's own holdings file, `nport` = the fund's latest public N-PORT report. */
-export type V2EtfSource = V2EtfHolding["source"];
-export type V2EtfStoredDate = NonNullable<NonNullable<V2EtfHoldingsResponse["meta"]["composition"]>["stored_dates"]>[number];
-export type V2EtfWeight = V2EtfWeightsResponse["data"][number];
-export type V2EtfWeightDimension = V2EtfWeight["dimension"];
 export type V2InsiderTrade = V2InsiderTradesResponse["data"][number];
 export type V2InsiderSide = V2InsiderTrade["side"];
 export type V2Ipo = V2IposResponse["data"][number];
@@ -137,9 +153,9 @@ export type V2IpoStage = V2Ipo["stage"];
 export type V2IposSort = NonNullable<ApiQuery<"/v1/ipos">["sort"]>;
 export type V2Offering = V2OfferingsResponse["data"][number];
 /** `meta.coverage` of a v2 list: `pending` (data empty, still filling) / `partial` / `complete`. */
-export type V2MetaCoverage = NonNullable<V2HoldingsResponse["meta"]["coverage"]>;
+export type V2MetaCoverage = NonNullable<V2FilingsResponse["meta"]["coverage"]>;
 /** `meta.source`: the documented provenance (dataset release, document version, accession, fetch time). */
-export type V2MetaSource = NonNullable<V2HoldingsResponse["meta"]["source"]>;
+export type V2MetaSource = NonNullable<V2FilingsResponse["meta"]["source"]>;
 
 // Data API v2 events family (`/v1/events*`, `/v1/guidance`, `/v1/kpis`, `/v1/investor-documents*`, `/v1/search/*`,
 // backend tasks/data-api-v2 task 7). Every per-event read names the event by id (no selector, no offset).

@@ -6,36 +6,39 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { V2_FILING_10K, V2_FILINGS, V2_HOLDINGS, V2_HOLDINGS_PENDING, V2_INSIDER_TRADES, V2_IPOS } from "@/lib/sec/v2-fixtures";
+import { V2_FILING_10K, V2_FILINGS, V2_HOLDERS_13F, V2_HOLDERS_OVERVIEW, V2_HOLDERS_PENDING, V2_INSIDER_TRADES, V2_IPOS } from "@/lib/sec/v2-fixtures";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import { ApiRequestError } from "./errors";
 import {
     refetchWhileCoveragePending,
+    useFilerHoldingsInfinite,
+    useHolderChangesInfinite,
+    useHoldersInfinite,
     useV2DocumentVersion,
     useV2Filing,
     useV2FilingsInfinite,
-    useV2HoldingChangesInfinite,
-    useV2HoldingsInfinite,
     useV2InsiderTradesInfinite,
     useV2IposInfinite,
 } from "./queries";
 import {
+    getFilerHoldings,
+    getHolderChanges,
+    getHolders,
     getV2DocumentVersion,
     getV2Filing,
     getV2Filings,
-    getV2HoldingChanges,
-    getV2Holdings,
     getV2InsiderTrades,
     getV2Ipos,
 } from "./server-functions";
 
 vi.mock("./server-functions", () => ({
+    getFilerHoldings: vi.fn(),
+    getHolderChanges: vi.fn(),
+    getHolders: vi.fn(),
     getV2DocumentVersion: vi.fn(),
     getV2Filing: vi.fn(),
     getV2Filings: vi.fn(),
-    getV2HoldingChanges: vi.fn(),
-    getV2Holdings: vi.fn(),
     getV2InsiderTrades: vi.fn(),
     getV2Ipos: vi.fn(),
 }));
@@ -59,17 +62,17 @@ beforeEach(() => {
 });
 
 describe("useV2FilingsInfinite", () => {
-    it("sends company, the form list, the sort and the day range as filed_at.gte / .lt; pages by next_cursor", async () => {
+    it("sends symbol, the form list, the sort and the day range as filed_at.gte / .lt; pages by next_cursor", async () => {
         vi.mocked(getV2Filings)
             .mockResolvedValueOnce(V2_FILINGS)
             .mockResolvedValueOnce({ ...V2_FILINGS, has_more: false, next_cursor: null });
 
         const { result } = renderHook(() => useV2FilingsInfinite({
-            company: "AAPL",
             form: ["10-K"],
             from: "2026-01-01",
             limit: 40,
             sort: "-filed_at",
+            symbol: "AAPL",
             to: "2026-11-03",
         }), { wrapper });
 
@@ -78,13 +81,13 @@ describe("useV2FilingsInfinite", () => {
         expect(getV2Filings).toHaveBeenLastCalledWith({
             data: {
                 apiKey: "test-key",
-                company: "AAPL",
                 cursor: undefined,
                 filedAtGte: "2026-01-01T00:00:00.000Z",
                 filedAtLt: "2026-11-04T00:00:00.000Z",
                 form: ["10-K"],
                 limit: 40,
                 sort: "-filed_at",
+                symbol: "AAPL",
             },
         });
 
@@ -100,7 +103,7 @@ describe("useV2FilingsInfinite", () => {
     it("a 403 excluded problem is a page state: revived, never retried, no toast", async () => {
         vi.mocked(getV2Filings).mockRejectedValue(revivedProblem(403, "excluded", "Excluded issuer"));
 
-        const { result } = renderHook(() => useV2FilingsInfinite({ company: "ABSX" }), { wrapper });
+        const { result } = renderHook(() => useV2FilingsInfinite({ symbol: "ABSX" }), { wrapper });
 
         await waitFor(() => expect(result.current.error).not.toBeNull());
 
@@ -139,41 +142,71 @@ describe("useV2Filing / useV2DocumentVersion", () => {
     });
 });
 
-describe("13F holdings and changes", () => {
-    it("holdings need exactly one scope; the period end is sent only when picked", async () => {
-        vi.mocked(getV2Holdings).mockResolvedValue(V2_HOLDINGS);
+describe("holders, holder changes and a manager's portfolio", () => {
+    it("one source by cursor with the picked period; an empty symbol stays idle", async () => {
+        vi.mocked(getHolders).mockResolvedValue(V2_HOLDERS_13F);
 
-        renderHook(() => useV2HoldingsInfinite({ accession: "0000102909-26-000123", company: "AAPL" }), { wrapper });
+        renderHook(() => useHoldersInfinite({ source: "13f", symbol: "" }), { wrapper });
 
-        renderHook(() => useV2HoldingsInfinite({}), { wrapper });
-
-        const { result } = renderHook(() => useV2HoldingsInfinite({ company: "AAPL", limit: 100, periodEnd: "2026-06-30" }), { wrapper });
+        const { result } = renderHook(() => useHoldersInfinite({ limit: 100, periodEnd: "2026-06-30", source: "13f", symbol: "AAPL" }), { wrapper });
 
         await waitFor(() => expect(result.current.data?.pages).toHaveLength(1));
 
-        expect(getV2Holdings).toHaveBeenCalledTimes(1);
+        expect(getHolders).toHaveBeenCalledTimes(1);
 
-        expect(getV2Holdings).toHaveBeenCalledWith({ data: { apiKey: "test-key", company: "AAPL", cursor: undefined, limit: 100, periodEnd: "2026-06-30" } });
+        expect(getHolders).toHaveBeenCalledWith({
+            data: { apiKey: "test-key", cursor: undefined, instruments: undefined, limit: 100, periodEnd: "2026-06-30", source: "13f", symbol: "AAPL" },
+        });
 
         expect(result.current.data?.pages[0].meta).toMatchObject({ counting: expect.any(String), pinned_at: "2026-11-09T06:00:00Z" });
     });
 
-    it("changes ask by company and the picked period", async () => {
-        vi.mocked(getV2HoldingChanges).mockResolvedValue({ data: [], has_more: false, meta: {}, next_cursor: null });
+    it("issuer files never send a period; the overview sends no source and no cursor", async () => {
+        vi.mocked(getHolders).mockResolvedValue(V2_HOLDERS_OVERVIEW);
 
-        const { result } = renderHook(() => useV2HoldingChangesInfinite({ company: "AAPL", limit: 100 }), { wrapper });
+        const issuer = renderHook(() => useHoldersInfinite({ periodEnd: "2026-06-30", source: "issuer_file", symbol: "NVDA" }), { wrapper });
+
+        await waitFor(() => expect(issuer.result.current.data).not.toBeNull());
+
+        expect(vi.mocked(getHolders).mock.lastCall?.[0]?.data).toMatchObject({ periodEnd: undefined, source: "issuer_file" });
+
+        const overview = renderHook(() => useHoldersInfinite({ limit: 25, symbol: "NVDA" }), { wrapper });
+
+        await waitFor(() => expect(overview.result.current.data).not.toBeNull());
+
+        expect(vi.mocked(getHolders).mock.lastCall?.[0]?.data).toMatchObject({ cursor: undefined, limit: 25, source: undefined, symbol: "NVDA" });
+
+        expect(overview.result.current.hasNextPage).toBe(false);
+    });
+
+    it("changes ask by symbol and the picked period; the portfolio by CIK, idle without one", async () => {
+        vi.mocked(getHolderChanges).mockResolvedValue({ data: [], has_more: false, meta: {}, next_cursor: null });
+
+        vi.mocked(getFilerHoldings).mockResolvedValue({ data: [], has_more: false, meta: {}, next_cursor: null });
+
+        const { result } = renderHook(() => useHolderChangesInfinite({ limit: 100, symbol: "AAPL" }), { wrapper });
 
         await waitFor(() => expect(result.current.data).not.toBeNull());
 
-        expect(getV2HoldingChanges).toHaveBeenCalledWith({ data: { apiKey: "test-key", company: "AAPL", cursor: undefined, limit: 100 } });
+        expect(getHolderChanges).toHaveBeenCalledWith({ data: { apiKey: "test-key", cursor: undefined, limit: 100, symbol: "AAPL" } });
+
+        renderHook(() => useFilerHoldingsInfinite({ cik: "" }), { wrapper });
+
+        const portfolio = renderHook(() => useFilerHoldingsInfinite({ cik: "102909", periodEnd: "2026-09-30" }), { wrapper });
+
+        await waitFor(() => expect(portfolio.result.current.data).not.toBeNull());
+
+        expect(getFilerHoldings).toHaveBeenCalledTimes(1);
+
+        expect(getFilerHoldings).toHaveBeenCalledWith({ data: { apiKey: "test-key", cik: "102909", cursor: undefined, periodEnd: "2026-09-30" } });
     });
 
     it("a pending first page is asked again every 30 s; partial / complete are not", () => {
-        const state = (page: typeof V2_HOLDINGS) => ({ state: { data: { pageParams: [null], pages: [page] } } });
+        const state = (page: typeof V2_HOLDERS_13F) => ({ state: { data: { pageParams: [null], pages: [page] } } });
 
-        expect(refetchWhileCoveragePending(state(V2_HOLDINGS_PENDING))).toBe(30_000);
+        expect(refetchWhileCoveragePending(state(V2_HOLDERS_PENDING))).toBe(30_000);
 
-        expect(refetchWhileCoveragePending(state(V2_HOLDINGS))).toBe(false);
+        expect(refetchWhileCoveragePending(state(V2_HOLDERS_13F))).toBe(false);
 
         expect(refetchWhileCoveragePending({ state: {} })).toBe(false);
     });

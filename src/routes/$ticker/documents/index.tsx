@@ -47,13 +47,13 @@ const SEARCH_SOURCES = [
 
 type SearchSource = (typeof SEARCH_SOURCES)[number]["value"];
 
-/** SEC filing search scoped to the company (`company=<ticker>`). */
+/** SEC filing search scoped to the company (`symbol=<ticker>`). */
 function SecFilingsSource({ ticker }: { ticker: string }) {
     const [target, setTarget] = React.useState<null | SecPanelTarget>(null);
 
     return (
         <>
-            <SecFilingSearch company={ticker} onOpen={setTarget} />
+            <SecFilingSearch onOpen={setTarget} symbol={ticker} />
             <SecSourceDialog onClose={() => setTarget(null)} target={target} />
         </>
     );

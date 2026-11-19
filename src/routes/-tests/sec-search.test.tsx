@@ -135,7 +135,7 @@ describe("SecFilingSearch", () => {
     it("sends lexical by default and literal + case_sensitive with Exact, scoped to the company", () => {
         vi.mocked(useV2FilingSearchInfinite).mockReturnValue(idle as unknown as ReturnType<typeof useV2FilingSearchInfinite>);
 
-        render(<SecFilingSearch company="AAPL" onOpen={() => undefined} />);
+        render(<SecFilingSearch onOpen={() => undefined} symbol="AAPL" />);
 
         fireEvent.change(screen.getByLabelText("Search this company's SEC filings"), { target: { value: "going concern" } });
 
@@ -143,9 +143,9 @@ describe("SecFilingSearch", () => {
 
         expect(vi.mocked(useV2FilingSearchInfinite)).toHaveBeenLastCalledWith(expect.objectContaining({
             caseSensitive: undefined,
-            company: "AAPL",
             mode: "lexical",
             q: "going concern",
+            symbol: "AAPL",
         }));
 
         fireEvent.click(screen.getByRole("button", { name: "Exact" }));
@@ -157,10 +157,10 @@ describe("SecFilingSearch", () => {
         expect(vi.mocked(useV2FilingSearchInfinite)).toHaveBeenLastCalledWith(expect.objectContaining({ caseSensitive: false, mode: "literal" }));
     });
 
-    it("without a company nothing can be submitted", () => {
+    it("without a symbol nothing can be submitted", () => {
         vi.mocked(useV2FilingSearchInfinite).mockReturnValue(idle as unknown as ReturnType<typeof useV2FilingSearchInfinite>);
 
-        render(<SecFilingSearch company="" onOpen={() => undefined} />);
+        render(<SecFilingSearch onOpen={() => undefined} symbol="" />);
 
         fireEvent.change(screen.getByLabelText("Search this company's SEC filings"), { target: { value: "going concern" } });
 

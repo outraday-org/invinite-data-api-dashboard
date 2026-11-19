@@ -3,19 +3,21 @@
  * holdings, insider trades, IPOs): the filings rows, the 10-K manifest and the document version are the API mappers'
  * output over their recorded door fixtures of 2026-11-09 (`invinite-data-api/src/lib/v1/sec/fixtures/`, trimmed); the
  * filer page and the search page are the pinned spec's captured examples (`openapi.json`, 2026-11-11; the listed
- * filer added); holdings, changes, insider trades and IPOs are written in the contract's shape.
+ * filer added); holders, changes, fund compositions, insider trades and IPOs are written in the contract's shape (Data API
+ * 7.0 for the holder and fund rows).
  */
 import type {
     V2DocumentVersionResponse,
-    V2EtfHoldingsResponse,
-    V2EtfWeightsResponse,
+    V2FilerHoldingsResponse,
     V2FilersResponse,
     V2FilingDetailResponse,
     V2FilingSearchResponse,
     V2FilingsResponse,
-    V2FundHoldingsResponse,
-    V2HoldingChangesResponse,
-    V2HoldingsResponse,
+    V2FundPositionsResponse,
+    V2FundWeightsResponse,
+    V2Holder,
+    V2HolderChangesResponse,
+    V2HoldersResponse,
     V2InsiderTradesResponse,
     V2IposResponse,
     V2OfferingsResponse,
@@ -32,10 +34,12 @@ export const V2_FILINGS: V2FilingsResponse = {
             filed_at: "2026-11-06T21:30:47Z",
             filing_date: "2026-11-06",
             form: "424B2",
+            fund: null,
             items: [],
             primary_document: "ny20084621x2_424b2.htm",
             report_date: null,
             roles: ["filer", "listed"],
+            symbol: "AAPL",
         },
         {
             accession: "0000320193-26-000026",
@@ -44,10 +48,12 @@ export const V2_FILINGS: V2FilingsResponse = {
             filed_at: "2026-11-03T13:05:15Z",
             filing_date: "2026-11-03",
             form: "10-K",
+            fund: null,
             items: [],
             primary_document: "aapl-20260926.htm",
             report_date: "2026-09-26",
             roles: ["filer", "listed"],
+            symbol: "AAPL",
         },
     ],
     has_more: true,
@@ -135,117 +141,219 @@ export const V2_DOCUMENT_VERSION: V2DocumentVersionResponse = {
     },
 };
 
-export const V2_HOLDINGS: V2HoldingsResponse = {
-    data: [{
-        accession_number: "0000102909-26-000123",
-        calendar_quarter: 3,
-        calendar_year: 2026,
-        cik_company: "0000320193",
-        cik_institution: "0000102909",
-        cusip_company: "037833100",
-        dollar_value: 412_000_000_000,
-        filing_date: "2026-11-13",
-        link_to_filing_details: "https://www.sec.gov/Archives/edgar/data/102909/000010290926000123/0000102909-26-000123-index.htm",
-        name_company: "Apple Inc.",
-        name_institution: "VANGUARD GROUP INC",
-        period_end: "2026-09-30",
-        put_call: null,
-        shares_or_principal_amount: 1_390_000_000,
-        shares_or_principal_amount_type: "SH",
-        ticker_company: "AAPL",
-    }],
+const AAPL_SECURITY = { cik: "0000320193", cusip: "037833100", fund_key: null, isin: null, name: "Apple Inc.", resolution: "cusip", symbol: "AAPL" };
+
+const VANGUARD = {
+    cik: "0000102909",
+    class_tickers: [],
+    fund_key: null,
+    issuer_file_as_of: null,
+    name: "VANGUARD GROUP INC",
+    registrant_name: null,
+    series_id: null,
+    symbols: [],
+    type: "institution" as const,
+};
+
+const THIRTEEN_F_ROW: V2Holder = {
+    accession_number: "0000102909-26-000123",
+    as_of: "2026-09-30",
+    asset_cat: null,
+    filing_date: "2026-11-13",
+    filing_url: "https://www.sec.gov/Archives/edgar/data/102909/000010290926000123/0000102909-26-000123-index.htm",
+    holder: VANGUARD,
+    investment_discretion: "SOLE",
+    put_call: null,
+    security: AAPL_SECURITY,
+    shares: 1_390_000_000,
+    shares_type: "SH",
+    source: "13f",
+    value_usd: 412_000_000_000,
+    voting_authority: { none: 0, shared: 0, sole: 1_390_000_000 },
+    weight_pct: null,
+};
+
+/** An N-PORT row of a listed fund that also has an issuer file (`issuer_file_as_of`, owner decision 12). */
+const NPORT_VOO_ROW: V2Holder = {
+    accession_number: "0001752724-26-123456",
+    as_of: "2026-06-30",
+    asset_cat: "EC",
+    filing_date: "2026-08-28",
+    filing_url: null,
+    holder: {
+        cik: "0000036405",
+        class_tickers: ["VFIAX", "VOO"],
+        fund_key: "S000002277",
+        issuer_file_as_of: "2026-10-31",
+        name: "Vanguard 500 Index Fund",
+        registrant_name: "Vanguard Index Funds",
+        series_id: "S000002277",
+        symbols: ["VOO"],
+        type: "fund",
+    },
+    investment_discretion: null,
+    put_call: null,
+    security: AAPL_SECURITY,
+    shares: 550_000_000,
+    shares_type: "NS",
+    source: "nport",
+    value_usd: 98_765_432_100,
+    voting_authority: null,
+    weight_pct: 7.12,
+};
+
+/** An unlisted fund is a holder row only (decision 13): `symbols: []`, no link. */
+const NPORT_UNLISTED_ROW: V2Holder = {
+    ...NPORT_VOO_ROW,
+    accession_number: "0000035315-26-000777",
+    holder: {
+        cik: "0000035315",
+        class_tickers: ["FCNTX"],
+        fund_key: "S000006037",
+        issuer_file_as_of: null,
+        name: "Fidelity Contrafund",
+        registrant_name: "Fidelity Contrafund",
+        series_id: "S000006037",
+        symbols: [],
+        type: "fund",
+    },
+    shares: 120_000_000,
+    value_usd: 21_000_000_000,
+    weight_pct: 9.4,
+};
+
+const ISSUER_FILE_SPY_ROW: V2Holder = {
+    accession_number: null,
+    as_of: "2026-11-13",
+    asset_cat: null,
+    filing_date: null,
+    filing_url: null,
+    holder: {
+        cik: "0000884394",
+        class_tickers: ["SPY"],
+        fund_key: "cik:884394",
+        issuer_file_as_of: null,
+        name: "SPDR S&P 500 ETF Trust",
+        registrant_name: "SPDR S&P 500 ETF Trust",
+        series_id: null,
+        symbols: ["SPY"],
+        type: "fund",
+    },
+    investment_discretion: null,
+    put_call: null,
+    security: AAPL_SECURITY,
+    shares: 170_000_000,
+    shares_type: "SH",
+    source: "issuer_file",
+    value_usd: 46_100_000_000,
+    voting_authority: null,
+    weight_pct: 6.52,
+};
+
+/** `GET /v1/holders?symbol=AAPL&source=13f`. */
+export const V2_HOLDERS_13F: V2HoldersResponse = {
+    data: [THIRTEEN_F_ROW],
     has_more: false,
     meta: {
         counting: "One row per manager and security; options and principal amounts excluded unless instruments=all",
         coverage: { state: "complete", through: "2026-09-30" },
         pinned_at: "2026-11-09T06:00:00Z",
-        source: { fetched_at: "2026-11-09T06:00:00Z" },
+        sections: null,
+        source: "13f",
     },
     next_cursor: null,
 };
 
-/** `/v1/fund-holdings?company=` (release 5.7): one row per N-PORT fund, its latest report; a unit trust is keyed `cik:`. */
-export const V2_FUND_HOLDINGS: V2FundHoldingsResponse = {
-    data: [
-        {
-            accession_number: "0001752724-26-123456",
-            asset_cat: "EC",
-            balance: 550_000_000,
-            class_tickers: ["VFIAX", "VOO"],
-            cusip: null,
-            fund_key: "S000002277",
-            isin: null,
-            issuer_cik: "0000320193",
-            issuer_name: "Apple Inc.",
-            issuer_resolution: "cusip_cache",
-            pct_nav: 7.12,
-            registrant_cik: "0000036405",
-            registrant_name: "Vanguard Index Funds",
-            report_date: "2026-06-30",
-            series_id: "S000002277",
-            series_name: "Vanguard 500 Index Fund",
-            ticker: "AAPL",
-            unit: "NS",
-            value_usd: 98_765_432_100,
-        },
-        {
-            accession_number: "0001410368-26-089410",
-            asset_cat: "EC",
-            balance: 285_000_000,
-            class_tickers: ["SPY"],
-            cusip: null,
-            fund_key: "cik:884394",
-            isin: null,
-            issuer_cik: "0000320193",
-            issuer_name: "Apple Inc.",
-            issuer_resolution: "cusip_cache",
-            pct_nav: 7.05,
-            registrant_cik: "0000884394",
-            registrant_name: "SPDR S&P 500 ETF Trust",
-            report_date: "2026-06-30",
-            series_id: null,
-            series_name: "N/A",
-            ticker: "AAPL",
-            unit: "NS",
-            value_usd: 51_234_567_890,
-        },
-    ],
+/** `GET /v1/holders?symbol=AAPL&source=nport`: a listed fund (link) and an unlisted one (text). */
+export const V2_HOLDERS_NPORT: V2HoldersResponse = {
+    data: [NPORT_VOO_ROW, NPORT_UNLISTED_ROW],
     has_more: false,
     meta: {
         counting: "One row per fund from its latest public N-PORT report on or before period_end",
         coverage: { state: "complete" },
         pinned_at: "2026-11-14T12:00:00Z",
+        sections: null,
+        source: "nport",
     },
     next_cursor: null,
 };
 
-export const V2_HOLDINGS_PENDING: V2HoldingsResponse = {
-    data: [],
+/** `GET /v1/holders?symbol=AAPL&source=issuer_file`: only the ETFs with an issuer file. */
+export const V2_HOLDERS_ISSUER_FILE: V2HoldersResponse = {
+    data: [ISSUER_FILE_SPY_ROW],
     has_more: false,
-    meta: { coverage: { retry_after_s: 60, state: "pending" } },
+    meta: { coverage: { state: "complete" }, funds_with_issuer_file: 7, reason: null, sections: null, snapshot_changed: false, source: "issuer_file" },
     next_cursor: null,
 };
 
-export const V2_HOLDING_CHANGES: V2HoldingChangesResponse = {
+/** `GET /v1/holders?symbol=AAPL` (no `source`): the overview, one section per source, rows one after another. */
+export const V2_HOLDERS_OVERVIEW: V2HoldersResponse = {
+    data: [THIRTEEN_F_ROW, NPORT_VOO_ROW, ISSUER_FILE_SPY_ROW],
+    has_more: false,
+    meta: {
+        coverage: { state: "complete" },
+        pinned_at: "2026-11-14T12:00:00Z",
+        sections: [
+            { as_of: "2026-09-30", has_more: true, reason: null, rows: 1, source: "13f", state: "complete", total: null },
+            { as_of: "2026-06-30", has_more: true, reason: null, rows: 1, source: "nport", state: "complete", total: 774 },
+            { as_of: "2026-11-13", has_more: false, reason: null, rows: 1, source: "issuer_file", state: "complete", total: 1 },
+        ],
+        source: null,
+    },
+    next_cursor: null,
+};
+
+/** SQQQ-type overview: a source that cannot tell the fund apart from its trust is a section state, not a failure. */
+export const V2_HOLDERS_OVERVIEW_NOT_COVERED: V2HoldersResponse = {
+    data: [],
+    has_more: false,
+    meta: {
+        sections: [
+            { as_of: null, has_more: false, reason: "fund_cusip_unknown", rows: 0, source: "13f", state: "not_covered", total: null },
+            { as_of: null, has_more: false, reason: null, rows: 0, source: "nport", state: "unavailable", total: null },
+            { as_of: null, has_more: false, reason: "no_etf_holders", rows: 0, source: "issuer_file", state: "not_covered", total: 0 },
+        ],
+        source: null,
+    },
+    next_cursor: null,
+};
+
+export const V2_HOLDERS_PENDING: V2HoldersResponse = {
+    data: [],
+    has_more: false,
+    meta: { coverage: { retry_after_s: 60, state: "pending" }, source: "13f" },
+    next_cursor: null,
+};
+
+/** `GET /v1/filers/102909/holdings`: a manager's portfolio, the same `Holder` row. */
+export const V2_FILER_HOLDINGS: V2FilerHoldingsResponse = {
+    data: [THIRTEEN_F_ROW],
+    has_more: false,
+    meta: {
+        counting: "One row per manager and security; options and principal amounts excluded unless instruments=all",
+        coverage: { state: "complete", through: "2026-09-30" },
+        pinned_at: "2026-11-09T06:00:00Z",
+    },
+    next_cursor: null,
+};
+
+export const V2_HOLDER_CHANGES: V2HolderChangesResponse = {
     data: [{
         accession_number: "0000102909-26-000123",
-        calendar_quarter: 3,
-        calendar_year: 2026,
-        change_dollar_value: 1_500_000_000,
-        change_shares_or_principal_amount_absolute: 5_000_000,
-        change_shares_or_principal_amount_percent: 0.0036,
-        cik_company: "0000320193",
-        cik_institution: "0000102909",
-        cusip_company: "037833100",
-        dollar_value: 412_000_000_000,
+        as_of: "2026-09-30",
         filing_date: null,
-        name_institution: "VANGUARD GROUP INC",
-        period_end: "2026-09-30",
-        shares_or_principal_amount_new: 1_390_000_000,
-        shares_or_principal_amount_old: 1_385_000_000,
-        shares_or_principal_amount_type: "SH",
-        ticker_company: "AAPL",
+        holder: VANGUARD,
+        prior_as_of: "2026-06-30",
+        put_call: null,
+        security: AAPL_SECURITY,
+        shares: 1_390_000_000,
+        shares_change: 5_000_000,
+        shares_change_pct: 0.0036,
+        shares_prior: 1_385_000_000,
+        shares_type: "SH",
         type: "added",
+        value_change_usd: 1_500_000_000,
+        value_usd: 412_000_000_000,
     }],
     has_more: false,
     meta: { coverage: { state: "partial" } },
@@ -450,7 +558,7 @@ export const V2_FILERS: V2FilersResponse = {
     next_cursor: null,
 };
 
-/** `GET /v1/search/filings?q=supply%20chain%20risk&company=AAPL` (the spec example): a partial index. */
+/** `GET /v1/search/filings?q=supply%20chain%20risk&symbol=AAPL` (the spec example of 6.4): a partial index. */
 export const V2_FILING_SEARCH: V2FilingSearchResponse = {
     data: [{
         accession: "0000320193-25-000079",
@@ -577,13 +685,17 @@ export const V2_OFFERINGS: V2OfferingsResponse = {
     next_cursor: "eyJ2IjoyfQ",
 };
 
-const SPY_DAY = { as_of: "2026-11-13", etf_symbol: "SPY", source: "issuer_daily" as const };
+const SPY_FUND = { fund_key: "cik:884394", name: "SPDR S&P 500 ETF Trust", symbol: "SPY" };
 
-/** `GET /v1/etf-holdings?etf=SPY` (release 5.10, written in the contract's shape): the issuer's daily file. */
-export const V2_ETF_HOLDINGS: V2EtfHoldingsResponse = {
+const SPY_DAY = { as_of: "2026-11-13", fund: SPY_FUND, source: "issuer_daily" as const };
+
+const security = (name: string, symbol: null | string) => ({ cik: null, cusip: null, isin: null, name, resolution: null, sedol: null, symbol });
+
+/** `GET /v1/funds/SPY/holdings` (Data API 7.0, written in the contract's shape): the issuer's daily file. */
+export const V2_FUND_POSITIONS: V2FundPositionsResponse = {
     data: [
-        { ...SPY_DAY, asset_class: "equity", etf_name: "SPDR S&P 500 ETF Trust", market_value_usd: 52_400_000_000, name: "NVIDIA CORP", shares: 290_000_000, ticker: "NVDA", weight_pct: 7.41 },
-        { ...SPY_DAY, asset_class: "equity", etf_name: "SPDR S&P 500 ETF Trust", market_value_usd: 46_100_000_000, name: "APPLE INC", shares: 170_000_000, ticker: "AAPL", weight_pct: 6.52 },
+        { ...SPY_DAY, asset_class: "equity", market_value_usd: 52_400_000_000, security: security("NVIDIA CORP", "NVDA"), shares: 290_000_000, weight_pct: 7.41 },
+        { ...SPY_DAY, asset_class: "equity", market_value_usd: 46_100_000_000, security: security("APPLE INC", "AAPL"), shares: 170_000_000, weight_pct: 6.52 },
     ],
     has_more: true,
     meta: {
@@ -608,36 +720,34 @@ export const V2_ETF_HOLDINGS: V2EtfHoldingsResponse = {
 };
 
 /** TQQQ: swap and futures lines carry a notional exposure, no weight. */
-export const V2_ETF_HOLDINGS_LEVERAGED: V2EtfHoldingsResponse = {
+export const V2_FUND_POSITIONS_LEVERAGED: V2FundPositionsResponse = {
     data: [
-        { as_of: "2026-11-13", asset_class: "derivative", etf_symbol: "TQQQ", market_value_usd: 1_200_000, name: "NASDAQ 100 INDEX SWAP", notional_value_usd: 9_800_000_000, source: "issuer_daily", weight_pct: null },
+        {
+            as_of: "2026-11-13",
+            asset_class: "derivative",
+            fund: { fund_key: "S000024908", name: "ProShares UltraPro QQQ", symbol: "TQQQ" },
+            market_value_usd: 1_200_000,
+            notional_value_usd: 9_800_000_000,
+            security: security("NASDAQ 100 INDEX SWAP", null),
+            source: "issuer_daily",
+            weight_pct: null,
+        },
     ],
     has_more: false,
     meta: { as_of: "2026-11-13", coverage: { state: "complete" }, reason: null, source: "issuer_daily" },
     next_cursor: null,
 };
 
-/** GLD: a single-asset trust answers no rows by design. */
-export const V2_ETF_HOLDINGS_SINGLE_ASSET: V2EtfHoldingsResponse = {
+/** A fund the store still treats as a single-asset trust (drift; an exchange-traded trust never asks): no rows by design. */
+export const V2_FUND_POSITIONS_SINGLE_ASSET: V2FundPositionsResponse = {
     data: [],
     has_more: false,
     meta: { as_of: "2026-11-13", coverage: { state: "complete" }, reason: "single_asset_trust", source: "issuer_daily" },
     next_cursor: null,
 };
 
-/** `GET /v1/etf-holdings?company=NVDA`: the ETFs whose head issuer file holds it (each row its own source + as-of). */
-export const V2_ETF_HOLDERS: V2EtfHoldingsResponse = {
-    data: [
-        { ...SPY_DAY, etf_name: "SPDR S&P 500 ETF Trust", market_value_usd: 52_400_000_000, name: "NVIDIA CORP", shares: 290_000_000, ticker: "NVDA", weight_pct: 7.41 },
-        { as_of: "2026-10-31", etf_name: "Vanguard S&P 500 ETF", etf_symbol: "VOO", market_value_usd: 48_000_000_000, name: "NVIDIA CORP", shares: 265_000_000, source: "issuer_monthly", ticker: "NVDA", weight_pct: 7.2 },
-    ],
-    has_more: false,
-    meta: { as_of: null, composition: null, coverage: { state: "complete" }, issuer_sourced_etfs: 412, reason: null, source: null },
-    next_cursor: null,
-};
-
-/** `GET /v1/etf-weights?etf=SPY`: sector (issuer-stated), country (mixed basis), an Unclassified bucket. */
-export const V2_ETF_WEIGHTS: V2EtfWeightsResponse = {
+/** `GET /v1/funds/SPY/weights`: sector (issuer-stated), country (mixed basis), an Unclassified bucket. */
+export const V2_FUND_WEIGHTS: V2FundWeightsResponse = {
     data: [
         { ...SPY_DAY, basis: "issuer_stated", bucket: "Information Technology", dimension: "sector", positions: 68, weight_pct: 31.2 },
         { ...SPY_DAY, basis: "issuer_stated", bucket: "Financials", dimension: "sector", positions: 72, weight_pct: 13.1 },

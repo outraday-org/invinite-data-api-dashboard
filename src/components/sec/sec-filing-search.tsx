@@ -155,11 +155,11 @@ export function SecSearchResults({
 }
 
 /**
- * SEC filing search over one company (`/v1/search/filings?company=`, 100 credits a page): keywords (`lexical`, default) or exact
+ * SEC filing search over one company (`/v1/search/filings?symbol=`, 100 credits a page): keywords (`lexical`, default) or exact
  * text (`literal`, + "Match case"). Runs on submit; a mode chip re-runs the submitted query. A hit opens its cited
  * version / block in the source panel.
  */
-export function SecFilingSearch({ company, onOpen }: { company: string; onOpen: (target: SecPanelTarget) => void }) {
+export function SecFilingSearch({ onOpen, symbol }: { onOpen: (target: SecPanelTarget) => void; symbol: string }) {
     const [draft, setDraft] = React.useState("");
 
     const [query, setQuery] = React.useState("");
@@ -170,14 +170,14 @@ export function SecFilingSearch({ company, onOpen }: { company: string; onOpen: 
 
     const result = useV2FilingSearchInfinite({
         caseSensitive: mode === "literal" ? matchCase : undefined,
-        // No company = no request (a search must stay scoped to this company).
-        company,
         limit: SEARCH_LIMIT,
         mode,
         q: query,
+        // No symbol = no request (a search must stay scoped to this company).
+        symbol,
     });
 
-    const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH && company.trim().length > 0;
+    const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH && symbol.trim().length > 0;
 
     const submit = (event: React.FormEvent) => {
         event.preventDefault();

@@ -1,12 +1,22 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { changePercentText, HolderChangesList, HoldersList, HoldersOverview } from "@/components/sec/holder-views";
 import { ApiRequestError } from "@/lib/api/errors";
 import { formatEnDateTime } from "@/lib/date";
-import { V2_FUND_HOLDINGS, V2_HOLDING_CHANGES, V2_HOLDINGS, V2_HOLDINGS_PENDING, V2_INSIDER_TRADES, V2_IPOS } from "@/lib/sec/v2-fixtures";
+import {
+    V2_HOLDER_CHANGES,
+    V2_HOLDERS_13F,
+    V2_HOLDERS_ISSUER_FILE,
+    V2_HOLDERS_NPORT,
+    V2_HOLDERS_OVERVIEW,
+    V2_HOLDERS_OVERVIEW_NOT_COVERED,
+    V2_HOLDERS_PENDING,
+    V2_INSIDER_TRADES,
+    V2_IPOS,
+} from "@/lib/sec/v2-fixtures";
 import { insiderRoles, InsiderTradesView } from "@/routes/$ticker/insider-trades/index";
-import { changePercentText, FundHoldingsList, HoldingChangesList, HoldingsList } from "@/routes/$ticker/institutions/index";
 import { ipoIssuerCik, IposView, ipoSymbolText, offerPriceText } from "@/routes/$ticker/ipos/index";
 
 // The page modules' routes need a router; the pure views do not.
@@ -19,10 +29,6 @@ vi.mock("@tanstack/react-router", () => ({
 
 // Keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
-    useV2EtfHoldingsInfinite: vi.fn(),
-    useV2FundHoldingsInfinite: vi.fn(),
-    useV2HoldingChangesInfinite: vi.fn(),
-    useV2HoldingsInfinite: vi.fn(),
     useV2InsiderTradesInfinite: vi.fn(),
     useV2IposInfinite: vi.fn(),
 }));
@@ -33,13 +39,15 @@ const list = { hasNextPage: false, isFetchingNextPage: false, isLoading: false, 
 
 const problem = (status: number, code: string, detail: string) => new ApiRequestError(status, { error: code, message: detail });
 
-describe("Institutions (`/v1/holdings`, `/v1/holding-changes`)", () => {
-    it("ownership rows name the institution; the line shows coverage through, the snapshot and the counting rule", () => {
-        render(<HoldingsList state={{ ...list, error: null, pages: [V2_HOLDINGS] }} />);
+describe("Holders, one source (`/v1/holders?source=`)", () => {
+    it("13F: the manager, value, the line with coverage through, the snapshot and the counting rule; no fund weight column", () => {
+        render(<HoldersList source="13f" state={{ ...list, error: null, pages: [V2_HOLDERS_13F] }} />);
 
         expect(screen.getByText("VANGUARD GROUP INC")).toHaveAttribute("title", "CIK 0000102909");
 
-        expect(screen.getByText("$412,000,000,000.00")).toBeInTheDocument();
+        expect(screen.getByText("$412,000,000,000")).toBeInTheDocument();
+
+        expect(screen.queryByText("% of Fund")).toBeNull();
 
         const line = screen.getByTestId("v2-meta-line");
 
@@ -49,11 +57,41 @@ describe("Institutions (`/v1/holdings`, `/v1/holding-changes`)", () => {
 
         expect(within(line).getByText(/^Snapshot /)).toBeInTheDocument();
 
-        expect(within(line).getByText(V2_HOLDINGS.meta.counting!)).toBeInTheDocument();
+        expect(within(line).getByText(V2_HOLDERS_13F.meta.counting!)).toBeInTheDocument();
+    });
+
+    it("N-PORT: a listed fund links to its page and names its fresher issuer file; an unlisted fund is text only", () => {
+        render(<HoldersList source="nport" state={{ ...list, error: null, pages: [V2_HOLDERS_NPORT] }} />);
+
+        expect(screen.getByRole("link", { name: "Vanguard 500 Index Fund" })).toHaveAttribute("href", "/VOO");
+
+        expect(screen.getByText("Issuer file 2026-10-31")).toBeInTheDocument();
+
+        expect(screen.getByText("Fidelity Contrafund").closest("a")).toBeNull();
+
+        expect(screen.getByText("VOO")).toBeInTheDocument();
+
+        expect(screen.getByText("FCNTX")).toBeInTheDocument();
+
+        expect(screen.getByText("7.12%")).toBeInTheDocument();
+    });
+
+    it("issuer files: the scope line says it is not every ETF", () => {
+        render(<HoldersList source="issuer_file" state={{ ...list, error: null, pages: [V2_HOLDERS_ISSUER_FILE] }} />);
+
+        expect(screen.getByRole("link", { name: "SPDR S&P 500 ETF Trust" })).toHaveAttribute("href", "/SPY");
+
+        expect(screen.getByTestId("holders-note")).toHaveTextContent("7 ETFs — not every ETF");
+
+        cleanup();
+
+        render(<HoldersList source="issuer_file" state={{ ...list, error: null, pages: [{ ...V2_HOLDERS_ISSUER_FILE, data: [] }] }} />);
+
+        expect(screen.getByText("No ETF with an issuer holdings file holds this security.")).toBeInTheDocument();
     });
 
     it("pending coverage: the pending notice, never 'No institutional holders'", () => {
-        render(<HoldingsList state={{ ...list, error: null, pages: [V2_HOLDINGS_PENDING] }} />);
+        render(<HoldersList source="13f" state={{ ...list, error: null, pages: [V2_HOLDERS_PENDING] }} />);
 
         expect(screen.getByText("Being prepared — asked again in 30 s")).toBeInTheDocument();
 
@@ -61,13 +99,77 @@ describe("Institutions (`/v1/holdings`, `/v1/holding-changes`)", () => {
     });
 
     it("a complete empty answer is a genuine empty", () => {
-        render(<HoldingsList state={{ ...list, error: null, pages: [{ ...V2_HOLDINGS, data: [] }] }} />);
+        render(<HoldersList source="13f" state={{ ...list, error: null, pages: [{ ...V2_HOLDERS_13F, data: [] }] }} />);
 
         expect(screen.getByText("No institutional holders reported for this quarter.")).toBeInTheDocument();
     });
 
-    it("changes: type label, the fraction as a percent, a null filing date as a dash, partial coverage notice", () => {
-        render(<HoldingChangesList state={{ ...list, error: null, pages: [V2_HOLDING_CHANGES] }} />);
+    it("503 unavailable and 404 not_covered are states", () => {
+        const { unmount } = render(<HolderChangesList state={{ ...list, error: problem(503, "unavailable", "The research provider is switched off"), pages: [] }} />);
+
+        expect(screen.getByText("This SEC capability is not switched on yet")).toBeInTheDocument();
+
+        expect(screen.getByText("The research provider is switched off")).toBeInTheDocument();
+
+        unmount();
+
+        render(<HoldersList source="nport" state={{ ...list, error: problem(404, "not_covered", "Holders of SQQQ cannot be told apart from its trust's other funds yet"), pages: [] }} />);
+
+        expect(screen.getByText("Not known to the SEC store")).toBeInTheDocument();
+    });
+});
+
+describe("Holders overview (`/v1/holders` without `source`, owner decision 12)", () => {
+    it("one section per source with its own state, as-of and count; rows never merged; 'Show all' opens the source", () => {
+        const onShowAll = vi.fn();
+
+        render(<HoldersOverview onShowAll={onShowAll} state={{ ...list, error: null, pages: [V2_HOLDERS_OVERVIEW] }} />);
+
+        const thirteenF = screen.getByTestId("holders-section-13f");
+
+        expect(within(thirteenF).getByText("Institutions (13F)")).toBeInTheDocument();
+
+        expect(within(thirteenF).getByText("as of 2026-09-30")).toBeInTheDocument();
+
+        expect(within(thirteenF).getByText("1 shown, more available")).toBeInTheDocument();
+
+        expect(within(thirteenF).getByText("VANGUARD GROUP INC")).toBeInTheDocument();
+
+        expect(within(thirteenF).queryByText("Vanguard 500 Index Fund")).toBeNull();
+
+        const nport = screen.getByTestId("holders-section-nport");
+
+        expect(within(nport).getByText("1 shown of 774")).toBeInTheDocument();
+
+        expect(within(nport).getByText("Vanguard 500 Index Fund")).toBeInTheDocument();
+
+        const issuer = screen.getByTestId("holders-section-issuer_file");
+
+        expect(within(issuer).getByText("1 holder")).toBeInTheDocument();
+
+        expect(within(issuer).queryByRole("button", { name: "Show all" })).toBeNull();
+
+        fireEvent.click(within(nport).getByRole("button", { name: "Show all" }));
+
+        expect(onShowAll).toHaveBeenCalledWith("nport");
+    });
+
+    it("a source that cannot answer is a section state with its reason, not a failed page", () => {
+        render(<HoldersOverview onShowAll={() => undefined} state={{ ...list, error: null, pages: [V2_HOLDERS_OVERVIEW_NOT_COVERED] }} />);
+
+        const thirteenF = screen.getByTestId("holders-section-13f");
+
+        expect(within(thirteenF).getByText("Not covered")).toBeInTheDocument();
+
+        expect(within(thirteenF).getByText(/own CUSIP is not known yet/)).toBeInTheDocument();
+
+        expect(within(screen.getByTestId("holders-section-nport")).getByText("Unavailable")).toBeInTheDocument();
+    });
+});
+
+describe("13F changes (`/v1/holder-changes`)", () => {
+    it("type label, the fraction as a percent, a null filing date as a dash, partial coverage notice", () => {
+        render(<HolderChangesList state={{ ...list, error: null, pages: [V2_HOLDER_CHANGES] }} />);
 
         const row = screen.getByText("Added").closest("tr")!;
 
@@ -80,48 +182,8 @@ describe("Institutions (`/v1/holdings`, `/v1/holding-changes`)", () => {
         expect(changePercentText(1)).toBe("+100%");
 
         expect(changePercentText(-1)).toBe("-100%");
-    });
 
-    it("503 unavailable and 404 not_covered are states", () => {
-        const { unmount } = render(<HoldingChangesList state={{ ...list, error: problem(503, "unavailable", "The research provider is switched off"), pages: [] }} />);
-
-        expect(screen.getByText("This SEC capability is not switched on yet")).toBeInTheDocument();
-
-        expect(screen.getByText("The research provider is switched off")).toBeInTheDocument();
-
-        unmount();
-
-        render(<HoldingsList state={{ ...list, error: problem(404, "not_covered", "Unknown company"), pages: [] }} />);
-
-        expect(screen.getByText("Not known to the SEC store")).toBeInTheDocument();
-    });
-});
-
-describe("Institutions: Funds tab (`/v1/fund-holdings`)", () => {
-    it("one row per fund: the series name (a unit trust: its registrant), class tickers, value and percent of the fund", () => {
-        render(<FundHoldingsList state={{ ...list, error: null, pages: [V2_FUND_HOLDINGS] }} />);
-
-        expect(screen.getByText("Vanguard 500 Index Fund")).toHaveAttribute("title", "Vanguard Index Funds · S000002277");
-
-        expect(screen.getByText("SPDR S&P 500 ETF Trust")).toHaveAttribute("title", "SPDR S&P 500 ETF Trust · cik:884394");
-
-        expect(screen.getByText("VFIAX, VOO")).toBeInTheDocument();
-
-        expect(screen.getByText("$98,765,432,100.00")).toBeInTheDocument();
-
-        expect(screen.getByText("7.12%")).toBeInTheDocument();
-    });
-
-    it("a complete empty answer is a genuine empty; 503 is a state", () => {
-        render(<FundHoldingsList state={{ ...list, error: null, pages: [{ ...V2_FUND_HOLDINGS, data: [] }] }} />);
-
-        expect(screen.getByText("No fund reported this company in its latest N-PORT report.")).toBeInTheDocument();
-
-        cleanup();
-
-        render(<FundHoldingsList state={{ ...list, error: problem(503, "unavailable", "Switched off"), pages: [] }} />);
-
-        expect(screen.queryByText(/No fund reported/)).toBeNull();
+        expect(changePercentText(null)).toBe("—");
     });
 });
 

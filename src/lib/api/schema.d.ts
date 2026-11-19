@@ -121,6 +121,114 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/alert-users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List end users
+         * @description The account's end users, ordered by `external_user_id`, each with its limits, effective limits (after the account defaults) and usage. Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        get: operations["listAlertUsers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/alert-users/{external_user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an end user
+         * @description One end user with its limits and usage; 404 when the account has no end user of this id. Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        get: operations["getAlertUser"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete an end user
+         * @description Erases an end user: its live alerts are deleted (without its id, client_reference_id and metadata), its open deliveries are cancelled, and its events, deliveries, fire counters and the end user itself are permanently removed. Answers 200 with `status: deleted`, or `deleting` when the rest is finished in the background (creates for the id answer 409 until then). A pull-feed or WebSocket cursor on a removed event answers like any unknown `after`. 404 when the account knows nothing of the id. Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        delete: operations["deleteAlertUser"];
+        options?: never;
+        head?: never;
+        /**
+         * Create or update an end user
+         * @description Sets the display name, metadata or limits of an end user, and creates it when absent (an upsert). A limit lowered below the current count keeps the existing alerts and refuses new ones (403 `alert_user_limit_reached`). Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        patch: operations["updateAlertUser"];
+        trace?: never;
+    };
+    "/v1/alert-users/{external_user_id}:pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pause an end user
+         * @description Pauses every active or scheduled alert of the end user (and a paused one whose `pause_until` would end its pause) and refuses new alerts and per-alert resumes (403 `alert_user_paused`) until the end user is resumed; the pause never ends by itself. Creates the end user paused when absent. A paused end user answers unchanged; 409 `conflict` while it is being deleted. Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        post: operations["pauseAlertUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/alert-users/{external_user_id}:resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resume an end user
+         * @description The end user is active again and exactly the alerts its pause paused are armed again (scheduled while `trigger.activate_at` lies ahead; a `pause_until` still ahead keeps them quiet until then); an alert paused on its own stays paused. An active end user answers unchanged; 404 for an unknown id, 409 `conflict` while it is being deleted. Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        post: operations["resumeAlertUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/alert-users:batch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create or update end users in bulk
+         * @description Up to 500 upserts, each an `external_user_id` with the fields of `updateAlertUser`. One result per item, in order; a refused item never undoes another. Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        post: operations["batchAlertUsers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/alerts": {
         parameters: {
             query?: never;
@@ -136,7 +244,7 @@ export interface paths {
         put?: never;
         /**
          * Create an alert
-         * @description Creates an alert rule (201). With a `client_reference_id` the create is idempotent: a live alert with the same id is returned as it is (200). Counts against the plan's active-alert quota (403 `plan_required` when full). Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description Creates an alert rule (201). With a `client_reference_id` the create is idempotent: a live alert with the same id is returned as it is (200). Counts against the plan's active-alert quota (403 `plan_required` when full). With `validate_only=true` nothing is written and a valid alert answers 204. Answers 503 `unavailable` while the alerts platform is switched off.
          */
         post: operations["createAlert"];
         delete?: never;
@@ -396,7 +504,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List listed companies */
+        /**
+         * List listed companies
+         * @description Operating companies with a US listing (an instrument of type `stock`); funds are GET /v1/funds, everything exchange-traded GET /v1/instruments.
+         */
         get: operations["listCompanies"];
         put?: never;
         post?: never;
@@ -558,7 +669,7 @@ export interface paths {
         };
         /**
          * List dividends
-         * @description Keyed by ticker: a US ETF of either identity (SPY, TQQQ) answers like a company.
+         * @description Keyed by ticker: every instrument type answers (`symbol=`); a row names its `company` (a stock) or its `fund` (an ETF or closed-end fund); an ETN row carries neither.
          */
         get: operations["listDividends"];
         put?: never;
@@ -612,46 +723,6 @@ export interface paths {
         };
         /** List a document version's sections */
         get: operations["listDocumentSections"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/etf-holdings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List ETF holdings (daily issuer files or N-PORT)
-         * @description The holdings of US ETFs from the freshest source per ETF, always named: the issuer's own daily (or monthly) holdings file where the store reads one, else the fund's latest public N-PORT report (quarter end, about 60 days later). `etf=` lists one ETF's positions (`meta.source`, `meta.as_of`; `as_of=` reads a stored earlier date, `meta.composition.stored_dates` lists them), order `-weight_pct`; `company=` lists the ETFs whose newest issuer file holds the company (one row per ETF, its lines of the company summed; ETFs known only from N-PORT are listed by `/v1/fund-holdings?company=`), order `-market_value_usd`. Exactly one of `etf` or `company`. A single-asset trust (GLD) has no rows by design (`meta.reason: single_asset_trust`). `EtfHolding` is not `FundHolding` (R16): `/v1/fund-holdings` serves filed N-PORT rows per report (with `accession_number` and `report_date`); this collection is the current composition of a listed ETF by ticker and falls back to N-PORT only where no issuer file is read.
-         */
-        get: operations["listEtfHoldings"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/v1/etf-weights": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List ETF sector, country and asset-class weights
-         * @description Sector, country and asset-class weights of one US ETF, from the same composition `/v1/etf-holdings?etf=` answers from (`meta.source`, `meta.as_of`): sector = the issuer's stated sector, else the SEC SIC sector of the holding's issuer; country = the stated location, else the N-PORT country / ISIN prefix / registrant country (each bucket names its `basis`, `mixed` when its positions differ); weights in percent of the fund. `dimension=` one or several of sector, country, asset_class (default all). An ETF without buckets for the chosen source answers `data: []` with `meta.reason: weights_unavailable`; a single-asset trust `meta.reason: single_asset_trust`. Positions themselves: `/v1/etf-holdings`; filed N-PORT rows: `/v1/fund-holdings`.
-         */
-        get: operations["listEtfWeights"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1034,6 +1105,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/filers/{cik}/holding-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a 13F manager's position changes
+         * @description Every quarter-over-quarter position change of one 13F manager between its two effective snapshots (`prior_period_end`, default the quarter before, and `period_end`). Rows are ordered by position. Only proven changes are listed (see GET /v1/holder-changes); a manager without one of the two snapshots answers an empty page with `meta.coverage.state: partial`.
+         */
+        get: operations["listFilerHoldingChanges"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/filers/{cik}/holdings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a 13F manager's holdings
+         * @description One 13F manager's portfolio: its effective snapshot of the quarter (amendments applied), one row per position, order value in USD, descending. A fund registrant that files N-PORT, not 13F, answers 404 naming its funds' GET /v1/funds/{fund}/holdings (listed funds only).
+         */
+        get: operations["listFilerHoldings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/filings": {
         parameters: {
             query?: never;
@@ -1043,7 +1154,7 @@ export interface paths {
         };
         /**
          * List filings
-         * @description A company’s SEC filings by filing date (newest first by default). Several companies are read one after another: all filings of the first company in the request’s order, then the next; `meta.form_facet` sums the forms of the companies read on the page. `items` is applied to the store’s pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false. For a US ETF that is a series of a multi-series trust (TQQQ), only the accessions naming its series (`series_id`) are listed, never the whole trust; an ETF that is its own SEC registrant (SPY, QQQ) lists its registrant's filings.
+         * @description An instrument’s SEC filings by filing date (newest first by default). Several symbols are read one after another: all filings of the first in the request’s order, then the next; `meta.form_facet` sums the forms of the filers read on the page. `items` is applied to the store’s pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false. A stock lists its company's filings; a fund that is its own SEC registrant (SPY, QQQ, PDI, GLD) its registrant's; a series of a multi-series trust (TQQQ) only the trust's accessions naming its series (`series_id`), never the whole trust.
          */
         get: operations["listFilings"];
         put?: never;
@@ -1080,6 +1191,26 @@ export interface paths {
         };
         /** List a filing's numeric facts */
         get: operations["listFilingFacts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/filings/{accession}/holdings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a holdings filing's lines
+         * @description The reported lines of one 13F-HR or NPORT-P filing as filed, in the filing's line order (`meta.family`: 13f or nport). An NPORT-P is served only for a listed fund (an ETF or a closed-end fund); any other fund's report answers 404 (an unlisted fund is a holder row, never a portfolio).
+         */
+        get: operations["listFilingHoldings"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1244,7 +1375,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/fund-holdings": {
+    "/v1/funds": {
         parameters: {
             query?: never;
             header?: never;
@@ -1252,10 +1383,70 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List N-PORT fund holdings
-         * @description N-PORT fund and ETF positions from the funds' quarterly public reports (about 60 days after the report date): by issuer (`company=`, one row per fund holding it, from each fund's latest report on or before `period_end`, its positions in the issuer summed), by fund (`filer=` registrant CIK, `series=` when the registrant files for several funds: that fund's positions) or by filing (`accession=`, an NPORT-P filing's reported holdings as filed); exactly one of `company`, `filer` or `accession` (`series` alone needs `filer`). `period_end` defaults to today. Order: value in USD, descending (`company=`, `filer=`), the filing's line order (`accession=`); several companies are read one after another. A fund row is not a 13F `Holding` (different row type, R16): `/v1/holdings` keeps the 13F managers. ETFs' current composition (daily issuer files, falling back to N-PORT): `/v1/etf-holdings`.
+         * List funds
+         * @description Listed funds: ETFs (`type=etf`; GLD, IBIT and other exchange-traded trusts included, `structure=exchange_traded_trust`) and closed-end funds (`type=closed_end_fund`) with a ticker. A mutual fund without a listing is no resource (it appears only as a holder); an ETN is an instrument only (GET /v1/instruments/{symbol}).
          */
-        get: operations["listFundHoldings"];
+        get: operations["listFunds"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/funds/{fund}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a fund
+         * @description A listed fund's profile: listing, fund key, registrant, net assets (N-PORT), expense ratio (prospectus), advisers and share classes (N-CEN). A stock answers 404 naming its GET /v1/companies/{company}, an ETN naming GET /v1/instruments/{symbol}.
+         */
+        get: operations["getFund"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/funds/{fund}/holdings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a fund's holdings
+         * @description A listed fund's composition from the freshest source, always named: the issuer's own daily (or monthly) holdings file where the store reads one, else the fund's latest public N-PORT report (quarter end, about 60 days later) — `meta.source`, `meta.as_of`, and on every row. `as_of=` reads a stored earlier date (`meta.composition.stored_dates` lists them). Order: weight, descending, then line. Listed funds only (owner decision 2026-11-19): an ETF or closed-end fund by ticker or fund key; a stock answers 404 naming GET /v1/companies/{company}, an ETN GET /v1/instruments/{symbol}, an ETF structured as an exchange-traded trust (GLD, IBIT: a 10-K filer without a holdings report) a 404 naming what is served for it, an unlisted fund a 404 (it appears only as a holder row).
+         */
+        get: operations["listFundPositions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/funds/{fund}/weights": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a fund's sector, country and asset-class weights
+         * @description Sector, country and asset-class weights of one listed fund, from the same composition GET /v1/funds/{fund}/holdings answers from (`meta.source`, `meta.as_of`): sector = the issuer's stated sector, else the SEC SIC sector of the holding's issuer; country = the stated location, else the N-PORT country / ISIN prefix / registrant country (each bucket names its `basis`, `mixed` when its positions differ); weights in percent of the fund. `dimension=` one or several of sector, country, asset_class (default all). No buckets for the chosen source answers `data: []` with `meta.reason: weights_unavailable`. Listed funds only (owner decision 2026-11-19): an ETF or closed-end fund by ticker or fund key; a stock answers 404 naming GET /v1/companies/{company}, an ETN GET /v1/instruments/{symbol}, an ETF structured as an exchange-traded trust (GLD, IBIT: a 10-K filer without a holdings report) a 404 naming what is served for it, an unlisted fund a 404 (it appears only as a holder row).
+         */
+        get: operations["listFundWeights"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1281,7 +1472,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/holding-changes": {
+    "/v1/holder-changes": {
         parameters: {
             query?: never;
             header?: never;
@@ -1289,10 +1480,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List 13F position changes
-         * @description Quarter-over-quarter 13F position changes between `prior_period_end` (default: the quarter before) and `period_end` (default: the newest quarter end whose 13F deadline has passed). `company=` lists every manager’s change of that issuer, `filer=` every change of that manager, both together that manager’s change of the issuer; several values are read one after another. Rows are ordered by manager CIK, then position. Only changes the store can prove are listed: a position whose prior snapshot is missing or incomplete is left out and the page reads `meta.coverage.state: partial`. The store names the issuer of a change by CUSIP only: `name_company` is null, and with `filer=` alone `cik_company` and `ticker_company` are null too (`cusip_company` identifies the security). `type` and the left-out positions are applied to the store’s pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false.
+         * List 13F position changes in a stock or a fund
+         * @description Quarter-over-quarter 13F position changes of one security between `prior_period_end` (default: the quarter before) and `period_end` (default: the newest quarter end whose 13F deadline has passed): every manager's change, or with `filer=` those managers' changes. Rows are ordered by manager CIK, then position. Only changes the store can prove are listed: a position whose prior snapshot is missing or incomplete is left out and the page reads `meta.coverage.state: partial`. `type` and the left-out positions are applied to the store's pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false.
          */
-        get: operations["listHoldingChanges"];
+        get: operations["listHolderChanges"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1301,7 +1492,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/v1/holdings": {
+    "/v1/holders": {
         parameters: {
             query?: never;
             header?: never;
@@ -1309,10 +1500,10 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List 13F holdings
-         * @description 13F positions: by issuer (`company=`), by manager (`filer=`, the manager’s effective snapshot, amendments applied) or by filing (`accession=`, the filing’s information-table lines); exactly one of the three. `period_end` defaults to the newest quarter end whose 13F deadline (45 days) has passed. Order: dollar value, descending (`company=`, `filer=`), the filing’s line order (`accession=`); several companies or managers are read one after another.
+         * List who holds a stock or a fund
+         * @description Who holds one stock or one fund, from three sources with different dates: `13f` = the 13F managers (quarter end, `period_end`), `nport` = the funds' public N-PORT reports (each fund's latest report on or before `period_end`; listed and unlisted funds), `issuer_file` = the ETFs whose own daily / monthly holdings file holds it (the newest file). The sources overlap (a manager's 13F includes its funds' positions; an ETF with an issuer file also files N-PORT, and its N-PORT row names `holder.issuer_file_as_of`), so rows are never merged or summed across sources. Without `source`: the overview — up to `limit` rows (at most 200) of each source, one source after another (13f, nport, issuer_file), each source's `as_of`, `total` and `has_more` in `meta.sections`; no cursor. With `source`: that source's full list, paged. Order: value in USD, descending.
          */
-        get: operations["listHoldings"];
+        get: operations["listHolders"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1350,6 +1541,46 @@ export interface paths {
         };
         /** Get an insider trade */
         get: operations["getInsiderTrade"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/instruments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List instruments
+         * @description Everything exchange-traded in one list: stocks, ETFs, closed-end funds and ETNs, each with its `type`, its company or fund link and `datasets` (the families that exist for its type). Crypto and commodities are not instruments.
+         */
+        get: operations["listInstruments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/instruments/{symbol}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get an instrument
+         * @description One instrument by ticker, active or delisted: its `type`, its company (`stock`) or fund (`etf`, `closed_end_fund`, with its `structure`; an `etn` has neither) and `datasets`, the families served for it.
+         */
+        get: operations["getInstrument"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1478,6 +1709,30 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/v1/me/alert-user-defaults": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the end-user defaults
+         * @description The account's default end-user limits (every value null until set). Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        get: operations["getAlertUserDefaults"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update the end-user defaults
+         * @description Sets the account's default end-user limits; null clears one. A default lowered below an end user's count keeps its alerts and refuses new ones. Answers 503 `unavailable` while the alerts platform is switched off.
+         */
+        patch: operations["updateAlertUserDefaults"];
         trace?: never;
     };
     "/v1/me/usage": {
@@ -1771,7 +2026,7 @@ export interface paths {
         };
         /**
          * Search filings
-         * @description Ranked passages from SEC documents with citations (`mode=lexical` by default: keywords and quoted phrases, English stemming; `literal` for the exact characters). Each request reads one page of the index: `limit` above 50 answers 50 hits and a `next_cursor`; `match.lexical_rank` counts on across pages. `meta.index` says how complete the answer is: empty `data` with `completeness: complete` is a genuine no-result, anything else is not. A search without `company=` reads at most `meta.index.matches.cap` matching passages, newest filings first; `meta.index.hint` says how to narrow it.
+         * @description Ranked passages from SEC documents with citations (`mode=lexical` by default: keywords and quoted phrases, English stemming; `literal` for the exact characters). Each request reads one page of the index: `limit` above 50 answers 50 hits and a `next_cursor`; `match.lexical_rank` counts on across pages. `meta.index` says how complete the answer is: empty `data` with `completeness: complete` is a genuine no-result, anything else is not. A search without `symbol=` reads at most `meta.index.matches.cap` matching passages, newest filings first; `meta.index.hint` says how to narrow it.
          */
         get: operations["searchFilings"];
         put?: never;
@@ -1882,7 +2137,7 @@ export interface paths {
         };
         /**
          * List stock splits
-         * @description Keyed by ticker: a US ETF of either identity (SPY, TQQQ) answers like a company.
+         * @description Keyed by ticker: every instrument type answers (`symbol=`); a row names its `company` (a stock) or its `fund` (an ETF or closed-end fund); an ETN row carries neither.
          */
         get: operations["listSplits"];
         put?: never;
@@ -2140,36 +2395,79 @@ export interface components {
             ipo_calendar_match: boolean;
         };
         /**
-         * CompanyListItem
-         * @description One listed registrant
+         * Instrument
+         * @description One exchange-traded US symbol (a stock, a fund or an ETN) with its ONE type, its company or fund link and the data families that exist for its type
          */
-        CompanyListItem: {
+        Instrument: {
             /**
-             * @description SEC CIK, 10 digits
-             * @example 0000320193
+             * @description Ticker; a bare ticker is a US listing
+             * @example TQQQ
              */
-            cik: string;
+            symbol: string;
+            /** @description Name */
+            name: null | string;
             /**
-             * @description Primary ticker
-             * @example AAPL
+             * @description `stock` (an operating company's listing: GET /v1/companies), `etf` or `closed_end_fund` (a fund: GET /v1/funds), `etn` (an exchange-traded note: an instrument only)
+             * @enum {string}
              */
-            ticker: string;
-            /** @description Company name */
-            name: string;
+            type: "closed_end_fund" | "etf" | "etn" | "stock";
+            /**
+             * @description A fund's legal structure: `registered_fund` (files N-PORT / N-CSR: SPY, VOO, TQQQ, every closed-end fund; holdings and weights are served) or `exchange_traded_trust` (a 10-K filer without a holdings report: GLD, IBIT, USO); null for a stock or an ETN
+             * @enum {string|null}
+             */
+            structure: "exchange_traded_trust" | "registered_fund" | null;
             /**
              * @description Primary exchange (MIC)
              * @example XNAS
              */
             exchange: null | string;
-            /** @description Sector; null for a US ETF */
-            sector: null | string;
             /**
-             * @description Fiscal year end as MM-DD
-             * @example 09-27
+             * @description Country of the listing (ISO 3166-1 alpha-2)
+             * @example US
              */
-            fiscal_year_end: null | string;
+            country_code: null | string;
+            /**
+             * @description Trading currency (ISO 4217)
+             * @example USD
+             */
+            currency: null | string;
+            /** @description false for a delisted symbol */
+            is_active: boolean;
+            /**
+             * Format: date
+             * @description First trading day
+             */
+            list_date: null | string;
             /** @description Permanent logo URL */
             logo_url: null | string;
+            /** @description For a stock: its company (GET /v1/companies/{company}); null for a fund or an ETN */
+            company: null | {
+                /**
+                 * @description SEC CIK, 10 digits
+                 * @example 0000320193
+                 */
+                cik: null | string;
+            };
+            /** @description For a fund (ETF, closed-end fund): its fund link (GET /v1/funds/{fund}); null for a stock or an ETN */
+            fund: null | {
+                /**
+                 * @description The fund's key: its SEC series id, else `cik:<registrant>` for a fund without a series (SPY); null for an ETF not linked to its trust yet
+                 * @example S000024908
+                 */
+                fund_key: null | string;
+                /**
+                 * @description SEC series id
+                 * @example S000024908
+                 */
+                series_id: null | string;
+                /**
+                 * @description The SEC registrant (the fund itself, or its trust), 10 digits
+                 * @example 0001174610
+                 */
+                registrant_cik: null | string;
+            };
+            /** @description The data families that exist for this instrument's type (the same table every `company=` / `symbol=` refusal names); actual depth: `expand=coverage` on the company or fund */
+            datasets: Array<"alerts" | "dividends" | "events" | "filings" | "financials" | "fiscal_periods" | "fund_holdings" | "fund_weights" | "guidance" | "holders" | "insider_trades" | "investor_documents" | "ipos" | "metrics" | "news" | "offerings" | "people" | "profile" | "segments" | "splits" | "transcripts">;
         };
         /**
          * MetaCoverage
@@ -2214,29 +2512,59 @@ export interface components {
             fetched_at?: null | string;
         };
         /**
+         * CompanyListItem
+         * @description One listed operating company
+         */
+        CompanyListItem: {
+            /**
+             * @description SEC CIK, 10 digits
+             * @example 0000320193
+             */
+            cik: string;
+            /**
+             * @description Primary ticker
+             * @example AAPL
+             */
+            ticker: string;
+            /** @description Company name */
+            name: string;
+            /**
+             * @description Primary exchange (MIC)
+             * @example XNAS
+             */
+            exchange: null | string;
+            /** @description Sector */
+            sector: null | string;
+            /**
+             * @description Fiscal year end as MM-DD
+             * @example 09-27
+             */
+            fiscal_year_end: null | string;
+            /** @description Permanent logo URL */
+            logo_url: null | string;
+        };
+        /**
          * Company
          * @description A listed company's profile
          */
         Company: {
             /** @description Ticker symbol */
             ticker: string;
-            /** @description CIK with or without leading zeros; for a US ETF that is a series of a multi-series trust (TQQQ) the trust's CIK, empty ("") for such an ETF without a registrant link */
+            /** @description SEC CIK, 10 digits */
             cik: string;
             /** @description Company name */
             name: string;
             /** @description Business description */
             description: null | string;
-            /** @description High-level category (`ETF` for a series of a multi-series trust such as TQQQ) */
-            category: string;
-            /** @description Sector, from the issuer's SIC code (SEC mapping); null for a US ETF (no SIC-derived values are shown for a fund) */
+            /** @description Sector, from the company's SIC code (SEC mapping) */
             sector: null | string;
-            /** @description Industry, from the issuer's SIC code (SEC mapping); null for a US ETF (no SIC-derived values are shown for a fund) */
+            /** @description Industry, from the company's SIC code (SEC mapping) */
             industry: null | string;
-            /** @description SIC code; null for a US ETF (no SIC-derived values are shown for a fund) */
+            /** @description SIC code */
             sic: null | string;
-            /** @description Fama-French sector, from the issuer's SIC code; null for a US ETF (no SIC-derived values are shown for a fund) */
+            /** @description Fama-French sector, from the company's SIC code */
             fama_sector: null | string;
-            /** @description Fama-French industry, from the issuer's SIC code; null for a US ETF (no SIC-derived values are shown for a fund) */
+            /** @description Fama-French industry, from the company's SIC code */
             fama_industry: null | string;
             /** @description Listing exchange (null when unknown) */
             exchange: null | string;
@@ -2255,7 +2583,7 @@ export interface components {
             list_date: null | string;
             /** @description Employee headcount */
             employees: null | number;
-            /** @description Market capitalization; for an ETF: fund net assets from its latest public N-PORT report (single-class funds only), else null */
+            /** @description Market capitalization */
             market_cap: null | number;
             /** @description Shares outstanding */
             shares_outstanding: null | number;
@@ -2279,13 +2607,13 @@ export interface components {
             logo_url: null | string;
             /** @description Brand color hex codes */
             brand_colors: Array<string> | null;
-            /** @description Street address; null for a US ETF */
+            /** @description Street address */
             street: null | string;
-            /** @description City; null for a US ETF */
+            /** @description City */
             city: null | string;
-            /** @description State or province; null for a US ETF */
+            /** @description State or province */
             state: null | string;
-            /** @description Postal/ZIP code; null for a US ETF */
+            /** @description Postal/ZIP code */
             zip_code: null | string;
             /** @description ISO country code */
             country_code: null | string;
@@ -2307,6 +2635,306 @@ export interface components {
                     through: null | string;
                 }>;
             };
+        };
+        /**
+         * FundListItem
+         * @description One listed fund (an ETF or a closed-end fund)
+         */
+        FundListItem: {
+            /**
+             * @description Ticker
+             * @example TQQQ
+             */
+            symbol: string;
+            /** @description Name */
+            name: null | string;
+            /**
+             * @description `etf` or `closed_end_fund`
+             * @enum {string}
+             */
+            type: "closed_end_fund" | "etf";
+            /**
+             * @description A fund's legal structure: `registered_fund` (files N-PORT / N-CSR: SPY, VOO, TQQQ, every closed-end fund; holdings and weights are served) or `exchange_traded_trust` (a 10-K filer without a holdings report: GLD, IBIT, USO); null for a stock or an ETN
+             * @enum {string|null}
+             */
+            structure: "exchange_traded_trust" | "registered_fund" | null;
+            /**
+             * @description Primary exchange (MIC)
+             * @example XNAS
+             */
+            exchange: null | string;
+            /**
+             * @description SEC series id, else `cik:<registrant>`; null for an ETF not linked to its trust yet
+             * @example S000024908
+             */
+            fund_key: null | string;
+            /** @description Net assets (USD) from the newest public N-PORT report */
+            net_assets_usd: null | number;
+            /** @description Permanent logo URL */
+            logo_url: null | string;
+        };
+        /**
+         * Fund
+         * @description A listed fund's profile: the listing, the fund (series or registrant) and its N-PORT / N-CEN / prospectus facts; the facts are null for a fund without a stored profile
+         */
+        Fund: {
+            /**
+             * @description The ticker this profile was read for
+             * @example TQQQ
+             */
+            symbol: string;
+            /** @description Every listed class of the fund */
+            symbols: Array<string>;
+            /** @description Name */
+            name: null | string;
+            /**
+             * @description `etf` or `closed_end_fund`
+             * @enum {string}
+             */
+            type: "closed_end_fund" | "etf";
+            /**
+             * @description A fund's legal structure: `registered_fund` (files N-PORT / N-CSR: SPY, VOO, TQQQ, every closed-end fund; holdings and weights are served) or `exchange_traded_trust` (a 10-K filer without a holdings report: GLD, IBIT, USO); null for a stock or an ETN
+             * @enum {string|null}
+             */
+            structure: "exchange_traded_trust" | "registered_fund" | null;
+            /**
+             * @description SEC series id, else `cik:<registrant>`; null for an ETF not linked to its trust yet
+             * @example S000024908
+             */
+            fund_key: null | string;
+            /**
+             * @description SEC series id
+             * @example S000024908
+             */
+            series_id: null | string;
+            /**
+             * @description SEC class id of this ticker
+             * @example C000073456
+             */
+            class_id: null | string;
+            /**
+             * @description The SEC registrant (the fund itself, or its trust), 10 digits (GET /v1/filers/{cik})
+             * @example 0001174610
+             */
+            registrant_cik: null | string;
+            /** @description The registrant's name */
+            registrant_name: null | string;
+            /**
+             * @description Primary exchange (MIC)
+             * @example XNAS
+             */
+            exchange: null | string;
+            /**
+             * @description Trading currency (ISO 4217)
+             * @example USD
+             */
+            currency: null | string;
+            /**
+             * @description Country of the listing
+             * @example US
+             */
+            country_code: null | string;
+            /** @description false for a delisted symbol */
+            is_active: boolean;
+            /**
+             * Format: date
+             * @description First trading day
+             */
+            list_date: null | string;
+            /** @description Net assets (USD) from the newest public N-PORT report */
+            net_assets_usd: null | number;
+            /**
+             * Format: date
+             * @description Report date of `net_assets_usd`
+             */
+            net_assets_as_of: null | string;
+            /**
+             * @description `fund` = this listing's own assets; `series` = the whole series, all its share classes
+             * @enum {string|null}
+             */
+            net_assets_scope: "fund" | "series" | null;
+            /** @description Net assets of a single-class fund, else null (a class of a multi-class series has none) */
+            market_cap: null | number;
+            /** @description Shares outstanding */
+            shares_outstanding: null | number;
+            /** @description Short interest, percent of the float */
+            short_float_pct: null | number;
+            /** @description The registrant's investment company type (`N-1A` open-end, `N-2` closed-end, …) */
+            investment_company_type: null | string;
+            /** @description An index fund (N-CEN) */
+            is_index: boolean | null;
+            /** @description Net expense ratio as a fraction (0.0084 = 0.84 %), prospectus XBRL */
+            expense_ratio_net: null | number;
+            /** @description Gross expense ratio as a fraction */
+            expense_ratio_gross: null | number;
+            /**
+             * Format: date
+             * @description Prospectus date
+             */
+            expense_ratio_as_of: null | string;
+            /** @description Advisers and sub-advisers (N-CEN) */
+            advisers: Array<components["schemas"]["FilerFundAdviser"]>;
+            /** @description Every share class of the series, listed or not */
+            share_classes: Array<{
+                /** @description SEC class id */
+                class_id: string;
+                /** @description Ticker */
+                ticker: null | string;
+                /** @description Class name */
+                class_name: null | string;
+                /** @description Exchange-traded (an instrument) */
+                is_listed: boolean;
+            }>;
+            /** @description Fund website */
+            homepage_url: null | string;
+            /** @description Permanent logo URL */
+            logo_url: null | string;
+            /** @description Brand colors (hex) */
+            brand_colors: Array<string> | null;
+            /** @description With `expand=coverage`: which data families hold rows and through which date */
+            coverage?: null | {
+                /** @description Families that hold rows for the fund */
+                families: Array<{
+                    /**
+                     * @description Data family
+                     * @example financials
+                     */
+                    family: string;
+                    /**
+                     * Format: date
+                     * @description Newest date the family holds rows for
+                     */
+                    through: null | string;
+                }>;
+            };
+        };
+        /**
+         * FilerFundAdviser
+         * @description One investment adviser of a fund series (N-CEN)
+         */
+        FilerFundAdviser: {
+            /** @description Adviser name as reported */
+            name: null | string;
+            /** @description Adviser CRD number */
+            crd: null | string;
+            /** @description Adviser LEI */
+            lei: null | string;
+            /** @description Whether the adviser is an affiliated person of the fund */
+            is_affiliated: boolean | null;
+            /** @description Adviser role as reported: Advisor, Subadvisor, Terminated Advisor, … */
+            role: null | string;
+        };
+        /**
+         * FundPosition
+         * @description One position of a listed fund's composition, from the freshest source: the issuer's own holdings file, else the fund's latest public N-PORT report (`source`, `as_of` always named)
+         */
+        FundPosition: {
+            /** @description The fund the rows belong to (the requested listed class) */
+            fund: {
+                /**
+                 * @description Ticker of the requested listed class
+                 * @example SPY
+                 */
+                symbol: string;
+                /**
+                 * @description The fund's key: its SEC series id, else `cik:<registrant>` for a fund without a series (SPY)
+                 * @example cik:884394
+                 */
+                fund_key: null | string;
+                /** @description The fund's name */
+                name?: null | string;
+            };
+            /**
+             * @description issuer_daily / issuer_monthly = the issuer's holdings file, nport = the fund's latest public N-PORT report
+             * @enum {string}
+             */
+            source: "issuer_daily" | "issuer_monthly" | "nport";
+            /**
+             * Format: date
+             * @description The date the composition is stated as of
+             */
+            as_of: string;
+            /** @description Line of the position in its source (issuer file line, N-PORT source line) */
+            line?: null | number;
+            /** @description The security held, as the source states it, with its resolved issuer */
+            security: {
+                /** @description Name as stated */
+                name: null | string;
+                /** @description Ticker as stated */
+                symbol: null | string;
+                /** @description Issuer CIK, 10 digits; null when it did not resolve */
+                cik: null | string;
+                /** @description CUSIP */
+                cusip: null | string;
+                /** @description ISIN */
+                isin?: null | string;
+                /** @description SEDOL (issuer files only) */
+                sedol?: null | string;
+                /** @description How `cik` was found: cusip_cache, isin, ticker, not_equity or unresolved */
+                resolution?: null | string;
+            };
+            /** @description equity, fixed_income, cash, derivative, fund, commodity, crypto or other */
+            asset_class?: null | string;
+            /** @description Shares held; null for a non-share position (principal, contracts) */
+            shares?: null | number;
+            /** @description Market value in USD as stated */
+            market_value_usd?: null | number;
+            /** @description Notional value in USD of a derivative (issuer files only) */
+            notional_value_usd?: null | number;
+            /** @description Percent of the fund (7.1 = 7.1 %; N-PORT: percent of net assets) */
+            weight_pct?: null | number;
+            /** @description Sector: as the issuer stated it, else the SEC SIC sector of the holding's issuer */
+            sector?: null | string;
+            /** @description issuer_stated, derived_sic or none */
+            sector_basis?: null | string;
+            /** @description Country (ISO alpha-2 where it maps): as stated, else derived */
+            country?: null | string;
+            /** @description issuer_stated, nport, isin_prefix, registrant or none */
+            country_basis?: null | string;
+        };
+        /**
+         * FundWeight
+         * @description One sector, country or asset-class bucket of a listed fund's composition
+         */
+        FundWeight: {
+            /** @description The fund the buckets belong to (the requested listed class) */
+            fund: {
+                /**
+                 * @description Ticker of the requested listed class
+                 * @example SPY
+                 */
+                symbol: string;
+                /**
+                 * @description The fund's key: its SEC series id, else `cik:<registrant>` for a fund without a series (SPY)
+                 * @example cik:884394
+                 */
+                fund_key: null | string;
+                /** @description The fund's name */
+                name?: null | string;
+            };
+            /**
+             * @description The composition the weights come from
+             * @enum {string}
+             */
+            source: "issuer_daily" | "issuer_monthly" | "nport";
+            /**
+             * Format: date
+             * @description The date the composition is stated as of
+             */
+            as_of: string;
+            /**
+             * @description sector, country or asset_class
+             * @enum {string}
+             */
+            dimension: "asset_class" | "country" | "sector";
+            /** @description The bucket label (a sector, an ISO country code, an asset class; Unclassified / Cash and other) */
+            bucket: string;
+            /** @description Percent of the fund in this bucket */
+            weight_pct: number;
+            /** @description Positions in the bucket */
+            positions?: null | number;
+            /** @description How the bucket label was found: issuer_stated, derived_sic, nport, isin_prefix, registrant, mixed (the bucket's positions differ) or none */
+            basis: string;
         };
         /**
          * Filer
@@ -2545,22 +3173,6 @@ export interface components {
             class_name: null | string;
         };
         /**
-         * FilerFundAdviser
-         * @description One investment adviser of a fund series (N-CEN)
-         */
-        FilerFundAdviser: {
-            /** @description Adviser name as reported */
-            name: null | string;
-            /** @description Adviser CRD number */
-            crd: null | string;
-            /** @description Adviser LEI */
-            lei: null | string;
-            /** @description Whether the adviser is an affiliated person of the fund */
-            is_affiliated: boolean | null;
-            /** @description Adviser role as reported: Advisor, Subadvisor, Terminated Advisor, … */
-            role: null | string;
-        };
-        /**
          * FilerFundReturn
          * @description Average annual total returns of one share class from the fund's prospectus (fractions: 0.1541 = 15.41 %)
          */
@@ -2727,7 +3339,7 @@ export interface components {
          */
         CompanyRef: {
             /**
-             * @description SEC CIK, 10 digits; for a US ETF that is a series of a trust (TQQQ) the trust's CIK, empty ("") for such an ETF without a registrant link
+             * @description SEC CIK, 10 digits
              * @example 0000320193
              */
             cik: string;
@@ -2739,7 +3351,15 @@ export interface components {
         };
         /** Dividend */
         Dividend: {
-            company: components["schemas"]["CompanyRef"];
+            /**
+             * @description The instrument's ticker
+             * @example AAPL
+             */
+            symbol: string;
+            /** @description For a stock: its company; null for a fund or an ETN */
+            company: components["schemas"]["CompanyRef"] | null;
+            /** @description For a fund (ETF, closed-end fund): the fund; null for a stock or an ETN */
+            fund: components["schemas"]["FundRef"] | null;
             /**
              * Format: date
              * @description Ex-dividend date
@@ -2767,9 +3387,33 @@ export interface components {
              */
             record_date: string;
         };
+        /**
+         * FundRef
+         * @description The fund a row belongs to
+         */
+        FundRef: {
+            /**
+             * @description SEC series id, else `cik:<registrant>`; null for an ETF not linked to its trust yet
+             * @example S000024908
+             */
+            fund_key: null | string;
+            /**
+             * @description Ticker
+             * @example TQQQ
+             */
+            symbol: string;
+        };
         /** Split */
         Split: {
-            company: components["schemas"]["CompanyRef"];
+            /**
+             * @description The instrument's ticker
+             * @example AAPL
+             */
+            symbol: string;
+            /** @description For a stock: its company; null for a fund or an ETN */
+            company: components["schemas"]["CompanyRef"] | null;
+            /** @description For a fund (ETF, closed-end fund): the fund; null for a stock or an ETN */
+            fund: components["schemas"]["FundRef"] | null;
             /**
              * Format: date
              * @description Split execution date
@@ -3772,7 +4416,15 @@ export interface components {
              * @example 0000320193-26-000026
              */
             accession: string;
-            company: components["schemas"]["CompanyRef"];
+            /**
+             * @description The instrument's ticker
+             * @example AAPL
+             */
+            symbol: string;
+            /** @description For a stock: its company; null for a fund or an ETN */
+            company: components["schemas"]["CompanyRef"] | null;
+            /** @description For a fund (ETF, closed-end fund): the fund; null for a stock or an ETN */
+            fund: components["schemas"]["FundRef"] | null;
             /**
              * @description Form
              * @example 10-K
@@ -3860,6 +4512,101 @@ export interface components {
             current_version_id: null | string;
             /** @description Permanent public URL of the original */
             source_url: null | string;
+        };
+        /**
+         * FiledHolding
+         * @description One reported line of one 13F-HR or NPORT-P filing, as filed (no issuer resolution). Same fields as `Holder`, so a filing's lines read like the holder lists
+         */
+        FiledHolding: {
+            /** @description Who holds the position: a 13F manager (`institution`) or a fund (`fund`: an ETF, a closed-end fund, a mutual fund; an unlisted fund has `symbols: []`) */
+            holder: {
+                /**
+                 * @description institution (13F manager) or fund (N-PORT filer, issuer file)
+                 * @enum {string}
+                 */
+                type: "fund" | "institution";
+                /** @description The manager's name, or the fund's (series) name */
+                name: null | string;
+                /** @description The manager's CIK, or the fund's registrant (trust) CIK, 10 digits */
+                cik: null | string;
+                /** @description Fund: the registrant (trust) name as reported; null for a manager */
+                registrant_name?: null | string;
+                /**
+                 * @description Fund: its SEC series id, else `cik:<registrant>`; null for a manager
+                 * @example S000002277
+                 */
+                fund_key: null | string;
+                /** @description Fund: SEC series id (S + 9 digits); null for a manager or a fund without a series */
+                series_id: null | string;
+                /** @description Fund: the tickers of its share classes as the SEC Series and Class list states them (listed or not); [] for a manager */
+                class_tickers?: Array<string>;
+                /** @description Fund: its listed tickers (GET /v1/funds/{fund}); [] for an unlisted fund and for a manager */
+                symbols: Array<string>;
+                /**
+                 * Format: date
+                 * @description Fund (nport rows): the date of the fund's newest issuer holdings file when it has one: a fresher source than this N-PORT row (GET /v1/holders?source=issuer_file, GET /v1/funds/{fund}/holdings); null when it has none
+                 */
+                issuer_file_as_of?: null | string;
+            };
+            /** @description The security held */
+            security: {
+                /** @description Ticker (a listed instrument; null when none is known) */
+                symbol: null | string;
+                /** @description Name */
+                name: null | string;
+                /** @description Issuer CIK, 10 digits (a fund: its registrant); null when it did not resolve */
+                cik: null | string;
+                /** @description CUSIP; null on a fund's positions summed over several CUSIPs */
+                cusip: null | string;
+                /** @description ISIN (N-PORT rows) */
+                isin?: null | string;
+                /** @description A fund held as a security: its fund key; null otherwise */
+                fund_key?: null | string;
+                /** @description N-PORT: how the issuer was found (cusip_cache, isin, ticker, not_equity, unresolved); null otherwise */
+                resolution?: null | string;
+            };
+            /**
+             * @description 13f = a manager's quarterly 13F report, nport = a fund's public N-PORT report, issuer_file = an ETF's own daily / monthly holdings file
+             * @enum {string}
+             */
+            source: "13f" | "issuer_file" | "nport";
+            /**
+             * Format: date
+             * @description The date the position is reported as of: the 13F quarter end, the N-PORT report date or the issuer file's date
+             */
+            as_of: string;
+            /**
+             * Format: date
+             * @description Filing date of the report (13F, N-PORT); null for an issuer file
+             */
+            filing_date?: null | string;
+            /** @description The SEC filing (13F, NPORT-P); null for an issuer file */
+            accession_number: null | string;
+            /** @description The filing's EDGAR index page; null for an issuer file */
+            filing_url?: null | string;
+            /** @description Shares, principal or contracts held (see shares_type); null when none was stated */
+            shares: null | number;
+            /** @description Unit of shares: SH shares / PRN principal (13F); NS shares, PA principal, NC contracts, OU other (N-PORT); SH (issuer file) */
+            shares_type?: null | string;
+            /** @description Value in USD as reported */
+            value_usd: null | number;
+            /** @description Percent of the holding fund (nport: percent of net assets; issuer_file: weight); null for 13F */
+            weight_pct: null | number;
+            /** @description N-PORT asset category (EC equity common, EP equity preferred, DBT debt, …); null otherwise */
+            asset_cat?: null | string;
+            /** @description 13F: Put or Call for an option position; null otherwise */
+            put_call?: null | string;
+            /** @description 13F: SOLE, DFND or OTR (filed rows); null otherwise */
+            investment_discretion?: null | string;
+            /** @description 13F voting authority (shares); null on N-PORT and issuer-file rows */
+            voting_authority?: null | {
+                /** @description Votes with sole authority */
+                sole: null | number;
+                /** @description Votes with shared authority */
+                shared: null | number;
+                /** @description Votes with no authority */
+                none: null | number;
+            };
         };
         /**
          * FilingFact
@@ -4212,239 +4959,191 @@ export interface components {
             /** @description Annotated rendition URL */
             rendition_url: null | string;
         };
-        /** Holding */
-        Holding: {
-            /** @description SEC filing accession number */
-            accession_number: string;
-            /** @description Calendar quarter (1-4) */
-            calendar_quarter: number;
-            /** @description Calendar year */
-            calendar_year: number;
-            /** @description Company CIK */
-            cik_company?: null | string;
-            /** @description Company name */
-            name_company?: null | string;
-            /** @description Company ticker symbol */
-            ticker_company?: null | string;
-            /** @description Company CUSIP */
-            cusip_company: string;
-            /** @description Institution CIK */
-            cik_institution: string;
-            /** @description Institution name */
-            name_institution?: null | string;
-            /** @description Position market value in USD; null when the filer stated none */
-            dollar_value: null | number;
+        /**
+         * Holder
+         * @description One position of one holder in one security, as one source reports it (13F manager, N-PORT fund, ETF issuer file). The same row answers who holds a security (GET /v1/holders) and what a manager holds (GET /v1/filers/{cik}/holdings); rows are never summed across holders or sources
+         */
+        Holder: {
+            /** @description Who holds the position: a 13F manager (`institution`) or a fund (`fund`: an ETF, a closed-end fund, a mutual fund; an unlisted fund has `symbols: []`) */
+            holder: {
+                /**
+                 * @description institution (13F manager) or fund (N-PORT filer, issuer file)
+                 * @enum {string}
+                 */
+                type: "fund" | "institution";
+                /** @description The manager's name, or the fund's (series) name */
+                name: null | string;
+                /** @description The manager's CIK, or the fund's registrant (trust) CIK, 10 digits */
+                cik: null | string;
+                /** @description Fund: the registrant (trust) name as reported; null for a manager */
+                registrant_name?: null | string;
+                /**
+                 * @description Fund: its SEC series id, else `cik:<registrant>`; null for a manager
+                 * @example S000002277
+                 */
+                fund_key: null | string;
+                /** @description Fund: SEC series id (S + 9 digits); null for a manager or a fund without a series */
+                series_id: null | string;
+                /** @description Fund: the tickers of its share classes as the SEC Series and Class list states them (listed or not); [] for a manager */
+                class_tickers?: Array<string>;
+                /** @description Fund: its listed tickers (GET /v1/funds/{fund}); [] for an unlisted fund and for a manager */
+                symbols: Array<string>;
+                /**
+                 * Format: date
+                 * @description Fund (nport rows): the date of the fund's newest issuer holdings file when it has one: a fresher source than this N-PORT row (GET /v1/holders?source=issuer_file, GET /v1/funds/{fund}/holdings); null when it has none
+                 */
+                issuer_file_as_of?: null | string;
+            };
+            /** @description The security held */
+            security: {
+                /** @description Ticker (a listed instrument; null when none is known) */
+                symbol: null | string;
+                /** @description Name */
+                name: null | string;
+                /** @description Issuer CIK, 10 digits (a fund: its registrant); null when it did not resolve */
+                cik: null | string;
+                /** @description CUSIP; null on a fund's positions summed over several CUSIPs */
+                cusip: null | string;
+                /** @description ISIN (N-PORT rows) */
+                isin?: null | string;
+                /** @description A fund held as a security: its fund key; null otherwise */
+                fund_key?: null | string;
+                /** @description N-PORT: how the issuer was found (cusip_cache, isin, ticker, not_equity, unresolved); null otherwise */
+                resolution?: null | string;
+            };
+            /**
+             * @description 13f = a manager's quarterly 13F report, nport = a fund's public N-PORT report, issuer_file = an ETF's own daily / monthly holdings file
+             * @enum {string}
+             */
+            source: "13f" | "issuer_file" | "nport";
             /**
              * Format: date
-             * @description Filing date (YYYY-MM-DD); null when the filing is undated in the store
+             * @description The date the position is reported as of: the 13F quarter end, the N-PORT report date or the issuer file's date
              */
-            filing_date: null | string;
-            /** @description Investment discretion type */
-            investment_discretion?: null | string;
-            /** @description URL to SEC filing details */
-            link_to_filing_details: string;
+            as_of: string;
             /**
              * Format: date
-             * @description Period end date (YYYY-MM-DD)
+             * @description Filing date of the report (13F, N-PORT); null for an issuer file
              */
-            period_end: string;
-            /** @description Option type if applicable */
+            filing_date?: null | string;
+            /** @description The SEC filing (13F, NPORT-P); null for an issuer file */
+            accession_number: null | string;
+            /** @description The filing's EDGAR index page; null for an issuer file */
+            filing_url?: null | string;
+            /** @description Shares, principal or contracts held (see shares_type); null when none was stated */
+            shares: null | number;
+            /** @description Unit of shares: SH shares / PRN principal (13F); NS shares, PA principal, NC contracts, OU other (N-PORT); SH (issuer file) */
+            shares_type?: null | string;
+            /** @description Value in USD as reported */
+            value_usd: null | number;
+            /** @description Percent of the holding fund (nport: percent of net assets; issuer_file: weight); null for 13F */
+            weight_pct: null | number;
+            /** @description N-PORT asset category (EC equity common, EP equity preferred, DBT debt, …); null otherwise */
+            asset_cat?: null | string;
+            /** @description 13F: Put or Call for an option position; null otherwise */
             put_call?: null | string;
-            /** @description Shares or principal amount; null when the filer stated none */
-            shares_or_principal_amount: null | number;
-            /** @description Type of position amount */
-            shares_or_principal_amount_type: string;
-            /** @description Votes with no authority */
-            voting_authority_none?: null | number;
-            /** @description Votes with shared authority */
-            voting_authority_shared?: null | number;
-            /** @description Votes with sole authority */
-            voting_authority_sole?: null | number;
+            /** @description 13F: SOLE, DFND or OTR (filed rows); null otherwise */
+            investment_discretion?: null | string;
+            /** @description 13F voting authority (shares); null on N-PORT and issuer-file rows */
+            voting_authority?: null | {
+                /** @description Votes with sole authority */
+                sole: null | number;
+                /** @description Votes with shared authority */
+                shared: null | number;
+                /** @description Votes with no authority */
+                none: null | number;
+            };
         };
-        /** HoldingChange */
-        HoldingChange: {
-            /** @description Institution CIK */
-            cik_institution: string;
-            /** @description Institution name */
-            name_institution?: null | string;
-            /** @description Company CIK */
-            cik_company?: null | string;
-            /** @description Company name */
-            name_company?: null | string;
-            /** @description Company ticker symbol */
-            ticker_company?: null | string;
-            /** @description Company CUSIP */
-            cusip_company: string;
+        /**
+         * HolderChange
+         * @description A quarter-over-quarter change of one 13F manager's position in one security (only changes the store can prove)
+         */
+        HolderChange: {
+            /** @description Who holds the position: a 13F manager (`institution`) or a fund (`fund`: an ETF, a closed-end fund, a mutual fund; an unlisted fund has `symbols: []`) */
+            holder: {
+                /**
+                 * @description institution (13F manager) or fund (N-PORT filer, issuer file)
+                 * @enum {string}
+                 */
+                type: "fund" | "institution";
+                /** @description The manager's name, or the fund's (series) name */
+                name: null | string;
+                /** @description The manager's CIK, or the fund's registrant (trust) CIK, 10 digits */
+                cik: null | string;
+                /** @description Fund: the registrant (trust) name as reported; null for a manager */
+                registrant_name?: null | string;
+                /**
+                 * @description Fund: its SEC series id, else `cik:<registrant>`; null for a manager
+                 * @example S000002277
+                 */
+                fund_key: null | string;
+                /** @description Fund: SEC series id (S + 9 digits); null for a manager or a fund without a series */
+                series_id: null | string;
+                /** @description Fund: the tickers of its share classes as the SEC Series and Class list states them (listed or not); [] for a manager */
+                class_tickers?: Array<string>;
+                /** @description Fund: its listed tickers (GET /v1/funds/{fund}); [] for an unlisted fund and for a manager */
+                symbols: Array<string>;
+                /**
+                 * Format: date
+                 * @description Fund (nport rows): the date of the fund's newest issuer holdings file when it has one: a fresher source than this N-PORT row (GET /v1/holders?source=issuer_file, GET /v1/funds/{fund}/holdings); null when it has none
+                 */
+                issuer_file_as_of?: null | string;
+            };
+            /** @description The security held */
+            security: {
+                /** @description Ticker (a listed instrument; null when none is known) */
+                symbol: null | string;
+                /** @description Name */
+                name: null | string;
+                /** @description Issuer CIK, 10 digits (a fund: its registrant); null when it did not resolve */
+                cik: null | string;
+                /** @description CUSIP; null on a fund's positions summed over several CUSIPs */
+                cusip: null | string;
+                /** @description ISIN (N-PORT rows) */
+                isin?: null | string;
+                /** @description A fund held as a security: its fund key; null otherwise */
+                fund_key?: null | string;
+                /** @description N-PORT: how the issuer was found (cusip_cache, isin, ticker, not_equity, unresolved); null otherwise */
+                resolution?: null | string;
+            };
             /**
              * @description Change type: new (a position the prior complete snapshot did not hold), added, reduced, sold_out, unchanged (served only when `type` asks for it)
              * @enum {string}
              */
             type: "added" | "new" | "reduced" | "sold_out" | "unchanged";
-            /** @description Change in dollar value */
-            change_dollar_value: number;
-            /** @description Absolute change in shares or principal */
-            change_shares_or_principal_amount_absolute: number;
-            /** @description Change over the prior position as a fraction (0.05 = +5 %); +1 for a new position, −1 for a sold-out one */
-            change_shares_or_principal_amount_percent: number;
-            /** @description New position size */
-            shares_or_principal_amount_new: number;
+            /**
+             * Format: date
+             * @description The quarter end of the current position
+             */
+            as_of: string;
+            /**
+             * Format: date
+             * @description The quarter end it is compared with; null when the store does not state it
+             */
+            prior_as_of: null | string;
+            /**
+             * Format: date
+             * @description Filing date of the current 13F report; null when the store does not state it
+             */
+            filing_date?: null | string;
+            /** @description The current 13F filing (its base filing) */
+            accession_number?: null | string;
+            /** @description Current position size (0 when sold out) */
+            shares: number;
             /** @description Prior position size */
-            shares_or_principal_amount_old: number;
-            /** @description SEC filing accession number */
-            accession_number: string;
-            /** @description Calendar quarter (1-4) */
-            calendar_quarter: number;
-            /** @description Calendar year */
-            calendar_year: number;
-            /** @description Position market value in USD */
-            dollar_value: number;
-            /**
-             * Format: date
-             * @description Filing date (YYYY-MM-DD); null when the store does not state it for a position change
-             */
-            filing_date: null | string;
-            /** @description Investment discretion type */
-            investment_discretion?: null | string;
-            /**
-             * Format: date
-             * @description Period end date (YYYY-MM-DD)
-             */
-            period_end: string;
-            /** @description Option type if applicable */
+            shares_prior: number;
+            /** @description Change in shares or principal */
+            shares_change: number;
+            /** @description Change over the prior position as a fraction (0.05 = +5 %); +1 for a new position, −1 for a sold-out one */
+            shares_change_pct: number;
+            /** @description Unit of shares: SH shares, PRN principal */
+            shares_type?: null | string;
+            /** @description Current position value in USD (0 when sold out) */
+            value_usd: number;
+            /** @description Change in value in USD */
+            value_change_usd: number;
+            /** @description Put or Call for an option position; null otherwise */
             put_call?: null | string;
-            /** @description Type of position amount */
-            shares_or_principal_amount_type: string;
-            /** @description Votes with no authority */
-            voting_authority_none?: null | number;
-            /** @description Votes with shared authority */
-            voting_authority_shared?: null | number;
-            /** @description Votes with sole authority */
-            voting_authority_sole?: null | number;
-        };
-        /** FundHolding */
-        FundHolding: {
-            /** @description The fund: its SEC series id, or cik:<registrant CIK> for a unit investment trust that files without a series */
-            fund_key: string;
-            /** @description SEC series id (S + 9 digits); null for a fund without a series */
-            series_id?: null | string;
-            /** @description Fund (series) name as reported */
-            series_name?: null | string;
-            /** @description Registrant (trust) CIK, 10 digits */
-            registrant_cik?: null | string;
-            /** @description Registrant (trust) name as reported */
-            registrant_name?: null | string;
-            /** @description Tickers of the fund's share classes (SEC Series and Class list; a unit trust's own SEC-stated tickers) */
-            class_tickers: Array<string>;
-            /**
-             * Format: date
-             * @description Date the holdings are reported as of (YYYY-MM-DD)
-             */
-            report_date?: null | string;
-            /** @description NPORT-P accession number of the report */
-            accession_number: string;
-            /** @description Issuer CIK of the holding, 10 digits; null when it did not resolve (or on accession= rows, as filed) */
-            issuer_cik?: null | string;
-            /** @description Issuer name */
-            issuer_name?: null | string;
-            /** @description Holding CUSIP; null on company= rows (a fund's positions in the issuer summed) */
-            cusip?: null | string;
-            /** @description Holding ISIN; null on company= rows */
-            isin?: null | string;
-            /** @description Holding ticker (company= rows: the requested company's ticker; else as the fund stated it) */
-            ticker?: null | string;
-            /** @description Value in USD as the fund reported it; null when none was stated */
-            value_usd?: null | number;
-            /** @description Percent of the fund's net assets (7.1 = 7.1 %) */
-            pct_nav?: null | number;
-            /** @description Shares, principal or contracts held (see unit); null when the summed positions state different units */
-            balance?: null | number;
-            /** @description Unit of balance: NS shares, PA principal amount, NC contracts, OU other */
-            unit?: null | string;
-            /** @description N-PORT asset category (EC equity common, EP equity preferred, DBT debt, …) */
-            asset_cat?: null | string;
-            /** @description How issuer_cik was found: cusip_cache, isin, ticker, not_equity (no issuer for a non-equity holding) or unresolved; null on accession= rows */
-            issuer_resolution?: null | string;
-        };
-        /** EtfHolding */
-        EtfHolding: {
-            /** @description The ETF's ticker */
-            etf_symbol: string;
-            /** @description The ETF's name */
-            etf_name?: null | string;
-            /** @description SEC series id of the ETF's fund (S + 9 digits); null for a unit investment trust and on company= rows */
-            series_id?: null | string;
-            /**
-             * @description issuer_daily / issuer_monthly = the issuer's holdings file, nport = the fund's latest public N-PORT report
-             * @enum {string}
-             */
-            source: "issuer_daily" | "issuer_monthly" | "nport";
-            /**
-             * Format: date
-             * @description The date the composition is stated as of
-             */
-            as_of: string;
-            /** @description Line of the position in its source (issuer file line, N-PORT source line); null on company= rows (lines summed) */
-            line?: null | number;
-            /** @description Holding name as stated (company= rows: the requested company) */
-            name?: null | string;
-            /** @description Holding ticker as stated (company= rows: the requested company's ticker) */
-            ticker?: null | string;
-            /** @description Holding CUSIP */
-            cusip?: null | string;
-            /** @description Holding ISIN */
-            isin?: null | string;
-            /** @description Holding SEDOL (issuer files only) */
-            sedol?: null | string;
-            /** @description equity, fixed_income, cash, derivative, fund, commodity, crypto or other */
-            asset_class?: null | string;
-            /** @description Shares held; null for a non-share position (principal, contracts) */
-            shares?: null | number;
-            /** @description Market value in USD as stated */
-            market_value_usd?: null | number;
-            /** @description Notional value in USD of a derivative (issuer files only) */
-            notional_value_usd?: null | number;
-            /** @description Percent of the fund (7.1 = 7.1 %; N-PORT: percent of net assets) */
-            weight_pct?: null | number;
-            /** @description Sector: as the issuer stated it, else the SEC SIC sector of the holding's issuer */
-            sector?: null | string;
-            /** @description issuer_stated, derived_sic or none */
-            sector_basis?: null | string;
-            /** @description Country (ISO alpha-2 where it maps): as stated, else derived */
-            country?: null | string;
-            /** @description issuer_stated, nport, isin_prefix, registrant or none */
-            country_basis?: null | string;
-            /** @description Issuer CIK of the holding, 10 digits; null when it did not resolve */
-            issuer_cik?: null | string;
-            /** @description How issuer_cik was found: cusip_cache, isin, ticker, not_equity or unresolved */
-            issuer_resolution?: null | string;
-        };
-        /** EtfWeight */
-        EtfWeight: {
-            /** @description The ETF's ticker */
-            etf_symbol: string;
-            /**
-             * @description The composition the weights come from
-             * @enum {string}
-             */
-            source: "issuer_daily" | "issuer_monthly" | "nport";
-            /**
-             * Format: date
-             * @description The date the composition is stated as of
-             */
-            as_of: string;
-            /**
-             * @description sector, country or asset_class
-             * @enum {string}
-             */
-            dimension: "asset_class" | "country" | "sector";
-            /** @description The bucket label (a sector, an ISO country code, an asset class; Unclassified / Cash and other) */
-            bucket: string;
-            /** @description Percent of the fund in this bucket */
-            weight_pct: number;
-            /** @description Positions in the bucket */
-            positions?: null | number;
-            /** @description issuer_stated, derived_sic, nport, isin_prefix, registrant, mixed or none */
-            basis: string;
         };
         /** InsiderTrade */
         InsiderTrade: {
@@ -7917,7 +8616,7 @@ export interface components {
             /** @description Event id (`evt_…`; the `webhook-id` of its deliveries) */
             id: string;
             /** @enum {string} */
-            type: "account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "destination.disabled" | "destination.test";
+            type: "account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "alert_user.fire_cap_reached" | "destination.disabled" | "destination.test";
             /** @description Null for account events */
             alert_id: null | string;
             external_user_id: null | string;
@@ -7927,6 +8626,117 @@ export interface components {
             payload: {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * AlertUser
+         * @description One end user of the account (your own `external_user_id`): created by the first alert naming it or by a PATCH
+         */
+        AlertUser: {
+            /** @description Your end user's id */
+            external_user_id: string;
+            /** @description A name for your dashboards */
+            display_name: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB) */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /**
+             * @description `paused`: its alerts are paused and new ones refused; `deleting`: its erasure is running
+             * @enum {string}
+             */
+            status: "active" | "deleting" | "paused";
+            limits: components["schemas"]["AlertUserLimits"];
+            effective_limits: components["schemas"]["AlertUserLimits"];
+            usage: components["schemas"]["AlertUserUsage"];
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * AlertUserLimits
+         * @description An end user's limits (null = none)
+         */
+        AlertUserLimits: {
+            /** @description Alerts that may count (active, paused, scheduled) for this end user; null = no limit */
+            max_active_alerts: null | number;
+            /** @description Script and indicator alerts among them; null = no limit */
+            max_script_alerts: null | number;
+            /** @description Fires per UTC day of this end user's alerts before their deliveries pause; null = no cap */
+            max_fires_per_day: null | number;
+        };
+        /**
+         * AlertUserUsage
+         * @description What the end user uses now
+         */
+        AlertUserUsage: {
+            /** @description Its alerts that count (active, paused, scheduled) */
+            active_alerts: number;
+            /** @description Script and indicator alerts among them */
+            script_alerts: number;
+            /** @description Fires of its alerts on the current UTC day */
+            fires_today: number;
+            /**
+             * Format: date-time
+             * @description The newest fire of its live alerts
+             */
+            last_fired_at: null | string;
+        };
+        /**
+         * AlertUserDeleteResult
+         * @description The erasure of an end user: what this call removed. `deleting` = the rest is finished in the background (a repeated DELETE continues it)
+         */
+        AlertUserDeleteResult: {
+            /**
+             * @description `deleted`: nothing of the end user is left; `deleting`: its remaining events are removed in the background
+             * @enum {string}
+             */
+            status: "deleted" | "deleting";
+            /** @description Live alerts of the end user deleted (soft: they stay as deleted alerts without its id, client_reference_id and metadata) */
+            alerts_deleted: number;
+            /** @description Events of the end user permanently removed by this call */
+            events_deleted: number;
+            /** @description Deliveries of those events permanently removed by this call */
+            deliveries_deleted: number;
+        };
+        /** AlertUserBatchResponse */
+        AlertUserBatchResponse: {
+            results: Array<components["schemas"]["AlertUserBatchResult"]>;
+        };
+        /** AlertUserBatchResult */
+        AlertUserBatchResult: {
+            /** @description Position of the item in the request */
+            index: number;
+            ok: boolean;
+            /**
+             * @description What happened; null when refused
+             * @enum {string|null}
+             */
+            result: "created" | "updated" | null;
+            /** @description The end user after the item; null when refused */
+            alert_user: components["schemas"]["AlertUser"] | null;
+            /** @description Why the item was refused; null when ok */
+            error: components["schemas"]["AlertBatchError"] | null;
+        };
+        /**
+         * AlertUserBatchItem
+         * @description One upsert: the end user's id and the fields of `AlertUserInput`
+         */
+        AlertUserBatchItem: {
+            /** @description Your end user's id */
+            external_user_id: string;
+            /** @description A name for your dashboards (null clears it) */
+            display_name?: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB); replaces the stored object */
+            metadata?: {
+                [key: string]: unknown;
+            };
+            /** @description Alerts that may count (active, paused, scheduled) for this end user; null = the account default */
+            max_active_alerts?: null | number;
+            /** @description Script and indicator alerts among them; null = the account default */
+            max_script_alerts?: null | number;
+            /** @description Fires per UTC day of this end user's alerts before their deliveries pause; null = the account default */
+            max_fires_per_day?: null | number;
         };
         /** Destination */
         Destination: {
@@ -8215,7 +9025,7 @@ export interface components {
                  * @description The account's Data API plan
                  * @enum {string}
                  */
-                tier: "free" | "lite" | "prepaid" | "pro" | "standard";
+                tier: "enterprise" | "free" | "lite" | "prepaid" | "pro" | "standard";
                 /** @description Credits the plan includes per period */
                 included_credits: number;
                 /** @description Credits used this period, counted as the quota gate counts them (live) */
@@ -8282,6 +9092,23 @@ export interface components {
             }>;
             /** @description A breakdown was capped at its item limit */
             truncated: boolean;
+        };
+        /**
+         * AlertUserDefaults
+         * @description The account's default end-user limits: they apply to every end user without its own value (null = no limit)
+         */
+        AlertUserDefaults: {
+            /** @description Alerts that may count (active, paused, scheduled) for an end user without its own value; null = no limit */
+            max_active_alerts: null | number;
+            /** @description Script and indicator alerts among them; null = no limit */
+            max_script_alerts: null | number;
+            /** @description Fires per UTC day of an end user's alerts before their deliveries pause; null = no cap */
+            max_fires_per_day: null | number;
+            /**
+             * Format: date-time
+             * @description Last change; null = never set
+             */
+            updated_at: null | string;
         };
         /** @description A new SEC filing with its `ticker` (null before an IPO) and `proposed_symbols`. Until 2026-10 the frame forwarded the upstream camelCase envelope (`schemaVersion`, `eventKey`, `filing.accessionNumber`, …) instead of this documented shape; it now is exactly this object */
         WebSocketFiling: {
@@ -8591,7 +9418,7 @@ export interface components {
             /** @description Only the events of this end user (B2B2C) */
             external_user_id?: string;
             /** @description Only these event types */
-            types?: Array<"account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "destination.disabled" | "destination.test">;
+            types?: Array<"account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "alert_user.fire_cap_reached" | "destination.disabled" | "destination.test">;
             /** @description An event id (evt_) of this account: replay the matching events after it, then go live */
             after?: string;
         };
@@ -8906,7 +9733,7 @@ export interface components {
              * @description Event type
              * @enum {string}
              */
-            type: "account.fire_cap_reached" | "alert.fired" | "alert.fired.batch" | "alert.status_changed" | "destination.disabled" | "destination.test";
+            type: "account.fire_cap_reached" | "alert.fired" | "alert.fired.batch" | "alert.status_changed" | "alert_user.fire_cap_reached" | "destination.disabled" | "destination.test";
             /**
              * Format: date-time
              * @description When the event happened (a batch: when it was sent). Deliveries are NOT ordered: order by this
@@ -8948,7 +9775,7 @@ export interface components {
              * @example invalid_parameter
              * @enum {string}
              */
-            code: "conflict" | "cursor_mismatch" | "excluded" | "forbidden" | "idempotency_in_flight" | "insufficient_credits" | "internal" | "invalid_parameter" | "not_covered" | "not_found" | "plan_required" | "rate_limited" | "unauthorized" | "unavailable" | "unknown_parameter";
+            code: "alert_user_limit_reached" | "alert_user_paused" | "conflict" | "cursor_mismatch" | "excluded" | "forbidden" | "idempotency_in_flight" | "insufficient_credits" | "internal" | "invalid_parameter" | "not_covered" | "not_found" | "plan_required" | "rate_limited" | "unauthorized" | "unavailable" | "unknown_parameter";
             /**
              * @description The query parameter the problem is about
              * @example limit
@@ -9053,9 +9880,73 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
-    createAlert: {
+    batchAlertUsers: {
         parameters: {
             query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "items": [
+                 *         {
+                 *           "external_user_id": "user_8812",
+                 *           "max_active_alerts": 50
+                 *         },
+                 *         {
+                 *           "external_user_id": "user_9001",
+                 *           "max_active_alerts": 10,
+                 *           "max_script_alerts": 0
+                 *         }
+                 *       ]
+                 *     }
+                 */
+                "application/json": {
+                    items: Array<components["schemas"]["AlertUserBatchItem"]>;
+                };
+            };
+        };
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertUserBatchResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    createAlert: {
+        parameters: {
+            query?: {
+                /**
+                 * @description true = run every check of the create (body, plan, coverage, destinations, quotas, end user) and answer 204 without creating anything; the same problems as a real create. Idempotency-Key is ignored
+                 * @example true
+                 */
+                validate_only?: boolean;
+            };
             header?: {
                 /**
                  * @description Replays the first answer for 24 h; 409 while in flight (R13)
@@ -9151,6 +10042,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Alert"];
+                };
+            };
+            /** @description validate_only=true: the alert is valid; nothing was created */
+            204: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             400: components["responses"]["BadRequest"];
@@ -9399,6 +10309,50 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    deleteAlertUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Your end user's id (URL-encoded; any character, 1–200)
+                 * @example user_8812
+                 */
+                external_user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertUserDeleteResult"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     deleteDestination: {
         parameters: {
             query?: never;
@@ -9582,11 +10536,132 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    getAlertUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Your end user's id (URL-encoded; any character, 1–200)
+                 * @example user_8812
+                 */
+                external_user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "external_user_id": "smoke-a",
+                     *       "display_name": null,
+                     *       "metadata": {},
+                     *       "status": "active",
+                     *       "limits": {
+                     *         "max_active_alerts": 3,
+                     *         "max_script_alerts": null,
+                     *         "max_fires_per_day": null
+                     *       },
+                     *       "effective_limits": {
+                     *         "max_active_alerts": 3,
+                     *         "max_script_alerts": null,
+                     *         "max_fires_per_day": null
+                     *       },
+                     *       "usage": {
+                     *         "active_alerts": 3,
+                     *         "script_alerts": 0,
+                     *         "fires_today": 0,
+                     *         "last_fired_at": null
+                     *       },
+                     *       "created_at": "2026-11-19T16:59:52.948Z",
+                     *       "updated_at": "2026-11-19T16:59:59.916Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["AlertUser"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getAlertUserDefaults: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "max_active_alerts": 2,
+                     *       "max_script_alerts": null,
+                     *       "max_fires_per_day": null,
+                     *       "updated_at": "2026-11-19T16:59:52.616Z"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["AlertUserDefaults"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     getAsReportedFinancials: {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -9961,7 +11036,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -10833,7 +11908,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -11186,7 +12261,7 @@ export interface operations {
             header?: never;
             path: {
                 /**
-                 * @description Ticker or CIK. A US ETF that is a series of a multi-series trust (TQQQ) answers its ETF profile by ticker: `cik` / `filer_cik` its trust's CIK, `category` `ETF`, every SIC-derived, address and company-only field null
+                 * @description Ticker of any listed class, or CIK, of an operating company. A fund answers 404 `not_covered` naming its GET /v1/funds/{fund}, an ETN its GET /v1/instruments/{symbol}
                  * @example AAPL
                  */
                 company: string;
@@ -11219,7 +12294,6 @@ export interface operations {
                      *       "cik": "0000320193",
                      *       "name": "Apple Inc.",
                      *       "description": "Apple is among the largest companies in the world, with a broad portfolio of hardware and software products targeted at consumers and businesses. Apple's iPhone accounts for the majority of the firm's sales, and Apple's other products, such…",
-                     *       "category": "",
                      *       "sector": "Technology",
                      *       "industry": "Electronic Computers",
                      *       "sic": "3571",
@@ -12230,6 +13304,64 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    getFund: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Optional objects to include: `coverage` (comma list)
+                 * @example coverage
+                 */
+                expand?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Ticker of any listed class, or the fund key (`S000024908`; `cik:884394` for a fund without a series)
+                 * @example TQQQ
+                 */
+                fund: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Fund"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     getInsiderTrade: {
         parameters: {
             query?: {
@@ -12309,6 +13441,59 @@ export interface operations {
                      *     }
                      */
                     "application/json": components["schemas"]["InsiderTrade"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getInstrument: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Ticker (case-insensitive); a bare ticker is a US listing (`TICKER.<MIC>` answers 400)
+                 * @example TQQQ
+                 */
+                symbol: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Instrument"];
                 };
             };
             304: components["responses"]["NotModified"];
@@ -13646,7 +14831,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -13887,7 +15072,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -14692,7 +15877,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -15258,7 +16443,7 @@ export interface operations {
                  * @description Only events of this type
                  * @example alert.fired
                  */
-                type?: "account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "destination.disabled" | "destination.test";
+                type?: "account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "alert_user.fire_cap_reached" | "destination.disabled" | "destination.test";
                 /**
                  * @description Only the events of this end user's alerts
                  * @example user_8812
@@ -15337,7 +16522,7 @@ export interface operations {
                  * @description Only events of this type
                  * @example alert.fired
                  */
-                type?: "account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "destination.disabled" | "destination.test";
+                type?: "account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "alert_user.fire_cap_reached" | "destination.disabled" | "destination.test";
             };
             header?: never;
             path: {
@@ -15545,11 +16730,130 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listAlertUsers: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+                /**
+                 * @description Only end users in this status
+                 * @example active
+                 */
+                status?: "active" | "deleting" | "paused";
+                /**
+                 * @description Only end users whose id starts with this prefix
+                 * @example user_
+                 */
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "external_user_id": "smoke-a",
+                     *           "display_name": null,
+                     *           "metadata": {},
+                     *           "status": "active",
+                     *           "limits": {
+                     *             "max_active_alerts": 3,
+                     *             "max_script_alerts": null,
+                     *             "max_fires_per_day": null
+                     *           },
+                     *           "effective_limits": {
+                     *             "max_active_alerts": 3,
+                     *             "max_script_alerts": null,
+                     *             "max_fires_per_day": null
+                     *           },
+                     *           "usage": {
+                     *             "active_alerts": 3,
+                     *             "script_alerts": 0,
+                     *             "fires_today": 0,
+                     *             "last_fired_at": null
+                     *           },
+                     *           "created_at": "2026-11-19T16:59:52.948Z",
+                     *           "updated_at": "2026-11-19T16:59:59.916Z"
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": "2026q3",
+                     *           "version_id": null,
+                     *           "accession": "0000320193-26-000026",
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["AlertUser"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listAnnouncements: {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -15669,7 +16973,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -15913,9 +17217,9 @@ export interface operations {
                      *           "retry_after_s": null
                      *         },
                      *         "source": {
-                     *           "dataset_release": "2026q3",
+                     *           "dataset_release": null,
                      *           "version_id": null,
-                     *           "accession": "0000320193-26-000026",
+                     *           "accession": null,
                      *           "fetched_at": null
                      *         }
                      *       }
@@ -16183,10 +17487,10 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker of any instrument (a stock, a fund, an ETN), a fund key (`S000024908`, `cik:884394`) or a company CIK (its primary listing); a comma list of 1–50. A bare ticker is a US listing (`TICKER.<MIC>` is refused with a 400). Required.
                  * @example AAPL
                  */
-                "company": string;
+                "symbol": string;
                 /**
                  * @description `ex_date` on or after this value
                  * @example 2025-01-01
@@ -16257,10 +17561,12 @@ export interface operations {
                      * @example {
                      *       "data": [
                      *         {
+                     *           "symbol": "AAPL",
                      *           "company": {
                      *             "cik": "0000320193",
                      *             "ticker": "AAPL"
                      *           },
+                     *           "fund": null,
                      *           "ex_dividend_date": "2026-11-12",
                      *           "declaration_date": "2026-11-02",
                      *           "cash_amount": 0.27,
@@ -16279,9 +17585,9 @@ export interface operations {
                      *           "retry_after_s": null
                      *         },
                      *         "source": {
-                     *           "dataset_release": "2026q3",
+                     *           "dataset_release": null,
                      *           "version_id": null,
-                     *           "accession": "0000320193-26-000026",
+                     *           "accession": null,
                      *           "fetched_at": null
                      *         }
                      *       }
@@ -16484,353 +17790,11 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
-    listEtfHoldings: {
-        parameters: {
-            query?: {
-                /**
-                 * @description ETF ticker: the fund's freshest composition (one ETF)
-                 * @example SPY
-                 */
-                etf?: string;
-                /**
-                 * @description Ticker (`NVDA`) or CIK of ONE company: the ETFs holding it (from the ETFs' issuer files). Exactly one of `etf` or `company` is required. A US ETF that is its own registrant (SPY) is found by its CIK; a series of a multi-series trust (TQQQ) answers one 404 `not_covered` naming it (holders are found by issuer CIK, which would mix its trust's other series).
-                 * @example NVDA
-                 */
-                company?: string;
-                /**
-                 * @description With etf=: the composition stored on or before this date (issuer files about 30 days back, older dates from the N-PORT report); default the freshest
-                 * @example 2026-11-12
-                 */
-                as_of?: string;
-                /**
-                 * @description Sort field: `-weight_pct` with etf= (default), `-market_value_usd` with company= (default); the only orders the store serves
-                 * @example -weight_pct
-                 */
-                sort?: "-market_value_usd" | "-weight_pct";
-                /**
-                 * @description Comma list of root-level fields to keep (R7)
-                 * @example fiscal_year,period_end
-                 */
-                fields?: string;
-                /**
-                 * @description Rows per page (default 25, max 1 000 on 13F rows)
-                 * @example 100
-                 */
-                limit?: number;
-                /**
-                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
-                 * @example eyJ2IjoyfQ
-                 */
-                cursor?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description A page of rows */
-            200: {
-                headers: {
-                    "X-Request-Id": components["headers"]["X-Request-Id"];
-                    "ETag": components["headers"]["ETag"];
-                    "Cache-Control": components["headers"]["Cache-Control"];
-                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
-                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
-                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
-                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
-                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
-                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
-                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
-                    "RateLimit": components["headers"]["RateLimit"];
-                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
-                    "Link": components["headers"]["Link"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "data": [
-                     *         {
-                     *           "etf_symbol": "SPY",
-                     *           "etf_name": "SPDR S&P 500 ETF TRUST",
-                     *           "series_id": null,
-                     *           "source": "issuer_daily",
-                     *           "as_of": "2026-11-12",
-                     *           "line": 1,
-                     *           "name": "APPLE INC",
-                     *           "ticker": "AAPL",
-                     *           "cusip": "037833100",
-                     *           "isin": null,
-                     *           "sedol": "2046251",
-                     *           "asset_class": "equity",
-                     *           "shares": 178410117,
-                     *           "market_value_usd": null,
-                     *           "notional_value_usd": null,
-                     *           "weight_pct": 7.904389,
-                     *           "sector": "Technology",
-                     *           "sector_basis": "derived_sic",
-                     *           "country": "US",
-                     *           "country_basis": "nport",
-                     *           "issuer_cik": "0000320193",
-                     *           "issuer_resolution": "cusip_cache"
-                     *         }
-                     *       ],
-                     *       "has_more": true,
-                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2laR0ZoTURFMU5tRmlNR1F4TUdFNVptUTRaR1ExWlRjMElpd2ljQ0k2SWpJd01qWXRNVEV0TVRWVU1UZzZNelk2TWpZdU9UWXlOVGMyS3pBd09qQXdJaXdpYXlJNld5SXdMalU1TmpJMUlpd2lNalVpWFN3aWN5STZJbk51WVhBNk1UcHBjM04xWlhKZlpHRnBi…",
-                     *       "meta": {
-                     *         "coverage": {
-                     *           "state": "complete",
-                     *           "through": null,
-                     *           "retry_after_s": null
-                     *         },
-                     *         "source": "issuer_daily",
-                     *         "as_of": "2026-11-12",
-                     *         "reason": null,
-                     *         "composition": {
-                     *           "newest_issuer_as_of": "2026-11-12",
-                     *           "nport_report_date": "2026-06-30",
-                     *           "stored_from": "2026-11-12",
-                     *           "stored_to": "2026-11-12",
-                     *           "stored_dates": [
-                     *             {
-                     *               "as_of": "2026-11-12",
-                     *               "source": "issuer_daily",
-                     *               "status": "ready",
-                     *               "positions_count": 505
-                     *             }
-                     *           ]
-                     *         },
-                     *         "issuer_sourced_etfs": null,
-                     *         "snapshot_changed": false
-                     *       }
-                     *     }
-                     */
-                    "application/json": {
-                        /** @description The rows of this page */
-                        data: Array<components["schemas"]["EtfHolding"]>;
-                        /** @description true when a next page exists */
-                        has_more: boolean;
-                        /** @description Opaque cursor of the next page; null on the last page */
-                        next_cursor: null | string;
-                        /** @description Page metadata */
-                        meta: {
-                            coverage?: components["schemas"]["MetaCoverage"];
-                            /**
-                             * @description Which composition the rows come from (etf=): issuer_daily / issuer_monthly = the issuer's own holdings file, nport = the fund's latest public N-PORT report; null with company= (each row names its own)
-                             * @enum {string|null}
-                             */
-                            source?: "issuer_daily" | "issuer_monthly" | "nport" | null;
-                            /**
-                             * Format: date
-                             * @description The date the composition is stated as of (etf=); null with company=
-                             */
-                            as_of?: null | string;
-                            /**
-                             * @description Why the answer is partial or empty by design: single_asset_trust (a single-asset trust such as GLD holds one commodity: no rows by design), source_stale (the issuer file is more than 5 trading days old), issuer_source_unavailable (a daily-file ETF answered from its N-PORT report), weights_unavailable (etf-weights: no buckets for the chosen source)
-                             * @enum {string|null}
-                             */
-                            reason?: "issuer_source_unavailable" | "single_asset_trust" | "source_stale" | "weights_unavailable" | null;
-                            /** @description What the store holds for the ETF (etf=); null with company= */
-                            composition?: null | {
-                                /**
-                                 * Format: date
-                                 * @description Date of the newest issuer holdings file
-                                 */
-                                newest_issuer_as_of?: null | string;
-                                /**
-                                 * Format: date
-                                 * @description Report date of the fund's latest public N-PORT report
-                                 */
-                                nport_report_date?: null | string;
-                                /**
-                                 * Format: date
-                                 * @description Oldest issuer file kept (about 30 days are kept)
-                                 */
-                                stored_from?: null | string;
-                                /**
-                                 * Format: date
-                                 * @description Newest issuer file kept
-                                 */
-                                stored_to?: null | string;
-                                /** @description Every stored date (issuer files and N-PORT reports), newest first; as_of= picks one */
-                                stored_dates?: Array<{
-                                    /**
-                                     * Format: date
-                                     * @description Composition date
-                                     */
-                                    as_of: string;
-                                    /**
-                                     * @description issuer_daily / issuer_monthly / nport
-                                     * @enum {string}
-                                     */
-                                    source: "issuer_daily" | "issuer_monthly" | "nport";
-                                    /** @description ready, or quarantined / superseded for an issuer file that is not served */
-                                    status?: null | string;
-                                    /** @description Positions in that composition */
-                                    positions_count?: null | number;
-                                }>;
-                            };
-                            /** @description company=: how many ETFs the store reads an issuer file for (the ETFs this list can name) */
-                            issuer_sourced_etfs?: null | number;
-                            /** @description true when the composition (etf=) or the ETFs holding the company (company=) changed since the first page of this walk (a newer issuer file arrived): restart from the first page for one consistent answer */
-                            snapshot_changed?: boolean | null;
-                        };
-                    };
-                };
-            };
-            304: components["responses"]["NotModified"];
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            402: components["responses"]["PaymentRequired"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            429: components["responses"]["TooManyRequests"];
-            500: components["responses"]["InternalError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
-    listEtfWeights: {
-        parameters: {
-            query: {
-                /**
-                 * @description ETF ticker
-                 * @example SPY
-                 */
-                etf: string;
-                /**
-                 * @description sector, country or asset_class; a comma list for several (default all three)
-                 * @example sector
-                 */
-                dimension?: string;
-                /**
-                 * @description With etf=: the composition stored on or before this date (issuer files about 30 days back, older dates from the N-PORT report); default the freshest
-                 * @example 2026-11-12
-                 */
-                as_of?: string;
-                /**
-                 * @description Comma list of root-level fields to keep (R7)
-                 * @example fiscal_year,period_end
-                 */
-                fields?: string;
-                /**
-                 * @description Rows per page (default 25, max 200)
-                 * @example 25
-                 */
-                limit?: number;
-                /**
-                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
-                 * @example eyJ2IjoyfQ
-                 */
-                cursor?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description A page of rows */
-            200: {
-                headers: {
-                    "X-Request-Id": components["headers"]["X-Request-Id"];
-                    "ETag": components["headers"]["ETag"];
-                    "Cache-Control": components["headers"]["Cache-Control"];
-                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
-                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
-                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
-                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
-                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
-                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
-                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
-                    "RateLimit": components["headers"]["RateLimit"];
-                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
-                    "Link": components["headers"]["Link"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "data": [
-                     *         {
-                     *           "etf_symbol": "SPY",
-                     *           "source": "issuer_daily",
-                     *           "as_of": "2026-11-12",
-                     *           "dimension": "asset_class",
-                     *           "bucket": "equity",
-                     *           "weight_pct": 99.871328,
-                     *           "positions": 504,
-                     *           "basis": "issuer_stated"
-                     *         }
-                     *       ],
-                     *       "has_more": false,
-                     *       "next_cursor": null,
-                     *       "meta": {
-                     *         "coverage": {
-                     *           "state": "complete",
-                     *           "through": null,
-                     *           "retry_after_s": null
-                     *         },
-                     *         "source": "issuer_daily",
-                     *         "as_of": "2026-11-12",
-                     *         "reason": null,
-                     *         "weight_pct_sum": 99.967472,
-                     *         "weight_basis": "stated"
-                     *       }
-                     *     }
-                     */
-                    "application/json": {
-                        /** @description The rows of this page */
-                        data: Array<components["schemas"]["EtfWeight"]>;
-                        /** @description true when a next page exists */
-                        has_more: boolean;
-                        /** @description Opaque cursor of the next page; null on the last page */
-                        next_cursor: null | string;
-                        /** @description Page metadata */
-                        meta: {
-                            coverage?: components["schemas"]["MetaCoverage"];
-                            /**
-                             * @description Which composition the rows come from (etf=): issuer_daily / issuer_monthly = the issuer's own holdings file, nport = the fund's latest public N-PORT report; null with company= (each row names its own)
-                             * @enum {string|null}
-                             */
-                            source?: "issuer_daily" | "issuer_monthly" | "nport" | null;
-                            /**
-                             * Format: date
-                             * @description The date the composition is stated as of (etf=); null with company=
-                             */
-                            as_of?: null | string;
-                            /**
-                             * @description Why the answer is partial or empty by design: single_asset_trust (a single-asset trust such as GLD holds one commodity: no rows by design), source_stale (the issuer file is more than 5 trading days old), issuer_source_unavailable (a daily-file ETF answered from its N-PORT report), weights_unavailable (etf-weights: no buckets for the chosen source)
-                             * @enum {string|null}
-                             */
-                            reason?: "issuer_source_unavailable" | "single_asset_trust" | "source_stale" | "weights_unavailable" | null;
-                            /** @description What the buckets of one dimension sum to, in percent (every weighted position once). About 100 for a plain fund; a leveraged or inverse fund is far from 100 (swaps and futures count at notional exposure in the Derivatives bucket): draw a pie chart only when this is about 100. null without buckets */
-                            weight_pct_sum?: null | number;
-                            /**
-                             * @description How the position weights were stated: stated = the issuer file states each weight, net_assets = market value over the stated net assets, sum = market value over the sum of the non-derivative positions, nport = the N-PORT percent of net assets, none = no weight was stated or derivable (then reason is weights_unavailable)
-                             * @enum {string|null}
-                             */
-                            weight_basis?: "net_assets" | "none" | "nport" | "stated" | "sum" | null;
-                        };
-                    };
-                };
-            };
-            304: components["responses"]["NotModified"];
-            400: components["responses"]["BadRequest"];
-            401: components["responses"]["Unauthorized"];
-            402: components["responses"]["PaymentRequired"];
-            403: components["responses"]["Forbidden"];
-            404: components["responses"]["NotFound"];
-            429: components["responses"]["TooManyRequests"];
-            500: components["responses"]["InternalError"];
-            503: components["responses"]["ServiceUnavailable"];
-        };
-    };
     listEvents: {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -17267,6 +18231,193 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listFilerHoldingChanges: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Quarter end (default the newest whose 13F deadline, 45 days, has passed)
+                 * @example 2026-06-30
+                 */
+                period_end?: string;
+                /**
+                 * @description Quarter compared against (default the previous one)
+                 * @example 2026-03-31
+                 */
+                prior_period_end?: string;
+                /**
+                 * @description Change types — any of `new`, `added`, `reduced`, `sold_out`, `unchanged`, comma-separated. Without `type` every change but `unchanged` is listed
+                 * @example new
+                 */
+                type?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 1 000)
+                 * @example 100
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description The 13F manager's CIK (any padding)
+                 * @example 0000102909
+                 */
+                cik: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["HolderChange"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listFilerHoldings: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Quarter end (default the newest whose 13F deadline, 45 days, has passed)
+                 * @example 2026-06-30
+                 */
+                period_end?: string;
+                /**
+                 * @description 13F: shares = common shares only (default); all = incl. options and principal amounts
+                 * @example shares
+                 */
+                instruments?: "all" | "shares";
+                /**
+                 * @description Sort field: `-value_usd` (the only order the store serves); the id tiebreaker is always appended
+                 * @example -value_usd
+                 */
+                sort?: "-value_usd";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 1 000)
+                 * @example 100
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description The 13F manager's CIK (any padding)
+                 * @example 0000102909
+                 */
+                cik: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Holder"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            /**
+                             * Format: date-time
+                             * @description The research snapshot the page reads
+                             */
+                            pinned_at?: null | string;
+                            /** @description How positions are counted (the documented rule of the source) */
+                            counting?: null | string;
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listFilers: {
         parameters: {
             query?: {
@@ -17473,6 +18624,89 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listFilingHoldings: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 1 000)
+                 * @example 100
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Accession number of a 13F-HR or NPORT-P filing
+                 * @example 0002012383-26-003238
+                 */
+                accession: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["FiledHolding"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                            /**
+                             * @description 13f (an information table) or nport (an NPORT-P)
+                             * @enum {string|null}
+                             */
+                            family?: "13f" | "nport" | null;
+                            /** @description How positions are counted (the documented rule of the source) */
+                            counting?: null | string;
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listFilingNotes: {
         parameters: {
             query?: {
@@ -17558,10 +18792,10 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker of any instrument (a stock, a fund, an ETN), a fund key (`S000024908`, `cik:884394`) or a company CIK (its primary listing); a comma list of 1–50. A bare ticker is a US listing (`TICKER.<MIC>` is refused with a 400). Required.
                  * @example AAPL
                  */
-                "company": string;
+                "symbol": string;
                 /**
                  * @description Forms, comma list
                  * @example 10-K
@@ -17643,10 +18877,12 @@ export interface operations {
                      *       "data": [
                      *         {
                      *           "accession": "0001140361-26-043484",
+                     *           "symbol": "AAPL",
                      *           "company": {
                      *             "cik": "0000320193",
                      *             "ticker": "AAPL"
                      *           },
+                     *           "fund": null,
                      *           "form": "4",
                      *           "filing_date": "2026-11-12",
                      *           "report_date": "2026-11-10",
@@ -17725,7 +18961,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 company: string;
@@ -17928,47 +19164,184 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
-    listFundHoldings: {
+    listFundPositions: {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
-                 * @example AAPL
+                 * @description The composition stored on or before this date (issuer files about 30 days back, older dates from the N-PORT report); default the freshest
+                 * @example 2026-11-12
                  */
-                company?: string;
+                as_of?: string;
                 /**
-                 * @description Fund registrant CIK (one): its fund portfolio
-                 * @example 0000036405
+                 * @description Sort field: `-weight_pct` (the only order the store serves); the line tiebreaker is always appended
+                 * @example -weight_pct
                  */
-                filer?: string;
-                /**
-                 * @description SEC series id of one fund (S + 9 digits; a unit investment trust without a series: cik:<registrant CIK>); with filer=, required when the registrant files for more than one fund
-                 * @example S000002277
-                 */
-                series?: string;
-                /**
-                 * @description NPORT-P filing: its reported holdings as filed
-                 * @example 0001752724-26-123456
-                 */
-                accession?: string;
-                /**
-                 * @description Each fund's latest report on or before this date
-                 * @example 2026-06-30
-                 */
-                period_end?: string;
-                /**
-                 * @description Sort field: `-value_usd` (the only order the store serves); the id tiebreaker is always appended
-                 * @example -value_usd
-                 */
-                sort?: "-value_usd";
+                sort?: "-weight_pct";
                 /**
                  * @description Comma list of root-level fields to keep (R7)
                  * @example fiscal_year,period_end
                  */
                 fields?: string;
                 /**
-                 * @description Rows per page (default 25, max 1 000 on 13F rows)
-                 * @example 100
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Ticker of any listed class, or the fund key (`S000024908`; `cik:884394` for a fund without a series). Listed funds only: an unlisted fund is a holder row, never a portfolio
+                 * @example SPY
+                 */
+                fund: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["FundPosition"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            /**
+                             * @description Which composition the rows come from: issuer_daily / issuer_monthly = the issuer's own holdings file, nport = the fund's latest public N-PORT report; null while there is none
+                             * @enum {string|null}
+                             */
+                            source?: "issuer_daily" | "issuer_monthly" | "nport" | null;
+                            /**
+                             * Format: date
+                             * @description The date the composition is stated as of; null while there is none
+                             */
+                            as_of?: null | string;
+                            /**
+                             * @description Why the answer is partial or empty: single_asset_trust (the store treats the fund as a single-asset trust (one commodity or crypto asset): no rows by design), source_stale (the issuer file is more than 5 trading days old), issuer_source_unavailable (a fund with a daily issuer file answered from its N-PORT report), no_composition (the fund has no composition in any source yet (`meta.coverage.state` pending))
+                             * @enum {string|null}
+                             */
+                            reason?: "issuer_source_unavailable" | "no_composition" | "single_asset_trust" | "source_stale" | null;
+                            /** @description What the store holds for the fund: the newest issuer file, the N-PORT report date and every stored date */
+                            composition?: null | {
+                                /**
+                                 * Format: date
+                                 * @description Date of the newest issuer holdings file
+                                 */
+                                newest_issuer_as_of?: null | string;
+                                /**
+                                 * Format: date
+                                 * @description Report date of the fund's latest public N-PORT report
+                                 */
+                                nport_report_date?: null | string;
+                                /**
+                                 * Format: date
+                                 * @description Oldest issuer file kept (about 30 days are kept)
+                                 */
+                                stored_from?: null | string;
+                                /**
+                                 * Format: date
+                                 * @description Newest issuer file kept
+                                 */
+                                stored_to?: null | string;
+                                /** @description Every stored date (issuer files and N-PORT reports), newest first; as_of= picks one */
+                                stored_dates?: Array<{
+                                    /**
+                                     * Format: date
+                                     * @description Composition date
+                                     */
+                                    as_of: string;
+                                    /**
+                                     * @description issuer_daily / issuer_monthly / nport
+                                     * @enum {string}
+                                     */
+                                    source: "issuer_daily" | "issuer_monthly" | "nport";
+                                    /** @description ready, or quarantined / superseded for an issuer file that is not served */
+                                    status?: null | string;
+                                    /** @description Positions in that composition */
+                                    positions_count?: null | number;
+                                }>;
+                            };
+                            /** @description true when the composition changed since the first page of this walk (a newer issuer file arrived): restart from the first page for one consistent answer */
+                            snapshot_changed?: boolean | null;
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listFunds: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker prefix or a part of the name (case-insensitive)
+                 * @example TQQ
+                 */
+                q?: string;
+                /**
+                 * @description Instrument type, comma list (`etf`, `closed_end_fund`)
+                 * @example etf
+                 */
+                type?: string;
+                /**
+                 * @description Fund structure, comma list (`registered_fund`, `exchange_traded_trust`)
+                 * @example registered_fund
+                 */
+                structure?: string;
+                /**
+                 * @description Exchange (MIC), comma list
+                 * @example XNAS
+                 */
+                exchange?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `symbol`
+                 * @example symbol
+                 */
+                sort?: "-name" | "-symbol" | "name" | "symbol";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
                  */
                 limit?: number;
                 /**
@@ -18004,7 +19377,7 @@ export interface operations {
                 content: {
                     "application/json": {
                         /** @description The rows of this page */
-                        data: Array<components["schemas"]["FundHolding"]>;
+                        data: Array<components["schemas"]["FundListItem"]>;
                         /** @description true when a next page exists */
                         has_more: boolean;
                         /** @description Opaque cursor of the next page; null on the last page */
@@ -18013,13 +19386,112 @@ export interface operations {
                         meta: {
                             coverage?: components["schemas"]["MetaCoverage"];
                             source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listFundWeights: {
+        parameters: {
+            query?: {
+                /**
+                 * @description sector, country or asset_class; a comma list for several (default all three)
+                 * @example sector
+                 */
+                dimension?: string;
+                /**
+                 * @description The composition stored on or before this date (issuer files about 30 days back, older dates from the N-PORT report); default the freshest
+                 * @example 2026-11-12
+                 */
+                as_of?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description Ticker of any listed class, or the fund key (`S000024908`; `cik:884394` for a fund without a series). Listed funds only: an unlisted fund is a holder row, never a portfolio
+                 * @example SPY
+                 */
+                fund: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["FundWeight"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
                             /**
-                             * Format: date-time
-                             * @description Instant the page reads the fund reports at
+                             * @description Which composition the buckets come from; null while there is none
+                             * @enum {string|null}
                              */
-                            pinned_at?: null | string;
-                            /** @description How fund positions are counted (documented rule) */
-                            counting?: null | string;
+                            source?: "issuer_daily" | "issuer_monthly" | "nport" | null;
+                            /**
+                             * Format: date
+                             * @description The date the composition is stated as of; null while there is none
+                             */
+                            as_of?: null | string;
+                            /**
+                             * @description Why the answer is partial or empty: single_asset_trust (the store treats the fund as a single-asset trust (one commodity or crypto asset): no rows by design), source_stale (the issuer file is more than 5 trading days old), issuer_source_unavailable (a fund with a daily issuer file answered from its N-PORT report), weights_unavailable (weights only: no buckets for the chosen source), no_composition (the fund has no composition in any source yet (`meta.coverage.state` pending))
+                             * @enum {string|null}
+                             */
+                            reason?: "issuer_source_unavailable" | "no_composition" | "single_asset_trust" | "source_stale" | "weights_unavailable" | null;
+                            /** @description What the buckets of one dimension sum to, in percent (every weighted position once). About 100 for a plain fund; a leveraged or inverse fund is far from 100 (swaps and futures count at notional exposure in the Derivatives bucket): draw a pie chart only when this is about 100. null without buckets */
+                            weight_pct_sum?: null | number;
+                            /**
+                             * @description How the position weights were stated: issuer_stated = the issuer file states each weight, net_assets = market value over the stated net assets, sum = market value over the sum of the non-derivative positions, nport = the N-PORT percent of net assets, none = no weight was stated or derivable (then reason is weights_unavailable)
+                             * @enum {string|null}
+                             */
+                            weight_basis?: "issuer_stated" | "net_assets" | "none" | "nport" | "sum" | null;
                         };
                     };
                 };
@@ -18039,7 +19511,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -18202,7 +19674,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 company?: string;
@@ -18363,21 +19835,21 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
-    listHoldingChanges: {
+    listHolderChanges: {
         parameters: {
-            query?: {
+            query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
-                 * @example AAPL
+                 * @description ONE instrument held: a stock's ticker or CIK, a fund's ticker or fund key (`S000024908`, `cik:884394`), or an ETN's ticker. A fund or an ETN is found by its own CUSIP, never by its trust or its issuing bank (a series of a multi-series trust such as TQQQ answers its own holders; VXX answers the holders of the note, not of Barclays). Required.
+                 * @example NVDA
                  */
-                company?: string;
+                symbol: string;
                 /**
-                 * @description Manager CIK, comma list
+                 * @description Manager CIK, comma list (1–50): only those managers' changes
                  * @example 0000102909
                  */
                 filer?: string;
                 /**
-                 * @description Quarter end
+                 * @description Quarter end (default the newest whose 13F deadline, 45 days, has passed)
                  * @example 2026-06-30
                  */
                 period_end?: string;
@@ -18397,7 +19869,7 @@ export interface operations {
                  */
                 fields?: string;
                 /**
-                 * @description Rows per page (default 25, max 1 000 on 13F rows)
+                 * @description Rows per page (default 25, max 1 000)
                  * @example 100
                  */
                 limit?: number;
@@ -18432,56 +19904,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example {
-                     *       "data": [
-                     *         {
-                     *           "cik_institution": "0001005354",
-                     *           "name_institution": "VIRGINIA RETIREMENT SYSTEMS ET Al",
-                     *           "cik_company": "0000320193",
-                     *           "name_company": null,
-                     *           "ticker_company": "AAPL",
-                     *           "cusip_company": "037833100",
-                     *           "type": "added",
-                     *           "change_dollar_value": 694399822,
-                     *           "change_shares_or_principal_amount_absolute": 2281283,
-                     *           "change_shares_or_principal_amount_percent": 2.3665939797832256,
-                     *           "shares_or_principal_amount_new": 3245235,
-                     *           "shares_or_principal_amount_old": 963952,
-                     *           "accession_number": "0001005354-26-000003",
-                     *           "calendar_year": 2026,
-                     *           "calendar_quarter": 2,
-                     *           "dollar_value": 939041200,
-                     *           "filing_date": "2026-08-25",
-                     *           "investment_discretion": null,
-                     *           "period_end": "2026-06-30",
-                     *           "put_call": null,
-                     *           "shares_or_principal_amount_type": "SH",
-                     *           "voting_authority_none": null,
-                     *           "voting_authority_shared": null,
-                     *           "voting_authority_sole": null
-                     *         }
-                     *       ],
-                     *       "has_more": true,
-                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lOakV5T0RneE1XUTROakl4TXpCallUaG1NV1ExTXpabUlpd2ljQ0k2SWpJd01qWXRNVEV0TVROVU1EWTZORGc2TlRZdU1EZ3pORFl3S3pBd09qQXdJaXdpYXlJNld5SXhOVEl5T0RjM0lpd2lNRE0zT0RNek1UQXdmSEJ2YzJsMGFXOXVmRk5JSWwxOSIsMTIs…",
-                     *       "meta": {
-                     *         "coverage": {
-                     *           "state": "partial",
-                     *           "through": "2026-11-10",
-                     *           "retry_after_s": null
-                     *         },
-                     *         "source": {
-                     *           "dataset_release": "2026q3",
-                     *           "version_id": null,
-                     *           "accession": "0000320193-26-000026",
-                     *           "fetched_at": null
-                     *         }
-                     *       }
-                     *     }
-                     */
                     "application/json": {
                         /** @description The rows of this page */
-                        data: Array<components["schemas"]["HoldingChange"]>;
+                        data: Array<components["schemas"]["HolderChange"]>;
                         /** @description true when a next page exists */
                         has_more: boolean;
                         /** @description Opaque cursor of the next page; null on the last page */
@@ -18489,7 +19914,6 @@ export interface operations {
                         /** @description Page metadata */
                         meta: {
                             coverage?: components["schemas"]["MetaCoverage"];
-                            source?: components["schemas"]["MetaSource"];
                         };
                     };
                 };
@@ -18505,46 +19929,41 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
-    listHoldings: {
+    listHolders: {
         parameters: {
-            query?: {
+            query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
-                 * @example AAPL
+                 * @description ONE instrument held: a stock's ticker or CIK, a fund's ticker or fund key (`S000024908`, `cik:884394`), or an ETN's ticker. A fund or an ETN is found by its own CUSIP, never by its trust or its issuing bank (a series of a multi-series trust such as TQQQ answers its own holders; VXX answers the holders of the note, not of Barclays). Required.
+                 * @example NVDA
                  */
-                company?: string;
+                symbol: string;
                 /**
-                 * @description Manager CIK, comma list
-                 * @example 0000102909
+                 * @description One source: `13f`, `nport` or `issuer_file` (its full list, paged); without it the overview of all three
+                 * @example 13f
                  */
-                filer?: string;
+                source?: "13f" | "issuer_file" | "nport";
                 /**
-                 * @description 13F filing
-                 * @example 0000950123-26-008512
-                 */
-                accession?: string;
-                /**
-                 * @description Quarter end
+                 * @description 13F: the quarter end (default the newest whose 13F deadline, 45 days, has passed); N-PORT: each fund's latest report on or before it (default today)
                  * @example 2026-06-30
                  */
                 period_end?: string;
                 /**
-                 * @description shares = common shares only; all = incl. options and principal amounts
+                 * @description 13F: shares = common shares only (default); all = incl. options and principal amounts
                  * @example shares
                  */
                 instruments?: "all" | "shares";
                 /**
-                 * @description Sort field: `-dollar_value` (the only order the store serves); the id tiebreaker is always appended
-                 * @example -dollar_value
+                 * @description Sort field: `-value_usd` (the only order the store serves); the id tiebreaker is always appended
+                 * @example -value_usd
                  */
-                sort?: "-dollar_value";
+                sort?: "-value_usd";
                 /**
                  * @description Comma list of root-level fields to keep (R7)
                  * @example fiscal_year,period_end
                  */
                 fields?: string;
                 /**
-                 * @description Rows per page (default 25, max 1 000 on 13F rows)
+                 * @description Rows per page (default 25, max 1 000)
                  * @example 100
                  */
                 limit?: number;
@@ -18579,54 +19998,9 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    /**
-                     * @example {
-                     *       "data": [
-                     *         {
-                     *           "accession_number": "0002012383-26-003238",
-                     *           "calendar_year": 2026,
-                     *           "calendar_quarter": 2,
-                     *           "cik_company": "0000320193",
-                     *           "name_company": "APPLE INC",
-                     *           "ticker_company": "AAPL",
-                     *           "cusip_company": "037833100",
-                     *           "cik_institution": "0002012383",
-                     *           "name_institution": "BlackRock, Inc.",
-                     *           "dollar_value": 336524794350,
-                     *           "filing_date": "2026-08-07",
-                     *           "investment_discretion": null,
-                     *           "link_to_filing_details": "https://www.sec.gov/Archives/edgar/data/2012383/000201238326003238/0002012383-26-003238-index.htm",
-                     *           "period_end": "2026-06-30",
-                     *           "put_call": null,
-                     *           "shares_or_principal_amount": 1162996939,
-                     *           "shares_or_principal_amount_type": "SH",
-                     *           "voting_authority_none": 114810748,
-                     *           "voting_authority_shared": 0,
-                     *           "voting_authority_sole": 1048186191
-                     *         }
-                     *       ],
-                     *       "has_more": true,
-                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lNekV6TkRRME9ETXlaVFF4WmpCbE1HUTRPVGhqTW1Sa0lpd2ljQ0k2SWpJd01qWXRNVEV0TVROVU1EWTZORGc2TlRVdU1qTXhNVFEyS3pBd09qQXdJaXdpYXlJNld5SXhOekl4TlRVM05EWTBNaUlzSWpNMU5ESXdOQ0lzSWpBek56Z3pNekV3TUh4d2IzTnBk…",
-                     *       "meta": {
-                     *         "coverage": {
-                     *           "state": "partial",
-                     *           "through": "2026-11-10",
-                     *           "retry_after_s": null
-                     *         },
-                     *         "pinned_at": "2026-11-13T06:48:55.231Z",
-                     *         "counting": "One row per manager and position as that manager reported it in its effective 13F snapshot (amendments applied); rows are never summed across managers",
-                     *         "source": {
-                     *           "dataset_release": "2026q3",
-                     *           "version_id": null,
-                     *           "accession": "0000320193-26-000026",
-                     *           "fetched_at": null
-                     *         }
-                     *       }
-                     *     }
-                     */
                     "application/json": {
                         /** @description The rows of this page */
-                        data: Array<components["schemas"]["Holding"]>;
+                        data: Array<components["schemas"]["Holder"]>;
                         /** @description true when a next page exists */
                         has_more: boolean;
                         /** @description Opaque cursor of the next page; null on the last page */
@@ -18634,14 +20008,50 @@ export interface operations {
                         /** @description Page metadata */
                         meta: {
                             coverage?: components["schemas"]["MetaCoverage"];
-                            source?: components["schemas"]["MetaSource"];
+                            /**
+                             * @description The source of every row (source=); null for the overview (each section names its own)
+                             * @enum {string|null}
+                             */
+                            source?: "13f" | "issuer_file" | "nport" | null;
                             /**
                              * Format: date-time
-                             * @description Research snapshot the page reads
+                             * @description The research snapshot the page reads
                              */
                             pinned_at?: null | string;
-                            /** @description How positions are counted (documented rule) */
+                            /** @description How positions are counted (the documented rule of the source) */
                             counting?: null | string;
+                            /** @description issuer_file: how many ETFs the store reads an issuer file for (the funds this source can name) */
+                            funds_with_issuer_file?: null | number;
+                            /** @description Why the list is empty or partial: the store's reason (no_etf_holders, fund_cusip_unknown, …) */
+                            reason?: null | string;
+                            /** @description true when the ETFs holding the security (source=issuer_file) changed since the first page of this walk (a newer issuer file arrived): restart from the first page for one consistent answer */
+                            snapshot_changed?: boolean | null;
+                            /** @description The overview (no source=): one entry per source in the order of `data`; null with source= */
+                            sections?: Array<{
+                                /**
+                                 * @description 13f, nport or issuer_file
+                                 * @enum {string}
+                                 */
+                                source: "13f" | "issuer_file" | "nport";
+                                /**
+                                 * @description complete / partial / pending as `meta.coverage.state`; not_covered = this source knows no holder of the security (or cannot tell it apart, see `reason`); unavailable = the source is switched off or out (retry later)
+                                 * @enum {string}
+                                 */
+                                state: "complete" | "not_covered" | "partial" | "pending" | "unavailable";
+                                /** @description Why the section is empty or partial (the store's reason, such as fund_cusip_unknown, no_etf_holders) */
+                                reason?: null | string;
+                                /**
+                                 * Format: date
+                                 * @description The newest date of this source's rows (13F: the quarter read; N-PORT: the newest report; issuer file: the newest file)
+                                 */
+                                as_of: null | string;
+                                /** @description How many rows this source's whole list has (13F positions, N-PORT funds, ETFs with an issuer file), as the source counts them; null when it could not count */
+                                total: null | number;
+                                /** @description Rows of this source in `data` */
+                                rows: number;
+                                /** @description true when this source has more rows: read them with source= */
+                                has_more: boolean;
+                            }> | null;
                         };
                     };
                 };
@@ -18661,7 +20071,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -18835,11 +20245,110 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listInstruments: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker prefix or a part of the name (case-insensitive)
+                 * @example TQQ
+                 */
+                q?: string;
+                /**
+                 * @description Instrument type, comma list (`stock`, `etf`, `closed_end_fund`, `etn`)
+                 * @example etf
+                 */
+                type?: string;
+                /**
+                 * @description Fund structure, comma list (`registered_fund`, `exchange_traded_trust`)
+                 * @example registered_fund
+                 */
+                structure?: string;
+                /**
+                 * @description Exchange (MIC), comma list
+                 * @example XNAS
+                 */
+                exchange?: string;
+                /**
+                 * @description true = listed today, false = delisted; both when absent
+                 * @example true
+                 */
+                is_active?: boolean;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `symbol`
+                 * @example symbol
+                 */
+                sort?: "-name" | "-symbol" | "name" | "symbol";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Instrument"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listInvestorDocuments: {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 company?: string;
@@ -19023,7 +20532,7 @@ export interface operations {
                  */
                 "listing_date.lt"?: string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -19218,7 +20727,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 company?: string;
@@ -19704,7 +21213,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -20212,7 +21721,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 company?: string;
@@ -20471,7 +21980,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -20879,7 +22388,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -21037,7 +22546,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -21200,10 +22709,10 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). Required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker of any instrument (a stock, a fund, an ETN), a fund key (`S000024908`, `cik:884394`) or a company CIK (its primary listing); a comma list of 1–50. A bare ticker is a US listing (`TICKER.<MIC>` is refused with a 400). Required.
                  * @example AAPL
                  */
-                company: string;
+                symbol: string;
                 /**
                  * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-execution_date`
                  * @example -execution_date
@@ -21254,10 +22763,12 @@ export interface operations {
                      * @example {
                      *       "data": [
                      *         {
+                     *           "symbol": "AAPL",
                      *           "company": {
                      *             "cik": "0000320193",
                      *             "ticker": "AAPL"
                      *           },
+                     *           "fund": null,
                      *           "execution_date": "2020-08-31",
                      *           "split_from": 1,
                      *           "split_to": 4
@@ -21272,9 +22783,9 @@ export interface operations {
                      *           "retry_after_s": null
                      *         },
                      *         "source": {
-                     *           "dataset_release": "2026q3",
+                     *           "dataset_release": null,
                      *           "version_id": null,
-                     *           "accession": "0000320193-26-000026",
+                     *           "accession": null,
                      *           "fetched_at": null
                      *         }
                      *       }
@@ -21458,6 +22969,51 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    pauseAlertUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Your end user's id (URL-encoded; any character, 1–200)
+                 * @example user_8812
+                 */
+                external_user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertUser"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     resumeAlert: {
         parameters: {
             query?: never;
@@ -21497,6 +23053,51 @@ export interface operations {
             402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    resumeAlertUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Your end user's id (URL-encoded; any character, 1–200)
+                 * @example user_8812
+                 */
+                external_user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertUser"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -21565,10 +23166,10 @@ export interface operations {
                  */
                 "case_sensitive"?: boolean;
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker of any instrument (a stock, a fund, an ETN), a fund key (`S000024908`, `cik:884394`) or a company CIK (its primary listing); a comma list of 1–50. A bare ticker is a US listing (`TICKER.<MIC>` is refused with a 400). A series of a multi-series trust (TQQQ) is searched alone.
                  * @example AAPL
                  */
-                "company"?: string;
+                "symbol"?: string;
                 /**
                  * @description Forms, comma list
                  * @example 10-K
@@ -21760,7 +23361,7 @@ export interface operations {
                  */
                 q: string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 company?: string;
@@ -21910,7 +23511,7 @@ export interface operations {
                  */
                 "q": string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -22017,7 +23618,7 @@ export interface operations {
                  */
                 "q": string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). One of the scope filters of this list is required. US ETFs: a fund registrant such as SPY and a series of a multi-series trust such as TQQQ both resolve on every list, and ETF data is served where it exists: `/v1/dividends`, `/v1/splits`, `/v1/filings` and `/v1/search/filings` (a trust series' filings are the accessions naming its series, and such a series is searched alone; an ETF that is its own registrant lists its registrant's; a row's `company.cik` is the trust's CIK, empty for an ETF without a registrant link), and the 13F, ETF and fund holder lists (holdings, holding changes, ETF / fund holdings) for an ETF that is its own registrant such as SPY (a trust series such as TQQQ answers one 404 `not_covered` naming it: holders are found by issuer CIK, which would mix its trust's other series). The families without ETF data (financials, metrics, segments, fiscal periods, insider trades, events, transcripts, guidance, people, investor documents, IPOs, news and announcements) answer one 404 `not_covered` naming the ETF, the same for SPY and TQQQ ("TQQQ is an ETF: … exists only for companies"); in a mixed list the companies answer.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -22260,7 +23861,7 @@ export interface operations {
                              * @description Docs group of the v2 API
                              * @enum {string}
                              */
-                            group: "alert_events" | "alerts" | "call_analytics" | "catalog" | "companies" | "destinations" | "documents" | "events" | "filings" | "financials" | "guidance" | "holdings" | "insider_trades" | "investor_documents" | "ipos" | "metrics" | "news" | "reference" | "scripts" | "transcripts";
+                            group: "alert_events" | "alert_users" | "alerts" | "call_analytics" | "catalog" | "companies" | "destinations" | "documents" | "events" | "filings" | "financials" | "funds" | "guidance" | "holdings" | "insider_trades" | "instruments" | "investor_documents" | "ipos" | "metrics" | "news" | "reference" | "scripts" | "transcripts";
                             /** @description Docs group title (e.g. Insider trades) */
                             name: string;
                             /**
@@ -22362,6 +23963,14 @@ export interface operations {
                      *           "train": false,
                      *           "audio": true,
                      *           "resell": false
+                     *         },
+                     *         "enterprise": {
+                     *           "display": true,
+                     *           "redistribute": true,
+                     *           "rag": true,
+                     *           "train": false,
+                     *           "audio": true,
+                     *           "resell": false
                      *         }
                      *       },
                      *       "families": [
@@ -22433,6 +24042,14 @@ export interface operations {
                                 audio: boolean;
                                 resell: boolean;
                             };
+                            enterprise: {
+                                display: boolean;
+                                redistribute: boolean;
+                                rag: boolean;
+                                train: boolean;
+                                audio: boolean;
+                                resell: boolean;
+                            };
                         };
                         families: Array<{
                             /**
@@ -22444,7 +24061,7 @@ export interface operations {
                                 /** @description Fastify route pattern; `#` = WebSocket channel */
                                 route: string;
                                 /** @enum {string} */
-                                tier: "free" | "lite" | "pro" | "standard";
+                                tier: "enterprise" | "free" | "lite" | "pro" | "standard";
                                 /** @enum {string} */
                                 license: "display" | "rag" | "redistribute" | "train";
                             }>;
@@ -22630,6 +24247,130 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    updateAlertUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Your end user's id (URL-encoded; any character, 1–200)
+                 * @example user_8812
+                 */
+                external_user_id: string;
+            };
+            cookie?: never;
+        };
+        /** @description Any of the fields; at least one. A missing field stays as it is; `status` is changed by pause / resume only */
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "display_name": "Jane (premium)",
+                 *       "max_active_alerts": 50,
+                 *       "max_script_alerts": 5
+                 *     }
+                 */
+                "application/json": {
+                    /** @description A name for your dashboards (null clears it) */
+                    display_name?: null | string;
+                    /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB); replaces the stored object */
+                    metadata?: {
+                        [key: string]: unknown;
+                    };
+                    /** @description Alerts that may count (active, paused, scheduled) for this end user; null = the account default */
+                    max_active_alerts?: null | number;
+                    /** @description Script and indicator alerts among them; null = the account default */
+                    max_script_alerts?: null | number;
+                    /** @description Fires per UTC day of this end user's alerts before their deliveries pause; null = the account default */
+                    max_fires_per_day?: null | number;
+                };
+            };
+        };
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertUser"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    updateAlertUserDefaults: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Any of the defaults; at least one. null clears a default (no limit) */
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "max_active_alerts": 10,
+                 *       "max_script_alerts": 1
+                 *     }
+                 */
+                "application/json": {
+                    /** @description Alerts that may count (active, paused, scheduled) for an end user without its own value; null = no limit */
+                    max_active_alerts?: null | number;
+                    /** @description Script and indicator alerts among them; null = no limit */
+                    max_script_alerts?: null | number;
+                    /** @description Fires per UTC day of an end user's alerts before their deliveries pause; null = no cap */
+                    max_fires_per_day?: null | number;
+                };
+            };
+        };
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertUserDefaults"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];

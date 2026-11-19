@@ -1,6 +1,6 @@
 import type { InfiniteData, UseQueryOptions } from "@tanstack/react-query";
 
-import { queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -26,8 +26,6 @@ import type {
     V2DividendsSort,
     V2DocumentFigureResponse,
     V2DocumentVersionResponse,
-    V2EtfHoldingsResponse,
-    V2EtfWeightsResponse,
     V2Event,
     V2EventComparisonResponse,
     V2EventsResponse,
@@ -37,6 +35,7 @@ import type {
     V2EventType,
     V2FactResponse,
     V2FilerExpand,
+    V2FilerHoldingsResponse,
     V2FilerResponse,
     V2FilersResponse,
     V2FilingDetailResponse,
@@ -46,17 +45,25 @@ import type {
     V2FilingsSort,
     V2FinancialsBasis,
     V2FinancialsView,
-    V2FundHoldingsResponse,
+    V2Fund,
+    V2FundPositionsResponse,
+    V2FundsResponse,
+    V2FundStructure,
+    V2FundType,
+    V2FundWeightsResponse,
     V2GrowthBasis,
     V2GrowthResponse,
     V2GuidanceBasis,
     V2GuidancePeriodKind,
     V2GuidanceResponse,
-    V2HoldingChangesResponse,
-    V2HoldingsInstruments,
-    V2HoldingsResponse,
+    V2HolderChangesResponse,
+    V2HoldersInstruments,
+    V2HolderSource,
+    V2HoldersResponse,
     V2InsiderSide,
     V2InsiderTradesResponse,
+    V2Instrument,
+    V2InstrumentsResponse,
     V2InvestorDocumentResponse,
     V2InvestorDocumentSearchResponse,
     V2InvestorDocumentsResponse,
@@ -101,6 +108,15 @@ import { ApiRequestError, errorDescription, rethrowApiError, retryUnlessApiError
 import {
     getApiBaseUrl,
     getCompanyFiscalPeriods,
+    getFilerHoldings,
+    getFund,
+    getFundPositions,
+    getFunds,
+    getFundWeights,
+    getHolderChanges,
+    getHolders,
+    getInstrument,
+    getInstruments,
     getV2Announcements,
     getV2AsReported,
     getV2AsReportedDetailed,
@@ -111,8 +127,6 @@ import {
     getV2Dividends,
     getV2DocumentFigure,
     getV2DocumentVersion,
-    getV2EtfHoldings,
-    getV2EtfWeights,
     getV2Event,
     getV2EventComparison,
     getV2Events,
@@ -123,11 +137,8 @@ import {
     getV2Filing,
     getV2Filings,
     getV2FilingSearch,
-    getV2FundHoldings,
     getV2Growth,
     getV2Guidance,
-    getV2HoldingChanges,
-    getV2Holdings,
     getV2InsiderTrades,
     getV2InvestorDocument,
     getV2InvestorDocuments,
@@ -158,7 +169,6 @@ import {
     getV2TranscriptSearch,
     getV2TranscriptText,
     getV2TranscriptVersions,
-    searchCompanies,
 } from "./server-functions";
 
 function useApiKey() {
@@ -174,15 +184,6 @@ function useApiKey() {
         hasHydrated,
     };
 }
-
-// Query options
-export const companySearchOptions = (query: string) =>
-    queryOptions({
-        enabled: query.trim().length > 0,
-        queryFn: () => searchCompanies({ data: { query } }),
-        queryKey: ["company", "search", query],
-        staleTime: 5 * 60 * 1000,
-    });
 
 // Helper to show error toast (a v2 problem's request id appended: `errorDescription`)
 function useErrorToast(error: Error | null, message: string) {
@@ -200,27 +201,6 @@ function toastableError(error: Error | null, errorMessage: null | string, quietS
     if (errorMessage === null) return null;
 
     return error instanceof ApiRequestError && quietStatuses.includes(error.status) ? null : error;
-}
-
-// Hooks with error handling
-export function useCompanySearch(query: string) {
-    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
-
-    const result = useQuery(
-        queryOptions({
-            ...companySearchOptions(query),
-            enabled: hasHydrated && query.trim().length > 0,
-            queryFn: () => searchCompanies({ data: { apiKey: apiKey ?? undefined, query } }),
-            queryKey: [...companySearchOptions(query).queryKey, String(apiKeyUpdatedAt)],
-        }),
-    );
-
-    useErrorToast(result.error, "Failed to search companies");
-
-    return {
-        ...result,
-        data: result.data ?? null,
-    };
 }
 
 // Shared hook shapes (the earnings family began on v1; every status-aware hook uses them)
@@ -459,18 +439,18 @@ export function useCompanyFiscalPeriods(identifier: string) {
 export type SecSearchInput = {
     /** `mode=literal` only. */
     caseSensitive?: boolean;
-    /** Ticker or CIK; empty = no request (the search stays scoped to one company). */
-    company: string;
     form?: string;
     limit?: number;
     mode: SecSearchMode;
     q: string;
+    /** Ticker, fund key or CIK; empty = no request (the search stays scoped to one instrument). */
+    symbol: string;
 };
 
-/** SEC filing search (`GET /v1/search/filings`): runs once `q` and `company` are set (on submit); "More results" follows `next_cursor`. */
+/** SEC filing search (`GET /v1/search/filings`): runs once `q` and `symbol` are set (on submit); "More results" follows `next_cursor`. */
 export function useV2FilingSearchInfinite(input: SecSearchInput) {
     return useEarningsInfinite<V2FilingSearchResponse>({
-        enabled: input.q.trim().length > 0 && input.company.trim().length > 0,
+        enabled: input.q.trim().length > 0 && input.symbol.trim().length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2FilingSearch({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
         queryKey: [
@@ -479,7 +459,7 @@ export function useV2FilingSearchInfinite(input: SecSearchInput) {
             input.q,
             input.mode,
             input.mode === "literal" ? String(input.caseSensitive ?? "") : "",
-            input.company,
+            input.symbol,
             input.form ?? "",
             input.limit ?? "",
         ],
@@ -506,6 +486,61 @@ export function useV2Company(company: string, { expand = [] }: { expand?: Readon
     });
 }
 
+/** Instrument search (`GET /v1/instruments?q=`, one page of 10): idle for an empty query; a failure toasts. */
+export function useInstrumentSearch(query: string) {
+    const q = query.trim();
+
+    return useEarningsQuery<V2InstrumentsResponse>({
+        enabled: q.length > 0,
+        errorMessage: "Failed to search instruments",
+        load: apiKey => getInstruments({ data: { apiKey, query: q } }),
+        queryKey: ["v2", "instruments", "search", q],
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
+/**
+ * One instrument (type, structure, company / fund link, `datasets`): the layout reads it once per symbol and every
+ * page under it shares the answer. Status-aware: 404 `not_covered` = the symbol is not known (a page state).
+ */
+export function useInstrument(symbol: string) {
+    return useEarningsQuery<V2Instrument>({
+        enabled: symbol.trim().length > 0,
+        errorMessage: null,
+        load: apiKey => getInstrument({ data: { apiKey, symbol } }),
+        queryKey: ["v2", "instrument", symbol.toUpperCase()],
+        staleTime: V2_STALE_MS,
+    });
+}
+
+export type FundsInput = { limit?: number; q?: string; structure?: Array<V2FundStructure>; type?: Array<V2FundType> };
+
+/** The listed funds by cursor (`GET /v1/funds`, filters `type` / `structure` / `q`). */
+export function useFunds(input: FundsInput) {
+    const q = input.q?.trim() || undefined;
+
+    return useEarningsInfinite<V2FundsResponse>({
+        enabled: true,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getFunds({
+            data: { apiKey, cursor: cursor ?? undefined, limit: input.limit, q, structure: input.structure, type: input.type },
+        }),
+        queryKey: ["v2", "funds", q ?? "", key(input.type), key(input.structure), input.limit ?? ""],
+        staleTime: V2_STALE_MS,
+    });
+}
+
+/** One fund's profile (ticker or fund key); idle for "" (a stock or an ETN never asks). */
+export function useFund(fund: string) {
+    return useEarningsQuery<V2Fund>({
+        enabled: fund.trim().length > 0,
+        errorMessage: null,
+        load: apiKey => getFund({ data: { apiKey, fund } }),
+        queryKey: ["v2", "fund", fund.toUpperCase()],
+        staleTime: V2_STALE_MS,
+    });
+}
+
 /** One filer by CIK with its expansions (status-aware: 403 excluded / 404 not_covered / 503 unavailable are states). */
 export function useV2Filer(cik: string, expand: ReadonlyArray<V2FilerExpand> = []) {
     return useEarningsQuery<V2FilerResponse>({
@@ -517,26 +552,26 @@ export function useV2Filer(cik: string, expand: ReadonlyArray<V2FilerExpand> = [
     });
 }
 
-type V2DividendsInput = { company: string; exDateGte?: string; exDateLte?: string; limit?: number; sort?: V2DividendsSort };
+type V2DividendsInput = { exDateGte?: string; exDateLte?: string; limit?: number; sort?: V2DividendsSort; symbol: string };
 
 export function useV2DividendsInfinite(input: V2DividendsInput) {
     return useEarningsInfinite<V2DividendsResponse>({
-        enabled: input.company.trim().length > 0,
+        enabled: input.symbol.trim().length > 0,
         errorMessage: "Failed to load dividends",
         fetchPage: (cursor, apiKey) => getV2Dividends({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "dividends", input.company, input.exDateGte ?? "", input.exDateLte ?? "", input.sort ?? "", input.limit ?? ""],
+        queryKey: ["v2", "dividends", input.symbol, input.exDateGte ?? "", input.exDateLte ?? "", input.sort ?? "", input.limit ?? ""],
         staleTime: V2_STALE_MS,
     });
 }
 
-type V2SplitsInput = { company: string; limit?: number; sort?: V2SplitsSort };
+type V2SplitsInput = { limit?: number; sort?: V2SplitsSort; symbol: string };
 
 export function useV2SplitsInfinite(input: V2SplitsInput) {
     return useEarningsInfinite<V2SplitsResponse>({
-        enabled: input.company.trim().length > 0,
-        errorMessage: "Failed to load stock splits",
+        enabled: input.symbol.trim().length > 0,
+        errorMessage: "Failed to load splits",
         fetchPage: (cursor, apiKey) => getV2Splits({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "splits", input.company, input.sort ?? "", input.limit ?? ""],
+        queryKey: ["v2", "splits", input.symbol, input.sort ?? "", input.limit ?? ""],
         staleTime: V2_STALE_MS,
     });
 }
@@ -950,7 +985,7 @@ export function useV2InvestorDocumentSearch(input: V2InvestorDocumentSearchInput
     });
 }
 
-// SEC family on v2 (`/v1/filings*`, `/v1/document-versions/*`, `/v1/holdings`, `/v1/holding-changes`,
+// SEC family on v2 (`/v1/filings*`, `/v1/document-versions/*`, `/v1/holders`, `/v1/holder-changes`,
 // `/v1/insider-trades`, `/v1/ipos`, backend tasks/data-api-v2 task 6). Every hook is status-aware (`errorMessage:
 // null`): 403 `excluded` / 404 `not_covered` / 503 `unavailable` and the plan gate are page states
 // (`SecReadinessNotice`, `secErrorState`). A list whose first page says `meta.coverage.state: pending` (`data: []`)
@@ -964,35 +999,36 @@ export function refetchWhileCoveragePending<TPage extends { meta: { coverage?: {
 }
 
 export type V2FilingsInput = {
-    company: string;
     /** Forms (any of). */
     form?: Array<string>;
     /** Day (`YYYY-MM-DD`, UTC): `filed_at.gte` its midnight. */
     from?: string;
     limit?: number;
     sort?: V2FilingsSort;
+    /** Ticker of any instrument, a fund key or a company CIK (its primary listing). */
+    symbol: string;
     /** Day (`YYYY-MM-DD`, UTC), inclusive: `filed_at.lt` the next midnight. */
     to?: string;
 };
 
-/** A company's filings by cursor; `meta.form_facet` of the first page = the form picker. */
+/** An instrument's filings by cursor; `meta.form_facet` of the first page = the form picker. */
 export function useV2FilingsInfinite(input: V2FilingsInput) {
     return useEarningsInfinite<V2FilingsResponse>({
-        enabled: input.company.trim().length > 0,
+        enabled: input.symbol.trim().length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2Filings({
             data: {
                 apiKey,
-                company: input.company,
                 cursor: cursor ?? undefined,
                 filedAtGte: input.from ? dayStartInstant(input.from) : undefined,
                 filedAtLt: input.to ? dayStartInstant(input.to, true) : undefined,
                 form: input.form,
                 limit: input.limit,
                 sort: input.sort,
+                symbol: input.symbol,
             },
         }),
-        queryKey: ["v2", "filings", input.company, key(input.form), input.from ?? "", input.to ?? "", input.sort ?? "", input.limit ?? ""],
+        queryKey: ["v2", "filings", input.symbol, key(input.form), input.from ?? "", input.to ?? "", input.sort ?? "", input.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
@@ -1033,88 +1069,84 @@ export function useV2DocumentFigure(target: null | { blockId: string; versionId:
     });
 }
 
-export type V2HoldingsInput = {
-    accession?: string;
-    company?: string;
-    /** Manager CIK(s), comma list. */
-    filer?: string;
-    instruments?: V2HoldingsInstruments;
+export type HoldersInput = {
+    instruments?: V2HoldersInstruments;
     limit?: number;
-    /** Quarter end (`YYYY-MM-DD`); omitted = the server's newest quarter whose 13F deadline passed. */
+    /** 13F quarter end / N-PORT "latest report on or before" (`YYYY-MM-DD`); omitted = the server's default; never sent with `issuer_file`. */
     periodEnd?: string;
+    /** One source's full list by cursor; omitted = the overview of all three (`meta.sections`, no cursor). */
+    source?: V2HolderSource;
+    /** ONE instrument: a stock's ticker or CIK, a fund's ticker or fund key; "" = idle. */
+    symbol: string;
 };
 
-/** 13F positions by cursor; exactly one of `company` / `filer` / `accession` (none or several keeps it idle). */
-export function useV2HoldingsInfinite(input: V2HoldingsInput) {
-    const scopes = [input.company, input.filer, input.accession].filter(value => value && value.trim().length > 0);
+/** Who holds one instrument (`GET /v1/holders`): one source by cursor, or the overview (one page, `has_more` false). */
+export function useHoldersInfinite(input: HoldersInput) {
+    const periodEnd = input.source === "issuer_file" ? undefined : input.periodEnd;
 
-    return useEarningsInfinite<V2HoldingsResponse>({
-        enabled: scopes.length === 1,
+    return useEarningsInfinite<V2HoldersResponse>({
+        enabled: input.symbol.trim().length > 0,
         errorMessage: null,
-        fetchPage: (cursor, apiKey) => getV2Holdings({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: [
-            "v2",
-            "holdings",
-            input.company ?? "",
-            input.filer ?? "",
-            input.accession ?? "",
-            input.periodEnd ?? "",
-            input.instruments ?? "",
-            input.limit ?? "",
-        ],
+        fetchPage: (cursor, apiKey) => getHolders({
+            data: {
+                apiKey,
+                cursor: input.source ? (cursor ?? undefined) : undefined,
+                instruments: input.instruments,
+                limit: input.limit,
+                periodEnd,
+                source: input.source,
+                symbol: input.symbol,
+            },
+        }),
+        queryKey: ["v2", "holders", input.symbol, input.source ?? "overview", periodEnd ?? "", input.instruments ?? "", input.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
 }
 
-/** N-PORT funds / ETFs holding a company (one row per fund, its latest report on or before `period_end`; omitted = today). */
-export function useV2FundHoldingsInfinite(input: { company: string; limit?: number; periodEnd?: string }) {
-    return useEarningsInfinite<V2FundHoldingsResponse>({
-        enabled: input.company.trim().length > 0,
+/** The proven 13F position changes of one security's holders vs the prior quarter, by cursor. */
+export function useHolderChangesInfinite(input: { limit?: number; periodEnd?: string; symbol: string }) {
+    return useEarningsInfinite<V2HolderChangesResponse>({
+        enabled: input.symbol.trim().length > 0,
         errorMessage: null,
-        fetchPage: (cursor, apiKey) => getV2FundHoldings({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "fund-holdings", input.company, input.periodEnd ?? "", input.limit ?? ""],
+        fetchPage: (cursor, apiKey) => getHolderChanges({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "holder-changes", input.symbol, input.periodEnd ?? "", input.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
 }
 
-/**
- * ETF composition by cursor (Data API release 5.10): exactly one of `etf` (its freshest composition, or the one stored
- * on or before `asOf`) or `company` (the ETFs holding it); none or both keeps it idle.
- */
-export function useV2EtfHoldingsInfinite(input: { asOf?: string; company?: string; etf?: string; limit?: number }) {
-    const scopes = [input.etf, input.company].filter(value => value && value.trim().length > 0);
-
-    return useEarningsInfinite<V2EtfHoldingsResponse>({
-        enabled: scopes.length === 1,
+/** A 13F manager's portfolio by cursor (`GET /v1/filers/{cik}/holdings`); idle for "" (asked on a click). */
+export function useFilerHoldingsInfinite(input: { cik: string; limit?: number; periodEnd?: string }) {
+    return useEarningsInfinite<V2FilerHoldingsResponse>({
+        enabled: input.cik.length > 0,
         errorMessage: null,
-        fetchPage: (cursor, apiKey) => getV2EtfHoldings({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "etf-holdings", input.etf ?? "", input.company ?? "", input.asOf ?? "", input.limit ?? ""],
+        fetchPage: (cursor, apiKey) => getFilerHoldings({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "filer-holdings", input.cik, input.periodEnd ?? "", input.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
 }
 
-/** An ETF's sector / country / asset-class weights by cursor (the composition `useV2EtfHoldingsInfinite` shows). */
-export function useV2EtfWeightsInfinite(input: { asOf?: string; dimension?: string; etf: string; limit?: number }) {
-    return useEarningsInfinite<V2EtfWeightsResponse>({
-        enabled: input.etf.trim().length > 0,
+/** A listed fund's composition by cursor (the freshest one, or the one stored on or before `asOf`); idle for "". */
+export function useFundPositionsInfinite(input: { asOf?: string; fund: string; limit?: number }) {
+    return useEarningsInfinite<V2FundPositionsResponse>({
+        enabled: input.fund.trim().length > 0,
         errorMessage: null,
-        fetchPage: (cursor, apiKey) => getV2EtfWeights({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "etf-weights", input.etf, input.dimension ?? "", input.asOf ?? "", input.limit ?? ""],
+        fetchPage: (cursor, apiKey) => getFundPositions({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "fund-positions", input.fund.toUpperCase(), input.asOf ?? "", input.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
 }
 
-/** A company's proven 13F position changes vs the prior quarter, by cursor (`period_end` omitted = the server's default). */
-export function useV2HoldingChangesInfinite(input: { company: string; limit?: number; periodEnd?: string }) {
-    return useEarningsInfinite<V2HoldingChangesResponse>({
-        enabled: input.company.trim().length > 0,
+/** A listed fund's sector / country / asset-class weights by cursor (the composition `useFundPositionsInfinite` shows). */
+export function useFundWeightsInfinite(input: { asOf?: string; dimension?: string; fund: string; limit?: number }) {
+    return useEarningsInfinite<V2FundWeightsResponse>({
+        enabled: input.fund.trim().length > 0,
         errorMessage: null,
-        fetchPage: (cursor, apiKey) => getV2HoldingChanges({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "holding-changes", input.company, input.periodEnd ?? "", input.limit ?? ""],
+        fetchPage: (cursor, apiKey) => getFundWeights({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "fund-weights", input.fund.toUpperCase(), input.dimension ?? "", input.asOf ?? "", input.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });

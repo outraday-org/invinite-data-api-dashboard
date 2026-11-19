@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StatusRouteImport } from './routes/status'
 import { Route as LicensingRouteImport } from './routes/licensing'
+import { Route as FundsRouteImport } from './routes/funds'
 import { Route as TickerRouteRouteImport } from './routes/$ticker/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TickerIndexRouteImport } from './routes/$ticker/index'
@@ -20,15 +21,15 @@ import { Route as TickerSegmentedFinancialsIndexRouteImport } from './routes/$ti
 import { Route as TickerNewsIndexRouteImport } from './routes/$ticker/news/index'
 import { Route as TickerMarketHolidaysIndexRouteImport } from './routes/$ticker/market-holidays/index'
 import { Route as TickerIposIndexRouteImport } from './routes/$ticker/ipos/index'
-import { Route as TickerInstitutionsIndexRouteImport } from './routes/$ticker/institutions/index'
 import { Route as TickerInsiderTradesIndexRouteImport } from './routes/$ticker/insider-trades/index'
+import { Route as TickerHoldingsIndexRouteImport } from './routes/$ticker/holdings/index'
+import { Route as TickerHoldersIndexRouteImport } from './routes/$ticker/holders/index'
 import { Route as TickerFinancialsStandardizedIndexRouteImport } from './routes/$ticker/financials-standardized/index'
 import { Route as TickerFinancialsRatiosIndexRouteImport } from './routes/$ticker/financials-ratios/index'
 import { Route as TickerFinancialsGrowthIndexRouteImport } from './routes/$ticker/financials-growth/index'
 import { Route as TickerFinancialsCagrIndexRouteImport } from './routes/$ticker/financials-cagr/index'
 import { Route as TickerFinancialsAsReportedIndexRouteImport } from './routes/$ticker/financials-as-reported/index'
 import { Route as TickerFilingsIndexRouteImport } from './routes/$ticker/filings/index'
-import { Route as TickerEtfHoldingsIndexRouteImport } from './routes/$ticker/etf-holdings/index'
 import { Route as TickerEarningsCallsIndexRouteImport } from './routes/$ticker/earnings-calls/index'
 import { Route as TickerEarningsCalendarIndexRouteImport } from './routes/$ticker/earnings-calendar/index'
 import { Route as TickerDocumentsIndexRouteImport } from './routes/$ticker/documents/index'
@@ -43,6 +44,11 @@ const StatusRoute = StatusRouteImport.update({
 const LicensingRoute = LicensingRouteImport.update({
   id: '/licensing',
   path: '/licensing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FundsRoute = FundsRouteImport.update({
+  id: '/funds',
+  path: '/funds',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TickerRouteRoute = TickerRouteRouteImport.update({
@@ -92,17 +98,22 @@ const TickerIposIndexRoute = TickerIposIndexRouteImport.update({
   path: '/ipos/',
   getParentRoute: () => TickerRouteRoute,
 } as any)
-const TickerInstitutionsIndexRoute = TickerInstitutionsIndexRouteImport.update({
-  id: '/institutions/',
-  path: '/institutions/',
-  getParentRoute: () => TickerRouteRoute,
-} as any)
 const TickerInsiderTradesIndexRoute =
   TickerInsiderTradesIndexRouteImport.update({
     id: '/insider-trades/',
     path: '/insider-trades/',
     getParentRoute: () => TickerRouteRoute,
   } as any)
+const TickerHoldingsIndexRoute = TickerHoldingsIndexRouteImport.update({
+  id: '/holdings/',
+  path: '/holdings/',
+  getParentRoute: () => TickerRouteRoute,
+} as any)
+const TickerHoldersIndexRoute = TickerHoldersIndexRouteImport.update({
+  id: '/holders/',
+  path: '/holders/',
+  getParentRoute: () => TickerRouteRoute,
+} as any)
 const TickerFinancialsStandardizedIndexRoute =
   TickerFinancialsStandardizedIndexRouteImport.update({
     id: '/financials-standardized/',
@@ -138,11 +149,6 @@ const TickerFilingsIndexRoute = TickerFilingsIndexRouteImport.update({
   path: '/filings/',
   getParentRoute: () => TickerRouteRoute,
 } as any)
-const TickerEtfHoldingsIndexRoute = TickerEtfHoldingsIndexRouteImport.update({
-  id: '/etf-holdings/',
-  path: '/etf-holdings/',
-  getParentRoute: () => TickerRouteRoute,
-} as any)
 const TickerEarningsCallsIndexRoute =
   TickerEarningsCallsIndexRouteImport.update({
     id: '/earnings-calls/',
@@ -175,6 +181,7 @@ const TickerEarningsCallsEventIdIndexRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$ticker': typeof TickerRouteRouteWithChildren
+  '/funds': typeof FundsRoute
   '/licensing': typeof LicensingRoute
   '/status': typeof StatusRoute
   '/sec/$cik': typeof SecCikRoute
@@ -183,15 +190,15 @@ export interface FileRoutesByFullPath {
   '/$ticker/documents': typeof TickerDocumentsIndexRoute
   '/$ticker/earnings-calendar': typeof TickerEarningsCalendarIndexRoute
   '/$ticker/earnings-calls': typeof TickerEarningsCallsIndexRoute
-  '/$ticker/etf-holdings': typeof TickerEtfHoldingsIndexRoute
   '/$ticker/filings': typeof TickerFilingsIndexRoute
   '/$ticker/financials-as-reported': typeof TickerFinancialsAsReportedIndexRoute
   '/$ticker/financials-cagr': typeof TickerFinancialsCagrIndexRoute
   '/$ticker/financials-growth': typeof TickerFinancialsGrowthIndexRoute
   '/$ticker/financials-ratios': typeof TickerFinancialsRatiosIndexRoute
   '/$ticker/financials-standardized': typeof TickerFinancialsStandardizedIndexRoute
+  '/$ticker/holders': typeof TickerHoldersIndexRoute
+  '/$ticker/holdings': typeof TickerHoldingsIndexRoute
   '/$ticker/insider-trades': typeof TickerInsiderTradesIndexRoute
-  '/$ticker/institutions': typeof TickerInstitutionsIndexRoute
   '/$ticker/ipos': typeof TickerIposIndexRoute
   '/$ticker/market-holidays': typeof TickerMarketHolidaysIndexRoute
   '/$ticker/news': typeof TickerNewsIndexRoute
@@ -201,6 +208,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/funds': typeof FundsRoute
   '/licensing': typeof LicensingRoute
   '/status': typeof StatusRoute
   '/sec/$cik': typeof SecCikRoute
@@ -209,15 +217,15 @@ export interface FileRoutesByTo {
   '/$ticker/documents': typeof TickerDocumentsIndexRoute
   '/$ticker/earnings-calendar': typeof TickerEarningsCalendarIndexRoute
   '/$ticker/earnings-calls': typeof TickerEarningsCallsIndexRoute
-  '/$ticker/etf-holdings': typeof TickerEtfHoldingsIndexRoute
   '/$ticker/filings': typeof TickerFilingsIndexRoute
   '/$ticker/financials-as-reported': typeof TickerFinancialsAsReportedIndexRoute
   '/$ticker/financials-cagr': typeof TickerFinancialsCagrIndexRoute
   '/$ticker/financials-growth': typeof TickerFinancialsGrowthIndexRoute
   '/$ticker/financials-ratios': typeof TickerFinancialsRatiosIndexRoute
   '/$ticker/financials-standardized': typeof TickerFinancialsStandardizedIndexRoute
+  '/$ticker/holders': typeof TickerHoldersIndexRoute
+  '/$ticker/holdings': typeof TickerHoldingsIndexRoute
   '/$ticker/insider-trades': typeof TickerInsiderTradesIndexRoute
-  '/$ticker/institutions': typeof TickerInstitutionsIndexRoute
   '/$ticker/ipos': typeof TickerIposIndexRoute
   '/$ticker/market-holidays': typeof TickerMarketHolidaysIndexRoute
   '/$ticker/news': typeof TickerNewsIndexRoute
@@ -229,6 +237,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$ticker': typeof TickerRouteRouteWithChildren
+  '/funds': typeof FundsRoute
   '/licensing': typeof LicensingRoute
   '/status': typeof StatusRoute
   '/sec/$cik': typeof SecCikRoute
@@ -237,15 +246,15 @@ export interface FileRoutesById {
   '/$ticker/documents/': typeof TickerDocumentsIndexRoute
   '/$ticker/earnings-calendar/': typeof TickerEarningsCalendarIndexRoute
   '/$ticker/earnings-calls/': typeof TickerEarningsCallsIndexRoute
-  '/$ticker/etf-holdings/': typeof TickerEtfHoldingsIndexRoute
   '/$ticker/filings/': typeof TickerFilingsIndexRoute
   '/$ticker/financials-as-reported/': typeof TickerFinancialsAsReportedIndexRoute
   '/$ticker/financials-cagr/': typeof TickerFinancialsCagrIndexRoute
   '/$ticker/financials-growth/': typeof TickerFinancialsGrowthIndexRoute
   '/$ticker/financials-ratios/': typeof TickerFinancialsRatiosIndexRoute
   '/$ticker/financials-standardized/': typeof TickerFinancialsStandardizedIndexRoute
+  '/$ticker/holders/': typeof TickerHoldersIndexRoute
+  '/$ticker/holdings/': typeof TickerHoldingsIndexRoute
   '/$ticker/insider-trades/': typeof TickerInsiderTradesIndexRoute
-  '/$ticker/institutions/': typeof TickerInstitutionsIndexRoute
   '/$ticker/ipos/': typeof TickerIposIndexRoute
   '/$ticker/market-holidays/': typeof TickerMarketHolidaysIndexRoute
   '/$ticker/news/': typeof TickerNewsIndexRoute
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$ticker'
+    | '/funds'
     | '/licensing'
     | '/status'
     | '/sec/$cik'
@@ -266,15 +276,15 @@ export interface FileRouteTypes {
     | '/$ticker/documents'
     | '/$ticker/earnings-calendar'
     | '/$ticker/earnings-calls'
-    | '/$ticker/etf-holdings'
     | '/$ticker/filings'
     | '/$ticker/financials-as-reported'
     | '/$ticker/financials-cagr'
     | '/$ticker/financials-growth'
     | '/$ticker/financials-ratios'
     | '/$ticker/financials-standardized'
+    | '/$ticker/holders'
+    | '/$ticker/holdings'
     | '/$ticker/insider-trades'
-    | '/$ticker/institutions'
     | '/$ticker/ipos'
     | '/$ticker/market-holidays'
     | '/$ticker/news'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/funds'
     | '/licensing'
     | '/status'
     | '/sec/$cik'
@@ -292,15 +303,15 @@ export interface FileRouteTypes {
     | '/$ticker/documents'
     | '/$ticker/earnings-calendar'
     | '/$ticker/earnings-calls'
-    | '/$ticker/etf-holdings'
     | '/$ticker/filings'
     | '/$ticker/financials-as-reported'
     | '/$ticker/financials-cagr'
     | '/$ticker/financials-growth'
     | '/$ticker/financials-ratios'
     | '/$ticker/financials-standardized'
+    | '/$ticker/holders'
+    | '/$ticker/holdings'
     | '/$ticker/insider-trades'
-    | '/$ticker/institutions'
     | '/$ticker/ipos'
     | '/$ticker/market-holidays'
     | '/$ticker/news'
@@ -311,6 +322,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$ticker'
+    | '/funds'
     | '/licensing'
     | '/status'
     | '/sec/$cik'
@@ -319,15 +331,15 @@ export interface FileRouteTypes {
     | '/$ticker/documents/'
     | '/$ticker/earnings-calendar/'
     | '/$ticker/earnings-calls/'
-    | '/$ticker/etf-holdings/'
     | '/$ticker/filings/'
     | '/$ticker/financials-as-reported/'
     | '/$ticker/financials-cagr/'
     | '/$ticker/financials-growth/'
     | '/$ticker/financials-ratios/'
     | '/$ticker/financials-standardized/'
+    | '/$ticker/holders/'
+    | '/$ticker/holdings/'
     | '/$ticker/insider-trades/'
-    | '/$ticker/institutions/'
     | '/$ticker/ipos/'
     | '/$ticker/market-holidays/'
     | '/$ticker/news/'
@@ -339,6 +351,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TickerRouteRoute: typeof TickerRouteRouteWithChildren
+  FundsRoute: typeof FundsRoute
   LicensingRoute: typeof LicensingRoute
   StatusRoute: typeof StatusRoute
   SecCikRoute: typeof SecCikRoute
@@ -358,6 +371,13 @@ declare module '@tanstack/react-router' {
       path: '/licensing'
       fullPath: '/licensing'
       preLoaderRoute: typeof LicensingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/funds': {
+      id: '/funds'
+      path: '/funds'
+      fullPath: '/funds'
+      preLoaderRoute: typeof FundsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$ticker': {
@@ -423,18 +443,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TickerIposIndexRouteImport
       parentRoute: typeof TickerRouteRoute
     }
-    '/$ticker/institutions/': {
-      id: '/$ticker/institutions/'
-      path: '/institutions'
-      fullPath: '/$ticker/institutions'
-      preLoaderRoute: typeof TickerInstitutionsIndexRouteImport
-      parentRoute: typeof TickerRouteRoute
-    }
     '/$ticker/insider-trades/': {
       id: '/$ticker/insider-trades/'
       path: '/insider-trades'
       fullPath: '/$ticker/insider-trades'
       preLoaderRoute: typeof TickerInsiderTradesIndexRouteImport
+      parentRoute: typeof TickerRouteRoute
+    }
+    '/$ticker/holdings/': {
+      id: '/$ticker/holdings/'
+      path: '/holdings'
+      fullPath: '/$ticker/holdings'
+      preLoaderRoute: typeof TickerHoldingsIndexRouteImport
+      parentRoute: typeof TickerRouteRoute
+    }
+    '/$ticker/holders/': {
+      id: '/$ticker/holders/'
+      path: '/holders'
+      fullPath: '/$ticker/holders'
+      preLoaderRoute: typeof TickerHoldersIndexRouteImport
       parentRoute: typeof TickerRouteRoute
     }
     '/$ticker/financials-standardized/': {
@@ -477,13 +504,6 @@ declare module '@tanstack/react-router' {
       path: '/filings'
       fullPath: '/$ticker/filings'
       preLoaderRoute: typeof TickerFilingsIndexRouteImport
-      parentRoute: typeof TickerRouteRoute
-    }
-    '/$ticker/etf-holdings/': {
-      id: '/$ticker/etf-holdings/'
-      path: '/etf-holdings'
-      fullPath: '/$ticker/etf-holdings'
-      preLoaderRoute: typeof TickerEtfHoldingsIndexRouteImport
       parentRoute: typeof TickerRouteRoute
     }
     '/$ticker/earnings-calls/': {
@@ -530,15 +550,15 @@ interface TickerRouteRouteChildren {
   TickerDocumentsIndexRoute: typeof TickerDocumentsIndexRoute
   TickerEarningsCalendarIndexRoute: typeof TickerEarningsCalendarIndexRoute
   TickerEarningsCallsIndexRoute: typeof TickerEarningsCallsIndexRoute
-  TickerEtfHoldingsIndexRoute: typeof TickerEtfHoldingsIndexRoute
   TickerFilingsIndexRoute: typeof TickerFilingsIndexRoute
   TickerFinancialsAsReportedIndexRoute: typeof TickerFinancialsAsReportedIndexRoute
   TickerFinancialsCagrIndexRoute: typeof TickerFinancialsCagrIndexRoute
   TickerFinancialsGrowthIndexRoute: typeof TickerFinancialsGrowthIndexRoute
   TickerFinancialsRatiosIndexRoute: typeof TickerFinancialsRatiosIndexRoute
   TickerFinancialsStandardizedIndexRoute: typeof TickerFinancialsStandardizedIndexRoute
+  TickerHoldersIndexRoute: typeof TickerHoldersIndexRoute
+  TickerHoldingsIndexRoute: typeof TickerHoldingsIndexRoute
   TickerInsiderTradesIndexRoute: typeof TickerInsiderTradesIndexRoute
-  TickerInstitutionsIndexRoute: typeof TickerInstitutionsIndexRoute
   TickerIposIndexRoute: typeof TickerIposIndexRoute
   TickerMarketHolidaysIndexRoute: typeof TickerMarketHolidaysIndexRoute
   TickerNewsIndexRoute: typeof TickerNewsIndexRoute
@@ -553,7 +573,6 @@ const TickerRouteRouteChildren: TickerRouteRouteChildren = {
   TickerDocumentsIndexRoute: TickerDocumentsIndexRoute,
   TickerEarningsCalendarIndexRoute: TickerEarningsCalendarIndexRoute,
   TickerEarningsCallsIndexRoute: TickerEarningsCallsIndexRoute,
-  TickerEtfHoldingsIndexRoute: TickerEtfHoldingsIndexRoute,
   TickerFilingsIndexRoute: TickerFilingsIndexRoute,
   TickerFinancialsAsReportedIndexRoute: TickerFinancialsAsReportedIndexRoute,
   TickerFinancialsCagrIndexRoute: TickerFinancialsCagrIndexRoute,
@@ -561,8 +580,9 @@ const TickerRouteRouteChildren: TickerRouteRouteChildren = {
   TickerFinancialsRatiosIndexRoute: TickerFinancialsRatiosIndexRoute,
   TickerFinancialsStandardizedIndexRoute:
     TickerFinancialsStandardizedIndexRoute,
+  TickerHoldersIndexRoute: TickerHoldersIndexRoute,
+  TickerHoldingsIndexRoute: TickerHoldingsIndexRoute,
   TickerInsiderTradesIndexRoute: TickerInsiderTradesIndexRoute,
-  TickerInstitutionsIndexRoute: TickerInstitutionsIndexRoute,
   TickerIposIndexRoute: TickerIposIndexRoute,
   TickerMarketHolidaysIndexRoute: TickerMarketHolidaysIndexRoute,
   TickerNewsIndexRoute: TickerNewsIndexRoute,
@@ -578,6 +598,7 @@ const TickerRouteRouteWithChildren = TickerRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TickerRouteRoute: TickerRouteRouteWithChildren,
+  FundsRoute: FundsRoute,
   LicensingRoute: LicensingRoute,
   StatusRoute: StatusRoute,
   SecCikRoute: SecCikRoute,

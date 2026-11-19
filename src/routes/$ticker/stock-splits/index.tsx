@@ -32,9 +32,9 @@ function StockSplitsPage() {
         isFetchingNextPage,
         isLoading,
     } = useV2SplitsInfinite({
-        company: ticker,
         limit: 40,
         sort: "-execution_date",
+        symbol: ticker,
     });
 
     const splits = React.useMemo(
@@ -103,7 +103,7 @@ function StockSplitsPage() {
     if (error) {
         return (
             <div className="space-y-4 relative flex flex-col h-0 grow">
-                <ErrorState error={error} title="Failed to load stock splits" />
+                <ErrorState error={error} title="Failed to load splits" />
             </div>
         );
     }
@@ -111,7 +111,7 @@ function StockSplitsPage() {
     return (
         <div className="space-y-4 relative flex flex-col h-0 grow">
             <div className="flex flex-col gap-1">
-                <div>Stock Splits</div>
+                <div>Splits</div>
                 <div className="text-muted-foreground text-sm">
                     Stock split history sorted by execution date.
                 </div>
@@ -157,13 +157,13 @@ function StockSplitsPage() {
 
                     {!isLoading && splits.length === 0 && (
                         <div className="text-muted-foreground w-full text-center text-xs p-2">
-                            No stock splits available.
+                            No splits available.
                         </div>
                     )}
 
                     {isLoading && splits.length === 0 && (
                         <div className="text-muted-foreground w-full text-center text-xs p-2">
-                            Loading stock splits...
+                            Loading splits...
                         </div>
                     )}
                 </ScrollArea>

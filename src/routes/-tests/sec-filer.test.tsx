@@ -18,7 +18,7 @@ import {
     SecPrivateOfferingsView,
 } from "@/components/sec/sec-filer-views";
 import { ApiRequestError } from "@/lib/api/errors";
-import { V2_FILERS, V2_FILINGS, V2_HOLDINGS, V2_HOLDINGS_PENDING, V2_OFFERINGS } from "@/lib/sec/v2-fixtures";
+import { V2_FILER_HOLDINGS, V2_FILERS, V2_FILINGS, V2_OFFERINGS } from "@/lib/sec/v2-fixtures";
 
 vi.mock("@tanstack/react-router", () => ({
     Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => (
@@ -320,7 +320,7 @@ describe("SecFilingsView", () => {
     });
 });
 
-describe("SecPortfolioView (`/v1/holdings?filer=`)", () => {
+describe("SecPortfolioView (`/v1/filers/{cik}/holdings`)", () => {
     const view = (props: Partial<Parameters<typeof SecPortfolioView>[0]>) => (
         <SecPortfolioView error={null} hasNextPage={false} isFetchingNextPage={false} isLoading={false} onMore={() => undefined} pages={[]} {...props} />
     );
@@ -328,7 +328,7 @@ describe("SecPortfolioView (`/v1/holdings?filer=`)", () => {
     it("lists the positions with the page's provenance; 'More positions' while a cursor remains", () => {
         const onMore = vi.fn();
 
-        render(view({ hasNextPage: true, onMore, pages: [V2_HOLDINGS] }));
+        render(view({ hasNextPage: true, onMore, pages: [V2_FILER_HOLDINGS] }));
 
         expect(screen.getByText("AAPL")).toBeInTheDocument();
 
@@ -344,7 +344,7 @@ describe("SecPortfolioView (`/v1/holdings?filer=`)", () => {
     });
 
     it("a pending quarter is its notice, never 'no positions'", () => {
-        render(view({ pages: [V2_HOLDINGS_PENDING] }));
+        render(view({ pages: [{ ...V2_FILER_HOLDINGS, data: [], meta: { coverage: { retry_after_s: 60, state: "pending" } } }] }));
 
         expect(screen.getByText("Being prepared — asked again in 30 s")).toBeInTheDocument();
 

@@ -26,8 +26,10 @@ function row(exDate: string) {
         dividend_type: "CD",
         ex_dividend_date: exDate,
         frequency: 4,
+        fund: null,
         pay_date: exDate,
         record_date: exDate,
+        symbol: "AAPL",
     };
 }
 
@@ -49,11 +51,11 @@ describe("useV2DividendsInfinite", () => {
             .mockResolvedValueOnce({ data: [row("2026-08-11")], has_more: true, meta: {}, next_cursor: "c2" })
             .mockResolvedValueOnce({ data: [row("2026-05-12")], has_more: false, meta: {}, next_cursor: null });
 
-        const { result } = renderHook(() => useV2DividendsInfinite({ company: "AAPL", limit: 1, sort: "-ex_date" }), { wrapper });
+        const { result } = renderHook(() => useV2DividendsInfinite({ limit: 1, sort: "-ex_date", symbol: "AAPL" }), { wrapper });
 
         await waitFor(() => expect(result.current.data?.pages).toHaveLength(1));
 
-        expect(getDividends).toHaveBeenLastCalledWith({ data: { apiKey: "test-key", company: "AAPL", cursor: undefined, limit: 1, sort: "-ex_date" } });
+        expect(getDividends).toHaveBeenLastCalledWith({ data: { apiKey: "test-key", cursor: undefined, limit: 1, sort: "-ex_date", symbol: "AAPL" } });
 
         expect(result.current.hasNextPage).toBe(true);
 
@@ -61,7 +63,7 @@ describe("useV2DividendsInfinite", () => {
 
         await waitFor(() => expect(result.current.data?.pages).toHaveLength(2));
 
-        expect(getDividends).toHaveBeenLastCalledWith({ data: { apiKey: "test-key", company: "AAPL", cursor: "c2", limit: 1, sort: "-ex_date" } });
+        expect(getDividends).toHaveBeenLastCalledWith({ data: { apiKey: "test-key", cursor: "c2", limit: 1, sort: "-ex_date", symbol: "AAPL" } });
 
         expect(result.current.hasNextPage).toBe(false);
     });
@@ -75,7 +77,7 @@ describe("useV2DividendsInfinite", () => {
 
         getDividends.mockRejectedValue(thrown);
 
-        const { result } = renderHook(() => useV2DividendsInfinite({ company: "AAPL" }), { wrapper });
+        const { result } = renderHook(() => useV2DividendsInfinite({ symbol: "AAPL" }), { wrapper });
 
         await waitFor(() => expect(result.current.error).not.toBeNull());
 

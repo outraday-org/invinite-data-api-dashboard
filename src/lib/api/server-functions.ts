@@ -3,7 +3,6 @@ import { z } from "zod";
 
 import type {
     CompanyFiscalPeriod,
-    CompanySearchResponse,
     V2AnnouncementsResponse,
     V2AsReportedDetailedResponse,
     V2AsReportedPresentationResponse,
@@ -16,8 +15,6 @@ import type {
     V2DividendsSort,
     V2DocumentFigureResponse,
     V2DocumentVersionResponse,
-    V2EtfHoldingsResponse,
-    V2EtfWeightsResponse,
     V2EventComparisonResponse,
     V2EventResponse,
     V2EventsResponse,
@@ -26,22 +23,33 @@ import type {
     V2EventStatus,
     V2EventType,
     V2FactResponse,
+    V2FilerHoldingsResponse,
     V2FilerResponse,
     V2FilersResponse,
     V2FilingDetailResponse,
     V2FilingSearchResponse,
     V2FilingsResponse,
     V2FilingsSort,
-    V2FundHoldingsResponse,
+    V2Fund,
+    V2FundPositionsResponse,
+    V2FundsResponse,
+    V2FundStructure,
+    V2FundType,
+    V2FundWeightsResponse,
     V2GrowthResponse,
     V2GuidanceBasis,
     V2GuidancePeriodKind,
     V2GuidanceResponse,
-    V2HoldingChangesResponse,
-    V2HoldingsInstruments,
-    V2HoldingsResponse,
+    V2HolderChangesResponse,
+    V2HolderChangeType,
+    V2HoldersInstruments,
+    V2HolderSource,
+    V2HoldersResponse,
     V2InsiderSide,
     V2InsiderTradesResponse,
+    V2Instrument,
+    V2InstrumentsResponse,
+    V2InstrumentType,
     V2InvestorDocumentResponse,
     V2InvestorDocumentSearchResponse,
     V2InvestorDocumentsResponse,
@@ -105,20 +113,79 @@ const apiKeySchema = z
     .pipe(z.string().min(1))
     .optional();
 
-const searchSchema = z.object({
-    apiKey: apiKeySchema,
-    limit: z.number().int().min(1).max(200).optional(),
-    query: z.string(),
-});
+const instrumentTypeSchema = z.enum(["stock", "etf", "closed_end_fund", "etn"] as const satisfies ReadonlyArray<V2InstrumentType>);
 
-/** Company search by name or ticker prefix (`GET /v1/companies?q=`, one page). */
-export const searchCompanies = createServerFn({ method: "GET" })
-    .inputValidator(searchSchema)
-    .handler(async ({ data }): Promise<CompanySearchResponse> => {
-        const { apiKey, limit = 10, query } = data;
+const fundTypeSchema = z.enum(["etf", "closed_end_fund"] as const satisfies ReadonlyArray<V2FundType>);
 
-        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/companies", {
-            params: { query: v2Query({ limit, q: query }) },
+const fundStructureSchema = z.enum(["registered_fund", "exchange_traded_trust"] as const satisfies ReadonlyArray<V2FundStructure>);
+
+/** A bare US ticker (`BRK.B`, `BF-B`); `TICKER.<MIC>` is refused by the API. */
+const symbolSchema = z.string().trim().min(1).max(15);
+
+/** A fund's ticker or fund key (`S000024908`, `cik:884394`). */
+const fundSchema = z.string().trim().min(1).max(20);
+
+/** Search everything exchange-traded by ticker prefix or name (`GET /v1/instruments?q=`, one page). */
+export const getInstruments = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        limit: z.number().int().min(1).max(200).optional(),
+        query: z.string(),
+        type: z.array(instrumentTypeSchema).optional(),
+    }))
+    .handler(async ({ data }): Promise<V2InstrumentsResponse> => {
+        const { apiKey, limit = 10, query, type } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/instruments", {
+            params: { query: v2Query({ limit, q: query, type: v2Expand(type) }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** One instrument: its type, structure, company or fund link and `datasets` (404 `not_covered` = not known). */
+export const getInstrument = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, symbol: symbolSchema }))
+    .handler(async ({ data }): Promise<V2Instrument> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/instruments/{symbol}", {
+            params: { path: { symbol: data.symbol } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The listed funds (ETFs and closed-end funds; an ETN is no fund) by cursor. */
+export const getFunds = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        cursor: z.string().min(1).optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+        q: z.string().trim().min(1).optional(),
+        structure: z.array(fundStructureSchema).optional(),
+        type: z.array(fundTypeSchema).optional(),
+    }))
+    .handler(async ({ data }): Promise<V2FundsResponse> => {
+        const { apiKey, cursor, limit, q, structure, type } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/funds", {
+            params: { query: v2Query({ cursor, limit, q, structure: v2Expand(structure), type: v2Expand(type) }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** One fund's profile (ticker or fund key): net assets with date and scope, expense ratio, registrant, classes. */
+export const getFund = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, fund: fundSchema }))
+    .handler(async ({ data }): Promise<V2Fund> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/funds/{fund}", {
+            params: { path: { fund: data.fund } },
         });
 
         if (error) throwApiError(error, response);
@@ -308,13 +375,13 @@ export const getV2Filers = createServerFn({ method: "GET" })
 const filingSearchSchema = z.object({
     apiKey: apiKeySchema,
     caseSensitive: z.boolean().optional(),
-    /** Ticker or CIK: the search stays scoped to one company. */
-    company: z.string().trim().min(1),
     cursor: cursorSchema,
     form: z.string().trim().min(1).optional(),
     limit: z.number().int().min(1).max(50).optional(),
     mode: searchModeSchema.optional(),
     q: z.string().trim().min(1).max(500),
+    /** Ticker, fund key or company CIK: the search stays scoped to one instrument. */
+    symbol: z.string().trim().min(1),
 });
 
 /**
@@ -324,18 +391,18 @@ const filingSearchSchema = z.object({
 export const getV2FilingSearch = createServerFn({ method: "GET" })
     .inputValidator(filingSearchSchema)
     .handler(async ({ data }): Promise<V2FilingSearchResponse> => {
-        const { apiKey, caseSensitive, company, cursor, form, limit, mode, q } = data;
+        const { apiKey, caseSensitive, cursor, form, limit, mode, q, symbol } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/search/filings", {
             params: {
                 query: v2Query({
                     case_sensitive: mode === "literal" ? caseSensitive : undefined,
-                    company,
                     cursor,
                     form,
                     limit,
                     mode,
                     q,
+                    symbol,
                 }),
             },
         });
@@ -373,21 +440,21 @@ export const getV2Company = createServerFn({ method: "GET" })
 
 const v2DividendsSchema = z.object({
     apiKey: apiKeySchema,
-    company: z.string().trim().min(1),
     cursor: cursorSchema,
     exDateGte: z.string().trim().min(1).optional(),
     exDateLte: z.string().trim().min(1).optional(),
     limit: v2LimitSchema,
     sort: z.enum(["ex_date", "-ex_date", "pay_date", "-pay_date"] as const satisfies ReadonlyArray<V2DividendsSort>).optional(),
+    symbol: symbolSchema,
 });
 
 export const getV2Dividends = createServerFn({ method: "GET" })
     .inputValidator(v2DividendsSchema)
     .handler(async ({ data }): Promise<V2DividendsResponse> => {
-        const { apiKey, company, cursor, exDateGte, exDateLte, limit, sort } = data;
+        const { apiKey, cursor, exDateGte, exDateLte, limit, sort, symbol } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/dividends", {
-            params: { query: v2Query({ company, cursor, "ex_date.gte": exDateGte, "ex_date.lte": exDateLte, limit, sort }) },
+            params: { query: v2Query({ cursor, "ex_date.gte": exDateGte, "ex_date.lte": exDateLte, limit, sort, symbol }) },
         });
 
         if (error) throwApiError(error, response);
@@ -397,19 +464,19 @@ export const getV2Dividends = createServerFn({ method: "GET" })
 
 const v2SplitsSchema = z.object({
     apiKey: apiKeySchema,
-    company: z.string().trim().min(1),
     cursor: cursorSchema,
     limit: v2LimitSchema,
     sort: z.enum(["execution_date", "-execution_date"] as const satisfies ReadonlyArray<V2SplitsSort>).optional(),
+    symbol: symbolSchema,
 });
 
 export const getV2Splits = createServerFn({ method: "GET" })
     .inputValidator(v2SplitsSchema)
     .handler(async ({ data }): Promise<V2SplitsResponse> => {
-        const { apiKey, company, cursor, limit, sort } = data;
+        const { apiKey, cursor, limit, sort, symbol } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/splits", {
-            params: { query: v2Query({ company, cursor, limit, sort }) },
+            params: { query: v2Query({ cursor, limit, sort, symbol }) },
         });
 
         if (error) throwApiError(error, response);
@@ -852,37 +919,38 @@ export const getV2InvestorDocumentSearch = createServerFn({ method: "GET" })
         return res;
     });
 
-// SEC family (`/v1/filings*`, `/v1/document-versions/*`, `/v1/holdings`, `/v1/holding-changes`, `/v1/insider-trades`,
+// SEC family (`/v1/filings*`, `/v1/document-versions/*`, `/v1/holders`, `/v1/holder-changes`, `/v1/insider-trades`,
 // `/v1/ipos`, backend tasks/data-api-v2 task 6). Readiness is `meta.coverage.state` on a 200 (`data: []` while
 // pending); 403 `excluded`, 404 `not_covered` and 503 `unavailable` are problems (page states, `secErrorState`).
 
 const v2FilingsSchema = z.object({
     apiKey: apiKeySchema,
-    company: z.string().trim().min(1),
     cursor: cursorSchema,
     filedAtGte: z.string().trim().min(1).optional(),
     filedAtLt: z.string().trim().min(1).optional(),
     form: z.array(z.string().trim().min(1)).optional(),
     limit: v2LimitSchema,
     sort: z.enum(["filed_at", "-filed_at"] as const satisfies ReadonlyArray<V2FilingsSort>).optional(),
+    /** Ticker of any instrument, a fund key or a company CIK (its primary listing). */
+    symbol: symbolSchema,
 });
 
-/** A company's filings by cursor (`meta.form_facet` = its forms with counts) (`sort`: `filed_at` only). */
+/** An instrument's filings by cursor (`meta.form_facet` = its forms with counts) (`sort`: `filed_at` only). */
 export const getV2Filings = createServerFn({ method: "GET" })
     .inputValidator(v2FilingsSchema)
     .handler(async ({ data }): Promise<V2FilingsResponse> => {
-        const { apiKey, company, cursor, filedAtGte, filedAtLt, form, limit, sort } = data;
+        const { apiKey, cursor, filedAtGte, filedAtLt, form, limit, sort, symbol } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/filings", {
             params: {
                 query: v2Query({
-                    company,
                     cursor,
                     "filed_at.gte": filedAtGte,
                     "filed_at.lt": filedAtLt,
                     "form": v2Expand(form),
                     limit,
                     sort,
+                    symbol,
                 }),
             },
         });
@@ -940,83 +1008,44 @@ export const getV2DocumentFigure = createServerFn({ method: "GET" })
         return res as V2DocumentFigureResponse;
     });
 
-// 13F rows: up to 1 000 per page.
-const v2ThirteenFLimitSchema = z.number().int().min(1).max(1000).optional();
+// Holder rows (13F, N-PORT, issuer files): up to 1 000 per page.
+const holdersLimitSchema = z.number().int().min(1).max(1000).optional();
 
-const v2HoldingsSchema = z.object({
-    accession: accessionSchema.optional(),
-    apiKey: apiKeySchema,
-    company: z.string().trim().min(1).optional(),
-    cursor: cursorSchema,
-    filer: z.string().trim().regex(/^\d{1,10}(,\d{1,10})*$/).optional(),
-    instruments: z.enum(["shares", "all"] as const satisfies ReadonlyArray<V2HoldingsInstruments>).optional(),
-    limit: v2ThirteenFLimitSchema,
-    periodEnd: z.iso.date().optional(),
-});
+const holderSourceSchema = z.enum(["13f", "nport", "issuer_file"] as const satisfies ReadonlyArray<V2HolderSource>);
 
-/** 13F positions of exactly one scope (`company` | `filer` | `accession`); `period_end` omitted = the server's newest due quarter. */
-export const getV2Holdings = createServerFn({ method: "GET" })
-    .inputValidator(v2HoldingsSchema)
-    .handler(async ({ data }): Promise<V2HoldingsResponse> => {
-        const { accession, apiKey, company, cursor, filer, instruments, limit, periodEnd } = data;
+const holdersInstrumentsSchema = z.enum(["shares", "all"] as const satisfies ReadonlyArray<V2HoldersInstruments>);
 
-        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/holdings", {
-            params: { query: v2Query({ accession, company, cursor, filer, instruments, limit, period_end: periodEnd }) },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const v2FundHoldingsSchema = z.object({
-    accession: accessionSchema.optional(),
-    apiKey: apiKeySchema,
-    company: z.string().trim().min(1).optional(),
-    cursor: cursorSchema,
-    filer: z.string().trim().regex(/^\d{1,10}$/).optional(),
-    limit: v2ThirteenFLimitSchema,
-    periodEnd: z.iso.date().optional(),
-    series: z.string().trim().regex(/^(S\d{9}|cik:\d{1,10})$/).optional(),
-});
-
-/** N-PORT fund positions of exactly one scope (`company` | `filer` [+ `series`] | `accession`); `period_end` omitted = today. */
-export const getV2FundHoldings = createServerFn({ method: "GET" })
-    .inputValidator(v2FundHoldingsSchema)
-    .handler(async ({ data }): Promise<V2FundHoldingsResponse> => {
-        const { accession, apiKey, company, cursor, filer, limit, periodEnd, series } = data;
-
-        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/fund-holdings", {
-            params: { query: v2Query({ accession, company, cursor, filer, limit, period_end: periodEnd, series }) },
-        });
-
-        if (error) throwApiError(error, response);
-
-        return res;
-    });
-
-const etfTickerSchema = z.string().trim().min(1).max(12);
-
-const v2EtfHoldingsSchema = z.object({
-    apiKey: apiKeySchema,
-    asOf: z.iso.date().optional(),
-    company: z.string().trim().min(1).optional(),
-    cursor: cursorSchema,
-    etf: etfTickerSchema.optional(),
-    limit: v2ThirteenFLimitSchema,
-});
+const holderChangeTypeSchema = z.enum(["new", "added", "reduced", "sold_out", "unchanged"] as const satisfies ReadonlyArray<V2HolderChangeType>);
 
 /**
- * ETF composition (Data API release 5.10): exactly one of `etf` (one ETF's freshest composition; `asOf` = the one stored
- * on or before that day) or `company` (the ETFs whose head issuer file holds it). `meta.source` / `meta.as_of` name it.
+ * Who holds ONE instrument (`GET /v1/holders?symbol=`): with `source` the full list of that source by cursor; without it
+ * the overview (owner decision 12): one door page per source in `data`, one after another, `meta.sections[]` naming
+ * each one's state, as-of, total and `has_more` (no cursor). `periodEnd` is never sent with `source=issuer_file` (400).
  */
-export const getV2EtfHoldings = createServerFn({ method: "GET" })
-    .inputValidator(v2EtfHoldingsSchema)
-    .handler(async ({ data }): Promise<V2EtfHoldingsResponse> => {
-        const { apiKey, asOf, company, cursor, etf, limit } = data;
+export const getHolders = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        cursor: cursorSchema,
+        instruments: holdersInstrumentsSchema.optional(),
+        limit: holdersLimitSchema,
+        periodEnd: z.iso.date().optional(),
+        source: holderSourceSchema.optional(),
+        symbol: symbolSchema,
+    }))
+    .handler(async ({ data }): Promise<V2HoldersResponse> => {
+        const { apiKey, cursor, instruments, limit, periodEnd, source, symbol } = data;
 
-        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/etf-holdings", {
-            params: { query: v2Query({ as_of: asOf, company, cursor, etf, limit }) },
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/holders", {
+            params: {
+                query: v2Query({
+                    cursor,
+                    instruments,
+                    limit,
+                    period_end: source === "issuer_file" ? undefined : periodEnd,
+                    source,
+                    symbol,
+                }),
+            },
         });
 
         if (error) throwApiError(error, response);
@@ -1024,23 +1053,21 @@ export const getV2EtfHoldings = createServerFn({ method: "GET" })
         return res;
     });
 
-const v2EtfWeightsSchema = z.object({
-    apiKey: apiKeySchema,
-    asOf: z.iso.date().optional(),
-    cursor: cursorSchema,
-    dimension: z.string().trim().regex(/^(sector|country|asset_class)(,(sector|country|asset_class))*$/).optional(),
-    etf: etfTickerSchema,
-    limit: z.number().int().min(1).max(200).optional(),
-});
+/** The proven 13F position changes of one security's holders vs the prior quarter (`unchanged` only when `type` asks). */
+export const getHolderChanges = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        cursor: cursorSchema,
+        limit: holdersLimitSchema,
+        periodEnd: z.iso.date().optional(),
+        symbol: symbolSchema,
+        type: z.array(holderChangeTypeSchema).optional(),
+    }))
+    .handler(async ({ data }): Promise<V2HolderChangesResponse> => {
+        const { apiKey, cursor, limit, periodEnd, symbol, type } = data;
 
-/** An ETF's sector / country / asset-class weights of the same composition `getV2EtfHoldings` serves (`basis` per bucket). */
-export const getV2EtfWeights = createServerFn({ method: "GET" })
-    .inputValidator(v2EtfWeightsSchema)
-    .handler(async ({ data }): Promise<V2EtfWeightsResponse> => {
-        const { apiKey, asOf, cursor, dimension, etf, limit } = data;
-
-        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/etf-weights", {
-            params: { query: v2Query({ as_of: asOf, cursor, dimension, etf, limit }) },
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/holder-changes", {
+            params: { query: v2Query({ cursor, limit, period_end: periodEnd, symbol, type: v2Expand(type) }) },
         });
 
         if (error) throwApiError(error, response);
@@ -1048,22 +1075,67 @@ export const getV2EtfWeights = createServerFn({ method: "GET" })
         return res;
     });
 
-const v2HoldingChangesSchema = z.object({
-    apiKey: apiKeySchema,
-    company: z.string().trim().min(1),
-    cursor: cursorSchema,
-    limit: v2ThirteenFLimitSchema,
-    periodEnd: z.iso.date().optional(),
-});
+/** A 13F manager's portfolio for one quarter (`period_end` omitted = the newest quarter whose 13F deadline passed). */
+export const getFilerHoldings = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        cik: cikSchema,
+        cursor: cursorSchema,
+        instruments: holdersInstrumentsSchema.optional(),
+        limit: holdersLimitSchema,
+        periodEnd: z.iso.date().optional(),
+    }))
+    .handler(async ({ data }): Promise<V2FilerHoldingsResponse> => {
+        const { apiKey, cik, cursor, instruments, limit, periodEnd } = data;
 
-/** A company's proven 13F position changes vs the prior quarter (`unchanged` rows only when `type` asks; not sent here). */
-export const getV2HoldingChanges = createServerFn({ method: "GET" })
-    .inputValidator(v2HoldingChangesSchema)
-    .handler(async ({ data }): Promise<V2HoldingChangesResponse> => {
-        const { apiKey, company, cursor, limit, periodEnd } = data;
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/filers/{cik}/holdings", {
+            params: { path: { cik }, query: v2Query({ cursor, instruments, limit, period_end: periodEnd }) },
+        });
 
-        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/holding-changes", {
-            params: { query: v2Query({ company, cursor, limit, period_end: periodEnd }) },
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/**
+ * A listed fund's composition from the freshest source (the issuer's daily / monthly file, else its latest N-PORT
+ * report; `meta.source` / `meta.as_of` name it), largest weight first; `asOf` = the composition stored on or before it.
+ */
+export const getFundPositions = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        asOf: z.iso.date().optional(),
+        cursor: cursorSchema,
+        fund: fundSchema,
+        limit: v2LimitSchema,
+    }))
+    .handler(async ({ data }): Promise<V2FundPositionsResponse> => {
+        const { apiKey, asOf, cursor, fund, limit } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/funds/{fund}/holdings", {
+            params: { path: { fund }, query: v2Query({ as_of: asOf, cursor, limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** A fund's sector / country / asset-class weights of the composition `getFundPositions` serves (`basis` per bucket). */
+export const getFundWeights = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        asOf: z.iso.date().optional(),
+        cursor: cursorSchema,
+        dimension: z.string().trim().regex(/^(sector|country|asset_class)(,(sector|country|asset_class))*$/).optional(),
+        fund: fundSchema,
+        limit: v2LimitSchema,
+    }))
+    .handler(async ({ data }): Promise<V2FundWeightsResponse> => {
+        const { apiKey, asOf, cursor, dimension, fund, limit } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/funds/{fund}/weights", {
+            params: { path: { fund }, query: v2Query({ as_of: asOf, cursor, dimension, limit }) },
         });
 
         if (error) throwApiError(error, response);

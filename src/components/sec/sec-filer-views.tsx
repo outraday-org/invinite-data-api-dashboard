@@ -5,10 +5,10 @@ import { FileText } from "lucide-react";
 import type {
     JsonValue,
     V2FilerFundSeries,
+    V2FilerHoldingsResponse,
     V2FilerPrivateOfferings,
     V2FilerResponse,
     V2FilingsResponse,
-    V2HoldingsResponse,
     V2Offering,
     V2OfferingsResponse,
 } from "@/lib/api/types";
@@ -410,7 +410,7 @@ export function SecPrivateOfferingsView({
 }
 
 /**
- * A filer's filings (pure, `GET /v1/filings?company=<cik>`): every loaded cursor page, the `meta.form_facet` filter, a
+ * A filer's filings (pure, `GET /v1/filings?symbol=<cik>`): every loaded cursor page, the `meta.form_facet` filter, a
  * row opens the accession's documents in the source panel; "No filings" only for a complete answer.
  */
 export function SecFilingsView({
@@ -513,7 +513,7 @@ export function SecFilingsView({
 const usd = new Intl.NumberFormat("en", { currency: "USD", maximumFractionDigits: 0, style: "currency" });
 
 /**
- * A 13F manager's portfolio for one quarter (pure, `GET /v1/holdings?filer=<cik>&period_end=`): the provenance line
+ * A 13F manager's portfolio for one quarter (pure, `GET /v1/filers/{cik}/holdings?period_end=`, the `Holder` row): the provenance line
  * (`meta.coverage`, `pinned_at`, `counting`, `meta.source`), the positions by dollar value, "More positions" by cursor.
  */
 export function SecPortfolioView({
@@ -529,7 +529,7 @@ export function SecPortfolioView({
     isFetchingNextPage: boolean;
     isLoading: boolean;
     onMore: () => void;
-    pages: ReadonlyArray<V2HoldingsResponse>;
+    pages: ReadonlyArray<V2FilerHoldingsResponse>;
 }) {
     if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the 13F portfolio" />;
 
@@ -561,16 +561,16 @@ export function SecPortfolioView({
                             <tbody>
                                 {rows.map((row, index) => (
                                     // A position has no id of its own (one CUSIP can be held twice: shares and an option).
-                                    <tr key={`${row.cusip_company}-${row.put_call ?? ""}-${index}`}>
+                                    <tr key={`${row.security.cusip ?? ""}-${row.put_call ?? ""}-${index}`}>
                                         <td className="p-1">
-                                            <span className="font-medium">{row.ticker_company ?? "—"}</span>
-                                            {row.name_company && <span className="text-muted-foreground">{` · ${row.name_company}`}</span>}
+                                            <span className="font-medium">{row.security.symbol ?? "—"}</span>
+                                            {row.security.name && <span className="text-muted-foreground">{` · ${row.security.name}`}</span>}
                                         </td>
-                                        <td className="p-1 tabular-nums">{row.cusip_company}</td>
+                                        <td className="p-1 tabular-nums">{row.security.cusip ?? "—"}</td>
                                         <td className="p-1 text-right tabular-nums">
-                                            {row.shares_or_principal_amount === null ? "—" : formatNumberEn(row.shares_or_principal_amount)}
+                                            {row.shares == null ? "—" : formatNumberEn(row.shares)}
                                         </td>
-                                        <td className="p-1 text-right tabular-nums">{row.dollar_value === null ? "—" : usd.format(row.dollar_value)}</td>
+                                        <td className="p-1 text-right tabular-nums">{row.value_usd == null ? "—" : usd.format(row.value_usd)}</td>
                                         <td className="p-1">{row.put_call ?? "—"}</td>
                                     </tr>
                                 ))}

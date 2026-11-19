@@ -14,7 +14,7 @@ import {
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
 import { NotFound } from "@/components/ui/not-found";
-import { useV2Filer, useV2FilingsInfinite, useV2HoldingsInfinite, useV2OfferingsInfinite } from "@/lib/api/queries";
+import { useFilerHoldingsInfinite, useV2Filer, useV2FilingsInfinite, useV2OfferingsInfinite } from "@/lib/api/queries";
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import { latest13fPeriodEnd } from "@/lib/sec/source";
 
@@ -23,7 +23,7 @@ import { latest13fPeriodEnd } from "@/lib/sec/source";
  * listing has no ticker, and none is invented (no asset row, no fake `$ticker`). Reached from the landing page's filer
  * lookup (`/v1/filers?q=`) and the company overview's CIK. Identity + lifecycle = one `GET /v1/filers/{cik}` with every
  * expansion (`fund` = a fund registrant's series, its own block when the filer has any; `private_offerings` = the
- * summary of its Form D private offerings, whose rows then come from `GET /v1/offerings?company=<cik>`); the filings = `GET /v1/filings?company=<cik>`; a 13F manager's portfolio = `GET /v1/holdings?filer=<cik>`
+ * summary of its Form D private offerings, whose rows then come from `GET /v1/offerings?company=<cik>`); the filings = `GET /v1/filings?symbol=<cik>` (a CIK with a listed stock or a fund that is its own registrant; an unlisted filer answers 404, as 6.x's `company=<cik>`); a 13F manager's portfolio = `GET /v1/filers/{cik}/holdings`
  * for one quarter, asked on a click.
  */
 export const Route = createFileRoute("/sec/$cik")({
@@ -52,10 +52,10 @@ function SecFilerPage() {
 
     const filer = useV2Filer(cik, V2_FILER_EXPANDS);
 
-    const filings = useV2FilingsInfinite({ company: cik, form: form ? [form] : undefined, limit: FILINGS_PAGE });
+    const filings = useV2FilingsInfinite({ form: form ? [form] : undefined, limit: FILINGS_PAGE, symbol: cik });
 
-    // Idle (no scope) until a quarter is picked.
-    const portfolio = useV2HoldingsInfinite({ filer: period ? cik : undefined, limit: PORTFOLIO_PAGE, periodEnd: period ?? undefined });
+    // Idle (no CIK) until a quarter is picked.
+    const portfolio = useFilerHoldingsInfinite({ cik: period ? cik : "", limit: PORTFOLIO_PAGE, periodEnd: period ?? undefined });
 
     const privateOfferings = filer.data?.private_offerings ?? null;
 

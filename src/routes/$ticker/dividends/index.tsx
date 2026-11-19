@@ -33,9 +33,9 @@ function DividendsPage() {
         isFetchingNextPage,
         isLoading,
     } = useV2DividendsInfinite({
-        company: ticker,
         limit: 40,
         sort: "-ex_date",
+        symbol: ticker,
     });
 
     const dividends = React.useMemo(

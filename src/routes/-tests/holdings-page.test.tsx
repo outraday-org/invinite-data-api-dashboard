@@ -2,14 +2,13 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { EtfCompositionList, EtfHoldersList, EtfWeightsBlock } from "@/components/sec/etf-views";
+import { FundCompositionList, FundWeightsBlock } from "@/components/sec/fund-views";
 import { ApiRequestError } from "@/lib/api/errors";
 import {
-    V2_ETF_HOLDERS,
-    V2_ETF_HOLDINGS,
-    V2_ETF_HOLDINGS_LEVERAGED,
-    V2_ETF_HOLDINGS_SINGLE_ASSET,
-    V2_ETF_WEIGHTS,
+    V2_FUND_POSITIONS,
+    V2_FUND_POSITIONS_LEVERAGED,
+    V2_FUND_POSITIONS_SINGLE_ASSET,
+    V2_FUND_WEIGHTS,
 } from "@/lib/sec/v2-fixtures";
 
 afterEach(cleanup);
@@ -18,11 +17,11 @@ const list = { hasNextPage: false, isFetchingNextPage: false, isLoading: false, 
 
 const problem = (status: number, code: string, detail: string) => new ApiRequestError(status, { error: code, message: detail });
 
-describe("ETF holdings (`/v1/etf-holdings?etf=`)", () => {
+describe("Fund holdings (`/v1/funds/{fund}/holdings`)", () => {
     it("the source + as-of badge, the top positions as stated, and 'Load more' for the next page", () => {
-        render(<EtfCompositionList state={{ ...list, error: null, hasNextPage: true, pages: [V2_ETF_HOLDINGS] }} />);
+        render(<FundCompositionList state={{ ...list, error: null, hasNextPage: true, pages: [V2_FUND_POSITIONS] }} />);
 
-        expect(screen.getByTestId("etf-source-badge")).toHaveTextContent("Issuer file · as of 2026-11-13");
+        expect(screen.getByTestId("fund-source-badge")).toHaveTextContent("Issuer file · as of 2026-11-13");
 
         expect(screen.getByText("NVIDIA CORP")).toBeInTheDocument();
 
@@ -36,7 +35,7 @@ describe("ETF holdings (`/v1/etf-holdings?etf=`)", () => {
     });
 
     it("a leveraged fund shows the notional exposure of its swap lines; a weight it does not state stays '—'", () => {
-        render(<EtfCompositionList state={{ ...list, error: null, pages: [V2_ETF_HOLDINGS_LEVERAGED] }} />);
+        render(<FundCompositionList state={{ ...list, error: null, pages: [V2_FUND_POSITIONS_LEVERAGED] }} />);
 
         expect(screen.getByText("Notional")).toBeInTheDocument();
 
@@ -47,8 +46,8 @@ describe("ETF holdings (`/v1/etf-holdings?etf=`)", () => {
         expect(screen.queryByText(/%$/)).toBeNull();
     });
 
-    it("a single-asset trust is a notice, never an empty table; 404 not_covered is a state", () => {
-        render(<EtfCompositionList state={{ ...list, error: null, pages: [V2_ETF_HOLDINGS_SINGLE_ASSET] }} />);
+    it("a single-asset answer is a notice, never an empty table; a 404 refusal is a state", () => {
+        render(<FundCompositionList state={{ ...list, error: null, pages: [V2_FUND_POSITIONS_SINGLE_ASSET] }} />);
 
         expect(screen.getByText("This fund holds one asset; there is no holdings list.")).toBeInTheDocument();
 
@@ -56,17 +55,19 @@ describe("ETF holdings (`/v1/etf-holdings?etf=`)", () => {
 
         cleanup();
 
-        render(<EtfCompositionList state={{ ...list, error: problem(404, "not_covered", "Not an ETF"), pages: [] }} />);
+        render(<FundCompositionList state={{ ...list, error: problem(404, "not_covered", "AAPL is a stock, not a fund (GET /v1/companies/AAPL)"), pages: [] }} />);
+
+        expect(screen.getByText("AAPL is a stock, not a fund (GET /v1/companies/AAPL)")).toBeInTheDocument();
 
         expect(screen.queryByText("No positions in this composition.")).toBeNull();
     });
 });
 
-describe("ETF weights (`/v1/etf-weights`)", () => {
+describe("Fund weights (`/v1/funds/{fund}/weights`)", () => {
     it("one block per dimension with its buckets (Unclassified shown as a bucket) and the basis note", () => {
-        render(<EtfWeightsBlock state={{ ...list, error: null, pages: [V2_ETF_WEIGHTS] }} />);
+        render(<FundWeightsBlock state={{ ...list, error: null, pages: [V2_FUND_WEIGHTS] }} />);
 
-        const block = screen.getByTestId("etf-weights");
+        const block = screen.getByTestId("fund-weights");
 
         expect(within(block).getByText("Sector")).toBeInTheDocument();
 
@@ -82,26 +83,8 @@ describe("ETF weights (`/v1/etf-weights`)", () => {
     });
 
     it("503 while the backend switch is off is a state, not 'no weights'", () => {
-        render(<EtfWeightsBlock state={{ ...list, error: problem(503, "unavailable", "Switched off"), pages: [] }} />);
+        render(<FundWeightsBlock state={{ ...list, error: problem(503, "unavailable", "Switched off"), pages: [] }} />);
 
         expect(screen.queryByText("No weights for this composition.")).toBeNull();
-    });
-});
-
-describe("Institutions: ETFs (daily) tab (`/v1/etf-holdings?company=`)", () => {
-    it("one row per ETF with its own source + as-of; the scope line says it is not every ETF", () => {
-        render(<EtfHoldersList state={{ ...list, error: null, pages: [V2_ETF_HOLDERS] }} />);
-
-        expect(screen.getByText("SPY")).toHaveAttribute("title", "SPDR S&P 500 ETF Trust");
-
-        expect(screen.getByText("Issuer file (monthly) · as of 2026-10-31")).toBeInTheDocument();
-
-        expect(screen.getByTestId("etf-holders-scope")).toHaveTextContent("412 ETFs — not every ETF");
-    });
-
-    it("a complete empty answer is a genuine empty", () => {
-        render(<EtfHoldersList state={{ ...list, error: null, pages: [{ ...V2_ETF_HOLDERS, data: [] }] }} />);
-
-        expect(screen.getByText("No ETF with an issuer holdings file holds this company.")).toBeInTheDocument();
     });
 });
