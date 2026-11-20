@@ -13348,6 +13348,66 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "symbol": "TQQQ",
+                     *       "symbols": [
+                     *         "TQQQ"
+                     *       ],
+                     *       "name": "ProShares  UltraPro QQQ",
+                     *       "type": "etf",
+                     *       "structure": "registered_fund",
+                     *       "fund_key": "S000024908",
+                     *       "series_id": "S000024908",
+                     *       "class_id": "C000074098",
+                     *       "registrant_cik": "0001174610",
+                     *       "registrant_name": "PROSHARES TRUST",
+                     *       "exchange": "XNAS",
+                     *       "currency": "USD",
+                     *       "country_code": "US",
+                     *       "is_active": true,
+                     *       "list_date": "2010-02-09",
+                     *       "net_assets_usd": 39772685912.05,
+                     *       "net_assets_as_of": "2026-05-31",
+                     *       "net_assets_scope": "fund",
+                     *       "market_cap": 39772685912.05,
+                     *       "shares_outstanding": 561300000,
+                     *       "short_float_pct": 3.9,
+                     *       "investment_company_type": "N-1A",
+                     *       "is_index": true,
+                     *       "expense_ratio_net": 0.0078,
+                     *       "expense_ratio_gross": 0.0094,
+                     *       "expense_ratio_as_of": "2026-05-31",
+                     *       "advisers": [
+                     *         {
+                     *           "name": "PROSHARE ADVISORS LLC",
+                     *           "crd": "000134155",
+                     *           "lei": "549300EP8KSLVZGKGX97",
+                     *           "is_affiliated": null,
+                     *           "role": "Advisor"
+                     *         }
+                     *       ],
+                     *       "share_classes": [
+                     *         {
+                     *           "class_id": "C000074098",
+                     *           "ticker": "TQQQ",
+                     *           "class_name": "ProShares UltraPro QQQ",
+                     *           "is_listed": true
+                     *         }
+                     *       ],
+                     *       "homepage_url": null,
+                     *       "logo_url": null,
+                     *       "brand_colors": null,
+                     *       "coverage": {
+                     *         "families": [
+                     *           {
+                     *             "family": "dividends",
+                     *             "through": "2026-09-23"
+                     *           }
+                     *         ]
+                     *       }
+                     *     }
+                     */
                     "application/json": components["schemas"]["Fund"];
                 };
             };
@@ -13493,6 +13553,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "symbol": "TQQQ",
+                     *       "name": "ProShares  UltraPro QQQ",
+                     *       "type": "etf",
+                     *       "structure": "registered_fund",
+                     *       "exchange": "XNAS",
+                     *       "country_code": "US",
+                     *       "currency": "USD",
+                     *       "is_active": true,
+                     *       "list_date": "2010-02-09",
+                     *       "logo_url": null,
+                     *       "company": null,
+                     *       "fund": {
+                     *         "fund_key": "S000024908",
+                     *         "series_id": "S000024908",
+                     *         "registrant_cik": "0001174610"
+                     *       },
+                     *       "datasets": [
+                     *         "profile"
+                     *       ]
+                     *     }
+                     */
                     "application/json": components["schemas"]["Instrument"];
                 };
             };
@@ -17561,23 +17644,23 @@ export interface operations {
                      * @example {
                      *       "data": [
                      *         {
-                     *           "symbol": "AAPL",
-                     *           "company": {
-                     *             "cik": "0000320193",
-                     *             "ticker": "AAPL"
+                     *           "symbol": "TQQQ",
+                     *           "company": null,
+                     *           "fund": {
+                     *             "fund_key": "S000024908",
+                     *             "symbol": "TQQQ"
                      *           },
-                     *           "fund": null,
-                     *           "ex_dividend_date": "2026-11-12",
-                     *           "declaration_date": "2026-11-02",
-                     *           "cash_amount": 0.27,
+                     *           "ex_dividend_date": "2026-09-23",
+                     *           "declaration_date": "2026-01-16",
+                     *           "cash_amount": 0.156012,
                      *           "dividend_type": "CD",
                      *           "frequency": 4,
-                     *           "pay_date": "2026-11-16",
-                     *           "record_date": "2026-11-12"
+                     *           "pay_date": "2026-09-29",
+                     *           "record_date": "2026-09-23"
                      *         }
                      *       ],
-                     *       "has_more": true,
-                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDIwLTExLTA2IDAwOjAwOjAwIiwiQUFQTCIsIkU4NjMxYWRkYTNkOTQ3NzlhOTBkMTRmNTNkNzdlZmUzZWVjODVkMGZkM2U2ZjlhMDY5ODQwN2I3ODdmZTc2MWZiIl0sImYiOiI1NzY5ZmIyNTE5MzQ2YWY1In0",
+                     *       "has_more": false,
+                     *       "next_cursor": null,
                      *       "meta": {
                      *         "coverage": {
                      *           "state": "complete",
@@ -18269,7 +18352,7 @@ export interface operations {
             path: {
                 /**
                  * @description The 13F manager's CIK (any padding)
-                 * @example 0000102909
+                 * @example 0002012383
                  */
                 cik: string;
             };
@@ -18296,6 +18379,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "holder": {
+                     *             "type": "institution",
+                     *             "name": "BlackRock, Inc.",
+                     *             "cik": "0002012383",
+                     *             "registrant_name": null,
+                     *             "fund_key": null,
+                     *             "series_id": null,
+                     *             "class_tickers": [],
+                     *             "symbols": [],
+                     *             "issuer_file_as_of": null
+                     *           },
+                     *           "security": {
+                     *             "symbol": "ADIG",
+                     *             "name": "ADI GLOBAL DISTR INC",
+                     *             "cik": "0002105139",
+                     *             "cusip": "001026103",
+                     *             "isin": null,
+                     *             "fund_key": null,
+                     *             "resolution": null
+                     *           },
+                     *           "type": "new",
+                     *           "as_of": "2026-09-30",
+                     *           "prior_as_of": "2026-06-30",
+                     *           "filing_date": "2026-11-13",
+                     *           "accession_number": "0002012383-26-003985",
+                     *           "shares": 10328096,
+                     *           "shares_prior": 0,
+                     *           "shares_change": 10328096,
+                     *           "shares_change_pct": 1,
+                     *           "shares_type": "SH",
+                     *           "value_usd": 185079471,
+                     *           "value_change_usd": 185079471,
+                     *           "put_call": null
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lOREE1WlRZMU5tRmpOV0V3TVRFNU4yWTNaV1ZpTXpGaUlpd2ljQ0k2SWpJd01qWXRNVEV0TWpCVU1EYzZNRGc2TlRrdU5UWTNPVE0zS3pBd09qQXdJaXdpYXlJNld5SXlNREV5TXpneklpd2lNRFF5TnpNMU1UQXdmSEJ2YzJsMGFXOXVmRk5JSWwxOSIsMjUs…",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "partial",
+                     *           "through": "2026-11-18",
+                     *           "retry_after_s": null
+                     *         }
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["HolderChange"]>;
@@ -18359,7 +18492,7 @@ export interface operations {
             path: {
                 /**
                  * @description The 13F manager's CIK (any padding)
-                 * @example 0000102909
+                 * @example 0002012383
                  */
                 cik: string;
             };
@@ -18386,6 +18519,62 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "holder": {
+                     *             "type": "institution",
+                     *             "name": "BlackRock, Inc.",
+                     *             "cik": "0002012383",
+                     *             "registrant_name": null,
+                     *             "fund_key": null,
+                     *             "series_id": null,
+                     *             "class_tickers": [],
+                     *             "symbols": [],
+                     *             "issuer_file_as_of": null
+                     *           },
+                     *           "security": {
+                     *             "symbol": "NVDA",
+                     *             "name": "NVIDIA CORPORATION",
+                     *             "cik": "0001045810",
+                     *             "cusip": "67066G104",
+                     *             "isin": null,
+                     *             "fund_key": null,
+                     *             "resolution": null
+                     *           },
+                     *           "source": "13f",
+                     *           "as_of": "2026-09-30",
+                     *           "filing_date": "2026-11-13",
+                     *           "accession_number": "0002012383-26-003985",
+                     *           "filing_url": "https://www.sec.gov/Archives/edgar/data/2012383/000201238326003985/0002012383-26-003985-index.htm",
+                     *           "shares": 1940885915,
+                     *           "shares_type": "SH",
+                     *           "value_usd": 443259525419,
+                     *           "weight_pct": null,
+                     *           "asset_cat": null,
+                     *           "put_call": null,
+                     *           "investment_discretion": null,
+                     *           "voting_authority": {
+                     *             "sole": 1754986398,
+                     *             "shared": 0,
+                     *             "none": 185899518
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2laamt3TVdNek0yTmlPRFZoTVRrNE1qSTFPVFUyTURVMklpd2ljQ0k2SWpJd01qWXRNVEV0TWpCVU1EYzZNRGc2TlRrdU1qSXpNRFV5S3pBd09qQXdJaXdpYXlJNld5SXpOak16T0RJNE1EQTFNeUlzSWpJd01USXpPRE1pTENJMU56WXpObEV4TURSOGNHOXph…",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "partial",
+                     *           "through": "2026-11-18",
+                     *           "retry_after_s": null
+                     *         },
+                     *         "pinned_at": "2026-11-20T07:08:59.223Z",
+                     *         "counting": "One row per manager and position as that manager reported it in its effective 13F snapshot (amendments applied); rows are never summed across managers"
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["Holder"]>;
@@ -18674,6 +18863,68 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "holder": {
+                     *             "type": "institution",
+                     *             "name": null,
+                     *             "cik": "0002012383",
+                     *             "registrant_name": null,
+                     *             "fund_key": null,
+                     *             "series_id": null,
+                     *             "class_tickers": [],
+                     *             "symbols": [],
+                     *             "issuer_file_as_of": null
+                     *           },
+                     *           "security": {
+                     *             "symbol": null,
+                     *             "name": "ABBVIE INC",
+                     *             "cik": null,
+                     *             "cusip": "00287Y109",
+                     *             "isin": null,
+                     *             "fund_key": null,
+                     *             "resolution": null
+                     *           },
+                     *           "source": "13f",
+                     *           "as_of": "2026-06-30",
+                     *           "filing_date": "2026-08-07",
+                     *           "accession_number": "0002012383-26-003238",
+                     *           "filing_url": "https://www.sec.gov/Archives/edgar/data/2012383/000201238326003238/0002012383-26-003238-index.htm",
+                     *           "shares": 451400,
+                     *           "shares_type": "SH",
+                     *           "value_usd": 113590399,
+                     *           "weight_pct": null,
+                     *           "asset_cat": null,
+                     *           "put_call": null,
+                     *           "investment_discretion": "SOLE",
+                     *           "voting_authority": {
+                     *             "sole": 0,
+                     *             "shared": 0,
+                     *             "none": 451400
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsIjEzMTQxNDYyMSIsMjUsMCwwXSwiZiI6IjZjYmFjOTMwNjI4ZTk2NzEifQ",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null
+                     *         },
+                     *         "source": {
+                     *           "accession": "0002012383-26-003238",
+                     *           "dataset_release": "2026q3",
+                     *           "version_id": null,
+                     *           "fetched_at": null
+                     *         },
+                     *         "family": "13f",
+                     *         "counting": "One row per information-table line of this filing, as filed"
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["FiledHolding"]>;
@@ -18876,27 +19127,27 @@ export interface operations {
                      * @example {
                      *       "data": [
                      *         {
-                     *           "accession": "0001140361-26-043484",
-                     *           "symbol": "AAPL",
-                     *           "company": {
-                     *             "cik": "0000320193",
-                     *             "ticker": "AAPL"
+                     *           "accession": "0001410368-26-089410",
+                     *           "symbol": "SPY",
+                     *           "company": null,
+                     *           "fund": {
+                     *             "fund_key": "cik:884394",
+                     *             "symbol": "SPY"
                      *           },
-                     *           "fund": null,
-                     *           "form": "4",
-                     *           "filing_date": "2026-11-12",
-                     *           "report_date": "2026-11-10",
-                     *           "filed_at": "2026-11-12T23:58:20Z",
+                     *           "form": "NPORT-P",
+                     *           "filing_date": "2026-08-28",
+                     *           "report_date": "2026-06-30",
+                     *           "filed_at": null,
                      *           "items": [],
-                     *           "primary_document": null,
+                     *           "primary_document": "xslFormNPORT-P_X01/primary_doc.xml",
                      *           "roles": [
-                     *             "issuer"
+                     *             "listed"
                      *           ],
-                     *           "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/320193/000114036126043484/0001140361-26-043484-index.htm"
+                     *           "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/884394/000141036826089410/0001410368-26-089410-index.htm"
                      *         }
                      *       ],
                      *       "has_more": true,
-                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKaFpuUmxjaUk2V3lJeU1ESTJMVEE1TFRJNUlpd2lNREF3TVRFME1ETTJNUzB5Tmkwd016Z3dNamdpWFN3aVppSTZJamcxTnpOaU1EZzBaakV5TnpWak1qTWlmUSIsMjUsMCwwXSwiZiI6Ijg0NmY4MDhhNmU4MmMzOGEifQ",
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKaFpuUmxjaUk2V3lJeU1ESTBMVEExTFRJNUlpd2lNREF3TVRFNU16RXlOUzB5TkMweE5Ea3dPVGNpWFN3aVppSTZJbVF5T1RSa09UZzFPV1psT1RBM1lUWWlmUSIsMjUsMCwwXSwiZiI6ImMzZWU0ZTMzMDk3YjMwZTkifQ",
                      *       "meta": {
                      *         "coverage": {
                      *           "state": "complete",
@@ -18905,15 +19156,15 @@ export interface operations {
                      *         },
                      *         "form_facet": [
                      *           {
-                     *             "form": "10-K",
+                     *             "form": "24F-2NT",
                      *             "count": 31,
-                     *             "newest_filing_date": "2026-11-03"
+                     *             "newest_filing_date": "2025-12-17"
                      *           }
                      *         ],
                      *         "source": {
-                     *           "dataset_release": "2026q3",
+                     *           "dataset_release": null,
                      *           "version_id": null,
-                     *           "accession": "0000320193-26-000026",
+                     *           "accession": null,
                      *           "fetched_at": null
                      *         }
                      *       }
@@ -19224,6 +19475,67 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "fund": {
+                     *             "symbol": "SPY",
+                     *             "fund_key": "cik:884394",
+                     *             "name": "SPDR S&P 500 ETF TRUST"
+                     *           },
+                     *           "source": "issuer_daily",
+                     *           "as_of": "2026-11-18",
+                     *           "line": 1,
+                     *           "security": {
+                     *             "name": "APPLE INC",
+                     *             "symbol": "AAPL",
+                     *             "cik": "0000320193",
+                     *             "cusip": "037833100",
+                     *             "isin": null,
+                     *             "sedol": "2046251",
+                     *             "resolution": "cusip_cache"
+                     *           },
+                     *           "asset_class": "equity",
+                     *           "shares": 178148725,
+                     *           "market_value_usd": null,
+                     *           "notional_value_usd": null,
+                     *           "weight_pct": 8.134997,
+                     *           "sector": "Technology",
+                     *           "sector_basis": "derived_sic",
+                     *           "country": "US",
+                     *           "country_basis": "nport"
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lOekl6WVRRNE9EQXdaVEV5TkRnNFpHTmpNemhrTnpBNElpd2ljQ0k2SWpJd01qWXRNVEV0TWpCVU1EYzZNRGM2TWpVdU5EUXlOVE0wS3pBd09qQXdJaXdpYXlJNld5SXdMall3TURnM09TSXNJakkxSWwwc0luTWlPaUp6Ym1Gd09qTXhPbWx6YzNWbGNsOWtZ…",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null
+                     *         },
+                     *         "source": "issuer_daily",
+                     *         "as_of": "2026-11-18",
+                     *         "reason": null,
+                     *         "composition": {
+                     *           "newest_issuer_as_of": "2026-11-18",
+                     *           "nport_report_date": "2026-06-30",
+                     *           "stored_from": "2026-11-12",
+                     *           "stored_to": "2026-11-18",
+                     *           "stored_dates": [
+                     *             {
+                     *               "as_of": "2026-11-18",
+                     *               "source": "issuer_daily",
+                     *               "status": "ready",
+                     *               "positions_count": 505
+                     *             }
+                     *           ]
+                     *         },
+                     *         "snapshot_changed": false
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["FundPosition"]>;
@@ -19375,6 +19687,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "symbol": "TQQQ",
+                     *           "name": "ProShares  UltraPro QQQ",
+                     *           "type": "etf",
+                     *           "structure": "registered_fund",
+                     *           "exchange": "XNAS",
+                     *           "fund_key": "S000024908",
+                     *           "net_assets_usd": 39772685912.05,
+                     *           "logo_url": null
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["FundListItem"]>;
@@ -19460,6 +19803,40 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "fund": {
+                     *             "symbol": "SPY",
+                     *             "fund_key": "cik:884394",
+                     *             "name": "SPDR S&P 500 ETF TRUST"
+                     *           },
+                     *           "source": "issuer_daily",
+                     *           "as_of": "2026-11-18",
+                     *           "dimension": "asset_class",
+                     *           "bucket": "equity",
+                     *           "weight_pct": 99.829561,
+                     *           "positions": 504,
+                     *           "basis": "issuer_stated"
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null
+                     *         },
+                     *         "source": "issuer_daily",
+                     *         "as_of": "2026-11-18",
+                     *         "reason": null,
+                     *         "weight_pct_sum": 99.948606,
+                     *         "weight_basis": "issuer_stated"
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["FundWeight"]>;
@@ -19904,6 +20281,56 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "holder": {
+                     *             "type": "institution",
+                     *             "name": "SUN LIFE FINANCIAL INC",
+                     *             "cik": "0001097362",
+                     *             "registrant_name": null,
+                     *             "fund_key": null,
+                     *             "series_id": null,
+                     *             "class_tickers": [],
+                     *             "symbols": [],
+                     *             "issuer_file_as_of": null
+                     *           },
+                     *           "security": {
+                     *             "symbol": "NVDA",
+                     *             "name": "NVIDIA CORP",
+                     *             "cik": "0001045810",
+                     *             "cusip": "67066G104",
+                     *             "isin": null,
+                     *             "fund_key": null,
+                     *             "resolution": null
+                     *           },
+                     *           "type": "new",
+                     *           "as_of": "2026-09-30",
+                     *           "prior_as_of": "2026-06-30",
+                     *           "filing_date": "2026-11-13",
+                     *           "accession_number": "0001104659-26-126705",
+                     *           "shares": 169140,
+                     *           "shares_prior": 0,
+                     *           "shares_change": 169140,
+                     *           "shares_change_pct": 1,
+                     *           "shares_type": "SH",
+                     *           "value_usd": 38628,
+                     *           "value_change_usd": 38628,
+                     *           "put_call": null
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lPRGRtTVRBMk9XSTRObUkwTkdNMU1tTmtOV05qTkdVeklpd2ljQ0k2SWpJd01qWXRNVEV0TWpCVU1EYzZNRGM2TWpjdU5qYzJORGMyS3pBd09qQXdJaXdpYXlJNld5SXhNVE14TVRneElpd2lOamN3TmpaSE1UQTBmSEJ2YzJsMGFXOXVmRk5JSWwxOSIsMSww…",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "partial",
+                     *           "through": "2026-11-18",
+                     *           "retry_after_s": null
+                     *         }
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["HolderChange"]>;
@@ -19998,6 +20425,67 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "holder": {
+                     *             "type": "institution",
+                     *             "name": "BlackRock, Inc.",
+                     *             "cik": "0002012383",
+                     *             "registrant_name": null,
+                     *             "fund_key": null,
+                     *             "series_id": null,
+                     *             "class_tickers": [],
+                     *             "symbols": [],
+                     *             "issuer_file_as_of": null
+                     *           },
+                     *           "security": {
+                     *             "symbol": "NVDA",
+                     *             "name": "NVIDIA CORP",
+                     *             "cik": "0001045810",
+                     *             "cusip": "67066G104",
+                     *             "isin": null,
+                     *             "fund_key": null,
+                     *             "resolution": null
+                     *           },
+                     *           "source": "13f",
+                     *           "as_of": "2026-09-30",
+                     *           "filing_date": "2026-11-13",
+                     *           "accession_number": "0002012383-26-003985",
+                     *           "filing_url": "https://www.sec.gov/Archives/edgar/data/2012383/000201238326003985/0002012383-26-003985-index.htm",
+                     *           "shares": 1940885915,
+                     *           "shares_type": "SH",
+                     *           "value_usd": 443259525419,
+                     *           "weight_pct": null,
+                     *           "asset_cat": null,
+                     *           "put_call": null,
+                     *           "investment_discretion": null,
+                     *           "voting_authority": {
+                     *             "sole": 1754986398,
+                     *             "shared": 0,
+                     *             "none": 185899518
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKeElqb2lPRFV3T1RZM1pXWXhNVEpoTkdZNFlUWXhNVFEzTW1aaElpd2ljQ0k2SWpJd01qWXRNVEV0TWpCVU1EYzZNRGM2TWpjdU5ESTNPRGcyS3pBd09qQXdJaXdpYXlJNld5SXpOamt3TmpnNU9ESXpJaXdpTnpJd05qY3lJaXdpTmpjd05qWkhNVEEwZkhCdmMybDBh…",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "partial",
+                     *           "through": "2026-11-18",
+                     *           "retry_after_s": null
+                     *         },
+                     *         "source": "13f",
+                     *         "pinned_at": "2026-11-20T07:07:27.427Z",
+                     *         "counting": "One row per manager and position as that manager reported it in its effective 13F snapshot (amendments applied); rows are never summed across managers",
+                     *         "funds_with_issuer_file": null,
+                     *         "reason": "coverage_partial",
+                     *         "snapshot_changed": null,
+                     *         "sections": null
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["Holder"]>;
@@ -20319,6 +20807,48 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "symbol": "TQQQ",
+                     *           "name": "ProShares  UltraPro QQQ",
+                     *           "type": "etf",
+                     *           "structure": "registered_fund",
+                     *           "exchange": "XNAS",
+                     *           "country_code": "US",
+                     *           "currency": "USD",
+                     *           "is_active": true,
+                     *           "list_date": "2010-02-09",
+                     *           "logo_url": null,
+                     *           "company": null,
+                     *           "fund": {
+                     *             "fund_key": "S000024908",
+                     *             "series_id": "S000024908",
+                     *             "registrant_cik": "0001174610"
+                     *           },
+                     *           "datasets": [
+                     *             "profile"
+                     *           ]
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["Instrument"]>;
@@ -22763,15 +23293,15 @@ export interface operations {
                      * @example {
                      *       "data": [
                      *         {
-                     *           "symbol": "AAPL",
-                     *           "company": {
-                     *             "cik": "0000320193",
-                     *             "ticker": "AAPL"
+                     *           "symbol": "TQQQ",
+                     *           "company": null,
+                     *           "fund": {
+                     *             "fund_key": "S000024908",
+                     *             "symbol": "TQQQ"
                      *           },
-                     *           "fund": null,
-                     *           "execution_date": "2020-08-31",
+                     *           "execution_date": "2025-11-20",
                      *           "split_from": 1,
-                     *           "split_to": 4
+                     *           "split_to": 2
                      *         }
                      *       ],
                      *       "has_more": false,
