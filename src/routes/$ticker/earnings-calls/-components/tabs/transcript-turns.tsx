@@ -4,6 +4,8 @@ import type { V2ParticipantsResponse } from "@/lib/api/types";
 import type { PlaybackSegment, TimedWord } from "@/lib/earnings/follow-along";
 import type { TranscriptTurn, TranscriptView } from "@/lib/earnings/transcript";
 
+import { Badge } from "@/components/ui/badge";
+import { formatDecimal, isLowSpeakerConfidence } from "@/lib/earnings/labels";
 import { qaStartTurnIndex } from "@/lib/earnings/transcript";
 
 import type { TurnSpeaker } from "../transcript/turn-block";
@@ -35,6 +37,21 @@ export function useSpeakerImagesByName(participants: null | undefined | V2Partic
 /** A transcript turn's speaker for `TurnBlock`. */
 function turnSpeaker(turn: TranscriptTurn, images: SpeakerImages): TurnSpeaker {
     return { detail: turn.title, imageUrl: images.get(turn.speaker_label), label: turn.speaker_label, name: turn.name, personId: turn.person_id, role: turn.role };
+}
+
+/** A named turn whose speaker attribution is weak (`speaker_confidence` below 0.8): marked, the value in the tooltip. */
+export function SpeakerConfidenceBadge({ turn }: { turn: Pick<TranscriptTurn, "name" | "speaker_confidence"> }) {
+    if (!isLowSpeakerConfidence(turn.name, turn.speaker_confidence)) return null;
+
+    return (
+        <Badge
+            className="order-last"
+            title={`Speaker attribution confidence ${formatDecimal(turn.speaker_confidence ?? 0, 2)}: the name may be wrong`}
+            variant="outline"
+        >
+            Speaker uncertain
+        </Badge>
+    );
 }
 
 /** "Q&A starts at m:ss" — a button that plays from there when the call has a recording. */
@@ -107,6 +124,7 @@ function Turns({
                 <React.Fragment key={index}>
                     {index === qaIndex && qaStartMs !== null && <QaDivider qaStartMs={qaStartMs} />}
                     <PlaybackTurnBlock
+                        badge={isLowSpeakerConfidence(turn.name, turn.speaker_confidence) ? <SpeakerConfidenceBadge turn={turn} /> : undefined}
                         index={index}
                         speaker={speakers[index]}
                         startMs={turn.start_ms}

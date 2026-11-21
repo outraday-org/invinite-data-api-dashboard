@@ -33,6 +33,7 @@ import {
     RssIcon,
     ScaleIcon,
     ScrollTextIcon,
+    SearchIcon,
     SplitIcon,
     UserRoundIcon,
     UsersIcon,
@@ -82,6 +83,7 @@ export const BROWSE_NAV: ReadonlyArray<NavPage> = [
     { description: "Your watchlist's news in one list, and every company's new items live.", icon: RssIcon, keywords: ["news", "feed", "watchlist", "live", "press releases"], label: "News feed", to: "/news-feed" },
     { description: "New SEC filings as they arrive, and full-text search across every filer.", icon: ScrollTextIcon, keywords: ["filings", "sec", "edgar", "8-k", "10-k", "live", "search"], label: "Filings", to: "/filings" },
     { description: "The SEC bulk data sets the API serves, with their newest release.", icon: DatabaseIcon, keywords: ["sec", "datasets", "data sets", "bulk", "releases", "13f", "n-port"], label: "SEC data sets", to: "/sec/datasets" },
+    { description: "What was said on every company's earnings calls: passages from transcripts, Q&A and slides.", icon: SearchIcon, keywords: ["search", "transcripts", "transcript", "passages", "quotes", "calls", "full-text"], label: "Transcript search", to: "/search" },
 ];
 
 /** The account (bottom of the sidebar, with the plan badge). */

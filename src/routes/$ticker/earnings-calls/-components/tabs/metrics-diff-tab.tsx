@@ -1,14 +1,16 @@
-import type * as React from "react";
-
 import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
+import * as React from "react";
 
-import type { V2EventComparisonResponse, V2EventStatsResponse } from "@/lib/api/types";
+import type { V2Event, V2EventComparisonResponse, V2EventStatsResponse } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useV2EventComparison, useV2EventStats } from "@/lib/api/queries";
-import { formatMs } from "@/lib/earnings/format";
+import { ApiRequestError } from "@/lib/api/errors";
+import { useV2EventComparison, useV2EventsInfinite, useV2EventStats } from "@/lib/api/queries";
+import { eventLabel, formatMs } from "@/lib/earnings/format";
 import { formatDecimal, formatSigned, percent, TONE_SHIFT_LABELS } from "@/lib/earnings/labels";
+import { formatDay } from "@/lib/format";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -124,7 +126,7 @@ function LevelRow({ hint, label, value }: { hint?: string; label: string; value:
                 {label}
                 {hint && <span className="text-muted-foreground/70">{` (${hint})`}</span>}
             </dt>
-            <dd className="flex items-center gap-3">
+            <dd className="flex min-w-0 flex-wrap items-center gap-x-3">
                 {value.level === null
                     ? <span className="text-muted-foreground">not available</span>
                     : <span className="tabular-nums">{formatDecimal(value.level, 3)}</span>}
@@ -186,8 +188,32 @@ function SlideDiff({ diff }: { diff: V2EventComparisonResponse["slide_diff"] }) 
     );
 }
 
-function DiffSection({ event, eventId }: Pick<CallTabProps, "event" | "eventId">) {
-    const { data, error, isLoading } = useV2EventComparison(eventId);
+/**
+ * The comparison body (pure): `data` / `error` / loading in. A 404 is a state in the API's words (first call, not
+ * derived yet, or a picked prior that is not the derived one — the `detail` names the derived call).
+ */
+export function ComparisonView({
+    data,
+    error,
+    isLoading,
+    prior,
+    symbol,
+}: {
+    data: null | undefined | V2EventComparisonResponse;
+    error: unknown;
+    isLoading: boolean;
+    /** The picked `prior` (undefined = the derived previous call). */
+    prior?: string;
+    symbol: string;
+}) {
+    // A 404 in the API's words: the first call, not derived yet, or a picked call that is not the derived prior.
+    if (error instanceof ApiRequestError && error.status === 404) {
+        return (
+            <Notice title={prior ? "No comparison with this call" : "No comparison yet — the first call on record, or not derived yet"}>
+                {error.message}
+            </Notice>
+        );
+    }
 
     if (error) {
         return (
@@ -208,8 +234,8 @@ function DiffSection({ event, eventId }: Pick<CallTabProps, "event" | "eventId">
             <div>
                 Compared with
                 {" "}
-                <EventLink className="font-medium underline-offset-4 hover:underline" event={{ event_id: data.prior_event.event_id, symbol: event.symbol }}>
-                    {data.prior_event.conference_date}
+                <EventLink className="font-medium underline-offset-4 hover:underline" event={{ event_id: data.prior_event.event_id, symbol }}>
+                    {formatDay(data.prior_event.conference_date)}
                 </EventLink>
             </div>
 
@@ -243,15 +269,109 @@ function DiffSection({ event, eventId }: Pick<CallTabProps, "event" | "eventId">
     );
 }
 
+const DERIVED_PRIOR = "derived";
+
+/** "Q2 FY2027 · Aug 26, 2026" of an earlier call in the picker. */
+const priorLabel = (call: V2Event) => `${eventLabel(call)} · ${formatDay(call.scheduled_at)}`;
+
+/**
+ * The `prior` picker (pure): "Previous call" = no `prior` (the pipeline derives one pair per call), else one of the
+ * company's earlier calls with a transcript. The list is asked only once the picker opens (`onOpenChange`).
+ */
+export function PriorPicker({
+    calls,
+    failed = false,
+    isLoading,
+    onOpenChange,
+    onPriorChange,
+    prior,
+}: {
+    /** The company's earlier calls with a transcript, newest first. */
+    calls: ReadonlyArray<V2Event>;
+    /** The list of earlier calls failed: said inside the menu ("Previous call" still works). */
+    failed?: boolean;
+    isLoading: boolean;
+    onOpenChange: (open: boolean) => void;
+    onPriorChange: (prior: string | undefined) => void;
+    prior: string | undefined;
+}) {
+    const picked = prior === undefined ? undefined : calls.find(call => call.event_id === prior);
+
+    const label = prior === undefined ? "Previous call" : picked ? priorLabel(picked) : "Another call";
+
+    return (
+        <div className="flex flex-wrap items-center gap-2">
+            <span className="text-muted-foreground">Compare with</span>
+            <Select
+                onOpenChange={onOpenChange}
+                onValueChange={value => onPriorChange(value === DERIVED_PRIOR || typeof value !== "string" ? undefined : value)}
+                value={prior ?? DERIVED_PRIOR}
+            >
+                <SelectTrigger aria-label="Compare with" className="max-w-72" size="sm">
+                    <span className="truncate">{label}</span>
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value={DERIVED_PRIOR}>Previous call</SelectItem>
+                    {isLoading && <div className="text-muted-foreground px-2 py-1">Loading the earlier calls…</div>}
+                    {failed && <div className="text-muted-foreground px-2 py-1">The earlier calls could not be loaded.</div>}
+                    {calls.map(call => (
+                        <SelectItem key={call.event_id} value={call.event_id}>
+                            {priorLabel(call)}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <span className="text-muted-foreground">One comparison is derived per call: with its previous call.</span>
+        </div>
+    );
+}
+
+function DiffSection({ event, eventId, onSearchChange, search }: Pick<CallTabProps, "event" | "eventId" | "onSearchChange" | "search">) {
+    const [pickerOpened, setPickerOpened] = React.useState(false);
+
+    const { data, error, isLoading } = useV2EventComparison(eventId, search.prior);
+
+    // The company's earlier calls, asked only once the picker opens (or a `?prior=` needs its label).
+    const callsQuery = useV2EventsInfinite({
+        company: event.cik,
+        enabled: pickerOpened || search.prior !== undefined,
+        limit: 50,
+        // A day (`format: date`; an instant is a 400): this call's own row is dropped below.
+        scheduledAtLte: event.scheduled_at.slice(0, 10),
+        sort: "-scheduled_at",
+        toastErrors: false,
+    });
+
+    const calls = React.useMemo(
+        () => (callsQuery.data?.pages.flatMap(page => page.data) ?? [])
+            .filter(call => call.event_id !== eventId && call.has_transcript),
+        [callsQuery.data, eventId],
+    );
+
+    return (
+        <div className="flex flex-col gap-3">
+            <PriorPicker
+                calls={calls}
+                failed={callsQuery.error !== null}
+                isLoading={callsQuery.isLoading && (pickerOpened || search.prior !== undefined)}
+                onOpenChange={open => open && setPickerOpened(true)}
+                onPriorChange={prior => onSearchChange({ prior })}
+                prior={search.prior}
+            />
+            <ComparisonView data={data} error={error} isLoading={isLoading} prior={search.prior} symbol={event.symbol} />
+        </div>
+    );
+}
+
 /** Metrics & diff tab: call metadata, then how the call differs from the company's prior call. */
-export function MetricsDiffTab({ event, eventId }: CallTabProps) {
+export function MetricsDiffTab({ event, eventId, onSearchChange, search }: CallTabProps) {
     return (
         <div className="flex flex-col gap-6">
             <Section title="Call metrics">
                 <MetricsSection eventId={eventId} />
             </Section>
             <Section title="Versus the prior call">
-                <DiffSection event={event} eventId={eventId} />
+                <DiffSection event={event} eventId={eventId} onSearchChange={onSearchChange} search={search} />
             </Section>
         </div>
     );

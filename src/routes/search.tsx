@@ -1,0 +1,246 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { Search } from "lucide-react";
+import * as React from "react";
+import { z } from "zod";
+
+import type { SearchMode, V2TranscriptSearchResponse, V2TranscriptSearchType } from "@/lib/api/types";
+
+import { ExportMenu } from "@/components/api/export-menu";
+import { DebouncedInput } from "@/components/navigation/debounced-input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
+import { useV2TranscriptSearch } from "@/lib/api/queries";
+import { SEARCH_MODE_LABELS, SEARCH_MODES } from "@/lib/earnings/labels";
+import { formatDay } from "@/lib/format";
+import { titleHead } from "@/lib/layout";
+import { IN_PLACE, optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
+import { AskResults, TYPE_LABELS, TYPES } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
+
+/** The operation's page size: ONE page of at most 8 passages (`has_more` is always false). */
+export const TRANSCRIPT_SEARCH_LIMIT = 8;
+
+/** The API's scope rule (`LITERAL_MIN_UNSCOPED_CODE_POINTS`): an exact pattern shorter than this needs a company. */
+export const EXACT_MIN_UNSCOPED = 3;
+
+const MIN_QUERY_LENGTH = 2;
+
+/**
+ * `/search` URL state: `q` = the submitted query (written on submit, never per keystroke: a search costs 10 credits),
+ * `mode` (absent = keyword), `type` (absent = every type), `company` (one ticker or CIK), `from` / `to` (call days).
+ */
+const searchPageSchema = z.object({
+    company: optionalText(20),
+    from: optionalDay(),
+    mode: optionalEnum(SEARCH_MODES),
+    q: optionalText(500),
+    to: optionalDay(),
+    type: optionalEnum(TYPES as [V2TranscriptSearchType, ...Array<V2TranscriptSearchType>]),
+});
+
+export type TranscriptSearchPageSearch = z.infer<typeof searchPageSchema>;
+
+export const Route = createFileRoute("/search")({
+    component: SearchPage,
+    head: () => titleHead("Transcript search"),
+    validateSearch: searchPageSchema,
+});
+
+/** An exact pattern the API refuses without a company (fewer than 3 code points). */
+export const exactTooShort = (search: Pick<TranscriptSearchPageSearch, "company" | "mode" | "q">) =>
+    search.mode === "literal" && !search.company && search.q !== undefined && Array.from(search.q).length < EXACT_MIN_UNSCOPED;
+
+/** The call window in words: the API defaults to the last 365 days without a company (pure). */
+export function windowText(search: Pick<TranscriptSearchPageSearch, "company" | "from" | "to">) {
+    if (search.from && search.to) return `Calls from ${formatDay(search.from)} to ${formatDay(search.to)}`;
+
+    if (search.from) return `Calls from ${formatDay(search.from)} on`;
+
+    if (!search.company) {
+        return search.to ? `Calls in the 365 days to ${formatDay(search.to)} (the API's default window)` : "Calls of the last 365 days (the API's default window)";
+    }
+
+    return search.to ? `Calls up to ${formatDay(search.to)}` : "Every call of the company";
+}
+
+/**
+ * The answer (pure): the hits of every company with their call (`AskResults`, market scope), the one-page rule and, at
+ * the cap, how to narrow. A page of 8 says so — the API pages no further.
+ */
+export function TranscriptSearchView({
+    data,
+    error,
+    isLoading,
+    search,
+}: {
+    data: null | V2TranscriptSearchResponse;
+    error: unknown;
+    isLoading: boolean;
+    search: TranscriptSearchPageSearch;
+}) {
+    if (!search.q) return <Notice title="Search what was said on every company's earnings calls">Type a phrase and press Search.</Notice>;
+
+    if (exactTooShort(search)) {
+        return <Notice badge="Exact" title={`Exact search needs ${EXACT_MIN_UNSCOPED} characters or a company`}>Nothing was sent: the API refuses a shorter exact pattern without a company.</Notice>;
+    }
+
+    const capped = (data?.data.length ?? 0) >= TRANSCRIPT_SEARCH_LIMIT;
+
+    return (
+        <div className="flex flex-col gap-2 text-xs/relaxed">
+            <AskResults data={data} error={error} isLoading={isLoading} scope={{ kind: "market" }} />
+            {data && capped && (
+                <p className="text-muted-foreground" data-testid="search-narrow">
+                    {`These are the top ${TRANSCRIPT_SEARCH_LIMIT} passages — the API answers one page and pages no further. To find more, narrow the search: a company, a shorter call window or one type (Q&A, prepared remarks, slides).`}
+                </p>
+            )}
+        </div>
+    );
+}
+
+/** The query box: typed text stays local until Search (a search is billed), then becomes `?q=`. */
+function SearchBox({ initial, isFetching, onSubmit }: { initial: string; isFetching: boolean; onSubmit: (q: string) => void }) {
+    const [draft, setDraft] = React.useState(initial);
+
+    const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH;
+
+    return (
+        <form
+            className="flex items-center gap-2"
+            onSubmit={(event) => {
+                event.preventDefault();
+
+                if (canSubmit) onSubmit(draft.trim());
+            }}
+        >
+            <Input
+                aria-label="Search every call"
+                maxLength={500}
+                onChange={event => setDraft(event.target.value)}
+                placeholder="e.g. gross margin, tariffs, &quot;free cash flow&quot;"
+                value={draft}
+            />
+            <Button disabled={!canSubmit || isFetching} type="submit">
+                <Search />
+                {isFetching ? "Searching…" : "Search"}
+            </Button>
+        </form>
+    );
+}
+
+/**
+ * Cross-company transcript search (`/v1/search/transcripts` without `company` / `event`, 10 credits a search): keyword
+ * (BM25, any word may match) or exact text, the call window (`conference_date.gte` / `.lte`; none = the API's last 365
+ * days), a type and optionally one company. ONE page of ≤ 8 passages: the page says so and offers narrowing, not
+ * paging. Every hit names its company and call and opens the call page.
+ */
+function SearchPage() {
+    const search = Route.useSearch();
+
+    const navigate = Route.useNavigate();
+
+    const onChange = (patch: Partial<TranscriptSearchPageSearch>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
+
+    const blocked = exactTooShort(search);
+
+    const { data, error, isFetching } = useV2TranscriptSearch({
+        company: search.company,
+        conferenceDateGte: search.from,
+        conferenceDateLte: search.to,
+        limit: TRANSCRIPT_SEARCH_LIMIT,
+        mode: search.mode ?? "lexical",
+        // An exact pattern the API would refuse is never sent ("" keeps the query idle).
+        q: blocked ? "" : search.q ?? "",
+        type: search.type,
+    });
+
+    // A new search is a history entry (Back returns to the previous one); filters change in place.
+    const submit = (q: string) => void navigate({ resetScroll: false, search: prev => ({ ...prev, q }) });
+
+    const setMode = (mode: SearchMode) => onChange({ mode: mode === "lexical" ? undefined : mode });
+
+    const hits = data?.data ?? [];
+
+    return (
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6 lg:px-8">
+            <PageHeader
+                description={`What was said on every company's earnings calls: transcripts, Q&A and slide text. One page of at most ${TRANSCRIPT_SEARCH_LIMIT} passages per search (10 credits); narrow it to find more.`}
+                title="Transcript search"
+            />
+
+            {/* Keyed by the submitted query: Back / a link with another `?q=` refills the box. */}
+            <SearchBox initial={search.q ?? ""} isFetching={isFetching} key={search.q ?? ""} onSubmit={submit} />
+
+            <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground">Match</span>
+                <div aria-label="Mode" className="flex gap-1" role="group">
+                    {SEARCH_MODES.map(mode => (
+                        <Button
+                            aria-pressed={(search.mode ?? "lexical") === mode}
+                            key={mode}
+                            onClick={() => setMode(mode)}
+                            size="xs"
+                            type="button"
+                            variant={(search.mode ?? "lexical") === mode ? "secondary" : "outline"}
+                        >
+                            {SEARCH_MODE_LABELS[mode]}
+                        </Button>
+                    ))}
+                </div>
+                <span className="text-muted-foreground sm:ml-3">In</span>
+                <div aria-label="Type" className="flex flex-wrap gap-1" role="group">
+                    <Button
+                        aria-pressed={search.type === undefined}
+                        onClick={() => onChange({ type: undefined })}
+                        size="xs"
+                        type="button"
+                        variant={search.type === undefined ? "secondary" : "outline"}
+                    >
+                        All
+                    </Button>
+                    {TYPES.map(type => (
+                        <Button
+                            aria-pressed={search.type === type}
+                            key={type}
+                            onClick={() => onChange({ type })}
+                            size="xs"
+                            type="button"
+                            variant={search.type === type ? "secondary" : "outline"}
+                        >
+                            {TYPE_LABELS[type]}
+                        </Button>
+                    ))}
+                </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+                <DebouncedInput
+                    aria-label="Company (ticker or CIK)"
+                    className="w-[160px]"
+                    onCommit={company => onChange({ company: company.toUpperCase() || undefined })}
+                    placeholder="One company"
+                    value={search.company ?? ""}
+                />
+                <Input aria-label="Calls from" className="w-[150px]" onChange={event => onChange({ from: event.target.value || undefined })} type="date" value={search.from ?? ""} />
+                <span className="text-muted-foreground">to</span>
+                <Input aria-label="Calls to" className="w-[150px]" onChange={event => onChange({ to: event.target.value || undefined })} type="date" value={search.to ?? ""} />
+                <span className="text-muted-foreground" data-testid="search-window">{windowText(search)}</span>
+                {hits.length > 0 && (
+                    <div className="ml-auto">
+                        <ExportMenu
+                            config={{ dataset: "transcript-search", scope: search.company ?? "all-companies" }}
+                            failed={false}
+                            hasNextPage={false}
+                            isFetchingNextPage={false}
+                            operationId="searchTranscripts"
+                            rows={hits}
+                        />
+                    </div>
+                )}
+            </div>
+
+            <TranscriptSearchView data={data} error={error} isLoading={isFetching} search={search} />
+        </div>
+    );
+}

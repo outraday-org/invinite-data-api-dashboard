@@ -70,8 +70,10 @@ const tenK: V2InvestorDocument = {
 const props = {
     event: { has_press_release: false, has_slides: false },
     eventId: EVENT_ID,
+    onSearchChange: vi.fn(),
     onTabChange: vi.fn(),
     onTranscriptJumpHandled: vi.fn(),
+    search: {},
     transcriptJump: null,
 } as unknown as CallTabProps;
 
@@ -89,10 +91,20 @@ describe("DocumentsTab", () => {
 
         render(<DocumentsTab {...props} />);
 
-        expect(useV2InvestorDocumentsInfinite).toHaveBeenLastCalledWith({ event: EVENT_ID, kind: undefined, limit: 200 });
+        expect(useV2InvestorDocumentsInfinite).toHaveBeenLastCalledWith({ event: EVENT_ID, kind: undefined, limit: 200, sort: undefined });
 
         // v2 lists carry no page count: no Pages column.
         expect(screen.queryByRole("columnheader", { name: "Pages" })).toBeNull();
+    });
+
+    it("sends the URL's order (`?docSort=` → `sort`) and names it", () => {
+        mockDocuments([base]);
+
+        render(<DocumentsTab {...props} search={{ docSort: "event_date" }} />);
+
+        expect(useV2InvestorDocumentsInfinite).toHaveBeenLastCalledWith({ event: EVENT_ID, kind: undefined, limit: 200, sort: "event_date" });
+
+        expect(screen.getByRole("combobox", { name: "Order" })).toHaveTextContent("Call date, oldest first");
     });
 
     it("lists the call's SEC filings apart under Filings, with their EDGAR filing date", () => {

@@ -1,16 +1,18 @@
 import { ExternalLink } from "lucide-react";
 import * as React from "react";
 
-import type { V2InvestorDocument } from "@/lib/api/types";
+import type { V2InvestorDocument, V2InvestorDocumentResponse } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useV2InvestorDocument, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
+import { DOCUMENT_SORT_VALUES, pagesOf } from "@/lib/earnings/documents";
 import { formatBytes } from "@/lib/earnings/format";
 
 import type { CallTabProps } from "../call-tabs";
@@ -79,22 +81,68 @@ function FilingsTable({ filings }: { filings: Array<V2InvestorDocument> }) {
     );
 }
 
-/** "Show text": the document by id (`/v1/investor-documents/{id}`: `body_text` is served on the member route only). */
-function DocumentText({ doc }: { doc: V2InvestorDocument }) {
-    const { data, error, isLoading } = useV2InvestorDocument(doc.document_id);
-
+/**
+ * The text of one document (pure): the per-page text of `expand=pages` (page by page, with the page's title), else the
+ * whole `body_text`, else the public per-page JSON of a file too large to inline (`pages_url`), else a notice.
+ */
+export function DocumentTextView({ data, error, isLoading }: { data: null | undefined | V2InvestorDocumentResponse; error: unknown; isLoading: boolean }) {
     if (error) return <MediaState error={error} notFound="This document is no longer available" title="Failed to load the document text" />;
 
     if (isLoading || !data) return <Skeleton className="h-40 w-full" />;
 
-    if (!data.body_text) return <Notice title="No text stored for this document" />;
+    const pages = pagesOf(data.pages ?? undefined);
 
-    return (
-        <ScrollArea className="h-[60vh] rounded-md border">
-            <div className="whitespace-pre-wrap p-3 leading-relaxed">{data.body_text}</div>
-        </ScrollArea>
-    );
+    if (pages.length > 0) {
+        return (
+            <ScrollArea className="h-[60vh] rounded-md border">
+                <div className="flex flex-col gap-4 p-3">
+                    {pages.map(page => (
+                        <section aria-label={`Page ${page.n}`} key={page.n}>
+                            <div className="text-muted-foreground text-xs">{page.title ? `Page ${page.n} · ${page.title}` : `Page ${page.n}`}</div>
+                            <div className="whitespace-pre-wrap leading-relaxed">{page.text}</div>
+                        </section>
+                    ))}
+                </div>
+            </ScrollArea>
+        );
+    }
+
+    if (data.body_text) {
+        return (
+            <ScrollArea className="h-[60vh] rounded-md border">
+                <div className="whitespace-pre-wrap p-3 leading-relaxed">{data.body_text}</div>
+            </ScrollArea>
+        );
+    }
+
+    if (data.pages_url) {
+        return (
+            <Notice title="The text is too large to show here">
+                {/* A permanent public URL, only an href; no referrer. */}
+                <a className="underline underline-offset-4" href={data.pages_url} rel="noopener noreferrer" target="_blank">
+                    Open the per-page text (JSON)
+                </a>
+            </Notice>
+        );
+    }
+
+    return <Notice title="No text stored for this document" />;
 }
+
+/** "Show text": the document by id with its pages (`/v1/investor-documents/{id}?expand=pages`). */
+function DocumentText({ doc }: { doc: V2InvestorDocument }) {
+    const { data, error, isLoading } = useV2InvestorDocument(doc.document_id, { pages: true });
+
+    return <DocumentTextView data={data} error={error} isLoading={isLoading} />;
+}
+
+/** The orders of `/v1/investor-documents` (`?docSort=`; the first is the API's default and never written). */
+const SORT_LABELS: Record<(typeof DOCUMENT_SORT_VALUES)[number], string> = {
+    "-event_date": "Call date, newest first",
+    "-filing_date": "Filed, newest first",
+    "event_date": "Call date, oldest first",
+    "filing_date": "Filed, oldest first",
+};
 
 /** "Also on this call:" the call's press release and slides tabs, when it has them. */
 function AlsoOnThisCall({ event, onTabChange }: Pick<CallTabProps, "event" | "onTabChange">) {
@@ -118,15 +166,23 @@ function AlsoOnThisCall({ event, onTabChange }: Pick<CallTabProps, "event" | "on
 }
 
 /**
- * Documents tab: the call's investor documents (`/v1/investor-documents?event=`, every page) with a kind filter, links
- * and their text. v2 lists no page count (`pages` is the inlined text of the member route), so there is no Pages column.
+ * Documents tab: the call's investor documents (`/v1/investor-documents?event=`, every page) with a kind filter, the
+ * order (`sort`, `?docSort=`), links and their text page by page (`expand=pages`). v2 lists no page count (`pages` is
+ * the inlined text of the member route), so there is no Pages column.
  */
-export function DocumentsTab({ event, eventId, onTabChange }: CallTabProps) {
+export function DocumentsTab({ event, eventId, onSearchChange, onTabChange, search }: CallTabProps) {
     const [kinds, setKinds] = React.useState<Array<V2InvestorDocument["kind"]>>([]);
 
     const [textOf, setTextOf] = React.useState<null | V2InvestorDocument>(null);
 
-    const documentsQuery = useV2InvestorDocumentsInfinite({ event: eventId, kind: kinds.length > 0 ? kinds : undefined, limit: 200 });
+    const sort = search.docSort ?? DOCUMENT_SORT_VALUES[0];
+
+    const documentsQuery = useV2InvestorDocumentsInfinite({
+        event: eventId,
+        kind: kinds.length > 0 ? kinds : undefined,
+        limit: 200,
+        sort: search.docSort,
+    });
 
     useLoadAllPages({ ...documentsQuery, hasNextPage: Boolean(documentsQuery.hasNextPage) });
 
@@ -163,6 +219,19 @@ export function DocumentsTab({ event, eventId, onTabChange }: CallTabProps) {
                         Clear
                     </Button>
                 )}
+                <Select
+                    onValueChange={value => onSearchChange({ docSort: value === DOCUMENT_SORT_VALUES[0] ? undefined : value ?? undefined })}
+                    value={sort}
+                >
+                    <SelectTrigger aria-label="Order" className="ml-auto" size="sm">
+                        <span>{SORT_LABELS[sort]}</span>
+                    </SelectTrigger>
+                    <SelectContent>
+                        {DOCUMENT_SORT_VALUES.map(value => (
+                            <SelectItem key={value} value={value}>{SORT_LABELS[value]}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
 
             {error

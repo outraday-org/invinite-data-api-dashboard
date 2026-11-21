@@ -17,7 +17,6 @@ import {
     SearchCoverageNote,
     SearchEmptyState,
     SearchError,
-    SearchScore,
 } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
 
 const SEARCH_LIMIT = 10;
@@ -34,7 +33,8 @@ const DOCUMENT_SEARCH_TIER = { badge: "STANDARD", title: "Your plan does not inc
 
 const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
 
-function DocumentHitCard({ hit, mode, query }: { hit: V2InvestorDocumentSearchHit; mode: SearchMode; query: string }) {
+/** One passage; the relevance sits in the match badge's tooltip (as on the transcript hits), never as visible text. */
+function DocumentHitCard({ hit, query }: { hit: V2InvestorDocumentSearchHit; query: string }) {
     const source = [
         hit.title ?? "Untitled document",
         hit.year === null ? "undated" : String(hit.year),
@@ -45,10 +45,9 @@ function DocumentHitCard({ hit, mode, query }: { hit: V2InvestorDocumentSearchHi
         <li className="flex flex-col gap-1.5 rounded-md border p-3">
             <div className="flex flex-wrap items-center gap-2">
                 {hit.kind && <Badge variant="outline">{documentKindLabel(hit.kind)}</Badge>}
-                <MatchBadge match={hit.match} />
+                <MatchBadge match={hit.match} score={hit.score} />
                 <span className="font-medium">{source}</span>
                 {hit.heading && <span className="text-muted-foreground">{hit.heading}</span>}
-                <SearchScore mode={mode} score={hit.score} />
             </div>
             <HitPassage match={hit.match} query={query} text={hit.text} />
             <div className="flex flex-wrap items-center gap-3">
@@ -110,7 +109,6 @@ export function DocumentSearchResults({
                                     hit={hit}
                                     // A hit has no id of its own: document + page + chunk start is unique within one answer.
                                     key={`${hit.document_id}:${hit.page ?? ""}:${hit.text.slice(0, 32)}`}
-                                    mode={mode}
                                     query={data.meta.query ?? ""}
                                 />
                             ))}

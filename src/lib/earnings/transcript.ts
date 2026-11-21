@@ -12,6 +12,8 @@ export type TranscriptTurn = {
     /** The person the API resolved the speaker to (the person page's id); null = unresolved. */
     person_id: null | string;
     role: null | string;
+    /** Speaker attribution confidence (0–1); null on the cleaned layer / an untimed transcript; absent = not read. */
+    speaker_confidence?: null | number;
     speaker_label: string;
     start_ms: null | number;
     text: string;
@@ -46,6 +48,7 @@ function toTurn(value: unknown): null | TranscriptTurn {
         name: stringOrNull(value.name),
         person_id: stringOrNull(value.person_id),
         role: stringOrNull(value.role),
+        speaker_confidence: numberOrNull(value.speaker_confidence),
         speaker_label: typeof value.speaker_label === "string" ? value.speaker_label : "",
         start_ms: numberOrNull(value.start_ms),
         text: value.text,

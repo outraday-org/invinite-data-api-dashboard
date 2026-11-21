@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { saveJsonFile, savePublicFile, saveTextFile } from "@/lib/download";
 import { formatInstant } from "@/lib/earnings/format";
+import { versionKindText } from "@/lib/earnings/labels";
 
 import { QaStart } from "../tabs/transcript-turns";
 
@@ -33,7 +34,7 @@ export const TRANSCRIPT_FORMATS: Array<{ label: string; value: TranscriptFormat 
 export function versionLabel(version: V2TranscriptVersion) {
     return [
         `Version ${version.version}`,
-        version.version_kind,
+        versionKindText(version),
         formatInstant(version.published_at),
         version.change_note,
     ].filter(Boolean).join(" · ");
@@ -181,7 +182,7 @@ export function TranscriptToolbar({
 
             {shownEntry && (
                 <div className="text-muted-foreground flex flex-wrap items-baseline gap-x-1">
-                    <span>{shownEntry.version_kind}</span>
+                    <span>{versionKindText(shownEntry)}</span>
                     <span>{`· ${shownEntry.word_count.toLocaleString("en-US")} words`}</span>
                     <span>{`· published ${formatInstant(shownEntry.published_at)}`}</span>
                     {qaStartMs !== null && (

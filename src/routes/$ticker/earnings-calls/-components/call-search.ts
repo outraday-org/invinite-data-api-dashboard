@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import type { TranscriptFormat } from "@/lib/earnings/transcript";
 
+import { DOCUMENT_SORT_VALUES } from "@/lib/earnings/documents";
 import { formatMs } from "@/lib/earnings/format";
 import { optionalEnum, optionalInt } from "@/lib/url-state";
 
@@ -18,11 +19,16 @@ const MAX_CALL_SECONDS = 12 * 60 * 60;
 
 /**
  * The call page's URL state (O6-final): `tab`, the Transcript tab's `format` and published `version` (absent = the
- * current one), and `t` = a moment of the call in whole seconds (the player's "Copy link at current time"). Every field
+ * current one), and `t` = a moment of the call in whole seconds (the player's "Copy link at current time"); O7 group 5
+ * adds the Metrics & diff tab's `prior` and the Documents tab's `docSort`. Every field
  * is optional (every `EventLink` stays search-free) and an invalid value falls back to its default.
  */
 export const callSearchSchema = z.object({
+    /** Documents tab: the list order (`sort` of `/v1/investor-documents`; absent = the API's `-filing_date`). */
+    docSort: optionalEnum(DOCUMENT_SORT_VALUES),
     format: optionalEnum(TRANSCRIPT_FORMAT_VALUES),
+    /** Metrics & diff: the `prior` call of `/comparison` (absent = the derived previous call). */
+    prior: z.uuid().optional().catch(undefined),
     t: optionalInt(0, MAX_CALL_SECONDS),
     tab: optionalEnum(CALL_TAB_VALUES),
     version: optionalInt(1, 100_000),

@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { ChartLine, ExternalLink } from "lucide-react";
 
 import type { V2KpiMention } from "@/lib/api/types";
 
@@ -88,8 +88,11 @@ function FilingLinkCell({ link }: { link: V2KpiMention["filing_link"] }) {
     );
 }
 
-/** Every reported KPI figure of the call, with its SEC filing match. */
-export function KpiTable({ eventId }: Pick<CallTabProps, "eventId">) {
+/**
+ * Every reported KPI figure of the call, with its SEC filing match. A KPI the API normalized opens its history across
+ * the company's calls (`onMetricClick`, the KPI history dialog).
+ */
+export function KpiTable({ eventId, onMetricClick }: Pick<CallTabProps, "eventId"> & { onMetricClick?: (metric: string) => void }) {
     const {
         data,
         error,
@@ -126,7 +129,19 @@ export function KpiTable({ eventId }: Pick<CallTabProps, "eventId">) {
                         <TableRow key={kpi.seq}>
                             <TableCell>
                                 <div className="flex flex-col items-start gap-1">
-                                    {kpi.metric_normalized && <Badge variant="secondary">{metricLabel(kpi.metric_normalized)}</Badge>}
+                                    {kpi.metric_normalized && (onMetricClick
+                                        ? (
+                                                <button
+                                                    className="inline-flex items-center gap-1 hover:underline"
+                                                    onClick={() => kpi.metric_normalized && onMetricClick(kpi.metric_normalized)}
+                                                    title="This KPI across the company's calls"
+                                                    type="button"
+                                                >
+                                                    <Badge variant="secondary">{metricLabel(kpi.metric_normalized)}</Badge>
+                                                    <ChartLine className="text-muted-foreground size-3" />
+                                                </button>
+                                            )
+                                        : <Badge variant="secondary">{metricLabel(kpi.metric_normalized)}</Badge>)}
                                     <span className="whitespace-normal">{kpi.metric}</span>
                                 </div>
                             </TableCell>

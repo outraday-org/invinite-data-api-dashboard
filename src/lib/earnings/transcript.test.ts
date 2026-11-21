@@ -19,8 +19,14 @@ describe("toTranscriptView", () => {
 
         expect(view).toEqual({
             kind: "turns",
-            turns: [{ name: "Tim Cook", person_id: null, role: "management", speaker_label: "A", start_ms: 1000, text: "Good afternoon.", title: "CEO" }],
+            turns: [{ name: "Tim Cook", person_id: null, role: "management", speaker_confidence: null, speaker_label: "A", start_ms: 1000, text: "Good afternoon.", title: "CEO" }],
         });
+    });
+
+    it("reads the speaker attribution confidence (null when not stated)", () => {
+        const view = toTranscriptView("speakers", [{ ...TURN, speaker_confidence: 0.65 }]);
+
+        expect(view.kind === "turns" && view.turns[0]?.speaker_confidence).toBe(0.65);
     });
 
     it("keeps a null start (company-published transcript)", () => {

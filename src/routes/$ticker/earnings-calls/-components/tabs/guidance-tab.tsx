@@ -7,18 +7,22 @@ import type { GuidanceHistoryTarget } from "./guidance-history-panel";
 
 import { GuidanceHistoryPanel } from "./guidance-history-panel";
 import { GuidanceTable } from "./guidance-table";
+import { KpiHistoryPanel } from "./kpi-history-panel";
 import { KpiTable } from "./kpi-table";
 
 type Kind = "guidance" | "kpi";
 
 /**
  * Guidance & KPIs tab: forward guidance (consolidated items with citations and a per-metric
- * history) or every reported KPI with its SEC filing link (`/v1/guidance?event=` | `/v1/kpis?event=`).
+ * history) or every reported KPI with its SEC filing link and a per-KPI history across the company's calls
+ * (`/v1/guidance?event=` | `/v1/kpis?event=`; histories `/v1/guidance?company=` | `/v1/kpis?company=&metric=`).
  */
 export function GuidanceTab({ event, eventId }: CallTabProps) {
     const [kind, setKind] = React.useState<Kind>("guidance");
 
     const [history, setHistory] = React.useState<GuidanceHistoryTarget | null>(null);
+
+    const [kpiHistory, setKpiHistory] = React.useState<null | string>(null);
 
     return (
         <div className="flex flex-col gap-3">
@@ -41,9 +45,10 @@ export function GuidanceTab({ event, eventId }: CallTabProps) {
                             })}
                         />
                     )
-                : <KpiTable eventId={eventId} />}
+                : <KpiTable eventId={eventId} onMetricClick={setKpiHistory} />}
 
             <GuidanceHistoryPanel company={event.symbol} onClose={() => setHistory(null)} target={history} />
+            <KpiHistoryPanel company={event.symbol} metric={kpiHistory} onClose={() => setKpiHistory(null)} />
         </div>
     );
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { JsonValue, V2Event, V2InvestorDocument } from "@/lib/api/types";
+import type { JsonValue, V2Event, V2InvestorDocument, V2InvestorDocumentsSort } from "@/lib/api/types";
 
 import { callCalendarDate, eventLabel } from "@/lib/earnings/format";
 
@@ -555,3 +555,9 @@ export function pagesOf(pagesJson: JsonValue | undefined): Array<DocumentPage> {
         }];
     });
 }
+
+/**
+ * The orders of `/v1/investor-documents` (`sort`), the API's default `-filing_date` first: the call page's Documents
+ * tab writes the others as `?docSort=` (O7 group 5).
+ */
+export const DOCUMENT_SORT_VALUES = ["-filing_date", "filing_date", "-event_date", "event_date"] as const satisfies ReadonlyArray<V2InvestorDocumentsSort>;

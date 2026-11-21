@@ -42,6 +42,7 @@ function toWordTurn(value: unknown): null | WordTurn {
         name: stringOrNull(value.name),
         person_id: stringOrNull(value.person_id),
         role: stringOrNull(value.role),
+        speaker_confidence: numberOrNull(value.speaker_confidence),
         speaker_label: typeof value.speaker_label === "string" ? value.speaker_label : "",
         start_ms: numberOrNull(value.start_ms),
         text: value.text,

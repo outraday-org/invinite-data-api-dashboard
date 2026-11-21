@@ -905,13 +905,16 @@ export function useV2EventStats(eventId: string) {
     });
 }
 
-/** Status-aware: a 404 = first call on record / the comparison is not derived yet. */
-export function useV2EventComparison(eventId: string) {
+/**
+ * Status-aware: a 404 = first call on record / the comparison is not derived yet / `prior` is not the derived previous
+ * call (the `detail` names it). `prior` absent = the API's default (the previous call).
+ */
+export function useV2EventComparison(eventId: string, prior?: string) {
     return useEarningsQuery<V2EventComparisonResponse>({
         enabled: eventId.length > 0,
         errorMessage: null,
-        load: apiKey => getV2EventComparison({ data: { apiKey, eventId } }),
-        queryKey: ["v2", "comparison", eventId],
+        load: apiKey => getV2EventComparison({ data: { apiKey, eventId, prior } }),
+        queryKey: ["v2", "comparison", eventId, prior ?? ""],
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }
@@ -1033,6 +1036,9 @@ export function useV2InvestorDocument(documentId: null | string, { pages = false
 
 export type V2TranscriptSearchInput = {
     company?: string;
+    /** The call-date window (days); none without a company or event = the API's last 365 days. */
+    conferenceDateGte?: string;
+    conferenceDateLte?: string;
     /** The event id ("Search this call"). */
     event?: string;
     limit?: number;
@@ -1056,6 +1062,8 @@ export function useV2TranscriptSearch(input: V2TranscriptSearchInput) {
             input.company ?? "",
             input.type ?? "",
             input.limit ?? "",
+            input.conferenceDateGte ?? "",
+            input.conferenceDateLte ?? "",
         ],
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
@@ -1891,5 +1899,23 @@ export function useV2DatasetsInfinite() {
         fetchPage: (cursor, apiKey) => getV2Datasets({ data: { apiKey, cursor: cursor ?? undefined, limit: 100 } }),
         queryKey: ["v2", "datasets"],
         staleTime: SEC_STALE_MS,
+    });
+}
+
+// O7 group 5 (backend tasks/data-api-dashboard 1-overhaul task 7): a company's KPI history.
+
+export type V2KpiHistoryInput = { company: string; metric: string; sort?: "-conference_date" | "conference_date" };
+
+/**
+ * One normalized KPI across a company's calls (`/v1/kpis?company=&metric=&sort=`, 200 a page). "" company or metric
+ * keeps it idle; the dialog renders the error (no toast).
+ */
+export function useV2KpiHistoryInfinite(input: V2KpiHistoryInput) {
+    return useEarningsInfinite<V2KpisResponse>({
+        enabled: input.company.trim().length > 0 && input.metric.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2Kpis({ data: { ...input, apiKey, cursor: cursor ?? undefined, limit: 200 } }),
+        queryKey: ["v2", "kpis", "history", input.company, input.metric, input.sort ?? ""],
+        staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }

@@ -1,4 +1,4 @@
-import type { HitMatch, MatchSpan, SearchMode, V2GuidanceItem } from "@/lib/api/types";
+import type { HitMatch, MatchSpan, SearchMode, V2Event, V2GuidanceItem, V2TranscriptVersion } from "@/lib/api/types";
 
 import { formatNumberEnCompact } from "@/lib/utils";
 
@@ -307,3 +307,48 @@ export const MATCH_TYPE_LABELS: Record<HitMatch["type"], string> = {
     lexical: "keyword",
     literal: "exact",
 };
+
+// O7 group 5 (backend tasks/data-api-dashboard 1-overhaul task 7): call header and transcript version facts.
+
+/** Why a calendar row expired (`expired_reason`, set only while `capture_status` is `expired`); exhaustive over the spec's enum. */
+export const EXPIRED_REASON_LABELS: Record<NonNullable<V2Event["expired_reason"]>, string> = {
+    agent_different_date: "Checked: the call is on another date",
+    agent_no_call: "Checked: no call scheduled",
+    agent_no_webcast: "Checked: no public webcast",
+    date_passed: "The date passed without a call",
+    duplicate: "Duplicate of another event",
+    early_results_filing: "Results filed before the estimated date",
+    inactive_company: "Company inactive",
+    never_planned: "No call was planned",
+    non_call_issuer: "The company holds no calls",
+    release_names_no_call: "The results release names no call",
+    results_without_call: "Results without a call",
+    superseded_by_reschedule: "Replaced by the rescheduled event",
+    superseded_estimate: "Estimate replaced by the confirmed date",
+};
+
+/**
+ * A version's kind with who corrected it: "corrected by a person", "corrected by the system (company text)"
+ * (`corrected_by` = `human` | `system:<stage>`); without `corrected_by` the kind alone.
+ */
+export function versionKindText(version: Pick<V2TranscriptVersion, "corrected_by" | "version_kind">): string {
+    const { corrected_by: correctedBy, version_kind: kind } = version;
+
+    if (!correctedBy) return kind;
+
+    const stage = correctedBy.startsWith("system:") ? correctedBy.slice("system:".length).replaceAll("_", " ") : null;
+
+    const by = correctedBy === "human" ? "by a person" : stage ? `by the system (${stage})` : "by the system";
+
+    return kind === "corrected" ? `corrected ${by}` : `${kind}, corrected ${by}`;
+}
+
+/**
+ * Below this `speaker_confidence` a named turn is marked "speaker uncertain". The pipeline only accepts a name from
+ * 0.6 (`MIN_ASSIGNMENT_CONFIDENCE`), so the band 0.6–0.8 is the accepted-but-weak attribution.
+ */
+export const LOW_SPEAKER_CONFIDENCE = 0.8;
+
+/** A named turn whose attribution is weak (`speaker_confidence` below `LOW_SPEAKER_CONFIDENCE`; null = not stated). */
+export const isLowSpeakerConfidence = (name: null | string, confidence: null | number | undefined) =>
+    name !== null && confidence !== null && confidence !== undefined && confidence < LOW_SPEAKER_CONFIDENCE;

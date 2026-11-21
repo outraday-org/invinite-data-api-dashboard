@@ -728,12 +728,15 @@ export const getV2EventStats = createServerFn({ method: "GET" })
         return res;
     });
 
-/** The comparison with the previous call (the one the pipeline derives; `prior` is not sent). */
+/**
+ * The comparison with the previous call (the one the pipeline derives). `prior` may name that call; any other event id
+ * answers 404 `not_found` whose `detail` names the derived prior (O7 group 5's picker shows it).
+ */
 export const getV2EventComparison = createServerFn({ method: "GET" })
-    .inputValidator(eventInputSchema)
+    .inputValidator(eventInputSchema.extend({ prior: eventIdSchema.optional() }))
     .handler(async ({ data }): Promise<V2EventComparisonResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/events/{event_id}/comparison", {
-            params: { path: { event_id: data.eventId } },
+            params: { path: { event_id: data.eventId }, query: v2Query({ prior: data.prior }) },
         });
 
         if (error) throwApiError(error, response);
@@ -840,6 +843,9 @@ export const getV2TranscriptSearch = createServerFn({ method: "GET" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         company: z.string().trim().min(1).optional(),
+        // The call-date window (`conference_date.gte` / `.lte`, days); none without a company = the API's last 365 days.
+        conferenceDateGte: z.iso.date().optional(),
+        conferenceDateLte: z.iso.date().optional(),
         event: eventIdSchema.optional(),
         limit: v2LimitSchema,
         mode: searchModeSchema.optional(),
@@ -847,10 +853,21 @@ export const getV2TranscriptSearch = createServerFn({ method: "GET" })
         type: z.enum(["transcript", "qa", "prepared", "presentation"] as const satisfies ReadonlyArray<V2TranscriptSearchType>).optional(),
     }))
     .handler(async ({ data }): Promise<V2TranscriptSearchResponse> => {
-        const { apiKey, company, event, limit, mode, q, type } = data;
+        const { apiKey, company, conferenceDateGte, conferenceDateLte, event, limit, mode, q, type } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/search/transcripts", {
-            params: { query: v2Query({ company, event, limit, mode, q, type }) },
+            params: {
+                query: v2Query({
+                    company,
+                    "conference_date.gte": conferenceDateGte,
+                    "conference_date.lte": conferenceDateLte,
+                    event,
+                    limit,
+                    mode,
+                    q,
+                    type,
+                }),
+            },
         });
 
         if (error) throwApiError(error, response);
@@ -888,13 +905,22 @@ export const getV2Guidance = createServerFn({ method: "GET" })
         return res;
     });
 
+/** `GET /v1/kpis`: one call's KPIs (`event`) or a company's history of one metric (`company` + `metric`, O7 group 5). */
 export const getV2Kpis = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, event: eventIdSchema, limit: v2LimitSchema }))
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        company: z.string().trim().min(1).optional(),
+        cursor: cursorSchema,
+        event: eventIdSchema.optional(),
+        limit: v2LimitSchema,
+        metric: z.string().trim().min(1).optional(),
+        sort: z.enum(["conference_date", "-conference_date"]).optional(),
+    }))
     .handler(async ({ data }): Promise<V2KpisResponse> => {
-        const { apiKey, cursor, event, limit } = data;
+        const { apiKey, company, cursor, event, limit, metric, sort } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/kpis", {
-            params: { query: v2Query({ cursor, event, limit }) },
+            params: { query: v2Query({ company, cursor, event, limit, metric, sort }) },
         });
 
         if (error) throwApiError(error, response);

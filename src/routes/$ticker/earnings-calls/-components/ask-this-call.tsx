@@ -5,7 +5,6 @@ import * as React from "react";
 import type {
     HitMatch,
     SearchCoverage,
-    SearchMode,
     V2TranscriptSearchHit,
     V2TranscriptSearchResponse,
     V2TranscriptSearchType,
@@ -39,23 +38,27 @@ export { HighlightedText, SearchCoverageNote, SpanHighlightedText };
 /** "Jump to transcript": `quiet` = no notice when the call has no transcript (a played hit jumps along by itself). */
 export type JumpToTranscript = (startMs: number, options?: { quiet?: boolean }) => void;
 
-/** One call (the call page) or one company (its calls list, hits link to their call). */
+/**
+ * One call (the call page), one company (its calls list, hits link to their call) or every company (`/search`: hits
+ * name their company too).
+ */
 export type AskScope
     = | { eventId: string; kind: "event"; onJumpToTranscript: JumpToTranscript }
-        | { identifier: string; kind: "company" };
+        | { identifier: string; kind: "company" }
+        | { kind: "market" };
 
 const SEARCH_LIMIT = 8;
 
 const MIN_QUERY_LENGTH = 2;
 
-const TYPE_LABELS: Record<V2TranscriptSearchType, string> = {
+export const TYPE_LABELS: Record<V2TranscriptSearchType, string> = {
     prepared: "Prepared remarks",
     presentation: "Slides",
     qa: "Q&A",
     transcript: "Transcript",
 };
 
-const TYPES = Object.keys(TYPE_LABELS) as Array<V2TranscriptSearchType>;
+export const TYPES = Object.keys(TYPE_LABELS) as Array<V2TranscriptSearchType>;
 
 const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
 
@@ -74,20 +77,6 @@ export function MatchBadge({ match, score }: { match: HitMatch; score?: number }
     const relevance = score !== undefined && match.type !== "literal" ? ` · relevance ${score.toFixed(4)}` : "";
 
     return <Badge title={`How the passage matched${relevance}`} variant="secondary">{MATCH_TYPE_LABELS[match.type]}</Badge>;
-}
-
-/**
- * The score of a mode: literal is always 0 (newest first, none shown); keyword ranks (BM25 / `ts_rank_cd`, often
- * < 0.01) need the API's 4 decimals.
- */
-export function SearchScore({ mode, score }: { mode: SearchMode; score: number }) {
-    if (mode === "literal") return null;
-
-    return (
-        <span className="text-muted-foreground ml-auto tabular-nums" title="Relevance score">
-            {score.toFixed(4)}
-        </span>
-    );
 }
 
 /**
@@ -234,8 +223,8 @@ function EventHitCard({ onJumpToTranscript, onPlayed, ...props }: Omit<HitCardPr
     return <HitShell {...props} actions={actions} timestamp={timestamp} />;
 }
 
-/** Company calls list: the hit's call page, the audio in a new tab. */
-function CompanyHitCard(props: Omit<HitCardProps, "onPlayed" | "scope">) {
+/** Company calls list / `/search`: the hit's call page, the audio in a new tab; `market` names the company too. */
+function CompanyHitCard({ market = false, ...props }: Omit<HitCardProps, "onPlayed" | "scope"> & { market?: boolean }) {
     const { hit } = props;
 
     const actions = (
@@ -265,7 +254,7 @@ function CompanyHitCard(props: Omit<HitCardProps, "onPlayed" | "scope">) {
 
     const title = (
         <EventLink className="font-medium underline-offset-4 hover:underline" event={hit}>
-            {`${formatDay(hit.conference_date)} · ${formatFiscalPeriod(hit)}`}
+            {[market ? hit.symbol : null, formatDay(hit.conference_date), formatFiscalPeriod(hit)].filter(Boolean).join(" · ")}
         </EventLink>
     );
 
@@ -275,7 +264,7 @@ function CompanyHitCard(props: Omit<HitCardProps, "onPlayed" | "scope">) {
 function HitCard({ onPlayed, scope, ...props }: HitCardProps) {
     return scope.kind === "event"
         ? <EventHitCard {...props} onJumpToTranscript={scope.onJumpToTranscript} onPlayed={onPlayed} />
-        : <CompanyHitCard {...props} />;
+        : <CompanyHitCard {...props} market={scope.kind === "market"} />;
 }
 
 /**
@@ -394,7 +383,7 @@ export function AskResults({
  * mode control. Scoped, any word may match (BM25) and the management answer follows a matched analyst question.
  * Runs on submit, never per keystroke; a type chip re-runs the submitted query.
  */
-export function AskThisCall({ scope }: { scope: AskScope }) {
+export function AskThisCall({ scope }: { scope: Exclude<AskScope, { kind: "market" }> }) {
     const [draft, setDraft] = React.useState("");
 
     const [query, setQuery] = React.useState("");
