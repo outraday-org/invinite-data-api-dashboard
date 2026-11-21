@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { RequestMeta } from "./request-meta";
 
-import { cliOf, curlOf, fileRequests, planAllows, requestMetaOf, requestsOf, shareWithRequests } from "./request-meta";
+import { cliOf, curlOf, fileRequests, planAllows, REDACTED, redactSecrets, requestMetaOf, requestsOf, shareWithRequests } from "./request-meta";
 
 const meta = (patch: Partial<RequestMeta> = {}): RequestMeta => ({
     credits: 1,
@@ -92,5 +92,39 @@ describe("planAllows", () => {
         expect(planAllows("enterprise", "pro")).toBe(true);
 
         expect(planAllows("free", null)).toBe(true);
+    });
+});
+
+describe("redactSecrets (alerts task 2: write bodies and answers in the inspector)", () => {
+    it("replaces a secret by key name at any depth and every header value; nothing else changes", () => {
+        const body = {
+            authorization: "Bearer x",
+            condition: { keywords: ["token economy"], symbols: ["AAPL"] },
+            destinations: [{ headers: { "X-Api-Key": "abc", "X-Trace": "1" }, signing_key: "sk", url: "https://hook.example" }],
+            metadata: { password: "p", plan: "gold" },
+            secret: "whsec_1",
+        };
+
+        expect(redactSecrets(body)).toEqual({
+            authorization: REDACTED,
+            condition: { keywords: ["token economy"], symbols: ["AAPL"] },
+            destinations: [{ headers: { "X-Api-Key": REDACTED, "X-Trace": REDACTED }, signing_key: REDACTED, url: "https://hook.example" }],
+            metadata: { password: REDACTED, plan: "gold" },
+            secret: REDACTED,
+        });
+    });
+
+    it("requestMetaOf records a write's body redacted, a read without one", () => {
+        const write = requestMetaOf({ body: { secret: "s", type: "filing" }, method: "POST", schemaPath: "/v1/alerts", url: "https://api.test/v1/alerts" });
+
+        expect(write).toMatchObject({ body: { secret: REDACTED, type: "filing" }, method: "POST", operationId: "createAlert" });
+
+        expect("body" in requestMetaOf({ method: "GET", schemaPath: "/v1/alerts", url: "https://api.test/v1/alerts" })).toBe(false);
+    });
+
+    it("the colon-verb routes resolve to their operations", () => {
+        expect(requestMetaOf({ method: "POST", schemaPath: "/v1/alerts/{id}:pause", url: "https://api.test/v1/alerts/alt_1:pause" }).operationId).toBe("pauseAlert");
+
+        expect(requestMetaOf({ method: "POST", schemaPath: "/v1/alerts:batch", url: "https://api.test/v1/alerts:batch" }).operationId).toBe("batchAlerts");
     });
 });

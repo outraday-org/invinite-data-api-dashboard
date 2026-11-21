@@ -1,12 +1,13 @@
-import type { Query, QueryCache } from "@tanstack/react-query";
+import type { Mutation, MutationCache, Query, QueryCache } from "@tanstack/react-query";
 
 import { useQueryClient } from "@tanstack/react-query";
 import * as React from "react";
 
 import type { RequestMeta } from "@/lib/api/request-meta";
+import type { JsonValue } from "@/lib/api/types";
 
 import { isMeQueryKey } from "@/lib/api/queries";
-import { requestsOf } from "@/lib/api/request-meta";
+import { redactSecrets, requestsOf } from "@/lib/api/request-meta";
 
 /** One request behind the view: its descriptor, the answer it produced (one page of a list) or the error. */
 export type ViewRequest = {
@@ -53,11 +54,41 @@ export function viewRequestsOf(queries: ReadonlyArray<Query>): Array<ViewRequest
     return out;
 }
 
-/** Subscribes to the query cache while `enabled` (the sheet is open) and returns the view's requests. */
+/**
+ * The writes that ran (alerts task 2): every settled mutation of the cache (kept 5 minutes after its page let go), oldest
+ * first, with the requests its server function made. The answer is shown redacted like the body (`redactSecrets`): a
+ * secret the API returns once (A3's destination secret) never reaches the JSON view.
+ */
+export function writeRequestsOf(mutations: ReadonlyArray<Mutation<unknown, Error, unknown, unknown>>): Array<ViewRequest> {
+    const out: Array<ViewRequest> = [];
+
+    for (const mutation of mutations) {
+        const { data, error, status } = mutation.state;
+
+        if (status !== "success" && status !== "error") continue;
+
+        const target = status === "success" ? data : error;
+
+        requestsOf(target).forEach((meta, index) => {
+            out.push({
+                answer: status === "success" ? redactSecrets(data as JsonValue) : undefined,
+                error: status === "error" ? error : null,
+                key: `write:${mutation.mutationId}:${index}`,
+                meta,
+            });
+        });
+    }
+
+    return out;
+}
+
+/** Subscribes to the query and mutation caches while `enabled` (the sheet is open) and returns the view's requests. */
 export function useViewRequests(enabled: boolean): Array<ViewRequest> {
     const queryClient = useQueryClient();
 
     const cache: QueryCache = queryClient.getQueryCache();
+
+    const mutations: MutationCache = queryClient.getMutationCache();
 
     const [version, setVersion] = React.useState(0);
 
@@ -66,13 +97,29 @@ export function useViewRequests(enabled: boolean): Array<ViewRequest> {
 
         // Only what changes the list: a query's state, a query or an observer coming / going. Never the observer
         // option / result events — each render of a `useQuery` (this sheet's own included) emits them: a render loop.
-        return cache.subscribe((event) => {
+        const unsubscribeQueries = cache.subscribe((event) => {
             if (event.type === "observerOptionsUpdated" || event.type === "observerResultsUpdated") return;
 
             setVersion(current => current + 1);
         });
-    }, [cache, enabled]);
 
-    // `version` re-reads the cache after each of its events.
-    return React.useMemo(() => (enabled && version >= 0 ? viewRequestsOf(cache.getAll()) : []), [cache, enabled, version]);
+        // A write settling or leaving the cache (its observer events are left out, as above).
+        const unsubscribeMutations = mutations.subscribe((event) => {
+            if (event.type === "observerOptionsUpdated") return;
+
+            setVersion(current => current + 1);
+        });
+
+        return () => {
+            unsubscribeQueries();
+
+            unsubscribeMutations();
+        };
+    }, [cache, enabled, mutations]);
+
+    // `version` re-reads the caches after each of their events.
+    return React.useMemo(
+        () => (enabled && version >= 0 ? [...viewRequestsOf(cache.getAll()), ...writeRequestsOf(mutations.getAll())] : []),
+        [cache, enabled, mutations, version],
+    );
 }

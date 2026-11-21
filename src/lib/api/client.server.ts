@@ -5,6 +5,7 @@ import createClient from "openapi-fetch";
 
 import type { RequestMeta } from "./request-meta";
 import type { paths } from "./schema";
+import type { JsonValue } from "./types";
 
 import { env } from "../env";
 import { requestMetaOf } from "./request-meta";
@@ -14,16 +15,43 @@ const apiRequests = new AsyncLocalStorage<Array<RequestMeta>>();
 
 /**
  * Runs `fn` (one server function call) while every Data API answer it receives is recorded into `into`: method, the
- * concrete path and query as sent, status, `X-Request-Id`, `X-Credits-Charged` — never a header of the request, so
- * the key cannot be recorded. The global function middleware (`request-middleware.ts`) sends the list to the browser.
+ * concrete path and query as sent, a write's JSON body (redacted: `redactSecrets`), status, `X-Request-Id`,
+ * `X-Credits-Charged` — never a header of the request, so the key cannot be recorded. The global function middleware (`request-middleware.ts`) sends the list to the browser.
  */
 export function recordApiRequests<T>(into: Array<RequestMeta>, fn: () => T): T {
     return apiRequests.run(into, fn);
 }
 
+// The JSON body of each write in flight, read before `fetch` consumes it (`onRequest`), recorded with its answer.
+const writeBodies = new WeakMap<Request, JsonValue>();
+
+/** A write's JSON body (a clone is read: the request itself is still sent); undefined for a read or a non-JSON body. */
+async function jsonBodyOf(request: Request): Promise<JsonValue | undefined> {
+    if (request.method === "GET" || request.method === "HEAD" || request.body === null) return undefined;
+
+    try {
+        return JSON.parse(await request.clone().text()) as JsonValue;
+    }
+    catch {
+        return undefined;
+    }
+}
+
 const recordingMiddleware: Middleware = {
+    async onRequest({ request }) {
+        // Only inside a recorded server function call: nothing is kept otherwise.
+        if (!apiRequests.getStore()) return undefined;
+
+        const body = await jsonBodyOf(request);
+
+        if (body !== undefined) writeBodies.set(request, body);
+
+        return undefined;
+    },
     onResponse({ request, response, schemaPath }) {
         apiRequests.getStore()?.push(requestMetaOf({
+            // Redacted by `requestMetaOf` before it is stored: no secret field reaches the browser's registry.
+            body: writeBodies.get(request),
             headers: response.headers,
             method: request.method,
             schemaPath,

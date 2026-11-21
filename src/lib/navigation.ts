@@ -5,6 +5,7 @@ import {
     ArrowUpRightIcon,
     BarChart3Icon,
     BookOpenIcon,
+    BellIcon,
     BriefcaseIcon,
     BuildingIcon,
     CalendarDaysIcon,
@@ -87,6 +88,7 @@ export const BROWSE_NAV: ReadonlyArray<NavPage> = [
     { description: "What was said on every company's earnings calls: passages from transcripts, Q&A and slides.", icon: SearchIcon, keywords: ["search", "transcripts", "transcript", "passages", "quotes", "calls", "full-text"], label: "Transcript search", to: "/search" },
     { description: "Metrics, mapping rules, SEC forms and sections, event types, document kinds.", icon: BookOpenIcon, keywords: ["catalog", "reference", "metrics", "definitions", "mapping", "forms", "sections", "glossary"], label: "Catalog", to: "/catalog" },
     { description: "Form D private offerings of every issuer, with amounts, exemptions and related persons.", icon: HandCoinsIcon, keywords: ["offerings", "form d", "private", "placements", "exemptions", "raises"], label: "Offerings", to: "/offerings" },
+    { description: "Your alert rules, what fired, live, and every alert's actions.", icon: BellIcon, keywords: ["alerts", "alert", "notifications", "webhooks", "events", "triggers", "watch"], label: "Alerts", to: "/alerts" },
 ];
 
 /** The account (bottom of the sidebar, with the plan badge). */

@@ -561,3 +561,114 @@ export function parseFilingFrame(data: unknown): ParsedFilingFrame {
 
     return parsed.success ? { frame: parsed.data, kind: "frame" } : { kind: "malformed" };
 }
+
+// ── Alerts (`alerts`; backend tasks/data-api-dashboard 2-alerts task 2) ─────────────────────────────────────────────
+// Mirrors the spec's `WebSocket*Alerts*` / `WebSocketAlertEventEvent` schemas and IDA `routes/websocket/types/
+// alertMessages.ts` (its `error` frame is not in the spec) — change both or neither. Every alerts frame carries
+// `channel: "alerts"`; its `error` / `subscribed` / `unsubscribed` share their `type` with other channels' frames, so
+// they are told apart by `channel`. A frame of the channel with a type this page does not know is counted, never thrown.
+
+export const ALERTS_CHANNEL = "alerts";
+
+/** Alert ids one subscription may name (`WebSocketSubscribeAlerts.alert_ids` `maxItems`). */
+export const ALERTS_WS_MAX_ALERT_IDS = 100;
+
+/** The codes IDA sends today (`ALERTS_WS_ERROR_CODES`); another code still parses (the hook treats it as a stop). */
+export const ALERTS_WS_ERROR_CODES = ["bad_message", "channel_unavailable", "unavailable"] as const;
+
+const alertsChannel = z.literal(ALERTS_CHANNEL);
+
+export const alertsSubscribedFrameSchema = z.object({
+    channel: alertsChannel,
+    filters: z.object({ alert_ids: z.array(z.string()), external_user_id: z.string().nullable(), types: z.array(z.string()) }),
+    type: z.literal("subscribed"),
+});
+
+/** `alert_event`: exactly the row of `GET /v1/alert-events` (replayed or live); the payload is kept whole. */
+export const alertEventFrameSchema = z.object({
+    channel: alertsChannel,
+    event: z.object({
+        alert_id: z.string().nullable(),
+        external_user_id: z.string().nullable(),
+        id: z.string(),
+        occurred_at: z.string(),
+        payload: z.record(z.string(), z.json()),
+        type: z.string(),
+    }),
+    type: z.literal("alert_event"),
+});
+
+/** More than 1,000 events were missed: the replay stopped at `last_event_id` (the rest: the REST feed). */
+export const alertsReplayTruncatedFrameSchema = z.object({ channel: alertsChannel, last_event_id: z.string(), type: z.literal("replay_truncated") });
+
+export const alertsUnsubscribedFrameSchema = z.object({ channel: alertsChannel, type: z.literal("unsubscribed") });
+
+export const alertsErrorFrameSchema = z.object({ channel: alertsChannel, code: z.string(), message: z.string(), type: z.literal("error") });
+
+export const alertsServerFrameSchema = z.discriminatedUnion("type", [
+    alertsSubscribedFrameSchema,
+    alertEventFrameSchema,
+    alertsReplayTruncatedFrameSchema,
+    alertsUnsubscribedFrameSchema,
+    alertsErrorFrameSchema,
+]);
+
+export type AlertsServerFrame = z.infer<typeof alertsServerFrameSchema>;
+
+const ALERTS_FRAME_TYPES: ReadonlySet<string> = new Set(alertsServerFrameSchema.options.map(option => option.shape.type.value));
+
+/**
+ * One raw socket `message`: an alerts frame, a frame of the channel with a type this page does not know (`unknown`:
+ * counted), a malformed alerts frame, or anything else on the socket (`other`).
+ */
+export type ParsedAlertsFrame
+    = | { frame: AlertsServerFrame; kind: "frame" }
+        | { kind: "malformed" }
+        | { kind: "other" }
+        | { kind: "unknown"; type: string };
+
+export function parseAlertsFrame(data: unknown): ParsedAlertsFrame {
+    if (typeof data !== "string") return { kind: "other" };
+
+    let value: unknown;
+
+    try {
+        value = JSON.parse(data);
+    }
+    catch {
+        return { kind: "other" };
+    }
+
+    if (typeof value !== "object" || value === null) return { kind: "other" };
+
+    const record = value as Record<string, unknown>;
+
+    if (record.channel !== ALERTS_CHANNEL) return { kind: "other" };
+
+    if (typeof record.type !== "string" || !ALERTS_FRAME_TYPES.has(record.type)) return { kind: "unknown", type: String(record.type) };
+
+    const parsed = alertsServerFrameSchema.safeParse(value);
+
+    return parsed.success ? { frame: parsed.data, kind: "frame" } : { kind: "malformed" };
+}
+
+export type AlertsSubscribeOptions = {
+    /** An event id: up to 1,000 missed events after it are replayed first. */
+    after?: string;
+    /** ≤ 100 (`ALERTS_WS_MAX_ALERT_IDS`); more are refused by the API, so the caller never sends more. */
+    alertIds?: ReadonlyArray<string>;
+    externalUserId?: string;
+    types?: ReadonlyArray<string>;
+};
+
+/** The `alerts` subscribe frame; an empty filter is left out (no filter = every event of the account). */
+export function alertsSubscribeFrame({ after, alertIds, externalUserId, types }: AlertsSubscribeOptions = {}) {
+    return {
+        channel: ALERTS_CHANNEL,
+        type: "subscribe",
+        ...(alertIds?.length ? { alert_ids: alertIds.slice(0, ALERTS_WS_MAX_ALERT_IDS) } : {}),
+        ...(externalUserId ? { external_user_id: externalUserId } : {}),
+        ...(types?.length ? { types: [...types] } : {}),
+        ...(after ? { after } : {}),
+    } as const;
+}

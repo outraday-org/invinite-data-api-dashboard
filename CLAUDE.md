@@ -419,6 +419,64 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   (`DocumentTextView`: page by page with the page title, else `body_text`, else the public pages JSON).
 - Tests `src/routes/-tests/earnings-o7.test.tsx`, `src/lib/earnings/kpi-history.test.ts`, the order case of
   `documents-tab.test.tsx`; fixtures `src/lib/earnings/o7-earnings-fixtures.ts` (live shapes of 2026-11-21).
+### Alerts (backend `tasks/data-api-dashboard` 2-alerts task 2): write layer, alerts, event feed
+
+- **Spec**: `openapi.json` = Data API 7.1 (`data-sdk-v7.1.0`): `listAlerts` takes `symbol` / `destination_id`. The only
+  spec change of the super tasklist besides A3's operations table regeneration.
+- **Writes** (the dashboard's first): `src/lib/api/server-functions-alerts.ts` — reads `GET`, writes
+  `createServerFn({ method: "POST" })`, zod input, the key from the same store as every read; the requests themselves in
+  `alerts-requests.ts` (one function per operation on a given client, so tests run them over a mocked `fetch`: the
+  colon verbs `/v1/alerts/{id}:pause|:resume|:test` and `/v1/alerts:batch` are sent as written, `alerts-requests.test.ts`).
+  A write answered with 204 returns `AlertWriteDone` (an object: the inspector files its request under it).
+- **`useApiMutation(operationId, { invalidates })`** (`src/lib/api/mutations.ts`, table `WRITES` — A3 / A4 append their
+  writes): runs the server function with the stored key, refetches the listed query-key prefixes on success
+  (`ALERT_QUERY_KEYS` in `queries.ts`), hands the revived `ApiRequestError` to the caller, NEVER toasts (the caller says
+  it once), never retries, no optimistic update. **Idempotency**: `useIdempotencyKey` — one `Idempotency-Key` per
+  submission of `createAlert` (A3: `createDestination`), the same body keeps its key (double click, retry after a lost
+  answer), any API answer or a success ends it. The other writes have no key: their buttons disable while pending.
+- **Confirm rule**: every destructive or outward action asks first through `src/components/ui/confirm-action.tsx`
+  (`ConfirmAction`: title, the effect in words, the ids / count, the confirm verb, `noun` for A3's destinations):
+  delete, every bulk change, "Send test event" (a REAL delivery to the alert's destinations). Pause / resume of one alert
+  runs at once. Words: `confirmWords` (`components/alerts/use-alert-actions.tsx`).
+- **Secret rule**: the inspector's recorder (`client.server.ts` `onRequest`) keeps a write's JSON body and
+  `requestMetaOf` redacts it before it is stored (`redactSecrets`: keys `secret`, `authorization`, `password`, `token`,
+  `api_key`, `signing_key`, `private_key`, …, and every value of a `headers` object); the sheet shows a write's ANSWER
+  redacted the same way (`writeRequestsOf` in `use-view-requests.ts`: settled mutations, oldest first). A secret the API
+  returns once (A3) is shown only in its dialog, never stored in the browser, never logged.
+- **No browser request to the API host**: `src/lib/api/no-direct-api-calls.test.ts` — one openapi-fetch client
+  (`client.server.ts`), `fetch(` only in the reviewed public-file readers, no XHR / beacon / EventSource, `new WebSocket`
+  only in `lib/live/use-live-*.ts` through `liveWsUrl` (`/v1/stream`), the host named only by `env.ts` and the curl text.
+- **Field map** (`src/lib/alerts/condition-fields.ts`): `FIELD_SPECS` (every `AlertConditionInput` field: editor kind,
+  label, help, enum, bounds; `optionsByType` for `scope` / `kinds` / `interval` / `frequency`), `TYPE_FIELDS` (17 types),
+  `CONDITION_FIELDS`, `TRIGGER_FIELDS` (`cooldown_bars` script / indicator, `rearm*` price types). `condition-fields.test.ts`
+  parses the schema's descriptions ("Same types as `x`", "price types", "Keyword types", the `$ref` fields) and fails on a
+  missing / extra type or field, an enum or a bound. The form model `alert-form.ts` (pure): `toCreateBody`,
+  `toUpdateBody` (whole condition / trigger / delivery + the LOADED `version`; an emptied reference = null),
+  `fromAlert` (edit, duplicate without the client reference id), `prefilledForm` (`?type=&symbol=`), `fieldErrorsOf` /
+  `fieldKeyOf` (a 400's `param` / `errors[]` → `condition.<field>`, `trigger.<field>`, `destination_ids`, …, else `form`).
+- **Routes** (`src/routes/alerts/`, Browse entry "Alerts"; tabs `src/lib/alerts/tabs.ts` — A3 / A4 append theirs):
+  `route.tsx` (tabs + plan gate: `me.allowed_families` holds "Alerts"), `/alerts` (`?status=&type=&external_user_id=
+  &client_reference_id=&symbol=&destination_id=`, all sent to the API; quota line from `meta.quota`; row actions; selection
+  → bulk pause / resume / delete via `batchAlerts`, ≤ 500 items a request, per-item results `BatchResultsView`),
+  `/alerts/new` (`?type=&symbol=` pre-fill, `?from=<id>` duplicate; "Check" = `validate_only`), `/alerts/$id`
+  (summary, actions, the alert's events; `?edit=true` = the form; 409 `conflict` → "changed elsewhere" + Reload),
+  `/alerts/events` (`?alert_id=&type=&external_user_id=&event=&live=true`). Views in `src/components/alerts/` (pure:
+  `AlertsListView`, `AlertFormView`, `AlertDetailView`, `AlertEventsView`, `SingleEventView`; wiring
+  `alert-editor.tsx`, `use-alert-actions.tsx`, `use-event-list.ts`). States: `AlertsState` (plan gate, 404 in the page's
+  words, 503 = alerts switched off, 400 message); limits `LimitNotice` (quota-full 403 `plan_required` with the quota
+  numbers on request — one `limit=1` list page —, `alert_user_limit_reached`, `alert_user_paused`).
+- **Event lists are oldest first** in the API (no sort parameter): `useEventList` loads the next (newer) pages by itself up
+  to `EVENT_PAGES_AUTO` (10 pages × 200, 1 credit each), shows the loaded events newest first and says how far they reach.
+- **Live** (`src/lib/live/use-live-alerts.ts`, frames `parseAlertsFrame` / `alertsSubscribeFrame` in `ws-frames.ts`):
+  subscribe `{ channel: "alerts", alert_ids?, external_user_id?, types?, after }` with `after` = the newest loaded (then the
+  newest live) event — the API replays ≤ 1,000 missed events, also after a reconnect; new events on top, "New" + a 4-s
+  highlight; `replay_truncated` → "Some events were skipped" + reload; an unknown frame of the channel is counted, never
+  thrown; `bad_message` is a note; close 4001 / 4003 (the stream is STANDARD, the REST feed is free) / 4029 and
+  `channel_unavailable` stop; other closes reconnect 1 s → 30 s × 10; `unavailable` re-subscribes after 10 s.
+- Tests: `src/lib/api/{alerts-requests,no-direct-api-calls}.test.ts`, `mutations.test.tsx`, the redaction cases of
+  `request-meta.test.ts`, `src/lib/alerts/*.test.ts`, the alerts cases of `ws-frames.test.ts`, `use-live-alerts.test.tsx`,
+  `src/routes/-tests/alerts-{list,form,events}.test.tsx`. Fixtures `src/lib/alerts/alerts-fixtures.ts` (tests only; the spec
+  has no response examples for alerts — they follow the schemas and its request / id examples).
 
 ### Ownership and offerings (backend `tasks/data-api-dashboard` O7 group 6)
 
@@ -627,3 +685,17 @@ states why here. Count: 89 non-alert rows + 36 = 125 operation ids in `openapi.j
 | `statusGet` | `GET /status` | `/account` (API status card); sidebar Help (status dot beside "API status"); O7 group 7 |
 | `statusLicensing` | `GET /status/licensing` | `/account` (licensing card: the plan's rights, routes per family); O7 group 7 |
 | `healthGet` | `GET /health` | No view, by design: a liveness probe (`status`, `timestamp`) that says nothing a reader can act on; `/status` (above) carries the product states and uptime the dashboard shows |
+| `listAlerts` | `GET /v1/alerts` | `/alerts` (filters incl. 7.1's `symbol` / `destination_id`; quota line); quota on a refused create (`limit=1`) (alerts task 2) |
+| `createAlert` | `POST /v1/alerts` | `/alerts/new` (Create with `Idempotency-Key`; Check = `validate_only`) (alerts task 2) |
+| `getAlert` | `GET /v1/alerts/{id}` | `/alerts/$id`; `/alerts/new?from=` (Duplicate) (alerts task 2) |
+| `updateAlert` | `PATCH /v1/alerts/{id}` | `/alerts/$id?edit=true` (with `version`) (alerts task 2) |
+| `deleteAlert` | `DELETE /v1/alerts/{id}` | `/alerts` row action; `/alerts/$id` (confirmed) (alerts task 2) |
+| `pauseAlert` | `POST /v1/alerts/{id}:pause` | `/alerts` row action; `/alerts/$id` (alerts task 2) |
+| `resumeAlert` | `POST /v1/alerts/{id}:resume` | `/alerts` row action; `/alerts/$id` (alerts task 2) |
+| `testAlert` | `POST /v1/alerts/{id}:test` | `/alerts` row action; `/alerts/$id` "Send test event" (confirmed) (alerts task 2) |
+| `batchAlerts` | `POST /v1/alerts:batch` | `/alerts` bulk pause / resume / delete (confirmed; per-item results) (alerts task 2) |
+| `listAlertEvents` | `GET /v1/alert-events` | `/alerts/events` (alerts task 2) |
+| `getAlertEvent` | `GET /v1/alert-events/{id}` | `/alerts/events?event=` (e.g. from "Send test event") (alerts task 2) |
+| `listAlertEventsForAlert` | `GET /v1/alerts/{id}/events` | `/alerts/$id` (events) (alerts task 2) |
+| `listAlertTemplates` | `GET /v1/alert-templates` | `/alerts/new`, `/alerts/$id?edit=true` (indicator template picker) (alerts task 2) |
+| `streamEvents` (channel `alerts`) | `WS /v1/stream` `alert_event` | `/alerts/events` "Live" (alerts task 2) |

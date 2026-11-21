@@ -22,17 +22,22 @@ import { Route as FundsRouteImport } from './routes/funds'
 import { Route as CatalogRouteImport } from './routes/catalog'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AccountRouteImport } from './routes/account'
+import { Route as AlertsRouteRouteImport } from './routes/alerts/route'
 import { Route as TickerRouteRouteImport } from './routes/$ticker/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeopleIndexRouteImport } from './routes/people/index'
 import { Route as OfferingsIndexRouteImport } from './routes/offerings/index'
 import { Route as FilingsIndexRouteImport } from './routes/filings/index'
+import { Route as AlertsIndexRouteImport } from './routes/alerts/index'
 import { Route as TickerIndexRouteImport } from './routes/$ticker/index'
 import { Route as SecDatasetsRouteImport } from './routes/sec/datasets'
 import { Route as SecCikRouteImport } from './routes/sec/$cik'
 import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
 import { Route as OfferingsOfferingIdRouteImport } from './routes/offerings/$offeringId'
 import { Route as FilingsAccessionRouteImport } from './routes/filings/$accession'
+import { Route as AlertsNewRouteImport } from './routes/alerts/new'
+import { Route as AlertsEventsRouteImport } from './routes/alerts/events'
+import { Route as AlertsIdRouteImport } from './routes/alerts/$id'
 import { Route as TickerStockSplitsIndexRouteImport } from './routes/$ticker/stock-splits/index'
 import { Route as TickerSegmentedFinancialsIndexRouteImport } from './routes/$ticker/segmented-financials/index'
 import { Route as TickerNewsIndexRouteImport } from './routes/$ticker/news/index'
@@ -119,6 +124,11 @@ const AccountRoute = AccountRouteImport.update({
   path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AlertsRouteRoute = AlertsRouteRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TickerRouteRoute = TickerRouteRouteImport.update({
   id: '/$ticker',
   path: '/$ticker',
@@ -143,6 +153,11 @@ const FilingsIndexRoute = FilingsIndexRouteImport.update({
   id: '/filings/',
   path: '/filings/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AlertsIndexRoute = AlertsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AlertsRouteRoute,
 } as any)
 const TickerIndexRoute = TickerIndexRouteImport.update({
   id: '/',
@@ -173,6 +188,21 @@ const FilingsAccessionRoute = FilingsAccessionRouteImport.update({
   id: '/filings/$accession',
   path: '/filings/$accession',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AlertsNewRoute = AlertsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => AlertsRouteRoute,
+} as any)
+const AlertsEventsRoute = AlertsEventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => AlertsRouteRoute,
+} as any)
+const AlertsIdRoute = AlertsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AlertsRouteRoute,
 } as any)
 const TickerStockSplitsIndexRoute = TickerStockSplitsIndexRouteImport.update({
   id: '/stock-splits/',
@@ -289,6 +319,7 @@ const TickerEarningsCallsEventIdIndexRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$ticker': typeof TickerRouteRouteWithChildren
+  '/alerts': typeof AlertsRouteRouteWithChildren
   '/account': typeof AccountRoute
   '/calendar': typeof CalendarRoute
   '/catalog': typeof CatalogRoute
@@ -302,12 +333,16 @@ export interface FileRoutesByFullPath {
   '/news-feed': typeof NewsFeedRoute
   '/search': typeof SearchRoute
   '/status': typeof StatusRoute
+  '/alerts/$id': typeof AlertsIdRoute
+  '/alerts/events': typeof AlertsEventsRoute
+  '/alerts/new': typeof AlertsNewRoute
   '/filings/$accession': typeof FilingsAccessionRoute
   '/offerings/$offeringId': typeof OfferingsOfferingIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/sec/datasets': typeof SecDatasetsRoute
   '/$ticker/': typeof TickerIndexRoute
+  '/alerts/': typeof AlertsIndexRoute
   '/filings': typeof FilingsIndexRoute
   '/offerings': typeof OfferingsIndexRoute
   '/people': typeof PeopleIndexRoute
@@ -347,12 +382,16 @@ export interface FileRoutesByTo {
   '/news-feed': typeof NewsFeedRoute
   '/search': typeof SearchRoute
   '/status': typeof StatusRoute
+  '/alerts/$id': typeof AlertsIdRoute
+  '/alerts/events': typeof AlertsEventsRoute
+  '/alerts/new': typeof AlertsNewRoute
   '/filings/$accession': typeof FilingsAccessionRoute
   '/offerings/$offeringId': typeof OfferingsOfferingIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/sec/datasets': typeof SecDatasetsRoute
   '/$ticker': typeof TickerIndexRoute
+  '/alerts': typeof AlertsIndexRoute
   '/filings': typeof FilingsIndexRoute
   '/offerings': typeof OfferingsIndexRoute
   '/people': typeof PeopleIndexRoute
@@ -381,6 +420,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$ticker': typeof TickerRouteRouteWithChildren
+  '/alerts': typeof AlertsRouteRouteWithChildren
   '/account': typeof AccountRoute
   '/calendar': typeof CalendarRoute
   '/catalog': typeof CatalogRoute
@@ -394,12 +434,16 @@ export interface FileRoutesById {
   '/news-feed': typeof NewsFeedRoute
   '/search': typeof SearchRoute
   '/status': typeof StatusRoute
+  '/alerts/$id': typeof AlertsIdRoute
+  '/alerts/events': typeof AlertsEventsRoute
+  '/alerts/new': typeof AlertsNewRoute
   '/filings/$accession': typeof FilingsAccessionRoute
   '/offerings/$offeringId': typeof OfferingsOfferingIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/sec/datasets': typeof SecDatasetsRoute
   '/$ticker/': typeof TickerIndexRoute
+  '/alerts/': typeof AlertsIndexRoute
   '/filings/': typeof FilingsIndexRoute
   '/offerings/': typeof OfferingsIndexRoute
   '/people/': typeof PeopleIndexRoute
@@ -429,6 +473,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$ticker'
+    | '/alerts'
     | '/account'
     | '/calendar'
     | '/catalog'
@@ -442,12 +487,16 @@ export interface FileRouteTypes {
     | '/news-feed'
     | '/search'
     | '/status'
+    | '/alerts/$id'
+    | '/alerts/events'
+    | '/alerts/new'
     | '/filings/$accession'
     | '/offerings/$offeringId'
     | '/people/$personId'
     | '/sec/$cik'
     | '/sec/datasets'
     | '/$ticker/'
+    | '/alerts/'
     | '/filings'
     | '/offerings'
     | '/people'
@@ -487,12 +536,16 @@ export interface FileRouteTypes {
     | '/news-feed'
     | '/search'
     | '/status'
+    | '/alerts/$id'
+    | '/alerts/events'
+    | '/alerts/new'
     | '/filings/$accession'
     | '/offerings/$offeringId'
     | '/people/$personId'
     | '/sec/$cik'
     | '/sec/datasets'
     | '/$ticker'
+    | '/alerts'
     | '/filings'
     | '/offerings'
     | '/people'
@@ -520,6 +573,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$ticker'
+    | '/alerts'
     | '/account'
     | '/calendar'
     | '/catalog'
@@ -533,12 +587,16 @@ export interface FileRouteTypes {
     | '/news-feed'
     | '/search'
     | '/status'
+    | '/alerts/$id'
+    | '/alerts/events'
+    | '/alerts/new'
     | '/filings/$accession'
     | '/offerings/$offeringId'
     | '/people/$personId'
     | '/sec/$cik'
     | '/sec/datasets'
     | '/$ticker/'
+    | '/alerts/'
     | '/filings/'
     | '/offerings/'
     | '/people/'
@@ -567,6 +625,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TickerRouteRoute: typeof TickerRouteRouteWithChildren
+  AlertsRouteRoute: typeof AlertsRouteRouteWithChildren
   AccountRoute: typeof AccountRoute
   CalendarRoute: typeof CalendarRoute
   CatalogRoute: typeof CatalogRoute
@@ -683,6 +742,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/alerts': {
+      id: '/alerts'
+      path: '/alerts'
+      fullPath: '/alerts'
+      preLoaderRoute: typeof AlertsRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$ticker': {
       id: '/$ticker'
       path: '/$ticker'
@@ -717,6 +783,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/filings'
       preLoaderRoute: typeof FilingsIndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/alerts/': {
+      id: '/alerts/'
+      path: '/'
+      fullPath: '/alerts/'
+      preLoaderRoute: typeof AlertsIndexRouteImport
+      parentRoute: typeof AlertsRouteRoute
     }
     '/$ticker/': {
       id: '/$ticker/'
@@ -759,6 +832,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/filings/$accession'
       preLoaderRoute: typeof FilingsAccessionRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/alerts/new': {
+      id: '/alerts/new'
+      path: '/new'
+      fullPath: '/alerts/new'
+      preLoaderRoute: typeof AlertsNewRouteImport
+      parentRoute: typeof AlertsRouteRoute
+    }
+    '/alerts/events': {
+      id: '/alerts/events'
+      path: '/events'
+      fullPath: '/alerts/events'
+      preLoaderRoute: typeof AlertsEventsRouteImport
+      parentRoute: typeof AlertsRouteRoute
+    }
+    '/alerts/$id': {
+      id: '/alerts/$id'
+      path: '/$id'
+      fullPath: '/alerts/$id'
+      preLoaderRoute: typeof AlertsIdRouteImport
+      parentRoute: typeof AlertsRouteRoute
     }
     '/$ticker/stock-splits/': {
       id: '/$ticker/stock-splits/'
@@ -956,9 +1050,28 @@ const TickerRouteRouteWithChildren = TickerRouteRoute._addFileChildren(
   TickerRouteRouteChildren,
 )
 
+interface AlertsRouteRouteChildren {
+  AlertsIdRoute: typeof AlertsIdRoute
+  AlertsEventsRoute: typeof AlertsEventsRoute
+  AlertsNewRoute: typeof AlertsNewRoute
+  AlertsIndexRoute: typeof AlertsIndexRoute
+}
+
+const AlertsRouteRouteChildren: AlertsRouteRouteChildren = {
+  AlertsIdRoute: AlertsIdRoute,
+  AlertsEventsRoute: AlertsEventsRoute,
+  AlertsNewRoute: AlertsNewRoute,
+  AlertsIndexRoute: AlertsIndexRoute,
+}
+
+const AlertsRouteRouteWithChildren = AlertsRouteRoute._addFileChildren(
+  AlertsRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TickerRouteRoute: TickerRouteRouteWithChildren,
+  AlertsRouteRoute: AlertsRouteRouteWithChildren,
   AccountRoute: AccountRoute,
   CalendarRoute: CalendarRoute,
   CatalogRoute: CatalogRoute,

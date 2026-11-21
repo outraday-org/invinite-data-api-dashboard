@@ -1,13 +1,17 @@
 import { describe, expect, it } from "vitest";
 
+import { EVENT_TEST } from "@/lib/alerts/alerts-fixtures";
 import { newsroomItem } from "@/lib/news/news-fixtures";
 import { LIVE_FILING, LIVE_FILING_S1 } from "@/lib/sec/filing-detail-fixtures";
 
 import {
+    ALERTS_CHANNEL,
+    alertsSubscribeFrame,
     EARNINGS_FRAME_TYPES,
     liveWsUrl,
     NEWS_LIVE_CHANNEL,
     newsSubscribeFrame,
+    parseAlertsFrame,
     parseFilingFrame,
     parseNewsFrame,
     parseServerFrame,
@@ -363,5 +367,57 @@ describe("filings frames (mirrors the spec's WebSocketNewFilingEvent)", () => {
 
     it("the earnings parser keeps classing new_filing as `other` (one socket, two readers)", () => {
         expect(parseServerFrame(JSON.stringify({ filing: LIVE_FILING, type: "new_filing" })).kind).toBe("other");
+    });
+});
+
+describe("alerts frames (mirrors the spec's WebSocket*Alerts* schemas and IDA types/alertMessages.ts)", () => {
+    const raw = (frame: object) => JSON.stringify(frame);
+
+    it("parses every alerts server frame by its channel; the event is the REST row, payload kept whole", () => {
+        const frames = [
+            { channel: ALERTS_CHANNEL, filters: { alert_ids: [], external_user_id: null, types: [] }, type: "subscribed" },
+            { channel: ALERTS_CHANNEL, event: EVENT_TEST, type: "alert_event" },
+            { channel: ALERTS_CHANNEL, last_event_id: "evt_9", type: "replay_truncated" },
+            { channel: ALERTS_CHANNEL, type: "unsubscribed" },
+            { channel: ALERTS_CHANNEL, code: "channel_unavailable", message: "Alerts are not available yet", type: "error" },
+            { channel: ALERTS_CHANNEL, code: "a_new_code", message: "still parses", type: "error" },
+        ];
+
+        for (const frame of frames) expect(parseAlertsFrame(raw(frame)).kind, frame.type).toBe("frame");
+
+        const parsed = parseAlertsFrame(raw({ channel: ALERTS_CHANNEL, event: EVENT_TEST, type: "alert_event" }));
+
+        expect(parsed.kind === "frame" && parsed.frame.type === "alert_event" && parsed.frame.event).toEqual(EVENT_TEST);
+    });
+
+    it("an unknown type of the channel is counted (unknown), a broken known frame is malformed, other channels are other", () => {
+        expect(parseAlertsFrame(raw({ channel: ALERTS_CHANNEL, type: "alert_digest" }))).toEqual({ kind: "unknown", type: "alert_digest" });
+
+        expect(parseAlertsFrame(raw({ channel: ALERTS_CHANNEL, event: { id: 1 }, type: "alert_event" })).kind).toBe("malformed");
+
+        expect(parseAlertsFrame(raw({ channel: NEWS_LIVE_CHANNEL, item: newsroomItem(), type: "news_item" })).kind).toBe("other");
+
+        expect(parseAlertsFrame(raw({ type: "ping" })).kind).toBe("other");
+
+        expect(parseAlertsFrame("not json").kind).toBe("other");
+
+        // The other parsers leave the alerts frames alone.
+        expect(parseNewsFrame(raw({ channel: ALERTS_CHANNEL, type: "subscribed" })).kind).toBe("other");
+    });
+
+    it("the subscribe frame leaves empty filters out and caps alert_ids at 100", () => {
+        expect(alertsSubscribeFrame()).toStrictEqual({ channel: ALERTS_CHANNEL, type: "subscribe" });
+
+        expect(alertsSubscribeFrame({ after: "evt_3", alertIds: [], externalUserId: "u1", types: ["alert.fired"] })).toStrictEqual({
+            after: "evt_3",
+            channel: ALERTS_CHANNEL,
+            external_user_id: "u1",
+            type: "subscribe",
+            types: ["alert.fired"],
+        });
+
+        const many = Array.from({ length: 150 }, (_, index) => `alt_${index}`);
+
+        expect(alertsSubscribeFrame({ alertIds: many }).alert_ids).toHaveLength(100);
     });
 });

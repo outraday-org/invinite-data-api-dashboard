@@ -9,6 +9,14 @@ import type { AssetGroupCategory } from "@/lib/earnings/documents";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import type {
+    Alert,
+    AlertEvent,
+    AlertEventsResponse,
+    AlertEventType,
+    AlertsListResponse,
+    AlertStatus,
+    AlertTemplatesResponse,
+    AlertType,
     CompanyFiscalPeriod,
     FiscalPeriodType,
     SearchMode,
@@ -238,6 +246,14 @@ import {
     getV2TranscriptText,
     getV2TranscriptVersions,
 } from "./server-functions";
+import {
+    getAlert,
+    getAlertEvent,
+    listAlertEvents,
+    listAlertEventsForAlert,
+    listAlerts,
+    listAlertTemplates,
+} from "./server-functions-alerts";
 
 function useApiKey() {
     const apiKey = useApiKeyStore(s => s.apiKey);
@@ -2118,6 +2134,119 @@ export function useApiLicensing(enabled = true) {
         load: apiKey => getApiLicensing({ data: { apiKey } }),
         queryKey: ["status", "licensing"],
         staleTime: REFERENCE_STALE_MS,
+// Alerts (backend tasks/data-api-dashboard 2-alerts task 2): the alert rules, the event log, the indicator templates.
+// Status-aware (no toast: the pages render `AlertsState`); writes go through `useApiMutation` (`mutations.ts`), which
+// refetches by these key prefixes.
+
+/** The query key prefixes of the alert reads (a write invalidates them; A3 / A4 add theirs beside). */
+export const ALERT_QUERY_KEYS = {
+    /** One alert (`["v2", "alert", id]`). */
+    alert: ["v2", "alert"],
+    /** One event (`["v2", "alert-event", id]`). */
+    event: ["v2", "alert-event"],
+    /** The event feed and every alert's events. */
+    events: ["v2", "alert-events"],
+    /** The alerts list and the quota read. */
+    list: ["v2", "alerts"],
+    templates: ["v2", "alert-templates"],
+} as const;
+
+const ALERTS_STALE_MS = 30 * 1000;
+
+/** Alerts per page of `/v1/alerts` (1 credit a page). */
+export const ALERTS_PAGE = 100;
+
+/** Events per page of `/v1/alert-events` (the most the API gives, 1 credit a page). */
+export const ALERT_EVENTS_PAGE = 200;
+
+/** The filters of `GET /v1/alerts` (7.1 adds `symbol` / `destinationId`); unset = not sent. */
+export type AlertsFilters = {
+    clientReferenceId?: string;
+    destinationId?: string;
+    externalUserId?: string;
+    status?: AlertStatus;
+    symbol?: string;
+    type?: AlertType;
+};
+
+/** The account's alerts by cursor (oldest first, as the API lists them), filtered on the server. */
+export function useAlertsInfinite(filters: AlertsFilters) {
+    return useEarningsInfinite<AlertsListResponse>({
+        enabled: true,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => listAlerts({ data: { ...filters, apiKey, cursor: cursor ?? undefined, limit: ALERTS_PAGE } }),
+        queryKey: [...ALERT_QUERY_KEYS.list, "list", filters.status ?? "", filters.type ?? "", filters.externalUserId ?? "", filters.clientReferenceId ?? "", filters.symbol ?? "", filters.destinationId ?? ""],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** The account's alert quota (`meta.quota` of one `limit=1` page: 1 credit); idle until `enabled` (a quota refusal). */
+export function useAlertsQuota(enabled: boolean) {
+    return useEarningsQuery<AlertsListResponse>({
+        enabled,
+        errorMessage: null,
+        load: apiKey => listAlerts({ data: { apiKey, limit: 1 } }),
+        queryKey: [...ALERT_QUERY_KEYS.list, "quota"],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** One alert by id; idle for "". */
+export function useAlert(id: string) {
+    return useEarningsQuery<Alert>({
+        enabled: id.length > 0,
+        errorMessage: null,
+        load: apiKey => getAlert({ data: { apiKey, id } }),
+        queryKey: [...ALERT_QUERY_KEYS.alert, id],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** The filters of `GET /v1/alert-events`. */
+export type AlertEventsFilters = { alertId?: string; externalUserId?: string; type?: AlertEventType };
+
+/** The account's event log by cursor (the API lists it oldest first; the feed shows the loaded events newest first). */
+export function useAlertEventsInfinite(filters: AlertEventsFilters) {
+    return useEarningsInfinite<AlertEventsResponse>({
+        enabled: true,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => listAlertEvents({ data: { ...filters, apiKey, cursor: cursor ?? undefined, limit: ALERT_EVENTS_PAGE } }),
+        queryKey: [...ALERT_QUERY_KEYS.events, "feed", filters.alertId ?? "", filters.type ?? "", filters.externalUserId ?? ""],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** One alert's events by cursor (oldest first); idle for "". */
+export function useAlertEventsForAlertInfinite(id: string) {
+    return useEarningsInfinite<AlertEventsResponse>({
+        enabled: id.length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => listAlertEventsForAlert({ data: { apiKey, cursor: cursor ?? undefined, id, limit: ALERT_EVENTS_PAGE } }),
+        queryKey: [...ALERT_QUERY_KEYS.events, "alert", id],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** One event by id (`/alerts/events?event=`); idle for "". */
+export function useAlertEvent(id: string) {
+    return useEarningsQuery<AlertEvent>({
+        enabled: id.length > 0,
+        errorMessage: null,
+        load: apiKey => getAlertEvent({ data: { apiKey, id } }),
+        queryKey: [...ALERT_QUERY_KEYS.event, id],
+        retry: false,
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** The indicator templates (one page of up to 200: the API has four today); idle until `enabled`. */
+export function useAlertTemplates(enabled: boolean) {
+    return useEarningsQuery<AlertTemplatesResponse>({
+        enabled,
+        errorMessage: null,
+        load: apiKey => listAlertTemplates({ data: { apiKey, limit: 200 } }),
+        queryKey: [...ALERT_QUERY_KEYS.templates],
+        staleTime: 10 * 60 * 1000,
     });
 }
 

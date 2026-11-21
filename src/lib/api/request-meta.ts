@@ -8,8 +8,8 @@ import { OPERATION_IDS_BY_ROUTE, OPERATIONS, PLAN_ORDER } from "./operations.gen
 /**
  * One Data API request behind a view, as the SERVER sent it (`client.server.ts` records it, the global function
  * middleware of `start.ts` carries it to the browser, the query cache keeps it beside the answer). Never a header:
- * the key cannot reach it. Only GET is produced today; `body` and the write methods are for the alerts tasklist, which
- * shows writes after they ran, redacted.
+ * the key cannot reach it. A write (alerts task 2) carries its JSON `body`, redacted on the server
+ * (`redactSecrets`) before it is recorded.
  */
 export type RequestMeta = {
     body?: JsonValue;
@@ -38,8 +38,36 @@ export function operationOf(operationId: string): null | Operation {
     return Object.hasOwn(OPERATIONS, operationId) ? OPERATIONS[operationId as keyof typeof OPERATIONS] : null;
 }
 
-/** The descriptor of a sent request (server side; pure). */
+/** What a redacted value reads as. */
+export const REDACTED = "[redacted]";
+
+// Keys whose value is a secret wherever they appear (a destination's signing secret, an auth header, a token).
+const SECRET_KEY = /secret|authorization|password|passphrase|token|api[_-]?key|signing[_-]?key|private[_-]?key/i;
+
+/**
+ * A request body or answer with every secret replaced by `REDACTED` (pure; the inspector's rule): a value under a key
+ * that names a secret (`secret`, `authorization`, `password`, `token`, `api_key`, `signing_key`, …) and every value of
+ * a `headers` object (a destination's custom header values) — at any depth. Nothing else changes.
+ */
+export function redactSecrets(value: JsonValue): JsonValue {
+    if (Array.isArray(value)) return value.map(redactSecrets);
+
+    if (value === null || typeof value !== "object") return value;
+
+    return Object.fromEntries(Object.entries(value).map(([key, item]): [string, JsonValue] => {
+        if (SECRET_KEY.test(key)) return [key, REDACTED];
+
+        if (key.toLowerCase() === "headers" && item !== null && typeof item === "object" && !Array.isArray(item)) {
+            return [key, Object.fromEntries(Object.keys(item).map(name => [name, REDACTED]))];
+        }
+
+        return [key, redactSecrets(item)];
+    }));
+}
+
+/** The descriptor of a sent request (server side; pure). A write's JSON `body` is recorded redacted. */
 export function requestMetaOf(input: {
+    body?: JsonValue;
     headers?: Headers;
     method: string;
     schemaPath: string;
@@ -66,6 +94,7 @@ export function requestMetaOf(input: {
     const charged = input.headers?.get("x-credits-charged");
 
     return {
+        ...(input.body === undefined ? {} : { body: redactSecrets(input.body) }),
         credits: charged != null && charged !== "" && Number.isFinite(Number(charged)) ? Number(charged) : null,
         method,
         operationId: OPERATION_IDS_BY_ROUTE[`${method} ${input.schemaPath}`] ?? "unknown",

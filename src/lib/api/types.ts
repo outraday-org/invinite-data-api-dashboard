@@ -396,3 +396,37 @@ export type V2OfferingRelatedPerson = V2OfferingDetail["related_persons"][number
 /** A 13F manager's position changes vs the prior quarter (the `HolderChange` row). */
 export type V2FilerHoldingChangesResponse = ApiResponse<"/v1/filers/{cik}/holding-changes", "get">;
 export type V2FundAdviser = V2Fund["advisers"][number];
+
+// Alerts (backend tasks/data-api-dashboard 2-alerts task 2; Data API 7.1): the alert rules, their event log and the
+// indicator templates. `condition` / `metadata` / an event's `payload` are free JSON in the spec (`additionalProperties`):
+// narrowed to `JsonValue` (`SecJson`) so a server function may return them.
+type CreateAlertBody = NonNullable<paths["/v1/alerts"]["post"]["requestBody"]>["content"]["application/json"];
+type BatchAlertsBody = NonNullable<paths["/v1/alerts:batch"]["post"]["requestBody"]>["content"]["application/json"];
+
+export type AlertsListResponse = SecJson<ApiResponse<"/v1/alerts", "get">>;
+export type Alert = AlertsListResponse["data"][number];
+export type AlertType = Alert["type"];
+export type AlertStatus = Alert["status"];
+export type AlertQuotaUsage = NonNullable<AlertsListResponse["meta"]["quota"]>;
+export type AlertsListQuery = ApiQuery<"/v1/alerts">;
+export type AlertConditionInput = SecJson<CreateAlertBody["condition"]>;
+/** A field of `AlertConditionInput` (the union of every type's fields). */
+export type AlertConditionField = keyof CreateAlertBody["condition"];
+export type AlertTriggerInput = NonNullable<CreateAlertBody["trigger"]>;
+export type AlertTriggerField = keyof AlertTriggerInput;
+export type AlertActiveWindow = NonNullable<AlertTriggerInput["active_window"]>;
+export type CreateAlertRequest = SecJson<CreateAlertBody>;
+export type UpdateAlertRequest = SecJson<NonNullable<paths["/v1/alerts/{id}"]["patch"]["requestBody"]>["content"]["application/json"]>;
+export type AlertBatchItem = SecJson<BatchAlertsBody["items"][number]>;
+export type AlertBatchOp = AlertBatchItem["op"];
+export type AlertBatchResponse = SecJson<ApiResponse<"/v1/alerts:batch", "post">>;
+export type AlertBatchResult = AlertBatchResponse["results"][number];
+export type AlertTestAccepted = paths["/v1/alerts/{id}:test"]["post"]["responses"][202]["content"]["application/json"];
+export type AlertEventsResponse = SecJson<ApiResponse<"/v1/alert-events", "get">>;
+export type AlertEvent = AlertEventsResponse["data"][number];
+export type AlertEventType = AlertEvent["type"];
+export type AlertTemplatesResponse = SecJson<ApiResponse<"/v1/alert-templates", "get">>;
+export type AlertTemplate = AlertTemplatesResponse["data"][number];
+export type AlertTemplateInput = AlertTemplate["inputs"][number];
+/** What a write answered with no body (204): an object, so the inspector can file its request under it. */
+export type AlertWriteDone = { done: "deleted" | "validated"; id: null | string };
