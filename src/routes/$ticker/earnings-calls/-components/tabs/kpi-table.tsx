@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useV2KpisInfinite } from "@/lib/api/queries";
-import { formatDecimal, metricLabel } from "@/lib/earnings/labels";
+import { formatDecimal, metricLabel, ORIGIN_LABELS } from "@/lib/earnings/labels";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -17,8 +17,6 @@ import { SeekButton } from "../seek-button";
 import { EXTRACTIONS_PAGE_LIMIT } from "./guidance-table";
 
 type FilingLink = NonNullable<V2KpiMention["filing_link"]>;
-
-const ORIGIN_LABELS = { press_release: "Press release", transcript: "Transcript" } as const;
 
 /** "FY2026 Q3 · ends 2026-09-27" of an XBRL fact. */
 function factPeriodText(period: FilingLink["fact_period"]) {

@@ -15,9 +15,9 @@ import {
     formatGuidanceRange,
     formatGuidanceValue,
     metricLabel,
+    ORIGIN_LABELS,
     percent,
-    PERIOD_KIND_LABELS,
-    REVIEW_STATUS_LABELS,
+    PERIOD_KIND_LABELS, REVIEW_STATUS_LABELS,
 } from "@/lib/earnings/labels";
 import { cn } from "@/lib/utils";
 
@@ -30,8 +30,6 @@ export const EXTRACTIONS_PAGE_LIMIT = 50;
 
 /** The dashboard asks every review state (`review=any`); "needs review" is a filter over the loaded rows. */
 type ReviewFilter = "all" | "needs_review";
-
-const ORIGIN_LABELS = { press_release: "Press release", transcript: "Transcript" } as const;
 
 /** `confidence` (0–1, calibrated on spot checks, not a probability) as a small bar. */
 export function ConfidenceBar({ value }: { value: number }) {

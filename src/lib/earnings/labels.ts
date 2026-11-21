@@ -1,4 +1,4 @@
-import type { HitMatch, MatchSpan, SearchMode, V2Event, V2GuidanceItem, V2TranscriptVersion } from "@/lib/api/types";
+import type { HitMatch, MatchSpan, SearchMode, V2Event, V2GuidanceItem, V2KpiMention, V2TranscriptVersion } from "@/lib/api/types";
 
 import { formatNumberEnCompact } from "@/lib/utils";
 
@@ -43,6 +43,9 @@ export function metricLabel(normalized: null | string) {
 }
 
 /** Direction chip: label + colour classes (the Badge variants have no green / amber). */
+/** Where a guidance item or a KPI mention was said: the press release or the call's transcript (one wording everywhere). */
+export const ORIGIN_LABELS: Record<V2KpiMention["origin"], string> = { press_release: "Press release", transcript: "Transcript" };
+
 export const DIRECTION_STYLES: Record<Direction, { className: string; label: string }> = {
     lowered: { className: "bg-red-500/15 text-red-700 dark:text-red-400", label: "Lowered" },
     maintained: { className: "bg-muted text-muted-foreground", label: "Maintained" },

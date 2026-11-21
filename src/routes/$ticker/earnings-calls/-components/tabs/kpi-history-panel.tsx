@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useV2KpiHistoryInfinite } from "@/lib/api/queries";
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
 import { kpiHistoryCallCount, kpiHistorySeries } from "@/lib/earnings/kpi-history";
-import { formatGuidanceValue, metricLabel } from "@/lib/earnings/labels";
+import { formatGuidanceValue, metricLabel, ORIGIN_LABELS } from "@/lib/earnings/labels";
 import { formatDay } from "@/lib/format";
 
 import { EventLink } from "../event-link";
@@ -19,8 +19,6 @@ import { MediaState, Notice } from "../media-state";
 
 /** Newest call first (the API's default) or oldest first: sent as `sort`. */
 export type KpiHistorySort = "-conference_date" | "conference_date";
-
-const ORIGIN_LABELS: Record<V2KpiMention["origin"], string> = { press_release: "Press release", transcript: "Call" };
 
 const AXIS_PAD_MS = 14 * 24 * 60 * 60 * 1000;
 
