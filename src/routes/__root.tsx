@@ -1,14 +1,15 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createRootRoute, HeadContent, Link, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { PanelLeftIcon } from "lucide-react";
 import * as React from "react";
 
 import { ApiKeyDialogButton } from "@/components/api-key/api-key-dialog";
 import { KeyGate } from "@/components/api-key/key-gate";
+import { AppSidebar } from "@/components/navigation/app-sidebar";
 import { TickerSearch } from "@/components/search/ticker-search";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { isUnauthorized } from "@/lib/api/errors";
 import { ME_QUERY_KEY } from "@/lib/api/queries";
@@ -68,38 +69,38 @@ export const Route = createRootRoute({
     shellComponent: RootDocument,
 });
 
+/**
+ * Every page: the pinned top bar (sidebar toggle, search, theme, key / account), the one sidebar (Market · Browse ·
+ * Context, `src/components/navigation/app-sidebar.tsx`) and the content column behind the key gate.
+ */
 function RootLayout() {
-    const pathname = useRouterState({
-        select: state => state.location.pathname,
-    });
-
-    // The tickerless pages (`/sec/$cik`, `/funds`) have no instrument sidebar.
-    const showSidebarTrigger = pathname !== "/" && !pathname.startsWith("/sec/") && pathname !== "/funds";
-
     return (
         <>
             <div className="sticky shrink-0 top-0 z-40 h-14 bg-background/80 supports-backdrop-filter:backdrop-blur-md">
                 <div className="grid h-full w-full grid-cols-[1fr_auto_1fr] items-center gap-3 pl-2 pr-4">
                     <div className="justify-self-start shrink-0">
-                        {showSidebarTrigger && (
-                            <SidebarTrigger
-                                aria-label="Toggle sidebar"
-                                className="shrink-0 flex items-center gap-2 rounded-md size-8 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            >
-                                <PanelLeftIcon className="size-4" />
-                            </SidebarTrigger>
-                        )}
+                        <SidebarTrigger
+                            aria-label="Toggle sidebar"
+                            className="shrink-0 flex items-center gap-2 rounded-md size-8 text-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                            <PanelLeftIcon className="size-4" />
+                        </SidebarTrigger>
                     </div>
                     <TickerSearch />
                     <div className="justify-self-end flex items-center gap-3">
-                        <Link className="text-muted-foreground hover:text-foreground text-sm" to="/funds">Funds</Link>
                         <ApiKeyDialogButton />
                     </div>
                 </div>
             </div>
-            <KeyGate>
-                <Outlet />
-            </KeyGate>
+            <AppSidebar />
+            {/* The sidebar is `fixed` and its wrapper a column: the content steps aside by the sidebar's width while it is open. */}
+            <div className="relative flex min-w-0 grow flex-col md:peer-data-[state=expanded]:pl-(--sidebar-width)">
+                <SidebarInset>
+                    <KeyGate>
+                        <Outlet />
+                    </KeyGate>
+                </SidebarInset>
+            </div>
         </>
     );
 }

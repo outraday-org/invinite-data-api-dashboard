@@ -7,8 +7,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { V2Instrument } from "@/lib/api/types";
 
 import { ApiRequestError } from "@/lib/api/errors";
-import { useFund, useInstrument, useV2Company } from "@/lib/api/queries";
-import { AAPL_INSTRUMENT, GLD_INSTRUMENT, PDI_INSTRUMENT, SPY_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
+import { useInstrument } from "@/lib/api/queries";
+import { AAPL_INSTRUMENT, GLD_INSTRUMENT, SPY_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { Route } from "@/routes/$ticker/route";
 
 const route = vi.hoisted(() => ({ pathname: "/AAPL", ticker: "AAPL" }));
@@ -22,27 +22,7 @@ vi.mock("@tanstack/react-router", () => ({
     useRouterState: ({ select }: { select: (state: { location: { pathname: string } }) => string }) => select({ location: { pathname: route.pathname } }),
 }));
 
-// The sidebar primitives need a provider and `matchMedia`; plain containers are enough here.
-vi.mock("@/components/ui/sidebar", () => {
-    const Box = ({ children }: { children?: React.ReactNode }) => <div>{children}</div>;
-
-    return {
-        Sidebar: Box,
-        SidebarContent: Box,
-        SidebarGroup: Box,
-        SidebarGroupContent: Box,
-        SidebarGroupLabel: Box,
-        SidebarInset: Box,
-        SidebarMenu: Box,
-        SidebarMenuItem: Box,
-    };
-});
-
-vi.mock("@/lib/api/queries", () => ({
-    useFund: vi.fn(() => ({ data: null })),
-    useInstrument: vi.fn(),
-    useV2Company: vi.fn(() => ({ data: null })),
-}));
+vi.mock("@/lib/api/queries", () => ({ useInstrument: vi.fn() }));
 
 afterEach(cleanup);
 
@@ -60,63 +40,17 @@ const show = (instrument: V2Instrument, pathname = `/${instrument.symbol}`) => {
     render(<TickerLayout />);
 };
 
-const navLabels = () => screen.getAllByRole("link").map(link => link.textContent);
-
-const MARKET = ["Earnings Calendar", "IPOs", "Market Holidays"];
-
 beforeEach(() => {
     vi.clearAllMocks();
 });
 
-describe("$ticker layout: navigation from `datasets`", () => {
-    it("a stock: company sections, Holders, no fund Holdings", () => {
-        show(AAPL_INSTRUMENT);
-
-        const labels = navLabels();
-
-        expect(labels).toEqual(expect.arrayContaining(["Overview", "Filings", "Earnings Calls", "Standardized Financials", "Insider Trades", "Holders", ...MARKET]));
-
-        expect(labels).not.toContain("Holdings");
-
-        expect(screen.getByText("Company")).toBeInTheDocument();
-
-        expect(screen.getByTestId("instrument-badge")).toHaveTextContent("Stock");
-
-        expect(useV2Company).toHaveBeenLastCalledWith("AAPL");
-
-        expect(useFund).toHaveBeenLastCalledWith("");
-    });
-
-    it("an ETF: Holdings and Holders, no financials, earnings or insider items", () => {
-        show(SPY_INSTRUMENT);
-
-        expect(navLabels()).toEqual(["Overview", "Filings", "Holdings", "Dividends", "Splits", "Holders", ...MARKET]);
-
-        expect(screen.getByText("Fund")).toBeInTheDocument();
-
-        expect(useFund).toHaveBeenLastCalledWith("SPY");
-    });
-
-    it("a closed-end fund keeps its earnings calls; an exchange-traded trust has no Holdings; an ETN has Holders from its datasets", () => {
-        show(PDI_INSTRUMENT);
-
-        expect(navLabels()).toContain("Earnings Calls");
-
-        cleanup();
-
+describe("$ticker layout (the sidebar's sections: app-sidebar.test.tsx)", () => {
+    it("the header names the instrument with its type badges; no brand-colour dots", () => {
         show(GLD_INSTRUMENT);
-
-        expect(navLabels()).not.toContain("Holdings");
 
         expect(screen.getAllByTestId("instrument-badge").map(badge => badge.textContent)).toEqual(["ETF", "Trust"]);
 
-        cleanup();
-
-        show(VXX_INSTRUMENT);
-
-        expect(navLabels()).toEqual(["Overview", "Dividends", "Splits", "Holders", ...MARKET]);
-
-        expect(screen.getByText("Note")).toBeInTheDocument();
+        expect(screen.getByTestId("outlet")).toBeInTheDocument();
     });
 
     it("a typed URL to a section the instrument lacks renders its reason, not the page", () => {
@@ -128,7 +62,7 @@ describe("$ticker layout: navigation from `datasets`", () => {
 
         cleanup();
 
-        show(SPY_INSTRUMENT, "/SPY/financials-standardized");
+        show(SPY_INSTRUMENT, "/SPY/financials");
 
         expect(screen.getByText("SPY is an ETF: financial statements are not served for it.")).toBeInTheDocument();
     });
@@ -149,13 +83,6 @@ describe("$ticker layout: navigation from `datasets`", () => {
         expect(screen.queryByText(/files no holdings report/)).toBeNull();
 
         unmount();
-
-        // A market page needs no instrument: it renders at once.
-        route.pathname = "/GLD/market-holidays";
-
-        render(<TickerLayout />);
-
-        expect(screen.getByTestId("outlet")).toBeInTheDocument();
     });
 
     it("the header shows the instrument's canonical symbol, not the URL's spelling", () => {
@@ -170,7 +97,7 @@ describe("$ticker layout: navigation from `datasets`", () => {
         expect(screen.getByRole("heading", { level: 1, name: "AAPL" })).toBeInTheDocument();
     });
 
-    it("an unknown symbol is one notice; the market pages still render under it", () => {
+    it("an unknown symbol is one notice", () => {
         route.ticker = "ZZZZ";
 
         route.pathname = "/ZZZZ";
@@ -181,20 +108,10 @@ describe("$ticker layout: navigation from `datasets`", () => {
             isLoading: false,
         } as never);
 
-        const { unmount } = render(<TickerLayout />);
+        render(<TickerLayout />);
 
         expect(screen.getByText("ZZZZ is not a known instrument")).toBeInTheDocument();
 
         expect(screen.queryByTestId("outlet")).toBeNull();
-
-        expect(navLabels()).toEqual(MARKET);
-
-        unmount();
-
-        route.pathname = "/ZZZZ/market-holidays";
-
-        render(<TickerLayout />);
-
-        expect(screen.getByTestId("outlet")).toBeInTheDocument();
     });
 });

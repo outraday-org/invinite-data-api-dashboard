@@ -31,12 +31,12 @@ describe("sections from datasets", () => {
         expect(sectionOf("/")).toBeUndefined();
     });
 
-    it("a stock has no fund holdings; a registered fund has no financials; a trust has no holdings; an ETN has holders, no filings; market pages always", () => {
+    it("a stock has no fund holdings; a registered fund has no financials; a trust has no holdings; an ETN has holders, no filings", () => {
         expect(servesSection(AAPL_INSTRUMENT.datasets, "holdings")).toBe(false);
 
-        expect(servesSection(AAPL_INSTRUMENT.datasets, "financials-standardized")).toBe(true);
+        expect(servesSection(AAPL_INSTRUMENT.datasets, "financials")).toBe(true);
 
-        expect(servesSection(SPY_INSTRUMENT.datasets, "financials-standardized")).toBe(false);
+        expect(servesSection(SPY_INSTRUMENT.datasets, "financials")).toBe(false);
 
         expect(servesSection(SPY_INSTRUMENT.datasets, "insider-trades")).toBe(false);
 
@@ -50,7 +50,8 @@ describe("sections from datasets", () => {
 
         expect(servesSection(VXX_INSTRUMENT.datasets, "filings")).toBe(false);
 
-        expect(servesSection(VXX_INSTRUMENT.datasets, "ipos")).toBe(true);
+        // The market pages are top-level routes now: no `$ticker` section.
+        expect(servesSection(VXX_INSTRUMENT.datasets, "ipos")).toBe(false);
 
         expect(servesSection(AAPL_INSTRUMENT.datasets, "no-such-page")).toBe(false);
     });

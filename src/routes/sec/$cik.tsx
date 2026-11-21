@@ -18,12 +18,14 @@ import { useFilerHoldingsInfinite, useV2Filer, useV2FilingsInfinite, useV2Offeri
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import { formatDay } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
+import { FILER_ANCHORS, FILER_FILINGS_PAGE, isManagerFiler } from "@/lib/navigation";
 import { latest13fPeriodEnd } from "@/lib/sec/source";
 
 /**
  * One SEC filer by CIK — outside `$ticker` on purpose: a pre-IPO issuer, a SPAC or a 13F manager without an exchange
- * listing has no ticker, and none is invented (no asset row, no fake `$ticker`). Reached from the landing page's filer
- * lookup (`/v1/filers?q=`) and the company overview's CIK. Identity + lifecycle = one `GET /v1/filers/{cik}` with every
+ * listing has no ticker, and none is invented (no asset row, no fake `$ticker`). Reached from the search, `/institutions`,
+ * the holders / holdings / portfolio cells and the company overview's CIK; the sidebar's context lists its blocks
+ * (`FILER_ANCHORS`). Identity + lifecycle = one `GET /v1/filers/{cik}` with every
  * expansion (`fund` = a fund registrant's series, its own block when the filer has any; `private_offerings` = the
  * summary of its Form D private offerings, whose rows then come from `GET /v1/offerings?company=<cik>`); the filings = `GET /v1/filings?symbol=<cik>` (a CIK with a listed stock or a fund that is its own registrant; an unlisted filer answers 404, as 6.x's `company=<cik>`); a 13F manager's portfolio = `GET /v1/filers/{cik}/holdings`
  * for one quarter, asked on a click.
@@ -33,13 +35,9 @@ export const Route = createFileRoute("/sec/$cik")({
     head: ({ params }) => titleHead(`SEC filer ${params.cik}`),
 });
 
-const FILINGS_PAGE = 40;
-
 const PORTFOLIO_PAGE = 25;
 
 const OFFERINGS_PAGE = 25;
-
-const MANAGER_FORMS = new Set(["13F-HR", "13F-HR/A", "13F-NT", "13F-NT/A"]);
 
 function SecFilerPage() {
     const { cik: rawCik } = Route.useParams();
@@ -55,7 +53,7 @@ function SecFilerPage() {
 
     const filer = useV2Filer(cik, V2_FILER_EXPANDS);
 
-    const filings = useV2FilingsInfinite({ form: form ? [form] : undefined, limit: FILINGS_PAGE, symbol: cik });
+    const filings = useV2FilingsInfinite({ form: form ? [form] : undefined, limit: FILER_FILINGS_PAGE, symbol: cik });
 
     // Idle (no CIK) until a quarter is picked.
     const portfolio = useFilerHoldingsInfinite({ cik: period ? cik : "", limit: PORTFOLIO_PAGE, periodEnd: period ?? undefined });
@@ -73,26 +71,25 @@ function SecFilerPage() {
 
     const facet = filings.data?.pages[0]?.meta.form_facet ?? [];
 
-    const isManager = filer.data?.phase === "manager" || facet.some(entry => MANAGER_FORMS.has(entry.form));
+    const isManager = isManagerFiler(filer.data?.phase, facet.map(entry => entry.form));
 
     return (
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 lg:px-8">
-            <SecFilerHeader cik={cik} data={filer.data} error={filer.error} isLoading={filer.isLoading} />
-
-            <section className="flex flex-col gap-2">
+            <section className="flex scroll-mt-20 flex-col gap-4" id={FILER_ANCHORS.profile}>
+                <SecFilerHeader cik={cik} data={filer.data} error={filer.error} isLoading={filer.isLoading} />
                 <h3 className="text-sm font-semibold">Lifecycle</h3>
                 <SecLifecycleView data={filer.data} error={filer.error} isLoading={filer.isLoading} />
             </section>
 
             {filer.data?.fund && (
-                <section className="flex flex-col gap-2">
-                    <h3 className="text-sm font-semibold">Fund</h3>
+                <section className="flex scroll-mt-20 flex-col gap-2" id={FILER_ANCHORS.fund}>
+                    <h3 className="text-sm font-semibold">Fund series</h3>
                     <SecFundView data={filer.data} />
                 </section>
             )}
 
             {privateOfferings && (
-                <section className="flex flex-col gap-2">
+                <section className="flex scroll-mt-20 flex-col gap-2" id={FILER_ANCHORS.offerings}>
                     <h3 className="text-sm font-semibold">Private offerings (Form D)</h3>
                     <SecPrivateOfferingsView
                         error={offerings.error}
@@ -107,7 +104,7 @@ function SecFilerPage() {
             )}
 
             {isManager && (
-                <section className="flex flex-col gap-2">
+                <section className="flex scroll-mt-20 flex-col gap-2" id={FILER_ANCHORS.portfolio}>
                     <div className="flex items-center gap-2">
                         <h3 className="text-sm font-semibold">13F portfolio</h3>
                         {!period && (
@@ -128,7 +125,7 @@ function SecFilerPage() {
                 </section>
             )}
 
-            <section className="flex flex-col gap-2">
+            <section className="flex scroll-mt-20 flex-col gap-2" id={FILER_ANCHORS.filings}>
                 <h3 className="text-sm font-semibold">Filings</h3>
                 <SecFilingsView
                     error={filings.error}

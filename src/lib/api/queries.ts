@@ -610,6 +610,8 @@ export type V2EventsInput = {
     /** `false` keeps the list idle. */
     enabled?: boolean;
     expand?: Array<"calendar">;
+    fiscalQuarter?: number;
+    fiscalYear?: number;
     limit: number;
     scheduledAtGte?: string;
     scheduledAtLte?: string;
@@ -644,6 +646,8 @@ export function useV2EventsInfinite(input: V2EventsInput) {
             key(query.expand),
             query.sort ?? "",
             query.limit,
+            query.fiscalYear ?? "",
+            query.fiscalQuarter ?? "",
         ],
         quietStatuses: [404],
         staleTime: EARNINGS_LIST_STALE_MS,
@@ -1196,7 +1200,17 @@ export function useV2InsiderTradesInfinite(input: V2InsiderTradesInput) {
     });
 }
 
-export type V2IposInput = { company?: string; limit?: number; sort?: V2IposSort; stage?: Array<V2IpoStage> };
+export type V2IposInput = {
+    company?: string;
+    isSpac?: boolean;
+    limit?: number;
+    /** `YYYY-MM-DD`: `listing_date.gte`. */
+    listingDateGte?: string;
+    /** `YYYY-MM-DD`: `listing_date.lte`. */
+    listingDateLte?: string;
+    sort?: V2IposSort;
+    stage?: Array<V2IpoStage>;
+};
 
 /** Offerings by cursor (one row per offering: registration track + listing-calendar row). */
 export function useV2IposInfinite(input: V2IposInput) {
@@ -1204,7 +1218,17 @@ export function useV2IposInfinite(input: V2IposInput) {
         enabled: true,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2Ipos({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "ipos", input.company ?? "", key(input.stage), input.sort ?? "", input.limit ?? ""],
+        queryKey: [
+            "v2",
+            "ipos",
+            input.company ?? "",
+            key(input.stage),
+            input.sort ?? "",
+            input.limit ?? "",
+            String(input.isSpac ?? ""),
+            input.listingDateGte ?? "",
+            input.listingDateLte ?? "",
+        ],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });

@@ -10,8 +10,12 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StatusRouteImport } from './routes/status'
+import { Route as MarketHolidaysRouteImport } from './routes/market-holidays'
+import { Route as LiveCallsRouteImport } from './routes/live-calls'
 import { Route as LicensingRouteImport } from './routes/licensing'
+import { Route as IpoCalendarRouteImport } from './routes/ipo-calendar'
 import { Route as FundsRouteImport } from './routes/funds'
+import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as TickerRouteRouteImport } from './routes/$ticker/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -25,6 +29,7 @@ import { Route as TickerIposIndexRouteImport } from './routes/$ticker/ipos/index
 import { Route as TickerInsiderTradesIndexRouteImport } from './routes/$ticker/insider-trades/index'
 import { Route as TickerHoldingsIndexRouteImport } from './routes/$ticker/holdings/index'
 import { Route as TickerHoldersIndexRouteImport } from './routes/$ticker/holders/index'
+import { Route as TickerFinancialsIndexRouteImport } from './routes/$ticker/financials/index'
 import { Route as TickerFinancialsStandardizedIndexRouteImport } from './routes/$ticker/financials-standardized/index'
 import { Route as TickerFinancialsRatiosIndexRouteImport } from './routes/$ticker/financials-ratios/index'
 import { Route as TickerFinancialsGrowthIndexRouteImport } from './routes/$ticker/financials-growth/index'
@@ -42,14 +47,34 @@ const StatusRoute = StatusRouteImport.update({
   path: '/status',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MarketHolidaysRoute = MarketHolidaysRouteImport.update({
+  id: '/market-holidays',
+  path: '/market-holidays',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LiveCallsRoute = LiveCallsRouteImport.update({
+  id: '/live-calls',
+  path: '/live-calls',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LicensingRoute = LicensingRouteImport.update({
   id: '/licensing',
   path: '/licensing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const IpoCalendarRoute = IpoCalendarRouteImport.update({
+  id: '/ipo-calendar',
+  path: '/ipo-calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FundsRoute = FundsRouteImport.update({
   id: '/funds',
   path: '/funds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalendarRoute = CalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountRoute = AccountRouteImport.update({
@@ -120,6 +145,11 @@ const TickerHoldersIndexRoute = TickerHoldersIndexRouteImport.update({
   path: '/holders/',
   getParentRoute: () => TickerRouteRoute,
 } as any)
+const TickerFinancialsIndexRoute = TickerFinancialsIndexRouteImport.update({
+  id: '/financials/',
+  path: '/financials/',
+  getParentRoute: () => TickerRouteRoute,
+} as any)
 const TickerFinancialsStandardizedIndexRoute =
   TickerFinancialsStandardizedIndexRouteImport.update({
     id: '/financials-standardized/',
@@ -188,8 +218,12 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$ticker': typeof TickerRouteRouteWithChildren
   '/account': typeof AccountRoute
+  '/calendar': typeof CalendarRoute
   '/funds': typeof FundsRoute
+  '/ipo-calendar': typeof IpoCalendarRoute
   '/licensing': typeof LicensingRoute
+  '/live-calls': typeof LiveCallsRoute
+  '/market-holidays': typeof MarketHolidaysRoute
   '/status': typeof StatusRoute
   '/sec/$cik': typeof SecCikRoute
   '/$ticker/': typeof TickerIndexRoute
@@ -203,6 +237,7 @@ export interface FileRoutesByFullPath {
   '/$ticker/financials-growth': typeof TickerFinancialsGrowthIndexRoute
   '/$ticker/financials-ratios': typeof TickerFinancialsRatiosIndexRoute
   '/$ticker/financials-standardized': typeof TickerFinancialsStandardizedIndexRoute
+  '/$ticker/financials': typeof TickerFinancialsIndexRoute
   '/$ticker/holders': typeof TickerHoldersIndexRoute
   '/$ticker/holdings': typeof TickerHoldingsIndexRoute
   '/$ticker/insider-trades': typeof TickerInsiderTradesIndexRoute
@@ -216,8 +251,12 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
+  '/calendar': typeof CalendarRoute
   '/funds': typeof FundsRoute
+  '/ipo-calendar': typeof IpoCalendarRoute
   '/licensing': typeof LicensingRoute
+  '/live-calls': typeof LiveCallsRoute
+  '/market-holidays': typeof MarketHolidaysRoute
   '/status': typeof StatusRoute
   '/sec/$cik': typeof SecCikRoute
   '/$ticker': typeof TickerIndexRoute
@@ -231,6 +270,7 @@ export interface FileRoutesByTo {
   '/$ticker/financials-growth': typeof TickerFinancialsGrowthIndexRoute
   '/$ticker/financials-ratios': typeof TickerFinancialsRatiosIndexRoute
   '/$ticker/financials-standardized': typeof TickerFinancialsStandardizedIndexRoute
+  '/$ticker/financials': typeof TickerFinancialsIndexRoute
   '/$ticker/holders': typeof TickerHoldersIndexRoute
   '/$ticker/holdings': typeof TickerHoldingsIndexRoute
   '/$ticker/insider-trades': typeof TickerInsiderTradesIndexRoute
@@ -246,8 +286,12 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/$ticker': typeof TickerRouteRouteWithChildren
   '/account': typeof AccountRoute
+  '/calendar': typeof CalendarRoute
   '/funds': typeof FundsRoute
+  '/ipo-calendar': typeof IpoCalendarRoute
   '/licensing': typeof LicensingRoute
+  '/live-calls': typeof LiveCallsRoute
+  '/market-holidays': typeof MarketHolidaysRoute
   '/status': typeof StatusRoute
   '/sec/$cik': typeof SecCikRoute
   '/$ticker/': typeof TickerIndexRoute
@@ -261,6 +305,7 @@ export interface FileRoutesById {
   '/$ticker/financials-growth/': typeof TickerFinancialsGrowthIndexRoute
   '/$ticker/financials-ratios/': typeof TickerFinancialsRatiosIndexRoute
   '/$ticker/financials-standardized/': typeof TickerFinancialsStandardizedIndexRoute
+  '/$ticker/financials/': typeof TickerFinancialsIndexRoute
   '/$ticker/holders/': typeof TickerHoldersIndexRoute
   '/$ticker/holdings/': typeof TickerHoldingsIndexRoute
   '/$ticker/insider-trades/': typeof TickerInsiderTradesIndexRoute
@@ -277,8 +322,12 @@ export interface FileRouteTypes {
     | '/'
     | '/$ticker'
     | '/account'
+    | '/calendar'
     | '/funds'
+    | '/ipo-calendar'
     | '/licensing'
+    | '/live-calls'
+    | '/market-holidays'
     | '/status'
     | '/sec/$cik'
     | '/$ticker/'
@@ -292,6 +341,7 @@ export interface FileRouteTypes {
     | '/$ticker/financials-growth'
     | '/$ticker/financials-ratios'
     | '/$ticker/financials-standardized'
+    | '/$ticker/financials'
     | '/$ticker/holders'
     | '/$ticker/holdings'
     | '/$ticker/insider-trades'
@@ -305,8 +355,12 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/account'
+    | '/calendar'
     | '/funds'
+    | '/ipo-calendar'
     | '/licensing'
+    | '/live-calls'
+    | '/market-holidays'
     | '/status'
     | '/sec/$cik'
     | '/$ticker'
@@ -320,6 +374,7 @@ export interface FileRouteTypes {
     | '/$ticker/financials-growth'
     | '/$ticker/financials-ratios'
     | '/$ticker/financials-standardized'
+    | '/$ticker/financials'
     | '/$ticker/holders'
     | '/$ticker/holdings'
     | '/$ticker/insider-trades'
@@ -334,8 +389,12 @@ export interface FileRouteTypes {
     | '/'
     | '/$ticker'
     | '/account'
+    | '/calendar'
     | '/funds'
+    | '/ipo-calendar'
     | '/licensing'
+    | '/live-calls'
+    | '/market-holidays'
     | '/status'
     | '/sec/$cik'
     | '/$ticker/'
@@ -349,6 +408,7 @@ export interface FileRouteTypes {
     | '/$ticker/financials-growth/'
     | '/$ticker/financials-ratios/'
     | '/$ticker/financials-standardized/'
+    | '/$ticker/financials/'
     | '/$ticker/holders/'
     | '/$ticker/holdings/'
     | '/$ticker/insider-trades/'
@@ -364,8 +424,12 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TickerRouteRoute: typeof TickerRouteRouteWithChildren
   AccountRoute: typeof AccountRoute
+  CalendarRoute: typeof CalendarRoute
   FundsRoute: typeof FundsRoute
+  IpoCalendarRoute: typeof IpoCalendarRoute
   LicensingRoute: typeof LicensingRoute
+  LiveCallsRoute: typeof LiveCallsRoute
+  MarketHolidaysRoute: typeof MarketHolidaysRoute
   StatusRoute: typeof StatusRoute
   SecCikRoute: typeof SecCikRoute
 }
@@ -379,6 +443,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StatusRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/market-holidays': {
+      id: '/market-holidays'
+      path: '/market-holidays'
+      fullPath: '/market-holidays'
+      preLoaderRoute: typeof MarketHolidaysRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/live-calls': {
+      id: '/live-calls'
+      path: '/live-calls'
+      fullPath: '/live-calls'
+      preLoaderRoute: typeof LiveCallsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/licensing': {
       id: '/licensing'
       path: '/licensing'
@@ -386,11 +464,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LicensingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ipo-calendar': {
+      id: '/ipo-calendar'
+      path: '/ipo-calendar'
+      fullPath: '/ipo-calendar'
+      preLoaderRoute: typeof IpoCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/funds': {
       id: '/funds'
       path: '/funds'
       fullPath: '/funds'
       preLoaderRoute: typeof FundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calendar': {
+      id: '/calendar'
+      path: '/calendar'
+      fullPath: '/calendar'
+      preLoaderRoute: typeof CalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account': {
@@ -482,6 +574,13 @@ declare module '@tanstack/react-router' {
       path: '/holders'
       fullPath: '/$ticker/holders'
       preLoaderRoute: typeof TickerHoldersIndexRouteImport
+      parentRoute: typeof TickerRouteRoute
+    }
+    '/$ticker/financials/': {
+      id: '/$ticker/financials/'
+      path: '/financials'
+      fullPath: '/$ticker/financials'
+      preLoaderRoute: typeof TickerFinancialsIndexRouteImport
       parentRoute: typeof TickerRouteRoute
     }
     '/$ticker/financials-standardized/': {
@@ -576,6 +675,7 @@ interface TickerRouteRouteChildren {
   TickerFinancialsGrowthIndexRoute: typeof TickerFinancialsGrowthIndexRoute
   TickerFinancialsRatiosIndexRoute: typeof TickerFinancialsRatiosIndexRoute
   TickerFinancialsStandardizedIndexRoute: typeof TickerFinancialsStandardizedIndexRoute
+  TickerFinancialsIndexRoute: typeof TickerFinancialsIndexRoute
   TickerHoldersIndexRoute: typeof TickerHoldersIndexRoute
   TickerHoldingsIndexRoute: typeof TickerHoldingsIndexRoute
   TickerInsiderTradesIndexRoute: typeof TickerInsiderTradesIndexRoute
@@ -600,6 +700,7 @@ const TickerRouteRouteChildren: TickerRouteRouteChildren = {
   TickerFinancialsRatiosIndexRoute: TickerFinancialsRatiosIndexRoute,
   TickerFinancialsStandardizedIndexRoute:
     TickerFinancialsStandardizedIndexRoute,
+  TickerFinancialsIndexRoute: TickerFinancialsIndexRoute,
   TickerHoldersIndexRoute: TickerHoldersIndexRoute,
   TickerHoldingsIndexRoute: TickerHoldingsIndexRoute,
   TickerInsiderTradesIndexRoute: TickerInsiderTradesIndexRoute,
@@ -619,8 +720,12 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TickerRouteRoute: TickerRouteRouteWithChildren,
   AccountRoute: AccountRoute,
+  CalendarRoute: CalendarRoute,
   FundsRoute: FundsRoute,
+  IpoCalendarRoute: IpoCalendarRoute,
   LicensingRoute: LicensingRoute,
+  LiveCallsRoute: LiveCallsRoute,
+  MarketHolidaysRoute: MarketHolidaysRoute,
   StatusRoute: StatusRoute,
   SecCikRoute: SecCikRoute,
 }

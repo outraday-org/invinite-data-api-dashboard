@@ -3,6 +3,7 @@ import { z } from "zod";
 import type {
     V2CalendarStatus,
     V2DateKind,
+    V2EventStatus,
     V2EventType,
     V2Session,
 } from "@/lib/api/types";
@@ -35,16 +36,24 @@ export const CALENDAR_STATUSES = [
 /** `date_kind` of `/v1/events` = date certainty (`any` is the default, never sent). */
 const DATE_KINDS = ["confirmed", "estimated"] as const satisfies ReadonlyArray<V2DateKind>;
 
-// Every field optional: a bare `/$ticker/earnings-calendar` link means "around today";
+/** `status` of `/v1/events`: where the call stands (omitted = every status, cancelled included). */
+const EVENT_STATUSES = ["upcoming", "live", "ended"] as const satisfies ReadonlyArray<V2EventStatus>;
+
+// Every field optional: a bare `/calendar` link means "around today";
 // an invalid value falls back to its default instead of failing the route.
 const calendarSearchSchema = z.object({
     // `calendarStatus` and `session` have no `/v1/events` filter: they filter the loaded rows (`matchesCalendarSearch`).
     calendarStatus: z.enum(CALENDAR_STATUSES).optional().catch(undefined),
+    // A ticker (`company`); the calendar then lists that company's calls in the window.
+    company: z.string().trim().min(1).max(15).optional().catch(undefined),
     // Date certainty (`date_kind`); omitted = any.
     dateKind: z.enum(DATE_KINDS).optional().catch(undefined),
     eventType: z.enum(EVENT_TYPES).optional().catch(undefined),
+    fiscalQuarter: z.coerce.number().int().min(1).max(4).optional().catch(undefined),
+    fiscalYear: z.coerce.number().int().min(1900).max(2200).optional().catch(undefined),
     from: z.iso.date().optional().catch(undefined),
     session: z.enum(SESSIONS).optional().catch(undefined),
+    status: z.enum(EVENT_STATUSES).optional().catch(undefined),
     to: z.iso.date().optional().catch(undefined),
 });
 
@@ -76,6 +85,21 @@ const DATE_KIND_OPTIONS: Array<{ label: string; value: "any" | V2DateKind }> = [
     { label: "Any date", value: "any" },
     { label: "Confirmed date", value: "confirmed" },
     { label: "Estimated date", value: "estimated" },
+];
+
+const STATUS_OPTIONS: Array<{ label: string; value: "all" | V2EventStatus }> = [
+    { label: "Any call status", value: "all" },
+    { label: "Upcoming", value: "upcoming" },
+    { label: "Live", value: "live" },
+    { label: "Ended", value: "ended" },
+];
+
+const QUARTER_OPTIONS: Array<{ label: string; value: "1" | "2" | "3" | "4" | "all" }> = [
+    { label: "Any quarter", value: "all" },
+    { label: "Q1", value: "1" },
+    { label: "Q2", value: "2" },
+    { label: "Q3", value: "3" },
+    { label: "Q4", value: "4" },
 ];
 
 const CALENDAR_STATUS_OPTIONS: Array<{ label: string; value: "all" | V2CalendarStatus }> = [
@@ -151,6 +175,17 @@ export function CalendarFilters({
     return (
         <div className="flex flex-wrap items-center gap-2">
             <Input
+                aria-label="Symbol"
+                className="w-[110px] uppercase placeholder:normal-case"
+                defaultValue={search.company ?? ""}
+                key={search.company ?? ""}
+                onBlur={event => onChange({ company: event.target.value.trim().toUpperCase() || undefined })}
+                onKeyDown={(event) => {
+                    if (event.key === "Enter") onChange({ company: event.currentTarget.value.trim().toUpperCase() || undefined });
+                }}
+                placeholder="Symbol"
+            />
+            <Input
                 aria-label="From"
                 className="w-[150px]"
                 onChange={e => onChange({ from: e.target.value || undefined })}
@@ -184,10 +219,39 @@ export function CalendarFilters({
                 value={search.dateKind ?? "any"}
             />
             <FilterSelect
+                aria-label="Call status"
+                className="w-[150px]"
+                onValueChange={value => onChange({ status: value === "all" ? undefined : value })}
+                options={STATUS_OPTIONS}
+                value={search.status ?? "all"}
+            />
+            <FilterSelect
                 className="w-[170px]"
                 onValueChange={value => onChange({ calendarStatus: value === "all" ? undefined : value })}
                 options={CALENDAR_STATUS_OPTIONS}
                 value={search.calendarStatus ?? "all"}
+            />
+            <Input
+                aria-label="Fiscal year"
+                className="w-[110px]"
+                defaultValue={search.fiscalYear ?? ""}
+                key={`fy-${search.fiscalYear ?? ""}`}
+                max={2200}
+                min={1900}
+                onBlur={(event) => {
+                    const year = Number(event.target.value);
+
+                    onChange({ fiscalYear: Number.isInteger(year) && year >= 1900 ? year : undefined });
+                }}
+                placeholder="Fiscal year"
+                type="number"
+            />
+            <FilterSelect
+                aria-label="Fiscal quarter"
+                className="w-[120px]"
+                onValueChange={value => onChange({ fiscalQuarter: value === "all" ? undefined : Number(value) })}
+                options={QUARTER_OPTIONS}
+                value={search.fiscalQuarter ? String(search.fiscalQuarter) as "1" | "2" | "3" | "4" : "all"}
             />
         </div>
     );

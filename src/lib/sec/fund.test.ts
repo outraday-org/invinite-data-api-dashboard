@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import type { V2Fund } from "@/lib/api/types";
 
-import { FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS, SECTION_DATASETS } from "@/lib/instruments";
+import { FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS, SECTION_DATASETS, sectionDatasets } from "@/lib/instruments";
 import {
     FUND_REASON_TEXT,
     FUND_SOURCE_LABELS,
@@ -107,8 +107,8 @@ describe("every contract enum value has its label", () => {
     it("every dataset a section shows is a contract dataset", () => {
         const datasets = enumOf(schema("Instrument").properties?.datasets?.items);
 
-        for (const dataset of Object.values(SECTION_DATASETS)) {
-            if (dataset !== null) expect(datasets).toContain(dataset);
+        for (const section of Object.keys(SECTION_DATASETS)) {
+            for (const dataset of sectionDatasets(section)) expect(datasets).toContain(dataset);
         }
     });
 });

@@ -544,6 +544,8 @@ const v2EventsSchema = z.object({
     cursor: cursorSchema,
     dateKind: z.enum(["confirmed", "estimated", "any"] as const satisfies ReadonlyArray<V2DateKind>).optional(),
     expand: z.array(z.literal("calendar")).optional(),
+    fiscalQuarter: z.number().int().min(1).max(4).optional(),
+    fiscalYear: z.number().int().min(1900).max(2200).optional(),
     limit: v2LimitSchema,
     scheduledAtGte: z.string().trim().min(1).optional(),
     scheduledAtLte: z.string().trim().min(1).optional(),
@@ -556,7 +558,7 @@ const v2EventsSchema = z.object({
 export const getV2Events = createServerFn({ method: "GET" })
     .inputValidator(v2EventsSchema)
     .handler(async ({ data }): Promise<V2EventsResponse> => {
-        const { apiKey, company, cursor, dateKind, expand, limit, scheduledAtGte, scheduledAtLte, sort, status, type } = data;
+        const { apiKey, company, cursor, dateKind, expand, fiscalQuarter, fiscalYear, limit, scheduledAtGte, scheduledAtLte, sort, status, type } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/events", {
             params: {
@@ -565,6 +567,8 @@ export const getV2Events = createServerFn({ method: "GET" })
                     cursor,
                     "date_kind": dateKind,
                     "expand": v2Expand(expand),
+                    "fiscal_quarter": fiscalQuarter,
+                    "fiscal_year": fiscalYear,
                     limit,
                     "scheduled_at.gte": scheduledAtGte,
                     "scheduled_at.lte": scheduledAtLte,
@@ -1175,7 +1179,10 @@ const v2IposSchema = z.object({
     apiKey: apiKeySchema,
     company: z.string().trim().min(1).optional(),
     cursor: cursorSchema,
+    isSpac: z.boolean().optional(),
     limit: v2LimitSchema,
+    listingDateGte: z.iso.date().optional(),
+    listingDateLte: z.iso.date().optional(),
     sort: z.enum(["listing_date", "-listing_date", "first_public_at", "-first_public_at"] as const satisfies ReadonlyArray<V2IposSort>).optional(),
     stage: z.array(z.enum(V2_IPO_STAGES)).optional(),
 });
@@ -1184,10 +1191,21 @@ const v2IposSchema = z.object({
 export const getV2Ipos = createServerFn({ method: "GET" })
     .inputValidator(v2IposSchema)
     .handler(async ({ data }): Promise<V2IposResponse> => {
-        const { apiKey, company, cursor, limit, sort, stage } = data;
+        const { apiKey, company, cursor, isSpac, limit, listingDateGte, listingDateLte, sort, stage } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/ipos", {
-            params: { query: v2Query({ company, cursor, limit, sort, stage: v2Expand(stage) }) },
+            params: {
+                query: v2Query({
+                    company,
+                    cursor,
+                    "is_spac": isSpac,
+                    limit,
+                    "listing_date.gte": listingDateGte,
+                    "listing_date.lte": listingDateLte,
+                    sort,
+                    "stage": v2Expand(stage),
+                }),
+            },
         });
 
         if (error) throwApiError(error, response);

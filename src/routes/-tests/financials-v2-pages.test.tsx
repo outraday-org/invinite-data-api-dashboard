@@ -2,6 +2,10 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { cagrRows, CagrView } from "@/components/financials-pages/cagr";
+import { GrowthView } from "@/components/financials-pages/growth";
+import { ratioRows, RatiosView } from "@/components/financials-pages/ratios";
+import { SegmentsView } from "@/components/financials-pages/segments";
 import { FinancialsStatementsView } from "@/components/financials-presentation/financials-statements-view";
 import { addFactTypes, buildTreeRows } from "@/components/financials-presentation/utils";
 import { ApiRequestError } from "@/lib/api/errors";
@@ -16,10 +20,6 @@ import {
     V2_STANDARDIZED,
     V2_STANDARDIZED_PENDING,
 } from "@/lib/financials/v2-fixtures";
-import { cagrRows, CagrView } from "@/routes/$ticker/financials-cagr/index";
-import { GrowthView } from "@/routes/$ticker/financials-growth/index";
-import { ratioRows, RatiosView } from "@/routes/$ticker/financials-ratios/index";
-import { SegmentsView } from "@/routes/$ticker/segmented-financials/index";
 
 // The page modules' routes need a router; the pure views do not.
 vi.mock("@tanstack/react-router", () => ({

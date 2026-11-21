@@ -63,6 +63,8 @@ export function DataTable<TRow>({
     emptyIsGenuine = true,
     emptyText,
     errorState,
+    groupHeading,
+    groupOf,
     hasNextPage = false,
     isFetchingNextPage = false,
     isLoading,
@@ -78,6 +80,13 @@ export function DataTable<TRow>({
     emptyText: string;
     /** A rendered error (`ErrorState`, `SecReadinessNotice`) for a failed request; null / undefined = none. */
     errorState?: React.ReactNode;
+    /** The heading row of a group (its key and its rows); rendered with `groupOf`. */
+    groupHeading?: (group: string, rows: ReadonlyArray<TRow>) => React.ReactNode;
+    /**
+     * Groups consecutive rows (the rows come sorted by group, e.g. the calendar's New York day): a full-width heading row
+     * before each group that sticks below the pinned header from `lg` up (the column header then scrolls with the page).
+     */
+    groupOf?: (row: TRow) => string;
     hasNextPage?: boolean;
     isFetchingNextPage?: boolean;
     isLoading: boolean;
@@ -94,7 +103,17 @@ export function DataTable<TRow>({
 
     const fits = useTableFits(wrapper, !stickyFirstColumn);
 
-    const stickyHeader = !stickyFirstColumn && fits;
+    const stickyHeader = !stickyFirstColumn && fits && !groupOf;
+
+    const groupRows = React.useMemo(() => {
+        const groups = new Map<string, Array<TRow>>();
+
+        if (!groupOf) return groups;
+
+        for (const row of rows) groups.set(groupOf(row), [...(groups.get(groupOf(row)) ?? []), row]);
+
+        return groups;
+    }, [groupOf, rows]);
 
     const firstColumn = (index: number) => (stickyFirstColumn && index === 0 ? "sticky left-0 z-10 bg-background" : undefined);
 
@@ -104,7 +123,7 @@ export function DataTable<TRow>({
 
     return (
         <div className="flex min-w-0 flex-col" data-slot="data-table" ref={wrapper}>
-            <Table containerClassName={stickyHeader ? "lg:overflow-x-visible" : undefined}>
+            <Table containerClassName={stickyHeader || (groupOf && fits) ? "lg:overflow-x-visible" : undefined}>
                 <TableHeader className={cn(stickyHeader && cn("bg-background lg:sticky lg:z-20", LG_STICKY_TOP_CLASS))}>
                     {table.getHeaderGroups().map(headerGroup => (
                         <TableRow key={headerGroup.id}>
@@ -117,15 +136,33 @@ export function DataTable<TRow>({
                     ))}
                 </TableHeader>
                 <TableBody>
-                    {table.getRowModel().rows.map((row: Row<TRow>) => (
-                        <TableRow className={rowClassName?.(row.original)} key={row.id}>
-                            {row.getVisibleCells().map((cell, index) => (
-                                <TableCell className={cn(firstColumn(index), columnClassName?.(cell.column.id))} key={cell.id}>
-                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                </TableCell>
-                            ))}
-                        </TableRow>
-                    ))}
+                    {table.getRowModel().rows.map((row: Row<TRow>, rowIndex, all) => {
+                        const group = groupOf?.(row.original);
+
+                        const startsGroup = group !== undefined && (rowIndex === 0 || groupOf?.(all[rowIndex - 1].original) !== group);
+
+                        return (
+                            <React.Fragment key={row.id}>
+                                {startsGroup && (
+                                    <TableRow className="hover:bg-transparent" data-testid="data-table-group">
+                                        <TableCell
+                                            className={cn("bg-muted/95 supports-backdrop-filter:backdrop-blur py-1.5 font-medium lg:sticky lg:z-10", fits && LG_STICKY_TOP_CLASS)}
+                                            colSpan={columnCount}
+                                        >
+                                            {groupHeading ? groupHeading(group, groupRows.get(group) ?? []) : group}
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                                <TableRow className={rowClassName?.(row.original)}>
+                                    {row.getVisibleCells().map((cell, index) => (
+                                        <TableCell className={cn(firstColumn(index), columnClassName?.(cell.column.id))} key={cell.id}>
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                            </React.Fragment>
+                        );
+                    })}
 
                     {showSkeleton && Array.from({ length: SKELETON_ROWS }, (_, rowIndex) => (
                         <TableRow data-testid="data-table-skeleton" key={`skeleton-${rowIndex}`}>

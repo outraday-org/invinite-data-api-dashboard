@@ -17,7 +17,7 @@ import {
     V2_IPOS,
 } from "@/lib/sec/v2-fixtures";
 import { insiderRoles, InsiderTradesView } from "@/routes/$ticker/insider-trades/index";
-import { ipoIssuerCik, IposView, ipoSymbolText, offerPriceText } from "@/routes/$ticker/ipos/index";
+import { ipoIssuerCik, IposView, ipoSymbolText, offerPriceText } from "@/routes/ipo-calendar";
 
 // The page modules' routes need a router; the pure views do not.
 vi.mock("@tanstack/react-router", () => ({

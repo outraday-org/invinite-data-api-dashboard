@@ -39,30 +39,32 @@ export function instrumentBadges(instrument: Pick<V2Instrument, "is_active" | "s
 export const isFundType = (type: V2InstrumentType): boolean => type === "etf" || type === "closed_end_fund";
 
 /**
- * The `$ticker` section (the first path segment after the ticker; "" = the overview) → the dataset it shows. `null` =
- * market-wide (Earnings Calendar, IPOs, Market Holidays): shown for every ticker.
+ * The `$ticker` section (the first path segment after the ticker; "" = the overview) → the dataset it shows; a list =
+ * any of them (Financials: statements, metrics or segments, one tab each). The market-wide pages are top-level routes
+ * (`/calendar`, `/ipo-calendar`, `/market-holidays`); their former `/$ticker/...` paths redirect there.
  */
-export const SECTION_DATASETS: Record<string, null | V2Dataset> = {
+export const SECTION_DATASETS: Record<string, ReadonlyArray<V2Dataset> | V2Dataset> = {
     "": "profile",
     "dividends": "dividends",
     "documents": "investor_documents",
-    "earnings-calendar": null,
     "earnings-calls": "events",
     "filings": "filings",
-    "financials-as-reported": "financials",
-    "financials-cagr": "metrics",
-    "financials-growth": "metrics",
-    "financials-ratios": "metrics",
-    "financials-standardized": "financials",
+    "financials": ["financials", "metrics", "segments"],
     "holders": "holders",
     "holdings": "fund_holdings",
     "insider-trades": "insider_trades",
-    "ipos": null,
-    "market-holidays": null,
     "news": "news",
-    "segmented-financials": "segments",
     "stock-splits": "splits",
 };
+
+/** The datasets behind a section (empty = an unknown section). */
+export function sectionDatasets(section: string): ReadonlyArray<V2Dataset> {
+    if (!(section in SECTION_DATASETS)) return [];
+
+    const dataset = SECTION_DATASETS[section];
+
+    return typeof dataset === "string" ? [dataset] : dataset;
+}
 
 /** The section of a `/$ticker/...` path ("" = the overview); undefined outside `$ticker`. */
 export function sectionOf(pathname: string): string | undefined {
@@ -73,13 +75,11 @@ export function sectionOf(pathname: string): string | undefined {
     return parts[1] ?? "";
 }
 
-/** Whether a section exists for an instrument: market-wide always, an unknown section never, else by `datasets`. */
+/** Whether a section exists for an instrument: an unknown section never, else by `datasets` (any of a list). */
 export function servesSection(datasets: ReadonlyArray<V2Dataset>, section: string): boolean {
     if (!(section in SECTION_DATASETS)) return false;
 
-    const dataset = SECTION_DATASETS[section];
-
-    return dataset === null || datasets.includes(dataset);
+    return sectionDatasets(section).some(dataset => datasets.includes(dataset));
 }
 
 const DATASET_WORDS: Partial<Record<V2Dataset, string>> = {
