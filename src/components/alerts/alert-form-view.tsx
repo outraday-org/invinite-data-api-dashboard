@@ -68,6 +68,15 @@ const optionList = (values: ReadonlyArray<string> | undefined) => (values ?? [])
 
 const WEEKDAY_OPTIONS = WEEKDAY_LABELS.map((label, index) => ({ label, value: String(index) }));
 
+/** A numeric field's bounds as a hint: " (1–90)", " (at least 0)", " (at most 6)"; "" without bounds (pure). */
+export function rangeText({ max, min }: Pick<FieldSpec, "max" | "min">) {
+    if (min !== undefined && max !== undefined) return ` (${min}–${max})`;
+
+    if (min !== undefined) return ` (at least ${min})`;
+
+    return max === undefined ? "" : ` (at most ${max})`;
+}
+
 /** One field's editor by its kind (the field map's `FieldSpec`). */
 export function FieldInput({ error, fieldKey, onChange, spec, value }: { error?: string; fieldKey: string; onChange: (value: FieldText) => void; spec: FieldSpec; value: FieldText | undefined }) {
     const id = fieldId(fieldKey);
@@ -78,7 +87,7 @@ export function FieldInput({ error, fieldKey, onChange, spec, value }: { error?:
 
     const numeric = spec.kind === "integer" || spec.kind === "number" || spec.kind === "int-list";
 
-    const range = numeric && (spec.min !== undefined || spec.max !== undefined) ? ` (${spec.min ?? "…"}–${spec.max ?? "…"})` : "";
+    const range = numeric ? rangeText(spec) : "";
 
     const grouped = spec.kind === "enum-list" || spec.kind === "weekday-list";
 

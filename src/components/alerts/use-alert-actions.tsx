@@ -71,7 +71,7 @@ export function batchChunks<T>(items: ReadonlyArray<T>, size = ALERT_BATCH_MAX):
  * change (`batchAlerts`, ≤ 500 items a request) only after `ConfirmAction` stated the effect. One toast per outcome
  * (the mutation hook never toasts); a bulk change shows its per-item results (`batch`), a partial failure included.
  */
-export function useAlertActions({ onDeleted }: { onDeleted?: (ids: ReadonlyArray<string>) => void } = {}) {
+export function useAlertActions({ onBulkDone, onDeleted }: { onBulkDone?: (ids: ReadonlyArray<string>) => void; onDeleted?: (ids: ReadonlyArray<string>) => void } = {}) {
     const navigate = useNavigate();
 
     const [pending, setPending] = React.useState<null | Pending>(null);
@@ -164,6 +164,9 @@ export function useAlertActions({ onDeleted }: { onDeleted?: (ids: ReadonlyArray
         }
 
         if (results.length > 0) setBatch({ ids, results });
+
+        // The answered items leave the selection; an item without an answer (the run stopped) stays selected.
+        onBulkDone?.(results.map(result => ids[result.index]));
 
         if (action === "delete") onDeleted?.(results.filter(result => result.ok).map(result => ids[result.index]));
     };

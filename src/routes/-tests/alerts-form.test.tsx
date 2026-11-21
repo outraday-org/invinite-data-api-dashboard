@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type * as MutationsModule from "@/lib/api/mutations";
 
 import { CreateAlertForm, EditAlertForm } from "@/components/alerts/alert-editor";
-import { AlertFormView } from "@/components/alerts/alert-form-view";
+import { AlertFormView, rangeText } from "@/components/alerts/alert-form-view";
 import { emptyAlertForm, fromAlert } from "@/lib/alerts/alert-form";
 import { ALERT_FILING, ALERT_PRICE, TEMPLATES_FIXTURE } from "@/lib/alerts/alerts-fixtures";
 import { ApiRequestError } from "@/lib/api/errors";
@@ -98,6 +98,16 @@ describe("AlertFormView (one form from the field map)", () => {
         fireEvent.click(screen.getByRole("radio", { name: "Structured condition" }));
 
         expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ indicatorMode: "structured" }));
+    });
+
+    it("numeric bounds as a hint", () => {
+        expect(rangeText({ max: 90, min: 0 })).toBe(" (0–90)");
+
+        expect(rangeText({ min: 0 })).toBe(" (at least 0)");
+
+        expect(rangeText({ max: 6 })).toBe(" (at most 6)");
+
+        expect(rangeText({})).toBe("");
     });
 
     it("editing keeps the type fixed and says so; Check only on create", () => {

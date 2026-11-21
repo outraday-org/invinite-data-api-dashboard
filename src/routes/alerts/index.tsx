@@ -9,7 +9,7 @@ import { AlertsListView } from "@/components/alerts/alerts-list-view";
 import { useAlertActions } from "@/components/alerts/use-alert-actions";
 import { useIdSelection } from "@/components/alerts/use-id-selection";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { ALERT_STATUS_INFO, ALERT_STATUSES, ALERT_TYPE_INFO, ALERT_TYPES } from "@/lib/alerts/labels";
 import { useAlertsInfinite } from "@/lib/api/queries";
@@ -74,12 +74,12 @@ function AlertsPage() {
 
     const [selected, setSelected] = useIdSelection();
 
-    const actions = useAlertActions({ onDeleted: ids => setSelected(ids, false) });
+    const actions = useAlertActions({ onBulkDone: ids => setSelected(ids, false), onDeleted: ids => setSelected(ids, false) });
 
     return (
         <div className="flex flex-col gap-4">
             <PageHeader
-                actions={<Button render={<Link to="/alerts/new" />} size="sm">New alert</Button>}
+                actions={<Link className={buttonVariants({ size: "sm" })} to="/alerts/new">New alert</Link>}
                 description="Your alert rules, oldest first as the API lists them. Every filter is applied by the API. Fires and deliveries cost no credits; each list page costs 1."
                 title="Alerts"
             />

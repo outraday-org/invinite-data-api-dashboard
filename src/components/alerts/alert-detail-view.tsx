@@ -7,7 +7,7 @@ import type { FieldSpec } from "@/lib/alerts/condition-fields";
 import type { Alert } from "@/lib/api/types";
 
 import { AlertStatusBadge, DestinationChips, DetailRow } from "@/components/alerts/alert-parts";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { fieldText } from "@/lib/alerts/alert-form";
 import { alertTarget } from "@/lib/alerts/alert-view";
@@ -67,7 +67,7 @@ export function AlertDetailView({ alert, busy, children, onAction, onEdit }: { a
                 {canResume(alert.status) && <Button disabled={busy} onClick={() => onAction("resume")} size="sm" type="button" variant="outline">Resume</Button>}
                 <Button disabled={busy} onClick={() => onAction("test")} size="sm" type="button" variant="outline">Send test event…</Button>
                 <Button disabled={busy} onClick={onEdit} size="sm" type="button" variant="outline">Edit</Button>
-                <Button render={<Link search={{ from: alert.id }} to="/alerts/new" />} size="sm" variant="outline">Duplicate</Button>
+                <Link className={buttonVariants({ size: "sm", variant: "outline" })} search={{ from: alert.id }} to="/alerts/new">Duplicate</Link>
                 <Button disabled={busy} onClick={() => onAction("delete")} size="sm" type="button" variant="destructive">Delete…</Button>
             </div>
             <dl className="flex flex-col gap-2 rounded-xl border p-4">

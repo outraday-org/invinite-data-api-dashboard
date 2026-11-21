@@ -43,5 +43,5 @@ export function useEventList(query: EventsQuery, live: ReadonlyArray<AlertEvent>
         onLoadMore: () => void fetchNextPage(),
     };
 
-    return { events, note: loadedEventsNote(pages.reduce((sum, page) => sum + page.data.length, 0), hasNextPage), pages, state };
+    return { events, note: loadedEventsNote(events.length, hasNextPage), pages, state };
 }
