@@ -16,7 +16,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useV2GuidanceInfinite } from "@/lib/api/queries";
-import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
+import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { BASIS_LABELS, formatGuidanceRange, formatGuidanceValue, metricLabel, PERIOD_KIND_LABELS } from "@/lib/earnings/labels";
 import { formatDay } from "@/lib/format";
 
@@ -53,7 +53,7 @@ function HistoryBody({ company, target }: { company: string; target: GuidanceHis
         sort: "-conference_date",
     });
 
-    useLoadAllPages({ ...query, hasNextPage: Boolean(query.hasNextPage) });
+    useAutoLoadPages({ ...query, hasNextPage: Boolean(query.hasNextPage) });
 
     const { data, error, isLoading } = query;
 

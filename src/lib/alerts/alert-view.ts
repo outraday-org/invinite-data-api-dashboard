@@ -1,5 +1,6 @@
 import type { Alert, AlertEvent, AlertEventsResponse } from "@/lib/api/types";
 
+import { shouldLoadNextPage } from "@/lib/api/use-auto-load-pages";
 import { isRecord } from "@/lib/guards";
 
 import { alertEventTypeLabel } from "./labels";
@@ -72,12 +73,14 @@ export function newestEventId(pages: ReadonlyArray<Pick<AlertEventsResponse, "da
 export const EVENT_PAGES_AUTO = 10;
 
 /**
- * Whether an event list should load its next (newer) page by itself: a next page exists, nothing is loading, the last
- * page did not fail (a failed page would be asked again without end) and fewer than `max` pages are loaded — at most
- * `max` billed pages (1 credit each) per view; then "Load more".
+ * Whether an event list should load its next (newer) page by itself: `shouldLoadNextPage` with fewer than `max` pages
+ * loaded — at most `max` billed pages (1 credit each) per view; then "Load more". `useEventList` runs it
+ * (`useAutoLoadPages`); the events page reads it to know the list settled.
  */
 export function shouldAutoLoad(state: { hasNextPage: boolean; isFetching: boolean; nextPageFailed: boolean; pageCount: number }, max = EVENT_PAGES_AUTO) {
-    return state.hasNextPage && !state.isFetching && !state.nextPageFailed && state.pageCount < max;
+    const { pageCount, ...rest } = state;
+
+    return shouldLoadNextPage({ ...rest, pagesLoaded: pageCount }, max);
 }
 
 /** What the loaded pages of an oldest-first event list cover, for the note above it. */

@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { RequestErrorState } from "@/components/ui/request-error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2Company, useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
-import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
+import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { buildDocumentTree, callEntries, eventTitleMap, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
 import { tickerHead } from "@/lib/layout";
 import { IN_PLACE } from "@/lib/url-state";
@@ -105,9 +105,9 @@ function DocumentsPage() {
     const { data: details } = useV2Company(ticker);
 
     // No totals in the API: load every page of both, so the counts and the text filter see everything.
-    useLoadAllPages({ ...library, hasNextPage: Boolean(library.hasNextPage) });
+    useAutoLoadPages({ ...library, hasNextPage: Boolean(library.hasNextPage) });
 
-    useLoadAllPages({ ...events, hasNextPage: Boolean(events.hasNextPage) });
+    useAutoLoadPages({ ...events, hasNextPage: Boolean(events.hasNextPage) });
 
     const { data, error, isLoading } = library;
 

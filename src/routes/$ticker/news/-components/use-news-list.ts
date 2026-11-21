@@ -6,7 +6,7 @@ import type { LiveNewsStop } from "@/lib/live/use-live-news";
 import type { NewsFilters, NewsSearch } from "@/lib/news/labels";
 
 import { useApiBaseUrl, useNewsPage } from "@/lib/api/queries";
-import { shouldFillPage } from "@/lib/api/use-fill-pages";
+import { shouldFillPage } from "@/lib/api/use-auto-load-pages";
 import { useLiveNews } from "@/lib/live/use-live-news";
 import { matchesNewsFilters, mergeLiveItems } from "@/lib/news/labels";
 import { firstNewsPage, newsPageCursor, newsPageNumber, newsPagerFor, nextNewsPage, previousNewsPage } from "@/lib/news/pager";

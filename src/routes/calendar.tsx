@@ -14,7 +14,7 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2EventsInfinite } from "@/lib/api/queries";
-import { useFillPages } from "@/lib/api/use-fill-pages";
+import { FILL_PAGES_MAX, useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { calendarPresetWindow, dayHeading, groupEventsByNewYorkDay, newYorkCallDay, presetOf } from "@/lib/earnings/calendar-groups";
 import { calendarWindow, eventLabel, isCallToday, SESSION_LABELS } from "@/lib/earnings/format";
 import { titleHead } from "@/lib/layout";
@@ -174,16 +174,11 @@ function CalendarPage() {
 
     const filtering = Boolean(search.session || search.calendarStatus);
 
-    const { capped } = useFillPages({
-        fetchNextPage,
-        filtering,
-        hasNextPage,
-        isFetching,
-        nextPageFailed: isFetchNextPageError,
-        pageCount: pages.length,
-        resetKey: JSON.stringify(search),
-        shownRows: events.length,
-    });
+    // A client-side filter that shows nothing loads ≤ FILL_PAGES_MAX pages per filter change by itself; then "Load more".
+    const { capped } = useAutoLoadPages(
+        { fetchNextPage, hasNextPage, isFetching, isFetchNextPageError, pageCount: pages.length },
+        { enabled: filtering && events.length === 0, max: FILL_PAGES_MAX, resetKey: JSON.stringify(search) },
+    );
 
     const onFilterChange = (patch: Partial<CalendarSearch>) => {
         void navigate({ resetScroll: false, search: prev => ({ ...prev, ...patch }) });

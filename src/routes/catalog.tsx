@@ -32,7 +32,7 @@ import {
     useMetricCatalogInfinite,
     useSectionCatalogInfinite,
 } from "@/lib/api/queries";
-import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
+import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { formatNumber } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import {
@@ -245,7 +245,7 @@ function useCatalogList<TRow>(query: {
     isFetchNextPageError: boolean;
     isLoading: boolean;
 }): CatalogList<TRow> {
-    useLoadAllPages(query);
+    useAutoLoadPages(query);
 
     const rows = React.useMemo(() => query.data?.pages.flatMap(page => page.data) ?? [], [query.data]);
 

@@ -5,7 +5,8 @@ import * as React from "react";
 import type { AlertEventsListState } from "@/components/alerts/alert-events-view";
 import type { AlertEvent, AlertEventsResponse } from "@/lib/api/types";
 
-import { eventsNewestFirst, loadedEventsNote, shouldAutoLoad } from "@/lib/alerts/alert-view";
+import { EVENT_PAGES_AUTO, eventsNewestFirst, loadedEventsNote } from "@/lib/alerts/alert-view";
+import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 
 type EventsQuery = {
     data: InfiniteData<AlertEventsResponse, null | string> | null;
@@ -20,18 +21,14 @@ type EventsQuery = {
 
 /**
  * An oldest-first event list shown newest first: loads its next (newer) pages by itself up to `EVENT_PAGES_AUTO`
- * (`shouldAutoLoad`), merges the live events, and states how far the loaded pages reach.
+ * (`useAutoLoadPages`, the rule `shouldAutoLoad` names), merges the live events, and states how far the loaded pages reach.
  */
 export function useEventList(query: EventsQuery, live: ReadonlyArray<AlertEvent> = []) {
     const pages = React.useMemo(() => query.data?.pages ?? [], [query.data]);
 
-    const { fetchNextPage, hasNextPage, isFetching, isFetchNextPageError } = query;
+    const { fetchNextPage, hasNextPage } = query;
 
-    const load = shouldAutoLoad({ hasNextPage, isFetching, nextPageFailed: isFetchNextPageError, pageCount: pages.length });
-
-    React.useEffect(() => {
-        if (load) void fetchNextPage();
-    }, [fetchNextPage, load]);
+    useAutoLoadPages({ ...query, pageCount: pages.length }, { max: EVENT_PAGES_AUTO });
 
     const events = React.useMemo(() => eventsNewestFirst(pages, live), [live, pages]);
 

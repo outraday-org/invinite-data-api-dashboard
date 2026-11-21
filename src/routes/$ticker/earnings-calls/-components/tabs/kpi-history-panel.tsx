@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useV2KpiHistoryInfinite } from "@/lib/api/queries";
-import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
+import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { kpiHistoryCallCount, kpiHistorySeries } from "@/lib/earnings/kpi-history";
 import { formatGuidanceValue, metricLabel, ORIGIN_LABELS } from "@/lib/earnings/labels";
 import { formatDay } from "@/lib/format";
@@ -181,7 +181,7 @@ function KpiHistoryBody({ company, metric }: { company: string; metric: string }
 
     const query = useV2KpiHistoryInfinite({ company, metric, sort });
 
-    useLoadAllPages({ ...query, hasNextPage: Boolean(query.hasNextPage) });
+    useAutoLoadPages({ ...query, hasNextPage: Boolean(query.hasNextPage) });
 
     const mentions = React.useMemo(() => query.data?.pages.flatMap(page => page.data) ?? [], [query.data]);
 

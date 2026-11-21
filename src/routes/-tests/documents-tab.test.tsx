@@ -10,7 +10,7 @@ import { DocumentsTab } from "@/routes/$ticker/earnings-calls/-components/tabs/d
 
 vi.mock("@/lib/api/queries", () => ({ useV2InvestorDocument: vi.fn(), useV2InvestorDocumentsInfinite: vi.fn() }));
 
-vi.mock("@/lib/api/use-load-all-pages", () => ({ useLoadAllPages: vi.fn() }));
+vi.mock("@/lib/api/use-auto-load-pages", () => ({ useAutoLoadPages: vi.fn() }));
 
 afterEach(cleanup);
 

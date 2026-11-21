@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useV2InvestorDocument, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
-import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
+import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { DOCUMENT_SORT_VALUES, pagesOf } from "@/lib/earnings/documents";
 import { formatBytes } from "@/lib/earnings/format";
 
@@ -184,7 +184,7 @@ export function DocumentsTab({ event, eventId, onSearchChange, onTabChange, sear
         sort: search.docSort,
     });
 
-    useLoadAllPages({ ...documentsQuery, hasNextPage: Boolean(documentsQuery.hasNextPage) });
+    useAutoLoadPages({ ...documentsQuery, hasNextPage: Boolean(documentsQuery.hasNextPage) });
 
     const { data, error, isLoading } = documentsQuery;
 
