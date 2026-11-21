@@ -1,6 +1,7 @@
-import { ErrorState } from "@/components/ui/error-state";
+import type { NoticeText } from "@/components/ui/request-error-state";
+
 import { Notice } from "@/components/ui/notice";
-import { ApiRequestError, isTierError } from "@/lib/api/errors";
+import { RequestErrorState } from "@/components/ui/request-error-state";
 
 // Lifted to `src/components/ui/notice.tsx` (the SEC views use it too); re-exported for the existing importers.
 export { Notice };
@@ -21,7 +22,7 @@ export function NoTranscriptNotice({ captureStatus }: { captureStatus: string })
 
 // The answers IDA's v2 media operations give by design (`code` = the problem's `code`). The REST plan gate is a 403
 // `plan_required` (`isTierError`, checked first), so a 403 `forbidden` here is the audio refusal.
-const MEDIA_CODES: Partial<Record<string, { badge: string; title: string }>> = {
+export const MEDIA_CODES: Partial<Record<string, NoticeText>> = {
     // One answer for an unlicensed company and a recording not served yet (not marked, failed, too long).
     forbidden: {
         badge: "Unavailable",
@@ -31,19 +32,17 @@ const MEDIA_CODES: Partial<Record<string, { badge: string; title: string }>> = {
 };
 
 /**
- * The state of a status-aware earnings request (`ApiRequestError`): a known media code or the
- * REST plan gate as a `Notice`, a 404 as `notFound` when given, anything else as `ErrorState`.
+ * The state of a status-aware earnings request (`ApiRequestError`): a known media code or the REST plan gate as a
+ * `Notice`, a 404 as `notFound` when given, anything else as `ErrorState` (`RequestErrorState` with the media options).
  */
 export function MediaState({ error, notFound, title }: { error: unknown; notFound?: string; title: string }) {
-    if (isTierError(error)) return <Notice badge="PRO" title="PRO plan required" />;
-
-    if (error instanceof ApiRequestError) {
-        const known = MEDIA_CODES[error.code];
-
-        if (known) return <Notice badge={known.badge} title={known.title} />;
-
-        if (error.status === 404 && notFound) return <Notice title={notFound} />;
-    }
-
-    return <ErrorState error={error} title={title} />;
+    return (
+        <RequestErrorState
+            codes={MEDIA_CODES}
+            error={error}
+            notFound={notFound ? { title: notFound } : undefined}
+            tier={{ badge: "PRO", title: "PRO plan required" }}
+            title={title}
+        />
+    );
 }

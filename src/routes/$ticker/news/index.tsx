@@ -13,10 +13,8 @@ import { ExportMenu } from "@/components/api/export-menu";
 import { LIVE_NEWS_PLAN_NOTE, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
 import { TabStrip } from "@/components/navigation/tab-strip";
 import { Button } from "@/components/ui/button";
-import { ErrorState } from "@/components/ui/error-state";
-import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
-import { isTierError } from "@/lib/api/errors";
+import { RequestErrorState } from "@/components/ui/request-error-state";
 import { useV2Company } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
 import { issuerLabels, validateNewsSearch } from "@/lib/news/labels";
@@ -39,9 +37,7 @@ export const Route = createFileRoute("/$ticker/news/")({
 
 /** The list's request state: `/v1/news` is FREE, so a plan gate is unexpected but still a notice, not an error. */
 function ListError({ error }: { error: unknown }) {
-    if (isTierError(error)) return <Notice badge="FREE" title="Your plan does not include news" />;
-
-    return <ErrorState error={error} title="Failed to load the news" />;
+    return <RequestErrorState error={error} tier={{ badge: "FREE", title: "Your plan does not include news" }} title="Failed to load the news" />;
 }
 
 /** The export's columns of a news row (the shown page; the pager has no "load all"). */

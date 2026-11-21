@@ -9,14 +9,14 @@ import { SecFilingSearch } from "@/components/sec/sec-filing-search";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { RequestErrorState } from "@/components/ui/request-error-state";
 import { Skeleton } from "@/components/ui/skeleton";
-import { isTierError } from "@/lib/api/errors";
 import { useV2Company, useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
 import { buildDocumentTree, callEntries, eventTitleMap, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
 import { tickerHead } from "@/lib/layout";
 import { IN_PLACE } from "@/lib/url-state";
-import { MediaState, Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
+import { MEDIA_CODES } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
 import { DocumentFilters } from "./-components/document-filters";
 import { DocumentSearch } from "./-components/document-search";
@@ -35,11 +35,17 @@ const PAGE_SIZE = 200;
 // The events list feeds the call rows: every event type, newest first, the API's largest page.
 const EVENTS_PAGE_SIZE = 200;
 
-/** The library's request state: the plan gate names STANDARD (the shared `MediaState` says PRO). */
+/** The library's request state: `MediaState`'s options, but the plan gate names STANDARD (`MediaState` says PRO). */
 function LibraryError({ error }: { error: unknown }) {
-    if (isTierError(error)) return <Notice badge="STANDARD" title="Your plan does not include company documents" />;
-
-    return <MediaState error={error} notFound="No earnings-call coverage for this company" title="Failed to load the documents" />;
+    return (
+        <RequestErrorState
+            codes={MEDIA_CODES}
+            error={error}
+            notFound={{ title: "No earnings-call coverage for this company" }}
+            tier={{ badge: "STANDARD", title: "Your plan does not include company documents" }}
+            title="Failed to load the documents"
+        />
+    );
 }
 
 /** The search sources: the company's own documents (`/v1/search/investor-documents`) or its SEC filings (`/v1/search/filings`). */
