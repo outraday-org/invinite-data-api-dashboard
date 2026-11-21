@@ -532,7 +532,9 @@ calls, with its page. Created by O7 group 1 from `server-functions.ts` at `ab8a8
 `listSegmentsDetailed` were called with no view before), group 7's (the six catalogs, `listCompanies`, `statusGet`, `statusLicensing`;
 `healthGet` with its reason), group 6's (`getInsiderTrade`, `getOffering`, `listFilerHoldingChanges`); group 5 adds no operation, it widens five rows (`listKpis`,
 `searchTranscripts`, `getEventComparison`, `listInvestorDocuments`, `getInvestorDocument`). Every O7
-group appends its rows, the alerts tasklist its 36 (→ 124); an operation with no view states why here.
+group appends its rows, the alerts tasklist its 36 (30 alert / destination + 6 script operations); an operation with no view
+states why here. Count: 89 non-alert rows + 36 = 125 operation ids in `openapi.json` = the 124 HTTP operations of
+`operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, which the operations table does not list).
 
 | Operation | Request | Page |
 |-----------|---------|------|
