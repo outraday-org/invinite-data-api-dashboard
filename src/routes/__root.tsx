@@ -9,10 +9,12 @@ import { ApiKeyDialogButton } from "@/components/api-key/api-key-dialog";
 import { KeyGate } from "@/components/api-key/key-gate";
 import { AppSidebar } from "@/components/navigation/app-sidebar";
 import { TickerSearch } from "@/components/search/ticker-search";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { isUnauthorized } from "@/lib/api/errors";
 import { ME_QUERY_KEY } from "@/lib/api/queries";
+import { THEME_SCRIPT } from "@/lib/theme";
 
 import appCss from "../styles.css?url";
 
@@ -87,7 +89,8 @@ function RootLayout() {
                         </SidebarTrigger>
                     </div>
                     <TickerSearch />
-                    <div className="justify-self-end flex items-center gap-3">
+                    <div className="justify-self-end flex items-center gap-2">
+                        <ThemeToggle />
                         <ApiKeyDialogButton />
                     </div>
                 </div>
@@ -107,8 +110,10 @@ function RootLayout() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="en">
+        // The no-flash script sets `.dark` before React hydrates: the class differs from the server's on purpose.
+        <html lang="en" suppressHydrationWarning>
             <head>
+                <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
                 <HeadContent />
             </head>
             <body style={{ "--app-topbar-height": "56px" } as React.CSSProperties}>
