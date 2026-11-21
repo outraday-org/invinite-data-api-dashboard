@@ -50,6 +50,7 @@ import type {
     V2Fund,
     V2FundPositionsResponse,
     V2FundsResponse,
+    V2FundsSort,
     V2FundStructure,
     V2FundType,
     V2FundWeightsResponse,
@@ -526,7 +527,7 @@ export function useInstrument(symbol: string) {
     });
 }
 
-export type FundsInput = { limit?: number; q?: string; structure?: Array<V2FundStructure>; type?: Array<V2FundType> };
+export type FundsInput = { exchange?: string; limit?: number; q?: string; sort?: V2FundsSort; structure?: Array<V2FundStructure>; type?: Array<V2FundType> };
 
 /** The listed funds by cursor (`GET /v1/funds`, filters `type` / `structure` / `q`). */
 export function useFunds(input: FundsInput) {
@@ -536,9 +537,9 @@ export function useFunds(input: FundsInput) {
         enabled: true,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getFunds({
-            data: { apiKey, cursor: cursor ?? undefined, limit: input.limit, q, structure: input.structure, type: input.type },
+            data: { apiKey, cursor: cursor ?? undefined, exchange: input.exchange, limit: input.limit, q, sort: input.sort, structure: input.structure, type: input.type },
         }),
-        queryKey: ["v2", "funds", q ?? "", key(input.type), key(input.structure), input.limit ?? ""],
+        queryKey: ["v2", "funds", q ?? "", key(input.type), key(input.structure), input.limit ?? "", input.exchange ?? "", input.sort ?? ""],
         staleTime: V2_STALE_MS,
     });
 }

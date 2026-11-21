@@ -6,6 +6,13 @@ export type RecentSubject
     = | { badge: null | string; kind: "filer"; label: string; name: null | string; ref: string }
         | { badge: null | string; kind: "instrument"; label: string; name: null | string; ref: string };
 
+/** The recents before the store is hydrated (one stable empty list: a selector must not build a new one per call). */
+export const NO_RECENTS: ReadonlyArray<RecentSubject> = [];
+
+/** The hydrated recents (none during the server render and before hydration). */
+export const selectRecents = (state: { hasHydrated: boolean; recents: Array<RecentSubject> }): ReadonlyArray<RecentSubject> =>
+    (state.hasHydrated ? state.recents : NO_RECENTS);
+
 /** How many subjects the recents list keeps (newest first). */
 export const RECENTS_MAX = 8;
 

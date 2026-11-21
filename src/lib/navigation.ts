@@ -5,8 +5,10 @@ import {
     ArrowUpRightIcon,
     BarChart3Icon,
     BriefcaseIcon,
+    BuildingIcon,
     CalendarDaysIcon,
     CalendarOffIcon,
+    ChartPieIcon,
     CircleUserRoundIcon,
     CoinsIcon,
     FileTextIcon,
@@ -18,10 +20,12 @@ import {
     LayersIcon,
     LayoutDashboardIcon,
     ListIcon,
+    LockKeyholeIcon,
     MicIcon,
     NewspaperIcon,
     PieChartIcon,
     RadioIcon,
+    ReceiptIcon,
     RocketIcon,
     ScaleIcon,
     SplitIcon,
@@ -220,3 +224,20 @@ export function filerContextAnchors(filer: null | Pick<V2FilerResponse, "fund" |
 
 /** The icon of the filer context's "Open <TICKER>" link. */
 export const OPEN_LISTING_ICON = ArrowUpRightIcon;
+
+/** A card of the landing page's "Browse" row: a Browse page opened with its filter. */
+export type BrowseCard = { description: string; icon: LucideIcon; label: string } & (
+    | { search: Record<string, never>; to: "/institutions" }
+    | { search: { structure: "registered_fund" }; to: "/funds" }
+    | { search: { type: "closed_end_fund" | "etf" | "etn" | "stock" }; to: "/instruments" }
+);
+
+/** The landing page's "Browse" row (the Browse pages of `BROWSE_NAV`, each with its first filter). */
+export const BROWSE_CARDS: ReadonlyArray<BrowseCard> = [
+    { description: "Companies listed on US exchanges.", icon: BuildingIcon, label: "Stocks", search: { type: "stock" }, to: "/instruments" },
+    { description: "Exchange-traded funds and trusts.", icon: ChartPieIcon, label: "ETFs", search: { type: "etf" }, to: "/instruments" },
+    { description: "Listed closed-end funds.", icon: LockKeyholeIcon, label: "Closed-end funds", search: { type: "closed_end_fund" }, to: "/instruments" },
+    { description: "Exchange-traded notes.", icon: ReceiptIcon, label: "ETNs", search: { type: "etn" }, to: "/instruments" },
+    { description: "Registered funds with their reported holdings.", icon: LayersIcon, label: "Funds with holdings", search: { structure: "registered_fund" }, to: "/funds" },
+    { description: "13F managers and their portfolios.", icon: LandmarkIcon, label: "Institutions", search: {}, to: "/institutions" },
+];

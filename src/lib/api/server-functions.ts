@@ -35,6 +35,7 @@ import type {
     V2Fund,
     V2FundPositionsResponse,
     V2FundsResponse,
+    V2FundsSort,
     V2FundStructure,
     V2FundType,
     V2FundWeightsResponse,
@@ -185,16 +186,18 @@ export const getFunds = createServerFn({ method: "GET" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cursor: z.string().min(1).optional(),
+        exchange: z.string().trim().min(1).max(10).optional(),
         limit: z.number().int().min(1).max(200).optional(),
         q: z.string().trim().min(1).optional(),
+        sort: z.enum(["symbol", "-symbol", "name", "-name"] as const satisfies ReadonlyArray<V2FundsSort>).optional(),
         structure: z.array(fundStructureSchema).optional(),
         type: z.array(fundTypeSchema).optional(),
     }))
     .handler(async ({ data }): Promise<V2FundsResponse> => {
-        const { apiKey, cursor, limit, q, structure, type } = data;
+        const { apiKey, cursor, exchange, limit, q, sort, structure, type } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/funds", {
-            params: { query: v2Query({ cursor, limit, q, structure: v2Expand(structure), type: v2Expand(type) }) },
+            params: { query: v2Query({ cursor, exchange, limit, q, sort, structure: v2Expand(structure), type: v2Expand(type) }) },
         });
 
         if (error) throwApiError(error, response);

@@ -6,10 +6,10 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { useFunds } from "@/lib/api/queries";
 import { FUNDS_PAGE } from "@/lib/instruments-fixtures";
-import { FundsList, Route } from "@/routes/funds";
+import { FundsList, fundsRequest, Route } from "@/routes/funds";
 
 vi.mock("@tanstack/react-router", () => ({
-    createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
+    createFileRoute: () => (options: Record<string, unknown>) => ({ options, useNavigate: () => vi.fn(), useSearch: () => ({}) }),
     Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => (
         <a href={Object.entries(params).reduce((path, [key, value]) => path.replace(`$${key}`, value), to)}>{children}</a>
     ),
@@ -49,8 +49,16 @@ describe("/funds (`GET /v1/funds`)", () => {
 
         render(<FundsPage />);
 
-        expect(useFunds).toHaveBeenLastCalledWith({ limit: 50, q: "", structure: undefined, type: undefined });
+        expect(useFunds).toHaveBeenLastCalledWith({ exchange: undefined, limit: 50, q: "", sort: undefined, structure: undefined, type: undefined });
 
         expect(screen.getByRole("heading", { name: "Funds" })).toBeInTheDocument();
+    });
+
+    it("\"with holdings\" = registered funds; exchange and sort go to the API (symbol / name only)", () => {
+        expect(fundsRequest({ exchange: "ARCX", sort: "-name", structure: "registered_fund" })).toMatchObject({
+            exchange: "ARCX",
+            sort: "-name",
+            structure: ["registered_fund"],
+        });
     });
 });

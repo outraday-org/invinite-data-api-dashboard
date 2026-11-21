@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { useInstrumentSearch, useKeyReady, useV2Filers } from "@/lib/api/queries";
 import { INSTRUMENT_TYPE_PLURALS, instrumentBadges, servesSection } from "@/lib/instruments";
 import { searchPages } from "@/lib/navigation";
-import { useTickerStore } from "@/lib/stores/ticker-store";
+import { selectRecents, useTickerStore } from "@/lib/stores/ticker-store";
 import { cn } from "@/lib/utils";
 
 /** The category pills (owner 2026-11-21): one active at a time, All by default; task 7 adds People. */
@@ -146,7 +146,7 @@ export function TickerSearch() {
 
     const pathname = useRouterState({ select: state => state.location.pathname });
 
-    const recents = useTickerStore(state => (state.hasHydrated ? state.recents : []));
+    const recents = useTickerStore(selectRecents);
 
     const keyReady = useKeyReady();
 
