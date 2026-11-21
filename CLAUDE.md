@@ -129,10 +129,10 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
 
 - **v2 (backend tasks/data-api-v2 task 8)**: the list is `GET /v1/news?company=<ticker>` (`getV2News` / `useNewsPage`: `kind`, `topic`, the `from` / `to` UTC days as `published_at.gte` / `published_at.lt` of the next midnight — `dayStartInstant`; keyset `next_cursor`); the panel is `GET /v1/news/{id}` (`useNewsItem`, the list row), `GET /v1/news/{id}/text` (`useNewsText`; `getV2NewsText` follows `next_cursor` and joins every page's blocks) and `GET /v1/announcements?item=` (`useNewsAnnouncements`, the v1 developments). v2 has no market-wide feed: decision 15 requires `company=` on every list, so dropping the "Whole market" view is accepted (lead, 2026-11-09) — the scope switch is gone and `?scope=market` reads the company. Source, earnings and Company-published (+ its publication type / category / tag) have no `/v1/news` parameter: `matchesNewsFilters` filters the loaded page, so a page can show fewer than 50 rows; the page then says how many it hid, and a page whose every row was hidden says so with a "Load the next page" button while `next_cursor` is set (never an empty-looking list). The summary renders from the blocks as React elements (`summary-body.tsx`: heading / paragraph / list, bullets dropped — no HTML injected; `summary-html.ts` is no longer used by the panel). The branded PDF comes from the v2 item's `pdf` (owner decision 2026-11-09; `PdfDocumentSection`, hidden when null). Not in the v2 contract, so not shown (lead decision G4): sightings, companies, `source_words` and `superseded_by` (a correction shows a notice from `supersedes_id`); no empty section. The live toggle subscribes the channel `news` on `WS /v1/stream`. The bullets below describe the v1 page where they differ
 
-- Nav item "News" after "Documents" (backend earnings `tasks/inhouse-news-pipeline` task 17). `?scope=&published=&source=&kind=&topic=&earnings=&pubType=&category=&tag=&from=&to=&item=&live=` (`validateNewsSearch` in `src/lib/news/labels.ts`: invalid → none; `published`, `pubType`, `category`, `tag` only in the company scope, `category` / `tag` only with `published` — the API needs exactly one publisher). `useNewsPage` → `GET /v1/news` (FREE), one page per KEYSET cursor (`cursor` in the query key, `null` = page 1). Pager (owner 2026-11-01): `-components/news-pager.tsx` Previous / "Page N" / Next CENTRED UNDER the table (no load-more, no infinite scroll; hidden while there is one page), over the visited-cursor stack of the pure `src/lib/news/pager.ts` (Next pushes the page's `next_cursor`, Previous pops it and reads the cached page; the stack is bound to a key of every filter + `from` / `to`, so any change starts at page 1); live items join page 1 only. The date inputs stay empty by default: without `from` / `to` the API pages back through the whole news history (IDA history mode), with them the same pager walks that ≤ 92-day range. The earnings lists keep `useEarningsInfinite` + `offsetPageParam` (`src/lib/api/page-params.ts`). `scope=market` drops `ticker`; "Company-published" sends `publisher=<CIK>` (the company's verified newsroom publications, from `useCompanyDetails`) INSTEAD of the ticker. No wire items exist (owner 2026-10-28): sources are `edgar` / `ir:<host>` (`sourceLabel`). Value sets (`NEWS_KIND_LABELS`, topics, publication types, claim statuses) mirror IDA `src/lib/news/constants.ts` No media filter or column since API 2.0.0 (backend earnings `tasks/X-inhouse-news-summaries-2026-11-07` task 5: the API serves no images or files)
+- Nav item "News" after "Documents" (backend earnings `tasks/inhouse-news-pipeline` task 17). `?scope=&published=&source=&kind=&topic=&earnings=&pubType=&category=&tag=&from=&to=&item=&live=` (`validateNewsSearch` in `src/lib/news/labels.ts`: invalid → none; `published`, `pubType`, `category`, `tag` only in the company scope, `category` / `tag` only with `published` — the API needs exactly one publisher). `useNewsPage` → `GET /v1/news` (FREE), one page per KEYSET cursor (`cursor` in the query key, `null` = page 1). Pager (owner 2026-11-01): `-components/news-pager.tsx` Previous / "Page N" / Next CENTRED UNDER the table (no load-more, no infinite scroll; hidden while there is one page), over the visited-cursor stack of the pure `src/lib/news/pager.ts` (Next pushes the page's `next_cursor`, Previous pops it and reads the cached page; the stack is bound to a key of every filter + `from` / `to`, so any change starts at page 1); live items join page 1 only. The date inputs stay empty by default: without `from` / `to` the API pages back through the whole news history (IDA history mode), with them the same pager walks that ≤ 92-day range. `scope=market` drops `ticker`; "Company-published" sends `publisher=<CIK>` (the company's verified newsroom publications, from `useCompanyDetails`) INSTEAD of the ticker. No wire items exist (owner 2026-10-28): sources are `edgar` / `ir:<host>` (`sourceLabel`). Value sets (`NEWS_KIND_LABELS`, topics, publication types, claim statuses) mirror IDA `src/lib/news/constants.ts` No media filter or column since API 2.0.0 (backend earnings `tasks/X-inhouse-news-summaries-2026-11-07` task 5: the API serves no images or files)
 - `-components/news-table.tsx` (headline → `?item=`, "Published by <issuer>" = `publishedBy` = the item's `publications`, never a mentioned company; else "By <attribution.publisher>"), `news-filters.tsx` (reuses `FilterSelect` of `calendar-filters.tsx`; categories / tags = the publisher's labels in the loaded items, `issuerLabels`), `news-item-panel.tsx` (`useNewsItem`, STANDARD, default detail `staleTime`; `NewsItemView` pure; dialog subtitle "Invinite's summary of the announcement"). Since API 2.0.0 (backend earnings `tasks/X-inhouse-news-summaries-2026-11-07`, owner 2026-11-07) the API serves Invinite's LLM summary of every publication, never the publisher's text or media; the panel renders, in order: the header (kind / earnings / source / "Published by" badges, `superseded_by` notice) and `AttributionBlock` — the D26 reference rendering (publisher + host, published, source link, EDGAR form · accession, the API's `statement` "Summary written by Invinite …" + "© <publisher>" for `rights: issuer`) — → the lede (`description`, the LLM lede; `data-testid="news-lede"`) → `-components/summary-body.tsx` `SummaryBody` (with "Summary by Invinite · N of M words" from `summary_words` / `source_words`) = `summary_html` sanitized AGAIN in the browser (`src/lib/news/summary-html.ts` `prepareSummaryHtml`: a DOMPurify instance, tags `h2, p, ul, li, strong, em` only, NO attributes — the API emits none; no DOM / SSR → the text) in `@tailwindcss/typography` `prose`, else `summary_text` as paragraphs (`paragraphs` in `src/lib/utils.ts`, shared with the press-release tab) → "AI-extracted developments" (claim status badge — "Planned" stands out; no `evidence` quotes: the API dropped them) → the branded PDF (`PdfDocumentSection`, `data.pdf`) → "Seen on" (`sightings`). Without a summary (`content_status: no_text`: published before summaries started, metadata-only or a reserved source): "Headline and link only" + "Open at source" (never an empty block or a fetched teaser). 404 / plan gate are states. Never re-add a publisher-text field, an image / file row or a media filter
 - Live (`LiveToggle` of `src/components/live/live-toggle.tsx`, `?live=true`, default off): `src/lib/live/use-live-news.ts` opens its own `liveWsUrl` socket (the stored key; never logged) and subscribes `newsSubscribeFrame` (`channel: "news"`, `tickers: [ticker]`, none in the market scope; kinds / sources / `earnings_only` from the filters); `news_item` frames (`parseNewsFrame` in `ws-frames.ts`, mirroring IDA `types/newsMessages.ts`: told apart from earnings frames by `channel: "news"`; the stream renames the registry's `news.live` both ways, IDA `src/lib/v1/stream.ts`) are re-checked with `matchesNewsFilters` (topic, publisher, publication type, category, tag, `earnings=false` are not socket filters) and merged on top by `mergeLiveItems` (one per id, marked "New"). `forbidden_tier` / close 4003 → STANDARD plan notice, `channel_unavailable` → "not enabled", close 4029 → "Live feed unavailable: connection limit", 4001 / `bad_message` → error: each STOPS (no reconnect loop) and turns the switch off; other closes reconnect 1 s → 30 s × 10, `unavailable` re-subscribes after 10 s, and a re-subscribe refetches the list (missed items are not replayed)
-- Tests: `src/routes/-tests/news-page.test.tsx` (`NewsPageView`, `NewsItemView`), `src/lib/news/labels.test.ts`, `src/lib/news/pager.test.ts`, `src/lib/api/page-params.test.ts`, the news cases of `ws-frames.test.ts`; fixtures `src/lib/news/news-fixtures.ts` (tests only)
+- Tests: `src/routes/-tests/news-page.test.tsx` (`NewsPageView`, `NewsItemView`), `src/lib/news/labels.test.ts`, `src/lib/news/pager.test.ts`, the news cases of `ws-frames.test.ts`; fixtures `src/lib/news/news-fixtures.ts` (tests only)
 - **O7 group 2 (backend `tasks/data-api-dashboard` task 7, 2026-11-21)**: the page has tabs News | Announcements (`?view=announcements`) and the shared list logic lives in `-components/use-news-list.ts` (`useNewsList`: pager, page-side filters, live merge; used by `/news-feed` too). News: a search box (`news-search.tsx` `NewsSearchBox` → `GET /v1/search/news`, STANDARD, 10 credits a page, `useV2NewsSearchInfinite`; submit-only, Keyword / Exact chips, field any / title / lede / summary, the page's day window, "More results" by cursor; hits in the shared layout — `MatchBadge` with the relevance in its tooltip, "Headline" / "Lede" / "Summary · <block heading>", `HitPassage` — the headline opens `?item=`; 503 `unavailable` "News search is not enabled" on prod 2026-11-21, `[FU2995]`), `?sort=oldest` (→ `sort=published_at`; Live clears it, it clears Live: live items join the newest-first list only) and `?event=<event id>` (`news-event-filter.tsx`: "Filter by call" asks the company's 20 newest events, `type=all`, only on that click or with `?event=` set). The page-side filters auto-advance the pager while a page shows no row (`shouldFillPage`, ≤ 10 pages per filter change, paused by Previous; the hidden line names the skipped pages). Export = the shown page (`ExportMenu` without "load all": the pager). Announcements (`announcements.tsx`, `AnnouncementsView` in a `DataTable` + export, `useV2AnnouncementsInfinite` → `GET /v1/announcements?company=`, STANDARD, 2 credits a page): `?aTopic=&aFrom=&aTo=&effFrom=&effTo=&aSort=oldest` → `topic`, `announced_at.gte|lt`, `effective_from.gte`, `effective_to.lte`, `sort`; columns announced, title + summary (model-derived, said once above the table) + named products / counterparties, topic, claim status (confidence in the tooltip), effective range with `date_precision` (`effectiveLabel`) and the stated text, the news item (`?item=` panel). v2's `source.id` is `edgar` | `ir` with the host in `source.host` (live 2026-11-21; the v1 `ir:<host>` id stays readable): `sourceLabel(source)` and the source filter read both. The press-release tab links its archival item (`news_id` → `/$ticker/news?item=`)
 - **`/news-feed`** (`src/routes/news-feed.tsx`, `BROWSE_NAV` "News feed"): `GET /v1/news` refuses a list without `company` or `event` (400 `invalid_parameter`, documented "one of the scope filters is required"; `req_01M7ZBPES0JQRY488JS45XZJ7N`), but `company` takes a comma list of 1–50 merged by `published_at` (one request, 1 credit; a fund in the list is dropped, an unknown ticker 404s the request). So scope "Watchlist" = up to 20 tickers kept in this browser (`src/lib/news/watchlist.ts`, `localStorage` `invinite.news-watchlist`, try/catch, read after mount) read as ONE `company=<list>` per keyset page with the News page's pager, filters (no Company-published), export and live switch (`tickers: [...]`) — not a per-ticker fan-out; scope "Whole market · live" (`?scope=market`) = the `news` channel without tickers only, since Live was switched on (no window / order: nothing is listed) and the search box without a company (`/v1/search/news` takes none). `?scope=&kind=&topic=&source=&earnings=&from=&to=&sort=&live=&item=` (`validateNewsFeedSearch`). Tests: `news-feed.test.tsx`, `use-news-list.test.tsx` (auto-advance), `news-search.test.tsx`, `announcements.test.tsx`, `press-release-tab.test.tsx`, `src/lib/news/watchlist.test.ts`, `src/lib/api/news-queries.test.tsx`
 
@@ -198,8 +198,9 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 - **The document scrolls** (the browser's scrollbar). `html` / `body` are `min-height: 100svh`; `body` sets the one base
   text size (`text-xs/relaxed`), so no element relies on the 16 px browser default. **No page body is a scroll box**: no
   `ScrollArea`, no `h-0 grow` flex chains, no fixed `h-[NNvh]` around a page's content. Inner scroll boxes are allowed
-  only in dialogs, side panels (`sec-source-panel.tsx`), the PDF / HTML viewers and code blocks (the call page has none:
-  the finished call's since O3, the live transcript's since O4).
+  only in dialogs, side panels (`sec-source-panel.tsx`), the PDF / HTML viewers and code / JSON blocks (a script's
+  source, a template, an event payload, a webhook example); the call page has none outside its dialogs (the finished
+  call's transcript since O3, the live transcript's since O4).
 - **Pinned**: the top bar (`__root.tsx`, `sticky top-0 h-14`, `--app-topbar-height: 56px` on `<body>`) and on ticker
   pages the instrument header (`$ticker/route.tsx`, `sticky top-(--app-topbar-height)`), whose height a
   `ResizeObserver` writes as `--ticker-header-height` on `<html>` (`0px` without one). Anything else that sticks sits
@@ -210,8 +211,8 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 - A search-param change that opens a panel or filters in place (`?item=` on News, the Documents filters) navigates with
   `resetScroll: false`: the document scrolls, so the router's default reset would jump to the top.
 - **Gate before mount**: `$ticker/route.tsx` renders a section (`<Outlet />`) only once the instrument is known
-  (skeleton while it loads), so a gated section never requests and no refusal flashes before the gate sentence; the
-  The `h1` is the answer's canonical `symbol`.
+  (skeleton while it loads), so a gated section never requests and no refusal flashes before the gate sentence. The
+  header's `h1` is the answer's canonical `symbol`.
 - **`PageHeader`** (`src/components/ui/page-header.tsx`): THE page title — `h2`, muted description, `actions` slot
   (filters) and the "API" button (O6). Every page renders it, in its error state too.
 - **`DataTable`** (`src/components/ui/data-table.tsx`, grown from `V2ListTable`): `columns`, `rows`, skeleton rows while
@@ -349,8 +350,9 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   flattened), "N rows loaded", "Load all pages first…" behind a confirm naming the per-page cost (`loadAllText`),
   stopping at the last page, after a page that added no row (failed / empty) or after `LOAD_ALL_MAX_PAGES` (25). On:
   dividends, splits, insider trades, filings, holders (each source + changes), fund holdings, calls list, market
-  holidays, funds, instruments, institutions. The calendar and `/ipo-calendar` have none yet (their rows are grouped /
-  split client-side).
+  holidays, funds, instruments, institutions, and every O7 / alerts list that names it in its section below (people,
+  offerings, catalog, data sets, the filing page's tabs, transcript search, news, announcements). The calendar and
+  `/ipo-calendar` have none yet (their rows are grouped / split client-side).
 - **Hints**: `src/components/ui/credit-hint.tsx` — `creditText(operationId)`, `CreditHint` (tooltip),
   `PlanBadge({ operationId })` (`useMe()` plan vs `x-tier` in `PLAN_ORDER`; nothing while the plan is unknown or
   outside a query client), `usePlanAllows`. `DataTable` / `LoadMoreButton` take `operationId` (the page's cost in the
@@ -635,38 +637,6 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   Fixtures appended to `src/lib/alerts/alerts-fixtures.ts` (the spec's `smoke-a` / defaults / `createScript` examples,
   `ODD_USER_ID`).
 
-### UI Components (`src/components/ui/`)
-
-Base UI components built on `@base-ui/react` primitives with `class-variance-authority` for variants. Uses `cn()` utility from `src/lib/utils.ts` (clsx + tailwind-merge).
-
-### Environment
-
-- `INVINITE_DATA_API_KEY`: Server-side API key (optional, can be set via UI)
-- `INVINITE_DATA_API_URL`: API base URL (defaults to https://api.data.invinite.com)
-
-Validated with `@t3-oss/env-core` in `src/lib/env.ts`.
-
-The app origin is NOT an env var: `src/lib/app-url.ts` (`INVINITE_APP_URL` = `https://data.invinite.com`, `dataApiDashboardUrl`, `docsUrl`) is a plain constant because `env.ts` reads `process.env` and is server-only, while its links render in the browser. A Data API account (keys, usage, credits, invoices) lives in the Invinite Data app (`/`, `/keys`, `/usage`, `/billing`; docs at `/docs`) — this explorer's `/account` (O5) only reads `/v1/me` + `/v1/me/usage`; keys, invoices and plan changes link there (the account page, the key fields' "No key yet?" line).
-
-## Code Style
-
-- 4-space indentation, double quotes, semicolons (via @stylistic/eslint-plugin)
-- Import sorting via eslint-plugin-perfectionist (recommended-natural)
-- React Compiler enabled (`react-compiler/react-compiler: error`)
-- Blank lines required before most statements (const, let, if, return, etc.)
-- Path alias: `@/*` maps to `./src/*`
-
-## Data contract ownership
-
-SDK generation/packaging/publication and API/MCP reference export belong to
-`invinite-data-api`; CLI command/reference export belongs to `invinite-data-cli`.
-This example dashboard retains its UI, server-side API consumption and
-`generate:api` frontend type projection. Its `openapi.json` is a pinned consumer
-artifact: adopt `reference/openapi.json` from a versioned API reference bundle,
-then regenerate its local types and run mocked tests. No SDK generator or source
-introspection of sibling checkouts belongs here. An ownership-only SDK move does
-not require a dashboard spec refresh or runtime deployment.
-
 ### Reference (O7 group 7: catalog, companies, status)
 
 - **`/catalog`** (`src/routes/catalog.tsx`, `BROWSE_NAV` "Catalog"): tabs Metrics | Sections | Forms | Event types |
@@ -706,6 +676,38 @@ not require a dashboard spec refresh or runtime deployment.
   tab (`holidaysRequest`: it narrows the tab, never leaves it).
 - Tests: `src/routes/-tests/reference-pages.test.tsx`, `src/lib/reference/catalog.test.ts`; fixtures
   `src/lib/reference/reference-fixtures.ts` (tests only).
+
+### UI Components (`src/components/ui/`)
+
+Base UI components built on `@base-ui/react` primitives with `class-variance-authority` for variants. Uses `cn()` utility from `src/lib/utils.ts` (clsx + tailwind-merge).
+
+### Environment
+
+- `INVINITE_DATA_API_KEY`: Server-side API key (optional, can be set via UI)
+- `INVINITE_DATA_API_URL`: API base URL (defaults to https://api.data.invinite.com)
+
+Validated with `@t3-oss/env-core` in `src/lib/env.ts`.
+
+The app origin is NOT an env var: `src/lib/app-url.ts` (`INVINITE_APP_URL` = `https://data.invinite.com`, `dataApiDashboardUrl`, `docsUrl`) is a plain constant because `env.ts` reads `process.env` and is server-only, while its links render in the browser. A Data API account (keys, usage, credits, invoices) lives in the Invinite Data app (`/`, `/keys`, `/usage`, `/billing`; docs at `/docs`) — this explorer's `/account` (O5) only reads `/v1/me` + `/v1/me/usage`; keys, invoices and plan changes link there (the account page, the key fields' "No key yet?" line).
+
+## Code Style
+
+- 4-space indentation, double quotes, semicolons (via @stylistic/eslint-plugin)
+- Import sorting via eslint-plugin-perfectionist (recommended-natural)
+- React Compiler enabled (`react-compiler/react-compiler: error`)
+- Blank lines required before most statements (const, let, if, return, etc.)
+- Path alias: `@/*` maps to `./src/*`
+
+## Data contract ownership
+
+SDK generation/packaging/publication and API/MCP reference export belong to
+`invinite-data-api`; CLI command/reference export belongs to `invinite-data-cli`.
+This example dashboard retains its UI, server-side API consumption and
+`generate:api` frontend type projection. Its `openapi.json` is a pinned consumer
+artifact: adopt `reference/openapi.json` from a versioned API reference bundle,
+then regenerate its local types and run mocked tests. No SDK generator or source
+introspection of sibling checkouts belongs here. An ownership-only SDK move does
+not require a dashboard spec refresh or runtime deployment.
 
 ## Operation coverage
 
