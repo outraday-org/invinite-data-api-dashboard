@@ -52,6 +52,11 @@ export type CallAudio = {
     /** Seek + play (the page's engine's `seekMs`); the first call requests `/audio` and plays once it is in. */
     seekMs: (ms: number) => void;
     /**
+     * The link's `?t=` (call ms) while it still decides where the recording starts: the first Play starts there. `null`
+     * once anything asked for the recording (a play, a timestamp, a search hit) or without a `?t=`.
+     */
+    startAtMs: null | number;
+    /**
      * The webcast slide changes on the recording's clock, as seek-bar markers: published by the Slides tab once its
      * `/slides?include=timeline` answer is in (never requested for the markers alone), kept when the tab closes.
      */
@@ -120,12 +125,18 @@ export function CallAudioProvider({
     eventId,
     hasAudio,
     live,
+    startAtMs,
 }: {
     children: React.ReactNode;
     eventId: string;
     hasAudio: boolean;
     /** The page's live session (`useCallLiveSession`); absent = never live. */
     live?: CallLiveSession;
+    /**
+     * Where the first Play starts (the link's `?t=`, call ms). Read once: the recording is still never asked for on page
+     * load (a pro operation billed per request), so a link at a time arms the Play button instead of loading the file.
+     */
+    startAtMs?: number;
 }) {
     const [requested, setRequested] = React.useState(false);
 
@@ -139,7 +150,11 @@ export function CallAudioProvider({
 
     const recording = audio.data ?? null;
 
-    const fileEngine = useFileEngine({
+    // Only a call with a published recording at mount: a live call's link time is not applied (the stream has its own
+    // "Tune in" / "From the beginning"; the handover keeps the live position).
+    const [linkStartMs] = React.useState(() => (hasAudio && startAtMs !== undefined ? startAtMs : null));
+
+    const fileEngineRaw = useFileEngine({
         error: audio.error,
         hit: playedUrl,
         mediaRef: audioRef,
@@ -147,6 +162,13 @@ export function CallAudioProvider({
         recordingUrl: recording?.url ?? null,
         requested,
     });
+
+    // Armed until anything asks for the recording; then the listener's own seeks decide.
+    const startAt = linkStartMs !== null && !requested && playedUrl === null ? linkStartMs : null;
+
+    const fileEngine: typeof fileEngineRaw = startAt === null
+        ? fileEngineRaw
+        : { ...fileEngineRaw, play: () => fileEngineRaw.seekMs(startAt) };
 
     const playUrl = (url: string) => {
         setPlayedUrl(previous => ({ nonce: (previous?.nonce ?? 0) + 1, url }));
@@ -259,6 +281,7 @@ export function CallAudioProvider({
         seekMs: ms => engine.seekMs(ms),
         setSlideMarkers,
         slideMarkers,
+        startAtMs: onAir ? null : startAt,
         words,
         wordTurns,
     };

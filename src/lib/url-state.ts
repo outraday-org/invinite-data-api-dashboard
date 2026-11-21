@@ -26,3 +26,6 @@ export const optionalAccession = () => z.string().regex(/^\d{10}-\d{2}-\d{6}$/).
 
 /** A boolean flag written as `true` (absent = false). */
 export const optionalFlag = () => z.boolean().optional().catch(undefined);
+
+/** A whole number in `[min, max]` (`?t=95`, `?version=3`; a numeric string is read as its number). */
+export const optionalInt = (min: number, max: number) => z.coerce.number().int().min(min).max(max).optional().catch(undefined);

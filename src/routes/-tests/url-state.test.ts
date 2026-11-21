@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { financialsSearchSchema } from "@/components/financials-pages/financials-search";
+import { Route as CallRoute } from "@/routes/$ticker/earnings-calls/$eventId/index";
+import { callLinkAt } from "@/routes/$ticker/earnings-calls/-components/call-search";
 import { Route as CallsRoute } from "@/routes/$ticker/earnings-calls/index";
 import { Route as FilingsRoute } from "@/routes/$ticker/filings/index";
 import { Route as HoldersRoute } from "@/routes/$ticker/holders/index";
@@ -41,6 +43,19 @@ describe("URL state (validateSearch): a reload restores what the URL says, an in
 
         expect(parse(FilerRoute, { docs: "0001067983-25-000001", form: "13F-HR", period: "2026-09-30" }))
             .toEqual({ docs: "0001067983-25-000001", form: "13F-HR", period: "2026-09-30" });
+    });
+
+    it("call page (O6-final): tab, transcript format and version, the moment ?t= in seconds", () => {
+        expect(parse(CallRoute, { format: "cleaned", t: "754", tab: "qa", version: "2" })).toEqual({ format: "cleaned", t: 754, tab: "qa", version: 2 });
+
+        expect(parse(CallRoute, { format: "pdf", t: -5, tab: "audio", version: 0 })).toEqual({});
+
+        expect(parse(CallRoute, { t: 1.5 })).toEqual({});
+    });
+
+    it("call page: the copied link keeps the other params and replaces t", () => {
+        expect(callLinkAt("https://dash.test/NVDA/earnings-calls/e1?format=text&t=10", 754.9))
+            .toBe("https://dash.test/NVDA/earnings-calls/e1?format=text&t=754");
     });
 
     it("financials: every tab's filter and the charted row", () => {

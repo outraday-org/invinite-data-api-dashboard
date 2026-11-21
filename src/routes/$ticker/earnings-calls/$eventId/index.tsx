@@ -8,33 +8,32 @@ import { NotFound } from "@/components/ui/not-found";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useV2Event } from "@/lib/api/queries";
+import { formatMs } from "@/lib/earnings/format";
 import { tickerHead } from "@/lib/layout";
+import { IN_PLACE } from "@/lib/url-state";
 
 import type { JumpToTranscript } from "../-components/ask-this-call";
+import type { CallSearch } from "../-components/call-search";
 import type { CallTab, TranscriptJump } from "../-components/call-tabs";
 import type { LiveSessionClock } from "../-components/live/use-call-live-session";
 
 import { AskThisCall } from "../-components/ask-this-call";
 import { CallAudioProvider } from "../-components/audio-context";
 import { CallHeader } from "../-components/call-header";
-import { CALL_TAB_VALUES, CallTabs, DEFAULT_CALL_TAB } from "../-components/call-tabs";
+import { callLinkAt, callSearchSchema } from "../-components/call-search";
+import { CallTabs, DEFAULT_CALL_TAB } from "../-components/call-tabs";
 import { EventVideoSlot } from "../-components/event-video";
 import { LivePlayerSlot } from "../-components/live-player-slot";
 import { recordingWaitInterval, useCallLiveSession } from "../-components/live/use-call-live-session";
 import { CallPlayerBar } from "../-components/player/live-call-player";
-
-// `tab` stays optional (every `EventLink` would otherwise have to pass search); an unknown
-// value falls back to the transcript instead of failing the route.
-const callSearchSchema = z.object({
-    tab: z.enum(CALL_TAB_VALUES).optional().catch(undefined),
-});
 
 const eventIdSchema = z.string().uuid();
 
 export const Route = createFileRoute("/$ticker/earnings-calls/$eventId/")({
     component: EarningsCallPage,
     head: ({ params }) => tickerHead(params.ticker, "Earnings Call"),
-    validateSearch: (search: Record<string, unknown>) => callSearchSchema.parse(search),
+    // Every field optional (an `EventLink` passes no search); an unknown value falls back to its default.
+    validateSearch: callSearchSchema,
 });
 
 function EarningsCallPage() {
@@ -49,7 +48,9 @@ function EarningsCallPage() {
  * symbol differs from the URL's ticker still renders (no redirect).
  */
 function CallPage({ eventId }: { eventId: string }) {
-    const { tab = DEFAULT_CALL_TAB } = Route.useSearch();
+    const search = Route.useSearch();
+
+    const { tab = DEFAULT_CALL_TAB } = search;
 
     const navigate = Route.useNavigate();
 
@@ -71,8 +72,35 @@ function CallPage({ eventId }: { eventId: string }) {
 
     const [transcriptJump, setTranscriptJump] = React.useState<null | TranscriptJump>(null);
 
-    const onTabChange = (next: CallTab) => {
-        void navigate({ replace: true, resetScroll: false, search: prev => ({ ...prev, tab: next }) });
+    // The link's `?t=` as it was when the page opened (a later "Copy link" rewrites `t`, never re-jumps).
+    const [linkTimeMs] = React.useState(() => (search.t === undefined ? null : search.t * 1000));
+
+    // `?t=` opens the final transcript at that moment once the event is in (the Transcript tab scrolls there; a live
+    // call has no final transcript yet, so nothing scrolls — documented in the dashboard CLAUDE.md).
+    const linkJumpDoneRef = React.useRef(false);
+
+    React.useEffect(() => {
+        if (linkJumpDoneRef.current || linkTimeMs === null || !event) return;
+
+        linkJumpDoneRef.current = true;
+
+        if (event.has_transcript && tab === "transcript") setTranscriptJump({ fromLink: true, ms: linkTimeMs, nonce: 1 });
+    }, [event, linkTimeMs, tab]);
+
+    const onSearchChange = React.useCallback((patch: Partial<CallSearch>) => {
+        void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
+    }, [navigate]);
+
+    const onTabChange = (next: CallTab) => onSearchChange({ tab: next });
+
+    // The player's `⋯` → "Copy link at current time": the page URL with `?t=`, also written into the address bar.
+    const onCopyLinkAt = (seconds: number) => {
+        navigator.clipboard.writeText(callLinkAt(window.location.href, seconds)).then(
+            () => toast.success(`Link at ${formatMs(seconds * 1000)} copied`),
+            () => toast.error("Could not copy the link"),
+        );
+
+        onSearchChange({ t: seconds });
     };
 
     // A played search hit jumps along `quiet`ly: a call without a transcript just plays.
@@ -111,7 +139,7 @@ function CallPage({ eventId }: { eventId: string }) {
     return (
         // The recording is requested on the first play or timestamp click (never on page load, an old `?tab=audio`
         // link included), then stays loaded so timestamps on any tab can play it.
-        <CallAudioProvider eventId={event.event_id} hasAudio={event.has_audio} live={liveSession}>
+        <CallAudioProvider eventId={event.event_id} hasAudio={event.has_audio} live={liveSession} startAtMs={linkTimeMs ?? undefined}>
             <div className="flex flex-col gap-4">
                 <CallHeader event={event} />
 
@@ -131,12 +159,14 @@ function CallPage({ eventId }: { eventId: string }) {
 
                 {/* The one player bar, sticky below the ticker header on every tab: the live stream while the call is */}
                 {/* followed live, the recording once it is published (nothing without either). */}
-                <CallPlayerBar event={event} />
+                <CallPlayerBar event={event} onCopyLinkAt={onCopyLinkAt} />
 
                 <CallTabs
                     event={event}
+                    onSearchChange={onSearchChange}
                     onTabChange={onTabChange}
                     onTranscriptJumpHandled={() => setTranscriptJump(null)}
+                    search={search}
                     tab={tab}
                     transcriptJump={transcriptJump}
                 />

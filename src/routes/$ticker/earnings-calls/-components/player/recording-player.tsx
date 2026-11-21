@@ -1,7 +1,11 @@
+import { Link2 } from "lucide-react";
+
 import type { V2AudioResponse, V2Event } from "@/lib/api/types";
 
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { callFileName } from "@/lib/download";
 import { formatBytes, formatMs } from "@/lib/earnings/format";
+import { usePlayer } from "@/lib/player/player-context";
 
 import type { PlayerDetail, PlayerDownload } from "./player-controls";
 import type { PlayerMarker } from "./seek-bar";
@@ -39,13 +43,29 @@ export function recordingDetails(recording: V2AudioResponse): Array<PlayerDetail
     ];
 }
 
+/** `⋯` → "Copy link at current time": hands the page the element's position in whole seconds (`?t=`). */
+function CopyTimeLinkItem({ onCopyLinkAt }: { onCopyLinkAt: (seconds: number) => void }) {
+    const { engine, mediaRef } = usePlayer();
+
+    return (
+        <DropdownMenuItem
+            onClick={() => onCopyLinkAt(Math.floor((mediaRef.current?.currentTime ?? engine.positionMs / 1000)))}
+        >
+            <Link2 />
+            Copy link at current time
+        </DropdownMenuItem>
+    );
+}
+
 /**
  * The finished call's player: `CallPlayer` on the file engine with the recording's own pieces — the caption line,
  * the markers (the Q&A start = the words transcript's `qa_start_ms`, shown once that transcript is in; the webcast slide
- * changes once the Slides tab loaded its timeline), the file facts (+ the permanent-link note) and the download. Nothing for a call without a recording (unless a search hit plays).
+ * changes once the Slides tab loaded its timeline), the file facts (+ the permanent-link note), the download and
+ * "Copy link at current time" (`?t=`). A link's `?t=` labels the Play button until the recording is asked for.
+ * Nothing for a call without a recording (unless a search hit plays).
  */
-export function RecordingPlayer({ event }: { event: V2Event }) {
-    const { canSeek, recording, slideMarkers, words } = useCallAudio();
+export function RecordingPlayer({ event, onCopyLinkAt }: { event: V2Event; onCopyLinkAt?: (seconds: number) => void }) {
+    const { canSeek, recording, slideMarkers, startAtMs, words } = useCallAudio();
 
     if (!canSeek) return null;
 
@@ -62,6 +82,8 @@ export function RecordingPlayer({ event }: { event: V2Event }) {
             detailsNote="Permanent link; the file carries a forensic watermark."
             download={download}
             markers={markers}
+            menu={onCopyLinkAt ? <CopyTimeLinkItem onCopyLinkAt={onCopyLinkAt} /> : undefined}
+            playLabel={startAtMs === null ? undefined : `Play from ${formatMs(startAtMs)}`}
         />
     );
 }

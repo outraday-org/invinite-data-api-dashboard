@@ -4,6 +4,7 @@ import * as React from "react";
 import type { V2Event } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
+import { Copyable } from "@/components/ui/copy-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { eventLabel, formatInstant, SESSION_LABELS } from "@/lib/earnings/format";
 
@@ -22,8 +23,8 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 /**
- * Call header: company, period, time, status, materials, lifecycle times, the IR webcast page
- * and the API's call-time provenance (`observations[]`, collapsed — shown because this is the
+ * Call header: company, period, time, status, materials, lifecycle times, the IR webcast page, the event id (with
+ * its copy button: every `/v1/events/{event_id}/…` request names it) and the API's call-time provenance (`observations[]`, collapsed — shown because this is the
  * example app).
  */
 export function CallHeader({ event }: { event: V2Event }) {
@@ -53,6 +54,14 @@ export function CallHeader({ event }: { event: V2Event }) {
                 {event.started_at && <Fact label="Started" value={formatInstant(event.started_at)} />}
                 {event.ended_at && <Fact label="Ended" value={formatInstant(event.ended_at)} />}
                 {event.reschedule_count > 0 && <Fact label="Rescheduled" value={`${event.reschedule_count}×`} />}
+                <Fact
+                    label="Event id"
+                    value={(
+                        <Copyable label="Copy event id" value={event.event_id}>
+                            <code className="font-mono text-[0.6875rem] break-all">{event.event_id}</code>
+                        </Copyable>
+                    )}
+                />
                 {event.webcast_url && (
                     <Fact
                         label="Webcast"

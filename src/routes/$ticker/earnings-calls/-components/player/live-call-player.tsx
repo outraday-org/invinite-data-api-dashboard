@@ -123,9 +123,12 @@ export function LiveCallPlayer() {
     );
 }
 
-/** The page's one bar: the live call's while the HLS engine is the page's, else the recording's. */
-export function CallPlayerBar({ event }: { event: V2Event }) {
+/**
+ * The page's one bar: the live call's while the HLS engine is the page's, else the recording's. "Copy link at current
+ * time" is the recording's only: a live position is not a moment a link can reopen before the recording is published.
+ */
+export function CallPlayerBar({ event, onCopyLinkAt }: { event: V2Event; onCopyLinkAt?: (seconds: number) => void }) {
     const live = useLiveCall();
 
-    return live?.onAir ? <LiveCallPlayer /> : <RecordingPlayer event={event} />;
+    return live?.onAir ? <LiveCallPlayer /> : <RecordingPlayer event={event} onCopyLinkAt={onCopyLinkAt} />;
 }

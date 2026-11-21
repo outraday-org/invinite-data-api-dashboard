@@ -2,8 +2,11 @@ import type * as React from "react";
 
 import type { V2Event } from "@/lib/api/types";
 
+import { ApiButton } from "@/components/api/api-sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+
+import type { CallSearch } from "./call-search";
 
 import { useLiveCall } from "./audio-context";
 import { LiveTranscript } from "./live/live-transcript-view";
@@ -40,8 +43,11 @@ export type CallTab = (typeof CALL_TAB_VALUES)[number];
 
 export const DEFAULT_CALL_TAB: CallTab = "transcript";
 
-/** A "Jump to transcript" request: the Transcript tab scrolls to `ms`; `nonce` repeats a jump to the same spot. */
-export type TranscriptJump = { ms: number; nonce: number };
+/**
+ * A "Jump to transcript" request: the Transcript tab scrolls to `ms`; `nonce` repeats a jump to the same spot.
+ * `fromLink` = the page's `?t=`: the URL's format is kept and nothing is announced when the spot cannot be shown.
+ */
+export type TranscriptJump = { fromLink?: boolean; ms: number; nonce: number };
 
 /** What every tab panel gets. */
 export type CallTabProps = {
@@ -51,6 +57,10 @@ export type CallTabProps = {
     /** The Transcript tab clears the pending jump once it has scrolled (or told why it could not). */
     onTranscriptJumpHandled: () => void;
     onTabChange: (tab: CallTab) => void;
+    /** Merges into the page's URL state (`IN_PLACE`): the Transcript tab's `format` / `version`. */
+    onSearchChange: (patch: Partial<CallSearch>) => void;
+    /** The page's URL state (`?format=`, `?version=`, `?t=`). */
+    search: CallSearch;
     transcriptJump: null | TranscriptJump;
 };
 
@@ -84,17 +94,23 @@ const CALL_TABS: Record<CallTab, CallTabDefinition> = {
  * unselected tab never sends its request. The player (`CallPlayer`) is the page's, above the bar.
  * While the page follows the call live and the final transcript is not published, the Transcript tab is the live
  * transcript (`LiveTranscript`); `has_transcript` turning true swaps in the final one.
+ * The bar's "API" button (O6-final; the call page has no `PageHeader`) lists the requests on screen: the event's, the
+ * open tab's and the player's — whatever query is mounted, so nothing per tab registers.
  */
 export function CallTabs({
     event,
+    onSearchChange,
     onTabChange,
     onTranscriptJumpHandled,
+    search,
     tab,
     transcriptJump,
 }: {
     event: V2Event;
+    onSearchChange: (patch: Partial<CallSearch>) => void;
     onTabChange: (tab: CallTab) => void;
     onTranscriptJumpHandled: () => void;
+    search: CallSearch;
     tab: CallTab;
     transcriptJump: null | TranscriptJump;
 }) {
@@ -119,27 +135,32 @@ export function CallTabs({
     const props: CallTabProps = {
         event,
         eventId: event.event_id,
+        onSearchChange,
         onTabChange,
         onTranscriptJumpHandled,
+        search,
         transcriptJump,
     };
 
     return (
         <Tabs onValueChange={value => onTabChange(value as CallTab)} value={shownTab}>
-            <div className="overflow-x-auto">
-                <TabsList variant="line">
-                    {visibleTabs.map((value) => {
-                        const { flag, label } = CALL_TABS[value];
+            <div className="flex items-center gap-2">
+                <div className="min-w-0 grow overflow-x-auto">
+                    <TabsList variant="line">
+                        {visibleTabs.map((value) => {
+                            const { flag, label } = CALL_TABS[value];
 
-                        const muted = flag !== undefined && !event[flag] && !(value === "transcript" && liveText);
+                            const muted = flag !== undefined && !event[flag] && !(value === "transcript" && liveText);
 
-                        return (
-                            <TabsTrigger className={cn(muted && "text-muted-foreground/50")} key={value} value={value}>
-                                {label}
-                            </TabsTrigger>
-                        );
-                    })}
-                </TabsList>
+                            return (
+                                <TabsTrigger className={cn(muted && "text-muted-foreground/50")} key={value} value={value}>
+                                    {label}
+                                </TabsTrigger>
+                            );
+                        })}
+                    </TabsList>
+                </div>
+                <ApiButton />
             </div>
 
             <TabsContent className="pt-2" value={shownTab}>

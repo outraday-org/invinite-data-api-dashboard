@@ -11,6 +11,7 @@ import { ApiRequestError } from "@/lib/api/errors";
 import { PLAYER_RATE_STORAGE_KEY } from "@/lib/player/engine";
 import { CallPlayerProvider, usePlayer } from "@/lib/player/player-context";
 import { CallAudioProvider } from "@/routes/$ticker/earnings-calls/-components/audio-context";
+import { CallHeader } from "@/routes/$ticker/earnings-calls/-components/call-header";
 import { CALL_TAB_VALUES } from "@/routes/$ticker/earnings-calls/-components/call-tabs";
 import { CallPlayer } from "@/routes/$ticker/earnings-calls/-components/player/call-player";
 import { recordingFilename, RecordingPlayer } from "@/routes/$ticker/earnings-calls/-components/player/recording-player";
@@ -359,6 +360,70 @@ describe("RecordingPlayer on the file engine", () => {
         expect(queries.audioIds.at(-1)).toBe(EVENT_ID);
     });
 
+    it("a link's ?t= labels the first Play, which asks for /audio then and starts there (never on page load)", () => {
+        queries.recording = { bytes: 1_000, capture_path: "direct_download", codec: "mp3", duration_seconds: 2_745, url: "https://storage.example.com/calls/t/AAPL.mp3" };
+
+        render(
+            <CallAudioProvider eventId={EVENT_ID} hasAudio startAtMs={95_000}>
+                <RecordingPlayer event={event} />
+            </CallAudioProvider>,
+        );
+
+        expect(queries.audioIds.every(id => id === "")).toBe(true);
+
+        act(() => {
+            fireEvent.click(screen.getByRole("button", { name: "Play from 1:35" }));
+        });
+
+        expect(queries.audioIds.at(-1)).toBe(EVENT_ID);
+
+        const audio = document.querySelector<HTMLAudioElement>("audio[data-engine='file']");
+
+        act(() => {
+            audio?.dispatchEvent(new Event("loadedmetadata"));
+        });
+
+        expect(audio?.currentTime).toBe(95);
+
+        expect(HTMLMediaElement.prototype.play).toHaveBeenCalled();
+    });
+
+    it("a link's ?t= is not applied to a call without a recording at load (a live call keeps Tune in)", () => {
+        render(
+            <CallAudioProvider eventId={EVENT_ID} hasAudio={false} startAtMs={95_000}>
+                <RecordingPlayer event={event} />
+            </CallAudioProvider>,
+        );
+
+        expect(screen.queryByRole("button", { name: /Play from/ })).toBeNull();
+    });
+
+    it("⋯ → Copy link at current time hands the page the position in whole seconds", async () => {
+        queries.recording = { bytes: 1_000, capture_path: "direct_download", codec: "mp3", duration_seconds: 2_745, url: "https://storage.example.com/calls/t/AAPL.mp3" };
+
+        const onCopyLinkAt = vi.fn();
+
+        render(
+            <CallAudioProvider eventId={EVENT_ID} hasAudio>
+                <RecordingPlayer event={event} onCopyLinkAt={onCopyLinkAt} />
+            </CallAudioProvider>,
+        );
+
+        act(() => {
+            fireEvent.click(screen.getByRole("button", { name: "Play the recording" }));
+        });
+
+        const audio = document.querySelector<HTMLAudioElement>("audio[data-engine='file']");
+
+        if (audio) audio.currentTime = 754.8;
+
+        fireEvent.click(screen.getByRole("button", { name: "Player details" }));
+
+        fireEvent.click(await screen.findByRole("menuitem", { name: "Copy link at current time" }));
+
+        expect(onCopyLinkAt).toHaveBeenCalledWith(754);
+    });
+
     it("renders no bar for a call without a recording (timestamps are text)", () => {
         const { container } = render(
             <CallAudioProvider eventId={EVENT_ID} hasAudio={false}>
@@ -378,6 +443,14 @@ describe("RecordingPlayer on the file engine", () => {
         expect(recordingFilename(event, { codec: "aac", url: "https://storage.example.com/calls/t/file.m4a" })).toBe("AAPL-Q3-FY2026-call.m4a");
 
         expect(recordingFilename({ ...event, fiscal_year: null }, { codec: "mp3", url: "not a url" })).toBe("AAPL-call.mp3");
+    });
+
+    it("the call header shows the event id with its copy button", () => {
+        render(<CallHeader event={{ ...event, company_name: "Apple", event_type: "earnings_call", observations: [], reschedule_count: 0 } as V2Event} />);
+
+        expect(screen.getByText(EVENT_ID)).toBeInTheDocument();
+
+        expect(screen.getByRole("button", { name: "Copy event id" })).toBeInTheDocument();
     });
 
     it("has no Audio tab: an old ?tab=audio is not a tab value", () => {

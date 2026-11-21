@@ -33,7 +33,7 @@ vi.mock("@/lib/player/player-context", () => ({
 
 // The Q&A tab module also imports the hooks and the audio host; nothing of them runs here.
 // The Transcript tab's requests, stubbed: each call is recorded to check what is asked.
-const requests = vi.hoisted(() => ({ transcript: [] as Array<unknown> }));
+const requests = vi.hoisted(() => ({ transcript: [] as Array<unknown>, versions: [] as Array<unknown> }));
 
 vi.mock("@/lib/api/queries", () => ({
     useV2Participants: () => ({ data: null }),
@@ -49,8 +49,11 @@ vi.mock("@/lib/api/queries", () => ({
         };
     },
     useV2TranscriptDiff: () => ({ data: null, error: null, isLoading: false }),
-    useV2TranscriptText: () => ({ data: null, error: null }),
-    useV2TranscriptVersions: () => ({ data: { data: [] } }),
+    useV2TranscriptText: (input: { eventId: string }) => ({
+        data: input.eventId ? { blocks: [{ section: "prepared_remarks", text: "Good morning everyone" }], qa_start_ms: null, version: 3 } : null,
+        error: null,
+    }),
+    useV2TranscriptVersions: () => ({ data: { data: requests.versions } }),
 }));
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({ useCallAudio: () => ({ recording: null }) }));
@@ -159,13 +162,73 @@ describe("TranscriptTurns (playback)", () => {
     });
 });
 
+const TAB_EVENT = { event_id: "e1", fiscal_quarter: 3, fiscal_year: 2027, has_audio: true, symbol: "NVDA" };
+
+function tabProps(search: Record<string, unknown>, onSearchChange = vi.fn(), jump: null | object = null, onTranscriptJumpHandled = vi.fn()) {
+    return { event: TAB_EVENT, eventId: "e1", onSearchChange, onTranscriptJumpHandled, search, transcriptJump: jump } as unknown as React.ComponentProps<typeof TranscriptTab>;
+}
+
+const versionEntry = (version: number) => ({ change_note: null, pdf: null, published_at: "2026-11-20T21:00:00Z", version, version_kind: "final", word_count: 9_000 });
+
 describe("TranscriptTab", () => {
-    it("asks the Speakers format of the current version once, with its words (the player provider's very query)", () => {
+    beforeEach(() => {
         requests.transcript.length = 0;
 
-        const event = { event_id: "e1", fiscal_quarter: 3, fiscal_year: 2027, has_audio: true, symbol: "NVDA" };
+        requests.versions = [];
+    });
 
-        render(<TranscriptTab {...({ event, eventId: "e1", onTranscriptJumpHandled: vi.fn(), transcriptJump: null } as unknown as React.ComponentProps<typeof TranscriptTab>)} />);
+    it("reads ?format= and ?version= from the URL (O6-final): the cleaned layer of version 2", () => {
+        requests.versions = [versionEntry(3), versionEntry(2)];
+
+        render(<TranscriptTab {...tabProps({ format: "cleaned", version: 2 })} />);
+
+        expect(requests.transcript.at(-1)).toEqual({ eventId: "e1", layer: "cleaned", version: 2, words: undefined });
+
+        expect(screen.getByRole("tab", { name: "Cleaned", selected: true })).toBeInTheDocument();
+    });
+
+    it("a ?version= the published list does not name reads as the current version", () => {
+        requests.versions = [versionEntry(3)];
+
+        render(<TranscriptTab {...tabProps({ version: 9 })} />);
+
+        expect(requests.transcript.at(-1)).toEqual({ eventId: "e1", layer: undefined, version: undefined, words: true });
+    });
+
+    it("a link's ?t= keeps the URL's format (plain text opens at the top); a passage jump switches to Speakers", () => {
+        const onSearchChange = vi.fn();
+
+        const handled = vi.fn();
+
+        const { rerender } = render(<TranscriptTab {...tabProps({ format: "text" }, onSearchChange, { fromLink: true, ms: 754_000, nonce: 1 }, handled)} />);
+
+        expect(onSearchChange).not.toHaveBeenCalled();
+
+        expect(handled).toHaveBeenCalled();
+
+        rerender(<TranscriptTab {...tabProps({ format: "text" }, onSearchChange, { ms: 754_000, nonce: 2 }, handled)} />);
+
+        expect(onSearchChange).toHaveBeenCalledWith({ format: undefined });
+    });
+
+    it("a format pick writes the URL; Speakers (the default) is written as no parameter", () => {
+        const onSearchChange = vi.fn();
+
+        const { rerender } = render(<TranscriptTab {...tabProps({}, onSearchChange)} />);
+
+        fireEvent.click(screen.getByRole("tab", { name: "Plain text" }));
+
+        expect(onSearchChange).toHaveBeenLastCalledWith({ format: "text" });
+
+        rerender(<TranscriptTab {...tabProps({ format: "text" }, onSearchChange)} />);
+
+        fireEvent.click(screen.getByRole("tab", { name: "Speakers" }));
+
+        expect(onSearchChange).toHaveBeenLastCalledWith({ format: undefined });
+    });
+
+    it("asks the Speakers format of the current version once, with its words (the player provider's very query)", () => {
+        render(<TranscriptTab {...tabProps({})} />);
 
         const asked = requests.transcript.filter(input => (input as { eventId: string }).eventId === "e1");
 

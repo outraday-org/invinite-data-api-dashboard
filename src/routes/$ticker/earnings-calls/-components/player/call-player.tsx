@@ -147,6 +147,7 @@ export function CallPlayer({
     markers = [],
     menu,
     notice,
+    playLabel = "Play the recording",
     status,
 }: {
     /** The caption line under the controls (stays in the compact layout). */
@@ -162,6 +163,8 @@ export function CallPlayer({
     menu?: React.ReactNode;
     /** A line in place of the controls (a live stream not playable yet, a call that ended). */
     notice?: React.ReactNode;
+    /** The idle Play button's text ("Play from 12:34" for a link at a time). */
+    playLabel?: string;
     /** Status pills beside the controls (buffering, waiting for the transcript, reconnecting …). */
     status?: React.ReactNode;
 }) {
@@ -211,7 +214,7 @@ export function CallPlayer({
         body = (
             <Button onClick={engine.play} size="sm" type="button">
                 <Play />
-                Play the recording
+                {playLabel}
             </Button>
         );
     }

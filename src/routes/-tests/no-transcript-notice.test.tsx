@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { V2Event } from "@/lib/api/types";
 
 import { ApiRequestError } from "@/lib/api/errors";
+import { shareWithRequests } from "@/lib/api/request-meta";
 import { CallTabs } from "@/routes/$ticker/earnings-calls/-components/call-tabs";
 import { MediaState, NO_TRANSCRIPT_TITLE, NoTranscriptNotice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
@@ -29,11 +31,30 @@ vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/price-attribution-tab"
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/prosody-tab", () => ({ ProsodyTab: tabStub("prosody") }));
 
-vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/qa-tab", () => ({ QaTab: tabStub("qa") }));
+// The Q&A stub asks like the real tab: a query whose answer carries the request the server recorded (O6 inspector).
+vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/qa-tab", async () => {
+    const { useQuery } = await import("@tanstack/react-query");
+
+    const { fileRequests } = await import("@/lib/api/request-meta");
+
+    const answer = { data: [], has_more: false, next_cursor: null };
+
+    fileRequests(answer, [{ credits: 2, method: "GET", operationId: "listQa", path: "/v1/events/e1/qa", query: { include: "scores" }, requestId: "req_qa", status: 200 }]);
+
+    return {
+        QaTab: () => {
+            useQuery({ initialData: answer, queryFn: () => answer, queryKey: ["qa"], staleTime: Number.POSITIVE_INFINITY });
+
+            return <div data-testid="tab-qa" />;
+        },
+    };
+});
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/slides-tab", () => ({ SlidesTab: tabStub("slides") }));
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/transcript-tab", () => ({ TranscriptTab: tabStub("transcript") }));
+
+vi.mock("@/lib/api/server-functions", () => ({ getApiBaseUrl: vi.fn(() => Promise.resolve({ url: "https://api.test" })) }));
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({ useLiveCall: () => live.call }));
 
@@ -62,14 +83,20 @@ function eventOf(overrides: Partial<V2Event>): V2Event {
 }
 
 function renderTab(event: V2Event, tab: "price-moves" | "transcript" | (typeof DERIVED_TABS)[number]) {
+    const client = new QueryClient({ defaultOptions: { queries: { structuralSharing: shareWithRequests } } });
+
     return render(
-        <CallTabs
-            event={event}
-            onTabChange={() => {}}
-            onTranscriptJumpHandled={() => {}}
-            tab={tab}
-            transcriptJump={null}
-        />,
+        <QueryClientProvider client={client}>
+            <CallTabs
+                event={event}
+                onSearchChange={() => {}}
+                onTabChange={() => {}}
+                onTranscriptJumpHandled={() => {}}
+                search={{}}
+                tab={tab}
+                transcriptJump={null}
+            />
+        </QueryClientProvider>,
     );
 }
 
@@ -132,6 +159,26 @@ describe("CallTabs without a transcript", () => {
         expect(screen.queryByRole("tab", { name: "Q&A" })).toBeNull();
 
         expect(screen.getByRole("tab", { name: "Price moves" })).toBeInTheDocument();
+    });
+});
+
+describe("CallTabs: the API button (O6-final)", () => {
+    it("sits in the tab bar and lists the open tab's requests, read from its mounted queries", async () => {
+        renderTab(eventOf({ has_transcript: true }), "qa");
+
+        fireEvent.click(screen.getByRole("button", { name: "API" }));
+
+        expect(await screen.findByText("/v1/events/e1/qa?include=scores")).toBeInTheDocument();
+
+        expect(screen.getByText("req_qa")).toBeInTheDocument();
+    });
+
+    it("a tab without a request on screen lists none", async () => {
+        renderTab(eventOf({ has_transcript: true }), "price-moves");
+
+        fireEvent.click(screen.getByRole("button", { name: "API" }));
+
+        expect(await screen.findByText("No Data API request on this page yet.")).toBeInTheDocument();
     });
 });
 

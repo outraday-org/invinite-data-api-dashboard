@@ -21,6 +21,7 @@ import type { TranscriptDownloads } from "../transcript/transcript-toolbar";
 import type { SpeakerImages } from "./transcript-turns";
 
 import { useCallAudio } from "../audio-context";
+import { DEFAULT_TRANSCRIPT_FORMAT } from "../call-search";
 import { MediaState, Notice } from "../media-state";
 import { recordingFilename } from "../player/recording-player";
 import { TranscriptToolbar } from "../transcript/transcript-toolbar";
@@ -117,17 +118,29 @@ function TranscriptBody({
  * version), the cleaned layer turn by turn (its `words` answer empty) —, where the Q&A starts.
  * A pending "Jump to transcript" (`transcriptJump`) scrolls to its turn once the transcript is
  * in; a format that cannot locate a passage (sections, plain text, a missing cleaned layer)
- * switches to Speakers first, and a passage that still cannot be found gets a short notice.
+ * switches to Speakers first, and a passage that still cannot be found gets a short notice (a link's `?t=` neither
+ * switches nor tells: `fromLink`).
+ * The format and the picked version are URL state (`?format=`, `?version=`, O6-final): a reload or a shared link shows
+ * the same text; the defaults (Speakers, the current version) are never written.
  */
-export function TranscriptTab({ event, eventId, onTranscriptJumpHandled, transcriptJump }: CallTabProps) {
-    const [format, setFormat] = React.useState<RenderedFormat>("speakers");
+export function TranscriptTab({ event, eventId, onSearchChange, onTranscriptJumpHandled, search, transcriptJump }: CallTabProps) {
+    const format: RenderedFormat = search.format ?? DEFAULT_TRANSCRIPT_FORMAT;
 
-    // null = the current version (no `version` parameter).
-    const [selectedVersion, setSelectedVersion] = React.useState<null | number>(null);
+    const setFormat = React.useCallback((next: RenderedFormat) => {
+        onSearchChange({ format: next === DEFAULT_TRANSCRIPT_FORMAT ? undefined : next });
+    }, [onSearchChange]);
 
     const [compareOpen, setCompareOpen] = React.useState(false);
 
     const versions = useV2TranscriptVersions(eventId);
+
+    const listedVersions = versions.data?.data;
+
+    // null = the current version (no `version` parameter). A `?version=` the published list does not name (once it is
+    // in) reads as the current one.
+    const selectedVersion = search.version !== undefined && (listedVersions === undefined || listedVersions.some(entry => entry.version === search.version))
+        ? search.version
+        : null;
 
     const requestedVersion = selectedVersion ?? undefined;
 
@@ -173,7 +186,15 @@ export function TranscriptTab({ event, eventId, onTranscriptJumpHandled, transcr
     React.useEffect(() => {
         if (!transcriptJump) return;
 
-        const canSwitch = format !== LOCATING_FORMAT;
+        // A link's `?t=` keeps the URL's format (a reload restores what the URL says) and tells nothing: a format
+        // without timed turns just opens at the top.
+        const { fromLink } = transcriptJump;
+
+        const canSwitch = format !== LOCATING_FORMAT && !fromLink;
+
+        const notify = (message: string) => {
+            if (!fromLink) toast.info(message);
+        };
 
         if (transcript.error) {
             if (canSwitch) {
@@ -182,7 +203,7 @@ export function TranscriptTab({ event, eventId, onTranscriptJumpHandled, transcr
                 return;
             }
 
-            toast.info("The transcript could not be loaded to locate this passage");
+            notify("The transcript could not be loaded to locate this passage");
 
             onTranscriptJumpHandled();
 
@@ -198,7 +219,7 @@ export function TranscriptTab({ event, eventId, onTranscriptJumpHandled, transcr
                 return;
             }
 
-            toast.info("This transcript has no turns to locate the passage in");
+            notify("This transcript has no turns to locate the passage in");
 
             onTranscriptJumpHandled();
 
@@ -208,18 +229,18 @@ export function TranscriptTab({ event, eventId, onTranscriptJumpHandled, transcr
         onTranscriptJumpHandled();
 
         if (!view.turns.some(turn => turn.start_ms !== null)) {
-            toast.info("This transcript has no timings — the passage cannot be located");
+            notify("This transcript has no timings — the passage cannot be located");
 
             return;
         }
 
         // The turns are rendered in this commit; the short poll only covers a slow paint.
         void scrollToTurn(transcriptJump.ms, 2000).then((found) => {
-            if (!found) toast.info("The passage could not be found in the transcript");
+            if (!found) notify("The passage could not be found in the transcript");
         });
-    }, [format, onTranscriptJumpHandled, shown, transcript.error, transcriptJump, view]);
+    }, [format, onTranscriptJumpHandled, setFormat, shown, transcript.error, transcriptJump, view]);
 
-    const versionList = [...(versions.data?.data ?? [])].sort((a, b) => b.version - a.version);
+    const versionList = [...(listedVersions ?? [])].sort((a, b) => b.version - a.version);
 
     // The current version is the newest published one (what `/transcript` answers without `version`).
     const currentVersion = versionList.at(0)?.version ?? transcript.data?.version ?? null;
@@ -274,7 +295,7 @@ export function TranscriptTab({ event, eventId, onTranscriptJumpHandled, transcr
                 onCompare={compare ? () => setCompareOpen(true) : null}
                 onCopy={() => void copy()}
                 onFormatChange={setFormat}
-                onVersionChange={version => setSelectedVersion(version === currentVersion ? null : version)}
+                onVersionChange={version => onSearchChange({ version: version === currentVersion ? undefined : version })}
                 qaStartMs={qaStartMs}
                 shownVersion={shownVersion}
                 versions={versionList}
