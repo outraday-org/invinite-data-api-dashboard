@@ -43,7 +43,8 @@ describe("Holders, one source (`/v1/holders?source=`)", () => {
     it("13F: the manager, value, the line with coverage through, the snapshot and the counting rule; no fund weight column", () => {
         render(<HoldersList source="13f" state={{ ...list, error: null, pages: [V2_HOLDERS_13F] }} />);
 
-        expect(screen.getByText("VANGUARD GROUP INC")).toHaveAttribute("title", "CIK 0000102909");
+        // A 13F manager links its filer page (its portfolio).
+        expect(screen.getByRole("link", { name: "VANGUARD GROUP INC" })).toHaveAttribute("href", "/sec/102909");
 
         expect(screen.getByText("$412,000,000,000")).toBeInTheDocument();
 
@@ -60,7 +61,7 @@ describe("Holders, one source (`/v1/holders?source=`)", () => {
         expect(within(line).getByText(V2_HOLDERS_13F.meta.counting!)).toBeInTheDocument();
     });
 
-    it("N-PORT: a listed fund links to its page and names its fresher issuer file; an unlisted fund is text only", () => {
+    it("N-PORT: a listed fund links to its page and names its fresher issuer file; an unlisted fund is marked and links its trust", () => {
         render(<HoldersList source="nport" state={{ ...list, error: null, pages: [V2_HOLDERS_NPORT] }} />);
 
         expect(screen.getByRole("link", { name: "Vanguard 500 Index Fund" })).toHaveAttribute("href", "/VOO");
@@ -68,6 +69,12 @@ describe("Holders, one source (`/v1/holders?source=`)", () => {
         expect(screen.getByText("Issuer file Oct 31, 2026")).toBeInTheDocument();
 
         expect(screen.getByText("Fidelity Contrafund").closest("a")).toBeNull();
+
+        const unlisted = screen.getByText("Fidelity Contrafund").closest("tr")!;
+
+        expect(within(unlisted).getByText("Unlisted")).toBeInTheDocument();
+
+        expect(within(unlisted).getByRole("link", { name: "trust" })).toHaveAttribute("href", "/sec/35315");
 
         expect(screen.getByText("VOO")).toBeInTheDocument();
 

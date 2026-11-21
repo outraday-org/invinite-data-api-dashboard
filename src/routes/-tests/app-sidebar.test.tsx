@@ -32,7 +32,6 @@ vi.mock("@/components/ui/sidebar", () => {
         SidebarGroupLabel: Box,
         SidebarMenu: Box,
         SidebarMenuItem: Box,
-        SidebarMenuSkeleton: () => <div data-testid="menu-skeleton" />,
     };
 });
 

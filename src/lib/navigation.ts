@@ -14,8 +14,10 @@ import {
     HandCoinsIcon,
     HouseIcon,
     IdCardIcon,
+    LandmarkIcon,
     LayersIcon,
     LayoutDashboardIcon,
+    ListIcon,
     MicIcon,
     NewspaperIcon,
     PieChartIcon,
@@ -63,7 +65,9 @@ export const MARKET_NAV: ReadonlyArray<NavPage> = [
 
 /** Browse: always shown. Later tasks add News feed, Filings, Offerings, Search, Catalog, Alerts here with their routes. */
 export const BROWSE_NAV: ReadonlyArray<NavPage> = [
+    { description: "Every exchange-traded US symbol: stocks, ETFs, closed-end funds, ETNs.", icon: ListIcon, keywords: ["instruments", "stocks", "symbols", "tickers", "etn", "etns", "browse"], label: "Instruments", to: "/instruments" },
     { description: "Every listed ETF and closed-end fund with net assets.", icon: LayersIcon, keywords: ["funds", "etf", "etfs", "closed-end", "holdings"], label: "Funds", to: "/funds" },
+    { description: "13F investment managers and their portfolios.", icon: LandmarkIcon, keywords: ["institutions", "managers", "13f", "holders", "filers"], label: "Institutions", to: "/institutions" },
 ];
 
 /** The account (bottom of the sidebar, with the plan badge). */

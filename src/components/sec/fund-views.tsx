@@ -3,6 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { V2FundPosition, V2FundPositionsResponse, V2FundSource, V2FundWeightsResponse } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
+import { SecurityLink } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { Notice } from "@/components/ui/notice";
@@ -19,7 +20,7 @@ import { formatNumberEn } from "@/lib/utils";
 /**
  * Views of a listed fund's composition (Data API 7.0): its positions (`/v1/funds/{fund}/holdings`) and the sector /
  * country / asset-class weights (`/v1/funds/{fund}/weights`). Every answer names its source and as-of date; pure (state
- * in, markup out) so the tests render them without a router. Who holds a security is `holder-views.tsx`.
+ * in, markup out). A position links its instrument or issuer (`SecurityLink`). Who holds a security is `holder-views.tsx`.
  */
 
 export type FundListState<TPage> = {
@@ -57,7 +58,15 @@ export function FundSourceBadge({ asOf, source }: { asOf: null | string | undefi
 }
 
 const COMPOSITION_COLUMNS: Array<ColumnDef<V2FundPosition>> = [
-    { cell: ({ row }) => <div className="truncate">{row.original.security.name ?? "—"}</div>, header: "Holding", id: "name" },
+    {
+        cell: ({ row }) => (
+            <div className="truncate">
+                <SecurityLink security={row.original.security}>{row.original.security.name ?? row.original.security.symbol ?? "—"}</SecurityLink>
+            </div>
+        ),
+        header: "Holding",
+        id: "name",
+    },
     { cell: ({ row }) => row.original.security.symbol ?? "—", header: "Ticker", id: "symbol" },
     { accessorKey: "asset_class", cell: ({ row }) => row.original.asset_class ?? "—", header: "Asset Class" },
     {

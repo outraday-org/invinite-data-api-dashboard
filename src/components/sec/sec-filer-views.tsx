@@ -28,6 +28,7 @@ import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calend
 import type { SecPanelTarget } from "./sec-source-panel";
 
 import { SecReadinessNotice } from "./sec-readiness-notice";
+import { SecurityLink } from "./security-link";
 import { V2MetaLine } from "./v2-meta-line";
 
 function Facts({ entries }: { entries: Array<[string, string]> }) {
@@ -577,8 +578,8 @@ export function SecPortfolioView({
                                     // A position has no id of its own (one CUSIP can be held twice: shares and an option).
                                     <tr key={`${row.security.cusip ?? ""}-${row.put_call ?? ""}-${index}`}>
                                         <td className="p-1">
-                                            <span className="font-medium">{row.security.symbol ?? "—"}</span>
-                                            {row.security.name && <span className="text-muted-foreground">{` · ${row.security.name}`}</span>}
+                                            <SecurityLink className="font-medium" security={row.security}>{row.security.symbol ?? row.security.name ?? "—"}</SecurityLink>
+                                            {row.security.symbol && row.security.name && <span className="text-muted-foreground">{` · ${row.security.name}`}</span>}
                                         </td>
                                         <td className="p-1 tabular-nums">{row.security.cusip ?? "—"}</td>
                                         <td className="p-1 text-right tabular-nums">

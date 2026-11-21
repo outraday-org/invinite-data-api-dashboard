@@ -1,4 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
+import type * as React from "react";
 
 import { Link } from "@tanstack/react-router";
 
@@ -15,6 +16,7 @@ import type {
 
 import { count, money, right, weightText } from "@/components/sec/fund-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
+import { filerCikParam } from "@/components/sec/security-link";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,8 +40,12 @@ import { formatNumberEn } from "@/lib/utils";
 
 const day = (value: null | string | undefined) => formatDay(value);
 
-/** The holder's name; a listed fund links to its page (`holder.symbols`), an unlisted fund is text only (decision 13). */
-function HolderCell({ holder }: { holder: V2Holder["holder"] }) {
+/**
+ * The holder: a 13F manager links its filer page (its 13F portfolio); a listed fund its page (`holder.symbols`); an
+ * unlisted fund (no resource in the contract, decision 13) is marked "Unlisted" and links its trust's filer page
+ * (`holder.cik` = the registrant), the series id in the tooltip.
+ */
+export function HolderCell({ holder }: { holder: V2Holder["holder"] }) {
     const name = holder.name ?? holder.registrant_name ?? holder.cik ?? holder.fund_key ?? "—";
 
     const title = [holder.registrant_name, holder.series_id ?? holder.fund_key, holder.cik ? `CIK ${holder.cik}` : null]
@@ -48,15 +54,37 @@ function HolderCell({ holder }: { holder: V2Holder["holder"] }) {
 
     const symbol = holder.symbols.at(0);
 
+    const cik = filerCikParam(holder.cik);
+
+    const linkClass = "truncate font-medium underline-offset-4 hover:underline";
+
+    let cell: React.ReactNode;
+
+    if (holder.type === "institution" && cik) {
+        cell = <Link className={linkClass} params={{ cik }} title={`13F manager · CIK ${cik}: its filer page and portfolio`} to="/sec/$cik">{name}</Link>;
+    }
+    else if (symbol) {
+        cell = <Link className={linkClass} params={{ ticker: symbol }} title={title} to="/$ticker">{name}</Link>;
+    }
+    else {
+        const trustTitle = [`Trust: ${holder.registrant_name ?? `CIK ${cik ?? "?"}`}`, holder.series_id ? `series ${holder.series_id}` : null].filter(Boolean).join(" · ");
+
+        cell = (
+            <>
+                <span className="truncate" title={title}>{name}</span>
+                {holder.type === "fund" && <Badge title="A fund without a listed ticker (e.g. a mutual fund)" variant="outline">Unlisted</Badge>}
+                {holder.type === "fund" && cik && (
+                    <Link className="text-muted-foreground shrink-0 underline-offset-4 hover:underline" params={{ cik }} title={trustTitle} to="/sec/$cik">
+                        trust
+                    </Link>
+                )}
+            </>
+        );
+    }
+
     return (
         <div className="flex min-w-0 items-center gap-2">
-            {symbol
-                ? (
-                        <Link className="truncate font-medium underline-offset-4 hover:underline" params={{ ticker: symbol }} title={title} to="/$ticker">
-                            {name}
-                        </Link>
-                    )
-                : <span className="truncate" title={title}>{name}</span>}
+            {cell}
             {holder.issuer_file_as_of && (
                 <Badge title="This fund also has an issuer holdings file, a fresher source than its N-PORT report" variant="outline">
                     {`Issuer file ${formatDay(holder.issuer_file_as_of)}`}

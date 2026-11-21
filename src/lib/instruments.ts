@@ -106,3 +106,25 @@ export function datasetGateText(instrument: Pick<V2Instrument, "structure" | "sy
 
     return `${instrument.symbol} is ${TYPE_NOUNS[instrument.type]}: ${words} are not served for it.`;
 }
+
+/** The US venues of `exchange=` (a MIC) on `/v1/instruments` and `/v1/funds`, for the browse filters. */
+export const EXCHANGE_LABELS: Readonly<Record<string, string>> = {
+    ARCX: "NYSE Arca",
+    BATS: "Cboe BZX",
+    XASE: "NYSE American",
+    XNAS: "Nasdaq",
+    XNYS: "NYSE",
+};
+
+/** The type tabs of `/instruments` (`all` = no `type`). */
+export const INSTRUMENT_TABS = ["all", "stock", "etf", "closed_end_fund", "etn"] as const;
+
+export type InstrumentTab = (typeof INSTRUMENT_TABS)[number];
+
+/** "Stocks", "ETFs", "Closed-end funds", "ETNs" (the tab and pill labels). */
+export const INSTRUMENT_TYPE_PLURALS: Record<V2InstrumentType, string> = {
+    closed_end_fund: "Closed-end funds",
+    etf: "ETFs",
+    etn: "ETNs",
+    stock: "Stocks",
+};

@@ -241,7 +241,7 @@ function Sidebar({
             />
             <div
                 className={cn(
-                    "fixed bottom-0 top-(--app-topbar-height,0px) z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
+                    "fixed bottom-0 top-(--app-topbar-height,0px) z-10 hidden h-[calc(100svh-var(--app-topbar-height,0px))] w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex",
                     side === "left"
                         ? "left-0 group-data-[collapsible=offExamples]:left-[calc(var(--sidebar-width)*-1)]"
                         : "right-0 group-data-[collapsible=offExamples]:right-[calc(var(--sidebar-width)*-1)]",

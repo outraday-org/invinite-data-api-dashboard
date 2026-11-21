@@ -14,6 +14,8 @@ import { Route as MarketHolidaysRouteImport } from './routes/market-holidays'
 import { Route as LiveCallsRouteImport } from './routes/live-calls'
 import { Route as LicensingRouteImport } from './routes/licensing'
 import { Route as IpoCalendarRouteImport } from './routes/ipo-calendar'
+import { Route as InstrumentsRouteImport } from './routes/instruments'
+import { Route as InstitutionsRouteImport } from './routes/institutions'
 import { Route as FundsRouteImport } from './routes/funds'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AccountRouteImport } from './routes/account'
@@ -65,6 +67,16 @@ const LicensingRoute = LicensingRouteImport.update({
 const IpoCalendarRoute = IpoCalendarRouteImport.update({
   id: '/ipo-calendar',
   path: '/ipo-calendar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstrumentsRoute = InstrumentsRouteImport.update({
+  id: '/instruments',
+  path: '/instruments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstitutionsRoute = InstitutionsRouteImport.update({
+  id: '/institutions',
+  path: '/institutions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FundsRoute = FundsRouteImport.update({
@@ -220,6 +232,8 @@ export interface FileRoutesByFullPath {
   '/account': typeof AccountRoute
   '/calendar': typeof CalendarRoute
   '/funds': typeof FundsRoute
+  '/institutions': typeof InstitutionsRoute
+  '/instruments': typeof InstrumentsRoute
   '/ipo-calendar': typeof IpoCalendarRoute
   '/licensing': typeof LicensingRoute
   '/live-calls': typeof LiveCallsRoute
@@ -253,6 +267,8 @@ export interface FileRoutesByTo {
   '/account': typeof AccountRoute
   '/calendar': typeof CalendarRoute
   '/funds': typeof FundsRoute
+  '/institutions': typeof InstitutionsRoute
+  '/instruments': typeof InstrumentsRoute
   '/ipo-calendar': typeof IpoCalendarRoute
   '/licensing': typeof LicensingRoute
   '/live-calls': typeof LiveCallsRoute
@@ -288,6 +304,8 @@ export interface FileRoutesById {
   '/account': typeof AccountRoute
   '/calendar': typeof CalendarRoute
   '/funds': typeof FundsRoute
+  '/institutions': typeof InstitutionsRoute
+  '/instruments': typeof InstrumentsRoute
   '/ipo-calendar': typeof IpoCalendarRoute
   '/licensing': typeof LicensingRoute
   '/live-calls': typeof LiveCallsRoute
@@ -324,6 +342,8 @@ export interface FileRouteTypes {
     | '/account'
     | '/calendar'
     | '/funds'
+    | '/institutions'
+    | '/instruments'
     | '/ipo-calendar'
     | '/licensing'
     | '/live-calls'
@@ -357,6 +377,8 @@ export interface FileRouteTypes {
     | '/account'
     | '/calendar'
     | '/funds'
+    | '/institutions'
+    | '/instruments'
     | '/ipo-calendar'
     | '/licensing'
     | '/live-calls'
@@ -391,6 +413,8 @@ export interface FileRouteTypes {
     | '/account'
     | '/calendar'
     | '/funds'
+    | '/institutions'
+    | '/instruments'
     | '/ipo-calendar'
     | '/licensing'
     | '/live-calls'
@@ -426,6 +450,8 @@ export interface RootRouteChildren {
   AccountRoute: typeof AccountRoute
   CalendarRoute: typeof CalendarRoute
   FundsRoute: typeof FundsRoute
+  InstitutionsRoute: typeof InstitutionsRoute
+  InstrumentsRoute: typeof InstrumentsRoute
   IpoCalendarRoute: typeof IpoCalendarRoute
   LicensingRoute: typeof LicensingRoute
   LiveCallsRoute: typeof LiveCallsRoute
@@ -469,6 +495,20 @@ declare module '@tanstack/react-router' {
       path: '/ipo-calendar'
       fullPath: '/ipo-calendar'
       preLoaderRoute: typeof IpoCalendarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/instruments': {
+      id: '/instruments'
+      path: '/instruments'
+      fullPath: '/instruments'
+      preLoaderRoute: typeof InstrumentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/institutions': {
+      id: '/institutions'
+      path: '/institutions'
+      fullPath: '/institutions'
+      preLoaderRoute: typeof InstitutionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/funds': {
@@ -722,6 +762,8 @@ const rootRouteChildren: RootRouteChildren = {
   AccountRoute: AccountRoute,
   CalendarRoute: CalendarRoute,
   FundsRoute: FundsRoute,
+  InstitutionsRoute: InstitutionsRoute,
+  InstrumentsRoute: InstrumentsRoute,
   IpoCalendarRoute: IpoCalendarRoute,
   LicensingRoute: LicensingRoute,
   LiveCallsRoute: LiveCallsRoute,

@@ -1,6 +1,6 @@
 import type { InfiniteData, UseQueryOptions } from "@tanstack/react-query";
 
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -36,8 +36,10 @@ import type {
     V2FactResponse,
     V2FilerExpand,
     V2FilerHoldingsResponse,
+    V2FilerPhase,
     V2FilerResponse,
     V2FilersResponse,
+    V2FilersSort,
     V2FilingDetailResponse,
     V2FilingExpand,
     V2FilingSearchResponse,
@@ -64,6 +66,8 @@ import type {
     V2InsiderTradesResponse,
     V2Instrument,
     V2InstrumentsResponse,
+    V2InstrumentsSort,
+    V2InstrumentType,
     V2InvestorDocumentResponse,
     V2InvestorDocumentSearchResponse,
     V2InvestorDocumentsResponse,
@@ -217,7 +221,7 @@ const EARNINGS_EVENT_STALE_MS = 10 * 60 * 1000;
 
 type EarningsQueryExtras<T> = Pick<
     UseQueryOptions<T, Error, T, ReadonlyArray<unknown>>,
-    "gcTime" | "refetchInterval" | "retry"
+    "gcTime" | "placeholderData" | "refetchInterval" | "retry"
 >;
 
 /**
@@ -419,13 +423,14 @@ const SEC_STALE_MS = 10 * 60 * 1000;
 const SEC_PENDING_REFETCH_MS = 30 * 1000;
 
 /** The filer registry by name (`GET /v1/filers?q=`, one page of ≤ 50): idle until `q` has ≥ 2 characters. */
-export function useV2Filers(input: { limit?: number; q: string }) {
+export function useV2Filers(input: { limit?: number; minLength?: number; q: string }) {
     const q = input.q.trim();
 
     return useEarningsQuery<V2FilersResponse>({
-        enabled: q.length >= 2,
+        enabled: q.length >= (input.minLength ?? 2),
         errorMessage: null,
         load: apiKey => getV2Filers({ data: { apiKey, limit: input.limit, q } }),
+        placeholderData: keepPreviousData,
         queryKey: ["v2", "filers", q, input.limit ?? ""],
         staleTime: SEC_STALE_MS,
     });
@@ -493,14 +498,16 @@ export function useV2Company(company: string, { expand = [] }: { expand?: Readon
 }
 
 /** Instrument search (`GET /v1/instruments?q=`, one page of 10): idle for an empty query; a failure toasts. */
-export function useInstrumentSearch(query: string) {
+export function useInstrumentSearch(query: string, type?: ReadonlyArray<V2InstrumentType>) {
     const q = query.trim();
 
     return useEarningsQuery<V2InstrumentsResponse>({
         enabled: q.length > 0,
         errorMessage: "Failed to search instruments",
-        load: apiKey => getInstruments({ data: { apiKey, query: q } }),
-        queryKey: ["v2", "instruments", "search", q],
+        load: apiKey => getInstruments({ data: { apiKey, query: q, type: type ? [...type] : undefined } }),
+        // The previous hits stay while the next query loads (the search list does not flash empty).
+        placeholderData: keepPreviousData,
+        queryKey: ["v2", "instruments", "search", q, key(type)],
         staleTime: 5 * 60 * 1000,
     });
 }
@@ -1475,6 +1482,48 @@ export function useIpo(ipoId: string) {
         errorMessage: null,
         load: apiKey => getIpo({ data: { apiKey, ipoId } }),
         queryKey: ["v2", "ipo", ipoId],
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+// Browse lists (backend tasks/data-api-dashboard O5): `/instruments` and `/institutions` by cursor.
+
+export type InstrumentsListInput = {
+    exchange?: string;
+    isActive?: boolean;
+    limit?: number;
+    q?: string;
+    sort?: V2InstrumentsSort;
+    structure?: Array<V2FundStructure>;
+    type?: Array<V2InstrumentType>;
+};
+
+/** Every exchange-traded symbol (`GET /v1/instruments`, filters + sort) by cursor; status-aware (the page renders errors). */
+export function useInstrumentsInfinite(input: InstrumentsListInput) {
+    const q = input.q?.trim() || undefined;
+
+    return useEarningsInfinite<V2InstrumentsResponse>({
+        enabled: true,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getInstruments({
+            data: { ...input, apiKey, cursor: cursor ?? undefined, limit: input.limit ?? 50, query: q },
+        }),
+        queryKey: ["v2", "instruments", "list", q ?? "", key(input.type), key(input.structure), input.exchange ?? "", String(input.isActive ?? ""), input.sort ?? "", input.limit ?? ""],
+        staleTime: V2_STALE_MS,
+    });
+}
+
+export type FilersListInput = { limit?: number; phase?: V2FilerPhase; q?: string; sort?: V2FilersSort };
+
+/** The filer registry by cursor (`GET /v1/filers`, 1 credit a page): `phase=manager` = the 13F institutions. */
+export function useV2FilersInfinite(input: FilersListInput) {
+    const q = input.q?.trim() || undefined;
+
+    return useEarningsInfinite<V2FilersResponse>({
+        enabled: true,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2Filers({ data: { ...input, apiKey, cursor: cursor ?? undefined, q } }),
+        queryKey: ["v2", "filers", "list", input.phase ?? "", q ?? "", input.sort ?? "", input.limit ?? ""],
         staleTime: SEC_STALE_MS,
     });
 }

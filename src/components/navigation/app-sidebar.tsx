@@ -15,8 +15,8 @@ import {
     SidebarGroupLabel,
     SidebarMenu,
     SidebarMenuItem,
-    SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { PLAN_LABELS } from "@/lib/account";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useInstrument, useKeyState, useV2Filer, useV2FilingsInfinite, useV2LiveEvents } from "@/lib/api/queries";
@@ -76,7 +76,13 @@ function PageLinks({ liveCount, pages }: { liveCount: number; pages: ReadonlyArr
 function SkeletonRows() {
     return (
         <SidebarMenu data-testid="context-skeleton">
-            {[0, 1, 2, 3].map(index => <SidebarMenuItem key={index}><SidebarMenuSkeleton showIcon /></SidebarMenuItem>)}
+            {/* Fixed widths (the primitive's random width differs between the server and the client render). */}
+            {["w-3/4", "w-2/3", "w-4/5", "w-1/2"].map(width => (
+                <SidebarMenuItem className="flex h-8 items-center gap-2 px-2" key={width}>
+                    <Skeleton className="size-4 rounded-md" />
+                    <Skeleton className={cn("h-4", width)} />
+                </SidebarMenuItem>
+            ))}
         </SidebarMenu>
     );
 }

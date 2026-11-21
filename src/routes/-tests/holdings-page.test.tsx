@@ -1,6 +1,8 @@
+import type * as React from "react";
+
 // @vitest-environment jsdom
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { FundCompositionList, FundWeightsBlock } from "@/components/sec/fund-views";
 import { ApiRequestError } from "@/lib/api/errors";
@@ -10,6 +12,12 @@ import {
     V2_FUND_POSITIONS_SINGLE_ASSET,
     V2_FUND_WEIGHTS,
 } from "@/lib/sec/v2-fixtures";
+
+vi.mock("@tanstack/react-router", () => ({
+    Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => (
+        <a href={Object.entries(params).reduce((path, [key, value]) => path.replace(`$${key}`, value), to)}>{children}</a>
+    ),
+}));
 
 afterEach(cleanup);
 
@@ -23,7 +31,8 @@ describe("Fund holdings (`/v1/funds/{fund}/holdings`)", () => {
 
         expect(screen.getByTestId("fund-source-badge")).toHaveTextContent("Issuer file · as of Nov 13, 2026");
 
-        expect(screen.getByText("NVIDIA CORP")).toBeInTheDocument();
+        // A position with a ticker opens that instrument (as stated; no request per row).
+        expect(screen.getByRole("link", { name: "NVIDIA CORP" })).toHaveAttribute("href", "/NVDA");
 
         expect(screen.getByText("7.41%")).toBeInTheDocument();
 

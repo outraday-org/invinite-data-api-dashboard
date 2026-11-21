@@ -330,7 +330,8 @@ describe("SecPortfolioView (`/v1/filers/{cik}/holdings`)", () => {
 
         render(view({ hasNextPage: true, onMore, pages: [V2_FILER_HOLDINGS] }));
 
-        expect(screen.getByText("AAPL")).toBeInTheDocument();
+        // The held security opens its instrument page.
+        expect(screen.getByRole("link", { name: "AAPL" })).toHaveAttribute("href", "/AAPL");
 
         expect(screen.getByText("037833100")).toBeInTheDocument();
 

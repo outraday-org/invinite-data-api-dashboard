@@ -24,8 +24,10 @@ import type {
     V2EventType,
     V2FactResponse,
     V2FilerHoldingsResponse,
+    V2FilerPhase,
     V2FilerResponse,
     V2FilersResponse,
+    V2FilersSort,
     V2FilingDetailResponse,
     V2FilingSearchResponse,
     V2FilingsResponse,
@@ -49,6 +51,7 @@ import type {
     V2InsiderTradesResponse,
     V2Instrument,
     V2InstrumentsResponse,
+    V2InstrumentsSort,
     V2InstrumentType,
     V2InvestorDocumentResponse,
     V2InvestorDocumentSearchResponse,
@@ -132,15 +135,31 @@ const fundSchema = z.string().trim().min(1).max(20);
 export const getInstruments = createServerFn({ method: "GET" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
+        cursor: z.string().min(1).optional(),
+        exchange: z.string().trim().min(1).max(10).optional(),
+        isActive: z.boolean().optional(),
         limit: z.number().int().min(1).max(200).optional(),
-        query: z.string(),
+        query: z.string().optional(),
+        sort: z.enum(["symbol", "-symbol", "name", "-name"] as const satisfies ReadonlyArray<V2InstrumentsSort>).optional(),
+        structure: z.array(fundStructureSchema).optional(),
         type: z.array(instrumentTypeSchema).optional(),
     }))
     .handler(async ({ data }): Promise<V2InstrumentsResponse> => {
-        const { apiKey, limit = 10, query, type } = data;
+        const { apiKey, cursor, exchange, isActive, limit = 10, query, sort, structure, type } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/instruments", {
-            params: { query: v2Query({ limit, q: query, type: v2Expand(type) }) },
+            params: {
+                query: v2Query({
+                    cursor,
+                    exchange,
+                    is_active: isActive,
+                    limit,
+                    q: query?.trim() || undefined,
+                    sort,
+                    structure: v2Expand(structure),
+                    type: v2Expand(type),
+                }),
+            },
         });
 
         if (error) throwApiError(error, response);
@@ -356,18 +375,23 @@ const accessionSchema = z.string().trim().regex(/^(\d{10}-\d{2}-\d{6}|\d{18})$/)
 const versionIdSchema = z.uuid();
 
 /**
- * The filer registry by name or ticker (`GET /v1/filers?q=`): without `phase` ONE page of at most 50 filers
- * (`has_more` false) — narrow `q` to find more.
+ * The filer registry (`GET /v1/filers`, 1 credit a page): by name or ticker (`q`), by `phase` (`manager` = the 13F
+ * institutions), sorted, by cursor.
  */
 export const getV2Filers = createServerFn({ method: "GET" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
-        limit: z.number().int().min(1).max(50).optional(),
-        q: z.string().trim().min(1).max(200),
+        cursor: z.string().min(1).optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+        phase: z.enum(["pre_ipo", "public", "former", "manager", "other"] as const satisfies ReadonlyArray<V2FilerPhase>).optional(),
+        q: z.string().trim().min(1).max(200).optional(),
+        sort: z.enum(["name", "-name", "cik", "-cik"] as const satisfies ReadonlyArray<V2FilersSort>).optional(),
     }))
     .handler(async ({ data }): Promise<V2FilersResponse> => {
-        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/filers", {
-            params: { query: v2Query({ limit: data.limit, q: data.q }) },
+        const { apiKey, cursor, limit, phase, q, sort } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/filers", {
+            params: { query: v2Query({ cursor, limit, phase, q, sort }) },
         });
 
         if (error) throwApiError(error, response);
