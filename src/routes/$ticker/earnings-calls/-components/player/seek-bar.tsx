@@ -73,7 +73,12 @@ export function SeekBar({ className, engine, markers }: { className?: string; en
                 className,
             )}
             onKeyDown={onKeyDown}
+            // A cancelled drag (the OS took the pointer, the window lost focus) seeks nowhere and lets go of the thumb.
+            onPointerCancel={() => setDragMs(null)}
             onPointerDown={(event) => {
+                // The main button / a touch / a pen only: a right click opens the context menu, it never seeks.
+                if (event.button !== 0) return;
+
                 event.currentTarget.setPointerCapture(event.pointerId);
 
                 setDragMs(msAt(event.clientX));

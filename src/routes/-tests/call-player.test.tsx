@@ -185,6 +185,41 @@ describe("CallPlayer: controls by state", () => {
         expect(engine.seekMs).toHaveBeenLastCalledWith(0, { play: false });
     });
 
+    it("the seek bar's drag seeks on release without playing; a cancelled drag or a right click seeks nothing", () => {
+        const engine = engineOf("recording");
+
+        renderPlayer(engine);
+
+        const slider = screen.getByRole("slider", { name: "Seek" });
+
+        slider.setPointerCapture = vi.fn();
+
+        slider.getBoundingClientRect = () => ({ bottom: 16, height: 16, left: 0, right: 1000, toJSON: () => ({}), top: 0, width: 1000, x: 0, y: 0 });
+
+        fireEvent.pointerDown(slider, { button: 0, clientX: 500, pointerId: 1 });
+
+        fireEvent.pointerUp(slider, { button: 0, clientX: 500, pointerId: 1 });
+
+        expect(engine.seekMs).toHaveBeenLastCalledWith(1_372_500, { play: false });
+
+        fireEvent.pointerDown(slider, { button: 0, clientX: 250, pointerId: 2 });
+
+        expect(slider).toHaveAttribute("aria-valuetext", "11:26 of 45:45");
+
+        fireEvent.pointerCancel(slider, { pointerId: 2 });
+
+        // The thumb is back on the playhead and the release after a cancel seeks nowhere.
+        expect(slider).toHaveAttribute("aria-valuetext", "0:00 of 45:45");
+
+        fireEvent.pointerUp(slider, { button: 0, clientX: 250, pointerId: 2 });
+
+        fireEvent.pointerDown(slider, { button: 2, clientX: 750, pointerId: 3 });
+
+        fireEvent.pointerUp(slider, { button: 2, clientX: 750, pointerId: 3 });
+
+        expect(engine.seekMs).toHaveBeenCalledTimes(1);
+    });
+
     it("hides speed, skip and download when the engine cannot do them", () => {
         renderPlayer(engineOf("live-edge", { capabilities: { download: false, rate: false, skip: false } }), {
             download: { filename: "x.mp3", url: "https://storage.example.com/x.mp3" },
@@ -233,6 +268,30 @@ describe("CallPlayer: controls by state", () => {
         fireEvent.keyDown(screen.getByRole("textbox", { name: "Search this call" }), { key: " " });
 
         expect(engine.play).toHaveBeenCalledTimes(1);
+    });
+
+    it("page shortcuts stay off inside an open dialog or menu", () => {
+        const engine = engineOf("recording");
+
+        renderPlayer(engine);
+
+        const dialog = document.createElement("div");
+
+        dialog.setAttribute("role", "dialog");
+
+        dialog.tabIndex = -1;
+
+        document.body.append(dialog);
+
+        fireEvent.keyDown(dialog, { key: " " });
+
+        fireEvent.keyDown(dialog, { key: "j" });
+
+        expect(engine.play).not.toHaveBeenCalled();
+
+        expect(engine.skip).not.toHaveBeenCalled();
+
+        dialog.remove();
     });
 
     it("applies the remembered speed", () => {

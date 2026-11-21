@@ -16,8 +16,27 @@ import { MediaState } from "../media-state";
 import { DownloadButton, FollowButton, MoreMenu, PlayPauseButton, SkipButtons, SpeedButtons, VolumeControl } from "./player-controls";
 import { PlayerTime, SeekBar } from "./seek-bar";
 
-/** Keys the page shortcuts leave alone: typing, and controls that answer Space themselves. */
-const INTERACTIVE_SELECTOR = "input, textarea, select, button:not([role='tab']), a[href], [contenteditable=''], [contenteditable='true'], [role='slider'], [role='menuitem'], [role='combobox']";
+/**
+ * Keys the page shortcuts leave alone: typing, controls that answer Space themselves, and anything inside an open
+ * dialog / menu / list (`closest` also matches the focused popup itself, e.g. a menu with no item focused yet).
+ */
+const INTERACTIVE_SELECTOR = [
+    "input",
+    "textarea",
+    "select",
+    "button:not([role='tab'])",
+    "a[href]",
+    "summary",
+    "[contenteditable='']",
+    "[contenteditable='true']",
+    "[role='slider']",
+    "[role='menuitem']",
+    "[role='combobox']",
+    "[role='dialog']",
+    "[role='alertdialog']",
+    "[role='menu']",
+    "[role='listbox']",
+].join(", ");
 
 function isTypingTarget(target: EventTarget | null) {
     return target instanceof Element && target.closest(INTERACTIVE_SELECTOR) !== null;
@@ -81,12 +100,17 @@ function useStuck(ref: React.RefObject<HTMLElement | null>) {
 
         window.addEventListener("scroll", onScroll, { passive: true });
 
+        // A resize moves the pinned offset (the ticker header wraps) without a scroll.
+        window.addEventListener("resize", onScroll);
+
         measure();
 
         return () => {
             cancelAnimationFrame(frame);
 
             window.removeEventListener("scroll", onScroll);
+
+            window.removeEventListener("resize", onScroll);
         };
     }, [ref]);
 
