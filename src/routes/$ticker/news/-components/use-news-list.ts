@@ -72,35 +72,6 @@ export function useNewsList({
 
     const listed = fetched.filter(item => matchesNewsFilters(item, filters));
 
-    // Auto-advance while a page-side filter hides the whole page (state, not a ref: render stays pure). "Previous"
-    // pauses it (going back to an all-hidden page must not jump forward again); "Next" or a filter change resumes it.
-    const fillKey = JSON.stringify([filterKey, filters]);
-
-    const [filled, setFilled] = React.useState({ key: fillKey, pages: 0, paused: false });
-
-    if (filled.key !== fillKey) setFilled({ key: fillKey, pages: 0, paused: false });
-
-    const current = filled.key === fillKey ? filled : { pages: 0, paused: false };
-
-    const pagesSinceChange = current.pages;
-
-    const fill = !list.isLoading && !current.paused && shouldFillPage({
-        filtering: hasPageFilters(filters),
-        hasNextPage: nextCursor !== null,
-        isFetching: list.isFetching,
-        nextPageFailed: Boolean(list.error),
-        pagesSinceChange,
-        shownRows: listed.length,
-    });
-
-    React.useEffect(() => {
-        if (!fill || nextCursor === null) return;
-
-        setFilled(state => ({ ...state, pages: state.pages + 1 }));
-
-        setPager(nextNewsPage(pager, nextCursor));
-    }, [fill, nextCursor, pager]);
-
     const { refetch } = list;
 
     const apiKey = useApiKeyStore(s => s.apiKey);
@@ -129,6 +100,36 @@ export function useNewsList({
 
     // Live items land on top of the newest page only (the live switch clears `sort=oldest`).
     const liveItems: Array<NewsItemPublic> = page === 1 && search.sort !== "oldest" ? live.items.filter(item => matchesNewsFilters(item, filters)) : [];
+
+    // Auto-advance while a page-side filter hides the whole page (state, not a ref: render stays pure). "Previous"
+    // pauses it (going back to an all-hidden page must not jump forward again); "Next" or a filter change resumes it.
+    const fillKey = JSON.stringify([filterKey, filters]);
+
+    const [filled, setFilled] = React.useState({ key: fillKey, pages: 0, paused: false });
+
+    if (filled.key !== fillKey) setFilled({ key: fillKey, pages: 0, paused: false });
+
+    const current = filled.key === fillKey ? filled : { pages: 0, paused: false };
+
+    const pagesSinceChange = current.pages;
+
+    const fill = !list.isLoading && !current.paused && shouldFillPage({
+        filtering: hasPageFilters(filters),
+        hasNextPage: nextCursor !== null,
+        isFetching: list.isFetching,
+        nextPageFailed: Boolean(list.error),
+        pagesSinceChange,
+        // Live items on page 1 count as shown: the page never skips away from them.
+        shownRows: listed.length + liveItems.length,
+    });
+
+    React.useEffect(() => {
+        if (!fill || nextCursor === null) return;
+
+        setFilled(state => ({ ...state, pages: state.pages + 1 }));
+
+        setPager(nextNewsPage(pager, nextCursor));
+    }, [fill, nextCursor, pager]);
 
     return {
         error: list.error,

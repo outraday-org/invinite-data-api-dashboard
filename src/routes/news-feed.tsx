@@ -129,13 +129,15 @@ function NewsFeedPage() {
 
     const company = scope === "watchlist" ? watchlist.list.join(",") : "";
 
+    // An empty watchlist subscribes nothing (no tickers would mean the whole market): Live waits for a ticker.
+    const live = search.live === true && (scope === "market" || watchlist.list.length > 0);
+
     const news = useNewsList({
         company,
         filters,
-        // An empty watchlist subscribes nothing (no tickers would mean the whole market).
         liveTickers: scope === "market" ? undefined : watchlist.list,
         onLiveStop,
-        search: { ...search, live: search.live === true && (scope === "market" || watchlist.list.length > 0) },
+        search: { ...search, live },
     });
 
     const controls = (
@@ -149,7 +151,7 @@ function NewsFeedPage() {
                 windowFilters={scope === "watchlist"}
             />
             <NewsLiveToggle
-                live={search.live === true}
+                live={live}
                 mode={news.liveMode}
                 onChange={(on) => {
                     setStop(null);
@@ -167,7 +169,7 @@ function NewsFeedPage() {
             <NewsPageView
                 controls={controls}
                 description={feedDescription(scope)}
-                emptyText={feedEmptyText({ live: search.live === true, scope, tickers: watchlist.list.length })}
+                emptyText={feedEmptyText({ live, scope, tickers: watchlist.list.length })}
                 error={news.error}
                 exportScope={scope}
                 headerActions={(

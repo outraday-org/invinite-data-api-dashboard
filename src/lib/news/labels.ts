@@ -141,8 +141,6 @@ export function publishedBy(item: Pick<NewsItemPublic, "publications">): Array<s
 /** The list orders of a page (`?sort=` / `?aSort=`; absent = newest first). */
 export const NEWS_ORDER_LABELS = { newest: "Newest first", oldest: "Oldest first" } as const;
 
-export type NewsOrder = keyof typeof NEWS_ORDER_LABELS;
-
 const newsSearchSchema = z.object({
     /** Announcements: announced from / to (UTC days). */
     aFrom: optionalDay(),

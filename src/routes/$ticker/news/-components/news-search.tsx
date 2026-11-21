@@ -15,7 +15,7 @@ import { HitPassage, MatchBadge, SearchCoverageNote, SearchEmptyState, SearchErr
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 /** Hits per page (10 credits a page whatever the size). */
-export const NEWS_SEARCH_LIMIT = 20;
+const NEWS_SEARCH_LIMIT = 20;
 
 const MIN_QUERY_LENGTH = 2;
 
