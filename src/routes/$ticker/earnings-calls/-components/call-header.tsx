@@ -24,8 +24,8 @@ function Fact({ label, value }: { label: string; value: React.ReactNode }) {
 
 /**
  * Call header: company, period, time, status, materials, lifecycle times, the IR webcast page, the event id (with
- * its copy button: every `/v1/events/{event_id}/…` request names it) and the API's call-time provenance (`observations[]`, collapsed — shown because this is the
- * example app).
+ * its copy button: every `/v1/events/{event_id}/…` request names it) and the API's call-time provenance
+ * (`observations[]`, collapsed — shown because this is the example app).
  */
 export function CallHeader({ event }: { event: V2Event }) {
     const [showObservations, setShowObservations] = React.useState(false);

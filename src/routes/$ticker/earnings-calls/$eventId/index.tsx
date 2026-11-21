@@ -94,13 +94,20 @@ function CallPage({ eventId }: { eventId: string }) {
     const onTabChange = (next: CallTab) => onSearchChange({ tab: next });
 
     // The player's `⋯` → "Copy link at current time": the page URL with `?t=`, also written into the address bar.
-    const onCopyLinkAt = (seconds: number) => {
-        navigator.clipboard.writeText(callLinkAt(window.location.href, seconds)).then(
-            () => toast.success(`Link at ${formatMs(seconds * 1000)} copied`),
-            () => toast.error("Could not copy the link"),
-        );
+    // The address bar is written first: a browser without clipboard access (no secure context) still gets the link.
+    const onCopyLinkAt = async (seconds: number) => {
+        const link = callLinkAt(window.location.href, seconds);
 
         onSearchChange({ t: seconds });
+
+        try {
+            await navigator.clipboard.writeText(link);
+
+            toast.success(`Link at ${formatMs(seconds * 1000)} copied`);
+        }
+        catch {
+            toast.error("Could not copy the link");
+        }
     };
 
     // A played search hit jumps along `quiet`ly: a call without a transcript just plays.
@@ -159,7 +166,7 @@ function CallPage({ eventId }: { eventId: string }) {
 
                 {/* The one player bar, sticky below the ticker header on every tab: the live stream while the call is */}
                 {/* followed live, the recording once it is published (nothing without either). */}
-                <CallPlayerBar event={event} onCopyLinkAt={onCopyLinkAt} />
+                <CallPlayerBar event={event} onCopyLinkAt={seconds => void onCopyLinkAt(seconds)} />
 
                 <CallTabs
                     event={event}

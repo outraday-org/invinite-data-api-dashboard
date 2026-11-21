@@ -281,7 +281,7 @@ export function CallAudioProvider({
         seekMs: ms => engine.seekMs(ms),
         setSlideMarkers,
         slideMarkers,
-        startAtMs: onAir ? null : startAt,
+        startAtMs: startAt,
         words,
         wordTurns,
     };
