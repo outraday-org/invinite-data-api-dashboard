@@ -19,7 +19,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { PLAN_LABELS } from "@/lib/account";
 import { ApiRequestError } from "@/lib/api/errors";
-import { useInstrument, useKeyState, useV2Filer, useV2FilingsInfinite, useV2LiveEvents } from "@/lib/api/queries";
+import { useInstrument, useKeyState, useV2Filer, useV2FilingsInfinite, useV2LiveEvents, useV2Person } from "@/lib/api/queries";
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import {
     ACCOUNT_NAV,
@@ -33,7 +33,9 @@ import {
     isManagerFiler,
     MARKET_NAV,
     OPEN_LISTING_ICON,
+    PERSON_CONTEXT_ANCHORS,
 } from "@/lib/navigation";
+import { PERSON_ID_PATTERN, personSubjectLabel } from "@/lib/people";
 import { cn } from "@/lib/utils";
 import { LiveDot } from "@/routes/$ticker/earnings-calls/-components/live-dot";
 
@@ -172,6 +174,32 @@ function FilerContext({ cik, enabled }: { cik: string; enabled: boolean }) {
     );
 }
 
+/** The open person's blocks as in-page anchors (the same `/v1/people/{person_id}` answer as the page). */
+function PersonContext({ enabled, personId }: { enabled: boolean; personId: string }) {
+    const person = useV2Person(enabled ? personId : "");
+
+    return (
+        <SidebarGroup data-testid="sidebar-context">
+            <SidebarGroupLabel className="normal-case">{personSubjectLabel(person.data)}</SidebarGroupLabel>
+            <SidebarGroupContent>
+                {person.isLoading || !enabled
+                    ? <SkeletonRows />
+                    : (
+                            <SidebarMenu>
+                                {PERSON_CONTEXT_ANCHORS.map(anchor => (
+                                    <SidebarMenuItem key={anchor.id}>
+                                        <a className={linkClass} href={`#${anchor.id}`}>
+                                            <ItemContent icon={anchor.icon} label={anchor.label} />
+                                        </a>
+                                    </SidebarMenuItem>
+                                ))}
+                            </SidebarMenu>
+                        )}
+            </SidebarGroupContent>
+        </SidebarGroup>
+    );
+}
+
 /**
  * The one sidebar of every page (root layout): Market and Browse always, the Context of the open subject (an
  * instrument's sections by its `datasets`, a filer's blocks), Help, and the account with its plan badge. Every entry
@@ -189,6 +217,8 @@ export function AppSidebar() {
     const liveCount = live?.data.length ?? 0;
 
     const cik = params.cik && /^\d{1,10}$/.test(params.cik) ? String(Number(params.cik)) : null;
+
+    const personId = params.personId && PERSON_ID_PATTERN.test(params.personId) ? params.personId.toLowerCase() : null;
 
     return (
         <Sidebar className="group-data-[side=left]:border-none [&>div]:bg-background">
@@ -208,6 +238,7 @@ export function AppSidebar() {
                 {/* The subject's context once the key answered (no key: the onboarding card, no context to load). */}
                 {params.ticker && state !== "invalid" && <InstrumentContext enabled={keyReady} ticker={params.ticker} />}
                 {cik && state !== "invalid" && <FilerContext cik={cik} enabled={keyReady} />}
+                {personId && state !== "invalid" && <PersonContext enabled={keyReady} personId={personId} />}
             </SidebarContent>
             <SidebarFooter>
                 <SidebarGroup className="p-0">

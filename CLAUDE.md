@@ -26,7 +26,7 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
 - **server-functions.ts**: TanStack Start server functions (`createServerFn`) with Zod validation. These run on the server and handle API calls
 - **queries.ts**: React Query hooks (`useQuery`/`useInfiniteQuery`) that call server functions. Each hook manages API key from store and shows error toasts
 - **errors.ts**: `ApiRequestError` (`status`, `code` = the body's `error`, `body`). Every earnings server function throws it via `throwApiError(error, response)`; the shared earnings hook helpers (`useEarningsQuery` / `useEarningsInfinite` in `queries.ts`) revive it on the client (`rethrowApiError` → `fromSerialized`: a server function's thrown Error crosses to the client as a plain `Error` with its own properties) and never retry an API answer (`retryUnlessApiError`). A hook with `errorMessage: null` is status-aware — no toast, the page renders the state: event, transcript, press release, stats, comparison, prosody, price attribution (a 404 `not_found` is a page state there: not derived yet / first call, the reason in `detail`), audio, slides, investor documents / document search, transcript search, live audio (403 `forbidden` = audio refused, 503 `unavailable` = media outage / search off) and the live list (its 15-s refetch would otherwise toast on every failure; the "Live now" strip shows a one-line note). The other earnings hooks toast with their `errorMessage`. The REST plan gate is the `403` problem `plan_required` (the legacy `403 { error: "Forbidden" }` is still read) (`isTierError`; `forbidden_tier` is the WebSocket's code). A v2 problem+json body is read too (see "Data API v2"). Non-earnings hooks keep their own pattern (raw `throw error` + `useErrorToast`)
-- **Earnings calls**: every earnings page reads the events family (see "Data API v2"); no old `/v1/earnings-calls/*` server function or hook is left (webhooks, analysts and people are CLI-only). `getApiBaseUrl` / `useApiBaseUrl` return the (non-secret) API base URL for the `/v1/stream` WebSocket. `useV2Event` refetches every 30 s while `isEarningsEventLiveish` (armed / capturing / captured without a transcript); `useV2LiveEvents(enabled)`; `useV2LiveAudio` is never stale and refetches only every 15 s while `not_started`
+- **Earnings calls**: every earnings page reads the events family (see "Data API v2"); no old `/v1/earnings-calls/*` server function or hook is left (people: `/people` + `/people/$personId`, see "People"; the 7.0 contract has no webhook or analyst route). `getApiBaseUrl` / `useApiBaseUrl` return the (non-secret) API base URL for the `/v1/stream` WebSocket. `useV2Event` refetches every 30 s while `isEarningsEventLiveish` (armed / capturing / captured without a transcript); `useV2LiveEvents(enabled)`; `useV2LiveAudio` is never stale and refetches only every 15 s while `not_started`
 
 ### SEC document store (the SEC family of the Data API: filers, filings, document versions, holdings, filing search)
 
@@ -210,7 +210,8 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 - **Sidebar** (`src/components/navigation/app-sidebar.tsx`, root layout, every page): Market (Live calls with the live
   count of `useV2LiveEvents`), Browse, Context ("AAPL · Stock", "GLD · ETF (trust)", "<name> · Institution": an
   instrument's sections from the same `useInstrument` answer as the layout; a filer's blocks as anchors from the same
-  `/v1/filers/{cik}` + first filings page as `/sec/$cik`, plus "Open <TICKER>"), Help, Account with the plan. Fixed-width
+  `/v1/filers/{cik}` + first filings page as `/sec/$cik`, plus "Open <TICKER>"; "<name> · Analyst": a person's blocks
+  `PERSON_CONTEXT_ANCHORS` from the same `/v1/people/{person_id}` answer as `/people/$personId`), Help, Account with the plan. Fixed-width
   skeleton rows (the primitive's random width mismatched on hydration). `src/hooks/use-mobile.tsx` is false on the first
   client render (hydration).
 - **Global pages** (each a pure `*View` + test): `/calendar` (`/v1/events`, grouped by New York day —
@@ -230,7 +231,9 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 - **Search** (`ticker-search.tsx`, ⌘K / Ctrl K, also inside inputs): groups Instruments (`rankInstruments`: exact ticker,
   then a name starting with the text — "apple" → AAPL), Institutions & filers (from 3 characters after a 300 ms pause:
   `phase=manager` then the other filers, `mergeFilers`; 2 billed requests per pause), Pages; pills All / Stocks / ETFs /
-  Closed-end funds / ETNs / Institutions (`TabStrip`, ←/→; a pill sends only its own requests; All on every open);
+  Closed-end funds / ETNs / Institutions / People (`TabStrip`, ←/→; a pill sends only its own requests; All on every open);
+  People (O7 group 1) = `useV2PeopleSearch` (`/v1/people?q=`, 5 rows, from 3 characters after the same pause: 1 billed
+  request per pause, in All and People);
   combobox + listbox, Enter = highlighted or first hit (waits for an answer in flight); empty = recents.
 - **Cross-links**: `HolderCell` (a 13F manager → `/sec/$cik`; a listed fund → `/$ticker`; an unlisted fund "Unlisted" +
   "trust" → its registrant's `/sec/$cik`, series id in the tooltip); fund positions and a manager's portfolio rows →
@@ -313,6 +316,29 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   `no-transcript-notice.test.tsx` (the tab bar's API button), `src/lib/export.test.ts`,
   `src/lib/api/request-meta.test.ts`, `operations.test.ts`.
 
+### People (backend `tasks/data-api-dashboard` O7 group 1)
+
+- **Routes**: `/people` (`routes/people/index.tsx`, `PeopleList`: `GET /v1/people`, 50 a page, by cursor; `?q=` name,
+  `?company=` ticker or CIK, `?event=` one call, `?role=`, `?sort=` — absent = the API's `-last_seen` — all URL state
+  with `IN_PLACE`; with a company or a call the per-scope `appearances` / `questions` show as "Calls here" /
+  "Questions here", `appearance_count` is every call; Export + `listPeople`) and `/people/$personId`
+  (`PersonProfileView`, `PersonCallsView`, `RoleHistoryView`; in-page blocks `PERSON_ANCHORS`). `/people` is in
+  `BROWSE_NAV`; the sidebar's person context lists the three blocks.
+- **A participation names its call only by id** (`/v1/participants?person=`: event id, title, firm, confidence — no
+  date, no company), so the person page asks `GET /v1/events/{id}` per loaded call (`useV2EventsById`, `useQueries`
+  under `useV2Event`'s key and expansions: the call page opened from the list is cached). 25 calls a page bounds it
+  (≤ 26 requests per page of calls). Calls sort newest first once their event is in; a call whose event failed says
+  "Not available". Role & firm history (`roleHistory`, `src/lib/people.ts`, tested) = consecutive calls with the same
+  title and firm as said on each call; undated calls are left out (the note says so).
+- **Links**: `PersonLink` (`src/components/people/person-link.tsx`) — `TurnBlock`'s speaker name (`speaker.personId`:
+  transcript turns carry `person_id` through `toTranscriptView` / `toWordTurns`, the Q&A tab's analyst and answers),
+  the Participants tab's names (plus "Search people: on this call / on every <SYMBOL> call" → `/people?event=` /
+  `?company=`), the `/people` rows. Search hits and live turns carry no `person_id`: no link (never by name).
+- **States**: `PeopleState` (`src/components/people/people-state.tsx`): the plan gate (STANDARD), a 404 in the API's
+  words (a fund given as `company` answers `not_covered`) or the page's not-found text, a 400's message, else
+  `ErrorState`. Fixtures `src/lib/people-fixtures.ts`; tests `src/routes/-tests/people-pages.test.tsx`,
+  `src/lib/people.test.ts`, the People cases of `ticker-search.test.tsx` and `transcript-layout.test.tsx`.
+
 ### UI Components (`src/components/ui/`)
 
 Base UI components built on `@base-ui/react` primitives with `class-variance-authority` for variants. Uses `cn()` utility from `src/lib/utils.ts` (clsx + tailwind-merge).
@@ -344,3 +370,80 @@ artifact: adopt `reference/openapi.json` from a versioned API reference bundle,
 then regenerate its local types and run mocked tests. No SDK generator or source
 introspection of sibling checkouts belongs here. An ownership-only SDK move does
 not require a dashboard spec refresh or runtime deployment.
+
+## Operation coverage
+
+Operation → the page that shows it (backend `tasks/data-api-dashboard` O7, requirement 7): every operation the dashboard
+calls, with its page. Created by O7 group 1 from `server-functions.ts` at `ab8a89c` (62 + task 5's `getMe`,
+`getMyUsage`, `getIpo` = 65) plus group 1's rows (`listPeople`, `getPerson`; `listParticipants?person=`). Every O7
+group appends its rows, the alerts tasklist its 36 (→ 124); an operation with no view states why here.
+
+| Operation | Request | Page |
+|-----------|---------|------|
+| `getAsReportedFinancials` | `GET /v1/financials/as-reported` | `/$ticker/financials?view=as-reported` (summary) |
+| `getAsReportedFinancialsDetailed` | `GET /v1/financials/as-reported/detailed` | `/$ticker/financials?view=as-reported` (detailed) |
+| `getAsReportedFinancialsPresentation` | `GET /v1/financials/as-reported/presentation` | `/$ticker/financials?view=as-reported` (presentation) |
+| `getAudio` | `GET /v1/events/{event_id}/audio` | call page · player (on Play) |
+| `getCompany` | `GET /v1/companies/{company}` | `/$ticker` (overview); `/$ticker/documents`; `/$ticker/news` |
+| `getDocumentFigure` | `GET /v1/document-versions/{version_id}/figures/{block_id}` | SEC documents panel (`/$ticker/filings`, `/sec/$cik`) |
+| `getDocumentVersion` | `GET /v1/document-versions/{version_id}` | SEC documents panel (`/$ticker/filings`, `/sec/$cik`) |
+| `getEvent` | `GET /v1/events/{event_id}` | call page; `/people/$personId` (one per loaded call) |
+| `getEventComparison` | `GET /v1/events/{event_id}/comparison` | call page · Metrics & diff tab |
+| `getEventStats` | `GET /v1/events/{event_id}/stats` | call page · Metrics & diff tab |
+| `getFact` | `GET /v1/facts/{fact_id}` | called, not shown yet (O7 group 4: "Explain this number") |
+| `getFiler` | `GET /v1/filers/{cik}` | `/sec/$cik`; sidebar (filer context) |
+| `getFiling` | `GET /v1/filings/{accession}` | SEC documents panel; `/$ticker/filings` (HTML dialog) |
+| `getFund` | `GET /v1/funds/{fund}` | `/$ticker` (fund overview) |
+| `getInstrument` | `GET /v1/instruments/{symbol}` | `/$ticker` layout + overview; `/$ticker/filings`; `/$ticker/financials`; sidebar |
+| `getInvestorDocument` | `GET /v1/investor-documents/{document_id}` | `/$ticker/documents`; call page · Documents tab |
+| `getIpo` | `GET /v1/ipos/{ipo_id}` | `/ipo-calendar` (row detail) |
+| `getLiveAudio` | `GET /v1/events/{event_id}/live-audio` | call page · player (live) |
+| `getMe` | `GET /v1/me` | key gate (every page); `/account`; plan badges; `/$ticker/financials` statement views |
+| `getMyUsage` | `GET /v1/me/usage` | `/account` |
+| `getNewsItem` | `GET /v1/news/{id}` | `/$ticker/news` (item panel) |
+| `getNewsText` | `GET /v1/news/{id}/text` | `/$ticker/news` (item panel) |
+| `getPerson` | `GET /v1/people/{person_id}` | `/people/$personId`; sidebar (person context) |
+| `getPressRelease` | `GET /v1/events/{event_id}/press-release` | call page · Press release tab |
+| `getPriceAttribution` | `GET /v1/events/{event_id}/price-attribution` | call page · Price moves tab + live player |
+| `getProsody` | `GET /v1/events/{event_id}/prosody` | call page · Prosody tab |
+| `getSlides` | `GET /v1/events/{event_id}/slides` | call page · Slides tab |
+| `getStandardizedFinancials` | `GET /v1/financials/standardized` | `/$ticker/financials?view=standardized` (summary) |
+| `getStandardizedFinancialsDetailed` | `GET /v1/financials/standardized/detailed` | `/$ticker/financials?view=standardized` (detailed) |
+| `getStandardizedFinancialsPresentation` | `GET /v1/financials/standardized/presentation` | `/$ticker/financials?view=standardized` (presentation) |
+| `getTranscript` | `GET /v1/events/{event_id}/transcript` | call page · Transcript tab + player (words) |
+| `getTranscriptDiff` | `GET /v1/events/{event_id}/transcript-diff` | call page · Transcript tab (Compare) |
+| `getTranscriptText` | `GET /v1/events/{event_id}/transcript-text` | call page · Transcript tab (Sections / Plain text) |
+| `listAnnouncements` | `GET /v1/announcements` | `/$ticker/news` (item panel, by news item) |
+| `listCagr` | `GET /v1/metrics/cagr` | `/$ticker/financials?view=cagr` |
+| `listDividends` | `GET /v1/dividends` | `/$ticker/dividends` |
+| `listEvents` | `GET /v1/events` | `/`; `/calendar`; `/live-calls`; `/$ticker` (overview); `/$ticker/earnings-calls`; `/$ticker/documents`; sidebar (live count); call page (live session) |
+| `listFilerHoldings` | `GET /v1/filers/{cik}/holdings` | `/sec/$cik` (13F portfolio) |
+| `listFilers` | `GET /v1/filers` | `/institutions`; top-bar search; filer lookup |
+| `listFilings` | `GET /v1/filings` | `/$ticker/filings`; `/$ticker` (overview); `/sec/$cik`; sidebar (filer context) |
+| `listFiscalPeriods` | `GET /v1/fiscal-periods` | `/$ticker/filings` (period labels) |
+| `listFundPositions` | `GET /v1/funds/{fund}/holdings` | `/$ticker/holdings`; `/$ticker` (fund overview) |
+| `listFundWeights` | `GET /v1/funds/{fund}/weights` | `/$ticker/holdings` |
+| `listFunds` | `GET /v1/funds` | `/funds` |
+| `listGrowth` | `GET /v1/metrics/growth` | `/$ticker/financials?view=growth` |
+| `listGuidance` | `GET /v1/guidance` | call page · Guidance tab (+ history dialog) |
+| `listHolderChanges` | `GET /v1/holder-changes` | `/$ticker/holders` |
+| `listHolders` | `GET /v1/holders` | `/$ticker/holders` |
+| `listInsiderTrades` | `GET /v1/insider-trades` | `/$ticker/insider-trades` |
+| `listInstruments` | `GET /v1/instruments` | `/instruments`; top-bar search |
+| `listInvestorDocuments` | `GET /v1/investor-documents` | `/$ticker/documents`; call page · Documents tab |
+| `listIpos` | `GET /v1/ipos` | `/ipo-calendar`; `/` |
+| `listKpis` | `GET /v1/kpis` | call page · Guidance tab (KPIs) |
+| `listMarketHolidays` | `GET /v1/market-holidays` | `/market-holidays`; `/` |
+| `listNews` | `GET /v1/news` | `/$ticker/news` |
+| `listOfferings` | `GET /v1/offerings` | `/sec/$cik` (private offerings) |
+| `listParticipants` | `GET /v1/participants` | call page · Participants tab, Transcript / Q&A (images), Search this call, live transcript (`event=`); `/people/$personId` (`person=`) |
+| `listPeople` | `GET /v1/people` | `/people`; top-bar search (People group) |
+| `listQa` | `GET /v1/events/{event_id}/qa` | call page · Q&A tab |
+| `listRatios` | `GET /v1/metrics/ratios` | `/$ticker/financials?view=ratios` |
+| `listSegments` | `GET /v1/segments` | `/$ticker/financials?view=segments` |
+| `listSegmentsDetailed` | `GET /v1/segments/detailed` | called, not shown yet (O7 group 4: detailed segments) |
+| `listSplits` | `GET /v1/splits` | `/$ticker/stock-splits` |
+| `listTranscriptVersions` | `GET /v1/events/{event_id}/transcript-versions` | call page · Transcript tab (version select) |
+| `searchFilings` | `GET /v1/search/filings` | SEC filing search (`/$ticker/documents`) |
+| `searchInvestorDocuments` | `GET /v1/search/investor-documents` | `/$ticker/documents` |
+| `searchTranscripts` | `GET /v1/search/transcripts` | call page / calls list · Search this call |

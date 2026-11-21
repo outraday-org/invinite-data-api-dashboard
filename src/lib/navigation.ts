@@ -11,9 +11,11 @@ import {
     ChartPieIcon,
     CircleUserRoundIcon,
     CoinsIcon,
+    ContactIcon,
     FileTextIcon,
     FolderOpenIcon,
     HandCoinsIcon,
+    HistoryIcon,
     HouseIcon,
     IdCardIcon,
     LandmarkIcon,
@@ -37,6 +39,7 @@ import type { V2Dataset, V2FilerResponse, V2Instrument } from "@/lib/api/types";
 import type { FileRoutesByTo } from "@/routeTree.gen";
 
 import { INSTRUMENT_TYPE_LABELS, servesSection } from "@/lib/instruments";
+import { PERSON_ANCHORS } from "@/lib/people";
 import { LICENSING_PAGE_URL, STATUS_PAGE_URL } from "@/lib/public-hosts";
 
 /**
@@ -72,6 +75,7 @@ export const BROWSE_NAV: ReadonlyArray<NavPage> = [
     { description: "Every exchange-traded US symbol: stocks, ETFs, closed-end funds, ETNs.", icon: ListIcon, keywords: ["instruments", "stocks", "symbols", "tickers", "etn", "etns", "browse"], label: "Instruments", to: "/instruments" },
     { description: "Every listed ETF and closed-end fund with net assets.", icon: LayersIcon, keywords: ["funds", "etf", "etfs", "closed-end", "holdings"], label: "Funds", to: "/funds" },
     { description: "13F investment managers and their portfolios.", icon: LandmarkIcon, keywords: ["institutions", "managers", "13f", "holders", "filers"], label: "Institutions", to: "/institutions" },
+    { description: "Executives and analysts who speak on calls, with every call of each.", icon: ContactIcon, keywords: ["people", "persons", "executives", "analysts", "speakers", "participants"], label: "People", to: "/people" },
 ];
 
 /** The account (bottom of the sidebar, with the plan badge). */
@@ -240,4 +244,11 @@ export const BROWSE_CARDS: ReadonlyArray<BrowseCard> = [
     { description: "Exchange-traded notes.", icon: ReceiptIcon, label: "ETNs", search: { type: "etn" }, to: "/instruments" },
     { description: "Registered funds with their reported holdings.", icon: LayersIcon, label: "Funds with holdings", search: { structure: "registered_fund" }, to: "/funds" },
     { description: "13F managers and their portfolios.", icon: LandmarkIcon, label: "Institutions", search: {}, to: "/institutions" },
+];
+
+/** The blocks of `/people/$personId` (in-page anchors of the sidebar's person context), in page order. */
+export const PERSON_CONTEXT_ANCHORS: ReadonlyArray<FilerAnchor> = [
+    { icon: IdCardIcon, id: PERSON_ANCHORS.profile, label: "Profile" },
+    { icon: MicIcon, id: PERSON_ANCHORS.calls, label: "Calls" },
+    { icon: HistoryIcon, id: PERSON_ANCHORS.history, label: "Role & firm history" },
 ];

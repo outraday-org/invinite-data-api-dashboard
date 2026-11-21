@@ -34,7 +34,7 @@ export function useSpeakerImagesByName(participants: null | undefined | V2Partic
 
 /** A transcript turn's speaker for `TurnBlock`. */
 function turnSpeaker(turn: TranscriptTurn, images: SpeakerImages): TurnSpeaker {
-    return { detail: turn.title, imageUrl: images.get(turn.speaker_label), label: turn.speaker_label, name: turn.name, role: turn.role };
+    return { detail: turn.title, imageUrl: images.get(turn.speaker_label), label: turn.speaker_label, name: turn.name, personId: turn.person_id, role: turn.role };
 }
 
 /** "Q&A starts at m:ss" — a button that plays from there when the call has a recording. */

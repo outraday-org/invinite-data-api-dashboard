@@ -3,6 +3,7 @@ import * as React from "react";
 import type { TimedWord, TurnPlaybackState } from "@/lib/earnings/follow-along";
 
 import { SpeakerAvatar } from "@/components/earnings/speaker-avatar";
+import { PersonLink } from "@/components/people/person-link";
 import { speakerName } from "@/lib/earnings/transcript";
 import { splitByKeywords } from "@/lib/live/live-highlights";
 import { usePlayer } from "@/lib/player/player-context";
@@ -11,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 import { SeekButton } from "../seek-button";
 
-/** Who speaks a turn. `personId` is unused here; task 7 group 1 turns the name into a link with it. */
+/** Who speaks a turn. `personId` (the API resolved the speaker to a person) turns the name into a person-page link. */
 export type TurnSpeaker = {
     /** Detail after the name: title · firm. */
     detail?: null | string;
@@ -50,7 +51,7 @@ function SpeakerChip({ speaker }: { speaker: TurnSpeaker }) {
     return (
         <span className="inline-flex min-w-0 items-center gap-2">
             <SpeakerAvatar imageUrl={speaker.imageUrl} name={speaker.name} speakerRole={speaker.role} />
-            <span className="font-medium">{speakerName({ name: speaker.name, speaker_label: speaker.label })}</span>
+            <PersonLink className="font-medium" personId={speaker.personId}>{speakerName({ name: speaker.name, speaker_label: speaker.label })}</PersonLink>
             {detail && <span className="text-muted-foreground">{detail}</span>}
         </span>
     );

@@ -21,6 +21,13 @@ const player = vi.hoisted(() => ({
     setFollow: vi.fn(),
 }));
 
+// A speaker resolved to a person links the person page (`PersonLink`); the router's `Link` as a plain anchor.
+vi.mock("@tanstack/react-router", () => ({
+    Link: ({ children, className, params, to }: { children: React.ReactNode; className?: string; params: Record<string, string>; to: string }) => (
+        <a className={className} href={Object.entries(params).reduce((path, [key, value]) => path.replace(`$${key}`, value), to)}>{children}</a>
+    ),
+}));
+
 vi.mock("@/lib/player/player-context", () => ({
     usePlayer: () => ({
         canSeek: true,
@@ -58,7 +65,7 @@ vi.mock("@/lib/api/queries", () => ({
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({ useCallAudio: () => ({ recording: null }) }));
 
-const TURNS_FIXTURE = vi.hoisted(() => [{ name: "Ann Lee", role: "executive", speaker_label: "A", start_ms: 0, text: "Good morning everyone", title: "CEO" }]);
+const TURNS_FIXTURE = vi.hoisted(() => [{ name: "Ann Lee", person_id: null, role: "executive", speaker_label: "A", start_ms: 0, text: "Good morning everyone", title: "CEO" }]);
 
 afterEach(cleanup);
 
@@ -80,8 +87,8 @@ beforeEach(() => {
 const words = (start: number, texts: Array<string>) => texts.map((text, index) => ({ startMs: start + index * 1000, text }));
 
 const TURNS = [
-    { name: "Ann Lee", role: "executive", speaker_label: "A", start_ms: 0, text: "Good morning everyone", title: "CEO" },
-    { name: "Bo Chan", role: "analyst", speaker_label: "B", start_ms: 10_000, text: "Thanks for taking my question", title: null },
+    { name: "Ann Lee", person_id: null, role: "executive", speaker_label: "A", start_ms: 0, text: "Good morning everyone", title: "CEO" },
+    { name: "Bo Chan", person_id: "6f1c2d3e-0000-4000-8000-000000000001", role: "analyst", speaker_label: "B", start_ms: 10_000, text: "Thanks for taking my question", title: null },
 ];
 
 const TURN_WORDS = [words(0, ["Good", "morning", "everyone"]), words(10_000, ["Thanks", "for", "taking", "my", "question"])];
@@ -145,6 +152,14 @@ describe("TranscriptTurns (playback)", () => {
         expect(stateOf("Bo Chan")).toBe("idle");
 
         expect(container.querySelector(".text-muted-foreground\\/40")).toBeNull();
+    });
+
+    it("a speaker resolved to a person links the person page; an unresolved one stays text", () => {
+        render(<TranscriptTurns qaStartMs={null} view={view} />);
+
+        expect(screen.getByText("Bo Chan").closest("a")?.getAttribute("href")).toBe("/people/6f1c2d3e-0000-4000-8000-000000000001");
+
+        expect(screen.getByText("Ann Lee").closest("a")).toBeNull();
     });
 
     it("without words (the cleaned layer) the turns get the turn-level state", () => {

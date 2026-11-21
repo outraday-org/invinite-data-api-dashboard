@@ -1,6 +1,6 @@
 import type { InfiniteData, UseQueryOptions } from "@tanstack/react-query";
 
-import { keepPreviousData, useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useInfiniteQuery, useQueries, useQuery } from "@tanstack/react-query";
 import * as React from "react";
 import { toast } from "sonner";
 
@@ -87,6 +87,10 @@ import type {
     V2NewsText,
     V2OfferingsResponse,
     V2ParticipantsResponse,
+    V2PeopleResponse,
+    V2PeopleSort,
+    V2Person,
+    V2PersonRole,
     V2PressReleaseResponse,
     V2PriceAttributionResponse,
     V2ProsodyResponse,
@@ -163,6 +167,9 @@ import {
     getV2NewsText,
     getV2Offerings,
     getV2Participants,
+    getV2People,
+    getV2Person,
+    getV2PersonParticipations,
     getV2PressRelease,
     getV2PriceAttribution,
     getV2Prosody,
@@ -1547,5 +1554,80 @@ export function useV2FilersInfinite(input: FilersListInput) {
         fetchPage: (cursor, apiKey) => getV2Filers({ data: { ...input, apiKey, cursor: cursor ?? undefined, q } }),
         queryKey: ["v2", "filers", "list", input.phase ?? "", q ?? "", input.sort ?? "", input.limit ?? ""],
         staleTime: SEC_STALE_MS,
+    });
+}
+
+// People (backend tasks/data-api-dashboard O7 group 1): `/people`, `/people/$personId` and the search's People group.
+
+const PEOPLE_STALE_MS = 10 * 60 * 1000;
+
+export type PeopleInput = { company?: string; event?: string; limit?: number; q?: string; role?: V2PersonRole; sort?: V2PeopleSort };
+
+/** People who appear on calls (`GET /v1/people`, 1 credit a page) by cursor; status-aware (the page renders errors). */
+export function useV2PeopleInfinite(input: PeopleInput) {
+    const q = input.q?.trim() || undefined;
+
+    const company = input.company?.trim() || undefined;
+
+    return useEarningsInfinite<V2PeopleResponse>({
+        enabled: true,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2People({ data: { ...input, apiKey, company, cursor: cursor ?? undefined, limit: input.limit ?? 50, q } }),
+        queryKey: ["v2", "people", "list", q ?? "", company ?? "", input.event ?? "", input.role ?? "", input.sort ?? "", input.limit ?? ""],
+        staleTime: PEOPLE_STALE_MS,
+    });
+}
+
+/** The top-bar search's People group (`GET /v1/people?q=`, one page): idle until `q` has `minLength` characters. */
+export function useV2PeopleSearch(input: { limit: number; minLength: number; q: string }) {
+    const q = input.q.trim();
+
+    return useEarningsQuery<V2PeopleResponse>({
+        enabled: q.length >= input.minLength,
+        errorMessage: null,
+        load: apiKey => getV2People({ data: { apiKey, limit: input.limit, q } }),
+        placeholderData: keepPreviousData,
+        queryKey: ["v2", "people", "search", q, input.limit],
+        staleTime: PEOPLE_STALE_MS,
+    });
+}
+
+/** One person (`GET /v1/people/{person_id}`); idle for "". Status-aware: a 404 is the page's "not found". */
+export function useV2Person(personId: string) {
+    return useEarningsQuery<V2Person>({
+        enabled: personId.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2Person({ data: { apiKey, personId } }),
+        queryKey: ["v2", "person", personId],
+        staleTime: PEOPLE_STALE_MS,
+    });
+}
+
+/** The calls one person spoke on (`GET /v1/participants?person=`, one participation per call) by cursor; idle for "". */
+export function useV2PersonParticipationsInfinite(input: { limit: number; personId: string }) {
+    return useEarningsInfinite<V2ParticipantsResponse>({
+        enabled: input.personId.length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2PersonParticipations({ data: { apiKey, cursor: cursor ?? undefined, limit: input.limit, person: input.personId } }),
+        queryKey: ["v2", "participants", "person", input.personId, input.limit],
+        staleTime: PEOPLE_STALE_MS,
+    });
+}
+
+/**
+ * Several events by id (`GET /v1/events/{event_id}` each, 1 credit): a participation names its event only by id. The
+ * query is `useV2Event`'s (same key, same expansions), so a call page opened from the list is already cached.
+ */
+export function useV2EventsById(eventIds: ReadonlyArray<string>) {
+    const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
+
+    return useQueries({
+        queries: eventIds.map(eventId => ({
+            enabled: hasHydrated && eventId.length > 0,
+            queryFn: () => getV2Event({ data: { apiKey: apiKey ?? undefined, eventId, expand: ["calendar", "observations"] } }).catch(rethrowApiError),
+            queryKey: ["v2", "event", eventId, String(apiKeyUpdatedAt)],
+            retry: retryUnlessApiError,
+            staleTime: EARNINGS_EVENT_STALE_MS,
+        })),
     });
 }

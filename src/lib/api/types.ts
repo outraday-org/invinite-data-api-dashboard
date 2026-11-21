@@ -316,3 +316,10 @@ export type V2InstrumentsSort = NonNullable<ApiQuery<"/v1/instruments">["sort"]>
 export type V2FundsSort = NonNullable<ApiQuery<"/v1/funds">["sort"]>;
 export type V2FilerPhase = NonNullable<ApiQuery<"/v1/filers">["phase"]>;
 export type V2FilersSort = NonNullable<ApiQuery<"/v1/filers">["sort"]>;
+
+// People (backend tasks/data-api-dashboard O7 group 1): who speaks on calls, across calls.
+export type V2PeopleResponse = ApiResponse<"/v1/people", "get">;
+/** A person who appears on calls (`GET /v1/people/{person_id}`, the rows of `GET /v1/people`). */
+export type V2Person = ApiResponse<"/v1/people/{person_id}", "get">;
+export type V2PersonRole = NonNullable<ApiQuery<"/v1/people">["role"]>;
+export type V2PeopleSort = NonNullable<ApiQuery<"/v1/people">["sort"]>;

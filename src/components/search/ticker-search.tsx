@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
 import { useNavigate, useParams, useRouterState } from "@tanstack/react-router";
-import { HistoryIcon, LandmarkIcon, SearchIcon } from "lucide-react";
+import { HistoryIcon, LandmarkIcon, SearchIcon, UserRoundIcon } from "lucide-react";
 import * as React from "react";
 
 import type { V2Dataset, V2FilerMatch, V2Instrument, V2InstrumentType } from "@/lib/api/types";
@@ -13,29 +13,35 @@ import { filerCikParam } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useInstrumentSearch, useKeyReady, useV2Filers } from "@/lib/api/queries";
+import { useInstrumentSearch, useKeyReady, useV2Filers, useV2PeopleSearch } from "@/lib/api/queries";
 import { INSTRUMENT_TYPE_PLURALS, instrumentBadges, servesSection } from "@/lib/instruments";
 import { searchPages } from "@/lib/navigation";
+import { personDetail, personRoleLabel } from "@/lib/people";
 import { selectRecents, useTickerStore } from "@/lib/stores/ticker-store";
 import { cn } from "@/lib/utils";
 
-/** The category pills (owner 2026-11-21): one active at a time, All by default; task 7 adds People. */
-export const SEARCH_PILLS = ["all", "stock", "etf", "closed_end_fund", "etn", "institutions"] as const;
+/** The category pills (owner 2026-11-21): one active at a time, All by default. */
+export const SEARCH_PILLS = ["all", "stock", "etf", "closed_end_fund", "etn", "institutions", "people"] as const;
 
 export type SearchPill = (typeof SEARCH_PILLS)[number];
 
-const PILL_OPTIONS = SEARCH_PILLS.map(pill => ({
-    label: pill === "all" ? "All" : pill === "institutions" ? "Institutions" : INSTRUMENT_TYPE_PLURALS[pill],
-    value: pill,
-}));
+const PILL_LABELS: Record<SearchPill, string> = { all: "All", institutions: "Institutions", people: "People", ...INSTRUMENT_TYPE_PLURALS };
+
+const PILL_OPTIONS = SEARCH_PILLS.map(pill => ({ label: PILL_LABELS[pill], value: pill }));
 
 /** Filers are searched from this many characters (a billed request). */
 export const FILER_MIN_CHARS = 3;
 
+/** People are searched from this many characters (a billed request, like filers). */
+export const PEOPLE_MIN_CHARS = 3;
+
+/** Rows of the People group. */
+const PEOPLE_LIMIT = 5;
+
 /** The typing pause before a request. */
 const DEBOUNCE_MS = 300;
 
-const PLACEHOLDER = "Search stocks, ETFs, funds, institutions and pages";
+const PLACEHOLDER = "Search stocks, ETFs, funds, institutions, people and pages";
 
 /** One pickable row of the list. */
 type SearchOption = {
@@ -134,9 +140,9 @@ function OptionIcon({ option }: { option: SearchOption }) {
 
 /**
  * The top-bar search (⌘K / Ctrl K, also from inside an input): groups Instruments (`/v1/instruments?q=`, type badges),
- * Institutions & filers (`/v1/filers?q=`, from 3 characters, after a typing pause — billed) and Pages (the navigation
- * table, no request); category pills (All · Stocks · ETFs · Closed-end funds · ETNs · Institutions) send only their own
- * request. Combobox + listbox: arrows move, Enter picks the highlighted or first hit (waiting for an answer in flight);
+ * Institutions & filers (`/v1/filers?q=`, from 3 characters, after a typing pause — billed), People (`/v1/people?q=`,
+ * the same rule: one billed request per pause) and Pages (the navigation table, no request); category pills (All ·
+ * Stocks · ETFs · Closed-end funds · ETNs · Institutions · People) send only their own request. Combobox + listbox: arrows move, Enter picks the highlighted or first hit (waiting for an answer in flight);
  * empty = the recently opened subjects. Picking an instrument keeps the current section when it has it.
  */
 export function TickerSearch() {
@@ -175,11 +181,13 @@ export function TickerSearch() {
         return () => window.clearTimeout(timer);
     }, [query]);
 
-    const instrumentPill = pill !== "institutions";
+    const instrumentPill = pill !== "institutions" && pill !== "people";
 
     const filerPill = pill === "all" || pill === "institutions";
 
-    const types: ReadonlyArray<V2InstrumentType> | undefined = pill === "all" || pill === "institutions" ? undefined : [pill];
+    const peoplePill = pill === "all" || pill === "people";
+
+    const types: ReadonlyArray<V2InstrumentType> | undefined = pill === "all" || pill === "institutions" || pill === "people" ? undefined : [pill];
 
     // A pill sends only its own request; nothing before the key answered `/v1/me`.
     const instruments = useInstrumentSearch(keyReady && instrumentPill ? debounced : "", types);
@@ -191,7 +199,10 @@ export function TickerSearch() {
 
     const filers = useV2Filers({ limit: 5, minLength: FILER_MIN_CHARS, q: filerQuery });
 
-    const settled = debounced === query && !instruments.isFetching && !managers.isFetching && !filers.isFetching;
+    // People by name (`/v1/people?q=`): one billed request per typing pause, from 3 characters.
+    const people = useV2PeopleSearch({ limit: PEOPLE_LIMIT, minLength: PEOPLE_MIN_CHARS, q: keyReady && peoplePill ? debounced : "" });
+
+    const settled = debounced === query && !instruments.isFetching && !managers.isFetching && !filers.isFetching && !people.isFetching;
 
     const goToTicker = React.useCallback((ticker: string, datasets?: ReadonlyArray<V2Dataset>) => {
         const normalizedTicker = ticker.toUpperCase();
@@ -263,6 +274,21 @@ export function TickerSearch() {
             }
         }
 
+        if (peoplePill && debounced === query && query.length >= PEOPLE_MIN_CHARS) {
+            for (const person of people.data?.data ?? []) {
+                list.push({
+                    badges: [personRoleLabel(person)],
+                    group: "People",
+                    icon: person.image_url ? undefined : UserRoundIcon,
+                    id: `person-${person.person_id}`,
+                    label: person.name,
+                    logoUrl: person.image_url,
+                    pick: close(() => void navigate({ params: { personId: person.person_id }, to: "/people/$personId" })),
+                    sub: personDetail(person),
+                });
+            }
+        }
+
         if (pill === "all") {
             for (const page of searchPages(query) as ReadonlyArray<HelpLink | NavPage>) {
                 list.push({
@@ -278,7 +304,7 @@ export function TickerSearch() {
         }
 
         return list;
-    }, [debounced, filerPill, filers.data, goToTicker, instrumentPill, instruments.data, managers.data, navigate, pill, query, recents]);
+    }, [debounced, filerPill, filers.data, goToTicker, instrumentPill, instruments.data, managers.data, navigate, people.data, peoplePill, pill, query, recents]);
 
     const activeIndex = Math.min(active, Math.max(0, options.length - 1));
 
@@ -365,7 +391,7 @@ export function TickerSearch() {
             >
                 <span className="text-muted-foreground inline-flex min-w-0 items-center gap-2">
                     <SearchIcon className="size-4 shrink-0" />
-                    <span className="truncate">Search stocks, ETFs, funds and institutions</span>
+                    <span className="truncate">Search stocks, ETFs, funds, institutions and people</span>
                 </span>
                 <span className="text-muted-foreground shrink-0 text-xs" data-testid="search-shortcut">{shortcut}</span>
             </DialogTrigger>
@@ -413,11 +439,11 @@ export function TickerSearch() {
                     )}
                     {query && settled && options.length === 0 && (
                         <div className="text-muted-foreground px-2 py-2">
-                            {filerPill && query.length < FILER_MIN_CHARS && !instrumentPill ? `Type ${FILER_MIN_CHARS} characters to search institutions.` : "Nothing found"}
+                            {!instrumentPill && query.length < FILER_MIN_CHARS ? `Type ${FILER_MIN_CHARS} characters to search ${pill === "people" ? "people" : "institutions"}.` : "Nothing found"}
                         </div>
                     )}
                     {!query && options.length === 0 && (
-                        <div className="text-muted-foreground px-2 py-2">Type a ticker, a name, an institution or a page.</div>
+                        <div className="text-muted-foreground px-2 py-2">Type a ticker, a name, an institution, a person or a page.</div>
                     )}
 
                     <div aria-label="Results" className="flex flex-col" id={listboxId} role="listbox">

@@ -5,8 +5,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { V2FilersResponse } from "@/lib/api/types";
 
 import { mergeFilers, rankInstruments, TickerSearch } from "@/components/search/ticker-search";
-import { useInstrumentSearch, useV2Filers } from "@/lib/api/queries";
+import { useInstrumentSearch, useV2Filers, useV2PeopleSearch } from "@/lib/api/queries";
 import { AAPL_INSTRUMENT, GLD_INSTRUMENT, INSTRUMENT_SEARCH } from "@/lib/instruments-fixtures";
+import { PERSON_ANALYST, V2_PEOPLE } from "@/lib/people-fixtures";
 import { V2_FILERS } from "@/lib/sec/v2-fixtures";
 import { useTickerStore } from "@/lib/stores/ticker-store";
 
@@ -18,7 +19,7 @@ vi.mock("@tanstack/react-router", () => ({
     useRouterState: ({ select }: { select: (state: { location: { pathname: string } }) => string }) => select({ location: { pathname: router.pathname } }),
 }));
 
-vi.mock("@/lib/api/queries", () => ({ useInstrumentSearch: vi.fn(), useKeyReady: () => true, useV2Filers: vi.fn() }));
+vi.mock("@/lib/api/queries", () => ({ useInstrumentSearch: vi.fn(), useKeyReady: () => true, useV2Filers: vi.fn(), useV2PeopleSearch: vi.fn() }));
 
 const VANGUARD: V2FilersResponse = {
     ...V2_FILERS,
@@ -45,6 +46,11 @@ beforeEach(() => {
         data: query
             ? { ...INSTRUMENT_SEARCH, data: INSTRUMENT_SEARCH.data.filter(instrument => !types || types.includes(instrument.type)) }
             : null,
+        isFetching: false,
+    }) as never);
+
+    vi.mocked(useV2PeopleSearch).mockImplementation(({ minLength, q }) => ({
+        data: q.length >= minLength ? { ...V2_PEOPLE, data: V2_PEOPLE.data.filter(person => person.name.toLowerCase().includes(q.toLowerCase())) } : null,
         isFetching: false,
     }) as never);
 
@@ -122,6 +128,10 @@ describe("top-bar search: groups, pills, keyboard, recents", () => {
 
         fireEvent.keyDown(all, { key: "ArrowLeft" });
 
+        expect(screen.getByRole("tab", { name: "People" })).toHaveAttribute("aria-selected", "true");
+
+        fireEvent.keyDown(screen.getByRole("tab", { name: "People" }), { key: "ArrowLeft" });
+
         expect(screen.getByRole("tab", { name: "Institutions" })).toHaveAttribute("aria-selected", "true");
 
         type("vanguard");
@@ -129,6 +139,40 @@ describe("top-bar search: groups, pills, keyboard, recents", () => {
         expect(useInstrumentSearch).toHaveBeenLastCalledWith("", undefined);
 
         expect(optionLabels()).toEqual(["VANGUARD GROUP INC", "VANGUARD INDEX FUNDS"]);
+    });
+
+    it("People: a name after the typing pause, from 3 characters; the pill sends no instrument or filer request", () => {
+        openSearch();
+
+        type("kramer");
+
+        expect(useV2PeopleSearch).toHaveBeenLastCalledWith({ limit: 5, minLength: 3, q: "kramer" });
+
+        expect(screen.getByText("People", { selector: "[role=presentation]" })).toBeInTheDocument();
+
+        expect(within(option("Richard Kramer")).getAllByTestId("search-badge").map(badge => badge.textContent)).toEqual(["Analyst"]);
+
+        fireEvent.click(screen.getByRole("tab", { name: "People" }));
+
+        expect(useInstrumentSearch).toHaveBeenLastCalledWith("", undefined);
+
+        expect(useV2Filers).toHaveBeenLastCalledWith(expect.objectContaining({ q: "" }));
+
+        expect(optionLabels()).toEqual(["Richard Kramer"]);
+
+        fireEvent.click(option("Richard Kramer"));
+
+        expect(router.navigate).toHaveBeenLastCalledWith({ params: { personId: PERSON_ANALYST.person_id }, to: "/people/$personId" });
+    });
+
+    it("an instrument pill sends no people request", () => {
+        openSearch();
+
+        fireEvent.click(screen.getByRole("tab", { name: "Stocks" }));
+
+        type("kramer");
+
+        expect(useV2PeopleSearch).toHaveBeenLastCalledWith(expect.objectContaining({ q: "" }));
     });
 
     it("the pill resets to All on the next open", () => {

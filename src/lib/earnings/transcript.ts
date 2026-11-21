@@ -9,6 +9,8 @@ export type TranscriptFormat = "cleaned" | "sections" | "speakers" | "text";
 /** One turn of `/transcript` (raw or cleaned layer); `start_ms` null = an untimed company-published transcript. */
 export type TranscriptTurn = {
     name: null | string;
+    /** The person the API resolved the speaker to (the person page's id); null = unresolved. */
+    person_id: null | string;
     role: null | string;
     speaker_label: string;
     start_ms: null | number;
@@ -42,6 +44,7 @@ function toTurn(value: unknown): null | TranscriptTurn {
 
     return {
         name: stringOrNull(value.name),
+        person_id: stringOrNull(value.person_id),
         role: stringOrNull(value.role),
         speaker_label: typeof value.speaker_label === "string" ? value.speaker_label : "",
         start_ms: numberOrNull(value.start_ms),

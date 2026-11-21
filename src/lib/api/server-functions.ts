@@ -71,6 +71,10 @@ import type {
     V2NewsText,
     V2OfferingsResponse,
     V2ParticipantsResponse,
+    V2PeopleResponse,
+    V2PeopleSort,
+    V2Person,
+    V2PersonRole,
     V2PressReleaseResponse,
     V2PriceAttributionResponse,
     V2ProsodyResponse,
@@ -1532,6 +1536,63 @@ export const getIpo = createServerFn({ method: "GET" })
     .handler(async ({ data }): Promise<V2IpoDetail> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/ipos/{ipo_id}", {
             params: { path: { ipo_id: data.ipoId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+// People (backend tasks/data-api-dashboard O7 group 1): `/v1/people` (search), `/v1/people/{person_id}`, and the calls
+// of one person (`/v1/participants?person=`). 1 credit a request each.
+
+const personIdSchema = z.uuid();
+
+/** People who appear on calls (`GET /v1/people`): by name (`q`), company, event, role; sorted; by cursor. */
+export const getV2People = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        company: z.string().trim().min(1).max(200).optional(),
+        cursor: cursorSchema,
+        event: eventIdSchema.optional(),
+        limit: v2LimitSchema,
+        q: z.string().trim().min(1).max(200).optional(),
+        role: z.enum(["executive", "analyst", "operator", "other"] as const satisfies ReadonlyArray<V2PersonRole>).optional(),
+        sort: z.enum(["name", "-name", "last_seen", "-last_seen"] as const satisfies ReadonlyArray<V2PeopleSort>).optional(),
+    }))
+    .handler(async ({ data }): Promise<V2PeopleResponse> => {
+        const { apiKey, company, cursor, event, limit, q, role, sort } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/people", {
+            params: { query: v2Query({ company, cursor, event, limit, q, role, sort }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** One person (`GET /v1/people/{person_id}`). */
+export const getV2Person = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, personId: personIdSchema }))
+    .handler(async ({ data }): Promise<V2Person> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/people/{person_id}", {
+            params: { path: { person_id: data.personId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** Every call one person spoke on (`GET /v1/participants?person=`), one participation per call, by cursor. */
+export const getV2PersonParticipations = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: v2LimitSchema, person: personIdSchema }))
+    .handler(async ({ data }): Promise<V2ParticipantsResponse> => {
+        const { apiKey, cursor, limit, person } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/participants", {
+            params: { query: v2Query({ cursor, limit, person }) },
         });
 
         if (error) throwApiError(error, response);

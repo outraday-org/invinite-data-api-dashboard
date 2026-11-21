@@ -19,7 +19,7 @@ describe("toTranscriptView", () => {
 
         expect(view).toEqual({
             kind: "turns",
-            turns: [{ name: "Tim Cook", role: "management", speaker_label: "A", start_ms: 1000, text: "Good afternoon.", title: "CEO" }],
+            turns: [{ name: "Tim Cook", person_id: null, role: "management", speaker_label: "A", start_ms: 1000, text: "Good afternoon.", title: "CEO" }],
         });
     });
 

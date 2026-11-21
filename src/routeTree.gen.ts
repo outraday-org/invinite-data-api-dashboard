@@ -21,8 +21,10 @@ import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as TickerRouteRouteImport } from './routes/$ticker/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PeopleIndexRouteImport } from './routes/people/index'
 import { Route as TickerIndexRouteImport } from './routes/$ticker/index'
 import { Route as SecCikRouteImport } from './routes/sec/$cik'
+import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
 import { Route as TickerStockSplitsIndexRouteImport } from './routes/$ticker/stock-splits/index'
 import { Route as TickerSegmentedFinancialsIndexRouteImport } from './routes/$ticker/segmented-financials/index'
 import { Route as TickerNewsIndexRouteImport } from './routes/$ticker/news/index'
@@ -104,6 +106,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PeopleIndexRoute = PeopleIndexRouteImport.update({
+  id: '/people/',
+  path: '/people/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TickerIndexRoute = TickerIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -112,6 +119,11 @@ const TickerIndexRoute = TickerIndexRouteImport.update({
 const SecCikRoute = SecCikRouteImport.update({
   id: '/sec/$cik',
   path: '/sec/$cik',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
+  id: '/people/$personId',
+  path: '/people/$personId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TickerStockSplitsIndexRoute = TickerStockSplitsIndexRouteImport.update({
@@ -239,8 +251,10 @@ export interface FileRoutesByFullPath {
   '/live-calls': typeof LiveCallsRoute
   '/market-holidays': typeof MarketHolidaysRoute
   '/status': typeof StatusRoute
+  '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/$ticker/': typeof TickerIndexRoute
+  '/people': typeof PeopleIndexRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
   '/$ticker/documents': typeof TickerDocumentsIndexRoute
   '/$ticker/earnings-calendar': typeof TickerEarningsCalendarIndexRoute
@@ -274,8 +288,10 @@ export interface FileRoutesByTo {
   '/live-calls': typeof LiveCallsRoute
   '/market-holidays': typeof MarketHolidaysRoute
   '/status': typeof StatusRoute
+  '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/$ticker': typeof TickerIndexRoute
+  '/people': typeof PeopleIndexRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
   '/$ticker/documents': typeof TickerDocumentsIndexRoute
   '/$ticker/earnings-calendar': typeof TickerEarningsCalendarIndexRoute
@@ -311,8 +327,10 @@ export interface FileRoutesById {
   '/live-calls': typeof LiveCallsRoute
   '/market-holidays': typeof MarketHolidaysRoute
   '/status': typeof StatusRoute
+  '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/$ticker/': typeof TickerIndexRoute
+  '/people/': typeof PeopleIndexRoute
   '/$ticker/dividends/': typeof TickerDividendsIndexRoute
   '/$ticker/documents/': typeof TickerDocumentsIndexRoute
   '/$ticker/earnings-calendar/': typeof TickerEarningsCalendarIndexRoute
@@ -349,8 +367,10 @@ export interface FileRouteTypes {
     | '/live-calls'
     | '/market-holidays'
     | '/status'
+    | '/people/$personId'
     | '/sec/$cik'
     | '/$ticker/'
+    | '/people'
     | '/$ticker/dividends'
     | '/$ticker/documents'
     | '/$ticker/earnings-calendar'
@@ -384,8 +404,10 @@ export interface FileRouteTypes {
     | '/live-calls'
     | '/market-holidays'
     | '/status'
+    | '/people/$personId'
     | '/sec/$cik'
     | '/$ticker'
+    | '/people'
     | '/$ticker/dividends'
     | '/$ticker/documents'
     | '/$ticker/earnings-calendar'
@@ -420,8 +442,10 @@ export interface FileRouteTypes {
     | '/live-calls'
     | '/market-holidays'
     | '/status'
+    | '/people/$personId'
     | '/sec/$cik'
     | '/$ticker/'
+    | '/people/'
     | '/$ticker/dividends/'
     | '/$ticker/documents/'
     | '/$ticker/earnings-calendar/'
@@ -457,7 +481,9 @@ export interface RootRouteChildren {
   LiveCallsRoute: typeof LiveCallsRoute
   MarketHolidaysRoute: typeof MarketHolidaysRoute
   StatusRoute: typeof StatusRoute
+  PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   SecCikRoute: typeof SecCikRoute
+  PeopleIndexRoute: typeof PeopleIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -546,6 +572,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/people/': {
+      id: '/people/'
+      path: '/people'
+      fullPath: '/people'
+      preLoaderRoute: typeof PeopleIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$ticker/': {
       id: '/$ticker/'
       path: '/'
@@ -558,6 +591,13 @@ declare module '@tanstack/react-router' {
       path: '/sec/$cik'
       fullPath: '/sec/$cik'
       preLoaderRoute: typeof SecCikRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/people/$personId': {
+      id: '/people/$personId'
+      path: '/people/$personId'
+      fullPath: '/people/$personId'
+      preLoaderRoute: typeof PeoplePersonIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$ticker/stock-splits/': {
@@ -769,7 +809,9 @@ const rootRouteChildren: RootRouteChildren = {
   LiveCallsRoute: LiveCallsRoute,
   MarketHolidaysRoute: MarketHolidaysRoute,
   StatusRoute: StatusRoute,
+  PeoplePersonIdRoute: PeoplePersonIdRoute,
   SecCikRoute: SecCikRoute,
+  PeopleIndexRoute: PeopleIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

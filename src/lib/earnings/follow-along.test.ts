@@ -17,6 +17,7 @@ import {
 
 const turn = (start_ms: null | number, words: Array<[string, null | number]>, name = "Ann"): WordTurn => ({
     name,
+    person_id: null,
     role: null,
     speaker_label: "A",
     start_ms,
