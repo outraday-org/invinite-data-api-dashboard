@@ -2,7 +2,9 @@ import type { ReactNode } from "react";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 
-import type { V2CompanyCoverage, V2Fund, V2FundPositionsResponse, V2Instrument } from "@/lib/api/types";
+import type { FinancialView } from "@/components/financials-pages/views";
+import type { V2CompanyCoverage, V2CompanyResponse, V2Dataset, V2Event, V2Filing, V2Fund, V2FundPositionsResponse, V2Instrument } from "@/lib/api/types";
+import type { TickerPath } from "@/lib/navigation";
 
 import { FundSourceBadge } from "@/components/sec/fund-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
@@ -12,13 +14,15 @@ import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError } from "@/lib/api/errors";
-import { useFund, useFundPositionsInfinite, useInstrument, useV2Company } from "@/lib/api/queries";
+import { useFund, useFundPositionsInfinite, useInstrument, useV2Company, useV2EventsInfinite, useV2FilingsInfinite } from "@/lib/api/queries";
 import { coverageEntries } from "@/lib/api/v2";
+import { eventLabel, formatCallTime } from "@/lib/earnings/format";
 import { formatDay, formatMoneyCompact, formatNumber, formatShares } from "@/lib/format";
 import { datasetGateText, FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS, isFundType } from "@/lib/instruments";
 import { tickerHead } from "@/lib/layout";
 import { fundReasonText, netAssetsScopeText } from "@/lib/sec/fund";
 import { formatFractionPercentCompact, formatNumberEn } from "@/lib/utils";
+import { EventLink } from "@/routes/$ticker/earnings-calls/-components/event-link";
 
 export const Route = createFileRoute("/$ticker/")({
     component: TickerOverview,
@@ -39,14 +43,14 @@ function TickerOverview() {
     // The layout renders the unknown / failed instrument states.
     if (!instrument) return null;
 
-    if (instrument.type === "stock") return <CompanyOverview ticker={ticker} />;
+    if (instrument.type === "stock") return <CompanyOverview datasets={instrument.datasets} ticker={ticker} />;
 
     if (isFundType(instrument.type)) return <FundOverview instrument={instrument} ticker={ticker} />;
 
     return <InstrumentCard instrument={instrument} />;
 }
 
-function CompanyOverview({ ticker }: { ticker: string }) {
+function CompanyOverview({ datasets, ticker }: { datasets: ReadonlyArray<V2Dataset>; ticker: string }) {
     const { data: company, error, isLoading } = useV2Company(ticker, { expand: ["coverage"] });
 
     if (error instanceof ApiRequestError && error.code === "not_covered") {
@@ -67,6 +71,8 @@ function CompanyOverview({ ticker }: { ticker: string }) {
 
     return (
         <div className="grid gap-6 md:grid-cols-2">
+            <OverviewTiles company={company} datasets={datasets} ticker={ticker} />
+
             <Card className="border-border/60">
                 <CardHeader>
                     <CardTitle>Company Info</CardTitle>
@@ -146,7 +152,7 @@ function CompanyOverview({ ticker }: { ticker: string }) {
                 </CardContent>
             </Card>
 
-            <CoverageCard coverage={company.coverage} />
+            <CoverageCard coverage={company.coverage} ticker={ticker} />
 
             {company.description && (
                 <Card className="border-border/60 md:col-span-2">
@@ -164,8 +170,22 @@ function CompanyOverview({ ticker }: { ticker: string }) {
     );
 }
 
-/** `expand=coverage`: which data families hold rows for the company and through which day. */
-function CoverageCard({ coverage }: { coverage: null | undefined | V2CompanyCoverage }) {
+/** The overview section a coverage family's data lives on (a family without a page = a plain badge). */
+const COVERAGE_SECTIONS: Partial<Record<string, { to: "/$ticker/financials"; view: FinancialView } | { to: TickerPath }>> = {
+    dividends: { to: "/$ticker/dividends" },
+    events: { to: "/$ticker/earnings-calls" },
+    filings: { to: "/$ticker/filings" },
+    financials: { to: "/$ticker/financials" },
+    holdings: { to: "/$ticker/holders" },
+    insider_trades: { to: "/$ticker/insider-trades" },
+    metrics: { to: "/$ticker/financials", view: "ratios" },
+    news: { to: "/$ticker/news" },
+    segments: { to: "/$ticker/financials", view: "segments" },
+    splits: { to: "/$ticker/stock-splits" },
+};
+
+/** `expand=coverage`: which data families hold rows for the company and through which day; each links its section. */
+export function CoverageCard({ coverage, ticker }: { coverage: null | undefined | V2CompanyCoverage; ticker: string }) {
     const entries = coverageEntries(coverage);
 
     return (
@@ -179,11 +199,95 @@ function CoverageCard({ coverage }: { coverage: null | undefined | V2CompanyCove
                     ? <div className="text-muted-foreground text-sm">No data family holds rows for this company yet.</div>
                     : (
                             <div className="flex flex-wrap gap-2">
-                                {entries.map(entry => <Badge key={entry.family} variant="secondary">{entry.text}</Badge>)}
+                                {entries.map((entry) => {
+                                    const target = COVERAGE_SECTIONS[entry.family];
+
+                                    const badge = <Badge variant="secondary">{entry.text}</Badge>;
+
+                                    if (!target) return <span key={entry.family}>{badge}</span>;
+
+                                    return "view" in target
+                                        ? <Link className="rounded-md hover:opacity-80" key={entry.family} params={{ ticker }} search={{ view: target.view }} to={target.to}>{badge}</Link>
+                                        : <Link className="rounded-md hover:opacity-80" key={entry.family} params={{ ticker }} to={target.to}>{badge}</Link>;
+                                })}
                             </div>
                         )}
             </CardContent>
         </Card>
+    );
+}
+
+/** A public https link of the company (its website, its IR site), else null. */
+const httpsHref = (url: null | string | undefined) => (url && /^https?:\/\//i.test(url) ? url : null);
+
+/** The overview's tiles: the next call (links to it), the latest filing, the website and IR site. */
+export function OverviewTiles({ company, datasets, ticker }: { company: Pick<V2CompanyResponse, "homepage_url" | "investor_relations_url">; datasets: ReadonlyArray<V2Dataset>; ticker: string }) {
+    const hasEvents = datasets.includes("events");
+
+    const hasFilings = datasets.includes("filings");
+
+    const next = useV2EventsInfinite({ company: ticker, enabled: hasEvents, limit: 1, sort: "scheduled_at", status: ["upcoming"], toastErrors: false, type: "all" });
+
+    const filings = useV2FilingsInfinite({ limit: 1, sort: "-filed_at", symbol: hasFilings ? ticker : "" });
+
+    return (
+        <OverviewTilesView
+            filing={filings.data?.pages.at(0)?.data.at(0) ?? null}
+            filingLoading={hasFilings && filings.isLoading}
+            homepage={httpsHref(company.homepage_url)}
+            investorRelations={httpsHref(company.investor_relations_url)}
+            nextCall={next.data?.pages.at(0)?.data.at(0) ?? null}
+            nextLoading={hasEvents && next.isLoading}
+            ticker={ticker}
+        />
+    );
+}
+
+/** The tiles (pure). */
+export function OverviewTilesView({ filing, filingLoading, homepage, investorRelations, nextCall, nextLoading, ticker }: {
+    filing: null | Pick<V2Filing, "accession" | "filed_at" | "form">;
+    filingLoading: boolean;
+    homepage: null | string;
+    investorRelations: null | string;
+    nextCall: null | V2Event;
+    nextLoading: boolean;
+    ticker: string;
+}) {
+    return (
+        <div className="grid gap-3 sm:grid-cols-3 md:col-span-2" data-testid="overview-tiles">
+            <Card className="border-border/60" size="sm">
+                <CardHeader><CardDescription>Next call</CardDescription></CardHeader>
+                <CardContent>
+                    {nextLoading
+                        ? <Skeleton className="h-5 w-40" />
+                        : nextCall
+                            ? (
+                                    <EventLink className="font-medium hover:underline" event={nextCall}>
+                                        {`${eventLabel(nextCall)} · ${formatCallTime(nextCall)}`}
+                                    </EventLink>
+                                )
+                            : <span className="text-muted-foreground">None scheduled</span>}
+                </CardContent>
+            </Card>
+            <Card className="border-border/60" size="sm">
+                <CardHeader><CardDescription>Latest filing</CardDescription></CardHeader>
+                <CardContent>
+                    {filingLoading
+                        ? <Skeleton className="h-5 w-40" />
+                        : filing
+                            ? <Link className="font-medium hover:underline" params={{ ticker }} to="/$ticker/filings">{`${filing.form} · ${formatDay(filing.filed_at)}`}</Link>
+                            : <span className="text-muted-foreground">None</span>}
+                </CardContent>
+            </Card>
+            <Card className="border-border/60" size="sm">
+                <CardHeader><CardDescription>Links</CardDescription></CardHeader>
+                <CardContent className="flex flex-wrap gap-x-3 gap-y-1">
+                    {homepage && <a className="font-medium underline-offset-4 hover:underline" href={homepage} rel="noopener noreferrer" target="_blank">Website</a>}
+                    {investorRelations && <a className="font-medium underline-offset-4 hover:underline" href={investorRelations} rel="noopener noreferrer" target="_blank">Investor relations</a>}
+                    {!homepage && !investorRelations && <span className="text-muted-foreground">None stated</span>}
+                </CardContent>
+            </Card>
+        </div>
     );
 }
 

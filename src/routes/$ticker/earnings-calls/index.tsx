@@ -2,13 +2,13 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { z } from "zod";
 
 import type { V2Event } from "@/lib/api/types";
 
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { ErrorState } from "@/components/ui/error-state";
+import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiRequestError } from "@/lib/api/errors";
@@ -19,16 +19,35 @@ import { DocumentSearch } from "@/routes/$ticker/documents/-components/document-
 
 import { AskThisCall } from "./-components/ask-this-call";
 import { AvailabilityIcons } from "./-components/availability-icons";
+import { FilterSelect } from "./-components/calendar-filters";
 import { CallStatusBadge } from "./-components/call-status-badge";
 import { CallTime } from "./-components/call-time";
 import { EventLink } from "./-components/event-link";
 import { EventTypeBadge } from "./-components/event-type-badge";
 import { LiveNowStrip } from "./-components/live-now-strip";
 
+const callsSearchSchema = z.object({ fiscalYear: z.coerce.number().int().min(1900).max(2200).optional().catch(undefined) });
+
 export const Route = createFileRoute("/$ticker/earnings-calls/")({
     component: EarningsCallsPage,
     head: ({ params }) => tickerHead(params.ticker, "Earnings Calls"),
+    validateSearch: callsSearchSchema,
 });
+
+/** A tab's count: "40+" while the list has a next page (the API has no totals). */
+export const loadedCount = (count: number, hasMore: boolean) => `${count}${hasMore ? "+" : ""}`;
+
+/** The columns of a tab: an upcoming call has not started or ended, so the Upcoming tab has no such columns. */
+export function columnsForTab<T extends { id?: string }>(columns: ReadonlyArray<T>, tab: "past" | "upcoming"): Array<T> {
+    return tab === "upcoming" ? columns.filter(column => column.id !== "started_at" && column.id !== "ended_at") : [...columns];
+}
+
+/** The fiscal years of the picker: the next one and the eight before it. */
+const fiscalYearOptions = (now: Date) => {
+    const next = now.getUTCFullYear() + 1;
+
+    return [{ label: "Any fiscal year", value: "all" }, ...Array.from({ length: 9 }, (_, index) => ({ label: `FY${next - index}`, value: String(next - index) }))];
+};
 
 type CallsTab = "past" | "upcoming";
 
@@ -37,6 +56,10 @@ type SearchScope = "documents" | "transcripts";
 
 function EarningsCallsPage() {
     const { ticker } = Route.useParams();
+
+    const { fiscalYear } = Route.useSearch();
+
+    const navigate = Route.useNavigate();
 
     // Once per mount (lazy initializer: render stays pure).
     const [now] = React.useState(() => new Date());
@@ -54,6 +77,7 @@ function EarningsCallsPage() {
         isLoading,
     } = useV2EventsInfinite({
         company: ticker,
+        fiscalYear,
         limit: 40,
         sort: "-scheduled_at",
         toastErrors: false,
@@ -78,6 +102,8 @@ function EarningsCallsPage() {
     const tab: CallsTab = selectedTab ?? (upcoming.length > 0 ? "upcoming" : "past");
 
     const events = tab === "upcoming" ? upcoming : past;
+
+    const yearOptions = React.useMemo(() => fiscalYearOptions(now), [now]);
 
     const columns = React.useMemo<Array<ColumnDef<V2Event>>>(
         () => [
@@ -131,6 +157,8 @@ function EarningsCallsPage() {
         [],
     );
 
+    const shownColumns = React.useMemo(() => columnsForTab(columns, tab), [columns, tab]);
+
     const header = (
         <PageHeader
             description={(
@@ -158,18 +186,9 @@ function EarningsCallsPage() {
 
             {!covered
                 ? (
-                        <Card className="border-muted-foreground/20" role="status" size="sm">
-                            <CardHeader className="gap-2">
-                                <div className="flex items-center gap-2">
-                                    <Badge variant="outline">Not covered</Badge>
-                                    <CardTitle className="text-sm">No earnings-call data</CardTitle>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="text-muted-foreground">
-                                This company is outside the in-house coverage scope; the API returns
-                                no earnings-call data for it.
-                            </CardContent>
-                        </Card>
+                        <Notice badge="Not covered" title="No earnings-call data">
+                            This company is outside the in-house coverage scope; the API returns no earnings-call data for it.
+                        </Notice>
                     )
                 : (
                         <div className="flex flex-col gap-2">
@@ -189,23 +208,32 @@ function EarningsCallsPage() {
                                     : <DocumentSearch identifier={ticker} />}
                             </div>
 
-                            <Tabs onValueChange={value => setSelectedTab(value as CallsTab)} value={tab}>
-                                <TabsList variant="line">
-                                    <TabsTrigger value="upcoming">
-                                        Upcoming
-                                        {" "}
-                                        <span className="text-muted-foreground">{upcoming.length}</span>
-                                    </TabsTrigger>
-                                    <TabsTrigger value="past">
-                                        Past
-                                        {" "}
-                                        <span className="text-muted-foreground">{past.length}</span>
-                                    </TabsTrigger>
-                                </TabsList>
-                            </Tabs>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <Tabs onValueChange={value => setSelectedTab(value as CallsTab)} value={tab}>
+                                    <TabsList variant="line">
+                                        <TabsTrigger value="upcoming">
+                                            Upcoming
+                                            {" "}
+                                            <span className="text-muted-foreground">{loadedCount(upcoming.length, hasNextPage)}</span>
+                                        </TabsTrigger>
+                                        <TabsTrigger value="past">
+                                            Past
+                                            {" "}
+                                            <span className="text-muted-foreground">{loadedCount(past.length, hasNextPage)}</span>
+                                        </TabsTrigger>
+                                    </TabsList>
+                                </Tabs>
+                                <FilterSelect
+                                    aria-label="Fiscal year"
+                                    className="w-[150px]"
+                                    onValueChange={value => void navigate({ resetScroll: false, search: { fiscalYear: value === "all" ? undefined : Number(value) } })}
+                                    options={yearOptions}
+                                    value={fiscalYear ? String(fiscalYear) : "all"}
+                                />
+                            </div>
 
                             <DataTable
-                                columns={columns}
+                                columns={shownColumns}
                                 emptyText={tab === "upcoming" ? "No upcoming calls." : "No past calls."}
                                 hasNextPage={hasNextPage}
                                 isFetchingNextPage={isFetchingNextPage}
