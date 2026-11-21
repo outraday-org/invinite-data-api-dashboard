@@ -3,6 +3,7 @@ import * as React from "react";
 
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
+import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
@@ -189,6 +190,7 @@ export function FinancialsPresentationTable({
                                         >
                                             {row.label}
                                         </div>
+                                        <MetricCatalogLink label={row.label} metricId={row.metricId} />
                                         <ChartRowButton label={row.label} onOpen={() => setSelectedRow(row)} />
                                     </div>
                                 </TableCell>

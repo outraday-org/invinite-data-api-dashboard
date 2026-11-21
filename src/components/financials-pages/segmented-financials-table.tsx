@@ -4,6 +4,7 @@ import type { SegmentLine } from "@/lib/financials/statements";
 
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
+import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatMetricId, formatNumberEnCompact, formatSegmentId } from "@/lib/utils";
@@ -50,6 +51,7 @@ export function SegmentedFinancialsTable({ periodLabels, rows: lines }: { period
                                     <div className="min-w-0 flex-1 truncate font-medium" title={formatMetricId(row.metricId)}>
                                         {formatMetricId(row.metricId)}
                                     </div>
+                                    <MetricCatalogLink label={formatMetricId(row.metricId)} metricId={row.metricId} />
                                     <ChartRowButton label={`${formatMetricId(row.metricId)} · ${formatSegmentLabel(row)}`} onOpen={() => setSelectedRow(row)} />
                                 </div>
                             </TableCell>

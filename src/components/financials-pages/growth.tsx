@@ -42,7 +42,7 @@ export function growthRows(periods: ReadonlyArray<V2GrowthPeriod>): Array<Metric
             let row = rowMap.get(key);
 
             if (!row) {
-                row = { key, label: `${formatMetricId(metricId)} (${BASIS_SHORT_LABELS[period.basis]})`, values: {} };
+                row = { key, label: `${formatMetricId(metricId)} (${BASIS_SHORT_LABELS[period.basis]})`, metricId, values: {} };
 
                 rowMap.set(key, row);
             }

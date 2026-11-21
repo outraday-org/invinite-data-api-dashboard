@@ -35,6 +35,8 @@ import {
 // The page modules' routes need a router; the pure views do not.
 vi.mock("@tanstack/react-router", () => ({
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
+    // The metric labels' catalog links (O7 group 7).
+    Link: ({ children, search, to }: { children: React.ReactNode; search?: Record<string, string>; to: string }) => <a href={`${to}?${new URLSearchParams(search).toString()}`}>{children}</a>,
 }));
 
 // Keep the server functions (TanStack Start) unloaded.

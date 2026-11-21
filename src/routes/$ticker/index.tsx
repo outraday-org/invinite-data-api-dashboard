@@ -6,6 +6,7 @@ import type { FinancialView } from "@/components/financials-pages/views";
 import type { V2CompanyCoverage, V2CompanyResponse, V2Dataset, V2Event, V2Filing, V2Fund, V2FundPositionsResponse, V2Instrument } from "@/lib/api/types";
 import type { TickerPath } from "@/lib/navigation";
 
+import { FiscalPeriodsCard } from "@/components/reference/fiscal-periods-card";
 import { FundSourceBadge } from "@/components/sec/fund-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,7 @@ import { useFund, useFundPositionsInfinite, useInstrument, useV2Company, useV2Ev
 import { coverageEntries } from "@/lib/api/v2";
 import { eventLabel, formatCallTime } from "@/lib/earnings/format";
 import { formatDay, formatMoneyCompact, formatNumber, formatShares } from "@/lib/format";
-import { datasetGateText, FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS, isFundType } from "@/lib/instruments";
+import { datasetGateText, FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS, isFundType, servesSection } from "@/lib/instruments";
 import { tickerHead } from "@/lib/layout";
 import { fundReasonText, netAssetsScopeText } from "@/lib/sec/fund";
 import { formatFractionPercentCompact, formatNumberEn } from "@/lib/utils";
@@ -153,6 +154,9 @@ function CompanyOverview({ datasets, ticker }: { datasets: ReadonlyArray<V2Datas
             </Card>
 
             <CoverageCard coverage={company.coverage} ticker={ticker} />
+
+            {/* O7 group 7: the fiscal calendar (asked only when the company has financial data). */}
+            {servesSection(datasets, "financials") && <FiscalPeriodsCard ticker={ticker} />}
 
             {company.description && (
                 <Card className="border-border/60 md:col-span-2">

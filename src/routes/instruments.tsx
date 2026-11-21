@@ -8,11 +8,12 @@ import type { InstrumentTab } from "@/lib/instruments";
 
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { TabStrip } from "@/components/navigation/tab-strip";
+import { CompaniesList, companiesSort, COMPANY_SECTORS } from "@/components/reference/companies-list";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
-import { useInstrumentsInfinite } from "@/lib/api/queries";
+import { useCompaniesInfinite, useInstrumentsInfinite } from "@/lib/api/queries";
 import { formatDay } from "@/lib/format";
 import { EXCHANGE_LABELS, FUND_STRUCTURE_LABELS, INSTRUMENT_TABS, INSTRUMENT_TYPE_PLURALS, instrumentBadges } from "@/lib/instruments";
 import { titleHead } from "@/lib/layout";
@@ -27,9 +28,13 @@ const instrumentsSearchSchema = z.object({
     active: z.enum(["listed", "delisted"]).optional().catch(undefined),
     exchange: z.string().regex(/^[A-Z]{4}$/).optional().catch(undefined),
     q: z.string().trim().min(1).max(100).optional().catch(undefined),
+    /** Companies tab (`GET /v1/companies`) only. */
+    sector: z.enum(COMPANY_SECTORS).optional().catch(undefined),
     sort: z.enum(SORTS).optional().catch(undefined),
     structure: z.enum(["registered_fund", "exchange_traded_trust"]).optional().catch(undefined),
     type: z.enum(INSTRUMENT_TABS).optional().catch(undefined),
+    /** `companies` = the Companies tab (O7 group 7); absent = the instruments list of `type`. */
+    view: z.enum(["companies"]).optional().catch(undefined),
 });
 
 export type InstrumentsSearch = z.infer<typeof instrumentsSearchSchema>;
@@ -40,7 +45,17 @@ export const Route = createFileRoute("/instruments")({
     validateSearch: instrumentsSearchSchema,
 });
 
-const TAB_OPTIONS = INSTRUMENT_TABS.map(tab => ({ label: tab === ALL ? "All" : INSTRUMENT_TYPE_PLURALS[tab], value: tab }));
+const COMPANIES = "companies";
+
+const TAB_OPTIONS: Array<{ label: string; value: InstrumentTab | typeof COMPANIES }> = [
+    ...INSTRUMENT_TABS.map(tab => ({ label: tab === ALL ? "All" : INSTRUMENT_TYPE_PLURALS[tab], value: tab })),
+    { label: "Companies", value: COMPANIES },
+];
+
+const SECTOR_OPTIONS: Array<{ label: string; value: (typeof COMPANY_SECTORS)[number] | typeof ALL }> = [
+    { label: "Every sector", value: ALL },
+    ...COMPANY_SECTORS.map(sector => ({ label: sector, value: sector })),
+];
 
 const STRUCTURE_OPTIONS = [
     { label: "Any structure", value: ALL },
@@ -135,9 +150,56 @@ export function instrumentsRequest(search: InstrumentsSearch) {
     };
 }
 
+/** The request of the Companies tab: the shared search, exchange and sort, plus the sector (`GET /v1/companies`). */
+export function companiesRequest(search: InstrumentsSearch) {
+    return {
+        enabled: true,
+        exchange: search.exchange ? [search.exchange] : undefined,
+        limit: 50,
+        q: search.q,
+        sector: search.sector ? [search.sector] : undefined,
+        sort: companiesSort(search.sort),
+    };
+}
+
+/** The instruments list of the type tabs (its request runs only while such a tab is open). */
+function InstrumentsTabBody({ search }: { search: InstrumentsSearch }) {
+    const list = useInstrumentsInfinite(instrumentsRequest(search));
+
+    return (
+        <InstrumentsList
+            error={list.error}
+            hasNextPage={list.hasNextPage}
+            isFetchingNextPage={list.isFetchingNextPage}
+            isLoading={list.isLoading}
+            onLoadMore={() => void list.fetchNextPage()}
+            pages={list.data?.pages ?? []}
+        />
+    );
+}
+
+/** The Companies tab's list (`GET /v1/companies`; asked only while the tab is open). */
+function CompaniesTabBody({ search }: { search: InstrumentsSearch }) {
+    const list = useCompaniesInfinite(companiesRequest(search));
+
+    return (
+        <CompaniesList
+            error={list.error}
+            hasNextPage={list.hasNextPage}
+            isFetchingNextPage={list.isFetchingNextPage}
+            isLoading={list.isLoading}
+            onLoadMore={() => void list.fetchNextPage()}
+            pages={list.data?.pages ?? []}
+            scope={[search.exchange, search.sector, search.q].filter(Boolean).join("-") || "us"}
+        />
+    );
+}
+
 /**
  * Every exchange-traded US symbol (`GET /v1/instruments`): tabs All / Stocks / ETFs / Closed-end funds / ETNs, filters
  * structure, exchange and listed / delisted, a ticker / name search and the sort, all in the URL; a row opens its page.
+ * The Companies tab (`?view=companies`, O7 group 7) lists `GET /v1/companies` instead: the operating companies with
+ * sector, fiscal year end and CIK, filtered by the same search, exchange and sort plus the sector.
  */
 function InstrumentsPage() {
     const search = Route.useSearch();
@@ -146,7 +208,7 @@ function InstrumentsPage() {
 
     const onChange = (patch: Partial<InstrumentsSearch>) => void navigate({ replace: true, resetScroll: false, search: prev => ({ ...prev, ...patch }) });
 
-    const list = useInstrumentsInfinite(instrumentsRequest(search));
+    const companiesTab = search.view === COMPANIES;
 
     const tab: InstrumentTab = search.type ?? ALL;
 
@@ -156,24 +218,27 @@ function InstrumentsPage() {
                 description="Every exchange-traded US symbol the Data API knows: stocks, ETFs, closed-end funds and ETNs."
                 title="Instruments"
             />
-            <TabStrip aria-label="Instrument type" onSelect={value => onChange({ type: value === ALL ? undefined : value })} options={TAB_OPTIONS} value={tab} />
+            <TabStrip
+                aria-label="Instrument type"
+                // The Companies tab drops the instrument-only filters; a type tab drops the sector.
+                onSelect={value => onChange(value === COMPANIES
+                    ? { active: undefined, structure: undefined, type: undefined, view: COMPANIES }
+                    : { sector: undefined, type: value === ALL ? undefined : value, view: undefined })}
+                options={TAB_OPTIONS}
+                value={companiesTab ? COMPANIES : tab}
+            />
             <div className="flex flex-wrap items-center gap-2">
                 <DebouncedInput aria-label="Search instruments" className="w-[240px]" onCommit={q => onChange({ q: q || undefined })} placeholder="Ticker or name" value={search.q ?? ""} />
-                {(tab === "etf" || tab === "closed_end_fund") && (
+                {!companiesTab && (tab === "etf" || tab === "closed_end_fund") && (
                     <FilterSelect aria-label="Structure" className="w-[200px]" onValueChange={value => onChange({ structure: value === ALL ? undefined : value })} options={STRUCTURE_OPTIONS} value={search.structure ?? ALL} />
                 )}
                 <FilterSelect aria-label="Exchange" className="w-[200px]" onValueChange={value => onChange({ exchange: value === ALL ? undefined : value })} options={EXCHANGE_OPTIONS} value={search.exchange ?? ALL} />
-                <FilterSelect aria-label="Listed" className="w-[180px]" onValueChange={value => onChange({ active: value === ALL ? undefined : value })} options={ACTIVE_OPTIONS} value={search.active ?? ALL} />
+                {companiesTab
+                    ? <FilterSelect aria-label="Sector" className="w-[200px]" onValueChange={value => onChange({ sector: value === ALL ? undefined : value })} options={SECTOR_OPTIONS} value={search.sector ?? ALL} />
+                    : <FilterSelect aria-label="Listed" className="w-[180px]" onValueChange={value => onChange({ active: value === ALL ? undefined : value })} options={ACTIVE_OPTIONS} value={search.active ?? ALL} />}
                 <FilterSelect aria-label="Sort" className="w-[150px]" onValueChange={value => onChange({ sort: value === "symbol" ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? "symbol"} />
             </div>
-            <InstrumentsList
-                error={list.error}
-                hasNextPage={list.hasNextPage}
-                isFetchingNextPage={list.isFetchingNextPage}
-                isLoading={list.isLoading}
-                onLoadMore={() => void list.fetchNextPage()}
-                pages={list.data?.pages ?? []}
-            />
+            {companiesTab ? <CompaniesTabBody search={search} /> : <InstrumentsTabBody search={search} />}
         </div>
     );
 }

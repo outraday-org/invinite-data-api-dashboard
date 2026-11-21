@@ -128,6 +128,16 @@ import type {
     V2TranscriptTextResponse,
     V2TranscriptVersionsResponse,
     V2Usage,
+    V2ApiStatus,
+    V2CompaniesResponse,
+    V2CompaniesSort,
+    V2DocumentKindCatalogResponse,
+    V2EventTypeCatalogResponse,
+    V2FormCatalogResponse,
+    V2Licensing,
+    V2MappingRulesResponse,
+    V2MetricCatalogResponse,
+    V2SectionCatalogResponse,
 } from "./types";
 
 import { ApiRequestError, errorDescription, isUnauthorized, rethrowApiError, retryUnlessApiError } from "./errors";
@@ -210,6 +220,15 @@ import {
     getV2TranscriptSearch,
     getV2TranscriptText,
     getV2TranscriptVersions,
+    getApiLicensing,
+    getApiStatus,
+    getCompanies,
+    getDocumentKindCatalog,
+    getEventTypeCatalog,
+    getFormCatalog,
+    getMappingRules,
+    getMetricCatalog,
+    getSectionCatalog,
 } from "./server-functions";
 
 function useApiKey() {
@@ -1917,5 +1936,119 @@ export function useV2KpiHistoryInfinite(input: V2KpiHistoryInput) {
         fetchPage: (cursor, apiKey) => getV2Kpis({ data: { ...input, apiKey, cursor: cursor ?? undefined, limit: 200 } }),
         queryKey: ["v2", "kpis", "history", input.company, input.metric, input.sort ?? ""],
         staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+// Reference (backend tasks/data-api-dashboard O7 group 7): the catalogs, the companies list and the API's status. The
+// catalogs are reference data: cached for an hour, a tab's hook only runs while its tab is open (`enabled`).
+
+const REFERENCE_STALE_MS = 60 * 60 * 1000;
+
+/** Rows per catalog page (the contract's maximum: the whole metric catalog is 2 pages, the mapping rules 5). */
+export const CATALOG_PAGE_LIMIT = 200;
+
+type CatalogStatementInput = { enabled: boolean; statement?: Array<StatementType> };
+
+export function useMetricCatalogInfinite(input: CatalogStatementInput) {
+    return useEarningsInfinite<V2MetricCatalogResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getMetricCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT, statement: input.statement } }),
+        queryKey: ["v2", "catalog", "metrics", key(input.statement)],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+export function useSectionCatalogInfinite(input: { enabled: boolean; form?: Array<string> }) {
+    return useEarningsInfinite<V2SectionCatalogResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getSectionCatalog({ data: { apiKey, cursor: cursor ?? undefined, form: input.form, limit: CATALOG_PAGE_LIMIT } }),
+        queryKey: ["v2", "catalog", "sections", key(input.form)],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+export function useFormCatalogInfinite(input: { enabled: boolean }) {
+    return useEarningsInfinite<V2FormCatalogResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getFormCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
+        queryKey: ["v2", "catalog", "forms"],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+export function useEventTypeCatalogInfinite(input: { enabled: boolean }) {
+    return useEarningsInfinite<V2EventTypeCatalogResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getEventTypeCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
+        queryKey: ["v2", "catalog", "event-types"],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+export function useDocumentKindCatalogInfinite(input: { enabled: boolean }) {
+    return useEarningsInfinite<V2DocumentKindCatalogResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getDocumentKindCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
+        queryKey: ["v2", "catalog", "document-kinds"],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+export function useMappingRulesInfinite(input: CatalogStatementInput & { metricId?: Array<string> }) {
+    return useEarningsInfinite<V2MappingRulesResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getMappingRules({
+            data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT, metricId: input.metricId, statement: input.statement },
+        }),
+        queryKey: ["v2", "catalog", "mapping-rules", key(input.statement), key(input.metricId)],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+export type CompaniesInput = { enabled: boolean; exchange?: Array<string>; limit?: number; q?: string; sector?: Array<string>; sort?: V2CompaniesSort };
+
+/** Operating companies with a US listing by cursor (`GET /v1/companies`); status-aware (the list renders errors). */
+export function useCompaniesInfinite(input: CompaniesInput) {
+    const q = input.q?.trim() || undefined;
+
+    return useEarningsInfinite<V2CompaniesResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getCompanies({
+            data: { apiKey, cursor: cursor ?? undefined, exchange: input.exchange, limit: input.limit, q, sector: input.sector, sort: input.sort },
+        }),
+        queryKey: ["v2", "companies", q ?? "", key(input.exchange), key(input.sector), input.sort ?? "", input.limit ?? ""],
+        staleTime: V2_STALE_MS,
+    });
+}
+
+/** How long the status answer is fresh (the API judges the last 24 hours; the sidebar and the account share it). */
+const STATUS_STALE_MS = 5 * 60 * 1000;
+
+/** `GET /status` (no credits): status and uptime per product family and docs group. Status-aware, no toast. */
+export function useApiStatus(enabled = true) {
+    return useEarningsQuery<V2ApiStatus>({
+        enabled,
+        errorMessage: null,
+        load: apiKey => getApiStatus({ data: { apiKey } }),
+        queryKey: ["status"],
+        staleTime: STATUS_STALE_MS,
+    });
+}
+
+/** `GET /status/licensing` (no credits): rights per tier, the right and tier of every route. */
+export function useApiLicensing(enabled = true) {
+    return useEarningsQuery<V2Licensing>({
+        enabled,
+        errorMessage: null,
+        load: apiKey => getApiLicensing({ data: { apiKey } }),
+        queryKey: ["status", "licensing"],
+        staleTime: REFERENCE_STALE_MS,
     });
 }

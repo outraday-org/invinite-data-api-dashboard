@@ -4,6 +4,7 @@ import {
     ActivityIcon,
     ArrowUpRightIcon,
     BarChart3Icon,
+    BookOpenIcon,
     BriefcaseIcon,
     BuildingIcon,
     CalendarDaysIcon,
@@ -84,6 +85,7 @@ export const BROWSE_NAV: ReadonlyArray<NavPage> = [
     { description: "New SEC filings as they arrive, and full-text search across every filer.", icon: ScrollTextIcon, keywords: ["filings", "sec", "edgar", "8-k", "10-k", "live", "search"], label: "Filings", to: "/filings" },
     { description: "The SEC bulk data sets the API serves, with their newest release.", icon: DatabaseIcon, keywords: ["sec", "datasets", "data sets", "bulk", "releases", "13f", "n-port"], label: "SEC data sets", to: "/sec/datasets" },
     { description: "What was said on every company's earnings calls: passages from transcripts, Q&A and slides.", icon: SearchIcon, keywords: ["search", "transcripts", "transcript", "passages", "quotes", "calls", "full-text"], label: "Transcript search", to: "/search" },
+    { description: "Metrics, mapping rules, SEC forms and sections, event types, document kinds.", icon: BookOpenIcon, keywords: ["catalog", "reference", "metrics", "definitions", "mapping", "forms", "sections", "glossary"], label: "Catalog", to: "/catalog" },
 ];
 
 /** The account (bottom of the sidebar, with the plan badge). */

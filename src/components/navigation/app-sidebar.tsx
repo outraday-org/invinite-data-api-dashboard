@@ -5,6 +5,7 @@ import * as React from "react";
 
 import type { InstrumentSectionGroup, NavPage } from "@/lib/navigation";
 
+import { ApiStatusDot } from "@/components/reference/api-status";
 import { Badge } from "@/components/ui/badge";
 import {
     Sidebar,
@@ -36,6 +37,7 @@ import {
     PERSON_CONTEXT_ANCHORS,
 } from "@/lib/navigation";
 import { PERSON_ID_PATTERN, personSubjectLabel } from "@/lib/people";
+import { STATUS_PAGE_URL } from "@/lib/public-hosts";
 import { cn } from "@/lib/utils";
 import { LiveDot } from "@/routes/$ticker/earnings-calls/-components/live-dot";
 
@@ -247,7 +249,9 @@ export function AppSidebar() {
                         {HELP_NAV.map(link => (
                             <SidebarMenuItem key={link.href}>
                                 <a className={linkClass} href={link.href} rel="noreferrer" target="_blank">
-                                    <ItemContent icon={link.icon} label={link.label} />
+                                    <ItemContent icon={link.icon} label={link.label}>
+                                        {link.href === STATUS_PAGE_URL && <ApiStatusDot enabled={keyReady} />}
+                                    </ItemContent>
                                 </a>
                             </SidebarMenuItem>
                         ))}

@@ -19,6 +19,7 @@ import { Route as IpoCalendarRouteImport } from './routes/ipo-calendar'
 import { Route as InstrumentsRouteImport } from './routes/instruments'
 import { Route as InstitutionsRouteImport } from './routes/institutions'
 import { Route as FundsRouteImport } from './routes/funds'
+import { Route as CatalogRouteImport } from './routes/catalog'
 import { Route as CalendarRouteImport } from './routes/calendar'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as TickerRouteRouteImport } from './routes/$ticker/route'
@@ -99,6 +100,11 @@ const InstitutionsRoute = InstitutionsRouteImport.update({
 const FundsRoute = FundsRouteImport.update({
   id: '/funds',
   path: '/funds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogRoute = CatalogRouteImport.update({
+  id: '/catalog',
+  path: '/catalog',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CalendarRoute = CalendarRouteImport.update({
@@ -273,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/$ticker': typeof TickerRouteRouteWithChildren
   '/account': typeof AccountRoute
   '/calendar': typeof CalendarRoute
+  '/catalog': typeof CatalogRoute
   '/funds': typeof FundsRoute
   '/institutions': typeof InstitutionsRoute
   '/instruments': typeof InstrumentsRoute
@@ -315,6 +322,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/account': typeof AccountRoute
   '/calendar': typeof CalendarRoute
+  '/catalog': typeof CatalogRoute
   '/funds': typeof FundsRoute
   '/institutions': typeof InstitutionsRoute
   '/instruments': typeof InstrumentsRoute
@@ -359,6 +367,7 @@ export interface FileRoutesById {
   '/$ticker': typeof TickerRouteRouteWithChildren
   '/account': typeof AccountRoute
   '/calendar': typeof CalendarRoute
+  '/catalog': typeof CatalogRoute
   '/funds': typeof FundsRoute
   '/institutions': typeof InstitutionsRoute
   '/instruments': typeof InstrumentsRoute
@@ -404,6 +413,7 @@ export interface FileRouteTypes {
     | '/$ticker'
     | '/account'
     | '/calendar'
+    | '/catalog'
     | '/funds'
     | '/institutions'
     | '/instruments'
@@ -446,6 +456,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/calendar'
+    | '/catalog'
     | '/funds'
     | '/institutions'
     | '/instruments'
@@ -489,6 +500,7 @@ export interface FileRouteTypes {
     | '/$ticker'
     | '/account'
     | '/calendar'
+    | '/catalog'
     | '/funds'
     | '/institutions'
     | '/instruments'
@@ -533,6 +545,7 @@ export interface RootRouteChildren {
   TickerRouteRoute: typeof TickerRouteRouteWithChildren
   AccountRoute: typeof AccountRoute
   CalendarRoute: typeof CalendarRoute
+  CatalogRoute: typeof CatalogRoute
   FundsRoute: typeof FundsRoute
   InstitutionsRoute: typeof InstitutionsRoute
   InstrumentsRoute: typeof InstrumentsRoute
@@ -621,6 +634,13 @@ declare module '@tanstack/react-router' {
       path: '/funds'
       fullPath: '/funds'
       preLoaderRoute: typeof FundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalog': {
+      id: '/catalog'
+      path: '/catalog'
+      fullPath: '/catalog'
+      preLoaderRoute: typeof CatalogRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/calendar': {
@@ -901,6 +921,7 @@ const rootRouteChildren: RootRouteChildren = {
   TickerRouteRoute: TickerRouteRouteWithChildren,
   AccountRoute: AccountRoute,
   CalendarRoute: CalendarRoute,
+  CatalogRoute: CatalogRoute,
   FundsRoute: FundsRoute,
   InstitutionsRoute: InstitutionsRoute,
   InstrumentsRoute: InstrumentsRoute,

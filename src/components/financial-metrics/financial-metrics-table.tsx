@@ -1,5 +1,6 @@
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
+import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact } from "@/lib/utils";
@@ -8,6 +9,8 @@ export type MetricsTableRow = {
     group?: string;
     key: string;
     label: string;
+    /** The catalog metric the row shows (its label links `/catalog`). */
+    metricId?: string;
     formatValue?: (value: number) => string;
     values: Record<string, number | undefined>;
 };
@@ -61,8 +64,11 @@ export function FinancialMetricsTable({
                             {hasGroupColumn
                                 ? (
                                         <TableCell className={cn(STICKY_FIRST_CELL, "w-[140px] min-w-[140px] max-w-[140px] sm:w-[320px] sm:min-w-[320px] sm:max-w-[320px]")}>
-                                            <div className="truncate" title={row.group ?? ""}>
-                                                {row.group ?? "—"}
+                                            <div className="flex min-w-0 items-center gap-1">
+                                                <div className="min-w-0 flex-1 truncate" title={row.group ?? ""}>
+                                                    {row.group ?? "—"}
+                                                </div>
+                                                <MetricCatalogLink label={row.group ?? row.label} metricId={row.metricId} />
                                             </div>
                                         </TableCell>
                                     )
@@ -72,6 +78,7 @@ export function FinancialMetricsTable({
                                     <div className="min-w-0 flex-1 truncate" title={row.label}>
                                         {row.label}
                                     </div>
+                                    {!hasGroupColumn && <MetricCatalogLink label={row.label} metricId={row.metricId} />}
                                     <ChartRowButton label={row.label} onOpen={() => setSelectedRow(row)} />
                                 </div>
                             </TableCell>

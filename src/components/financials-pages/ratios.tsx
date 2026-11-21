@@ -56,6 +56,7 @@ export function ratioRows(periods: ReadonlyArray<V2RatioPeriod>): Array<MetricsT
                         group: formatMetricId(metricId),
                         key,
                         label: formatCategoryLabel(category),
+                        metricId,
                         values: {},
                     };
 

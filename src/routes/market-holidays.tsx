@@ -2,6 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { z } from "zod";
 
 import type { V2MarketHoliday, V2MarketHolidaysResponse } from "@/lib/api/types";
 
@@ -9,17 +10,27 @@ import { TabStrip } from "@/components/navigation/tab-strip";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { ErrorState } from "@/components/ui/error-state";
+import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2MarketHolidaysInfinite } from "@/lib/api/queries";
 import { zonedDate } from "@/lib/earnings/format";
 import { DASH, formatDay, formatInstant } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
+import { IN_PLACE, optionalDay } from "@/lib/url-state";
+
+/** `?tab=past` (absent = upcoming); `?from=&to=` = a day range inside the tab (`date.gte` / `.lte`). */
+const holidaysSearchSchema = z.object({
+    from: optionalDay(),
+    tab: z.literal("past").optional().catch(undefined),
+    to: optionalDay(),
+});
+
+export type HolidaysSearch = z.infer<typeof holidaysSearchSchema>;
 
 export const Route = createFileRoute("/market-holidays")({
     component: MarketHolidaysPage,
     head: () => titleHead("Market holidays"),
-    // `?tab=past`; absent = upcoming.
-    validateSearch: (search: Record<string, unknown>): { tab?: "past" } => (search.tab === "past" ? { tab: "past" } : {}),
+    validateSearch: holidaysSearchSchema,
 });
 
 /** The US exchanges' clock: a partial day's open / close reads in New York time ("1:00 PM EST"), not the viewer's zone. */
@@ -89,11 +100,27 @@ const yesterdayOf = (today: string) => {
 };
 
 /**
+ * The request of a search state (pure): Upcoming = from today (or the later "from") on, ascending; Past = up to
+ * yesterday (or the earlier "to"), newest first. The range narrows the tab, never leaves it.
+ */
+export function holidaysRequest(search: HolidaysSearch, today: string) {
+    const later = (a: string, b: string | undefined) => (b && b > a ? b : a);
+
+    const earlier = (a: string, b: string | undefined) => (b && b < a ? b : a);
+
+    if (search.tab === "past") return { dateGte: search.from, dateLte: earlier(yesterdayOf(today), search.to), limit: 40, sort: "-date" as const };
+
+    return { dateGte: later(today, search.from), dateLte: search.to, limit: 40, sort: "date" as const };
+}
+
+/**
  * US market holidays (`/v1/market-holidays`): Upcoming (today on, ascending) and Past (newest first). The answer states
  * no exchange (the US aggregate calendar); the status is read from the day's open / close.
  */
 function MarketHolidaysPage() {
-    const { tab } = Route.useSearch();
+    const search = Route.useSearch();
+
+    const { tab } = search;
 
     const navigate = Route.useNavigate();
 
@@ -101,9 +128,9 @@ function MarketHolidaysPage() {
 
     const past = tab === "past";
 
-    const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2MarketHolidaysInfinite(
-        past ? { dateLte: yesterdayOf(today), limit: 40, sort: "-date" } : { dateGte: today, limit: 40, sort: "date" },
-    );
+    const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2MarketHolidaysInfinite(holidaysRequest(search, today));
+
+    const onRange = (patch: Pick<HolidaysSearch, "from" | "to">) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
     return (
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
@@ -111,7 +138,8 @@ function MarketHolidaysPage() {
                 actions={(
                     <TabStrip
                         aria-label="Holidays"
-                        onSelect={value => void navigate({ resetScroll: false, search: value === "past" ? { tab: "past" } : {} })}
+                        // A tab change keeps the day range (it narrows either tab).
+                        onSelect={value => void navigate({ resetScroll: false, search: prev => ({ ...prev, tab: value === "past" ? "past" : undefined }) })}
                         options={[{ label: "Upcoming", value: "upcoming" }, { label: "Past", value: "past" }]}
                         value={past ? "past" : "upcoming"}
                     />
@@ -119,6 +147,12 @@ function MarketHolidaysPage() {
                 description="US market holidays. The answer names no exchange: one calendar for the US exchanges. A partial day shows its open and close in New York time; any other day is closed all day."
                 title="Market holidays"
             />
+            <div className="flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground">Between</span>
+                <Input aria-label="Holidays from" className="w-[150px]" onChange={event => onRange({ from: event.target.value || undefined })} type="date" value={search.from ?? ""} />
+                <span className="text-muted-foreground">and</span>
+                <Input aria-label="Holidays to" className="w-[150px]" onChange={event => onRange({ to: event.target.value || undefined })} type="date" value={search.to ?? ""} />
+            </div>
             <MarketHolidaysView
                 error={error}
                 hasNextPage={hasNextPage}

@@ -4,6 +4,7 @@ import type { StatementColumn, StatementLine } from "@/lib/financials/statements
 
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
+import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
@@ -55,6 +56,7 @@ export function FinancialsFlatTable({ columns, lines }: { columns: Array<Stateme
                             <TableCell className={cn(STICKY_FIRST_CELL, "w-[160px] min-w-[160px] max-w-[160px] sm:w-[420px] sm:min-w-[420px] sm:max-w-[420px]")}>
                                 <div className="flex min-w-0 items-center gap-1">
                                     <div className="min-w-0 flex-1 truncate font-medium" title={line.title ?? line.label}>{line.label}</div>
+                                    <MetricCatalogLink label={line.label} metricId={line.id} />
                                     <ChartRowButton label={line.label} onOpen={() => setSelected(line)} />
                                 </div>
                             </TableCell>

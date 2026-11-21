@@ -359,3 +359,28 @@ export type V2DatasetsResponse = ApiResponse<"/v1/datasets", "get">;
 export type V2SecDataset = V2DatasetsResponse["data"][number];
 /** `meta.index.matches` of a search without a company filter (null when the search names one). */
 export type V2FilingSearchMatches = NonNullable<SecSearchCoverage["matches"]>;
+
+// Reference (backend tasks/data-api-dashboard O7 group 7): the catalogs, the companies list and the API's status.
+export type V2MetricCatalogResponse = ApiResponse<"/v1/catalog/metrics", "get">;
+export type V2MetricCatalogEntry = V2MetricCatalogResponse["data"][number];
+export type V2SectionCatalogResponse = ApiResponse<"/v1/catalog/sections", "get">;
+export type V2SectionCatalogEntry = V2SectionCatalogResponse["data"][number];
+export type V2FormCatalogResponse = ApiResponse<"/v1/catalog/forms", "get">;
+export type V2FormCatalogEntry = V2FormCatalogResponse["data"][number];
+export type V2EventTypeCatalogResponse = ApiResponse<"/v1/catalog/event-types", "get">;
+export type V2EventTypeCatalogEntry = V2EventTypeCatalogResponse["data"][number];
+export type V2DocumentKindCatalogResponse = ApiResponse<"/v1/catalog/document-kinds", "get">;
+export type V2DocumentKindCatalogEntry = V2DocumentKindCatalogResponse["data"][number];
+/** A standardized metric's mapping rule; `rule` is free JSON in the spec (read by guards, `src/lib/reference/catalog.ts`). */
+export type V2MappingRulesResponse = SecJson<ApiResponse<"/v1/catalog/mapping-rules", "get">>;
+export type V2MappingRule = V2MappingRulesResponse["data"][number];
+/** `GET /v1/companies`: operating companies with a US listing (stocks only). */
+export type V2CompaniesResponse = ApiResponse<"/v1/companies", "get">;
+export type V2CompanyListItem = V2CompaniesResponse["data"][number];
+export type V2CompaniesSort = NonNullable<ApiQuery<"/v1/companies">["sort"]>;
+/** `GET /status` (no key, 0 credits): status and uptime per product family and per docs group, the coverage universe. */
+export type V2ApiStatus = ApiResponse<"/status", "get">;
+export type V2ServiceStatus = NonNullable<V2ApiStatus["services"]>[number]["status"];
+/** `GET /status/licensing` (no key): rights per tier, the right and tier of every route by product family. */
+export type V2Licensing = ApiResponse<"/status/licensing", "get">;
+export type V2LicensingRight = V2Licensing["rights"][number];

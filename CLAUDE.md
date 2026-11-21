@@ -452,12 +452,53 @@ then regenerate its local types and run mocked tests. No SDK generator or source
 introspection of sibling checkouts belongs here. An ownership-only SDK move does
 not require a dashboard spec refresh or runtime deployment.
 
+### Reference (O7 group 7: catalog, companies, status)
+
+- **`/catalog`** (`src/routes/catalog.tsx`, `BROWSE_NAV` "Catalog"): tabs Metrics | Sections | Forms | Event types |
+  Document kinds | Mapping rules = the six `/v1/catalog/*` operations (free, 1 credit a page; hooks
+  `useMetricCatalogInfinite` … `useMappingRulesInfinite`, each `enabled` only while its tab is open). The open tab loads
+  all its pages (`useLoadAllPages`, 200 a page: metrics 2, mapping rules 5) because the API has no text filter: `?q=`
+  (`DebouncedInput`) filters the loaded rows (`filterCatalogRows` in `src/lib/reference/catalog.ts`: a `q` equal to a
+  row's id keeps exactly that row, else every word must match). API filters in the URL: `?statement=` (metrics, mapping
+  rules), `?form=` (sections), `?metric=` (mapping rules → `metric_id`, set by a metric row's "Mapping rules" link, a
+  chip clears it); a form row links its sections. A mapping rule's `rule` is free JSON (`SecJson`): `mappingRuleView`
+  reads kind, concept (`taxonomy:alias (role)`) or formula, parent and sign defensively. Export per tab.
+- **Metric catalog links**: `MetricCatalogLink` (`src/components/reference/metric-catalog-link.tsx`, a book icon,
+  click never opens the row chart) beside every financial metric label → `/catalog?q=<metric_id>`; only for ids of the
+  catalog's families (`isCatalogMetricId`: `is_ | bs_ | cfs_ | ratio_ | growth_ | cagr_ | seg_`), so an as-reported
+  concept gets none. Wired in `financials-flat-table.tsx`, `financials-presentation-table.tsx`,
+  `financial-metrics-table.tsx` (`MetricsTableRow.metricId`, set by ratios / growth / CAGR; ratios link from the metric
+  column), `segmented-financials-table.tsx`, `segments-detailed.tsx`.
+- **`/instruments` Companies tab** (`?view=companies`): `GET /v1/companies` (`useCompaniesInfinite`, `CompaniesList`
+  in `src/components/reference/companies-list.tsx`) with the page's search, exchange and sort (`symbol` → `ticker`)
+  plus `?sector=` (choices = the sectors the API answered on 2026-11-21, `COMPANY_SECTORS`; the spec has no enum); logo
+  + ticker → `/$ticker`, name, exchange, sector, fiscal year end (`MM-DD` → "Sep 30"; null on every row today,
+  ledger), CIK → `/sec/$cik`. Each tab's list is its own component, so only the open tab's request runs.
+- **Status widget** (`src/components/reference/api-status.tsx`): `/account` shows `AccountStatusCards` = the API status
+  card (`GET /status`, `useApiStatus`: overall = the worst family, the families as a table with 7 / 30 / 90-day uptime,
+  the coverage universe, the docs groups with uptime and p50 / p95 buckets behind a disclosure) and the licensing card
+  (`GET /status/licensing`, `useApiLicensing`: the caller's plan's rights with the policy's notes, the resale rule,
+  "Draft" while `counsel_signed_off` is false, routes per family the plan reaches by tier order). The sidebar's Help
+  block has `ApiStatusDot` beside "API status" (same cached `/status` query, asked once the key answered; colour = the
+  overall status, the summary in its label). Both operations need no key and cost nothing. `/status` and `/licensing`
+  stay 301 redirects; `/health` has no view (reason in the coverage table).
+- **Fiscal periods**: the stock overview has a "Fiscal periods" card (`fiscal-periods-card.tsx`) when the instrument
+  serves financials — `useCompanyFiscalPeriods` (the filings list's request, every page), newest 8 + "Show all", the
+  latest fiscal year end = the newest Q4's period end.
+- **Dividends** (`?from=&to=&sort=`): the ex-date range as `ex_date.gte` / `.lte` (a swapped range is ordered), sort
+  ex-date / pay date either way, a Type column (`dividend_type` codes in words: CD regular cash, SC special cash, LT /
+  ST capital gains; another code as itself). **Market holidays** (`?from=&to=`): a day range inside the Upcoming / Past
+  tab (`holidaysRequest`: it narrows the tab, never leaves it).
+- Tests: `src/routes/-tests/reference-pages.test.tsx`, `src/lib/reference/catalog.test.ts`; fixtures
+  `src/lib/reference/reference-fixtures.ts` (tests only).
+
 ## Operation coverage
 
 Operation → the page that shows it (backend `tasks/data-api-dashboard` O7, requirement 7): every operation the dashboard
 calls, with its page. Created by O7 group 1 from `server-functions.ts` at `ab8a89c` (62 + task 5's `getMe`,
 `getMyUsage`, `getIpo` = 65) plus group 1's rows (`listPeople`, `getPerson`; `listParticipants?person=`) and group 4's (`listFactPlaces`; `getFact` and
-`listSegmentsDetailed` were called with no view before); group 5 adds no operation, it widens five rows (`listKpis`,
+`listSegmentsDetailed` were called with no view before), group 7's (the six catalogs, `listCompanies`, `statusGet`, `statusLicensing`;
+`healthGet` with its reason); group 5 adds no operation, it widens five rows (`listKpis`,
 `searchTranscripts`, `getEventComparison`, `listInvestorDocuments`, `getInvestorDocument`). Every O7
 group appends its rows, the alerts tasklist its 36 (→ 124); an operation with no view states why here.
 
@@ -498,13 +539,13 @@ group appends its rows, the alerts tasklist its 36 (→ 124); an operation with 
 | `getTranscriptText` | `GET /v1/events/{event_id}/transcript-text` | call page · Transcript tab (Sections / Plain text) |
 | `listAnnouncements` | `GET /v1/announcements` | `/$ticker/news` (item panel, by news item); `/$ticker/news?view=announcements` (Announcements tab, `?company=`) |
 | `listCagr` | `GET /v1/metrics/cagr` | `/$ticker/financials?view=cagr` |
-| `listDividends` | `GET /v1/dividends` | `/$ticker/dividends` |
+| `listDividends` | `GET /v1/dividends` | `/$ticker/dividends` (O7 group 7: `?from=&to=` → `ex_date.gte` / `.lte`, `?sort=` ex-date / pay date) |
 | `listEvents` | `GET /v1/events` | `/`; `/calendar`; `/live-calls`; `/$ticker` (overview); `/$ticker/earnings-calls`; `/$ticker/documents`; sidebar (live count); call page (live session); `/$ticker/news` "Filter by call" (on click); call page · Metrics & diff (`prior` picker, on open; O7 group 5) |
 | `listFactPlaces` | `GET /v1/fact-places` | "Explain this number" → Show in filing (`fact=`; O7 group 4); `/filings/$accession` Documents → Fact places (`document_version=`; O7 group 3) |
 | `listFilerHoldings` | `GET /v1/filers/{cik}/holdings` | `/sec/$cik` (13F portfolio) |
 | `listFilers` | `GET /v1/filers` | `/institutions`; top-bar search; filer lookup |
 | `listFilings` | `GET /v1/filings` | `/$ticker/filings`; `/$ticker` (overview); `/sec/$cik`; sidebar (filer context); `items` / `filed_at` filters on `/$ticker/filings` (O7 group 3) |
-| `listFiscalPeriods` | `GET /v1/fiscal-periods` | `/$ticker/filings` (period labels) |
+| `listFiscalPeriods` | `GET /v1/fiscal-periods` | `/$ticker/filings` (period labels); `/$ticker` (stock overview, "Fiscal periods" card; O7 group 7) |
 | `listFundPositions` | `GET /v1/funds/{fund}/holdings` | `/$ticker/holdings`; `/$ticker` (fund overview) |
 | `listFundWeights` | `GET /v1/funds/{fund}/weights` | `/$ticker/holdings` |
 | `listFunds` | `GET /v1/funds` | `/funds` |
@@ -517,7 +558,7 @@ group appends its rows, the alerts tasklist its 36 (→ 124); an operation with 
 | `listInvestorDocuments` | `GET /v1/investor-documents` | `/$ticker/documents`; call page · Documents tab (`sort`) |
 | `listIpos` | `GET /v1/ipos` | `/ipo-calendar`; `/` |
 | `listKpis` | `GET /v1/kpis` | call page · Guidance tab (KPIs `event=`; KPI history `company=&metric=&sort=`, O7 group 5) |
-| `listMarketHolidays` | `GET /v1/market-holidays` | `/market-holidays`; `/` |
+| `listMarketHolidays` | `GET /v1/market-holidays` | `/market-holidays` (O7 group 7: `?from=&to=` → `date.gte` / `.lte` inside the tab); `/` |
 | `listNews` | `GET /v1/news` | `/$ticker/news` (incl. `?event=` / `?sort=`); `/news-feed` (watchlist as one `company=<comma list>` per page) |
 | `listOfferings` | `GET /v1/offerings` | `/sec/$cik` (private offerings) |
 | `listParticipants` | `GET /v1/participants` | call page · Participants tab, Transcript / Q&A (images), Search this call, live transcript (`event=`); `/people/$personId` (`person=`) |
@@ -539,3 +580,13 @@ group appends its rows, the alerts tasklist its 36 (→ 124); an operation with 
 | `listFilingHoldings` | `GET /v1/filings/{accession}/holdings` | `/filings/$accession` Holdings tab, 13F-HR / NPORT-P only (O7 group 3) |
 | `listFilingNotes` | `GET /v1/filings/{accession}/notes` | `/filings/$accession` Notes tab (O7 group 3) |
 | `streamEvents` (channel `filings`) | `WS /v1/stream` `new_filing` | `/$ticker/filings` "Live"; `/filings` (O7 group 3) |
+| `listMetricCatalog` | `GET /v1/catalog/metrics` | `/catalog` Metrics (`statement`; every financial metric label links `/catalog?q=<metric_id>`; O7 group 7) |
+| `listSectionCatalog` | `GET /v1/catalog/sections` | `/catalog?tab=sections` (`form`; O7 group 7) |
+| `listFormCatalog` | `GET /v1/catalog/forms` | `/catalog?tab=forms` (O7 group 7) |
+| `listEventTypeCatalog` | `GET /v1/catalog/event-types` | `/catalog?tab=event-types` (O7 group 7) |
+| `listDocumentKindCatalog` | `GET /v1/catalog/document-kinds` | `/catalog?tab=document-kinds` (O7 group 7) |
+| `listMappingRules` | `GET /v1/catalog/mapping-rules` | `/catalog?tab=mapping-rules` (`statement`, `metric_id` from a metric row; O7 group 7) |
+| `listCompanies` | `GET /v1/companies` | `/instruments?view=companies` (Companies tab: `q`, `exchange`, `sector`, `sort`; O7 group 7) |
+| `statusGet` | `GET /status` | `/account` (API status card); sidebar Help (status dot beside "API status"); O7 group 7 |
+| `statusLicensing` | `GET /status/licensing` | `/account` (licensing card: the plan's rights, routes per family); O7 group 7 |
+| `healthGet` | `GET /health` | No view, by design: a liveness probe (`status`, `timestamp`) that says nothing a reader can act on; `/status` (above) carries the product states and uptime the dashboard shows |

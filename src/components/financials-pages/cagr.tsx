@@ -55,7 +55,7 @@ export function cagrRows(periods: ReadonlyArray<V2CagrPeriod>): Array<MetricsTab
 
     return [...rowMap.values()]
         .sort((a, b) => a.metricId.localeCompare(b.metricId) || b.horizon - a.horizon)
-        .map(({ horizon: _horizon, metricId: _metricId, ...row }) => row);
+        .map(({ horizon: _horizon, ...row }) => row);
 }
 
 /** The CAGR list (pure): a column only once every horizon of its period is loaded (`completePeriodsOnly`). */

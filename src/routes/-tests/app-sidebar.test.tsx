@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppSidebar } from "@/components/navigation/app-sidebar";
 import { ME_PRO } from "@/lib/account-fixtures";
-import { useInstrument, useKeyState, useV2Filer, useV2FilingsInfinite, useV2LiveEvents, useV2Person } from "@/lib/api/queries";
+import { useApiStatus, useInstrument, useKeyState, useV2Filer, useV2FilingsInfinite, useV2LiveEvents, useV2Person } from "@/lib/api/queries";
 import { CALENDAR_EVENT } from "@/lib/earnings/calendar-fixtures";
 import { AAPL_INSTRUMENT, SPY_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { PERSON_ANALYST } from "@/lib/people-fixtures";
@@ -37,6 +37,8 @@ vi.mock("@/components/ui/sidebar", () => {
 });
 
 vi.mock("@/lib/api/queries", () => ({
+    // The Help block's status dot (O7 group 7): `/status` answered "outage" for News.
+    useApiStatus: vi.fn((enabled: boolean) => ({ data: enabled ? { services: [{ family: "news", status: "outage" }] } : null, error: null })),
     useInstrument: vi.fn(),
     useKeyState: vi.fn(),
     useV2Filer: vi.fn(),
@@ -78,6 +80,9 @@ describe("the sidebar on every page (Market · Browse · Context)", () => {
         expect(screen.getByRole("link", { name: /Account/ })).toHaveTextContent("PRO");
 
         expect(screen.queryByTestId("sidebar-context")).toBeNull();
+
+        // O7 group 7: the status dot beside "API status" (`/status`), the families in its label.
+        expect(screen.getByRole("img", { name: "Outage: News" })).toBeInTheDocument();
     });
 
     it("no request before the key answered `/v1/me`", () => {
@@ -88,6 +93,8 @@ describe("the sidebar on every page (Market · Browse · Context)", () => {
         render(<AppSidebar />);
 
         expect(useV2LiveEvents).toHaveBeenLastCalledWith(false);
+
+        expect(useApiStatus).toHaveBeenLastCalledWith(false);
 
         // No key: no context to load (the page is the onboarding card).
         expect(useInstrument).not.toHaveBeenCalled();

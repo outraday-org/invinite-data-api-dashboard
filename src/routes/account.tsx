@@ -8,6 +8,7 @@ import type { V2Me, V2Usage } from "@/lib/api/types";
 
 import { AXIS_TICK, CHART_MARGIN, ChartFrame, GRID_STROKE, TOOLTIP_CONTENT_STYLE } from "@/components/charts/chart-parts";
 import { TabStrip } from "@/components/navigation/tab-strip";
+import { AccountStatusCards } from "@/components/reference/api-status";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
@@ -144,7 +145,8 @@ export function UsageView({ usage }: { usage: V2Usage }) {
 
 /**
  * The account (`/v1/me` + `/v1/me/usage`, both 0 credits): plan, rate limits, credits, the families the plan may call and
- * the usage of a 7 / 30 / 90-day window. Keys, invoices and plan changes live in the Invinite Data app.
+ * the usage of a 7 / 30 / 90-day window. Keys, invoices and plan changes live in the Invinite Data app. Below: the API's
+ * status and the plan's licensing rights (`/status`, `/status/licensing`; O7 group 7).
  */
 function AccountPage() {
     const days = toUsageWindow(Route.useSearch().days);
@@ -181,6 +183,7 @@ function AccountPage() {
             />
             {me.data ? <AccountSummary me={me.data} /> : me.error ? <ErrorState error={me.error} title="Failed to load the account" /> : <Skeleton className="h-32 w-full" />}
             {usage.data ? <UsageView usage={usage.data} /> : usage.error ? <ErrorState error={usage.error} title="Failed to load the usage" /> : <Skeleton className="h-64 w-full" />}
+            <AccountStatusCards plan={me.data?.plan ?? null} />
         </div>
     );
 }

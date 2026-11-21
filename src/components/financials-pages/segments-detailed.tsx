@@ -6,6 +6,7 @@ import type { MetricsListState } from "@/components/financial-metrics/metrics-li
 import type { SegmentedFinancialsSegmentId, V2Segment, V2SegmentsDetailedResponse } from "@/lib/api/types";
 
 import { FinancialsStateNotice, METRICS_PENDING_TITLE } from "@/components/financial-metrics/metrics-list-body";
+import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
 import { DataTable } from "@/components/ui/data-table";
 import { edgarFolderUrl } from "@/lib/earnings/edgar";
 import { dimensionsText, periodLabel, xbrlNameText } from "@/lib/financials/statements";
@@ -59,7 +60,20 @@ export function withAll(options: ReadonlyArray<SegmentFilterOption>, label: stri
 function columns(onOpenFiling: (accession: string) => void): Array<ColumnDef<SegmentDetailedRow>> {
     return [
         { cell: ({ row }) => periodLabel(row.original), header: "Period", id: "period" },
-        { cell: ({ row }) => formatMetricId(row.original.metric_id) || row.original.metric_id, header: "Metric", id: "metric_id" },
+        {
+            cell: ({ row }) => {
+                const label = formatMetricId(row.original.metric_id) || row.original.metric_id;
+
+                return (
+                    <span className="flex items-center gap-1">
+                        {label}
+                        <MetricCatalogLink label={label} metricId={row.original.metric_id} />
+                    </span>
+                );
+            },
+            header: "Metric",
+            id: "metric_id",
+        },
         {
             cell: ({ row }) => {
                 const details = dimensionsText(row.original.dimensions);

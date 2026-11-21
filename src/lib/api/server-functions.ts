@@ -109,6 +109,16 @@ import type {
     V2TranscriptTextResponse,
     V2TranscriptVersionsResponse,
     V2Usage,
+    V2ApiStatus,
+    V2CompaniesResponse,
+    V2CompaniesSort,
+    V2DocumentKindCatalogResponse,
+    V2EventTypeCatalogResponse,
+    V2FormCatalogResponse,
+    V2Licensing,
+    V2MappingRulesResponse,
+    V2MetricCatalogResponse,
+    V2SectionCatalogResponse,
 } from "./types";
 
 import { ASSET_GROUP_CATEGORIES } from "../earnings/documents";
@@ -1864,6 +1874,155 @@ export const getV2Datasets = createServerFn({ method: "GET" })
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/datasets", {
             params: { query: v2Query({ cursor, limit }) },
         });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+// Reference (backend tasks/data-api-dashboard O7 group 7): the six catalogs (`/v1/catalog/*`, FREE, one credit a page,
+// by cursor), the companies list (`/v1/companies`) and the API's status (`/status`, `/status/licensing`: no key needed,
+// 0 credits; the key is sent like on every call).
+
+const catalogPageSchema = z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: v2LimitSchema });
+
+const catalogStatementSchema = z.array(z.enum(V2_STATEMENTS)).optional();
+
+/** The standardized metrics (`GET /v1/catalog/metrics`, `statement` comma list). */
+export const getMetricCatalog = createServerFn({ method: "GET" })
+    .inputValidator(catalogPageSchema.extend({ statement: catalogStatementSchema }))
+    .handler(async ({ data }): Promise<V2MetricCatalogResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/metrics", {
+            params: { query: v2Query({ cursor: data.cursor, limit: data.limit, statement: v2Expand(data.statement) }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The sections of each form (`GET /v1/catalog/sections`, `form` comma list). */
+export const getSectionCatalog = createServerFn({ method: "GET" })
+    .inputValidator(catalogPageSchema.extend({ form: z.array(z.string().trim().min(1).max(20)).optional() }))
+    .handler(async ({ data }): Promise<V2SectionCatalogResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/sections", {
+            params: { query: v2Query({ cursor: data.cursor, form: v2Expand(data.form), limit: data.limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The SEC forms the API serves (`GET /v1/catalog/forms`). */
+export const getFormCatalog = createServerFn({ method: "GET" })
+    .inputValidator(catalogPageSchema)
+    .handler(async ({ data }): Promise<V2FormCatalogResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/forms", {
+            params: { query: v2Query({ cursor: data.cursor, limit: data.limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The event types (`GET /v1/catalog/event-types`). */
+export const getEventTypeCatalog = createServerFn({ method: "GET" })
+    .inputValidator(catalogPageSchema)
+    .handler(async ({ data }): Promise<V2EventTypeCatalogResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/event-types", {
+            params: { query: v2Query({ cursor: data.cursor, limit: data.limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The investor-document kinds (`GET /v1/catalog/document-kinds`). */
+export const getDocumentKindCatalog = createServerFn({ method: "GET" })
+    .inputValidator(catalogPageSchema)
+    .handler(async ({ data }): Promise<V2DocumentKindCatalogResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/document-kinds", {
+            params: { query: v2Query({ cursor: data.cursor, limit: data.limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The standardized metrics' mapping rules (`GET /v1/catalog/mapping-rules`, `statement` / `metric_id` comma lists). */
+export const getMappingRules = createServerFn({ method: "GET" })
+    .inputValidator(catalogPageSchema.extend({
+        metricId: z.array(z.string().trim().regex(/^[a-z0-9_]{1,120}$/)).optional(),
+        statement: catalogStatementSchema,
+    }))
+    .handler(async ({ data }): Promise<V2MappingRulesResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/mapping-rules", {
+            params: {
+                query: v2Query({
+                    cursor: data.cursor,
+                    limit: data.limit,
+                    metric_id: v2Expand(data.metricId),
+                    statement: v2Expand(data.statement),
+                }),
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        // `rule` is free JSON in the spec (see `SecJson` in types.ts).
+        return res as V2MappingRulesResponse;
+    });
+
+/** Operating companies with a US listing (`GET /v1/companies`: `q` name / ticker prefix, `exchange` / `sector` lists). */
+export const getCompanies = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        cursor: cursorSchema,
+        exchange: z.array(z.string().trim().regex(/^[A-Z]{4}$/)).optional(),
+        limit: v2LimitSchema,
+        q: z.string().trim().min(1).max(100).optional(),
+        sector: z.array(z.string().trim().min(1).max(60)).optional(),
+        sort: z.enum(["ticker", "-ticker", "name", "-name"] as const satisfies ReadonlyArray<V2CompaniesSort>).optional(),
+    }))
+    .handler(async ({ data }): Promise<V2CompaniesResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/companies", {
+            params: {
+                query: v2Query({
+                    cursor: data.cursor,
+                    exchange: v2Expand(data.exchange),
+                    limit: data.limit,
+                    q: data.q,
+                    sector: v2Expand(data.sector),
+                    sort: data.sort,
+                }),
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** Whether each product works (`GET /status`): status and uptime per family and per docs group, the universe. */
+export const getApiStatus = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema }))
+    .handler(async ({ data }): Promise<V2ApiStatus> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/status");
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The licensing policy (`GET /status/licensing`): rights per tier and the right and tier of every route. */
+export const getApiLicensing = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema }))
+    .handler(async ({ data }): Promise<V2Licensing> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/status/licensing");
 
         if (error) throwApiError(error, response);
 
