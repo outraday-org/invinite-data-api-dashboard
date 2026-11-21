@@ -220,8 +220,33 @@ export function CoverageCard({ coverage, ticker }: { coverage: null | undefined 
 /** A public https link of the company (its website, its IR site), else null. */
 const httpsHref = (url: null | string | undefined) => (url && /^https?:\/\//i.test(url) ? url : null);
 
-/** The overview's tiles: the next call (links to it), the latest filing, the website and IR site. */
-export function OverviewTiles({ company, datasets, ticker }: { company: Pick<V2CompanyResponse, "homepage_url" | "investor_relations_url">; datasets: ReadonlyArray<V2Dataset>; ticker: string }) {
+/** The company fields the overview tiles read (all from `/v1/companies/{company}`, already fetched: no request). */
+export type CompanyTileFields = Pick<
+    V2CompanyResponse,
+    | "city"
+    | "composite_figi"
+    | "country_code"
+    | "fama_industry"
+    | "fama_sector"
+    | "homepage_url"
+    | "insider_own_pct"
+    | "insider_own_shares"
+    | "inst_own_pct"
+    | "inst_own_shares"
+    | "investor_relations_url"
+    | "is_delisted"
+    | "short_float_pct"
+    | "short_float_shares"
+    | "state"
+    | "street"
+    | "zip_code"
+>;
+
+/**
+ * The overview's tiles: the next call (links to it), the latest filing, the website and IR site; then ownership
+ * (institutional, insider, short float), address, Fama-French classification and the listing (FIGI, delisted).
+ */
+export function OverviewTiles({ company, datasets, ticker }: { company: CompanyTileFields; datasets: ReadonlyArray<V2Dataset>; ticker: string }) {
     const hasEvents = datasets.includes("events");
 
     const hasFilings = datasets.includes("filings");
@@ -231,15 +256,82 @@ export function OverviewTiles({ company, datasets, ticker }: { company: Pick<V2C
     const filings = useV2FilingsInfinite({ limit: 1, sort: "-filed_at", symbol: hasFilings ? ticker : "" });
 
     return (
-        <OverviewTilesView
-            filing={filings.data?.pages.at(0)?.data.at(0) ?? null}
-            filingLoading={hasFilings && filings.isLoading}
-            homepage={httpsHref(company.homepage_url)}
-            investorRelations={httpsHref(company.investor_relations_url)}
-            nextCall={next.data?.pages.at(0)?.data.at(0) ?? null}
-            nextLoading={hasEvents && next.isLoading}
-            ticker={ticker}
-        />
+        <>
+            <OverviewTilesView
+                filing={filings.data?.pages.at(0)?.data.at(0) ?? null}
+                filingLoading={hasFilings && filings.isLoading}
+                homepage={httpsHref(company.homepage_url)}
+                investorRelations={httpsHref(company.investor_relations_url)}
+                nextCall={next.data?.pages.at(0)?.data.at(0) ?? null}
+                nextLoading={hasEvents && next.isLoading}
+                ticker={ticker}
+            />
+            <CompanyFactTilesView company={company} />
+        </>
+    );
+}
+
+/**
+ * An ownership share: "63.65% · 9,250,375,827 shares" (the API's `*_pct` are percent values, 63.65 = 63.65 %);
+ * `of` names the base ("of float").
+ */
+export function ownershipText(pct: null | number | undefined, shares: null | number | undefined, of?: string): null | string {
+    const parts = [
+        pct == null ? null : `${formatNumberEn(pct, { maximumFractionDigits: 2 })}%${of ? ` ${of}` : ""}`,
+        shares == null ? null : `${formatShares(shares)} shares`,
+    ].filter(Boolean);
+
+    return parts.length > 0 ? parts.join(" · ") : null;
+}
+
+/** The postal address in two lines ("ONE APPLE PARK WAY" / "CUPERTINO, California 95014 · US"); none stated = []. */
+export function addressLines(company: Pick<CompanyTileFields, "city" | "country_code" | "state" | "street" | "zip_code">): Array<string> {
+    const place = [[company.city, [company.state, company.zip_code].filter(Boolean).join(" ")].filter(Boolean).join(", "), company.country_code]
+        .filter(Boolean)
+        .join(" · ");
+
+    return [company.street, place].filter((line): line is string => Boolean(line && line.trim()));
+}
+
+function FactTile({ children, label }: { children: ReactNode; label: string }) {
+    return (
+        <Card className="border-border/60" size="sm">
+            <CardHeader><CardDescription>{label}</CardDescription></CardHeader>
+            <CardContent>{children}</CardContent>
+        </Card>
+    );
+}
+
+const notStated = <span className="text-muted-foreground">Not stated</span>;
+
+/** The fact tiles (pure): ownership, short float, address, Fama-French, listing. */
+export function CompanyFactTilesView({ company }: { company: Omit<CompanyTileFields, "homepage_url" | "investor_relations_url"> }) {
+    const institutional = ownershipText(company.inst_own_pct, company.inst_own_shares);
+
+    const insider = ownershipText(company.insider_own_pct, company.insider_own_shares);
+
+    const shortFloat = ownershipText(company.short_float_pct, company.short_float_shares, "of float");
+
+    const address = addressLines(company);
+
+    const fama = [company.fama_sector, company.fama_industry].filter(Boolean).join(" · ");
+
+    return (
+        <div className="grid gap-3 sm:grid-cols-3 md:col-span-2" data-testid="company-fact-tiles">
+            <FactTile label="Institutional ownership">{institutional ? <span className="font-medium tabular-nums">{institutional}</span> : notStated}</FactTile>
+            <FactTile label="Insider ownership">{insider ? <span className="font-medium tabular-nums">{insider}</span> : notStated}</FactTile>
+            <FactTile label="Short float">{shortFloat ? <span className="font-medium tabular-nums">{shortFloat}</span> : notStated}</FactTile>
+            <FactTile label="Address">
+                {address.length > 0 ? <address className="font-medium not-italic">{address.map(line => <div key={line}>{line}</div>)}</address> : notStated}
+            </FactTile>
+            <FactTile label="Fama-French sector · industry">{fama ? <span className="font-medium">{fama}</span> : notStated}</FactTile>
+            <FactTile label="Listing">
+                <div className="flex flex-wrap items-center gap-2">
+                    {company.composite_figi ? <span className="font-medium" title="Composite FIGI">{`FIGI ${company.composite_figi}`}</span> : <span className="text-muted-foreground">No FIGI</span>}
+                    {company.is_delisted ? <Badge variant="destructive">Delisted</Badge> : <Badge variant="secondary">Listed</Badge>}
+                </div>
+            </FactTile>
+        </div>
     );
 }
 

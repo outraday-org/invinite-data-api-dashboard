@@ -14,6 +14,7 @@ import { formatFractionPercentCompact, formatMetricId } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 import { useFinancialsSearch } from "./financials-search";
+import { FiscalYearRange } from "./fiscal-year-range";
 
 /** Periods per page of `/v1/metrics/growth`: one row per period and basis (both bases = two rows per period). */
 const GROWTH_PERIODS = 8;
@@ -90,6 +91,8 @@ export function GrowthFinancials({ ticker }: { ticker: string }) {
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2GrowthInfinite({
         basis: basis === ALL ? undefined : basis,
         company: ticker,
+        fiscalYearGte: search.fyFrom,
+        fiscalYearLte: search.fyTo,
         limit: basis === ALL ? GROWTH_PERIODS * 2 : GROWTH_PERIODS,
         period: periodType,
     });
@@ -101,6 +104,7 @@ export function GrowthFinancials({ ticker }: { ticker: string }) {
                     <>
                         <FilterSelect className="w-[220px]" onValueChange={value => update({ basis: value === ALL ? undefined : value })} options={basisOptions} value={basis} />
                         <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+                        <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
                     </>
                 )}
                 description="Period-over-period growth metrics (YoY/ QoQ)."

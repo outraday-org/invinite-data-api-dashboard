@@ -3,21 +3,32 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { cagrRows, CagrView } from "@/components/financials-pages/cagr";
+import { financialsSearchSchema } from "@/components/financials-pages/financials-search";
+import { parseFiscalYear } from "@/components/financials-pages/fiscal-year-range";
 import { GrowthView } from "@/components/financials-pages/growth";
+import { filingChoices, PointInTimeBanner, PointInTimeControls } from "@/components/financials-pages/point-in-time";
 import { ratioRows, RatiosView } from "@/components/financials-pages/ratios";
 import { SegmentsView } from "@/components/financials-pages/segments";
+import { segmentFilterOptions, SegmentsDetailedView } from "@/components/financials-pages/segments-detailed";
+import { FactExplanationView } from "@/components/financials-presentation/fact-explain-dialog";
 import { FinancialsStatementsView } from "@/components/financials-presentation/financials-statements-view";
 import { addFactTypes, buildTreeRows } from "@/components/financials-presentation/utils";
 import { ApiRequestError } from "@/lib/api/errors";
+import { factExplanationModel, factPlaceTargets } from "@/lib/financials/fact-explanation";
 import { completePeriodsOnly, periodLabel, segmentLines, statementLines } from "@/lib/financials/statements";
 import {
     V2_AS_REPORTED_DETAILED,
     V2_AS_REPORTED_PRESENTATION,
     V2_CAGR,
+    V2_FACT,
+    V2_FACT_PLACES,
     V2_GROWTH,
     V2_RATIOS,
     V2_SEGMENTS,
+    V2_SEGMENTS_DETAILED,
     V2_STANDARDIZED,
+    V2_STANDARDIZED_AS_OF,
+    V2_STANDARDIZED_DETAILED,
     V2_STANDARDIZED_PENDING,
 } from "@/lib/financials/v2-fixtures";
 
@@ -29,10 +40,21 @@ vi.mock("@tanstack/react-router", () => ({
 // Keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
     useV2CagrInfinite: vi.fn(),
+    // The explain dialog's two requests: idle until a value is clicked (then loading in these tests).
+    useV2Fact: vi.fn((factId: null | string) => ({ data: undefined, error: null, isLoading: Boolean(factId) })),
+    useV2FactPlaces: vi.fn((factId: null | string) => ({ data: undefined, error: null, isLoading: Boolean(factId) })),
     useV2FinancialsInfinite: vi.fn(),
     useV2GrowthInfinite: vi.fn(),
     useV2RatiosInfinite: vi.fn(),
+    useV2SegmentsDetailedInfinite: vi.fn(),
     useV2SegmentsInfinite: vi.fn(),
+}));
+
+// The plan badges read `/v1/me` (outside these pure views): no badge.
+vi.mock("@/components/ui/credit-hint", async importOriginal => ({
+    ...await importOriginal<object>(),
+    PlanBadge: () => null,
+    usePlanAllows: () => null,
 }));
 
 afterEach(cleanup);
@@ -289,5 +311,236 @@ describe("Metrics (`/v1/metrics/*`, `/v1/segments`)", () => {
         render(<SegmentsView {...list} hasNextPage pages={[V2_SEGMENTS]} segmentId="seg_revenue_geographic" />);
 
         expect(screen.getByText(/None of the loaded segment rows match this segment/)).toBeInTheDocument();
+    });
+});
+
+describe("Point in time (`as_of`, `filing`, `meta.point_in_time`)", () => {
+    it("the banner names the selector and goes back to the current renderings; a current answer shows none", () => {
+        const onClear = vi.fn();
+
+        const { rerender } = render(<PointInTimeBanner onClear={onClear} pointInTime={V2_STANDARDIZED_AS_OF.meta.point_in_time} />);
+
+        expect(screen.getByTestId("point-in-time-banner")).toHaveTextContent("Point in time: as filed on or before May 1, 2026");
+
+        fireEvent.click(screen.getByRole("button", { name: "Back to current" }));
+
+        expect(onClear).toHaveBeenCalledTimes(1);
+
+        rerender(<PointInTimeBanner onClear={onClear} pointInTime={{ as_of: null, filing: "0000320193-26-000052" }} />);
+
+        expect(screen.getByTestId("point-in-time-banner")).toHaveTextContent("as rendered by filing 0000320193-26-000052");
+
+        rerender(<PointInTimeBanner onClear={onClear} pointInTime={null} />);
+
+        expect(screen.queryByTestId("point-in-time-banner")).toBeNull();
+    });
+
+    it("the filing choices: the loaded periods' filings, newest first, one per accession; a pinned one the pages lack is kept", () => {
+        const second = { ...V2_STANDARDIZED.data[1], source: { ...V2_STANDARDIZED.data[1].source, filed_at: "2026-05-02T20:30:00Z" } };
+
+        const page = { ...V2_STANDARDIZED, data: [V2_STANDARDIZED.data[0], second, V2_STANDARDIZED.data[0]] };
+
+        expect(filingChoices([page], null)).toEqual([
+            { accession: "0000320193-26-000073", label: "10-Q · Aug 1, 2026" },
+            { accession: "0000320193-26-000052", label: "10-Q · May 2, 2026" },
+        ]);
+
+        expect(filingChoices([page], "0000320193-25-000079").at(0)).toEqual({ accession: "0000320193-25-000079", label: "0000320193-25-000079" });
+    });
+
+    it("an as-of day clears a pinned filing (the two exclude each other)", () => {
+        const onChange = vi.fn();
+
+        render(<PointInTimeControls asOf={undefined} choices={[]} filing="0000320193-26-000052" onChange={onChange} />);
+
+        fireEvent.change(screen.getByLabelText("As of"), { target: { value: "2026-05-01" } });
+
+        expect(onChange).toHaveBeenCalledWith({ asOf: "2026-05-01", filing: undefined });
+    });
+
+    it("the URL state: a typed `?horizon=5` (a number) and the select's \"5\" both read; bad values drop", () => {
+        expect(financialsSearchSchema.parse({ fyFrom: "2021", horizon: 5 })).toMatchObject({ fyFrom: 2021, horizon: "5" });
+
+        expect(financialsSearchSchema.parse({ asOf: "2026-13", filing: "nope", horizon: "7" })).toMatchObject({ asOf: undefined, filing: undefined, horizon: undefined });
+    });
+
+    it("fiscal years: only a four-digit year in the API's window", () => {
+        expect(parseFiscalYear("2024")).toBe(2024);
+
+        expect(parseFiscalYear(" 2024 ")).toBe(2024);
+
+        expect(parseFiscalYear("20")).toBeNull();
+
+        expect(parseFiscalYear("1800")).toBeNull();
+    });
+});
+
+describe("Explain this number (`/v1/facts/{fact_id}`, `/v1/fact-places`)", () => {
+    function loaded<T>(data: T) {
+        return { data, error: null, isLoading: false };
+    }
+
+    it("a standardized detailed value is a button: it opens the explanation, not the chart", () => {
+        render(
+            <FinancialsStatementsView
+                {...list}
+                basis="standardized"
+                pages={[V2_STANDARDIZED_DETAILED]}
+                statement="income-statement"
+                view="detailed"
+            />,
+        );
+
+        expect(screen.getByTestId("explain-hint")).toHaveTextContent("Click a value to explain it");
+
+        fireEvent.click(screen.getByRole("button", { name: "Explain Total Revenue, Q3 2026" }));
+
+        expect(screen.getByRole("dialog", { name: "Explain this number" })).toBeInTheDocument();
+
+        expect(screen.queryByRole("dialog", { name: /Total Revenue$/ })).toBeNull();
+    });
+
+    it("a summary value has no fact id: no button, the hint names the Detailed view", () => {
+        render(<FinancialsStatementsView {...list} basis="standardized" pages={[V2_STANDARDIZED]} statement="income-statement" view="summary" />);
+
+        expect(screen.queryByRole("button", { name: /^Explain / })).toBeNull();
+
+        expect(screen.getByTestId("explain-hint")).toHaveTextContent("The Detailed view explains each value.");
+    });
+
+    it("the model reads the free-JSON rule and source facts (raw value as a string, the period from its dates)", () => {
+        const model = factExplanationModel(V2_FACT);
+
+        expect(model.metricName).toBe("Total Revenue");
+
+        expect(model.rule).toMatchObject({ alias: "us_gaap:RevenueFromContractWithCustomerExcludingAssessedTax", formula: null, kind: "alias" });
+
+        expect(model.sources).toEqual([{
+            accession: "0000320193-26-000073",
+            anchor: "f-76",
+            basis: "receipt",
+            concept: "RevenueFromContractWithCustomerExcludingAssessedTax",
+            period: "2026-03-29 – 2026-06-27",
+            segment: null,
+            value: 94_036_000_000,
+        }]);
+
+        expect(factExplanationModel({ ...V2_FACT, rule: "unexpected", source_facts: [42] } as never).sources[0]).toMatchObject({ concept: "—", value: null });
+    });
+
+    it("places: placed spots only, one per version × block, the table cell 1-based", () => {
+        expect(factPlaceTargets(V2_FACT_PLACES.data)).toEqual([
+            { blockId: "b00407", label: "Table row 7, column 4", versionId: "8be0b759-1a9d-5f89-8308-bd86185f5e1f" },
+            { blockId: "b00475", label: "Table row 8, column 4", versionId: "8be0b759-1a9d-5f89-8308-bd86185f5e1f" },
+        ]);
+    });
+
+    it("the view: rule, the reported formula text, the source filing (documents + EDGAR) and Show in filing", () => {
+        const onOpenFiling = vi.fn();
+
+        const onOpenPlace = vi.fn();
+
+        render(<FactExplanationView fact={loaded(V2_FACT)} formula={null} onOpenFiling={onOpenFiling} onOpenPlace={onOpenPlace} places={loaded(V2_FACT_PLACES)} />);
+
+        const view = screen.getByTestId("fact-explanation");
+
+        expect(view).toHaveTextContent("Total Revenue");
+
+        expect(view).toHaveTextContent("94,036,000,000 USD");
+
+        expect(view).toHaveTextContent("None: the value is reported as filed");
+
+        fireEvent.click(screen.getByRole("button", { name: "0000320193-26-000073" }));
+
+        expect(onOpenFiling).toHaveBeenCalledWith("0000320193-26-000073");
+
+        expect(screen.getByRole("link", { name: "EDGAR" })).toHaveAttribute("href", "https://www.sec.gov/Archives/edgar/data/320193/000032019326000073/");
+
+        fireEvent.click(screen.getByRole("button", { name: "Table row 7, column 4" }));
+
+        expect(onOpenPlace).toHaveBeenCalledWith({ blockId: "b00407", label: "Table row 7, column 4", versionId: "8be0b759-1a9d-5f89-8308-bd86185f5e1f" });
+    });
+
+    it("a derived value shows its formula; the places' plan gate is a notice beside the explanation", () => {
+        render(
+            <FactExplanationView
+                fact={loaded(V2_FACT)}
+                formula="is_revenue_fy - is_revenue_q1 - is_revenue_q2 - is_revenue_q3"
+                onOpenFiling={() => undefined}
+                onOpenPlace={() => undefined}
+                places={{ data: undefined, error: problem(403, "plan_required", "Fact places need the PRO plan."), isLoading: false }}
+            />,
+        );
+
+        expect(screen.getByText("is_revenue_fy - is_revenue_q1 - is_revenue_q2 - is_revenue_q3")).toBeInTheDocument();
+
+        expect(screen.getByText("Your plan does not include this view")).toBeInTheDocument();
+
+        expect(screen.getByTestId("fact-explanation")).toHaveTextContent("Total Revenue");
+    });
+
+    it("a plan without fact places: the PRO notice, the explanation still shown", () => {
+        render(<FactExplanationView fact={loaded(V2_FACT)} formula={null} onOpenFiling={() => undefined} onOpenPlace={() => undefined} places={null} />);
+
+        expect(screen.getByText("Your plan does not include the places in the filing")).toBeInTheDocument();
+
+        expect(screen.queryByText("No place of this value in a stored document.")).toBeNull();
+    });
+
+    it("a failed explanation is its notice", () => {
+        render(<FactExplanationView fact={{ data: undefined, error: problem(404, "not_found", "No such fact."), isLoading: false }} formula={null} onOpenFiling={() => undefined} onOpenPlace={() => undefined} places={loaded(V2_FACT_PLACES)} />);
+
+        expect(screen.queryByTestId("fact-explanation")).toBeNull();
+    });
+});
+
+describe("Detailed segments (`/v1/segments/detailed`) and the metric / axis filters", () => {
+    it("one row per segment fact with its concept, caption and filing; the picker filters; export above the table", () => {
+        const onOpenFiling = vi.fn();
+
+        const { rerender } = render(<SegmentsDetailedView {...list} hasNextPage onOpenFiling={onOpenFiling} pages={[V2_SEGMENTS_DETAILED]} segmentId="all" ticker="AAPL" />);
+
+        const view = screen.getByTestId("segments-detailed");
+
+        expect(view).toHaveTextContent("iPhone");
+
+        expect(view).toHaveTextContent("us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax");
+
+        expect(within(view).getAllByRole("row")).toHaveLength(1 + 2);
+
+        expect(screen.getByRole("button", { name: /Export/ })).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: "0000320193-26-000073" }));
+
+        expect(onOpenFiling).toHaveBeenCalledWith("0000320193-26-000073");
+
+        rerender(<SegmentsDetailedView {...list} onOpenFiling={onOpenFiling} pages={[V2_SEGMENTS_DETAILED]} segmentId="seg_revenue_business_segment" ticker="AAPL" />);
+
+        expect(screen.queryByText("iPhone")).toBeNull();
+    });
+
+    it("the plan gate of the PRO list is its notice, no table", () => {
+        render(<SegmentsDetailedView {...list} error={problem(403, "plan_required", "PRO")} onOpenFiling={() => undefined} pages={[]} segmentId="all" ticker="AAPL" />);
+
+        expect(screen.getByText("Your plan does not include this view")).toBeInTheDocument();
+
+        expect(screen.queryByTestId("segments-detailed")).toBeNull();
+    });
+
+    it("metric / axis choices come from the loaded rows, in words; a chosen value the rows lack is kept", () => {
+        const options = segmentFilterOptions(V2_SEGMENTS.data, { axis: "us-gaap:SubsegmentsAxis" });
+
+        expect(options.metrics).toEqual([{ label: "Total Revenue", value: "is_total_revenue" }]);
+
+        expect(options.axes.map(axis => axis.value)).toEqual(["srt:ProductOrServiceAxis", "us-gaap:StatementBusinessSegmentsAxis", "us-gaap:SubsegmentsAxis"]);
+
+        expect(options.axes[0].label).toBe("Product Or Service");
+    });
+
+    it("two taxonomies' axes of the same name keep their prefix (GOOGL: srt: / us-gaap:StatementGeographicalAxis)", () => {
+        const row = (axis: string) => ({ dimensions: [{ axis, member: "x:UsMember" }], metric_id: "is_total_revenue" });
+
+        expect(segmentFilterOptions([row("srt:StatementGeographicalAxis"), row("us-gaap:StatementGeographicalAxis")], {}).axes.map(axis => axis.label))
+            .toEqual(["Statement Geographical (srt)", "Statement Geographical (us-gaap)"]);
     });
 });

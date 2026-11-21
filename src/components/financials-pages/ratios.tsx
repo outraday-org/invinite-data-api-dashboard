@@ -14,6 +14,7 @@ import { formatMetricId, formatNumberEnCompact } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 import { useFinancialsSearch } from "./financials-search";
+import { FiscalYearRange } from "./fiscal-year-range";
 
 /** Periods per page of `/v1/metrics/ratios` (one row per period). */
 const RATIOS_PAGE = 8;
@@ -103,6 +104,8 @@ export function RatiosFinancials({ ticker }: { ticker: string }) {
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2RatiosInfinite({
         category: category === ALL ? undefined : [category],
         company: ticker,
+        fiscalYearGte: search.fyFrom,
+        fiscalYearLte: search.fyTo,
         limit: RATIOS_PAGE,
         period: periodType,
     });
@@ -114,6 +117,7 @@ export function RatiosFinancials({ ticker }: { ticker: string }) {
                     <>
                         <FilterSelect className="w-[220px]" onValueChange={value => update({ category: value === ALL ? undefined : value })} options={ratioCategoryOptions} value={category} />
                         <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+                        <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
                     </>
                 )}
                 description="Financial ratios grouped by category."

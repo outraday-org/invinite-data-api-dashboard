@@ -6,9 +6,13 @@ import type {
     V2AsReportedDetailedResponse,
     V2AsReportedPresentationResponse,
     V2CagrResponse,
+    V2FactPlacesResponse,
+    V2FactResponse,
     V2GrowthResponse,
     V2RatiosResponse,
+    V2SegmentsDetailedResponse,
     V2SegmentsResponse,
+    V2StandardizedDetailedResponse,
     V2StandardizedResponse,
 } from "@/lib/api/types";
 
@@ -193,4 +197,136 @@ export const V2_SEGMENTS: V2SegmentsResponse = {
     has_more: false,
     meta: { coverage: { state: "complete" } },
     next_cursor: null,
+};
+
+/** A point-in-time answer (`as_of=2026-05-01`): `meta.point_in_time` names the selector. */
+export const V2_STANDARDIZED_AS_OF: V2StandardizedResponse = {
+    ...V2_STANDARDIZED,
+    has_more: false,
+    meta: { ...V2_STANDARDIZED.meta, point_in_time: { as_of: "2026-05-01", filing: null } },
+    next_cursor: null,
+};
+
+const FACT_ID = "320193|is_total_revenue|quarterly|2026|3";
+
+/** The standardized detailed view: each value carries its fact id (live AAPL shape, 2026-11-21). */
+export const V2_STANDARDIZED_DETAILED: V2StandardizedDetailedResponse = {
+    data: [
+        {
+            ...coordinates(2026, 3, "2026-06-27"),
+            currency: "USD",
+            source: source("0000320193-26-000073"),
+            statements: {
+                income_statement: {
+                    facts: {
+                        is_total_revenue: {
+                            accession: "0000320193-26-000073",
+                            fact_id: FACT_ID,
+                            formula: null,
+                            html_tag_id: "f-76",
+                            parent_id: null,
+                            split_factor: null,
+                            unit: "usd",
+                            value: 94_036_000_000,
+                            value_as_reported: null,
+                        },
+                    },
+                },
+            },
+        },
+    ],
+    has_more: false,
+    meta: { basis: "standardized", coverage: { state: "complete", through: "2026-06-27" }, currency: "USD", point_in_time: null },
+    next_cursor: null,
+};
+
+/** `GET /v1/facts/{fact_id}` (live AAPL shape, trimmed). */
+export const V2_FACT: V2FactResponse = {
+    company,
+    fact_id: FACT_ID,
+    metric_id: "is_total_revenue",
+    operands: [],
+    rule: {
+        alias_role: "alternate",
+        declared_alias: "RevenueFromContractWithCustomerExcludingAssessedTax",
+        declared_taxonomy: "us_gaap",
+        formula_definition: null,
+        kind: "alias",
+        metric_id: "is_total_revenue",
+        metric_name: "Total Revenue",
+        notes: "ASC 606 filers tag RevenueFromContractWithCustomerExcludingAssessedTax as the top line.",
+        rule_id: "r_8b92b021e8bd4f2207e85b87",
+        statement: "income_statement",
+    },
+    source_facts: [
+        {
+            accession: "0000320193-26-000073",
+            annotated_anchor: "f-76",
+            basis: "receipt",
+            concept: "RevenueFromContractWithCustomerExcludingAssessedTax",
+            raw: { end_date: "2026-06-27T00:00:00", instant_date: null, start_date: "2026-03-29T00:00:00", value: "94036000000" },
+            segment: null,
+        },
+    ],
+    unit: "usd",
+    value: 94_036_000_000,
+};
+
+const place = (blockId: string, row: number, status: "derived" | "placed" = "placed") => ({
+    block_id: blockId,
+    concept: "RevenueFromContractWithCustomerExcludingAssessedTax",
+    document_version: "8be0b759-1a9d-5f89-8308-bd86185f5e1f",
+    fact_id: FACT_ID,
+    html_tag_id: "f-76",
+    legacy_id: null,
+    page: null,
+    pdf_box: null,
+    rendition_url: null,
+    source_sha256: null,
+    status,
+    table_col: 3,
+    table_row: row,
+    xbrl_ordinal: 7,
+    xpath: null,
+});
+
+/** `GET /v1/fact-places?fact=` (PRO): two placed spots (one repeated) and a derived one. */
+export const V2_FACT_PLACES: V2FactPlacesResponse = {
+    data: [place("b00407", 6), place("b00407", 6), place("b00475", 7), place("b00500", 1, "derived")],
+    has_more: false,
+    meta: { coverage: { state: "complete" } },
+    next_cursor: null,
+};
+
+/** `GET /v1/segments/detailed` (PRO): segment facts with concept, caption and filing. */
+export const V2_SEGMENTS_DETAILED: V2SegmentsDetailedResponse = {
+    data: [
+        {
+            ...coordinates(2026, 3, "2026-06-27"),
+            accession: "0000320193-26-000073",
+            dimensions: [{ axis: "srt:ProductOrServiceAxis", member: "aapl:IPhoneMember" }],
+            html_label: "iPhone",
+            html_tag_id: "f-301",
+            metric: "us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax",
+            metric_id: "is_total_revenue",
+            segment_id: "seg_revenue_product",
+            unit: "usd",
+            value: 44_582_000_000,
+        },
+        {
+            ...coordinates(2026, 3, "2026-06-27"),
+            accession: null,
+            dimensions: [{ axis: "us-gaap:StatementBusinessSegmentsAxis", member: "aapl:AmericasSegmentMember" }],
+            html_label: null,
+            html_tag_id: null,
+            metric: null,
+            metric_id: "is_total_revenue",
+            segment_id: "seg_revenue_business_segment",
+            unit: null,
+            value: 41_198_000_000,
+        },
+    ],
+    has_more: true,
+    meta: { coverage: { state: "complete" } },
+    next_cursor: "eyJ2Ijo0fQ",
 };

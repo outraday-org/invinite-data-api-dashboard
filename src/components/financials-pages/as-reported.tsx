@@ -13,6 +13,8 @@ import { useV2FinancialsInfinite } from "@/lib/api/queries";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 import { useFinancialsSearch } from "./financials-search";
+import { FiscalYearRange } from "./fiscal-year-range";
+import { filingChoices, PointInTimeBanner, PointInTimeControls } from "./point-in-time";
 
 /** Periods per page of `/v1/financials/as-reported*` (one row per period; "Load more" adds older ones). */
 const STATEMENT_PAGE = 8;
@@ -60,15 +62,23 @@ export function AsReportedFinancials({ ticker }: { ticker: string }) {
     // `/v1/financials/as-reported[/detailed|/presentation]`; `reported_only` / `display_sign` sent only when changed
     // from the API defaults (false / as_filed), so the default view keeps one cache key.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2FinancialsInfinite({
+        asOf: search.asOf,
         basis: "as-reported",
         company: ticker,
         displaySign: displaySign === "as_filed" ? undefined : displaySign,
+        filing: search.filing,
+        fiscalYearGte: search.fyFrom,
+        fiscalYearLte: search.fyTo,
         limit: STATEMENT_PAGE,
         period: periodType,
         reportedOnly: reportedOnly || undefined,
         statement: [statement],
         view,
     });
+
+    const pages = React.useMemo(() => data?.pages ?? [], [data]);
+
+    const choices = React.useMemo(() => filingChoices(pages, search.filing ?? null), [pages, search.filing]);
 
     React.useEffect(() => {
         if (pickedView === null && view === "presentation" && isTierError(error)) setPresentationRefused(true);
@@ -82,6 +92,8 @@ export function AsReportedFinancials({ ticker }: { ticker: string }) {
                         <StatementSelect onValueChange={value => update({ chart: undefined, statement: value === "income-statement" ? undefined : value })} value={statement} />
                         <ViewButtons badges={AS_REPORTED_VIEW_OPERATIONS} onValueChange={value => update({ chart: undefined, layout: value })} value={view} />
                         <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+                        <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
+                        <PointInTimeControls asOf={search.asOf} choices={choices} filing={search.filing} onChange={update} />
                         <Button
                             aria-pressed={reportedOnly}
                             onClick={() => update({ reportedOnly: reportedOnly ? undefined : true })}
@@ -96,6 +108,7 @@ export function AsReportedFinancials({ ticker }: { ticker: string }) {
                 description={VIEW_SUBTITLES[view]}
                 title="As Reported Financials"
             />
+            <PointInTimeBanner onClear={() => update({ asOf: undefined, filing: undefined })} pointInTime={pages.at(0)?.meta.point_in_time} />
             <FinancialsStatementsView
                 basis="as-reported"
                 error={error}
@@ -103,7 +116,7 @@ export function AsReportedFinancials({ ticker }: { ticker: string }) {
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
                 onLoadMore={() => fetchNextPage()}
-                pages={data?.pages ?? []}
+                pages={pages}
                 statement={statement}
                 view={view}
             />

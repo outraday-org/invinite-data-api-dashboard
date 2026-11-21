@@ -6,16 +6,29 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { V2_AS_REPORTED_DETAILED, V2_CAGR, V2_GROWTH, V2_RATIOS, V2_SEGMENTS, V2_STANDARDIZED, V2_STANDARDIZED_PENDING } from "@/lib/financials/v2-fixtures";
+import {
+    V2_AS_REPORTED_DETAILED,
+    V2_CAGR,
+    V2_FACT_PLACES,
+    V2_GROWTH,
+    V2_RATIOS,
+    V2_SEGMENTS,
+    V2_SEGMENTS_DETAILED,
+    V2_STANDARDIZED,
+    V2_STANDARDIZED_AS_OF,
+    V2_STANDARDIZED_PENDING,
+} from "@/lib/financials/v2-fixtures";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import { ApiRequestError } from "./errors";
 import {
     refetchWhileCoveragePending,
     useV2CagrInfinite,
+    useV2FactPlaces,
     useV2FinancialsInfinite,
     useV2GrowthInfinite,
     useV2RatiosInfinite,
+    useV2SegmentsDetailedInfinite,
     useV2SegmentsInfinite,
 } from "./queries";
 import {
@@ -23,9 +36,11 @@ import {
     getV2AsReportedDetailed,
     getV2AsReportedPresentation,
     getV2Cagr,
+    getV2FactPlaces,
     getV2Growth,
     getV2Ratios,
     getV2Segments,
+    getV2SegmentsDetailed,
     getV2Standardized,
     getV2StandardizedDetailed,
     getV2StandardizedPresentation,
@@ -37,6 +52,7 @@ vi.mock("./server-functions", () => ({
     getV2AsReportedPresentation: vi.fn(),
     getV2Cagr: vi.fn(),
     getV2Fact: vi.fn(),
+    getV2FactPlaces: vi.fn(),
     getV2Growth: vi.fn(),
     getV2Ratios: vi.fn(),
     getV2Segments: vi.fn(),
@@ -187,5 +203,79 @@ describe("metrics hooks", () => {
         expect(vi.mocked(getV2Cagr).mock.lastCall?.[0]?.data).toMatchObject({ horizon: 5, period: "annual" });
 
         expect(vi.mocked(getV2Segments).mock.lastCall?.[0]?.data).toMatchObject({ company: "AAPL", limit: 200, period: "quarterly" });
+    });
+});
+
+describe("O7 group 4: point in time, fiscal years, detailed segments, fact places", () => {
+    it("as_of / filing and the fiscal-year window reach the statement operation; each selector is its own cache entry", async () => {
+        vi.mocked(getV2Standardized).mockResolvedValue(V2_STANDARDIZED_AS_OF);
+
+        const input = { basis: "standardized", company: "AAPL", fiscalYearGte: 2020, fiscalYearLte: 2024, period: "annual", view: "summary" } as const;
+
+        const first = renderHook(() => useV2FinancialsInfinite({ ...input, asOf: "2026-05-01" }), { wrapper });
+
+        await waitFor(() => expect(first.result.current.data?.pages).toHaveLength(1));
+
+        expect(vi.mocked(getV2Standardized).mock.lastCall?.[0]?.data).toMatchObject({ asOf: "2026-05-01", fiscalYearGte: 2020, fiscalYearLte: 2024 });
+
+        const pinned = renderHook(() => useV2FinancialsInfinite({ ...input, filing: "0000320193-26-000052" }), { wrapper });
+
+        await waitFor(() => expect(pinned.result.current.data?.pages).toHaveLength(1));
+
+        expect(vi.mocked(getV2Standardized).mock.lastCall?.[0]?.data).toMatchObject({ asOf: undefined, filing: "0000320193-26-000052" });
+    });
+
+    it("ratios / growth / CAGR / segments send the fiscal-year window; CAGR any period", async () => {
+        vi.mocked(getV2Ratios).mockResolvedValue(V2_RATIOS);
+
+        vi.mocked(getV2Cagr).mockResolvedValue(V2_CAGR);
+
+        vi.mocked(getV2Segments).mockResolvedValue(V2_SEGMENTS);
+
+        const ratios = renderHook(() => useV2RatiosInfinite({ company: "AAPL", fiscalYearGte: 2021, period: "annual" }), { wrapper });
+
+        const cagr = renderHook(() => useV2CagrInfinite({ company: "AAPL", fiscalYearLte: 2025, period: "ttm" }), { wrapper });
+
+        const segments = renderHook(() => useV2SegmentsInfinite({ axis: ["srt:ProductOrServiceAxis"], company: "AAPL", fiscalYearGte: 2022, metric: ["is_total_revenue"], period: "annual" }), { wrapper });
+
+        await waitFor(() => expect(ratios.result.current.data?.pages).toHaveLength(1));
+
+        await waitFor(() => expect(cagr.result.current.data?.pages).toHaveLength(1));
+
+        await waitFor(() => expect(segments.result.current.data?.pages).toHaveLength(1));
+
+        expect(vi.mocked(getV2Ratios).mock.lastCall?.[0]?.data).toMatchObject({ fiscalYearGte: 2021 });
+
+        expect(vi.mocked(getV2Cagr).mock.lastCall?.[0]?.data).toMatchObject({ fiscalYearLte: 2025, period: "ttm" });
+
+        expect(vi.mocked(getV2Segments).mock.lastCall?.[0]?.data).toMatchObject({ axis: ["srt:ProductOrServiceAxis"], fiscalYearGte: 2022, metric: ["is_total_revenue"] });
+    });
+
+    it("detailed segments: metric / axis sent; idle without a company", async () => {
+        vi.mocked(getV2SegmentsDetailed).mockResolvedValue(V2_SEGMENTS_DETAILED);
+
+        renderHook(() => useV2SegmentsDetailedInfinite({ company: "", period: "quarterly" }), { wrapper });
+
+        const detailed = renderHook(() => useV2SegmentsDetailedInfinite({ axis: ["srt:ProductOrServiceAxis"], company: "AAPL", limit: 100, period: "quarterly" }), { wrapper });
+
+        await waitFor(() => expect(detailed.result.current.data?.pages).toHaveLength(1));
+
+        expect(getV2SegmentsDetailed).toHaveBeenCalledTimes(1);
+
+        expect(vi.mocked(getV2SegmentsDetailed).mock.lastCall?.[0]?.data).toMatchObject({ axis: ["srt:ProductOrServiceAxis"], company: "AAPL", limit: 100 });
+    });
+
+    it("fact places: `fact=` while a fact is open, nothing for a null id", async () => {
+        vi.mocked(getV2FactPlaces).mockResolvedValue(V2_FACT_PLACES);
+
+        renderHook(() => useV2FactPlaces(null), { wrapper });
+
+        const places = renderHook(() => useV2FactPlaces("320193|is_total_revenue|quarterly|2026|3"), { wrapper });
+
+        await waitFor(() => expect(places.result.current.data?.data).toHaveLength(4));
+
+        expect(getV2FactPlaces).toHaveBeenCalledTimes(1);
+
+        expect(vi.mocked(getV2FactPlaces).mock.lastCall?.[0]?.data).toMatchObject({ apiKey: "test-key", fact: "320193|is_total_revenue|quarterly|2026|3" });
     });
 });

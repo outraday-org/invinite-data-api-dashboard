@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CALENDAR_EVENT } from "@/lib/earnings/calendar-fixtures";
 import { callTabCounts, columnsForTab, loadedCount } from "@/routes/$ticker/earnings-calls/index";
-import { CoverageCard, OverviewTilesView } from "@/routes/$ticker/index";
+import { addressLines, CompanyFactTilesView, CoverageCard, OverviewTilesView, ownershipText } from "@/routes/$ticker/index";
 
 vi.mock("@tanstack/react-router", () => ({
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
@@ -52,6 +52,59 @@ describe("overview", () => {
         expect(screen.getByRole("link", { name: "10-K · Oct 31, 2025" })).toHaveAttribute("href", "/AAPL/filings");
 
         expect(screen.getByRole("link", { name: "Investor relations" })).toHaveAttribute("href", "https://investor.apple.com");
+    });
+});
+
+describe("overview fact tiles (O7 group 4)", () => {
+    const AAPL = {
+        city: "CUPERTINO",
+        composite_figi: "BBG000B9XRY4",
+        country_code: "US",
+        fama_industry: null,
+        fama_sector: null,
+        insider_own_pct: 0.07,
+        insider_own_shares: 9_898_119,
+        inst_own_pct: 63.65,
+        inst_own_shares: 9_250_375_827,
+        is_delisted: false,
+        short_float_pct: 1,
+        short_float_shares: 144_791_472,
+        state: "California",
+        street: "ONE APPLE PARK WAY",
+        zip_code: "95014",
+    };
+
+    it("ownership, short float, address, Fama-French and listing from the company already fetched", () => {
+        render(<CompanyFactTilesView company={AAPL} />);
+
+        const tiles = screen.getByTestId("company-fact-tiles");
+
+        expect(tiles).toHaveTextContent("63.65% · 9,250,375,827 shares");
+
+        expect(tiles).toHaveTextContent("0.07% · 9,898,119 shares");
+
+        expect(tiles).toHaveTextContent("1% of float · 144,791,472 shares");
+
+        expect(tiles).toHaveTextContent("ONE APPLE PARK WAYCUPERTINO, California 95014 · US");
+
+        expect(tiles).toHaveTextContent("FIGI BBG000B9XRY4");
+
+        expect(screen.getByText("Listed")).toBeInTheDocument();
+
+        // AAPL's Fama-French fields are null (live 2026-11-21): "Not stated", never an empty tile.
+        expect(screen.getAllByText("Not stated")).toHaveLength(1);
+    });
+
+    it("a delisted company says so; nothing stated reads as such", () => {
+        render(<CompanyFactTilesView company={{ ...AAPL, composite_figi: null, inst_own_pct: null, inst_own_shares: null, is_delisted: true }} />);
+
+        expect(screen.getByText("Delisted")).toBeInTheDocument();
+
+        expect(screen.getByText("No FIGI")).toBeInTheDocument();
+
+        expect(ownershipText(null, null)).toBeNull();
+
+        expect(addressLines({ city: null, country_code: null, state: null, street: " ", zip_code: null })).toEqual([]);
     });
 });
 

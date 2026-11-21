@@ -22,6 +22,8 @@ import type {
     V2EventStatsResponse,
     V2EventStatus,
     V2EventType,
+    V2FactPlacesResponse,
+    V2FactPlaceStatus,
     V2FactResponse,
     V2FilerHoldingsResponse,
     V2FilerPhase,
@@ -1593,6 +1595,38 @@ export const getV2PersonParticipations = createServerFn({ method: "GET" })
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/participants", {
             params: { query: v2Query({ cursor, limit, person }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+// Fact places (backend tasks/data-api-dashboard O7 group 4, "Explain this number").
+
+const FACT_PLACE_STATUSES = ["placed", "hidden", "not_in_document", "derived", "unmatched"] as const satisfies ReadonlyArray<V2FactPlaceStatus>;
+
+/** Where facts sit in a document version (PRO): by `fact` (a standardized fact's source facts) or `documentVersion`. */
+export const getV2FactPlaces = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        cursor: cursorSchema,
+        documentVersion: z.string().trim().min(1).max(200).optional(),
+        fact: z.string().trim().min(1).max(200).optional(),
+        limit: v2LimitSchema,
+        status: z.array(z.enum(FACT_PLACE_STATUSES)).optional(),
+    }).refine(data => Boolean(data.fact) !== Boolean(data.documentVersion), "Exactly one of fact / documentVersion"))
+    .handler(async ({ data }): Promise<V2FactPlacesResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/fact-places", {
+            params: {
+                query: v2Query({
+                    cursor: data.cursor,
+                    document_version: data.documentVersion,
+                    fact: data.fact,
+                    limit: data.limit,
+                    status: v2Expand(data.status),
+                }),
+            },
         });
 
         if (error) throwApiError(error, response);

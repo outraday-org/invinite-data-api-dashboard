@@ -42,6 +42,13 @@ export function ViewButtons({ badges, onValueChange, value }: {
     );
 }
 
+/** Where "Explain this number" lives: only the standardized detailed view carries a fact id per value. */
+const EXPLAIN_HINTS: Record<V2FinancialsView, string> = {
+    detailed: "Click a value to explain it: rule, formula, source filing and its place in the filing.",
+    presentation: "The Detailed view explains each value.",
+    summary: "The Detailed view explains each value.",
+};
+
 export const STATEMENTS_PENDING_TITLE = "Statements are being prepared — asked again in 30 s";
 
 /**
@@ -84,8 +91,13 @@ export function FinancialsStatementsView({
             state={state}
             title="Failed to load financials"
         >
-            {meta?.currency
-                ? <div className="text-muted-foreground text-xs" data-testid="financials-meta">{`Values in ${meta.currency}`}</div>
+            {meta?.currency || basis === "standardized"
+                ? (
+                        <div className="text-muted-foreground flex flex-wrap gap-x-3 text-xs">
+                            {meta?.currency && <span data-testid="financials-meta">{`Values in ${meta.currency}`}</span>}
+                            {basis === "standardized" && <span data-testid="explain-hint">{EXPLAIN_HINTS[view]}</span>}
+                        </div>
+                    )
                 : null}
             {view === "presentation"
                 ? <FinancialsPresentationTable isCollapsible={basis === "standardized"} periods={trees} />

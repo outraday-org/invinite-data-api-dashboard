@@ -323,3 +323,9 @@ export type V2PeopleResponse = ApiResponse<"/v1/people", "get">;
 export type V2Person = ApiResponse<"/v1/people/{person_id}", "get">;
 export type V2PersonRole = NonNullable<ApiQuery<"/v1/people">["role"]>;
 export type V2PeopleSort = NonNullable<ApiQuery<"/v1/people">["sort"]>;
+
+// Fact places (`GET /v1/fact-places`, PRO; backend tasks/data-api-dashboard O7): where a standardized fact's source
+// facts sit in a document version (block, table cell, inline-XBRL id), with a typed `status`.
+export type V2FactPlacesResponse = ApiResponse<"/v1/fact-places", "get">;
+export type V2FactPlace = V2FactPlacesResponse["data"][number];
+export type V2FactPlaceStatus = V2FactPlace["status"];

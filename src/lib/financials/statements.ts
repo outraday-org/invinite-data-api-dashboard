@@ -60,6 +60,8 @@ export type StatementCell = {
     accession?: null | string;
     /** Invinite computed the value (a Q4, TTM or YTD derivation); false / absent = the company reported it. */
     derived?: boolean;
+    /** The standardized fact's id (the standardized detailed view only): "Explain this number" asks `/v1/facts/{id}`. */
+    factId?: string;
     formula?: null | string;
     unit?: null | string;
     value: number;
@@ -91,7 +93,7 @@ function toCell(fact: FlatFact): StatementCell {
     if (typeof fact === "number") return { value: fact };
 
     if (isDetailedStandardized(fact)) {
-        return { accession: fact.accession, formula: fact.formula?.formula_str ?? null, unit: fact.unit, value: fact.value };
+        return { accession: fact.accession, factId: fact.fact_id, formula: fact.formula?.formula_str ?? null, unit: fact.unit, value: fact.value };
     }
 
     if (isDetailedAsReported(fact)) {

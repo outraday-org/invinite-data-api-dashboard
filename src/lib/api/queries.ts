@@ -33,6 +33,8 @@ import type {
     V2EventStatsResponse,
     V2EventStatus,
     V2EventType,
+    V2FactPlacesResponse,
+    V2FactPlaceStatus,
     V2FactResponse,
     V2FilerExpand,
     V2FilerHoldingsResponse,
@@ -147,6 +149,7 @@ import {
     getV2Events,
     getV2EventStats,
     getV2Fact,
+    getV2FactPlaces,
     getV2Filer,
     getV2Filers,
     getV2Filing,
@@ -1287,6 +1290,9 @@ export type V2FinancialsInput = {
     displaySign?: V2DisplaySign;
     /** Accession: pin one filing's rendering. */
     filing?: string;
+    /** `fiscal_year.gte` / `fiscal_year.lte`: the fiscal-year window. */
+    fiscalYearGte?: number;
+    fiscalYearLte?: number;
     limit?: number;
     period: FiscalPeriodType;
     /** As-reported only: drop Invinite-derived values. */
@@ -1304,6 +1310,8 @@ function fetchStatementsPage(input: V2FinancialsInput, cursor: null | string, ap
         company: input.company,
         cursor: cursor ?? undefined,
         filing: input.filing,
+        fiscalYearGte: input.fiscalYearGte,
+        fiscalYearLte: input.fiscalYearLte,
         limit: input.limit,
         period: input.period,
         statement: input.statement,
@@ -1353,13 +1361,18 @@ export function useV2FinancialsInfinite(input: V2FinancialsInput) {
             asReported ? String(input.reportedOnly ?? "") : "",
             asReported ? input.displaySign ?? "" : "",
             input.limit ?? "",
+            input.fiscalYearGte ?? "",
+            input.fiscalYearLte ?? "",
         ],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: FINANCIALS_STALE_MS,
     });
 }
 
-type V2PeriodListInput = { company: string; limit?: number; period: FiscalPeriodType };
+type V2PeriodListInput = { company: string; fiscalYearGte?: number; fiscalYearLte?: number; limit?: number; period: FiscalPeriodType };
+
+/** The fiscal-year window's query-key entries ("" = unset). */
+const fiscalYearKey = (input: V2PeriodListInput) => [input.fiscalYearGte ?? "", input.fiscalYearLte ?? ""];
 
 /** Ratios per period by cursor (`category` any of). */
 export function useV2RatiosInfinite(input: V2PeriodListInput & { category?: Array<V2RatioCategory> }) {
@@ -1367,7 +1380,7 @@ export function useV2RatiosInfinite(input: V2PeriodListInput & { category?: Arra
         enabled: input.company.trim().length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2Ratios({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "metrics", "ratios", input.company, input.period, key(input.category), input.limit ?? ""],
+        queryKey: ["v2", "metrics", "ratios", input.company, input.period, key(input.category), input.limit ?? "", ...fiscalYearKey(input)],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: FINANCIALS_STALE_MS,
     });
@@ -1379,7 +1392,7 @@ export function useV2GrowthInfinite(input: V2PeriodListInput & { basis?: V2Growt
         enabled: input.company.trim().length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2Growth({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "metrics", "growth", input.company, input.period, input.basis ?? "", input.limit ?? ""],
+        queryKey: ["v2", "metrics", "growth", input.company, input.period, input.basis ?? "", input.limit ?? "", ...fiscalYearKey(input)],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: FINANCIALS_STALE_MS,
     });
@@ -1391,7 +1404,7 @@ export function useV2CagrInfinite(input: V2PeriodListInput & { horizon?: V2CagrH
         enabled: input.company.trim().length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2Cagr({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "metrics", "cagr", input.company, input.period, input.horizon ?? "", input.limit ?? ""],
+        queryKey: ["v2", "metrics", "cagr", input.company, input.period, input.horizon ?? "", input.limit ?? "", ...fiscalYearKey(input)],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: FINANCIALS_STALE_MS,
     });
@@ -1405,7 +1418,7 @@ export function useV2SegmentsInfinite(input: V2SegmentsInput) {
         enabled: input.company.trim().length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2Segments({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "segments", input.company, input.period, key(input.metric), key(input.axis), input.limit ?? ""],
+        queryKey: ["v2", "segments", input.company, input.period, key(input.metric), key(input.axis), input.limit ?? "", ...fiscalYearKey(input)],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: FINANCIALS_STALE_MS,
     });
@@ -1417,7 +1430,7 @@ export function useV2SegmentsDetailedInfinite(input: V2SegmentsInput) {
         enabled: input.company.trim().length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2SegmentsDetailed({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "segments", "detailed", input.company, input.period, key(input.metric), key(input.axis), input.limit ?? ""],
+        queryKey: ["v2", "segments", "detailed", input.company, input.period, key(input.metric), key(input.axis), input.limit ?? "", ...fiscalYearKey(input)],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: FINANCIALS_STALE_MS,
     });
@@ -1629,5 +1642,16 @@ export function useV2EventsById(eventIds: ReadonlyArray<string>) {
             retry: retryUnlessApiError,
             staleTime: EARNINGS_EVENT_STALE_MS,
         })),
+    });
+}
+
+/** The places of one standardized fact's source facts (`/v1/fact-places?fact=`, PRO; one page); idle for a null id. */
+export function useV2FactPlaces(factId: null | string, options: { limit?: number; status?: Array<V2FactPlaceStatus> } = {}) {
+    return useEarningsQuery<V2FactPlacesResponse>({
+        enabled: Boolean(factId),
+        errorMessage: null,
+        load: apiKey => getV2FactPlaces({ data: { apiKey, fact: factId ?? "", limit: options.limit, status: options.status } }),
+        queryKey: ["v2", "fact-places", factId ?? "", key(options.status), options.limit ?? ""],
+        staleTime: FINANCIALS_STALE_MS,
     });
 }

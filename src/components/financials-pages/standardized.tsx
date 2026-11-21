@@ -11,6 +11,8 @@ import { isTierError } from "@/lib/api/errors";
 import { useV2FinancialsInfinite } from "@/lib/api/queries";
 
 import { useFinancialsSearch } from "./financials-search";
+import { FiscalYearRange } from "./fiscal-year-range";
+import { filingChoices, PointInTimeBanner, PointInTimeControls } from "./point-in-time";
 
 /** Periods per page of `/v1/financials/standardized*` (one row per period; "Load more" adds older ones). */
 const STATEMENT_PAGE = 8;
@@ -48,13 +50,21 @@ export function StandardizedFinancials({ ticker }: { ticker: string }) {
 
     // `/v1/financials/standardized[/detailed|/presentation]?company=<ticker>&statement=<one>&period=<type>`, newest first.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2FinancialsInfinite({
+        asOf: search.asOf,
         basis: "standardized",
         company: ticker,
+        filing: search.filing,
+        fiscalYearGte: search.fyFrom,
+        fiscalYearLte: search.fyTo,
         limit: STATEMENT_PAGE,
         period: periodType,
         statement: [statement],
         view,
     });
+
+    const pages = React.useMemo(() => data?.pages ?? [], [data]);
+
+    const choices = React.useMemo(() => filingChoices(pages, search.filing ?? null), [pages, search.filing]);
 
     React.useEffect(() => {
         if (pickedView === null && view === "presentation" && isTierError(error)) setPresentationRefused(true);
@@ -68,11 +78,14 @@ export function StandardizedFinancials({ ticker }: { ticker: string }) {
                         <StatementSelect onValueChange={value => update({ chart: undefined, statement: value === "income-statement" ? undefined : value })} value={statement} />
                         <ViewButtons badges={STANDARDIZED_VIEW_OPERATIONS} onValueChange={value => update({ chart: undefined, layout: value })} value={view} />
                         <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+                        <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
+                        <PointInTimeControls asOf={search.asOf} choices={choices} filing={search.filing} onChange={update} />
                     </>
                 )}
                 description={VIEW_SUBTITLES[view]}
                 title="Standardized Financials"
             />
+            <PointInTimeBanner onClear={() => update({ asOf: undefined, filing: undefined })} pointInTime={pages.at(0)?.meta.point_in_time} />
             <FinancialsStatementsView
                 basis="standardized"
                 error={error}
@@ -80,7 +93,7 @@ export function StandardizedFinancials({ ticker }: { ticker: string }) {
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
                 onLoadMore={() => fetchNextPage()}
-                pages={data?.pages ?? []}
+                pages={pages}
                 statement={statement}
                 view={view}
             />

@@ -6,6 +6,7 @@ import type { V2CagrHorizon, V2CagrPeriod, V2CagrResponse } from "@/lib/api/type
 
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
+import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2CagrInfinite } from "@/lib/api/queries";
 import { completePeriodsOnly, periodLabel, periodLabels } from "@/lib/financials/statements";
@@ -13,6 +14,7 @@ import { formatFractionPercentCompact, formatMetricId } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 import { useFinancialsSearch } from "./financials-search";
+import { FiscalYearRange } from "./fiscal-year-range";
 
 /** Periods per page of `/v1/metrics/cagr`: one row per period and horizon (every horizon = three rows per period). */
 const CAGR_PERIODS = 8;
@@ -87,12 +89,17 @@ export function CagrFinancials({ ticker }: { ticker: string }) {
 
     const horizon: HorizonFilter = search.horizon ?? "all";
 
-    // `/v1/metrics/cagr?company=<ticker>&period=annual[&horizon=3|5|10]` (v1 `period_years`; CAGR is annual only).
+    // CAGR's default period is annual (the other tabs default to quarterly; a tab change drops `?period=`).
+    const periodType = search.period ?? "annual";
+
+    // `/v1/metrics/cagr?company=<ticker>&period=<type>[&horizon=3|5|10]` (v1 `period_years`).
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2CagrInfinite({
         company: ticker,
+        fiscalYearGte: search.fyFrom,
+        fiscalYearLte: search.fyTo,
         horizon: HORIZONS[horizon],
         limit: horizon === "all" ? CAGR_PERIODS * 3 : CAGR_PERIODS,
-        period: "annual",
+        period: periodType,
     });
 
     return (
@@ -101,6 +108,8 @@ export function CagrFinancials({ ticker }: { ticker: string }) {
                 actions={(
                     <>
                         <FilterSelect className="w-[200px]" onValueChange={value => update({ horizon: value === "all" ? undefined : value })} options={cagrPeriodOptions} value={horizon} />
+                        <PeriodTypeButtons onValueChange={value => update({ period: value === "annual" ? undefined : value })} value={periodType} />
+                        <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
                     </>
                 )}
                 description="Compound annual growth rates by metric."

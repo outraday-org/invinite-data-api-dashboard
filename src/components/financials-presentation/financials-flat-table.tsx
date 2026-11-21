@@ -1,3 +1,5 @@
+import * as React from "react";
+
 import type { StatementColumn, StatementLine } from "@/lib/financials/statements";
 
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
@@ -5,6 +7,10 @@ import { useChartSelection } from "@/components/metric-chart/use-chart-selection
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
+
+import type { ExplainTarget } from "./fact-explain-dialog";
+
+import { FactExplainDialog } from "./fact-explain-dialog";
 
 const formatterOf = (id: string) => (id === "is_effective_tax_rate" ? formatPercentCompact : formatNumberEnCompact);
 
@@ -22,10 +28,13 @@ function cellTitle(cell: NonNullable<StatementLine["values"][number]>) {
 
 /**
  * The flat statement table of the summary / detailed views: one line per metric / concept, one column per period
- * (newest first). A derived value is italic (its tooltip says so); a click charts the line.
+ * (newest first). A derived value is italic (its tooltip says so); a click charts the line. A value with a fact id (the
+ * standardized detailed view) is a button: "Explain this number" (`/v1/facts/{id}`), without charting the line.
  */
 export function FinancialsFlatTable({ columns, lines }: { columns: Array<StatementColumn>; lines: Array<StatementLine> }) {
     const [selected, setSelected] = useChartSelection(lines, line => line.id);
+
+    const [explaining, setExplaining] = React.useState<ExplainTarget | null>(null);
 
     return (
         <div className="flex flex-col gap-2">
@@ -54,13 +63,29 @@ export function FinancialsFlatTable({ columns, lines }: { columns: Array<Stateme
 
                                 return (
                                     <TableCell className="text-right" key={`${line.id}:${column.label}`}>
-                                        {cell
+                                        {cell?.factId
                                             ? (
-                                                    <span className={cn("tabular-nums", cell.derived ? "italic text-muted-foreground" : null)} title={cellTitle(cell)}>
+                                                    <button
+                                                        aria-label={`Explain ${line.label}, ${column.label}`}
+                                                        className={cn("tabular-nums rounded-sm underline decoration-dotted underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-ring", cell.derived ? "italic text-muted-foreground" : null)}
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+
+                                                            setExplaining({ factId: cell.factId!, formula: cell.formula, period: `${line.label} · ${column.label}` });
+                                                        }}
+                                                        title={[cellTitle(cell), "Click: explain this number"].filter(Boolean).join("\n")}
+                                                        type="button"
+                                                    >
                                                         {formatterOf(line.id)(cell.value)}
-                                                    </span>
+                                                    </button>
                                                 )
-                                            : <span className="tabular-nums">—</span>}
+                                            : cell
+                                                ? (
+                                                        <span className={cn("tabular-nums", cell.derived ? "italic text-muted-foreground" : null)} title={cellTitle(cell)}>
+                                                            {formatterOf(line.id)(cell.value)}
+                                                        </span>
+                                                    )
+                                                : <span className="tabular-nums">—</span>}
                                     </TableCell>
                                 );
                             })}
@@ -77,6 +102,7 @@ export function FinancialsFlatTable({ columns, lines }: { columns: Array<Stateme
                 }}
                 open={Boolean(selected)}
             />
+            <FactExplainDialog onClose={() => setExplaining(null)} target={explaining} />
         </div>
     );
 }
