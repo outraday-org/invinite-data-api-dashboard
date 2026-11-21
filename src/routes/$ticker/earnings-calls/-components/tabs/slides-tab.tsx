@@ -10,6 +10,7 @@ import { useV2Slides } from "@/lib/api/queries";
 
 import type { CallTabProps } from "../call-tabs";
 
+import { useCallAudio } from "../audio-context";
 import { MediaState, Notice } from "../media-state";
 import { SlideTimeline } from "../slide-timeline";
 
@@ -37,6 +38,17 @@ export function SlidesTab({ eventId }: CallTabProps) {
     const { data, error } = useV2Slides({ eventId, include: ["markdown", "timeline"] });
 
     const [openSlide, setOpenSlide] = React.useState<null | V2Slide>(null);
+
+    const { setSlideMarkers } = useCallAudio();
+
+    // The slide changes become the seek bar's markers once this answer is in (kept when the tab closes).
+    const timelineAnswer = data?.timeline;
+
+    React.useEffect(() => {
+        if (timelineAnswer && timelineAnswer.length > 0) {
+            setSlideMarkers(timelineAnswer.map((entry, index) => ({ label: `Slide ${index + 1}`, ms: entry.at_ms })));
+        }
+    }, [setSlideMarkers, timelineAnswer]);
 
     if (error) return <MediaState error={error} notFound="No slides stored for this call" title="Failed to load the slides" />;
 

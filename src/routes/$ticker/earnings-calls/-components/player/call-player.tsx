@@ -126,6 +126,7 @@ function useStuck(ref: React.RefObject<HTMLElement | null>) {
 export function CallPlayer({
     caption,
     details = [],
+    detailsNote,
     detailsTitle = "Recording",
     download = null,
     markers = [],
@@ -134,6 +135,8 @@ export function CallPlayer({
     caption?: React.ReactNode;
     /** The `⋯` menu's rows. */
     details?: ReadonlyArray<PlayerDetail>;
+    /** One muted line under the `⋯` menu's rows (the recording: permanent link, forensic watermark). */
+    detailsNote?: string;
     detailsTitle?: string;
     download?: null | PlayerDownload;
     markers?: ReadonlyArray<PlayerMarker>;
@@ -192,7 +195,7 @@ export function CallPlayer({
                     <VolumeControl compact={compact} engine={engine} />
                     <FollowButton follow={follow} onFollowChange={setFollow} />
                     {engine.capabilities.download && download && <DownloadButton download={download} />}
-                    {details.length > 0 && <MoreMenu details={details} title={detailsTitle} />}
+                    {details.length > 0 && <MoreMenu details={details} note={detailsNote} title={detailsTitle} />}
                 </div>
             </>
         );

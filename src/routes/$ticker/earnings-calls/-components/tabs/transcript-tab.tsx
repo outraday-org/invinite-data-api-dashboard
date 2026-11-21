@@ -1,54 +1,38 @@
-import { Copy, GitCompare } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 
-import type { V2TranscriptVersion } from "@/lib/api/types";
+import type { TimedWord } from "@/lib/earnings/follow-along";
 import type { TranscriptFormat, TranscriptView } from "@/lib/earnings/transcript";
 
-import { PdfDocumentSection } from "@/components/pdf/pdf-inline-viewer";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useV2Participants, useV2Transcript, useV2TranscriptDiff, useV2TranscriptText, useV2TranscriptVersions } from "@/lib/api/queries";
-import { formatInstant, formatMs } from "@/lib/earnings/format";
+import { callFileStem } from "@/lib/download";
+import { timedWordsOfTurns, toWordTurns } from "@/lib/earnings/follow-along";
+import { formatMs } from "@/lib/earnings/format";
 import { scrollToTurn } from "@/lib/earnings/scroll-to-turn";
 import { textAnswerData, toTranscriptView, transcriptPlainText } from "@/lib/earnings/transcript";
 
 import type { CallTabProps } from "../call-tabs";
+import type { TranscriptDownloads } from "../transcript/transcript-toolbar";
 import type { SpeakerImages } from "./transcript-turns";
 
+import { useCallAudio } from "../audio-context";
 import { MediaState, Notice } from "../media-state";
-import { QaStart, TranscriptTurns, useSpeakerImages } from "./transcript-turns";
+import { recordingFilename } from "../player/recording-player";
+import { TranscriptToolbar } from "../transcript/transcript-toolbar";
+import { TranscriptTurns, useSpeakerImages } from "./transcript-turns";
 
-// The turns (`/transcript`, raw or cleaned layer) or the text blocks (`/transcript-text`); words are the audio
-// follow view's (`audio-context.tsx`).
+// The turns (`/transcript`, raw or cleaned layer) or the text blocks (`/transcript-text`).
 type RenderedFormat = TranscriptFormat;
 
 const TURN_FORMATS = new Set<RenderedFormat>(["cleaned", "speakers"]);
 
 // "Jump to transcript" needs timed turns (`data-start-ms`); the other formats switch to this one.
 const LOCATING_FORMAT: RenderedFormat = "speakers";
-
-const FORMATS: Array<{ label: string; value: RenderedFormat }> = [
-    { label: "Speakers", value: "speakers" },
-    { label: "Sections", value: "sections" },
-    { label: "Cleaned", value: "cleaned" },
-    { label: "Plain text", value: "text" },
-];
-
-function versionLabel(version: V2TranscriptVersion) {
-    return [
-        `Version ${version.version}`,
-        version.version_kind,
-        formatInstant(version.published_at),
-        version.change_note,
-    ].filter(Boolean).join(" · ");
-}
 
 function TranscriptDiff({ eventId, from, to }: { eventId: string; from: number; to: number }) {
     const { data, error, isLoading } = useV2TranscriptDiff({ eventId, from, to });
@@ -99,12 +83,14 @@ function TranscriptBody({
     qaStartMs,
     speakerImages,
     view,
+    words,
 }: {
     error: Error | null;
     format: RenderedFormat;
     qaStartMs: null | number;
     speakerImages: SpeakerImages;
     view: null | TranscriptView;
+    words: null | ReadonlyArray<Array<TimedWord> | null>;
 }) {
     if (error) {
         return (
@@ -122,17 +108,18 @@ function TranscriptBody({
 
     if (view.kind === "empty") return <Notice title="Transcript is being prepared" />;
 
-    return <TranscriptTurns qaStartMs={qaStartMs} speakerImages={speakerImages} view={view} />;
+    return <TranscriptTurns qaStartMs={qaStartMs} speakerImages={speakerImages} view={view} words={words} />;
 }
 
 /**
- * Transcript tab: format switch, published versions (+ a diff against the current one), the
- * turns with timestamps that play the recording, where the Q&A starts, and a copy button.
+ * Transcript tab: one toolbar row (format, published versions + a diff against the current one, Download, Copy), the
+ * turns on `TurnBlock` — in the Speakers format with their words (`include=words`: highlighted as spoken, any listed
+ * version), the cleaned layer turn by turn (its `words` answer empty) —, where the Q&A starts.
  * A pending "Jump to transcript" (`transcriptJump`) scrolls to its turn once the transcript is
  * in; a format that cannot locate a passage (sections, plain text, a missing cleaned layer)
  * switches to Speakers first, and a passage that still cannot be found gets a short notice.
  */
-export function TranscriptTab({ eventId, onTranscriptJumpHandled, transcriptJump }: CallTabProps) {
+export function TranscriptTab({ event, eventId, onTranscriptJumpHandled, transcriptJump }: CallTabProps) {
     const [format, setFormat] = React.useState<RenderedFormat>("speakers");
 
     // null = the current version (no `version` parameter).
@@ -146,8 +133,18 @@ export function TranscriptTab({ eventId, onTranscriptJumpHandled, transcriptJump
 
     const turnFormat = TURN_FORMATS.has(format);
 
+    // Speakers asks with its words: for the current version the very query the player's provider asks once a recording
+    // plays (same key = one request). The cleaned layer answers `include=words` with empty word lists (checked
+    // 2026-11-21), so it is asked without them.
+    const withWords = format === "speakers";
+
     // One of the two is asked (the other idles on an empty id): turns for Speakers / Cleaned, text for the rest.
-    const turns = useV2Transcript({ eventId: turnFormat ? eventId : "", layer: format === "cleaned" ? "cleaned" : undefined, version: requestedVersion });
+    const turns = useV2Transcript({
+        eventId: turnFormat ? eventId : "",
+        layer: format === "cleaned" ? "cleaned" : undefined,
+        version: requestedVersion,
+        words: withWords || undefined,
+    });
 
     const text = useV2TranscriptText({ eventId: turnFormat ? "" : eventId, split: format === "sections" ? "sections" : "none", version: requestedVersion });
 
@@ -163,6 +160,12 @@ export function TranscriptTab({ eventId, onTranscriptJumpHandled, transcriptJump
 
         return text.data ? toTranscriptView(format, textAnswerData(text.data, format === "sections" ? "sections" : "text")) : null;
     }, [format, text.data, turnFormat, turns.data]);
+
+    // Every turn's timed words (Speakers only); `null` = turn-level highlight.
+    const words = React.useMemo(
+        () => (withWords && turns.data ? timedWordsOfTurns(toWordTurns(turns.data.turns)) : null),
+        [turns.data, withWords],
+    );
 
     // The answer for the format on screen (each format has its own query, so a switched one loads its own).
     const shown = transcript.data ?? undefined;
@@ -234,11 +237,21 @@ export function TranscriptTab({ eventId, onTranscriptJumpHandled, transcriptJump
 
     const shownEntry = versionList.find(version => version.version === shownVersion);
 
+    const { recording } = useCallAudio();
+
+    const downloads: TranscriptDownloads = {
+        audio: event.has_audio ? { download: recording ? { filename: recordingFilename(event, recording), url: recording.url } : null } : null,
+        baseName: callFileStem(event, shownVersion === null ? "transcript" : `transcript-v${shownVersion}`),
+        json: shown ?? null,
+        pdf: shownEntry?.pdf ?? null,
+        text: view && view.kind !== "empty" ? transcriptPlainText(view) : null,
+    };
+
     const copy = async () => {
-        if (!view) return;
+        if (downloads.text === null) return;
 
         try {
-            await navigator.clipboard.writeText(transcriptPlainText(view));
+            await navigator.clipboard.writeText(downloads.text);
 
             toast.success("Transcript copied");
         }
@@ -254,84 +267,24 @@ export function TranscriptTab({ eventId, onTranscriptJumpHandled, transcriptJump
 
     return (
         <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-                <Tabs onValueChange={value => setFormat(value as RenderedFormat)} value={format}>
-                    <TabsList>
-                        {FORMATS.map(option => (
-                            <TabsTrigger key={option.value} value={option.value}>
-                                {option.label}
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
-                </Tabs>
-
-                {versionList.length > 0 && (
-                    <Select
-                        onValueChange={(value) => {
-                            const version = Number(value);
-
-                            setSelectedVersion(version === currentVersion ? null : version);
-                        }}
-                        value={shownVersion === null ? "" : String(shownVersion)}
-                    >
-                        <SelectTrigger className="max-w-md">
-                            <span className="truncate">{shownEntry ? versionLabel(shownEntry) : "Version"}</span>
-                        </SelectTrigger>
-                        <SelectContent>
-                            {versionList.map(version => (
-                                <SelectItem key={version.version} value={String(version.version)}>
-                                    {versionLabel(version)}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                )}
-
-                {compare && (
-                    <Button onClick={() => setCompareOpen(true)} size="sm" type="button" variant="outline">
-                        <GitCompare />
-                        Compare with current
-                    </Button>
-                )}
-
-                <Button disabled={!view || view.kind === "empty"} onClick={() => void copy()} size="sm" type="button" variant="ghost">
-                    <Copy />
-                    Copy
-                </Button>
-            </div>
-
-            {shownEntry && (
-                <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
-                    <Badge variant="outline">{shownEntry.version_kind}</Badge>
-                    <span>
-                        {shownEntry.word_count.toLocaleString("en-US")}
-                        {" "}
-                        words
-                    </span>
-                    <span>
-                        · published
-                        {" "}
-                        {formatInstant(shownEntry.published_at)}
-                    </span>
-                    {qaStartMs !== null && (
-                        <span className="inline-flex items-baseline gap-1">
-                            ·
-                            <QaStart qaStartMs={qaStartMs} />
-                        </span>
-                    )}
-                </div>
-            )}
-
-            {untimed && (
-                <div className="text-muted-foreground text-xs">Company-published transcript (no audio timings)</div>
-            )}
-
-            <PdfDocumentSection
-                filename={`${transcript.data?.event.symbol ?? "earnings-call"}-transcript-v${shownVersion ?? ""}.pdf`}
-                pdf={shownEntry?.pdf}
+            <TranscriptToolbar
+                canCopy={downloads.text !== null}
+                downloads={downloads}
+                format={format}
+                onCompare={compare ? () => setCompareOpen(true) : null}
+                onCopy={() => void copy()}
+                onFormatChange={setFormat}
+                onVersionChange={version => setSelectedVersion(version === currentVersion ? null : version)}
+                qaStartMs={qaStartMs}
+                shownVersion={shownVersion}
+                versions={versionList}
             />
 
-            <TranscriptBody error={transcript.error} format={format} qaStartMs={qaStartMs} speakerImages={speakerImages} view={view} />
+            {untimed && (
+                <div className="text-muted-foreground">Company-published transcript (no audio timings)</div>
+            )}
+
+            <TranscriptBody error={transcript.error} format={format} qaStartMs={qaStartMs} speakerImages={speakerImages} view={view} words={words} />
 
             {compare && (
                 <Dialog onOpenChange={setCompareOpen} open={compareOpen}>

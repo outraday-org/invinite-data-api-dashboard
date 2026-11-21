@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 
 import { Notice, NoTranscriptNotice } from "./media-state";
 import { DocumentsTab } from "./tabs/documents-tab";
-import { FollowAlong } from "./tabs/follow-along";
 import { GuidanceTab } from "./tabs/guidance-tab";
 import { MetricsDiffTab } from "./tabs/metrics-diff-tab";
 import { ParticipantsTab } from "./tabs/participants-tab";
@@ -75,17 +74,7 @@ const CALL_TABS: Record<CallTab, CallTabDefinition> = {
     "prosody": { flag: "has_transcript", label: "Prosody", render: props => <ProsodyTab {...props} /> },
     "qa": { flag: "has_transcript", label: "Q&A", render: props => <QaTab {...props} /> },
     "slides": { flag: "has_slides", label: "Slides", render: props => <SlidesTab {...props} /> },
-    // The follow view stays under the turns until O3's one turn layout highlights the words in place.
-    "transcript": {
-        flag: "has_transcript",
-        label: "Transcript",
-        render: props => (
-            <div className="flex flex-col gap-6">
-                <TranscriptTab {...props} />
-                <FollowAlong />
-            </div>
-        ),
-    },
+    "transcript": { flag: "has_transcript", label: "Transcript", render: props => <TranscriptTab {...props} /> },
 };
 
 /**

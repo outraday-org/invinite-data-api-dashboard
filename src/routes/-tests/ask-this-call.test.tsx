@@ -16,15 +16,23 @@ vi.mock("@tanstack/react-router", () => ({
 // The results body is rendered with its data directly: keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
     useV2InvestorDocumentSearch: vi.fn(),
+    useV2Participants: () => ({ data: null }),
     useV2TranscriptSearch: vi.fn(),
 }));
 
+const callAudio = vi.hoisted(() => ({ loaded: false, playUrl: vi.fn(), seekMs: vi.fn() }));
+
 vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
-    useCallAudio: () => ({ canSeek: false, loaded: false, playUrl: vi.fn(), seekMs: vi.fn() }),
+    useCallAudio: () => ({ canSeek: true, ...callAudio }),
 }));
 
+// No call player is mounted in these tests (the calls list has none): any reach for it fails the test.
+const usePlayerThrows = vi.hoisted(() => () => {
+    throw new Error("usePlayer must be used inside CallPlayerProvider");
+});
+
 vi.mock("@/lib/player/player-context", () => ({
-    usePlayer: () => ({ canSeek: false }),
+    usePlayer: usePlayerThrows,
 }));
 
 afterEach(cleanup);
@@ -83,14 +91,84 @@ describe("AskResults", () => {
         expect(screen.getByText("No passages found")).toBeInTheDocument();
     });
 
-    it("shows the match badge, the span and the 4-decimal keyword score", () => {
+    it("shows the match badge (the 4-decimal keyword score in its tooltip), the span and the speaker header", () => {
         render(<AskResults data={answer(coverage("complete"), [HIT])} error={null} isLoading={false} scope={SCOPE} />);
 
-        expect(screen.getByText("keyword")).toBeInTheDocument();
+        expect(screen.getByText("keyword")).toHaveAttribute("title", "How the passage matched · relevance 0.0325");
+
+        expect(screen.queryByText("0.0325")).toBeNull();
 
         expect(screen.getByText("margin", { selector: "mark" })).toBeInTheDocument();
 
-        expect(screen.getByText("0.0325")).toBeInTheDocument();
+        // `TurnHeader`: initials (no image), name, title, m:ss.
+        expect(screen.getByText("JD")).toBeInTheDocument();
+
+        expect(screen.getByText("Jane Doe")).toBeInTheDocument();
+
+        expect(screen.getByText("CFO")).toBeInTheDocument();
+
+        expect(screen.getByText("1:00")).toBeInTheDocument();
+
+        expect(screen.getByText("1 result for “margins”")).toBeInTheDocument();
+    });
+
+    it("collapses and expands the results under a header that stays, and clears", () => {
+        const onExpandedChange = vi.fn();
+
+        const onClear = vi.fn();
+
+        const props = { data: answer(coverage("complete"), [HIT]), error: null, isLoading: false, onClear, onExpandedChange, scope: SCOPE };
+
+        const { container, rerender } = render(<AskResults {...props} expanded />);
+
+        const toggle = screen.getByRole("button", { name: "1 result for “margins”" });
+
+        expect(toggle).toHaveAttribute("aria-expanded", "true");
+
+        fireEvent.click(toggle);
+
+        expect(onExpandedChange).toHaveBeenCalledWith(false);
+
+        rerender(<AskResults {...props} expanded={false} />);
+
+        expect(screen.getByRole("button", { name: "1 result for “margins”" })).toHaveAttribute("aria-expanded", "false");
+
+        expect(container.querySelector("ul")?.closest("[hidden]")).not.toBeNull();
+
+        fireEvent.click(screen.getByRole("button", { name: "Clear the search" }));
+
+        expect(onClear).toHaveBeenCalled();
+    });
+
+    it("plays a hit with audio AND scrolls the transcript to it, then collapses", () => {
+        const onJumpToTranscript = vi.fn();
+
+        const onPlayed = vi.fn();
+
+        const withAudio = { ...HIT, audio_url: "https://storage.example.com/calls/t/file.mp3#t=60" };
+
+        render(
+            <AskResults
+                data={answer(coverage("complete"), [withAudio])}
+                error={null}
+                isLoading={false}
+                onPlayed={onPlayed}
+                scope={{ ...SCOPE, onJumpToTranscript }}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole("button", { name: "Play from here" }));
+
+        expect(callAudio.playUrl).toHaveBeenCalledWith(withAudio.audio_url);
+
+        expect(onJumpToTranscript).toHaveBeenCalledWith(60_000, { quiet: true });
+
+        expect(onPlayed).toHaveBeenCalled();
+
+        // The header's ▷ m:ss is the same action.
+        fireEvent.click(screen.getByRole("button", { name: "Play from 1:00" }));
+
+        expect(onJumpToTranscript).toHaveBeenCalledTimes(2);
     });
 
     it("guesses the highlight from the query for a keyword hit without spans (an attached answer)", () => {
@@ -157,6 +235,20 @@ describe("AskResults", () => {
     });
 });
 
+describe("AskResults (company scope)", () => {
+    it("renders hits without a call player, untimed ones too", () => {
+        const company = { identifier: "ACME", kind: "company" } as const;
+
+        render(<AskResults data={answer(coverage("complete"), [HIT, { ...HIT, match: { ...HIT.match, spans: [] }, start_ms: null, text: "Untimed passage" }])} error={null} isLoading={false} scope={company} />);
+
+        expect(screen.getAllByText("Jane Doe")).toHaveLength(2);
+
+        expect(screen.getByText("1:00")).toBeInTheDocument();
+
+        expect(screen.getByText("Untimed passage")).toBeInTheDocument();
+    });
+});
+
 describe("AskThisCall", () => {
     it("is a keyword search box: \"Search this call\" sends mode=lexical on submit, never another mode", () => {
         const search = vi.mocked(useV2TranscriptSearch).mockReturnValue({ data: null, error: null, isFetching: false } as unknown as ReturnType<typeof useV2TranscriptSearch>);
@@ -165,7 +257,7 @@ describe("AskThisCall", () => {
 
         fireEvent.change(screen.getByRole("textbox", { name: "Search this call" }), { target: { value: "gross margin" } });
 
-        fireEvent.click(screen.getByRole("button", { name: "Search" }));
+        fireEvent.click(screen.getByRole("button", { name: /^Search/ }));
 
         expect(search).toHaveBeenLastCalledWith(expect.objectContaining({ event: SCOPE.eventId, mode: "lexical", q: "gross margin" }));
 

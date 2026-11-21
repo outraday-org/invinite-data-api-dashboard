@@ -5,7 +5,7 @@ import type { PlayerEngine } from "@/lib/player/engine";
 
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { savePublicFile } from "@/lib/news/download";
+import { savePublicFile } from "@/lib/download";
 import { PLAYER_RATES, PLAYER_SKIP_SECONDS, writeStoredRate } from "@/lib/player/engine";
 
 /** One row of the `⋯` menu (file facts; O4 adds the live sync mode). */
@@ -161,7 +161,7 @@ export function DownloadButton({ download }: { download: PlayerDownload }) {
     );
 }
 
-export function MoreMenu({ details, title }: { details: ReadonlyArray<PlayerDetail>; title: string }) {
+export function MoreMenu({ details, note, title }: { details: ReadonlyArray<PlayerDetail>; note?: string; title: string }) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger render={<Button aria-label="Player details" size="icon-sm" type="button" variant="ghost" />}>
@@ -178,6 +178,7 @@ export function MoreMenu({ details, title }: { details: ReadonlyArray<PlayerDeta
                             </React.Fragment>
                         ))}
                     </dl>
+                    {note && <p className="text-muted-foreground max-w-64 px-2 pb-2 text-[0.625rem]">{note}</p>}
                 </DropdownMenuGroup>
             </DropdownMenuContent>
         </DropdownMenu>

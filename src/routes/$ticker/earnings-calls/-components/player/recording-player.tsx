@@ -1,6 +1,7 @@
 import type { V2AudioResponse, V2Event } from "@/lib/api/types";
 
-import { formatBytes, formatFiscalPeriod, formatMs } from "@/lib/earnings/format";
+import { callFileName } from "@/lib/download";
+import { formatBytes, formatMs } from "@/lib/earnings/format";
 
 import type { PlayerDetail, PlayerDownload } from "./player-controls";
 import type { PlayerMarker } from "./seek-bar";
@@ -25,11 +26,7 @@ function extensionOf(recording: Pick<V2AudioResponse, "codec" | "url">) {
 
 /** `AAPL-Q3-FY2026-call.mp3` (`AAPL-call.mp3` without a fiscal period). */
 export function recordingFilename(event: Pick<V2Event, "fiscal_quarter" | "fiscal_year" | "symbol">, recording: Pick<V2AudioResponse, "codec" | "url">) {
-    const period = formatFiscalPeriod(event);
-
-    const parts = [event.symbol, period === "—" ? null : period.replaceAll(" ", "-"), "call"].filter(Boolean);
-
-    return `${parts.join("-")}.${extensionOf(recording)}`;
+    return callFileName(event, "call", extensionOf(recording));
 }
 
 /** The `⋯` menu's file facts (what `AudioPlayer` showed beside its bar). */
@@ -44,17 +41,17 @@ export function recordingDetails(recording: V2AudioResponse): Array<PlayerDetail
 
 /**
  * The finished call's player: `CallPlayer` on the file engine with the recording's own pieces — the caption line,
- * the Q&A start marker (the words transcript's `qa_start_ms`, shown once that transcript is in), the file facts and
- * the download. Nothing for a call without a recording (unless a search hit plays).
+ * the markers (the Q&A start = the words transcript's `qa_start_ms`, shown once that transcript is in; the webcast slide
+ * changes once the Slides tab loaded its timeline), the file facts (+ the permanent-link note) and the download. Nothing for a call without a recording (unless a search hit plays).
  */
 export function RecordingPlayer({ event }: { event: V2Event }) {
-    const { canSeek, recording, words } = useCallAudio();
+    const { canSeek, recording, slideMarkers, words } = useCallAudio();
 
     if (!canSeek) return null;
 
     const qaStartMs = words.data?.qa_start_ms ?? null;
 
-    const markers: Array<PlayerMarker> = qaStartMs === null ? [] : [{ label: "Q&A", ms: qaStartMs }];
+    const markers: Array<PlayerMarker> = [...(qaStartMs === null ? [] : [{ label: "Q&A", ms: qaStartMs }]), ...slideMarkers];
 
     const download: null | PlayerDownload = recording ? { filename: recordingFilename(event, recording), url: recording.url } : null;
 
@@ -62,6 +59,7 @@ export function RecordingPlayer({ event }: { event: V2Event }) {
         <CallPlayer
             caption={<CaptionLine />}
             details={recording ? recordingDetails(recording) : []}
+            detailsNote="Permanent link; the file carries a forensic watermark."
             download={download}
             markers={markers}
         />

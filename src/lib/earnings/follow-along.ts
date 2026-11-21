@@ -80,6 +80,15 @@ export function timedWordsOf(turn: WordTurn, endMs: null | number): Array<TimedW
     return kept.map((word, index) => ({ startMs: Math.round((turn.start_ms as number) + index * stepMs), text: word.w.trim() }));
 }
 
+/** `timedWordsOf` of every turn, each spread to the next timed turn's start. */
+export function timedWordsOfTurns(turns: ReadonlyArray<WordTurn>): Array<Array<TimedWord> | null> {
+    return turns.map((turn, index) => {
+        const next = turns.slice(index + 1).find(candidate => candidate.start_ms !== null);
+
+        return timedWordsOf(turn, next?.start_ms ?? null);
+    });
+}
+
 /** A caption word: the turn's speaker on its first word, so the line can say who speaks. */
 export type CaptionWord = TimedWord & { speakerName: null | string };
 
@@ -90,15 +99,9 @@ export function buildCaptionWords(
 ): Array<CaptionWord> {
     const words: Array<CaptionWord> = [];
 
-    turns.forEach((turn, index) => {
-        const next = turns.slice(index + 1).find(candidate => candidate.start_ms !== null);
-
-        const timed = timedWordsOf(turn, next?.start_ms ?? null);
-
-        if (timed === null) return;
-
-        timed.forEach((word, wordIndex) => {
-            words.push({ ...word, speakerName: wordIndex === 0 ? speakerNameOf(turn) : null });
+    timedWordsOfTurns(turns).forEach((timed, index) => {
+        timed?.forEach((word, wordIndex) => {
+            words.push({ ...word, speakerName: wordIndex === 0 ? speakerNameOf(turns[index]) : null });
         });
     });
 
@@ -142,6 +145,65 @@ export function activeTurnIndex(turns: ReadonlyArray<Pick<TranscriptTurn, "start
     });
 
     return found;
+}
+
+/**
+ * How a turn reads against the player: `idle` = paused or nothing loaded (full text, nothing faded), else what was
+ * said (`spoken`), the turn being heard (`active`) and what comes next (`upcoming`, faded).
+ */
+export type TurnPlaybackState = "active" | "idle" | "spoken" | "upcoming";
+
+/**
+ * One block of a played list (a transcript turn, a Q&A question or answer): where it starts, optionally where it ends
+ * (a Q&A block: between two pairs nothing is heard), and its timed words (null = turn-level state only).
+ */
+export type PlaybackSegment = { endMs?: null | number; startMs: null | number; words: Array<TimedWord> | null };
+
+/** The segment the position falls in: the last timed one starting at or before it; `within` = before its end. */
+export type HeardSegment = { index: number; within: boolean };
+
+export function heardSegment(segments: ReadonlyArray<PlaybackSegment>, positionMs: number): HeardSegment {
+    let index = -1;
+
+    segments.forEach((segment, at) => {
+        if (segment.startMs !== null && segment.startMs <= positionMs) index = at;
+    });
+
+    if (index < 0) return { index, within: false };
+
+    const endMs = segments[index].endMs;
+
+    return { index, within: endMs === null || endMs === undefined || positionMs < endMs };
+}
+
+/**
+ * A segment's state: `idle` while paused (or untimed: it is read, never followed); else spoken before the heard one,
+ * `active` for the heard one while the position is inside it (past its end it reads as spoken), upcoming after it.
+ */
+export function segmentState(segment: Pick<PlaybackSegment, "startMs">, index: number, heard: HeardSegment, playing: boolean): TurnPlaybackState {
+    if (!playing || segment.startMs === null) return "idle";
+
+    if (index < heard.index) return "spoken";
+
+    if (index === heard.index) return heard.within ? "active" : "spoken";
+
+    return "upcoming";
+}
+
+/**
+ * The words of `[startMs, endMs)` out of one ascending list (a Q&A question or answer cut from the words transcript);
+ * `null` without a start, or when no word falls inside (the block then renders its own text, turn-level).
+ */
+export function wordsBetween(words: ReadonlyArray<TimedWord>, startMs: null | number, endMs: null | number): Array<TimedWord> | null {
+    if (startMs === null || words.length === 0) return null;
+
+    const from = indexAt(words, startMs - 1) + 1;
+
+    const to = endMs === null ? words.length : indexAt(words, endMs - 1) + 1;
+
+    const slice = words.slice(from, Math.max(from, to));
+
+    return slice.length > 0 ? slice : null;
 }
 
 /** Words rendered per chunk; the window holds the chunk before, the active one and the one after. */

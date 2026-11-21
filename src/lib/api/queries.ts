@@ -723,12 +723,13 @@ export function useV2TranscriptDiff(input: { eventId: string; from: number; to: 
     });
 }
 
+/** The Q&A pairs with their scores (`include=scores`: `scores` null while a pair is unscored). */
 export function useV2QaInfinite(input: { eventId: string; limit: number }) {
     return useEarningsInfinite<V2QaResponse>({
         enabled: input.eventId.length > 0,
         errorMessage: "Failed to load Q&A",
-        fetchPage: (cursor, apiKey) => getV2Qa({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "qa", input.eventId, input.limit],
+        fetchPage: (cursor, apiKey) => getV2Qa({ data: { ...input, apiKey, cursor: cursor ?? undefined, include: "scores" } }),
+        queryKey: ["v2", "qa", input.eventId, input.limit, "scores"],
         quietStatuses: [404],
         staleTime: EARNINGS_EVENT_STALE_MS,
     });

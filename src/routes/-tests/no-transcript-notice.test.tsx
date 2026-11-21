@@ -13,8 +13,6 @@ const { tabStub } = vi.hoisted(() => ({
     tabStub: (name: string) => () => <div data-testid={`tab-${name}`} />,
 }));
 
-vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/follow-along", () => ({ FollowAlong: tabStub("follow-along") }));
-
 vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/documents-tab", () => ({ DocumentsTab: tabStub("documents") }));
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/guidance-tab", () => ({ GuidanceTab: tabStub("guidance") }));

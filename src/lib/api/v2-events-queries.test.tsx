@@ -110,7 +110,7 @@ describe("per-event hooks", () => {
         expect(getV2Event).toHaveBeenLastCalledWith({ data: { apiKey: "test-key", eventId: EVENT_ID, expand: ["calendar", "observations"] } });
     });
 
-    it("pages the Q&A by cursor; a 404 (no transcript) is a quiet page state", async () => {
+    it("pages the Q&A by cursor with its scores; a 404 (no transcript) is a quiet page state", async () => {
         vi.mocked(getV2Qa)
             .mockResolvedValueOnce({ data: [], has_more: true, meta: { coverage: { state: "complete" } }, next_cursor: "q2" })
             .mockResolvedValueOnce({ data: [], has_more: false, meta: { coverage: { state: "complete" } }, next_cursor: null });
@@ -121,7 +121,7 @@ describe("per-event hooks", () => {
 
         await act(() => result.current.fetchNextPage());
 
-        expect(getV2Qa).toHaveBeenLastCalledWith({ data: { apiKey: "test-key", cursor: "q2", eventId: EVENT_ID, limit: 50 } });
+        expect(getV2Qa).toHaveBeenLastCalledWith({ data: { apiKey: "test-key", cursor: "q2", eventId: EVENT_ID, include: "scores", limit: 50 } });
 
         vi.mocked(getV2Qa).mockRejectedValue(problem(404, "not_found", "No transcript for this event"));
 

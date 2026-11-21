@@ -10,6 +10,7 @@ import { ApiRequestError } from "@/lib/api/errors";
 import { useV2Event } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
 
+import type { JumpToTranscript } from "../-components/ask-this-call";
 import type { CallTab, TranscriptJump } from "../-components/call-tabs";
 
 import { AskThisCall } from "../-components/ask-this-call";
@@ -60,9 +61,10 @@ function CallPage({ eventId }: { eventId: string }) {
         void navigate({ replace: true, resetScroll: false, search: prev => ({ ...prev, tab: next }) });
     };
 
-    const onJumpToTranscript = (startMs: number) => {
+    // A played search hit jumps along `quiet`ly: a call without a transcript just plays.
+    const onJumpToTranscript: JumpToTranscript = (startMs, options) => {
         if (!event?.has_transcript) {
-            toast.info("This call has no transcript to jump to");
+            if (!options?.quiet) toast.info("This call has no transcript to jump to");
 
             return;
         }

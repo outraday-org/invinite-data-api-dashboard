@@ -7,10 +7,12 @@ import {
     buildCaptionWords,
     CAPTION_CHUNK,
     captionWindow,
+    heardSegment,
     indexAt,
+    segmentState,
     timedWordsOf,
     toWordTurns,
-
+    wordsBetween,
 } from "./follow-along";
 
 const turn = (start_ms: null | number, words: Array<[string, null | number]>, name = "Ann"): WordTurn => ({
@@ -123,5 +125,56 @@ describe("captionWindow", () => {
         expect(captionWindow(CAPTION_CHUNK * 2 + 3, 500)).toEqual({ end: CAPTION_CHUNK * 4, start: CAPTION_CHUNK });
 
         expect(captionWindow(490, 500)).toEqual({ end: 500, start: CAPTION_CHUNK * 11 });
+    });
+});
+
+describe("heardSegment / segmentState", () => {
+    const segments = [
+        { endMs: 10_000, startMs: 0, words: null },
+        { endMs: 20_000, startMs: 12_000, words: null },
+        { startMs: null, words: null },
+        { startMs: 30_000, words: null },
+    ];
+
+    it("finds the last timed segment started and whether the position is still inside it", () => {
+        expect(heardSegment(segments, -1)).toEqual({ index: -1, within: false });
+
+        expect(heardSegment(segments, 5_000)).toEqual({ index: 0, within: true });
+
+        // Between a block's end and the next start nothing is heard.
+        expect(heardSegment(segments, 11_000)).toEqual({ index: 0, within: false });
+
+        // No end = until the next start.
+        expect(heardSegment(segments, 45_000)).toEqual({ index: 3, within: true });
+    });
+
+    it("reads spoken / active / upcoming while playing, idle while paused or untimed", () => {
+        const heard = heardSegment(segments, 15_000);
+
+        expect(segments.map((segment, index) => segmentState(segment, index, heard, true))).toEqual(["spoken", "active", "idle", "upcoming"]);
+
+        expect(segments.map((segment, index) => segmentState(segment, index, heard, false))).toEqual(["idle", "idle", "idle", "idle"]);
+
+        const gap = heardSegment(segments, 11_000);
+
+        expect(segmentState(segments[0], 0, gap, true)).toBe("spoken");
+    });
+});
+
+describe("wordsBetween", () => {
+    const words = [0, 1_000, 2_000, 3_000, 4_000].map(startMs => ({ startMs, text: `w${startMs}` }));
+
+    it("cuts [start, end) out of the ascending words", () => {
+        expect(wordsBetween(words, 1_000, 3_000)?.map(word => word.startMs)).toEqual([1_000, 2_000]);
+
+        expect(wordsBetween(words, 2_500, null)?.map(word => word.startMs)).toEqual([3_000, 4_000]);
+    });
+
+    it("is null without a start or without a word inside", () => {
+        expect(wordsBetween(words, null, 3_000)).toBeNull();
+
+        expect(wordsBetween(words, 5_000, 6_000)).toBeNull();
+
+        expect(wordsBetween([], 0, 1_000)).toBeNull();
     });
 });

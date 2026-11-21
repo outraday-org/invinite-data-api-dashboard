@@ -10,6 +10,8 @@ import { engineHasMedia } from "@/lib/player/engine";
 import { useFileEngine } from "@/lib/player/file-engine";
 import { CallPlayerProvider } from "@/lib/player/player-context";
 
+import type { PlayerMarker } from "./player/seek-bar";
+
 export type { PlayedUrl } from "@/lib/player/file-engine";
 
 type AudioQuery = ReturnType<typeof useV2Audio>;
@@ -22,8 +24,9 @@ export type CallAudio = {
     /** `audio.data`: the recording at its permanent public URL; `null` while idle or loading. */
     recording: null | V2AudioResponse;
     /**
-     * The transcript with its words (`include=words`, one request, once a recording is in): what the follow
-     * view, the caption line and the seek bar's Q&A marker (`qa_start_ms`) run over. Idle while nothing is loaded.
+     * The transcript with its words (`include=words`, once a recording is in): what the caption line, the Q&A tab's
+     * word highlight and the seek bar's Q&A marker (`qa_start_ms`) run over. Idle while nothing is loaded. The same
+     * query (same key) as the Transcript tab's Speakers format of the current version: one request for both.
      */
     words: WordsQuery;
     /** `words` narrowed (`toWordTurns`); `[]` until it is in. */
@@ -38,6 +41,12 @@ export type CallAudio = {
     canSeek: boolean;
     /** Seek + play (the engine's `seekMs`); the first call requests `/audio` and plays once it is in. */
     seekMs: (ms: number) => void;
+    /**
+     * The webcast slide changes on the recording's clock, as seek-bar markers: published by the Slides tab once its
+     * `/slides?include=timeline` answer is in (never requested for the markers alone), kept when the tab closes.
+     */
+    slideMarkers: ReadonlyArray<PlayerMarker>;
+    setSlideMarkers: (markers: ReadonlyArray<PlayerMarker>) => void;
 };
 
 const CallAudioContext = React.createContext<CallAudio | null>(null);
@@ -64,6 +73,8 @@ export function CallAudioProvider({
     const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
     const [playedUrl, setPlayedUrl] = React.useState<null | PlayedUrl>(null);
+
+    const [slideMarkers, setSlideMarkers] = React.useState<ReadonlyArray<PlayerMarker>>([]);
 
     const recording = audio.data ?? null;
 
@@ -98,6 +109,8 @@ export function CallAudioProvider({
         playUrl,
         recording,
         seekMs: ms => engine.seekMs(ms),
+        setSlideMarkers,
+        slideMarkers,
         words,
         wordTurns,
     };

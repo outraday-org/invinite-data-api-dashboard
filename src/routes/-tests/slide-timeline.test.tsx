@@ -24,7 +24,14 @@ vi.mock("@/lib/player/player-context", () => ({
 
 // The Slides tab's request, stubbed: an answer without `timeline` (opt-in in v2, absent unless asked), with a
 // player deck (no PDF viewer) on a permanent public URL; the call is recorded to check `include`.
-const slides = vi.hoisted(() => ({ calls: [] as Array<unknown> }));
+const slides = vi.hoisted(() => ({ calls: [] as Array<unknown>, timeline: undefined as Array<{ at_ms: number; image_url: string }> | undefined }));
+
+// The page's audio host, stubbed: the Slides tab publishes the slide changes as seek-bar markers.
+const markers = vi.hoisted(() => ({ set: vi.fn() }));
+
+vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
+    useCallAudio: () => ({ setSlideMarkers: markers.set }),
+}));
 
 vi.mock("@/lib/api/queries", () => ({
     useV2Slides: (input: unknown) => {
@@ -35,6 +42,7 @@ vi.mock("@/lib/api/queries", () => ({
                 deck: { origin: "player", pages: 1, trust_tier: null, url: "https://storage-prod.invinite.com/slides/t/deck.pdf" },
                 event: {},
                 slides: [{ image_url: "https://storage-prod.invinite.com/slides/t/page-1.webp", markdown: null, page: 1, title: "Cover" }],
+                timeline: slides.timeline,
             },
             error: null,
         };
@@ -49,6 +57,10 @@ beforeEach(() => {
     audio.positionMs = 0;
 
     audio.seekMs = null;
+
+    slides.timeline = undefined;
+
+    markers.set.mockClear();
 });
 
 const TIMELINE = [
@@ -74,6 +86,11 @@ describe("SlideTimeline", () => {
         expect(shownImage()).toBe(TIMELINE[1].image_url);
 
         expect(screen.getByText("Following the audio")).toBeInTheDocument();
+
+        // Playing: the slide on screen is the playhead's, its timestamp a seek button.
+        expect(screen.getByText("At the playhead")).toBeInTheDocument();
+
+        expect(screen.getByRole("button", { name: "Play from slide 2 (1:05)" })).toBeInTheDocument();
     });
 
     it("seeks the audio to the slide on click", () => {
@@ -147,6 +164,20 @@ describe("SlidesTab", () => {
         expect(screen.getByRole("img", { name: "Cover" })).toBeInTheDocument();
 
         expect(screen.queryByText("Webcast slides")).toBeNull();
+
+        expect(markers.set).not.toHaveBeenCalled();
+    });
+
+    it("publishes the slide changes as the seek bar's markers once the timeline is in", () => {
+        slides.timeline = TIMELINE;
+
+        render(<SlidesTab {...({ eventId: "e1" } as CallTabProps)} />);
+
+        expect(markers.set).toHaveBeenCalledWith([
+            { label: "Slide 1", ms: 0 },
+            { label: "Slide 2", ms: 65_000 },
+            { label: "Slide 3", ms: 130_000 },
+        ]);
     });
 
     it("shows the stored public URLs as they are, with no expiry text", () => {
