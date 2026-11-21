@@ -139,7 +139,7 @@ describe("/people/$personId", () => {
 
         expect(screen.getByText(historyNote(false, 1))).toBeInTheDocument();
 
-        expect(historyNote(true, 0)).toBe("As stated on each call (the speaker's introduction), from the loaded calls — load more calls for the older history.");
+        expect(historyNote(true, 0)).toBe("The title and firm named on each call, from the loaded calls — load more calls for the older history.");
 
         expect(historyNote(false, 2)).toContain("2 without a known date are left out");
     });

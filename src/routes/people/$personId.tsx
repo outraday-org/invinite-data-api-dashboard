@@ -162,7 +162,7 @@ export function historyNote(hasMore: boolean, undated: number) {
 
     const left = undated > 0 ? `; ${formatNumber(undated)} without a known date ${undated === 1 ? "is" : "are"} left out` : "";
 
-    return `As stated on each call (the speaker's introduction), from the loaded calls${more}${left}.`;
+    return `The title and firm named on each call, from the loaded calls${more}${left}.`;
 }
 
 /** The role / firm history: stretches of the same title and firm, newest first (pure). */

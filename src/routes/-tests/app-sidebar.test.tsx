@@ -6,9 +6,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AppSidebar } from "@/components/navigation/app-sidebar";
 import { ME_PRO } from "@/lib/account-fixtures";
-import { useInstrument, useKeyState, useV2Filer, useV2FilingsInfinite, useV2LiveEvents } from "@/lib/api/queries";
+import { useInstrument, useKeyState, useV2Filer, useV2FilingsInfinite, useV2LiveEvents, useV2Person } from "@/lib/api/queries";
 import { CALENDAR_EVENT } from "@/lib/earnings/calendar-fixtures";
 import { AAPL_INSTRUMENT, SPY_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
+import { PERSON_ANALYST } from "@/lib/people-fixtures";
 
 const route = vi.hoisted(() => ({ params: {} as Record<string, string> }));
 
@@ -41,6 +42,7 @@ vi.mock("@/lib/api/queries", () => ({
     useV2Filer: vi.fn(),
     useV2FilingsInfinite: vi.fn(),
     useV2LiveEvents: vi.fn(),
+    useV2Person: vi.fn(),
 }));
 
 afterEach(cleanup);
@@ -173,5 +175,31 @@ describe("the sidebar on every page (Market · Browse · Context)", () => {
         expect(contextLinks()).toEqual(["Profile", "13F portfolio", "Filings", "Open VGRD"]);
 
         expect(screen.getByRole("link", { name: "13F portfolio" })).toHaveAttribute("href", "#portfolio");
+    });
+
+    it("a person: name · role and the page's three blocks as anchors (the page's own `/v1/people/{id}` answer)", () => {
+        route.params = { personId: PERSON_ANALYST.person_id.toUpperCase() };
+
+        vi.mocked(useV2Person).mockReturnValue({ data: PERSON_ANALYST, isLoading: false } as never);
+
+        render(<AppSidebar />);
+
+        expect(useV2Person).toHaveBeenLastCalledWith(PERSON_ANALYST.person_id);
+
+        expect(screen.getByText("Richard Kramer · Analyst")).toBeInTheDocument();
+
+        expect(contextLinks()).toEqual(["Profile", "Calls", "Role & firm history"]);
+
+        expect(screen.getByRole("link", { name: "Calls" })).toHaveAttribute("href", "#calls");
+    });
+
+    it("a path parameter that is no person id: no person context, no request", () => {
+        route.params = { personId: "not-a-person" };
+
+        render(<AppSidebar />);
+
+        expect(useV2Person).not.toHaveBeenCalled();
+
+        expect(screen.queryByTestId("sidebar-context")).toBeNull();
     });
 });
