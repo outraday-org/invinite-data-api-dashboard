@@ -18,6 +18,11 @@ describe("toCsv (RFC 4180)", () => {
 
         expect(csvCell(-1.5)).toBe("-1.5");
 
+        // A list of plain values is one joined text cell: guarded like a string.
+        expect(csvCell(["=cmd()", "b"])).toBe("'=cmd(); b");
+
+        expect(csvCell(["a", "b"])).toBe("a; b");
+
         expect(csvCell(null)).toBe("");
     });
 

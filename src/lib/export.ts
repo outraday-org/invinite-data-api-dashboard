@@ -42,12 +42,13 @@ const cellText = (value: unknown): string => {
 
 /**
  * One CSV field (RFC 4180): quoted when it holds a comma, quote or line break, quotes doubled. A TEXT cell starting
- * like a formula gets a leading `'` (a number such as -1.5 stays a number).
+ * like a formula gets a leading `'` — a string and a joined list alike (`["=x"]` → `=x`); a number such as -1.5 stays a
+ * number.
  */
 export function csvCell(value: unknown): string {
     let text = cellText(value);
 
-    if (typeof value === "string" && FORMULA_START.test(text)) text = `'${text}`;
+    if (typeof value !== "number" && typeof value !== "bigint" && FORMULA_START.test(text)) text = `'${text}`;
 
     return /[",\r\n]/.test(text) ? `"${text.replaceAll("\"", "\"\"")}"` : text;
 }

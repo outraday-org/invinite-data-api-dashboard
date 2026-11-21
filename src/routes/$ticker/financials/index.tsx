@@ -9,6 +9,7 @@ import { ChartParamContext } from "@/components/metric-chart/use-chart-selection
 import { TabStrip } from "@/components/navigation/tab-strip";
 import { useInstrument } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
+import { IN_PLACE } from "@/lib/url-state";
 
 /**
  * The one Financials page of an instrument: `?view=standardized|as-reported|ratios|growth|cagr|segments` (default
@@ -38,7 +39,7 @@ function FinancialsPage() {
     // `?chart=` opens the charted row of the tab's table (a deep link; closing it clears the param).
     const chartParam = React.useMemo(() => ({
         chart: chart ?? null,
-        setChart: (key: null | string) => void navigate({ replace: true, resetScroll: false, search: prev => ({ ...prev, chart: key ?? undefined }) }),
+        setChart: (key: null | string) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, chart: key ?? undefined }) }),
     }), [chart, navigate]);
 
     if (!active) return null;
