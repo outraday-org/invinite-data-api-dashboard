@@ -40,7 +40,7 @@ vi.mock("@/lib/player/player-context", () => ({
 
 // The Q&A tab module also imports the hooks and the audio host; nothing of them runs here.
 // The Transcript tab's requests, stubbed: each call is recorded to check what is asked.
-const requests = vi.hoisted(() => ({ transcript: [] as Array<unknown>, versions: [] as Array<unknown> }));
+const requests = vi.hoisted(() => ({ transcript: [] as Array<unknown>, versions: [] as Array<unknown> | null, versionsError: null as Error | null }));
 
 vi.mock("@/lib/api/queries", () => ({
     useV2Participants: () => ({ data: null }),
@@ -60,7 +60,8 @@ vi.mock("@/lib/api/queries", () => ({
         data: input.eventId ? { blocks: [{ section: "prepared_remarks", text: "Good morning everyone" }], qa_start_ms: null, version: 3 } : null,
         error: null,
     }),
-    useV2TranscriptVersions: () => ({ data: { data: requests.versions } }),
+    // `versions: null` = the list is still pending (the hook answers `data: null`).
+    useV2TranscriptVersions: () => ({ data: requests.versions === null ? null : { data: requests.versions }, error: requests.versionsError }),
 }));
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({ useCallAudio: () => ({ recording: null }) }));
@@ -190,6 +191,8 @@ describe("TranscriptTab", () => {
         requests.transcript.length = 0;
 
         requests.versions = [];
+
+        requests.versionsError = null;
     });
 
     it("reads ?format= and ?version= from the URL (O6-final): the cleaned layer of version 2", () => {
@@ -208,6 +211,39 @@ describe("TranscriptTab", () => {
         render(<TranscriptTab {...tabProps({ version: 9 })} />);
 
         expect(requests.transcript.at(-1)).toEqual({ eventId: "e1", layer: undefined, version: undefined, words: true });
+    });
+
+    it("a ?version= asks nothing until the published list is in (an unlisted version is never requested)", () => {
+        requests.versions = null;
+
+        const { rerender } = render(<TranscriptTab {...tabProps({ format: "cleaned", version: 9 })} />);
+
+        expect(requests.transcript.filter(input => (input as { eventId: string }).eventId === "e1")).toEqual([]);
+
+        requests.versions = [versionEntry(3)];
+
+        rerender(<TranscriptTab {...tabProps({ format: "cleaned", version: 9 })} />);
+
+        expect(requests.transcript.filter(input => (input as { eventId: string }).eventId === "e1"))
+            .toEqual([{ eventId: "e1", layer: "cleaned", version: undefined, words: undefined }]);
+    });
+
+    it("a ?version= naming the newest version asks the current one (the player's very query, no second copy)", () => {
+        requests.versions = [versionEntry(3), versionEntry(2)];
+
+        render(<TranscriptTab {...tabProps({ version: 3 })} />);
+
+        expect(requests.transcript.at(-1)).toEqual({ eventId: "e1", layer: undefined, version: undefined, words: true });
+    });
+
+    it("a failed versions list asks the link's version as it is", () => {
+        requests.versions = null;
+
+        requests.versionsError = new Error("503");
+
+        render(<TranscriptTab {...tabProps({ version: 2 })} />);
+
+        expect(requests.transcript.at(-1)).toEqual({ eventId: "e1", layer: undefined, version: 2, words: true });
     });
 
     it("a link's ?t= keeps the URL's format (plain text opens at the top); a passage jump switches to Speakers", () => {

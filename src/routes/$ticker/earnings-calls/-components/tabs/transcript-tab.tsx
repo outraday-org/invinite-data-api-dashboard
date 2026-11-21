@@ -136,15 +136,28 @@ export function TranscriptTab({ event, eventId, onSearchChange, onTranscriptJump
 
     const listedVersions = versions.data?.data;
 
-    // null = the current version (no `version` parameter). A `?version=` the published list does not name (once it is
-    // in) reads as the current one.
-    const selectedVersion = search.version !== undefined && (listedVersions === undefined || listedVersions.some(entry => entry.version === search.version))
-        ? search.version
+    const linkVersion = search.version;
+
+    // A `?version=` waits for the published list before anything is asked: an unlisted one would be a wasted (billed)
+    // request, the newest one a second copy of the current version's query (another key than the player's).
+    const waitForVersions = linkVersion !== undefined && listedVersions === undefined && !versions.error;
+
+    const newestListed = listedVersions?.reduce<null | number>((newest, entry) => Math.max(newest ?? entry.version, entry.version), null) ?? null;
+
+    // null = the current version (no `version` parameter). A `?version=` the published list does not name, or the newest
+    // one, reads as the current one; without a list (its request failed) the link's version is asked as it is.
+    const selectedVersion = linkVersion !== undefined
+        && linkVersion !== newestListed
+        && (listedVersions === undefined || listedVersions.some(entry => entry.version === linkVersion))
+        ? linkVersion
         : null;
 
     const requestedVersion = selectedVersion ?? undefined;
 
     const turnFormat = TURN_FORMATS.has(format);
+
+    // The id the format's query asks with ("" idles it): nothing before a `?version=` is resolved.
+    const askId = waitForVersions ? "" : eventId;
 
     // Speakers asks with its words: for the current version the very query the player's provider asks once a recording
     // plays (same key = one request). The cleaned layer answers `include=words` with empty word lists (checked
@@ -153,13 +166,13 @@ export function TranscriptTab({ event, eventId, onSearchChange, onTranscriptJump
 
     // One of the two is asked (the other idles on an empty id): turns for Speakers / Cleaned, text for the rest.
     const turns = useV2Transcript({
-        eventId: turnFormat ? eventId : "",
+        eventId: turnFormat ? askId : "",
         layer: format === "cleaned" ? "cleaned" : undefined,
         version: requestedVersion,
         words: withWords || undefined,
     });
 
-    const text = useV2TranscriptText({ eventId: turnFormat ? "" : eventId, split: format === "sections" ? "sections" : "none", version: requestedVersion });
+    const text = useV2TranscriptText({ eventId: turnFormat ? "" : askId, split: format === "sections" ? "sections" : "none", version: requestedVersion });
 
     const transcript = turnFormat ? turns : text;
 
