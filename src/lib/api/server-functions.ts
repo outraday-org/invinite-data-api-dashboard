@@ -131,6 +131,7 @@ import { env } from "../env";
 import { OFFERING_ID_PATTERN } from "../sec/ownership";
 import { createApiClient } from "./client.server";
 import { throwApiError } from "./errors";
+import { apiKeySchema, cursorSchema, pageLimitSchema } from "./server-schemas";
 import {
     V2_COMPANY_EXPANDS,
     V2_EVENT_EXPANDS,
@@ -143,12 +144,6 @@ import {
     v2Expand,
     v2Query,
 } from "./v2";
-
-const apiKeySchema = z
-    .string()
-    .transform(val => val.trim())
-    .pipe(z.string().min(1))
-    .optional();
 
 const instrumentTypeSchema = z.enum(["stock", "etf", "closed_end_fund", "etn"] as const satisfies ReadonlyArray<V2InstrumentType>);
 
@@ -166,10 +161,10 @@ const fundSchema = z.string().trim().min(1).max(20);
 export const getInstruments = createServerFn({ method: "GET" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
-        cursor: z.string().min(1).optional(),
+        cursor: cursorSchema,
         exchange: z.string().trim().min(1).max(10).optional(),
         isActive: z.boolean().optional(),
-        limit: z.number().int().min(1).max(200).optional(),
+        limit: pageLimitSchema,
         query: z.string().optional(),
         sort: z.enum(["symbol", "-symbol", "name", "-name"] as const satisfies ReadonlyArray<V2InstrumentsSort>).optional(),
         structure: z.array(fundStructureSchema).optional(),
@@ -215,9 +210,9 @@ export const getInstrument = createServerFn({ method: "GET" })
 export const getFunds = createServerFn({ method: "GET" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
-        cursor: z.string().min(1).optional(),
+        cursor: cursorSchema,
         exchange: z.string().trim().min(1).max(10).optional(),
-        limit: z.number().int().min(1).max(200).optional(),
+        limit: pageLimitSchema,
         q: z.string().trim().min(1).optional(),
         sort: z.enum(["symbol", "-symbol", "name", "-name"] as const satisfies ReadonlyArray<V2FundsSort>).optional(),
         structure: z.array(fundStructureSchema).optional(),
@@ -299,7 +294,7 @@ const newsListSchema = z.object({
     /** An event id: the news linked to that call (O7 group 2). */
     event: z.string().trim().min(1).max(100).optional(),
     kind: z.array(z.string()).optional(),
-    limit: z.number().int().min(1).max(200).optional(),
+    limit: pageLimitSchema,
     /** ISO instants: `published_at.gte` / `published_at.lt`. */
     publishedAtGte: z.string().optional(),
     publishedAtLt: z.string().optional(),
@@ -384,7 +379,7 @@ export const getV2NewsText = createServerFn({ method: "GET" })
     });
 
 export const getV2Announcements = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, item: z.string().uuid(), limit: z.number().int().min(1).max(200).optional() }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, item: z.string().uuid(), limit: pageLimitSchema }))
     .handler(async ({ data }): Promise<V2AnnouncementsResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/announcements", {
             params: { query: v2Query({ item: data.item, limit: data.limit }) },
@@ -404,8 +399,6 @@ export const getApiBaseUrl = createServerFn({ method: "GET" })
 
 const cikSchema = z.string().trim().regex(/^\d{1,10}$/);
 
-const cursorSchema = z.string().min(1).optional();
-
 // Every search route: `mode` = the exhaustive `SEARCH_MODES`.
 const searchModeSchema = z.enum(SEARCH_MODES);
 
@@ -420,8 +413,8 @@ const versionIdSchema = z.uuid();
 export const getV2Filers = createServerFn({ method: "GET" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
-        cursor: z.string().min(1).optional(),
-        limit: z.number().int().min(1).max(200).optional(),
+        cursor: cursorSchema,
+        limit: pageLimitSchema,
         phase: z.enum(["pre_ipo", "public", "former", "manager", "other"] as const satisfies ReadonlyArray<V2FilerPhase>).optional(),
         q: z.string().trim().min(1).max(200).optional(),
         sort: z.enum(["name", "-name", "cik", "-cik"] as const satisfies ReadonlyArray<V2FilersSort>).optional(),
@@ -492,8 +485,6 @@ export const getV2FilingSearch = createServerFn({ method: "GET" })
 // `cursor` (= the previous page's `next_cursor`, with the SAME filters; changed filters + an old cursor = 400
 // `cursor_mismatch`). Errors are RFC 9457 problems, thrown as `ApiRequestError` (`code`, `requestId`).
 
-const v2LimitSchema = z.number().int().min(1).max(200).optional();
-
 const v2CompanySchema = z.object({
     apiKey: apiKeySchema,
     company: z.string().trim().min(1),
@@ -515,9 +506,9 @@ export const getV2Company = createServerFn({ method: "GET" })
 const v2DividendsSchema = z.object({
     apiKey: apiKeySchema,
     cursor: cursorSchema,
-    exDateGte: z.string().trim().min(1).optional(),
-    exDateLte: z.string().trim().min(1).optional(),
-    limit: v2LimitSchema,
+    exDateGte: z.iso.date().optional(),
+    exDateLte: z.iso.date().optional(),
+    limit: pageLimitSchema,
     sort: z.enum(["ex_date", "-ex_date", "pay_date", "-pay_date"] as const satisfies ReadonlyArray<V2DividendsSort>).optional(),
     symbol: symbolSchema,
 });
@@ -539,7 +530,7 @@ export const getV2Dividends = createServerFn({ method: "GET" })
 const v2SplitsSchema = z.object({
     apiKey: apiKeySchema,
     cursor: cursorSchema,
-    limit: v2LimitSchema,
+    limit: pageLimitSchema,
     sort: z.enum(["execution_date", "-execution_date"] as const satisfies ReadonlyArray<V2SplitsSort>).optional(),
     symbol: symbolSchema,
 });
@@ -561,9 +552,9 @@ export const getV2Splits = createServerFn({ method: "GET" })
 const v2MarketHolidaysSchema = z.object({
     apiKey: apiKeySchema,
     cursor: cursorSchema,
-    dateGte: z.string().trim().min(1).optional(),
-    dateLte: z.string().trim().min(1).optional(),
-    limit: v2LimitSchema,
+    dateGte: z.iso.date().optional(),
+    dateLte: z.iso.date().optional(),
+    limit: pageLimitSchema,
     sort: z.enum(["date", "-date"] as const satisfies ReadonlyArray<V2MarketHolidaysSort>).optional(),
 });
 
@@ -617,9 +608,9 @@ const v2EventsSchema = z.object({
     expand: z.array(z.literal("calendar")).optional(),
     fiscalQuarter: z.number().int().min(1).max(4).optional(),
     fiscalYear: z.number().int().min(1900).max(2200).optional(),
-    limit: v2LimitSchema,
-    scheduledAtGte: z.string().trim().min(1).optional(),
-    scheduledAtLte: z.string().trim().min(1).optional(),
+    limit: pageLimitSchema,
+    scheduledAtGte: z.iso.date().optional(),
+    scheduledAtLte: z.iso.date().optional(),
     sort: z.enum(["scheduled_at", "-scheduled_at"] as const satisfies ReadonlyArray<V2EventsSort>).optional(),
     status: z.array(z.enum(["upcoming", "live", "ended"] as const satisfies ReadonlyArray<V2EventStatus>)).optional(),
     type: v2EventTypeSchema.optional(),
@@ -680,7 +671,7 @@ export const getV2PressRelease = createServerFn({ method: "GET" })
     });
 
 export const getV2Qa = createServerFn({ method: "GET" })
-    .inputValidator(eventInputSchema.extend({ cursor: cursorSchema, include: z.literal("scores").optional(), limit: v2LimitSchema }))
+    .inputValidator(eventInputSchema.extend({ cursor: cursorSchema, include: z.literal("scores").optional(), limit: pageLimitSchema }))
     .handler(async ({ data }): Promise<V2QaResponse> => {
         const { apiKey, cursor, eventId, include, limit } = data;
 
@@ -823,7 +814,7 @@ export const getV2TranscriptText = createServerFn({ method: "GET" })
     });
 
 export const getV2TranscriptVersions = createServerFn({ method: "GET" })
-    .inputValidator(eventInputSchema.extend({ cursor: cursorSchema, limit: v2LimitSchema }))
+    .inputValidator(eventInputSchema.extend({ cursor: cursorSchema, limit: pageLimitSchema }))
     .handler(async ({ data }): Promise<V2TranscriptVersionsResponse> => {
         const { apiKey, cursor, eventId, limit } = data;
 
@@ -862,7 +853,7 @@ export const getV2TranscriptSearch = createServerFn({ method: "GET" })
         conferenceDateGte: z.iso.date().optional(),
         conferenceDateLte: z.iso.date().optional(),
         event: eventIdSchema.optional(),
-        limit: v2LimitSchema,
+        limit: pageLimitSchema,
         mode: searchModeSchema.optional(),
         q: z.string().trim().min(1),
         type: z.enum(["transcript", "qa", "prepared", "presentation"] as const satisfies ReadonlyArray<V2TranscriptSearchType>).optional(),
@@ -896,7 +887,7 @@ const v2GuidanceSchema = z.object({
     company: z.string().trim().min(1).optional(),
     cursor: cursorSchema,
     event: eventIdSchema.optional(),
-    limit: v2LimitSchema,
+    limit: pageLimitSchema,
     metric: z.string().trim().min(1).optional(),
     periodKind: z.enum(["quarter", "fiscal_year", "half", "other"] as const satisfies ReadonlyArray<V2GuidancePeriodKind>).optional(),
     sort: z.enum(["conference_date", "-conference_date"]).optional(),
@@ -927,7 +918,7 @@ export const getV2Kpis = createServerFn({ method: "GET" })
         company: z.string().trim().min(1).optional(),
         cursor: cursorSchema,
         event: eventIdSchema.optional(),
-        limit: v2LimitSchema,
+        limit: pageLimitSchema,
         metric: z.string().trim().min(1).optional(),
         sort: z.enum(["conference_date", "-conference_date"]).optional(),
     }))
@@ -945,7 +936,7 @@ export const getV2Kpis = createServerFn({ method: "GET" })
 
 /** The speakers of one event (`/v1/participants?event=`), with the quotes each name was resolved from. */
 export const getV2Participants = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, event: eventIdSchema, limit: v2LimitSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, event: eventIdSchema, limit: pageLimitSchema }))
     .handler(async ({ data }): Promise<V2ParticipantsResponse> => {
         const { apiKey, cursor, event, limit } = data;
 
@@ -966,7 +957,7 @@ const v2InvestorDocumentsSchema = z.object({
     event: eventIdSchema.optional(),
     fiscalYear: z.number().int().optional(),
     kind: z.array(z.string().trim().min(1)).optional(),
-    limit: v2LimitSchema,
+    limit: pageLimitSchema,
     sort: z.enum(["filing_date", "-filing_date", "event_date", "-event_date"] as const satisfies ReadonlyArray<V2InvestorDocumentsSort>).optional(),
 });
 
@@ -1007,7 +998,7 @@ export const getV2InvestorDocumentSearch = createServerFn({ method: "GET" })
         apiKey: apiKeySchema,
         company: z.string().trim().min(1).optional(),
         kind: z.array(z.string().trim().min(1)).optional(),
-        limit: v2LimitSchema,
+        limit: pageLimitSchema,
         mode: searchModeSchema.optional(),
         q: z.string().trim().min(1),
     }))
@@ -1036,7 +1027,7 @@ const v2FilingsSchema = z.object({
     form: z.array(z.string().trim().min(1)).optional(),
     /** 8-K items (any of). */
     items: z.array(z.string().trim().min(1).max(10)).optional(),
-    limit: v2LimitSchema,
+    limit: pageLimitSchema,
     sort: z.enum(["filed_at", "-filed_at"] as const satisfies ReadonlyArray<V2FilingsSort>).optional(),
     /** Ticker of any instrument, a fund key or a company CIK (its primary listing). */
     symbol: symbolSchema,
@@ -1230,7 +1221,7 @@ export const getFundPositions = createServerFn({ method: "GET" })
         asOf: z.iso.date().optional(),
         cursor: cursorSchema,
         fund: fundSchema,
-        limit: v2LimitSchema,
+        limit: pageLimitSchema,
     }))
     .handler(async ({ data }): Promise<V2FundPositionsResponse> => {
         const { apiKey, asOf, cursor, fund, limit } = data;
@@ -1252,7 +1243,7 @@ export const getFundWeights = createServerFn({ method: "GET" })
         cursor: cursorSchema,
         dimension: z.string().trim().regex(/^(sector|country|asset_class)(,(sector|country|asset_class))*$/).optional(),
         fund: fundSchema,
-        limit: v2LimitSchema,
+        limit: pageLimitSchema,
     }))
     .handler(async ({ data }): Promise<V2FundWeightsResponse> => {
         const { apiKey, asOf, cursor, dimension, fund, limit } = data;
@@ -1275,7 +1266,7 @@ const v2InsiderTradesSchema = z.object({
     filedAtLte: z.iso.date().optional(),
     /** true = derivative-security lines only, false = non-derivative only; omitted = both. */
     isDerivative: z.boolean().optional(),
-    limit: v2LimitSchema,
+    limit: pageLimitSchema,
     side: z.enum(["buy", "sell"] as const satisfies ReadonlyArray<V2InsiderSide>).optional(),
     sort: z.enum(["filed_at", "-filed_at"] as const satisfies ReadonlyArray<V2InsiderTradesSort>).optional(),
     transactionDateGte: z.iso.date().optional(),
@@ -1315,7 +1306,7 @@ const v2IposSchema = z.object({
     company: z.string().trim().min(1).optional(),
     cursor: cursorSchema,
     isSpac: z.boolean().optional(),
-    limit: v2LimitSchema,
+    limit: pageLimitSchema,
     listingDateGte: z.iso.date().optional(),
     listingDateLte: z.iso.date().optional(),
     sort: z.enum(["listing_date", "-listing_date", "first_public_at", "-first_public_at"] as const satisfies ReadonlyArray<V2IposSort>).optional(),
@@ -1359,7 +1350,7 @@ const v2OfferingsSchema = z.object({
     /** Industry group as filed (case-insensitive exact match). */
     industry: z.string().trim().min(2).max(80).optional(),
     isAmendment: z.boolean().optional(),
-    limit: v2LimitSchema,
+    limit: pageLimitSchema,
     totalSoldGte: z.number().min(0).optional(),
 });
 
@@ -1410,7 +1401,7 @@ const v2PeriodListSchema = z.object({
     fiscalYearGte: fiscalYearSchema,
     fiscalYearLt: fiscalYearSchema,
     fiscalYearLte: fiscalYearSchema,
-    limit: v2LimitSchema,
+    limit: pageLimitSchema,
     period: periodTypeSchema,
     sort: z.enum(["period_end", "-period_end"]).optional(),
 });
@@ -1683,7 +1674,7 @@ export const getV2People = createServerFn({ method: "GET" })
         company: z.string().trim().min(1).max(200).optional(),
         cursor: cursorSchema,
         event: eventIdSchema.optional(),
-        limit: v2LimitSchema,
+        limit: pageLimitSchema,
         q: z.string().trim().min(1).max(200).optional(),
         role: z.enum(["executive", "analyst", "operator", "other"] as const satisfies ReadonlyArray<V2PersonRole>).optional(),
         sort: z.enum(["name", "-name", "last_seen", "-last_seen"] as const satisfies ReadonlyArray<V2PeopleSort>).optional(),
@@ -1715,7 +1706,7 @@ export const getV2Person = createServerFn({ method: "GET" })
 
 /** Every call one person spoke on (`GET /v1/participants?person=`), one participation per call, by cursor. */
 export const getV2PersonParticipations = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: v2LimitSchema, person: personIdSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: pageLimitSchema, person: personIdSchema }))
     .handler(async ({ data }): Promise<V2ParticipantsResponse> => {
         const { apiKey, cursor, limit, person } = data;
 
@@ -1739,7 +1730,7 @@ export const getV2FactPlaces = createServerFn({ method: "GET" })
         cursor: cursorSchema,
         documentVersion: z.string().trim().min(1).max(200).optional(),
         fact: z.string().trim().min(1).max(200).optional(),
-        limit: v2LimitSchema,
+        limit: pageLimitSchema,
         status: z.array(z.enum(FACT_PLACE_STATUSES)).optional(),
     }).refine(data => Boolean(data.fact) !== Boolean(data.documentVersion), "Exactly one of fact / documentVersion"))
     .handler(async ({ data }): Promise<V2FactPlacesResponse> => {
@@ -1771,7 +1762,7 @@ export const getV2NewsSearch = createServerFn({ method: "GET" })
         company: z.string().trim().min(1).optional(),
         cursor: z.string().optional(),
         field: z.enum(["title", "lede", "summary", "any"]).optional(),
-        limit: z.number().int().min(1).max(200).optional(),
+        limit: pageLimitSchema,
         mode: z.enum(["lexical", "literal"]).optional(),
         publishedAtGte: z.string().optional(),
         publishedAtLt: z.string().optional(),
@@ -1811,7 +1802,7 @@ export const getV2AnnouncementsList = createServerFn({ method: "GET" })
         cursor: z.string().optional(),
         effectiveFromGte: z.iso.date().optional(),
         effectiveToLte: z.iso.date().optional(),
-        limit: z.number().int().min(1).max(200).optional(),
+        limit: pageLimitSchema,
         sort: z.enum(["announced_at", "-announced_at"]).optional(),
         topic: z.array(z.string()).optional(),
     }))
@@ -1842,7 +1833,7 @@ export const getV2AnnouncementsList = createServerFn({ method: "GET" })
 
 /** A filing's numeric XBRL facts (SEC financial statement data sets), `tag` = concepts (comma list). */
 export const getV2FilingFacts = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema, cursor: cursorSchema, limit: v2LimitSchema, tag: z.string().trim().min(1).max(500).optional() }))
+    .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema, cursor: cursorSchema, limit: pageLimitSchema, tag: z.string().trim().min(1).max(500).optional() }))
     .handler(async ({ data }): Promise<V2FilingFactsResponse> => {
         const { accession, apiKey, cursor, limit, tag } = data;
 
@@ -1857,7 +1848,7 @@ export const getV2FilingFacts = createServerFn({ method: "GET" })
 
 /** A filing's text facts (XBRL text blocks), `tag` = concepts (comma list). */
 export const getV2FilingNotes = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema, cursor: cursorSchema, limit: v2LimitSchema, tag: z.string().trim().min(1).max(500).optional() }))
+    .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema, cursor: cursorSchema, limit: pageLimitSchema, tag: z.string().trim().min(1).max(500).optional() }))
     .handler(async ({ data }): Promise<V2FilingNotesResponse> => {
         const { accession, apiKey, cursor, limit, tag } = data;
 
@@ -1911,7 +1902,7 @@ export const getV2DocumentSections = createServerFn({ method: "GET" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cursor: cursorSchema,
-        limit: v2LimitSchema,
+        limit: pageLimitSchema,
         outline: z.enum(["legacy", "generic"] as const satisfies ReadonlyArray<V2SectionOutline>).optional(),
         versionId: versionIdSchema,
     }))
@@ -1930,7 +1921,7 @@ export const getV2DocumentSections = createServerFn({ method: "GET" })
 
 /** The SEC data set releases the filings routes serve (newest release per data set). */
 export const getV2Datasets = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: v2LimitSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: pageLimitSchema }))
     .handler(async ({ data }): Promise<V2DatasetsResponse> => {
         const { apiKey, cursor, limit } = data;
 
@@ -1947,7 +1938,7 @@ export const getV2Datasets = createServerFn({ method: "GET" })
 // by cursor), the companies list (`/v1/companies`) and the API's status (`/status`, `/status/licensing`: no key needed,
 // 0 credits; the key is sent like on every call).
 
-const catalogPageSchema = z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: v2LimitSchema });
+const catalogPageSchema = z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: pageLimitSchema });
 
 const catalogStatementSchema = z.array(z.enum(V2_STATEMENTS)).optional();
 
@@ -2046,7 +2037,7 @@ export const getCompanies = createServerFn({ method: "GET" })
         apiKey: apiKeySchema,
         cursor: cursorSchema,
         exchange: z.array(z.string().trim().regex(/^[A-Z]{4}$/)).optional(),
-        limit: v2LimitSchema,
+        limit: pageLimitSchema,
         q: z.string().trim().min(1).max(100).optional(),
         sector: z.array(z.string().trim().min(1).max(60)).optional(),
         sort: z.enum(["ticker", "-ticker", "name", "-name"] as const satisfies ReadonlyArray<V2CompaniesSort>).optional(),

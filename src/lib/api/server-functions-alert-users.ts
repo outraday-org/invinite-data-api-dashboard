@@ -25,6 +25,7 @@ import {
     updateAlertUserRequest,
 } from "./alert-users-requests";
 import { createApiClient } from "./client.server";
+import { apiKeySchema, cursorSchema, pageLimitSchema } from "./server-schemas";
 
 /**
  * The end-user server functions (backend tasks/data-api-dashboard 2-alerts task 4): the 7 alert-user operations and
@@ -32,17 +33,11 @@ import { createApiClient } from "./client.server";
  * (`alert-users.ts`); the id is never trimmed (any character is part of it).
  */
 
-const apiKeySchema = z
-    .string()
-    .transform(val => val.trim())
-    .pipe(z.string().min(1))
-    .optional();
-
 export const listAlertUsers = createServerFn({ method: "GET" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
-        cursor: z.string().min(1).optional(),
-        limit: z.number().int().min(1).max(200).optional(),
+        cursor: cursorSchema,
+        limit: pageLimitSchema,
         q: z.string().min(1).max(200).optional(),
         status: z.enum(ALERT_USER_STATUSES).optional(),
     }))

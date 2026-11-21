@@ -25,6 +25,7 @@ import {
     testDestinationRequest,
     updateDestinationRequest,
 } from "./destinations-requests";
+import { apiKeySchema, pageInput, resourceIdSchema } from "./server-schemas";
 
 /**
  * The destination server functions (backend tasks/data-api-dashboard 2-alerts task 3), beside the alert ones
@@ -32,17 +33,6 @@ import {
  * its input with zod and sends the request through `destinations-requests.ts`. A body is checked field by field here
  * (the contract's bounds); its header values are never logged, and the inspector records them redacted.
  */
-
-const apiKeySchema = z
-    .string()
-    .transform(val => val.trim())
-    .pipe(z.string().min(1))
-    .optional();
-
-/** A destination id (`dst_…`; `maxLength` 64 in the spec). */
-const idSchema = z.string().trim().min(1).max(64);
-
-const pageSchema = { cursor: z.string().min(1).optional(), limit: z.number().int().min(1).max(200).optional() };
 
 const kindSchema = z.enum(["webhook", "batch_webhook"]);
 
@@ -78,11 +68,11 @@ const updateBodySchema = z.object({
 }).refine(body => Object.keys(body).length > 0, "At least one field");
 
 export const listDestinations = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, ...pageSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, ...pageInput }))
     .handler(({ data }): Promise<DestinationsListResponse> => listDestinationsRequest(createApiClient(data.apiKey), { cursor: data.cursor, limit: data.limit }));
 
 export const getDestination = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, id: idSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<Destination> => getDestinationRequest(createApiClient(data.apiKey), data.id));
 
 export const createDestination = createServerFn({ method: "POST" })
@@ -93,23 +83,23 @@ export const createDestination = createServerFn({ method: "POST" })
     }));
 
 export const updateDestination = createServerFn({ method: "POST" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, body: updateBodySchema, id: idSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, body: updateBodySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<Destination> => updateDestinationRequest(createApiClient(data.apiKey), data.id, data.body as UpdateDestinationRequest));
 
 export const deleteDestination = createServerFn({ method: "POST" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, id: idSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<AlertWriteDone> => deleteDestinationRequest(createApiClient(data.apiKey), data.id));
 
 export const rotateDestinationSecret = createServerFn({ method: "POST" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, id: idSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<DestinationSecret> => rotateDestinationSecretRequest(createApiClient(data.apiKey), data.id));
 
 export const testDestination = createServerFn({ method: "POST" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, id: idSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<DestinationTestAccepted> => testDestinationRequest(createApiClient(data.apiKey), data.id));
 
 export const listDestinationDeliveries = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, id: idSchema, ...pageSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema, ...pageInput }))
     .handler(({ data }): Promise<DestinationDeliveriesResponse> => listDestinationDeliveriesRequest(createApiClient(data.apiKey), data.id, {
         cursor: data.cursor,
         limit: data.limit,

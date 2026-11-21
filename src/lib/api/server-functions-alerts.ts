@@ -32,6 +32,7 @@ import {
     updateAlertRequest,
 } from "./alerts-requests";
 import { createApiClient } from "./client.server";
+import { apiKeySchema, cursorSchema, pageLimitSchema, resourceIdSchema } from "./server-schemas";
 
 /**
  * The alert server functions (backend tasks/data-api-dashboard 2-alerts task 2; `server-functions.ts` passed 1 800
@@ -39,19 +40,6 @@ import { createApiClient } from "./client.server";
  * read and never reaches a browser request to the API. Each validates its input with zod and sends the request through
  * `alerts-requests.ts`.
  */
-
-const apiKeySchema = z
-    .string()
-    .transform(val => val.trim())
-    .pipe(z.string().min(1))
-    .optional();
-
-/** An id of the API (`alt_…`, `evt_…`; `maxLength` 64 in the spec). */
-const idSchema = z.string().trim().min(1).max(64);
-
-const cursorSchema = z.string().min(1).optional();
-
-const limitSchema = z.number().int().min(1).max(200).optional();
 
 const alertTypeSchema = z.enum(ALERT_TYPES as [AlertTypeName, ...Array<AlertTypeName>]);
 
@@ -69,7 +57,7 @@ export const listAlerts = createServerFn({ method: "GET" })
         cursor: cursorSchema,
         destinationId: z.string().trim().min(1).max(64).optional(),
         externalUserId: z.string().trim().min(1).max(200).optional(),
-        limit: limitSchema,
+        limit: pageLimitSchema,
         status: z.enum(ALERT_STATUSES).optional(),
         symbol: z.string().trim().min(1).max(64).optional(),
         type: alertTypeSchema.optional(),
@@ -86,7 +74,7 @@ export const listAlerts = createServerFn({ method: "GET" })
     }));
 
 export const getAlert = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, id: idSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<Alert> => getAlertRequest(createApiClient(data.apiKey), data.id));
 
 export const createAlert = createServerFn({ method: "POST" })
@@ -103,23 +91,23 @@ export const createAlert = createServerFn({ method: "POST" })
     }));
 
 export const updateAlert = createServerFn({ method: "POST" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, body: bodySchema, id: idSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, body: bodySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<Alert> => updateAlertRequest(createApiClient(data.apiKey), data.id, data.body as UpdateAlertRequest));
 
 export const deleteAlert = createServerFn({ method: "POST" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, id: idSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<AlertWriteDone> => deleteAlertRequest(createApiClient(data.apiKey), data.id));
 
 export const pauseAlert = createServerFn({ method: "POST" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, id: idSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<Alert> => pauseAlertRequest(createApiClient(data.apiKey), data.id));
 
 export const resumeAlert = createServerFn({ method: "POST" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, id: idSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<Alert> => resumeAlertRequest(createApiClient(data.apiKey), data.id));
 
 export const testAlert = createServerFn({ method: "POST" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, id: idSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<AlertTestAccepted> => testAlertRequest(createApiClient(data.apiKey), data.id));
 
 /** At most 500 items per request (the spec's `maxItems`); the caller splits a larger selection. */
@@ -136,7 +124,7 @@ export const listAlertEvents = createServerFn({ method: "GET" })
         apiKey: apiKeySchema,
         cursor: cursorSchema,
         externalUserId: z.string().trim().min(1).max(200).optional(),
-        limit: limitSchema,
+        limit: pageLimitSchema,
         type: eventTypeSchema.optional(),
     }))
     .handler(({ data }): Promise<AlertEventsResponse> => listAlertEventsRequest(createApiClient(data.apiKey), {
@@ -149,11 +137,11 @@ export const listAlertEvents = createServerFn({ method: "GET" })
     }));
 
 export const getAlertEvent = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, id: idSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<AlertEvent> => getAlertEventRequest(createApiClient(data.apiKey), data.id));
 
 export const listAlertEventsForAlert = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, id: idSchema, limit: limitSchema, type: eventTypeSchema.optional() }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, id: resourceIdSchema, limit: pageLimitSchema, type: eventTypeSchema.optional() }))
     .handler(({ data }): Promise<AlertEventsResponse> => listAlertEventsForAlertRequest(createApiClient(data.apiKey), data.id, {
         cursor: data.cursor,
         limit: data.limit,
@@ -161,5 +149,5 @@ export const listAlertEventsForAlert = createServerFn({ method: "GET" })
     }));
 
 export const listAlertTemplates = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: limitSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: pageLimitSchema }))
     .handler(({ data }): Promise<AlertTemplatesResponse> => listAlertTemplatesRequest(createApiClient(data.apiKey), { cursor: data.cursor, limit: data.limit }));
