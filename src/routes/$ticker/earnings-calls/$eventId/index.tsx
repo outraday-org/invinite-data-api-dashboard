@@ -8,7 +8,6 @@ import { NotFound } from "@/components/ui/not-found";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useV2Event } from "@/lib/api/queries";
-import { formatMs } from "@/lib/earnings/format";
 import { tickerHead } from "@/lib/layout";
 import { IN_PLACE } from "@/lib/url-state";
 
@@ -20,7 +19,7 @@ import type { LiveSessionClock } from "../-components/live/use-call-live-session
 import { AskThisCall } from "../-components/ask-this-call";
 import { CallAudioProvider } from "../-components/audio-context";
 import { CallHeader } from "../-components/call-header";
-import { callLinkAt, callSearchSchema } from "../-components/call-search";
+import { callSearchSchema, copyCallLinkAt } from "../-components/call-search";
 import { CallTabs, DEFAULT_CALL_TAB } from "../-components/call-tabs";
 import { EventVideoSlot } from "../-components/event-video";
 import { LivePlayerSlot } from "../-components/live-player-slot";
@@ -93,22 +92,8 @@ function CallPage({ eventId }: { eventId: string }) {
 
     const onTabChange = (next: CallTab) => onSearchChange({ tab: next });
 
-    // The player's `⋯` → "Copy link at current time": the page URL with `?t=`, also written into the address bar.
-    // The address bar is written first: a browser without clipboard access (no secure context) still gets the link.
-    const onCopyLinkAt = async (seconds: number) => {
-        const link = callLinkAt(window.location.href, seconds);
-
-        onSearchChange({ t: seconds });
-
-        try {
-            await navigator.clipboard.writeText(link);
-
-            toast.success(`Link at ${formatMs(seconds * 1000)} copied`);
-        }
-        catch {
-            toast.error("Could not copy the link");
-        }
-    };
+    // The player's `⋯` → "Copy link at current time" (`copyCallLinkAt`: address bar first, then the clipboard).
+    const onCopyLinkAt = (seconds: number) => void copyCallLinkAt(seconds, onSearchChange);
 
     // A played search hit jumps along `quiet`ly: a call without a transcript just plays.
     const onJumpToTranscript: JumpToTranscript = (startMs, options) => {
@@ -166,7 +151,7 @@ function CallPage({ eventId }: { eventId: string }) {
 
                 {/* The one player bar, sticky below the ticker header on every tab: the live stream while the call is */}
                 {/* followed live, the recording once it is published (nothing without either). */}
-                <CallPlayerBar event={event} onCopyLinkAt={seconds => void onCopyLinkAt(seconds)} />
+                <CallPlayerBar event={event} onCopyLinkAt={onCopyLinkAt} />
 
                 <CallTabs
                     event={event}

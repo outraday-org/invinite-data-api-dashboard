@@ -2,13 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 
 import { financialsSearchSchema } from "@/components/financials-pages/financials-search";
 import { Route as CallRoute } from "@/routes/$ticker/earnings-calls/$eventId/index";
-import { callLinkAt } from "@/routes/$ticker/earnings-calls/-components/call-search";
+import { callLinkAt, copyCallLinkAt } from "@/routes/$ticker/earnings-calls/-components/call-search";
 import { Route as CallsRoute } from "@/routes/$ticker/earnings-calls/index";
 import { Route as FilingsRoute } from "@/routes/$ticker/filings/index";
 import { Route as HoldersRoute } from "@/routes/$ticker/holders/index";
 import { Route as HoldingsRoute } from "@/routes/$ticker/holdings/index";
 import { Route as InsiderRoute } from "@/routes/$ticker/insider-trades/index";
 import { Route as FilerRoute } from "@/routes/sec/$cik";
+
+const toasts = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
+
+vi.mock("sonner", () => ({ toast: toasts }));
 
 vi.mock("@/lib/api/server-functions", () => ({}));
 
@@ -56,6 +60,42 @@ describe("URL state (validateSearch): a reload restores what the URL says, an in
     it("call page: the copied link keeps the other params and replaces t", () => {
         expect(callLinkAt("https://dash.test/NVDA/earnings-calls/e1?format=text&t=10", 754.9))
             .toBe("https://dash.test/NVDA/earnings-calls/e1?format=text&t=754");
+    });
+
+    it("call page: Copy link at current time writes ?t= into the address bar, then copies the link", async () => {
+        const writeText = vi.fn(() => Promise.resolve());
+
+        vi.stubGlobal("window", { location: { href: "https://dash.test/NVDA/earnings-calls/e1?format=text" } });
+
+        vi.stubGlobal("navigator", { clipboard: { writeText } });
+
+        const onSearchChange = vi.fn();
+
+        await copyCallLinkAt(754.6, onSearchChange);
+
+        expect(onSearchChange).toHaveBeenCalledWith({ t: 754 });
+
+        expect(writeText).toHaveBeenCalledWith("https://dash.test/NVDA/earnings-calls/e1?format=text&t=754");
+
+        expect(toasts.success).toHaveBeenCalledWith("Link at 12:34 copied");
+
+        vi.unstubAllGlobals();
+    });
+
+    it("call page: without clipboard access the link still reaches the address bar and the click does not throw", async () => {
+        vi.stubGlobal("window", { location: { href: "https://dash.test/NVDA/earnings-calls/e1" } });
+
+        vi.stubGlobal("navigator", {});
+
+        const onSearchChange = vi.fn();
+
+        await expect(copyCallLinkAt(95, onSearchChange)).resolves.toBeUndefined();
+
+        expect(onSearchChange).toHaveBeenCalledWith({ t: 95 });
+
+        expect(toasts.error).toHaveBeenCalled();
+
+        vi.unstubAllGlobals();
     });
 
     it("financials: every tab's filter and the charted row", () => {

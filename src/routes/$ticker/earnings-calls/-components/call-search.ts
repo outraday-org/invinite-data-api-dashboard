@@ -1,7 +1,9 @@
+import { toast } from "sonner";
 import { z } from "zod";
 
 import type { TranscriptFormat } from "@/lib/earnings/transcript";
 
+import { formatMs } from "@/lib/earnings/format";
 import { optionalEnum, optionalInt } from "@/lib/url-state";
 
 import { CALL_TAB_VALUES } from "./call-tabs";
@@ -35,4 +37,23 @@ export function callLinkAt(href: string, seconds: number): string {
     url.searchParams.set("t", String(Math.max(0, Math.floor(seconds))));
 
     return url.toString();
+}
+
+/**
+ * "Copy link at current time": writes `?t=` into the address bar FIRST (through `onSearchChange`, so a browser without
+ * clipboard access — no secure context, a denied permission — still has the link there), then copies the link.
+ */
+export async function copyCallLinkAt(seconds: number, onSearchChange: (patch: Partial<CallSearch>) => void): Promise<void> {
+    const link = callLinkAt(window.location.href, seconds);
+
+    onSearchChange({ t: Math.max(0, Math.floor(seconds)) });
+
+    try {
+        await navigator.clipboard.writeText(link);
+
+        toast.success(`Link at ${formatMs(Math.floor(seconds) * 1000)} copied`);
+    }
+    catch {
+        toast.error("Could not copy the link — it is in the address bar");
+    }
 }
