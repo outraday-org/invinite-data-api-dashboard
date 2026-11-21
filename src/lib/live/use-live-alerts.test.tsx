@@ -172,6 +172,24 @@ describe("useLiveAlerts", () => {
         expect(second).toHaveBeenCalledWith(expect.objectContaining({ kind: "unavailable" }));
     });
 
+    it("switched off and on with the same filters, the new socket reads connecting (not the old live)", () => {
+        const { rerender, result } = renderHook(props => useLiveAlerts(props), { initialProps: input() });
+
+        act(() => {
+            FakeSocket.last.emit("open");
+
+            FakeSocket.last.frame({ filters: { alert_ids: [], external_user_id: "u1", types: [] }, type: "subscribed" });
+        });
+
+        expect(result.current.mode).toBe("live");
+
+        rerender(input({ enabled: false }));
+
+        rerender(input());
+
+        expect(result.current.mode).toBe("connecting");
+    });
+
     it("unavailable re-subscribes after 10 s on the same socket", () => {
         const { result } = renderHook(props => useLiveAlerts(props), { initialProps: input() });
 

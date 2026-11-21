@@ -101,7 +101,7 @@ export function FieldInput({ error, fieldKey, onChange, spec, value }: { error?:
         }
 
         case "datetime": {
-            input = <Input id={id} onChange={event => onChange(event.target.value)} type="datetime-local" value={text} />;
+            input = <Input id={id} onChange={event => onChange(event.target.value)} step={1} type="datetime-local" value={text} />;
 
             break;
         }

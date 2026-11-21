@@ -47,7 +47,8 @@ export type AlertFormState = {
     externalUserId: string;
     /** `indicator`: a built-in template, or a structured condition + filters. */
     indicatorMode: "structured" | "template";
-    metadata: Array<{ key: string; value: string }>;
+    /** `json`: the stored value was not a string (a number, a list…): its text is JSON and is sent parsed back. */
+    metadata: Array<{ json?: boolean; key: string; value: string }>;
     template: { inputs: Record<string, string>; key: string };
     trigger: Partial<Record<TriggerScalarField, string>>;
     type: AlertType;
@@ -91,7 +92,7 @@ export function instantOf(text: string): null | string {
     return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
-/** ISO 8601 → the `datetime-local` text of the viewer's zone (minutes). */
+/** ISO 8601 → the `datetime-local` text of the viewer's zone (minutes; seconds too when the instant has them). */
 export function localDateTimeOf(iso: string): string {
     const date = new Date(iso);
 
@@ -99,7 +100,9 @@ export function localDateTimeOf(iso: string): string {
 
     const pad = (n: number) => String(n).padStart(2, "0");
 
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    const seconds = date.getSeconds() === 0 ? "" : `:${pad(date.getSeconds())}`;
+
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}${seconds}`;
 }
 
 const minutesOf = (text: string): null | number => {
@@ -340,12 +343,20 @@ function readForm(state: AlertFormState, templates: ReadonlyArray<AlertTemplate>
 
     const metadata: Record<string, JsonValue> = {};
 
-    for (const { key, value } of state.metadata) {
+    for (const { json, key, value } of state.metadata) {
         if (!key.trim() && !value.trim()) continue;
 
         if (!key.trim()) errors.metadata = "Every value needs a key.";
         else if (Object.hasOwn(metadata, key.trim())) errors.metadata = `The key ${key.trim()} is given twice.`;
-        else metadata[key.trim()] = value;
+        else if (!json) metadata[key.trim()] = value;
+        else {
+            try {
+                metadata[key.trim()] = JSON.parse(value) as JsonValue;
+            }
+            catch {
+                errors.metadata = `The value of ${key.trim()} was stored as JSON and is no longer valid JSON.`;
+            }
+        }
     }
 
     if (Object.keys(metadata).length > 50) errors.metadata = "At most 50 keys.";
@@ -480,7 +491,7 @@ export function fromAlert(alert: Alert, { duplicate = false }: { duplicate?: boo
 
     state.clientReferenceId = duplicate ? "" : alert.client_reference_id ?? "";
 
-    state.metadata = Object.entries(isRecord(alert.metadata) ? alert.metadata : {}).map(([key, value]) => ({ key, value: typeof value === "string" ? value : JSON.stringify(value) }));
+    state.metadata = Object.entries(isRecord(alert.metadata) ? alert.metadata : {}).map(([key, value]) => (typeof value === "string" ? { key, value } : { json: true, key, value: JSON.stringify(value) }));
 
     return state;
 }
@@ -501,7 +512,8 @@ export function prefilledForm(type: AlertType | undefined, symbol: string | unde
 
 // ── API errors → fields ──────────────────────────────────────────────────────────────────────────────────────────
 
-const TOP_LEVEL_KEYS = new Set(["client_reference_id", "destination_ids", "external_user_id", "metadata", "type", "version"]);
+// `type` and `version` have no editable field (fixed on edit, sent by the form): their problems go under `form`.
+const TOP_LEVEL_KEYS = new Set(["client_reference_id", "destination_ids", "external_user_id", "metadata"]);
 
 /** The form key a problem `param` names (`condition.rules.0.value` → `condition.rules`); null = no field of the form. */
 export function fieldKeyOf(param: null | string | undefined): null | string {

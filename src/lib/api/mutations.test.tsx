@@ -98,6 +98,18 @@ describe("Idempotency-Key per submission", () => {
         expect(endsSubmission(new ApiRequestError(400, { error: "invalid_parameter", message: "x" }))).toBe(true);
 
         expect(endsSubmission(new TypeError("Failed to fetch"))).toBe(false);
+
+        // No decision of the API yet: the create may have happened, the retry replays it.
+        expect(endsSubmission(new ApiRequestError(409, { error: "idempotency_in_flight", message: "in flight" }))).toBe(false);
+
+        expect(endsSubmission(new ApiRequestError(504, { error: "http_504", message: "Gateway timeout" }))).toBe(false);
+
+        expect(endsSubmission(new ApiRequestError(502, { error: "http_502", message: "Bad gateway" }))).toBe(false);
+
+        // The API itself answered: decided.
+        expect(endsSubmission(new ApiRequestError(500, { error: "internal", message: "x" }))).toBe(true);
+
+        expect(endsSubmission(new ApiRequestError(409, { error: "conflict", message: "x" }))).toBe(true);
     });
 
     it("a double-submitted create sends one key twice (the API replays the first answer: one alert)", async () => {

@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
-import { newestEventId } from "@/lib/alerts/alert-view";
+import { newestEventId, shouldAutoLoad } from "@/lib/alerts/alert-view";
 import { ALERT_EVENT_TYPE_LABELS, ALERT_EVENT_TYPES } from "@/lib/alerts/labels";
 import { useAlertEvent, useAlertEventsInfinite, useApiBaseUrl } from "@/lib/api/queries";
 import { titleHead } from "@/lib/layout";
@@ -96,15 +96,28 @@ function AlertEventsPage() {
 
     const [stop, setStop] = React.useState<LiveAlertsStop | null>(null);
 
-    const pagesLoaded = query.data !== null || query.error !== null;
+    // Live starts once the REST list settled (its newer pages loaded by themselves, or it stopped): `after` is then the
+    // newest event the page holds, so the stream replays only what the list lacks. Latched per filter set, so a
+    // background refetch never closes the socket.
+    const filterKey = JSON.stringify(eventsRequest(search));
+
+    const settled = (query.data !== null || query.error !== null) && !query.isFetchingNextPage && !shouldAutoLoad({
+        hasNextPage: query.hasNextPage,
+        isFetching: query.isFetching,
+        nextPageFailed: query.isFetchNextPageError,
+        pageCount: query.data?.pages.length ?? 0,
+    });
+
+    const [readyKey, setReadyKey] = React.useState("");
+
+    if (settled && readyKey !== filterKey) setReadyKey(filterKey);
 
     const live = useLiveAlerts({
         after: newestEventId(query.data?.pages ?? []),
         apiKey,
         apiKeyUpdatedAt,
         baseUrl,
-        // Once the REST list answered: its newest event is where the stream's replay starts.
-        enabled: Boolean(search.live) && pagesLoaded,
+        enabled: Boolean(search.live) && readyKey === filterKey,
         filters: {
             alertIds: search.alert_id ? [search.alert_id] : undefined,
             externalUserId: search.external_user_id,

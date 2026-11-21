@@ -69,7 +69,8 @@ export function useLiveAlerts({ after, apiKey, apiKeyUpdatedAt, baseUrl, enabled
 
     const [received, setReceived] = useState<Received>(EMPTY);
 
-    const [mode, setMode] = useState<LiveAlertsMode>("connecting");
+    // The mode of one subscription (its key): a new socket (Live on again, other filters) reads "connecting" at once.
+    const [modeOf, setModeOf] = useState<{ key: string; mode: LiveAlertsMode }>({ key: "", mode: "connecting" });
 
     const latest = useRef({ after, onStop });
 
@@ -99,6 +100,8 @@ export function useLiveAlerts({ after, apiKey, apiKeyUpdatedAt, baseUrl, enabled
         let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
 
         let resubscribeTimer: ReturnType<typeof setTimeout> | undefined;
+
+        const setMode = (mode: LiveAlertsMode) => setModeOf({ key: filterKey, mode });
 
         const update = (change: (current: Received) => Received) => setReceived(prev => change(prev.key === filterKey ? prev : { ...EMPTY, key: filterKey }));
 
@@ -245,10 +248,15 @@ export function useLiveAlerts({ after, apiKey, apiKeyUpdatedAt, baseUrl, enabled
             clearTimeout(resubscribeTimer);
 
             close();
+
+            // The next socket (same filters or not) starts as "connecting", never with this one's mode.
+            setModeOf({ key: "", mode: "connecting" });
         };
     }, [apiKey, apiKeyUpdatedAt, baseUrl, enabled, filterKey]);
 
     const current = enabled && received.key === filterKey ? received : EMPTY;
+
+    const mode = modeOf.key === filterKey ? modeOf.mode : "connecting";
 
     return { events: current.events, ignored: current.ignored, mode, note: current.note, truncatedAt: current.truncatedAt };
 }

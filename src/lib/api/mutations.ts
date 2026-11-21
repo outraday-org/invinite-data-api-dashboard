@@ -77,12 +77,18 @@ export function idempotencyKeyFor(held: HeldKey | null, body: unknown, newKey: (
     return held?.body === text ? held : { body: text, key: newKey() };
 }
 
+/** Answers after which the create may still have happened (or is happening): the retry must replay, not create again. */
+const UNDECIDED = (error: ApiRequestError) => error.code === "idempotency_in_flight" || error.status === 502 || error.status === 504;
+
 /**
- * Whether a finished submission ends its key: a success or any API answer (the API decided; a corrected form is a new
- * submission) ends it, a transport failure (no answer: the create may have happened) keeps it for the retry.
+ * Whether a finished submission ends its key: a success or an API answer that decided (a 4xx, a 500 / 503 from the API
+ * itself; a corrected form is a new submission) ends it. It is kept for the retry after a transport failure, a 409
+ * `idempotency_in_flight` and a gateway 502 / 504 — no answer of the API, so the create may have happened.
  */
 export function endsSubmission(error: unknown) {
-    return error === null || error instanceof ApiRequestError;
+    if (error === null) return true;
+
+    return error instanceof ApiRequestError && !UNDECIDED(error);
 }
 
 /** One key per form submission, held across retries of the same body (`idempotencyKeyFor`, `endsSubmission`). */

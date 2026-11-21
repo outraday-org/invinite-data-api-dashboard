@@ -152,6 +152,24 @@ describe("toUpdateBody", () => {
 });
 
 describe("fromAlert / prefilledForm", () => {
+    it("metadata that was not a string is sent back as its value, not as text", () => {
+        const alert = { ...ALERT_FILING, metadata: { list: "tech", tags: ["a", "b"], tier: 3 } };
+
+        const state = fromAlert(alert);
+
+        expect(toCreateBody(state).body.metadata).toEqual({ list: "tech", tags: ["a", "b"], tier: 3 });
+
+        state.metadata = state.metadata.map(row => (row.key === "tier" ? { ...row, value: "{" } : row));
+
+        expect(toCreateBody(state).errors.metadata).toContain("tier");
+    });
+
+    it("an instant with seconds keeps them through the form", () => {
+        const alert = { ...ALERT_PRICE, trigger: { activate_at: "2026-12-01T14:30:45Z" } };
+
+        expect(new Date(String(toCreateBody(fromAlert(alert)).body.trigger?.activate_at)).toISOString()).toBe("2026-12-01T14:30:45.000Z");
+    });
+
     it("a duplicate drops the client reference id (unique per account)", () => {
         expect(fromAlert(ALERT_FILING).clientReferenceId).toBe("watchlist-aapl-8k");
 
@@ -197,7 +215,12 @@ describe("API problems on the form's fields", () => {
 
         expect(fieldErrorsOf(error)).toEqual({ "condition.level": "level: must be > 0", "destination_ids": "unknown destination", "form": "something else" });
 
-        expect(fieldErrorsOf(new ApiRequestError(400, { error: "invalid_parameter", message: "type: refused", param: "type" }))).toEqual({ type: "type: refused" });
+        // The type and the version have no field to show it under: the form says it.
+        expect(fieldErrorsOf(new ApiRequestError(400, { error: "invalid_parameter", message: "type: refused", param: "type" }))).toEqual({ form: "type: refused" });
+
+        expect(fieldKeyOf("version")).toBeNull();
+
+        expect(fieldKeyOf("metadata")).toBe("metadata");
     });
 
     it("readField keeps the schema's bounds", () => {
