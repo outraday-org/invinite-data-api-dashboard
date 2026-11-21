@@ -57,6 +57,9 @@ describe("KpiHistoryView", () => {
 
         expect(within(rows[2]).getByText("Press release")).toBeInTheDocument();
 
+        // The same words as the KPI table beside it (ORIGIN_LABELS): a call mention is "Transcript".
+        expect(within(rows[0]).getByText("Transcript")).toBeInTheDocument();
+
         expect(within(rows[2]).getByRole("link", { name: "8-K" })).toHaveAttribute("href", expect.stringContaining("sec.gov"));
     });
 
