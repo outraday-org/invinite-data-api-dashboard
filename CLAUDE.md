@@ -511,6 +511,40 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   (`expand`), `useFilerHoldingsInfinite` (`instruments`). Tests: `sec-v2-pages`, `sec-filer`, `holdings-page`,
   `fund-overview`, `offerings-pages` (`src/routes/-tests/`), `src/lib/sec/ownership.test.ts`.
 
+### Destinations, deliveries, webhooks (backend `tasks/data-api-dashboard` 2-alerts task 3)
+
+- **API layer**: `src/lib/api/server-functions-destinations.ts` over `destinations-requests.ts` (8 operations; zod bounds
+  of `CreateDestinationRequest` / `UpdateDestinationRequest`; `:rotate-secret` / `:test` sent as written,
+  `destinations-requests.test.ts`). Reads: `useDestinationsInfinite`, `useDestination`, `useDestinationDeliveriesInfinite`
+  (`DESTINATION_QUERY_KEYS`; deliveries poll while a test delivery is watched). Writes in `WRITES`. Model (pure):
+  `src/lib/alerts/destinations.ts` (form ↔ bodies, bounds checked against `openapi.json` in `destinations.test.ts`).
+- **Secret rules (hard)**: the signing secret exists in two answers only (`DestinationCreated`, `DestinationSecret`).
+  `takeSecret` reads it and DELETES it from the answer object in place, so the mutation state / mutation cache / the
+  inspector's view of the write never hold it; the string lives only in `SecretOnceDialog`'s caller state and is dropped
+  on close (the mutation is `reset()` too). Never in the query cache, `localStorage`, the URL, a toast, a log. Shown once
+  with Copy and "You will not see this secret again"; closing uncopied asks first. Every destination a READ returns
+  passes `withoutSecrets` on the server (drops any `secret` / `headers` field — the contract has none; the inspector
+  shows read answers unredacted). Test: `src/routes/-tests/destinations-secret.test.tsx` (caches, storage, DOM after close).
+- **Header values are write-only**: `type="password"`, `autocomplete="new-password"`, password-manager opt-outs; never
+  read back (the API returns `header_names` only). PATCH semantics (spec): an omitted `headers` KEEPS the stored ones,
+  an object REPLACES all of them, `null` removes them → edit offers Keep (default) / Replace / Remove. After a write
+  settles its input forgets the values (`forgetHeaderValues`: the mutation cache keeps names only); the recorder
+  redacts them in the request body (`redactSecrets`).
+- **Routes**: `/alerts/destinations` (`?new=true` = create dialog; one `Idempotency-Key` per submission; a created one
+  opens its page), `/alerts/destinations/$id` (`?edit=true`, `?status=` = delivery filter over the LOADED rows — the
+  operation has no status filter —, `?test=<dlv_…>` = the watched test delivery: polled every 2 s for ≤ 30 s, then the
+  notice says so), `/alerts/webhooks`. Every action confirms first (`destinationConfirmWords`: test, rotate — 24 h dual
+  signature —, disable, re-enable, delete — `ConfirmAction` `details` lists the alerts from `listAlerts?destination_id=`,
+  first page: "N" / "N+"). Destination chips of the alert pages link here.
+- **Webhook reference**: generated at build time — `scripts/webhooks.mjs` (`webhookEntries`, `webhookEnvelope`; pure,
+  types in `webhooks.d.mts`) feeds `WEBHOOKS` / `WEBHOOK_ENVELOPE` in `operations.gen.ts` (`pnpm generate:api`). The spec
+  has NO example bodies: the page builds an example shape from each schema (required fields; `exampleBody`) and labels
+  it. Signature / retry text = the spec's header and `2XX` descriptions only. `webhooks.test.ts` pins the export to the
+  spec; a type removed from the spec leaves the page (`webhook-reference.test.tsx`).
+- Views (pure): `DestinationsListView`, `DestinationFormView`, `DestinationDetailView`, `DeliveriesView`
+  (+ `TestDeliveryNotice`), `WebhookReferenceView`; wiring `destination-editor.tsx`, `use-destination-actions.tsx`.
+  Fixtures `src/lib/alerts/destinations-fixtures.ts` (fake secrets). Tests `src/routes/-tests/destinations-{views,secret}.test.tsx`.
+
 ### UI Components (`src/components/ui/`)
 
 Base UI components built on `@base-ui/react` primitives with `class-variance-authority` for variants. Uses `cn()` utility from `src/lib/utils.ts` (clsx + tailwind-merge).
@@ -700,3 +734,11 @@ states why here. Count: 89 non-alert rows + 36 = 125 operation ids in `openapi.j
 | `listAlertEventsForAlert` | `GET /v1/alerts/{id}/events` | `/alerts/$id` (events) (alerts task 2) |
 | `listAlertTemplates` | `GET /v1/alert-templates` | `/alerts/new`, `/alerts/$id?edit=true` (indicator template picker) (alerts task 2) |
 | `streamEvents` (channel `alerts`) | `WS /v1/stream` `alert_event` | `/alerts/events` "Live" (alerts task 2) |
+| `listDestinations` | `GET /v1/destinations` | `/alerts/destinations` (alerts task 3) |
+| `createDestination` | `POST /v1/destinations` | `/alerts/destinations?new=true` (`Idempotency-Key`; secret shown once) (alerts task 3) |
+| `getDestination` | `GET /v1/destinations/{id}` | `/alerts/destinations/$id` (alerts task 3) |
+| `updateDestination` | `PATCH /v1/destinations/{id}` | `/alerts/destinations/$id?edit=true`; Disable / Re-enable (`status`, confirmed) (alerts task 3) |
+| `deleteDestination` | `DELETE /v1/destinations/{id}` | `/alerts/destinations` row action; `/alerts/destinations/$id` (confirmed, names the alerts using it) (alerts task 3) |
+| `rotateDestinationSecret` | `POST /v1/destinations/{id}:rotate-secret` | `/alerts/destinations/$id`, list row action (confirmed; secret shown once) (alerts task 3) |
+| `testDestination` | `POST /v1/destinations/{id}:test` | `/alerts/destinations/$id?test=` (confirmed; delivery watched ≤ 30 s) (alerts task 3) |
+| `listDestinationDeliveries` | `GET /v1/destinations/{id}/deliveries` | `/alerts/destinations/$id` (deliveries; status filter over the loaded rows) (alerts task 3) |
