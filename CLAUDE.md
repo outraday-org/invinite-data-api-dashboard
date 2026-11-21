@@ -145,6 +145,8 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   classes written out in the source). The content column steps aside by `--sidebar-width` while the fixed sidebar is
   open (`md:peer-data-[state=expanded]:pl-(--sidebar-width)`: the sidebar wrapper is a column, so without it content sat
   under the sidebar below ~1660 px).
+- A search-param change that opens a panel or filters in place (`?item=` on News, the Documents filters) navigates with
+  `resetScroll: false`: the document scrolls, so the router's default reset would jump to the top.
 - **Gate before mount**: `$ticker/route.tsx` renders a section (`<Outlet />`) only once the instrument is known
   (skeleton while it loads), so a gated section never requests and no refusal flashes before the gate sentence; the
   market sections render at once. The `h1` is the answer's canonical `symbol`.
@@ -154,8 +156,9 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   the first page loads, `errorState` (a rendered `ErrorState` / `SecReadinessNotice`) in a full-width row, the empty row
   only when `emptyIsGenuine`, `LoadMoreButton` with "N loaded", `columnClassName`, `rowClassName`, `stickyFirstColumn`.
   CSS cannot stick a header to the window inside a horizontal scroller: the header sticks below the pinned header from
-  `lg` up (wrapper `lg:overflow-x-visible`); below `lg` and for `stickyFirstColumn` tables (insider trades) the wrapper
-  scrolls sideways and the header scrolls with the page. On it: dividends, splits, market holidays, filings
+  `lg` up while the table fits its column (wrapper `lg:overflow-x-visible`, measured by `useTableFits`); below `lg`, for a
+  table wider than its column and for `stickyFirstColumn` tables (insider trades) the wrapper scrolls sideways and the
+  header scrolls with the page — the page itself never scrolls sideways. On it: dividends, splits, market holidays, filings
   (`filing-columns.tsx`), insider trades, IPOs, calendar, calls list, holders, fund holdings, funds. The statement
   tables (`financials-flat-table`, `financials-presentation-table`, `financial-metrics-table`, segments) keep their own
   table with a sticky first column (`STICKY_FIRST_CELL`) and a visible chart button per row (`ChartRowButton`,
