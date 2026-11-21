@@ -701,9 +701,11 @@ calls, with its page. Created by O7 group 1 from `server-functions.ts` at `ab8a8
 `listSegmentsDetailed` were called with no view before), group 7's (the six catalogs, `listCompanies`, `statusGet`, `statusLicensing`;
 `healthGet` with its reason), group 6's (`getInsiderTrade`, `getOffering`, `listFilerHoldingChanges`); group 5 adds no operation, it widens five rows (`listKpis`,
 `searchTranscripts`, `getEventComparison`, `listInvestorDocuments`, `getInvestorDocument`). Every O7
-group appends its rows, the alerts tasklist its 36 (30 alert / destination + 6 script operations); an operation with no view
-states why here. Count: 89 non-alert rows + 36 = 125 operation ids in `openapi.json` = the 124 HTTP operations of
-`operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, which the operations table does not list).
+group appended its rows, the alerts tasklist its 36 (30 alert / destination + 6 script operations); an operation
+with no view states why here. **Complete (A4-final, 2026-11-21): 125 rows = the 125 operation ids of `openapi.json`, each
+exactly once** — the 124 HTTP operations of `operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, one
+row naming its channels). `src/lib/api/coverage.test.ts` parses this table against `openapi.json` and fails on a
+missing, duplicate or unknown id: a new operation of the spec needs its row (page or reason) here.
 
 | Operation | Request | Page |
 |-----------|---------|------|
@@ -785,7 +787,7 @@ states why here. Count: 89 non-alert rows + 36 = 125 operation ids in `openapi.j
 | `listFilingFacts` | `GET /v1/filings/{accession}/facts` | `/filings/$accession` Facts tab (O7 group 3) |
 | `listFilingHoldings` | `GET /v1/filings/{accession}/holdings` | `/filings/$accession` Holdings tab, 13F-HR / NPORT-P only (O7 group 3) |
 | `listFilingNotes` | `GET /v1/filings/{accession}/notes` | `/filings/$accession` Notes tab (O7 group 3) |
-| `streamEvents` (channel `filings`) | `WS /v1/stream` `new_filing` | `/$ticker/filings` "Live"; `/filings` (O7 group 3) |
+| `streamEvents` | `WS /v1/stream` (one row, four channels) | `events.live`: call page · live player and transcript; `news`: `/$ticker/news`, `/news-feed` "Live"; `filings` (`new_filing`): `/$ticker/filings` "Live", `/filings` (O7 group 3); `alerts` (`alert_event`): `/alerts/events` "Live" (alerts task 2) |
 | `listMetricCatalog` | `GET /v1/catalog/metrics` | `/catalog` Metrics (`statement`; every financial metric label links `/catalog?q=<metric_id>`; O7 group 7) |
 | `listSectionCatalog` | `GET /v1/catalog/sections` | `/catalog?tab=sections` (`form`; O7 group 7) |
 | `listFormCatalog` | `GET /v1/catalog/forms` | `/catalog?tab=forms` (O7 group 7) |
@@ -809,7 +811,6 @@ states why here. Count: 89 non-alert rows + 36 = 125 operation ids in `openapi.j
 | `getAlertEvent` | `GET /v1/alert-events/{id}` | `/alerts/events?event=` (e.g. from "Send test event") (alerts task 2) |
 | `listAlertEventsForAlert` | `GET /v1/alerts/{id}/events` | `/alerts/$id` (events) (alerts task 2) |
 | `listAlertTemplates` | `GET /v1/alert-templates` | `/alerts/new`, `/alerts/$id?edit=true` (indicator template picker) (alerts task 2); `/alerts/scripts?tab=templates` (alerts task 4) |
-| `streamEvents` (channel `alerts`) | `WS /v1/stream` `alert_event` | `/alerts/events` "Live" (alerts task 2) |
 | `listDestinations` | `GET /v1/destinations` | `/alerts/destinations` (alerts task 3) |
 | `createDestination` | `POST /v1/destinations` | `/alerts/destinations?new=true` (`Idempotency-Key`; secret shown once) (alerts task 3) |
 | `getDestination` | `GET /v1/destinations/{id}` | `/alerts/destinations/$id` (alerts task 3) |
