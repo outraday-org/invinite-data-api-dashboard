@@ -12,6 +12,7 @@ import { tickerHead } from "@/lib/layout";
 
 import type { JumpToTranscript } from "../-components/ask-this-call";
 import type { CallTab, TranscriptJump } from "../-components/call-tabs";
+import type { LiveSessionClock } from "../-components/live/use-call-live-session";
 
 import { AskThisCall } from "../-components/ask-this-call";
 import { CallAudioProvider } from "../-components/audio-context";
@@ -19,7 +20,8 @@ import { CallHeader } from "../-components/call-header";
 import { CALL_TAB_VALUES, CallTabs, DEFAULT_CALL_TAB } from "../-components/call-tabs";
 import { EventVideoSlot } from "../-components/event-video";
 import { LivePlayerSlot } from "../-components/live-player-slot";
-import { RecordingPlayer } from "../-components/player/recording-player";
+import { recordingWaitInterval, useCallLiveSession } from "../-components/live/use-call-live-session";
+import { CallPlayerBar } from "../-components/player/live-call-player";
 
 // `tab` stays optional (every `EventLink` would otherwise have to pass search); an unknown
 // value falls back to the transcript instead of failing the route.
@@ -53,7 +55,19 @@ function CallPage({ eventId }: { eventId: string }) {
 
     const validId = eventIdSchema.safeParse(eventId).success;
 
-    const { data: event, error, isLoading } = useV2Event(validId ? eventId : "");
+    // What the live session knows, read by the event's poll (outside render): a call this page saw live is polled
+    // every 30 s until its recording is published, for at most an hour after the end (`recordingWaitInterval`).
+    const liveClockRef = React.useRef<LiveSessionClock>({ endedAtMs: null, sawLive: false });
+
+    const { data: event, error, isLoading } = useV2Event(validId ? eventId : "", {
+        refetchInterval: current => recordingWaitInterval(current, liveClockRef.current, Date.now()),
+    });
+
+    const liveSession = useCallLiveSession(event);
+
+    React.useEffect(() => {
+        liveClockRef.current = liveSession.clock;
+    }, [liveSession.clock]);
 
     const [transcriptJump, setTranscriptJump] = React.useState<null | TranscriptJump>(null);
 
@@ -97,12 +111,12 @@ function CallPage({ eventId }: { eventId: string }) {
     return (
         // The recording is requested on the first play or timestamp click (never on page load, an old `?tab=audio`
         // link included), then stays loaded so timestamps on any tab can play it.
-        <CallAudioProvider eventId={event.event_id} hasAudio={event.has_audio}>
+        <CallAudioProvider eventId={event.event_id} hasAudio={event.has_audio} live={liveSession}>
             <div className="flex flex-col gap-4">
                 <CallHeader event={event} />
 
-                {/* The live player while the call is in progress (nothing for other calls). */}
-                <LivePlayerSlot event={event} />
+                {/* The live call's notices, highlights, price and diagnostics (nothing for other calls). */}
+                <LivePlayerSlot event={event} session={liveSession} />
 
                 {/* The company's public broadcast (click-to-load), collapsed while the call is captured live. */}
                 <EventVideoSlot event={event} />
@@ -115,8 +129,9 @@ function CallPage({ eventId }: { eventId: string }) {
                     }}
                 />
 
-                {/* The one player bar, sticky below the ticker header on every tab (nothing without a recording). */}
-                <RecordingPlayer event={event} />
+                {/* The one player bar, sticky below the ticker header on every tab: the live stream while the call is */}
+                {/* followed live, the recording once it is published (nothing without either). */}
+                <CallPlayerBar event={event} />
 
                 <CallTabs
                     event={event}

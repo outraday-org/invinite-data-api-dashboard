@@ -23,9 +23,19 @@ const NON_PAGE_SCROLL_SELECTOR = "[role='slider'], [role='menu'], [role='listbox
 const targetsWithin = (event: Event, selector: string) => event.target instanceof Element && event.target.closest(selector) !== null;
 
 /**
+ * A press on the window's own scrollbar (O4): it targets the root element, right of (or below) the client area. A drag
+ * of the scrollbar fires no wheel / touch / key event, so it is told apart here.
+ */
+export function onPageScrollbar(event: Pick<PointerEvent, "clientX" | "clientY" | "target">): boolean {
+    const root = document.documentElement;
+
+    return event.target === root && (event.clientX >= root.clientWidth || event.clientY >= root.clientHeight);
+}
+
+/**
  * The player's Follow (task O3): while it is on and the audio plays, the page (the document, never a box) scrolls the
  * element marked `data-follow-index={activeIndex}` inside `containerRef` into view each time the index moves; a wheel,
- * touch or scroll-key move by the reader switches Follow off (the player's Follow button turns it back on). A
+ * touch, scroll-key move or a press on the page's scrollbar by the reader switches Follow off (the player's Follow button turns it back on). A
  * programmatic scroll ("Jump to transcript", `scrollToTurn`) fires none of those events, so it never switches it off.
  * Only a mounted list follows: the call page mounts the open tab only.
  */
@@ -69,7 +79,13 @@ export function useFollowScroll({
             setFollow(false);
         };
 
+        const onPointerDown = (event: PointerEvent) => {
+            if (onPageScrollbar(event)) setFollow(false);
+        };
+
         window.addEventListener("wheel", stop, { passive: true });
+
+        window.addEventListener("pointerdown", onPointerDown);
 
         window.addEventListener("touchmove", stop, { passive: true });
 
@@ -79,6 +95,8 @@ export function useFollowScroll({
             window.removeEventListener("wheel", stop);
 
             window.removeEventListener("touchmove", stop);
+
+            window.removeEventListener("pointerdown", onPointerDown);
 
             window.removeEventListener("keydown", onKeyDown);
         };

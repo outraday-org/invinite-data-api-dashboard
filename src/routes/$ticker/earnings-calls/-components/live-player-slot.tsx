@@ -1,37 +1,253 @@
+import { Link } from "@tanstack/react-router";
 import * as React from "react";
 
 import type { V2Event } from "@/lib/api/types";
+import type { LiveHighlight } from "@/lib/live/live-highlights";
+import type { KeywordWatch } from "@/lib/live/ws-frames";
 
-import { isEarningsEventLiveish, useV2LiveEvents } from "@/lib/api/queries";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { isEarningsEventLiveish, useV2PriceAttribution } from "@/lib/api/queries";
+import { formatInstant } from "@/lib/format";
+import { liveHighlightList, parseKeywords } from "@/lib/live/live-highlights";
+import { textBehindEdgeS } from "@/lib/live/live-sync";
+import { positionToCallMs } from "@/lib/live/position-to-call-ms";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
-import { LivePlayer } from "./live/live-player";
+import type { LiveCall } from "./audio-context";
+import type { CallLiveSession } from "./live/use-call-live-session";
+
+import { useLiveCall } from "./audio-context";
+import { LiveDot } from "./live-dot";
+import { LivePriceChart } from "./live/live-price-chart";
+import { formatWallTime } from "./live/live-price-chart-data";
 import { Notice } from "./media-state";
+import { SeekButton } from "./seek-button";
+
+/** "Watch for keywords": a comma list + exact / stem; applied on submit (a re-subscribe on the open socket). */
+function KeywordWatchForm({ onWatch, watch }: { onWatch: (watch: KeywordWatch) => void; watch: KeywordWatch }) {
+    const [draft, setDraft] = React.useState(watch.keywords.join(", "));
+
+    const [match, setMatch] = React.useState(watch.match);
+
+    return (
+        <form
+            aria-label="Watch for keywords"
+            className="flex flex-wrap items-center gap-2"
+            onSubmit={(submitEvent) => {
+                submitEvent.preventDefault();
+
+                onWatch({ keywords: parseKeywords(draft), match });
+            }}
+        >
+            <Input
+                aria-label="Keywords to watch"
+                className="h-7 w-72 max-w-full text-xs"
+                onChange={changeEvent => setDraft(changeEvent.target.value)}
+                placeholder="Watch for keywords, e.g. tariffs, buyback"
+                value={draft}
+            />
+            <select
+                aria-label="Keyword match"
+                className="border-input bg-background h-7 rounded-md border px-1.5 text-xs"
+                onChange={changeEvent => setMatch(changeEvent.target.value === "stem" ? "stem" : "exact")}
+                value={match}
+            >
+                <option value="exact">exact words</option>
+                <option value="stem">word forms too (tariff → tariffs)</option>
+            </select>
+            <Button size="sm" type="submit" variant="outline">Watch</Button>
+            {watch.keywords.length > 0 && (
+                <span className="text-muted-foreground text-xs">
+                    Watching
+                    {" "}
+                    {watch.keywords.join(", ")}
+                </span>
+            )}
+        </form>
+    );
+}
+
+function HighlightRow({ highlight }: { highlight: LiveHighlight }) {
+    if (highlight.kind === "keyword") {
+        return (
+            <li className="flex flex-wrap items-baseline gap-2" data-highlight="keyword">
+                <Badge variant="secondary">{highlight.keyword}</Badge>
+                <SeekButton startMs={highlight.layer === "live" ? highlight.startMs : null} />
+                <span className="text-muted-foreground">{highlight.speakerName ?? "Unnamed speaker"}</span>
+                <span className="min-w-0 truncate">{highlight.text}</span>
+            </li>
+        );
+    }
+
+    return (
+        <li className="flex flex-wrap items-baseline gap-2" data-highlight="guidance" title={highlight.sourceSentence}>
+            <Badge variant="outline">guidance</Badge>
+            <SeekButton startMs={highlight.startMs} />
+            <span className="font-medium">
+                {highlight.metric}
+                {" · "}
+                {highlight.periodLabel}
+            </span>
+            <span className="tabular-nums">{highlight.value}</span>
+            {highlight.revision > 1 && <span className="text-muted-foreground">(restated)</span>}
+        </li>
+    );
+}
+
+/** Keyword hits and guidance flashes in call order, each with a ▷ timestamp (a final-layer hit is on another clock). */
+function LiveHighlights({ live }: { live: LiveCall }) {
+    const highlights = liveHighlightList(live.transcript.highlights);
+
+    return (
+        <section aria-label="Live highlights" className="flex flex-col gap-2">
+            <h3 className="text-xs font-semibold">Live highlights</h3>
+            <KeywordWatchForm onWatch={live.setWatch} watch={live.watch} />
+            {highlights.length === 0
+                ? <p className="text-muted-foreground text-xs">No keyword hits or guidance yet.</p>
+                : <ul className="flex flex-col gap-1">{highlights.map(highlight => <HighlightRow highlight={highlight} key={`${highlight.kind}-${highlight.key}`} />)}</ul>}
+        </section>
+    );
+}
+
+function Diagnostics({ live, priceRows }: { live: LiveCall; priceRows: number }) {
+    const { audio, callT0, mode, newestFinal, stream, streamStatus, transcript } = live;
+
+    const textBehindEdge = textBehindEdgeS(positionToCallMs(audio.position.edgeDate, callT0), newestFinal?.endMs ?? null);
+
+    const lastTick = transcript.prices.last;
+
+    return (
+        <details className="text-xs">
+            <summary className="text-muted-foreground cursor-pointer">Diagnostics</summary>
+            <dl className="text-muted-foreground mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 tabular-nums">
+                <dt>Stream</dt>
+                <dd>{streamStatus}</dd>
+                <dt>Stream URL expires</dt>
+                <dd>{audio.loadedExpiresAt ?? stream?.expires_at ?? "—"}</dd>
+                <dt>Call t0</dt>
+                <dd>{callT0 ?? "—"}</dd>
+                <dt>Credits</dt>
+                <dd>5 per stream request: asked once per live view and once more on a 403 (an expired token)</dd>
+                <dt>Audio</dt>
+                <dd>{audio.phase}</dd>
+                <dt>Audio behind edge</dt>
+                <dd>
+                    {audio.position.edgeBehindS.toFixed(1)}
+                    {" s"}
+                </dd>
+                <dt>Text behind edge</dt>
+                <dd>{textBehindEdge === null ? "unknown" : `${textBehindEdge.toFixed(1)} s`}</dd>
+                <dt>Playback mode</dt>
+                <dd>{mode === "synced" ? "synced to the transcript" : "live audio"}</dd>
+                <dt>hls.js errors</dt>
+                <dd>
+                    {audio.hlsErrorCount}
+                    {audio.lastHlsError && ` · last ${audio.lastHlsError.type} / ${audio.lastHlsError.details}`}
+                </dd>
+                <dt>WebSocket</dt>
+                <dd>
+                    {transcript.mode}
+                    {transcript.reconnecting ? " · reconnecting" : ""}
+                    {transcript.stalled ? " · stalled" : ""}
+                </dd>
+                <dt>Last contiguous seq</dt>
+                <dd>{transcript.state.lastSeq}</dd>
+                <dt>Pending gap</dt>
+                <dd>{transcript.state.gapRefetch === null ? "none" : `after seq ${transcript.state.gapRefetch.afterSeq}`}</dd>
+                <dt>Price ticks</dt>
+                <dd>
+                    {transcript.prices.ticks.length}
+                    {lastTick !== null && ` (last at ${formatWallTime(Date.parse(lastTick.at))} ET, ${lastTick.source})`}
+                </dd>
+                <dt>Minute rows</dt>
+                <dd>{priceRows}</dd>
+                <dt>Malformed frames</dt>
+                <dd>{transcript.malformedFrames}</dd>
+            </dl>
+        </details>
+    );
+}
+
+/** The live call's extras above the tabs; the audio controls are the player's, the transcript the Transcript tab's. */
+function LiveCallCard({ event, live }: { event: V2Event; live: LiveCall }) {
+    const { audio, callEnded, callT0, transcript } = live;
+
+    // The price line's backlog: the live minute rows (a 404 = none yet). Settled rows of the post-call run use another
+    // reference, so only live rows seed the line.
+    const minuteRows = useV2PriceAttribution(event.event_id, { live: isEarningsEventLiveish(event) }).data;
+
+    const priceSeed = minuteRows?.live ? minuteRows.buckets : [];
+
+    const { prices } = transcript;
+
+    const callMs = positionToCallMs(audio.position.playingDate, callT0);
+
+    const priceCursorMs = audio.started && audio.phase !== "ended" ? callMs : null;
+
+    return (
+        <Card size="sm">
+            <CardHeader>
+                <div className="flex flex-wrap items-center gap-2">
+                    <LiveDot />
+                    <CardTitle className="text-sm">{callEnded ? "Live call (ended)" : "Live call"}</CardTitle>
+                </div>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+                {transcript.rescheduledTo !== null && (
+                    <p className="text-sm" role="status">
+                        This call was rescheduled to
+                        {" "}
+                        {formatInstant(transcript.rescheduledTo)}
+                        .
+                        {" "}
+                        <Link className="text-primary underline-offset-4 hover:underline" params={{ ticker: event.symbol }} to="/$ticker/earnings-calls">
+                            All calls of
+                            {" "}
+                            {event.symbol}
+                        </Link>
+                    </p>
+                )}
+
+                {callEnded && transcript.rescheduledTo === null && (
+                    <p className="bg-muted rounded-md p-3 text-sm" role="status">
+                        {event.has_transcript
+                            ? "Call ended — the final transcript is in the Transcript tab."
+                            : "Call ended — final transcript in progress; the live one stays in the Transcript tab."}
+                    </p>
+                )}
+
+                <LiveHighlights live={live} />
+
+                <section aria-label="Live price" className="flex flex-col gap-2">
+                    <h3 className="text-xs font-semibold">Price</h3>
+                    {prices.ticks.length > 0 || priceSeed.length > 0
+                        ? <LivePriceChart buckets={priceSeed} callT0={callT0} cursorMs={priceCursorMs} prices={prices} />
+                        : <p className="text-muted-foreground text-sm">No price ticks yet.</p>}
+                </section>
+
+                <Diagnostics live={live} priceRows={priceSeed.length} />
+            </CardContent>
+        </Card>
+    );
+}
 
 /**
- * The live player's place on the call page, above the tabs: `LivePlayer` while the call is
- * capturing (`capture_status`) or listed by `/v1/events?status=live` (asked only for a call that may be live).
- * Once shown it stays for the page's life, so after the end its "final transcript in progress"
- * note remains while the event refetch (every 30 s) waits for `has_transcript`. Keyed by event:
- * a navigation always builds fresh hls.js / WebSocket instances.
+ * The live call's place on the call page, above the tabs (O4: notices, "Live highlights", the price chart and the
+ * diagnostics; the audio controls moved into the player bar, the transcript into the Transcript tab). Shown while the
+ * page follows the call live (`useCallLiveSession`: capturing or in `/v1/events?status=live`; sticky for the page's
+ * life, so the ended note stays). No stored key → "Enter your API key to follow this call live".
  */
-export function LivePlayerSlot({ event }: { event: V2Event }) {
-    const apiKey = useApiKeyStore(s => s.apiKey);
+export function LivePlayerSlot({ event, session }: { event: V2Event; session: CallLiveSession }) {
+    const live = useLiveCall();
 
-    const apiKeyUpdatedAt = useApiKeyStore(s => s.apiKeyUpdatedAt);
+    const apiKey = useApiKeyStore(s => s.apiKey);
 
     const hasHydrated = useApiKeyStore(s => s.hasHydrated);
 
-    const { data: live } = useV2LiveEvents(isEarningsEventLiveish(event));
-
-    const listed = live?.data.find(item => item.event_id === event.event_id);
-
-    // Sticky: the call leaves the live list (and `capturing`) when it ends; the player stays.
-    const [shown, setShown] = React.useState(false);
-
-    if (!shown && (event.capture_status === "capturing" || listed !== undefined)) setShown(true);
-
-    if (!shown || !hasHydrated) return null;
+    if (!session.sawLive || !hasHydrated) return null;
 
     if (apiKey === null) {
         return (
@@ -41,15 +257,5 @@ export function LivePlayerSlot({ event }: { event: V2Event }) {
         );
     }
 
-    return (
-        <LivePlayer
-            apiKey={apiKey}
-            apiKeyUpdatedAt={apiKeyUpdatedAt}
-            event={event}
-            key={event.event_id}
-            // v2's Event has no `live_audio` flag: the player asks `/live-audio`, whose `disabled` status is the
-            // "no live audio" state.
-            liveAudio
-        />
-    );
+    return live === null ? null : <LiveCallCard event={event} live={live} />;
 }

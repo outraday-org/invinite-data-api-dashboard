@@ -13,7 +13,18 @@ import type { PlayerDetail, PlayerDownload } from "./player-controls";
 import type { PlayerMarker } from "./seek-bar";
 
 import { MediaState } from "../media-state";
-import { DownloadButton, FollowButton, MoreMenu, PlayPauseButton, SkipButtons, SpeedButtons, VolumeControl } from "./player-controls";
+import {
+    BehindLiveButton,
+    DownloadButton,
+    FollowButton,
+    LivePill,
+    MoreMenu,
+    PlayPauseButton,
+    SkipButtons,
+    SpeedButtons,
+    TuneInButtons,
+    VolumeControl,
+} from "./player-controls";
 import { PlayerTime, SeekBar } from "./seek-bar";
 
 /**
@@ -121,7 +132,11 @@ function useStuck(ref: React.RefObject<HTMLElement | null>) {
  * THE call player (owner 2026-11-21): one bar above the tabs of every call, sticky below the pinned ticker header,
  * thinner once pinned. It renders from `engine.state` and `engine.capabilities` only — it never knows whether a file
  * or a live stream plays (`usePlayer()`); what is specific to the media comes in as props (`caption`, `details`,
- * `download`, `markers`). Before the media is asked for, a Play button asks for it (never on page load).
+ * `download`, `markers`, and for a live call `notice`, `status`, `menu`). Before the media is asked for, a Play button
+ * asks for it (never on page load); a live engine (`jumpToLive`) offers "Tune in" / "From the beginning" instead.
+ *
+ * Live states (O4): `live-edge` = the `LIVE` pill (`LIVE · synced`) where the time stands; `live-behind` = `−MM:SS`
+ * behind live (a click = back to live) and ±15 s. A live engine has no `rate` capability: no speed buttons.
  */
 export function CallPlayer({
     caption,
@@ -130,6 +145,9 @@ export function CallPlayer({
     detailsTitle = "Recording",
     download = null,
     markers = [],
+    menu,
+    notice,
+    status,
 }: {
     /** The caption line under the controls (stays in the compact layout). */
     caption?: React.ReactNode;
@@ -140,6 +158,12 @@ export function CallPlayer({
     detailsTitle?: string;
     download?: null | PlayerDownload;
     markers?: ReadonlyArray<PlayerMarker>;
+    /** More `⋯` menu content (the live call's playback mode). */
+    menu?: React.ReactNode;
+    /** A line in place of the controls (a live stream not playable yet, a call that ended). */
+    notice?: React.ReactNode;
+    /** Status pills beside the controls (buffering, waiting for the transcript, reconnecting …). */
+    status?: React.ReactNode;
 }) {
     const { engine, follow, setFollow } = usePlayer();
 
@@ -162,10 +186,26 @@ export function CallPlayer({
         if (stored !== null && stored !== engine.rate) engine.setRate(stored);
     });
 
+    const live = engine.jumpToLive !== undefined;
+
     let body: React.ReactNode;
 
-    if (engine.state === "error") {
-        body = <div className="grow"><MediaState error={engine.error} title="Failed to load the recording" /></div>;
+    if (notice) {
+        body = <div className="text-muted-foreground grow" role="status">{notice}</div>;
+    }
+    else if (engine.state === "error") {
+        body = <div className="grow"><MediaState error={engine.error} title={live ? "Live audio unavailable" : "Failed to load the recording"} /></div>;
+    }
+    else if (engine.state === "idle" && engine.jumpToLive) {
+        const { jumpToLive } = engine;
+
+        // The playback mode is chosen before tuning in too.
+        body = (
+            <>
+                <TuneInButtons onFromStart={() => engine.seekMs(0)} onTuneIn={jumpToLive} />
+                {menu && <MoreMenu details={details} note={detailsNote} title={detailsTitle}>{menu}</MoreMenu>}
+            </>
+        );
     }
     else if (engine.state === "idle") {
         body = (
@@ -179,7 +219,7 @@ export function CallPlayer({
         body = (
             <span className="text-muted-foreground inline-flex items-center gap-1.5">
                 <Loader2 className="size-3 animate-spin" />
-                Loading the recording…
+                {live ? "Tuning in…" : "Loading the recording…"}
             </span>
         );
     }
@@ -187,15 +227,18 @@ export function CallPlayer({
         body = (
             <>
                 <PlayPauseButton engine={engine} />
-                <PlayerTime engine={engine} />
+                {engine.state === "live-edge" && <LivePill synced={engine.synced === true} />}
+                {engine.state === "live-behind" && engine.jumpToLive && <BehindLiveButton behindMs={engine.behindMs} onJumpToLive={engine.jumpToLive} />}
+                {engine.state !== "live-edge" && engine.state !== "live-behind" && <PlayerTime engine={engine} />}
                 <SeekBar className="order-last basis-full sm:order-none sm:basis-auto" engine={engine} markers={markers} />
                 <div className="flex flex-wrap items-center gap-1">
-                    {engine.capabilities.skip && <SkipButtons engine={engine} />}
+                    {/* At the edge there is nothing ahead: ±15 s only once behind (J / L still move back). */}
+                    {engine.capabilities.skip && engine.state !== "live-edge" && <SkipButtons engine={engine} />}
                     {engine.capabilities.rate && <SpeedButtons compact={compact} engine={engine} />}
                     <VolumeControl compact={compact} engine={engine} />
                     <FollowButton follow={follow} onFollowChange={setFollow} />
                     {engine.capabilities.download && download && <DownloadButton download={download} />}
-                    {details.length > 0 && <MoreMenu details={details} note={detailsNote} title={detailsTitle} />}
+                    {(details.length > 0 || menu) && <MoreMenu details={details} note={detailsNote} title={detailsTitle}>{menu}</MoreMenu>}
                 </div>
             </>
         );
@@ -213,7 +256,10 @@ export function CallPlayer({
             ref={barRef}
             role="region"
         >
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">{body}</div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                {body}
+                {status}
+            </div>
             {engineHasMedia(engine.state) && caption}
         </div>
     );

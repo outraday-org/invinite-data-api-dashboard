@@ -1,7 +1,8 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 
-import type { EarningsServerFrame, UnsubscribeReason } from "./ws-frames";
+import type { EarningsServerFrame, KeywordWatch, UnsubscribeReason } from "./ws-frames";
 
+import { INITIAL_LIVE_HIGHLIGHTS, liveHighlightsReducer } from "./live-highlights";
 import { INITIAL_LIVE_PRICES, livePricesReducer } from "./live-prices-reducer";
 import { INITIAL_LIVE_TRANSCRIPT, liveTranscriptReducer } from "./live-transcript-reducer";
 import {
@@ -49,6 +50,11 @@ import {
  * `ping` frame as `bad_message`). 60 s without any frame while subscribed → `stalled` (a pill,
  * not a reconnect: a quiet stretch of a call sends nothing). A `price_tick` never re-arms the
  * stall timer: a tick a second would hide a transcript that stopped.
+ *
+ * HIGHLIGHTS (O4). `watch` (the page's "Watch for keywords") goes into the subscribe as `keywords` /
+ * `keyword_match`; a changed watch list re-subscribes on the SAME socket (unsubscribe, then subscribe from `lastSeq`:
+ * nothing is replayed twice, no reconnect). `keyword_hit` and `guidance_flash` → `liveHighlightsReducer`, returned as
+ * `highlights`; a `warning` frame (the subscription is degraded, still running) → `warning`, a pill in the player.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
@@ -102,9 +108,13 @@ type UseLiveTranscriptInput = {
     /** The API base URL (`useApiBaseUrl`); `null` while unknown. */
     baseUrl: null | string;
     eventId: string;
+    /** Keywords to be told about (`keyword_hit`); a change re-subscribes on the open socket. */
+    watch?: KeywordWatch;
 };
 
-export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }: UseLiveTranscriptInput) {
+const NO_WATCH: KeywordWatch = { keywords: [], match: "exact" };
+
+export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId, watch = NO_WATCH }: UseLiveTranscriptInput) {
     const [state, dispatch] = useReducer(liveTranscriptReducer, INITIAL_LIVE_TRANSCRIPT);
 
     const [prices, dispatchPrice] = useReducer(livePricesReducer, INITIAL_LIVE_PRICES);
@@ -124,6 +134,29 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }:
     const [malformedFrames, setMalformedFrames] = useState(0);
 
     const [provisionalVersion, setProvisionalVersion] = useState<null | number>(null);
+
+    const [highlights, dispatchHighlight] = useReducer(liveHighlightsReducer, INITIAL_LIVE_HIGHLIGHTS);
+
+    const [warning, setWarning] = useState<null | string>(null);
+
+    // The socket callbacks read the newest watch list; `resubscribeRef` sends it on the open socket.
+    const watchRef = useRef(watch);
+
+    const resubscribeRef = useRef<() => void>(() => undefined);
+
+    const watchKey = `${watch.match}:${watch.keywords.join("\u0000")}`;
+
+    const watchKeyRef = useRef(watchKey);
+
+    useEffect(() => {
+        watchRef.current = watch;
+
+        if (watchKeyRef.current === watchKey) return;
+
+        watchKeyRef.current = watchKey;
+
+        resubscribeRef.current();
+    }, [watch, watchKey]);
 
     // The socket callbacks read the newest contiguous seq for `since_seq`.
     const lastSeqRef = useRef(state.lastSeq);
@@ -174,7 +207,18 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }:
             if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(frame));
         };
 
-        const subscribe = () => send(subscribeFrame(eventId, lastSeqRef.current, true));
+        const subscribe = () => send(subscribeFrame(eventId, lastSeqRef.current, true, watchRef.current));
+
+        // A new watch list: the old subscription goes (its `unsubscribed` is `requested`, ignored), a new one starts.
+        resubscribeRef.current = () => {
+            if (socket?.readyState !== WebSocket.OPEN || finished) return;
+
+            if (subscriptionId !== null) send(unsubscribeFrame(subscriptionId));
+
+            subscriptionId = null;
+
+            subscribe();
+        };
 
         const armStall = () => {
             clearTimeout(stallTimer);
@@ -281,6 +325,18 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }:
                     break;
                 }
 
+                case "guidance_flash": {
+                    dispatchHighlight({ frame, kind: "guidance_flash" });
+
+                    break;
+                }
+
+                case "keyword_hit": {
+                    dispatchHighlight({ frame, kind: "keyword_hit" });
+
+                    break;
+                }
+
                 case "price_tick": {
                     dispatchPrice({ kind: "tick", tick: toPriceTick(frame) });
 
@@ -346,6 +402,12 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }:
                     setNotice(unsubscribedText(frame.reason));
 
                     finish("ended");
+
+                    break;
+                }
+
+                case "warning": {
+                    setWarning(frame.message);
 
                     break;
                 }
@@ -419,6 +481,8 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }:
         return () => {
             disposed = true;
 
+            resubscribeRef.current = () => undefined;
+
             clearTimers();
 
             closeSocket();
@@ -427,6 +491,7 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }:
 
     return {
         error,
+        highlights,
         malformedFrames,
         mode,
         notice,
@@ -436,5 +501,6 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId }:
         rescheduledTo,
         stalled,
         state,
+        warning,
     };
 }

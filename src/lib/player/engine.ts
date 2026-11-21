@@ -1,7 +1,7 @@
 /**
  * The call player's engine contract (backend `tasks/data-api-dashboard` O2). `CallPlayer` renders its controls from
  * `state` and `capabilities` only; an engine owns the media element and its source. The file engine
- * (`file-engine.ts`) plays a finished recording; the HLS engine (O4) a live call.
+ * (`file-engine.ts`) plays a finished recording; the HLS engine (`hls-engine.ts`, O4) a live call.
  */
 export type PlayerState = "ended" | "error" | "idle" | "live-behind" | "live-edge" | "loading" | "recording";
 
@@ -37,8 +37,10 @@ export type PlayerEngine = {
     skip: (seconds: number) => void;
     setRate: (rate: number) => void;
     setVolume: (volume: number, muted: boolean) => void;
-    /** Live only: back to the edge. */
+    /** Live only: back to the edge (before "Tune in": tune in at the edge). */
     jumpToLive?: () => void;
+    /** Live only: the audio is held to the transcript ("Synced"): the pill reads `LIVE · synced`. */
+    synced?: boolean;
     error: unknown;
 };
 

@@ -4,6 +4,7 @@ import type { TimedWord, TurnPlaybackState } from "@/lib/earnings/follow-along";
 
 import { SpeakerAvatar } from "@/components/earnings/speaker-avatar";
 import { speakerName } from "@/lib/earnings/transcript";
+import { splitByKeywords } from "@/lib/live/live-highlights";
 import { usePlayer } from "@/lib/player/player-context";
 import { FOLLOW_SCROLL_MARGIN_CLASS } from "@/lib/player/use-follow-scroll";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,10 @@ export type TurnBlockProps = {
     badge?: React.ReactNode;
     /** Position in its list: `data-follow-index`, what the player's Follow scrolls to. */
     index: number;
+    /** A live turn's unfinished tail (a partial segment), in italics after `text`. */
+    partialText?: null | string;
+    /** Words marked in the text (a live call's keyword hits); plain text only. Keep the array stable (memo). */
+    marks?: ReadonlyArray<string>;
 };
 
 function SpeakerChip({ speaker }: { speaker: TurnSpeaker }) {
@@ -119,11 +124,22 @@ function TurnWords({ activeWord, canSeek, state, words }: { activeWord: number; 
  * and everything after the playhead is faded; paused (`idle`) nothing is faded. A word click plays from that word.
  * Memoised: only the turns whose state or active word changes re-render (the active one at word rate).
  */
+/** Plain text with its keyword marks (`<mark>`). */
+function MarkedText({ marks, text }: { marks: ReadonlyArray<string>; text: string }) {
+    return splitByKeywords(text, marks).map((piece, at) => (piece.marked
+    // Pieces of one text: their order is stable.
+
+        ? <mark className="bg-primary/15 text-foreground rounded-sm px-0.5" data-keyword-mark key={at}>{piece.text}</mark>
+        : piece.text));
+}
+
 export const TurnBlock = React.memo(function TurnBlock({
     activeWord,
     badge,
     coSpeakers,
     index,
+    marks,
+    partialText,
     speaker,
     startMs,
     state,
@@ -155,7 +171,17 @@ export const TurnBlock = React.memo(function TurnBlock({
         >
             <TurnHeader badge={badge} coSpeakers={coSpeakers} speaker={speaker} startMs={startMs} />
             {words === null
-                ? <p className={cn("whitespace-pre-wrap", WORD_CLASSES[state])}>{text}</p>
+                ? (
+                        <p className={cn("whitespace-pre-wrap", WORD_CLASSES[state])}>
+                            {marks && marks.length > 0 ? <MarkedText marks={marks} text={text} /> : text}
+                            {partialText && (
+                                <span className="text-muted-foreground italic">
+                                    {text.length > 0 ? " " : ""}
+                                    {partialText}
+                                </span>
+                            )}
+                        </p>
+                    )
                 : (
                         // A word click seeks there; the ▷ timestamp is the keyboard path to the same turn.
                         // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions

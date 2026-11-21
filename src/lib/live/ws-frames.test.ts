@@ -37,6 +37,44 @@ const FRAMES: Record<string, Record<string, unknown>> = {
     call_started: { ...SUB, at: "2026-10-09T21:00:00.000Z", type: "call_started" },
     error: { code: "forbidden_tier", message: "Live earnings-call transcripts require the PRO plan", type: "error" },
     gap: { ...SUB, after_seq: 41, next_seq: 1042, type: "gap" },
+    // O4: the frames the stream sent all along and the page ignored (fields from `openapi.json`).
+    guidance_flash: {
+        ...SUB,
+        cik: "0000320193",
+        conference_date: "2026-10-09T21:00:00.000Z",
+        currency: "USD",
+        high: 96_000_000_000,
+        low: 94_000_000_000,
+        metric: "revenue",
+        metric_normalized: "revenue",
+        period_label: "Q4 FY2026",
+        point: null,
+        revision: 1,
+        seq: 88,
+        source_sentence: "We expect revenue between 94 and 96 billion dollars.",
+        start_ms: 1_220_000,
+        symbol: "AAPL",
+        type: "guidance_flash",
+        unit: "USD",
+    },
+    keyword_hit: {
+        ...SUB,
+        cik: "0000320193",
+        conference_date: "2026-10-09T21:00:00.000Z",
+        context_before: "Turning to margins.",
+        end_ms: 640_000,
+        keyword: "tariffs",
+        latency_ms: 8_400,
+        layer: "live",
+        seq: 41,
+        speaker_label: "spk0",
+        speaker_name: "Jane Doe",
+        speaker_role: "executive",
+        start_ms: 636_000,
+        symbol: "AAPL",
+        text: "Tariffs cost us about 80 basis points.",
+        type: "keyword_hit",
+    },
     price_tick: {
         ...SUB,
         at: "2026-10-09T21:05:12.000Z",
@@ -81,6 +119,7 @@ const FRAMES: Record<string, Record<string, unknown>> = {
         type: "transcript_segment",
     },
     unsubscribed: { reason: "transcript_ready", subscription_id: SUB.subscription_id, type: "unsubscribed" },
+    warning: { code: "global_scope_degraded", message: "Cap reached", subscription_id: SUB.subscription_id, type: "warning" },
 };
 
 describe("parseServerFrame", () => {
@@ -108,6 +147,18 @@ describe("parseServerFrame", () => {
         expect(parseServerFrame(JSON.stringify({ filing: {}, type: "new_filing" })).kind).toBe("other");
 
         expect(parseServerFrame(JSON.stringify({ type: "ping" })).kind).toBe("other");
+    });
+
+    it("a keyword hit of the final layer has no seq; a hit without its fields is malformed, never thrown on", () => {
+        const final = parseServerFrame(JSON.stringify({ ...FRAMES.keyword_hit, end_ms: null, latency_ms: null, layer: "final", seq: null }));
+
+        expect(final.kind === "frame" && final.frame.type === "keyword_hit" && final.frame.layer).toBe("final");
+
+        expect(parseServerFrame(JSON.stringify({ ...SUB, keyword: "x", type: "keyword_hit" })).kind).toBe("malformed");
+
+        expect(parseServerFrame(JSON.stringify({ code: "new_code", message: "m", subscription_id: "s", type: "warning" })).kind).toBe("frame");
+
+        expect(parseServerFrame(JSON.stringify({ type: "replay_truncated" })).kind).toBe("other");
     });
 
     it("rejects malformed frames", () => {
@@ -220,6 +271,15 @@ describe("client frames and the socket URL", () => {
         expect(subscribeFrame("e1", -5).since_seq).toBe(-1);
 
         expect(subscribeFrame("e1", -1, true).prices).toBe(true);
+    });
+
+    it("adds a watch list as keywords + keyword_match; an empty one sends neither", () => {
+        expect(subscribeFrame("e1", 3, true, { keywords: ["tariffs", "buyback"], match: "stem" })).toMatchObject({
+            keyword_match: "stem",
+            keywords: ["tariffs", "buyback"],
+        });
+
+        expect(subscribeFrame("e1", 3, true, { keywords: [], match: "exact" })).not.toHaveProperty("keywords");
     });
 
     it("builds the unsubscribe frame", () => {

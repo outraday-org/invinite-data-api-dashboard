@@ -174,6 +174,71 @@ export const errorFrameSchema = z.object({
     type: z.literal("error"),
 });
 
+/** Where a keyword hit was found: a live final, or the final transcript at `transcript_ready` (once per subscription). */
+export const KEYWORD_HIT_LAYERS = ["live", "final"] as const;
+
+/**
+ * `keyword_hit` (O4; `WebSocketKeywordHitEvent`): a watched keyword (`subscribe.keywords`) in a FINAL segment (`layer`
+ * `live`, `start_ms` from `call_t0`) or in the final transcript (`final`, `start_ms` from the recording's start).
+ */
+export const keywordHitFrameSchema = z.object({
+    ...subscriptionFields,
+    cik: z.string(),
+    conference_date: z.string(),
+    context_before: z.string().nullable(),
+    end_ms: z.number().nullable(),
+    keyword: z.string(),
+    latency_ms: z.number().nullable(),
+    layer: z.enum(KEYWORD_HIT_LAYERS),
+    seq: z.number().int().nullable(),
+    speaker_label: z.string().nullable(),
+    speaker_name: z.string().nullable(),
+    speaker_role: z.string().nullable(),
+    start_ms: z.number().nullable(),
+    symbol: z.string(),
+    text: z.string(),
+    type: z.literal("keyword_hit"),
+});
+
+/**
+ * `guidance_flash` (O4; `WebSocketGuidanceFlashEvent`): a forward-looking number seconds after it was spoken, one per
+ * metric / period; a restatement repeats it with a higher `revision`. Provisional (`/v1/guidance` replaces it later).
+ */
+export const guidanceFlashFrameSchema = z.object({
+    ...subscriptionFields,
+    cik: z.string(),
+    conference_date: z.string(),
+    currency: z.string().nullable(),
+    high: z.number().nullable(),
+    low: z.number().nullable(),
+    metric: z.string(),
+    metric_normalized: z.string(),
+    period_label: z.string(),
+    point: z.number().nullable(),
+    revision: z.number().int(),
+    seq: z.number().int(),
+    source_sentence: z.string(),
+    start_ms: z.number(),
+    symbol: z.string(),
+    type: z.literal("guidance_flash"),
+    unit: z.string().nullable(),
+});
+
+/** `warning` (O4; `WebSocketWarningEvent`): the subscription is degraded but keeps running. A code it does not know is still a warning. */
+export const warningFrameSchema = z.object({
+    code: z.string(),
+    message: z.string(),
+    subscription_id: z.string(),
+    type: z.literal("warning"),
+});
+
+export type KeywordHitFrame = z.infer<typeof keywordHitFrameSchema>;
+
+export type GuidanceFlashFrame = z.infer<typeof guidanceFlashFrameSchema>;
+
+/** The watch list of a subscription (`keywords`, `keyword_match`); empty = none sent. */
+export type KeywordWatch = { keywords: ReadonlyArray<string>; match: "exact" | "stem" };
+
 export const earningsServerFrameSchema = z.discriminatedUnion("type", [
     subscribedFrameSchema,
     transcriptSegmentFrameSchema,
@@ -187,6 +252,9 @@ export const earningsServerFrameSchema = z.discriminatedUnion("type", [
     unsubscribedFrameSchema,
     priceTickFrameSchema,
     errorFrameSchema,
+    keywordHitFrameSchema,
+    guidanceFlashFrameSchema,
+    warningFrameSchema,
 ]);
 
 export type EarningsServerFrame = z.infer<typeof earningsServerFrameSchema>;
@@ -294,9 +362,9 @@ export function toPriceTick(frame: PriceTickFrame): LivePriceTick {
 /**
  * The subscribe frame. `since_seq` = the last contiguous final held (`-1` = replay every
  * final of the call); `partials: true` for the greyed tail; `prices: true` adds the call's
- * `price_tick` frames (an API without the option strips the key).
+ * `price_tick` frames (an API without the option strips the key); `watch` adds `keywords` / `keyword_match`.
  */
-export function subscribeFrame(eventId: string, sinceSeq: number, prices = false) {
+export function subscribeFrame(eventId: string, sinceSeq: number, prices = false, watch?: KeywordWatch) {
     return {
         channel: EARNINGS_LIVE_CHANNEL,
         event_id: eventId,
@@ -304,6 +372,8 @@ export function subscribeFrame(eventId: string, sinceSeq: number, prices = false
         prices,
         since_seq: Math.max(-1, sinceSeq),
         type: "subscribe",
+        // A watch list (O4): a `keyword_hit` per final holding one of them. None = the key is left out.
+        ...(watch && watch.keywords.length > 0 ? { keyword_match: watch.match, keywords: [...watch.keywords] } : {}),
     } as const;
 }
 

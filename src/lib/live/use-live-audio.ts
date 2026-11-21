@@ -161,7 +161,7 @@ export type UseLiveAudioInput = {
 };
 
 export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stream }: UseLiveAudioInput) {
-    /** The always-mounted `<audio>` (`LivePlayer`); a ref, so effects may drive it. */
+    /** The always-mounted `<audio>` (`CallAudioProvider`); a ref, so effects may drive it. */
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const hlsRef = useRef<HlsType | null>(null);
@@ -808,6 +808,36 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
         seekToCallMs(callMs);
     };
 
+    /**
+     * The call's recording took over (the call player's live → recording switch, O4): hls.js goes, the element is
+     * paused and emptied, a lazy hls.js still loading stays unused. Nothing restarts it but `start`.
+     */
+    const stop = () => {
+        startIdRef.current += 1;
+
+        hlsRef.current?.destroy();
+
+        hlsRef.current = null;
+
+        heldAtBoundaryRef.current = false;
+
+        pausedByUserRef.current = true;
+
+        const media = audioRef.current;
+
+        if (media !== null) {
+            media.pause();
+
+            media.removeAttribute("src");
+        }
+
+        setStarted(false);
+
+        setIsPlaying(false);
+
+        setPhase("ended");
+    };
+
     const togglePlay = () => {
         const media = audioRef.current;
 
@@ -852,6 +882,7 @@ export function useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stre
         stallSince: stalledSince,
         start,
         started,
+        stop,
         togglePlay,
         waitingForText: syncAction === "wait" && isPlaying,
     };

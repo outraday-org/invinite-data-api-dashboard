@@ -9,6 +9,12 @@ import type { PlayerEngine } from "./engine";
 import { engineHasMedia } from "./engine";
 
 /**
+ * A live engine's call clock (O4): media ms + `offsetMs` = call ms (the live transcript's `start_ms`), and the
+ * listener's play state (a sync hold pauses the element, not the listener: the text stays highlighted meanwhile).
+ */
+export type PlayerClock = { offsetMs: number; playing: boolean };
+
+/**
  * What the call page's player context carries: the engine's slow fields and actions, never the per-frame position
  * (`usePlayerPosition()` subscribes each reader on its own, so the page is not re-rendered at frame rate).
  */
@@ -24,6 +30,8 @@ export type CallPlayerValue = {
     setFollow: (on: boolean) => void;
     /** The engine's media element: the per-frame position source of `usePlayerPosition()`. */
     mediaRef: React.RefObject<HTMLMediaElement | null>;
+    /** The call clock when it is not the media clock (a live stream); absent = the media clock is the call clock. */
+    clock?: PlayerClock;
 };
 
 const CallPlayerContext = React.createContext<CallPlayerValue | null>(null);
@@ -32,17 +40,23 @@ const CallPlayerContext = React.createContext<CallPlayerValue | null>(null);
 export function CallPlayerProvider({
     canSeek,
     children,
+    clock,
     engine,
     mediaRef,
 }: {
     canSeek: boolean;
     children: React.ReactNode;
+    clock?: PlayerClock;
     engine: PlayerEngine;
     mediaRef: React.RefObject<HTMLMediaElement | null>;
 }) {
     const [follow, setFollow] = React.useState(true);
 
-    const value: CallPlayerValue = { canSeek, engine, follow, mediaRef, setFollow };
+    // Memoised: a provider re-rendered by a media hook (the live one, on every `timeupdate`) re-renders no reader.
+    const value = React.useMemo<CallPlayerValue>(
+        () => ({ canSeek, clock, engine, follow, mediaRef, setFollow }),
+        [canSeek, clock, engine, follow, mediaRef],
+    );
 
     return <CallPlayerContext value={value}>{children}</CallPlayerContext>;
 }
@@ -57,10 +71,20 @@ export function usePlayer(): CallPlayerValue {
 
 /**
  * The play state and position (call clock), read per frame while playing. Each consumer (the seek bar, the caption
- * line, the transcript highlight, the slide timeline) subscribes itself. Idle until the engine has media.
+ * line, the transcript highlight, the slide timeline) subscribes itself. Idle until the engine has media. A live
+ * engine's `clock` maps the media clock to the call clock (position, buffered end, duration) and gives the play state.
  */
 export function usePlayerPosition(): PlaybackPosition {
-    const { engine, mediaRef } = usePlayer();
+    const { clock, engine, mediaRef } = usePlayer();
 
-    return usePlaybackPosition(mediaRef, engineHasMedia(engine.state));
+    const media = usePlaybackPosition(mediaRef, engineHasMedia(engine.state));
+
+    if (!clock || !engineHasMedia(engine.state)) return media;
+
+    return {
+        bufferedMs: media.bufferedMs > 0 ? media.bufferedMs + clock.offsetMs : 0,
+        durationMs: media.durationMs === null ? null : media.durationMs + clock.offsetMs,
+        playing: clock.playing,
+        positionMs: Math.max(0, media.positionMs + clock.offsetMs),
+    };
 }

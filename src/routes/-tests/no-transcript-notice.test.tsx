@@ -9,7 +9,9 @@ import { CallTabs } from "@/routes/$ticker/earnings-calls/-components/call-tabs"
 import { MediaState, NO_TRANSCRIPT_TITLE, NoTranscriptNotice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
 // Every tab is a stub: a mounted tab would send its request, so a rendered stub = a request.
-const { tabStub } = vi.hoisted(() => ({
+const { live, tabStub } = vi.hoisted(() => ({
+    // The live session the tabs see (`useLiveCall`): null = not a live call.
+    live: { call: null as null | object },
     tabStub: (name: string) => () => <div data-testid={`tab-${name}`} />,
 }));
 
@@ -33,7 +35,15 @@ vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/slides-tab", () => ({ 
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/transcript-tab", () => ({ TranscriptTab: tabStub("transcript") }));
 
-afterEach(cleanup);
+vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({ useLiveCall: () => live.call }));
+
+vi.mock("@/routes/$ticker/earnings-calls/-components/live/live-transcript-view", () => ({ LiveTranscript: tabStub("live-transcript") }));
+
+afterEach(() => {
+    cleanup();
+
+    live.call = null;
+});
 
 const DERIVED_TABS = ["guidance", "qa", "participants", "metrics", "prosody"] as const;
 
@@ -51,7 +61,7 @@ function eventOf(overrides: Partial<V2Event>): V2Event {
     } as V2Event;
 }
 
-function renderTab(event: V2Event, tab: "price-moves" | (typeof DERIVED_TABS)[number]) {
+function renderTab(event: V2Event, tab: "price-moves" | "transcript" | (typeof DERIVED_TABS)[number]) {
     return render(
         <CallTabs
             event={event}
@@ -146,5 +156,27 @@ describe("MediaState (v2 problems)", () => {
         rerender(<MediaState error={new ApiRequestError(403, { error: "plan_required", message: "PRO" })} title="Failed" />);
 
         expect(screen.getByText("PRO plan required")).toBeInTheDocument();
+    });
+});
+
+describe("CallTabs on a live call (O4)", () => {
+    it("the Transcript tab is the live transcript until has_transcript, then the final one", () => {
+        live.call = {};
+
+        const view = renderTab(eventOf({ capture_status: "capturing" }), "transcript");
+
+        expect(screen.getByTestId("tab-live-transcript")).toBeInTheDocument();
+
+        expect(screen.queryByText(NO_TRANSCRIPT_TITLE)).toBeNull();
+
+        expect(screen.getByRole("tab", { name: "Transcript" }).className).not.toContain("text-muted-foreground/50");
+
+        view.unmount();
+
+        renderTab(eventOf({ has_transcript: true }), "transcript");
+
+        expect(screen.getByTestId("tab-transcript")).toBeInTheDocument();
+
+        expect(screen.queryByTestId("tab-live-transcript")).toBeNull();
     });
 });

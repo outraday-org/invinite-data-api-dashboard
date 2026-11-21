@@ -1,13 +1,19 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { V2Event } from "@/lib/api/types";
 
+import { INITIAL_LIVE_HIGHLIGHTS } from "@/lib/live/live-highlights";
 import { INITIAL_LIVE_TRANSCRIPT } from "@/lib/live/live-transcript-reducer";
-import { LIVE_WAITING_FOR_TEXT_TEXT } from "@/routes/$ticker/earnings-calls/-components/live/live-audio-section";
-import { LIVE_MODE_STORAGE_KEY, LivePlayer } from "@/routes/$ticker/earnings-calls/-components/live/live-player";
+import { LIVE_MODE_STORAGE_KEY } from "@/lib/player/live-mode";
+import { useApiKeyStore } from "@/lib/stores/api-key-store";
+import { CallAudioProvider } from "@/routes/$ticker/earnings-calls/-components/audio-context";
+import { LivePlayerSlot } from "@/routes/$ticker/earnings-calls/-components/live-player-slot";
+import { LiveTranscript } from "@/routes/$ticker/earnings-calls/-components/live/live-transcript-view";
+import { RECORDING_WAIT_MS, recordingWaitInterval } from "@/routes/$ticker/earnings-calls/-components/live/use-call-live-session";
+import { CallPlayerBar, LIVE_WAITING_FOR_TEXT_TEXT, RECORDING_PREPARING_TEXT } from "@/routes/$ticker/earnings-calls/-components/player/live-call-player";
 
 const T0 = "2026-10-31T14:00:00.000Z";
 
@@ -67,7 +73,13 @@ class FakeHls {
     }
 }
 
-const mocks = vi.hoisted(() => ({ stream: {} as Record<string, unknown>, transcript: {} as Record<string, unknown> }));
+const RECORDING = { bytes: 1, capture_path: "live", codec: "mp3", duration_seconds: 3_600, url: "https://storage.example.com/calls/evt.mp3" };
+
+const mocks = vi.hoisted(() => ({
+    audioIds: [] as Array<string>,
+    stream: {} as Record<string, unknown>,
+    transcript: {} as Record<string, unknown>,
+}));
 
 vi.mock("@/lib/live/live-clients", async importOriginal => ({
     ...await importOriginal<object>(),
@@ -77,8 +89,19 @@ vi.mock("@/lib/live/live-clients", async importOriginal => ({
 vi.mock("@/lib/api/queries", () => ({
     isEarningsEventLiveish: () => true,
     useApiBaseUrl: () => "https://api.example.com",
-    useV2LiveAudio: () => ({ data: mocks.stream, error: null, refetch: () => Promise.resolve({ data: mocks.stream, isError: false }) }),
+    useV2Audio: (eventId: string) => {
+        mocks.audioIds.push(eventId);
+
+        return { data: eventId ? RECORDING : undefined, error: null };
+    },
+    useV2LiveAudio: (eventId: string) => ({
+        data: eventId ? mocks.stream : undefined,
+        error: null,
+        refetch: () => Promise.resolve({ data: mocks.stream, isError: false }),
+    }),
+    useV2Participants: () => ({ data: undefined }),
     useV2PriceAttribution: () => ({ data: undefined }),
+    useV2Transcript: () => ({ data: undefined, error: null }),
 }));
 
 vi.mock("@/lib/live/use-live-transcript", () => ({ useLiveTranscript: () => mocks.transcript }));
@@ -87,15 +110,26 @@ vi.mock("@/routes/$ticker/earnings-calls/-components/live/live-price-chart", () 
 
 vi.mock("@tanstack/react-router", () => ({ Link: () => null }));
 
-const EVENT = { event_id: "evt", has_transcript: false, symbol: "AAPL" } as unknown as V2Event;
+const SESSION = { clock: { endedAtMs: null, sawLive: true }, ended: false, recordingWait: null, sawLive: true } as const;
 
-function segment(seq: number, startMs: number, text: string) {
-    return { endMs: startMs + 4_000, seq, speakerLabel: "spk00", startMs, text };
+function eventOf(flags: { hasAudio?: boolean; hasTranscript?: boolean } = {}) {
+    return { event_id: "evt", fiscal_quarter: 3, fiscal_year: 2026, has_audio: flags.hasAudio ?? false, has_transcript: flags.hasTranscript ?? false, symbol: "AAPL" } as unknown as V2Event;
 }
 
-function setTranscript(finals: ReadonlyArray<ReturnType<typeof segment>>, partials: ReadonlyArray<ReturnType<typeof segment>> = [], mode = "live") {
+function segment(seq: number, startMs: number, text: string, speakerLabel: null | string = "spk0") {
+    return { endMs: startMs + 4_000, seq, speakerLabel, startMs, text };
+}
+
+function setTranscript(
+    finals: ReadonlyArray<ReturnType<typeof segment>>,
+    partials: ReadonlyArray<ReturnType<typeof segment>> = [],
+    mode = "live",
+    extra: Record<string, unknown> = {},
+) {
     mocks.transcript = {
         error: null,
+        highlights: INITIAL_LIVE_HIGHLIGHTS,
+        malformedFrames: 0,
         mode,
         notice: null,
         prices: { last: null, ticks: [] },
@@ -104,20 +138,52 @@ function setTranscript(finals: ReadonlyArray<ReturnType<typeof segment>>, partia
         rescheduledTo: null,
         stalled: false,
         state: { ...INITIAL_LIVE_TRANSCRIPT, finals, partials },
+        warning: null,
+        ...extra,
     };
 }
 
-function player() {
-    return <LivePlayer apiKey="key" apiKeyUpdatedAt={1} event={EVENT} liveAudio />;
+function Page({ hasAudio = false, hasTranscript = false }: { hasAudio?: boolean; hasTranscript?: boolean }) {
+    const event = eventOf({ hasAudio, hasTranscript });
+
+    return (
+        <CallAudioProvider eventId="evt" hasAudio={hasAudio} live={SESSION}>
+            <LivePlayerSlot event={event} session={SESSION} />
+            <CallPlayerBar event={event} />
+            <LiveTranscript eventId="evt" />
+        </CallAudioProvider>
+    );
+}
+
+function liveElement() {
+    const element = document.querySelector<HTMLAudioElement>("audio[data-engine='live']");
+
+    if (element === null) throw new Error("no live <audio>");
+
+    return element;
+}
+
+function fileElement() {
+    const element = document.querySelector<HTMLAudioElement>("audio[data-engine='file']");
+
+    if (element === null) throw new Error("no file <audio>");
+
+    return element;
+}
+
+/** Opens the bar's `⋯` menu and picks a playback mode. */
+async function chooseMode(label: "as live as possible" | "synced to the transcript") {
+    // A radio item keeps the menu open: open it only once.
+    if (screen.queryByRole("menu") === null) fireEvent.click(screen.getByRole("button", { name: "Player details" }));
+
+    fireEvent.click(await screen.findByRole("menuitemradio", { name: label }));
 }
 
 /** Tune in on a fake hls.js: `paused` follows `play()` / `pause()`, `tick` stands in for playback. */
 async function tuneIn(from: "From the beginning" | "Tune in" = "Tune in") {
-    const view = render(player());
+    const view = render(<Page />);
 
-    const element = document.querySelector("audio");
-
-    if (element === null) throw new Error("no <audio>");
+    const element = liveElement();
 
     let mediaTime = 0;
 
@@ -175,10 +241,21 @@ async function tuneIn(from: "From the beginning" | "Tune in" = "Tune in") {
 beforeEach(() => {
     FakeHls.instances = [];
 
+    mocks.audioIds = [];
+
     // jsdom answers no ranges at all.
     Object.defineProperty(HTMLMediaElement.prototype, "seekable", { configurable: true, get: () => ({ length: 0 }) });
 
+    HTMLMediaElement.prototype.play = vi.fn(() => Promise.resolve());
+
+    HTMLMediaElement.prototype.pause = vi.fn();
+
+    // jsdom has no layout: Follow's scroll is a no-op here.
+    Element.prototype.scrollIntoView = vi.fn();
+
     window.localStorage.clear();
+
+    useApiKeyStore.setState({ apiKey: "key", apiKeyUpdatedAt: 1, hasHydrated: true });
 
     mocks.stream = { call_t0: T0, expires_at: null, status: "available", url: "https://live.example.com/playlist.m3u8" };
 
@@ -188,26 +265,89 @@ beforeEach(() => {
 afterEach(() => {
     cleanup();
 
+    vi.restoreAllMocks();
+
     vi.useRealTimers();
+});
+
+describe("the live call on CallPlayer", () => {
+    it("before tuning in: Tune in and From the beginning in the bar, no speed, no inner transcript box", () => {
+        setTranscript([segment(0, 6_000, "Opening remarks.")]);
+
+        render(<Page />);
+
+        const bar = screen.getByRole("region", { name: "Call player" });
+
+        expect(within(bar).getByRole("button", { name: "Tune in" })).toBeDefined();
+
+        expect(within(bar).getByRole("button", { name: "From the beginning" })).toBeDefined();
+
+        expect(within(bar).queryByRole("group", { name: "Speed" })).toBeNull();
+
+        // The turn layout of a recording: the ▷ timestamp, the text, no 60vh box of its own.
+        expect(screen.getByText("Opening remarks.")).toBeDefined();
+
+        expect(document.querySelector(".overflow-y-auto")).toBeNull();
+    });
+
+    it("at the edge: the LIVE pill (LIVE · synced in Synced mode), no speed, no ±15 s", async () => {
+        const { tick } = await tuneIn();
+
+        tick(88, 100, 88_000);
+
+        const bar = screen.getByRole("region", { name: "Call player" });
+
+        expect(within(bar).getByRole("status").textContent).toContain("LIVE · synced");
+
+        expect(within(bar).queryByRole("group", { name: "Speed" })).toBeNull();
+
+        expect(within(bar).queryByRole("button", { name: "Back 15 seconds" })).toBeNull();
+
+        expect(within(bar).getByRole("button", { name: "Pause" })).toBeDefined();
+    });
+
+    it("Live audio: the plain LIVE pill at the edge, −MM:SS behind it, a click back to live", async () => {
+        window.localStorage.setItem(LIVE_MODE_STORAGE_KEY, "live");
+
+        const { mediaTime, tick } = await tuneIn("From the beginning");
+
+        tick(5, 500, 5_000);
+
+        const behind = await screen.findByRole("button", { name: "8 minutes 15 seconds behind live, back to live" });
+
+        expect(behind.textContent).toBe("−08:15");
+
+        expect(screen.getByRole("button", { name: "Back 15 seconds" })).toBeDefined();
+
+        fireEvent.click(behind);
+
+        expect(mediaTime()).toBe(500);
+
+        tick(500, 500, 500_000);
+
+        expect(within(screen.getByRole("region", { name: "Call player" })).getByRole("status").textContent).toBe("LIVE");
+    });
 });
 
 describe("the sync modes", () => {
     it("defaults to Synced: 12 s behind the edge, no hls.js jump of its own", async () => {
         const { hls } = await tuneIn();
 
-        expect(screen.getByRole("button", { name: "Synced" }).getAttribute("aria-pressed")).toBe("true");
-
         expect(hls.config).toMatchObject({ liveSyncDuration: 12, lowLatencyMode: false, startPosition: -1 });
 
         expect(hls.config.liveSyncDurationCount).toBeUndefined();
+
+        fireEvent.click(screen.getByRole("button", { name: "Player details" }));
+
+        expect((await screen.findByRole("menuitemradio", { name: "synced to the transcript" })).getAttribute("aria-checked")).toBe("true");
     });
 
-    it("the toggle persists; a switch to Live audio goes to the edge, a switch to Synced never seeks", async () => {
+    it("the menu's choice persists; a switch to Live audio goes to the edge, a switch to Synced never seeks", async () => {
         const { hls, mediaTime, tick } = await tuneIn();
 
         tick(80, 100, 80_000);
 
-        fireEvent.click(screen.getByRole("button", { name: "Live audio" }));
+        await chooseMode("as live as possible");
 
         expect(window.localStorage.getItem(LIVE_MODE_STORAGE_KEY)).toBe("live");
 
@@ -215,7 +355,7 @@ describe("the sync modes", () => {
 
         expect(mediaTime()).toBe(100);
 
-        fireEvent.click(screen.getByRole("button", { name: "Synced" }));
+        await chooseMode("synced to the transcript");
 
         expect(window.localStorage.getItem(LIVE_MODE_STORAGE_KEY)).toBe("synced");
 
@@ -260,11 +400,12 @@ describe("the sync modes", () => {
 
         expect(screen.getByTestId("live-waiting-for-text").textContent).toContain(LIVE_WAITING_FOR_TEXT_TEXT);
 
+        // A hold is not the listener's pause.
         expect(screen.getByRole("button", { name: "Pause" })).toBeDefined();
 
         setTranscript([segment(0, 6_000, "Opening remarks."), segment(1, 12_000, "Guidance.")]);
 
-        view.rerender(player());
+        view.rerender(<Page />);
 
         await waitFor(() => expect(element.play).toHaveBeenCalled());
 
@@ -289,7 +430,7 @@ describe("the sync modes", () => {
         expect(screen.queryByText(/Not yet heard/)).toBeNull();
     });
 
-    it("far behind it jumps forward to the newest final's start; an explicit seek back stays", async () => {
+    it("far behind it jumps forward to the newest final's start; an explicit seek back stays and reads −MM:SS", async () => {
         setTranscript([segment(0, 40_000, "Far ahead.")]);
 
         const { mediaTime, tick } = await tuneIn();
@@ -300,17 +441,17 @@ describe("the sync modes", () => {
 
         tick(42, 100, 42_000);
 
-        fireEvent.change(screen.getByLabelText("Position in the call"), { target: { value: "5" } });
+        fireEvent.keyDown(screen.getByRole("slider", { name: "Seek" }), { key: "ArrowLeft" });
 
-        expect(mediaTime()).toBe(5);
+        expect(mediaTime()).toBe(37);
 
-        tick(5, 100, 5_000);
+        tick(37, 100, 37_000);
 
-        expect(mediaTime()).toBe(5);
+        expect(mediaTime()).toBe(37);
 
-        expect(screen.getByText("following the audio")).toBeDefined();
+        const behind = await screen.findByRole("button", { name: "1 minute 3 seconds behind live, back to live" });
 
-        fireEvent.click(screen.getByRole("button", { name: "Back to synced" }));
+        fireEvent.click(behind);
 
         expect(mediaTime()).toBeCloseTo(42.5, 1);
     });
@@ -348,7 +489,7 @@ describe("the sync modes", () => {
 
         setTranscript([segment(0, 6_000, "Opening remarks."), segment(1, 14_000, "More.")]);
 
-        view.rerender(player());
+        view.rerender(<Page />);
 
         expect(screen.getByRole("button", { name: "Play" })).toBeDefined();
 
@@ -366,7 +507,7 @@ describe("the sync modes", () => {
 
         setTranscript([segment(0, 10_000, "Opening remarks.")]);
 
-        view.rerender(player());
+        view.rerender(<Page />);
 
         await waitFor(() => expect(hls.targetLatency).toBe(21.5));
 
@@ -378,7 +519,7 @@ describe("the sync modes", () => {
     });
 
     it("an unmount while hls.js loads leaves no player behind", async () => {
-        const view = render(player());
+        const view = render(<Page />);
 
         await act(async () => {
             await Promise.resolve();
@@ -420,14 +561,14 @@ describe("the sync modes", () => {
 
         tick(5, 500, 5_000);
 
-        fireEvent.click(await screen.findByRole("button", { name: "Jump to live" }));
+        fireEvent.click(await screen.findByRole("button", { name: /behind live, back to live/ }));
 
         tick(500, 500, 500_000);
 
         await waitFor(() => expect(hls.config.liveMaxLatencyDuration).toBe(30));
     });
 
-    it("storage that refuses costs only the memory", () => {
+    it("storage that refuses costs only the memory", async () => {
         const refuse = () => {
             throw new Error("denied");
         };
@@ -436,26 +577,142 @@ describe("the sync modes", () => {
 
         const write = vi.spyOn(Storage.prototype, "setItem").mockImplementation(refuse);
 
-        render(player());
+        render(<Page />);
 
-        expect(screen.getByRole("button", { name: "Synced" }).getAttribute("aria-pressed")).toBe("true");
+        await chooseMode("as live as possible");
 
-        fireEvent.click(screen.getByRole("button", { name: "Live audio" }));
-
-        expect(screen.getByRole("button", { name: "Live audio" }).getAttribute("aria-pressed")).toBe("true");
+        expect((await screen.findByRole("menuitemradio", { name: "as live as possible" })).getAttribute("aria-checked")).toBe("true");
 
         read.mockRestore();
 
         write.mockRestore();
     });
 
-    it("a refused transcript: no toggle, plain Live audio", async () => {
+    it("a refused transcript: no mode choice, plain Live audio", async () => {
         setTranscript([], [], "error");
 
         const { hls } = await tuneIn();
 
-        expect(screen.queryByRole("button", { name: "Synced" })).toBeNull();
+        expect(screen.queryByRole("button", { name: "Player details" })).toBeNull();
 
         expect(hls.config).toMatchObject({ liveSyncDurationCount: 3 });
+    });
+});
+
+describe("the live transcript on TurnBlock", () => {
+    it("names, the provisional badge, ▷ timestamps, the partial tail; a keyword hit is marked and listed", () => {
+        const assignment = { confidence: 0.9, firm: "Acme", fromSeq: 0, name: "Jane Doe", role: "executive", source: "question_cue", speakerLabel: "spk0", title: "CFO", toSeq: null };
+
+        const hit = { context_before: null, end_ms: 10_000, keyword: "tariffs", latency_ms: 1, layer: "live", seq: 0, speaker_label: "spk0", speaker_name: "Jane Doe", speaker_role: "executive", start_ms: 6_000, text: "Tariffs weigh.", type: "keyword_hit" };
+
+        const flash = { currency: "USD", high: 96e9, low: 94e9, metric: "revenue", metric_normalized: "revenue", period_label: "Q4 FY2026", point: null, revision: 1, seq: 1, source_sentence: "Revenue of 94 to 96 billion.", start_ms: 20_000, type: "guidance_flash", unit: "USD" };
+
+        setTranscript(
+            [segment(0, 6_000, "Tariffs weigh on margins."), segment(1, 20_000, "Next quarter revenue.", "spk1")],
+            [segment(2, 25_000, "and the rest", "spk1")],
+            "live",
+            {
+                highlights: {
+                    guidance: [{ key: "revenue|Q4 FY2026", metric: "revenue", periodLabel: "Q4 FY2026", revision: 1, sourceSentence: flash.source_sentence, startMs: 20_000, value: "$94B–$96B" }],
+                    keywords: [{ key: "live-0-tariffs", keyword: hit.keyword, layer: "live", speakerName: hit.speaker_name, startMs: 6_000, text: hit.text }],
+                },
+                state: { ...INITIAL_LIVE_TRANSCRIPT, finals: [segment(0, 6_000, "Tariffs weigh on margins."), segment(1, 20_000, "Next quarter revenue.", "spk1")], partials: [segment(2, 25_000, "and the rest", "spk1")], speakerNames: { assignments: [assignment], revision: 1 } },
+            },
+        );
+
+        render(<Page />);
+
+        const transcript = screen.getByRole("region", { name: "Live transcript" });
+
+        expect(within(transcript).getByText("Jane Doe")).toBeDefined();
+
+        expect(within(transcript).getByText("CFO, Acme")).toBeDefined();
+
+        expect(within(transcript).getByText("Speaker 2")).toBeDefined();
+
+        expect(within(transcript).getByText("live").closest("[title]")?.getAttribute("title")).toBe("provisional — from question cue, confidence 0.90");
+
+        expect(within(transcript).getByText("and the rest").className).toContain("italic");
+
+        expect(within(transcript).getAllByRole("button", { name: /0:06|0:20/ }).length).toBeGreaterThanOrEqual(2);
+
+        expect(transcript.querySelector("mark[data-keyword-mark]")?.textContent).toBe("Tariffs");
+
+        const highlights = screen.getByRole("region", { name: "Live highlights" });
+
+        expect(highlights.querySelector("[data-highlight='keyword']")?.textContent).toContain("Tariffs weigh.");
+
+        expect(highlights.querySelector("[data-highlight='guidance']")?.textContent).toContain("$94B–$96B");
+    });
+});
+
+describe("live → recording without a reload", () => {
+    it.each([
+        ["together with has_transcript", true],
+        ["a poll after has_transcript", false],
+    ])("has_audio %s: the recording player takes over at the same call position, hls.js goes", async (_label, together) => {
+        setTranscript([segment(0, 6_000, "Opening remarks.")]);
+
+        const { hls, tick, view } = await tuneIn();
+
+        tick(50, 100, 60_000);
+
+        if (!together) {
+            setTranscript([segment(0, 6_000, "Opening remarks.")], [], "ended", { state: { ...INITIAL_LIVE_TRANSCRIPT, ended: true, finals: [segment(0, 6_000, "Opening remarks.")] } });
+
+            view.rerender(<Page hasTranscript />);
+
+            // Still the live engine: the recording is not published yet.
+            expect(screen.queryByRole("group", { name: "Speed" })).toBeNull();
+
+            expect(mocks.audioIds.every(id => id === "")).toBe(true);
+        }
+
+        view.rerender(<Page hasAudio hasTranscript />);
+
+        expect(hls.destroy).toHaveBeenCalled();
+
+        await waitFor(() => expect(mocks.audioIds.at(-1)).toBe("evt"));
+
+        const file = fileElement();
+
+        Object.defineProperty(file, "readyState", { configurable: true, get: () => HTMLMediaElement.HAVE_METADATA });
+
+        act(() => {
+            file.dispatchEvent(new Event("loadedmetadata"));
+        });
+
+        // 50 s of media at call ms 60 000: the recording starts at the same call position.
+        expect(file.currentTime).toBe(60);
+
+        expect(await screen.findByRole("group", { name: "Speed" })).toBeDefined();
+
+        expect(screen.getByRole("button", { name: "Download the recording" })).toBeDefined();
+    });
+
+    it("the call ended before the recording: the bar says it is being prepared, the transcript stays", () => {
+        setTranscript([segment(0, 6_000, "Opening remarks.")], [], "ended", { state: { ...INITIAL_LIVE_TRANSCRIPT, ended: true, finals: [segment(0, 6_000, "Opening remarks.")] } });
+
+        render(<Page />);
+
+        expect(screen.getByRole("region", { name: "Call player" }).textContent).toContain(RECORDING_PREPARING_TEXT);
+
+        expect(screen.getByText("Opening remarks.")).toBeDefined();
+    });
+
+    it("keeps polling the event every 30 s until has_audio, for at most an hour after the end", () => {
+        const now = Date.parse("2026-11-21T15:00:00Z");
+
+        const seen = { endedAtMs: now - 10 * 60_000, sawLive: true };
+
+        expect(recordingWaitInterval({ has_audio: false }, seen, now)).toBe(30_000);
+
+        expect(recordingWaitInterval({ has_audio: true }, seen, now)).toBe(false);
+
+        expect(recordingWaitInterval({ has_audio: false }, { endedAtMs: null, sawLive: true }, now)).toBe(30_000);
+
+        expect(recordingWaitInterval({ has_audio: false }, { ...seen, endedAtMs: now - RECORDING_WAIT_MS }, now)).toBe(false);
+
+        expect(recordingWaitInterval({ has_audio: false }, { endedAtMs: null, sawLive: false }, now)).toBe(false);
     });
 });

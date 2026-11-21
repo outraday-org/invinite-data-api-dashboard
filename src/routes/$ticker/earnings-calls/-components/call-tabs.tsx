@@ -5,6 +5,8 @@ import type { V2Event } from "@/lib/api/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
+import { useLiveCall } from "./audio-context";
+import { LiveTranscript } from "./live/live-transcript-view";
 import { Notice, NoTranscriptNotice } from "./media-state";
 import { DocumentsTab } from "./tabs/documents-tab";
 import { GuidanceTab } from "./tabs/guidance-tab";
@@ -80,6 +82,8 @@ const CALL_TABS: Record<CallTab, CallTabDefinition> = {
 /**
  * The call page's tab bar and the active panel. Only the selected panel is mounted, so an
  * unselected tab never sends its request. The player (`CallPlayer`) is the page's, above the bar.
+ * While the page follows the call live and the final transcript is not published, the Transcript tab is the live
+ * transcript (`LiveTranscript`); `has_transcript` turning true swaps in the final one.
  */
 export function CallTabs({
     event,
@@ -94,6 +98,8 @@ export function CallTabs({
     tab: CallTab;
     transcriptJump: null | TranscriptJump;
 }) {
+    const liveText = useLiveCall() !== null && !event.has_transcript;
+
     // A non-earnings event (investor day, conference, AGM) hides the flagged tabs the API says it lacks (no press
     // release, no transcript-derived tabs without a transcript); an earnings call keeps them, muted.
     const hidden = (value: CallTab) => {
@@ -125,7 +131,7 @@ export function CallTabs({
                     {visibleTabs.map((value) => {
                         const { flag, label } = CALL_TABS[value];
 
-                        const muted = flag !== undefined && !event[flag];
+                        const muted = flag !== undefined && !event[flag] && !(value === "transcript" && liveText);
 
                         return (
                             <TabsTrigger className={cn(muted && "text-muted-foreground/50")} key={value} value={value}>
@@ -137,11 +143,13 @@ export function CallTabs({
             </div>
 
             <TabsContent className="pt-2" value={shownTab}>
-                {available
-                    ? active.render(props)
-                    : active.flag === "has_transcript"
-                        ? <NoTranscriptNotice captureStatus={event.capture_status} />
-                        : <Notice title="Not available for this call" />}
+                {shownTab === "transcript" && liveText
+                    ? <LiveTranscript eventId={event.event_id} />
+                    : available
+                        ? active.render(props)
+                        : active.flag === "has_transcript"
+                            ? <NoTranscriptNotice captureStatus={event.capture_status} />
+                            : <Notice title="Not available for this call" />}
             </TabsContent>
         </Tabs>
     );

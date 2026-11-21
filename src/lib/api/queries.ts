@@ -681,14 +681,22 @@ export function useV2LiveEvents(enabled = true) {
  * One event with its calendar semantics and call-time observations. Status-aware: the call page renders a 404 as
  * `NotFound`. Refetched every 30 s while the call is live or just ended without a transcript
  * (`isEarningsEventLiveish`), so the live player appears when capture starts and the Transcript tab lights up.
+ * `refetchInterval` (the call page, O4) decides when that rule does not poll: a call this page saw live keeps polling
+ * until its recording is published (`has_audio`), which can come after `has_transcript`.
  */
-export function useV2Event(eventId: string) {
+export function useV2Event(eventId: string, options?: { refetchInterval?: (event: V2Event) => false | number }) {
     return useEarningsQuery<V2Event>({
         enabled: eventId.length > 0,
         errorMessage: null,
         load: apiKey => getV2Event({ data: { apiKey, eventId, expand: ["calendar", "observations"] } }),
         queryKey: ["v2", "event", eventId],
-        refetchInterval: query => (query.state.data && isEarningsEventLiveish(query.state.data) ? 30 * 1000 : false),
+        refetchInterval: (query) => {
+            const event = query.state.data;
+
+            if (!event) return false;
+
+            return isEarningsEventLiveish(event) ? 30 * 1000 : (options?.refetchInterval?.(event) ?? false);
+        },
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }

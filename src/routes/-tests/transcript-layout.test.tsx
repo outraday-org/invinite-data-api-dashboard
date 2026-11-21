@@ -248,6 +248,26 @@ describe("useFollowScroll", () => {
         container.remove();
     });
 
+    it("a press on the page's scrollbar switches Follow off; a press in the page does not", () => {
+        const { container } = setup(true);
+
+        Object.defineProperty(document.documentElement, "clientWidth", { configurable: true, value: 1000 });
+
+        act(() => {
+            container.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, clientX: 1005, clientY: 10 }));
+        });
+
+        expect(player.setFollow).not.toHaveBeenCalled();
+
+        act(() => {
+            document.documentElement.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true, clientX: 1005, clientY: 10 }));
+        });
+
+        expect(player.setFollow).toHaveBeenCalledWith(false);
+
+        container.remove();
+    });
+
     it("keeps Follow on for a touch drag on the seek bar and a wheel inside an open menu; a page touch scroll counts", () => {
         const { container } = setup(true);
 

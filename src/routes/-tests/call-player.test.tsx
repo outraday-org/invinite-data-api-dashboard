@@ -23,11 +23,14 @@ const queries = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/api/queries", () => ({
+    // The live half of the provider stays idle (no live session in these tests).
+    useApiBaseUrl: () => null,
     useV2Audio: (eventId: string) => {
         queries.audioIds.push(eventId);
 
         return { data: eventId ? queries.recording : undefined, error: null };
     },
+    useV2LiveAudio: () => ({ data: undefined, error: null, refetch: () => Promise.resolve({ data: undefined, isError: false }) }),
     useV2Transcript: () => ({ data: undefined, error: null }),
 }));
 
