@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import { newsroomItem } from "@/lib/news/news-fixtures";
+import { LIVE_FILING, LIVE_FILING_S1 } from "@/lib/sec/filing-detail-fixtures";
 
 import {
     EARNINGS_FRAME_TYPES,
     liveWsUrl,
     NEWS_LIVE_CHANNEL,
     newsSubscribeFrame,
+    parseFilingFrame,
     parseNewsFrame,
     parseServerFrame,
     subscribeFrame,
@@ -339,5 +341,27 @@ describe("news frames (mirrors IDA types/newsMessages.ts)", () => {
             tickers: ["NVDA"],
             type: "subscribe",
         });
+    });
+});
+
+describe("filings frames (mirrors the spec's WebSocketNewFilingEvent)", () => {
+    it("a new_filing frame is read whole: ticker, form, proposed symbols", () => {
+        const parsed = parseFilingFrame(JSON.stringify({ filing: LIVE_FILING_S1, type: "new_filing" }));
+
+        expect(parsed).toEqual({ frame: { filing: LIVE_FILING_S1, type: "new_filing" }, kind: "frame" });
+    });
+
+    it("anything else on the socket is not a filing; a new_filing without its required fields is malformed", () => {
+        expect(parseFilingFrame(JSON.stringify({ channel: NEWS_LIVE_CHANNEL, type: "subscribed" })).kind).toBe("other");
+
+        expect(parseFilingFrame(JSON.stringify({ type: "ping" })).kind).toBe("other");
+
+        expect(parseFilingFrame("not json").kind).toBe("other");
+
+        expect(parseFilingFrame(JSON.stringify({ filing: { ...LIVE_FILING, accession_number: undefined }, type: "new_filing" })).kind).toBe("malformed");
+    });
+
+    it("the earnings parser keeps classing new_filing as `other` (one socket, two readers)", () => {
+        expect(parseServerFrame(JSON.stringify({ filing: LIVE_FILING, type: "new_filing" })).kind).toBe("other");
     });
 });

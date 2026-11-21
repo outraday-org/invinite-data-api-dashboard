@@ -23,9 +23,12 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as TickerRouteRouteImport } from './routes/$ticker/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeopleIndexRouteImport } from './routes/people/index'
+import { Route as FilingsIndexRouteImport } from './routes/filings/index'
 import { Route as TickerIndexRouteImport } from './routes/$ticker/index'
+import { Route as SecDatasetsRouteImport } from './routes/sec/datasets'
 import { Route as SecCikRouteImport } from './routes/sec/$cik'
 import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
+import { Route as FilingsAccessionRouteImport } from './routes/filings/$accession'
 import { Route as TickerStockSplitsIndexRouteImport } from './routes/$ticker/stock-splits/index'
 import { Route as TickerSegmentedFinancialsIndexRouteImport } from './routes/$ticker/segmented-financials/index'
 import { Route as TickerNewsIndexRouteImport } from './routes/$ticker/news/index'
@@ -117,10 +120,20 @@ const PeopleIndexRoute = PeopleIndexRouteImport.update({
   path: '/people/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FilingsIndexRoute = FilingsIndexRouteImport.update({
+  id: '/filings/',
+  path: '/filings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TickerIndexRoute = TickerIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => TickerRouteRoute,
+} as any)
+const SecDatasetsRoute = SecDatasetsRouteImport.update({
+  id: '/sec/datasets',
+  path: '/sec/datasets',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SecCikRoute = SecCikRouteImport.update({
   id: '/sec/$cik',
@@ -130,6 +143,11 @@ const SecCikRoute = SecCikRouteImport.update({
 const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
   id: '/people/$personId',
   path: '/people/$personId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FilingsAccessionRoute = FilingsAccessionRouteImport.update({
+  id: '/filings/$accession',
+  path: '/filings/$accession',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TickerStockSplitsIndexRoute = TickerStockSplitsIndexRouteImport.update({
@@ -258,9 +276,12 @@ export interface FileRoutesByFullPath {
   '/market-holidays': typeof MarketHolidaysRoute
   '/news-feed': typeof NewsFeedRoute
   '/status': typeof StatusRoute
+  '/filings/$accession': typeof FilingsAccessionRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
+  '/sec/datasets': typeof SecDatasetsRoute
   '/$ticker/': typeof TickerIndexRoute
+  '/filings': typeof FilingsIndexRoute
   '/people': typeof PeopleIndexRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
   '/$ticker/documents': typeof TickerDocumentsIndexRoute
@@ -296,9 +317,12 @@ export interface FileRoutesByTo {
   '/market-holidays': typeof MarketHolidaysRoute
   '/news-feed': typeof NewsFeedRoute
   '/status': typeof StatusRoute
+  '/filings/$accession': typeof FilingsAccessionRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
+  '/sec/datasets': typeof SecDatasetsRoute
   '/$ticker': typeof TickerIndexRoute
+  '/filings': typeof FilingsIndexRoute
   '/people': typeof PeopleIndexRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
   '/$ticker/documents': typeof TickerDocumentsIndexRoute
@@ -336,9 +360,12 @@ export interface FileRoutesById {
   '/market-holidays': typeof MarketHolidaysRoute
   '/news-feed': typeof NewsFeedRoute
   '/status': typeof StatusRoute
+  '/filings/$accession': typeof FilingsAccessionRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
+  '/sec/datasets': typeof SecDatasetsRoute
   '/$ticker/': typeof TickerIndexRoute
+  '/filings/': typeof FilingsIndexRoute
   '/people/': typeof PeopleIndexRoute
   '/$ticker/dividends/': typeof TickerDividendsIndexRoute
   '/$ticker/documents/': typeof TickerDocumentsIndexRoute
@@ -377,9 +404,12 @@ export interface FileRouteTypes {
     | '/market-holidays'
     | '/news-feed'
     | '/status'
+    | '/filings/$accession'
     | '/people/$personId'
     | '/sec/$cik'
+    | '/sec/datasets'
     | '/$ticker/'
+    | '/filings'
     | '/people'
     | '/$ticker/dividends'
     | '/$ticker/documents'
@@ -415,9 +445,12 @@ export interface FileRouteTypes {
     | '/market-holidays'
     | '/news-feed'
     | '/status'
+    | '/filings/$accession'
     | '/people/$personId'
     | '/sec/$cik'
+    | '/sec/datasets'
     | '/$ticker'
+    | '/filings'
     | '/people'
     | '/$ticker/dividends'
     | '/$ticker/documents'
@@ -454,9 +487,12 @@ export interface FileRouteTypes {
     | '/market-holidays'
     | '/news-feed'
     | '/status'
+    | '/filings/$accession'
     | '/people/$personId'
     | '/sec/$cik'
+    | '/sec/datasets'
     | '/$ticker/'
+    | '/filings/'
     | '/people/'
     | '/$ticker/dividends/'
     | '/$ticker/documents/'
@@ -494,8 +530,11 @@ export interface RootRouteChildren {
   MarketHolidaysRoute: typeof MarketHolidaysRoute
   NewsFeedRoute: typeof NewsFeedRoute
   StatusRoute: typeof StatusRoute
+  FilingsAccessionRoute: typeof FilingsAccessionRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   SecCikRoute: typeof SecCikRoute
+  SecDatasetsRoute: typeof SecDatasetsRoute
+  FilingsIndexRoute: typeof FilingsIndexRoute
   PeopleIndexRoute: typeof PeopleIndexRoute
 }
 
@@ -599,12 +638,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeopleIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/filings/': {
+      id: '/filings/'
+      path: '/filings'
+      fullPath: '/filings'
+      preLoaderRoute: typeof FilingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$ticker/': {
       id: '/$ticker/'
       path: '/'
       fullPath: '/$ticker/'
       preLoaderRoute: typeof TickerIndexRouteImport
       parentRoute: typeof TickerRouteRoute
+    }
+    '/sec/datasets': {
+      id: '/sec/datasets'
+      path: '/sec/datasets'
+      fullPath: '/sec/datasets'
+      preLoaderRoute: typeof SecDatasetsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/sec/$cik': {
       id: '/sec/$cik'
@@ -618,6 +671,13 @@ declare module '@tanstack/react-router' {
       path: '/people/$personId'
       fullPath: '/people/$personId'
       preLoaderRoute: typeof PeoplePersonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/filings/$accession': {
+      id: '/filings/$accession'
+      path: '/filings/$accession'
+      fullPath: '/filings/$accession'
+      preLoaderRoute: typeof FilingsAccessionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$ticker/stock-splits/': {
@@ -830,8 +890,11 @@ const rootRouteChildren: RootRouteChildren = {
   MarketHolidaysRoute: MarketHolidaysRoute,
   NewsFeedRoute: NewsFeedRoute,
   StatusRoute: StatusRoute,
+  FilingsAccessionRoute: FilingsAccessionRoute,
   PeoplePersonIdRoute: PeoplePersonIdRoute,
   SecCikRoute: SecCikRoute,
+  SecDatasetsRoute: SecDatasetsRoute,
+  FilingsIndexRoute: FilingsIndexRoute,
   PeopleIndexRoute: PeopleIndexRoute,
 }
 export const routeTree = rootRouteImport

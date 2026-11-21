@@ -6,6 +6,7 @@ import type { V2FilingDetailResponse } from "@/lib/api/types";
 import type { FilingListRow } from "@/lib/sec/parity";
 
 import { ApiRequestError } from "@/lib/api/errors";
+import { facetSummary } from "@/lib/sec/parity";
 import { V2_FILING_10K } from "@/lib/sec/v2-fixtures";
 import { FilingsList } from "@/routes/$ticker/filings/-components/filings-list";
 import { FilingHtmlBody, primaryDocumentUrl } from "@/routes/$ticker/filings/-components/html-dialog";
@@ -43,6 +44,7 @@ const ROW: FilingListRow = {
     fiscalQuarter: 4,
     fiscalYear: 2026,
     formType: "10-K",
+    items: [],
     periodEnd: "2026-09-26",
     primaryDocument: "aapl-20260926.htm",
 };
@@ -85,7 +87,61 @@ describe("filings row", () => {
 
         rerender(list({ ...ROW, fiscalQuarter: null, fiscalYear: null, periodEnd: null }));
 
-        expect(screen.getByText("—")).toBeInTheDocument();
+        // The period and the (empty) items column.
+        expect(screen.getAllByText("—")).toHaveLength(2);
+    });
+});
+
+describe("filings row: items, EDGAR, details, live (O7 group 3)", () => {
+    it("an 8-K row lists its items, links EDGAR's index page and the filing page", () => {
+        const edgar = "https://www.sec.gov/Archives/edgar/data/320193/000032019326000024/0000320193-26-000024-index.htm";
+
+        render(
+            <FilingsList
+                displayFilings={[{ ...ROW, accessionNumber: "0000320193-26-000024", edgarIndexUrl: edgar, formType: "8-K", items: ["2.02", "9.01"] }]}
+                hasNextPage={false}
+                isFetchingNextPage={false}
+                isLoading={false}
+                onFetchNextPage={noop}
+                onOpenHtml={noop}
+                onSortToggle={noop}
+                renderDetailsLink={filing => <a href={`/filings/${filing.accessionNumber}`}>Details</a>}
+                sortDirection="desc"
+            />,
+        );
+
+        expect(screen.getByText("2.02, 9.01")).toBeInTheDocument();
+
+        expect(screen.getByRole("link", { name: /EDGAR/ })).toHaveAttribute("href", edgar);
+
+        expect(screen.getByRole("link", { name: "Details" })).toHaveAttribute("href", "/filings/0000320193-26-000024");
+
+        expect(screen.queryByText("New")).toBeNull();
+    });
+
+    it("a live row is marked New; a row without items or EDGAR link shows a dash and no link", () => {
+        render(list({ ...ROW, live: true }));
+
+        expect(screen.getByText("New")).toBeInTheDocument();
+
+        expect(screen.queryByRole("link", { name: /EDGAR/ })).toBeNull();
+    });
+
+    it("the facet line: one form's count and newest date, else the newest filing of all", () => {
+        const facet = [
+            { count: 31, form: "10-K", newest_filing_date: "2026-11-03" },
+            { count: 1, form: "8-K", newest_filing_date: "2026-11-19" },
+        ];
+
+        expect(facetSummary(facet, "10-K")).toBe("31 10-K filings, newest filed 2026-11-03");
+
+        expect(facetSummary(facet, "8-K")).toBe("1 8-K filing, newest filed 2026-11-19");
+
+        expect(facetSummary(facet, null)).toBe("Newest filing 2026-11-19");
+
+        expect(facetSummary(facet, "S-1")).toBeNull();
+
+        expect(facetSummary(undefined, null)).toBeNull();
     });
 });
 

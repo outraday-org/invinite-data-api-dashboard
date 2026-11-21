@@ -37,6 +37,48 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
 - **Entry points**: `$ticker/filings` rows → "Documents" (the panel's `filing` target); `$ticker/documents` search source chips "Company documents" | "SEC filings" (`sec-filing-search.tsx` `SecFilingSearch({ symbol })` = the page's ticker; Keyword / Exact + Match case; 100 credits a page; "More results" by cursor; 503 `unavailable` = "SEC filing search is not switched on yet"; hits open their cited block); landing "SEC filers" card (`sec-filer-lookup.tsx`: a CIK opens its page, a name searches `/v1/filers?q=`, a row shows its listing or "No ticker" and its phase), the top-bar search's Institutions & filers group, `/institutions` and the holders / holdings / portfolio cells → `/sec/$cik` (`src/routes/sec/$cik.tsx`, outside `$ticker`: no ticker invented; the sidebar's context lists its blocks as anchors, `FILER_ANCHORS`): filer identity + lifecycle from `/v1/filers/{cik}` (see "Data API v2"), a "Fund" block (`SecFundView`) from the same request's `expand=fund` (Data API release 5.7, backend us-universe sublist 2 task 4: one row per series — name + ETF badge, exchange MIC, class tickers, net expense ratio, net assets with scope `fund` / "series total, all classes" and date, 1y / 5y / 10y returns of the expense ratio's class; fractions shown as percent; `fund: null` = no block), a "Private offerings (Form D)" block (`SecPrivateOfferingsView`; Data API release 5.7, backend us-universe sublist 2 task 6) from the same request's `expand=private_offerings` summary (count, first / latest filed, total sold, latest exemptions with short labels `exemptionLabel`) and, only when the count is above 0, the rows of `useV2OfferingsInfinite` = `GET /v1/offerings?company=<cik>` (`getV2Offerings`; latest filing, offering id = Form D file number or first accession, amendments, industry, exemptions, offering size or "Indefinite", sold, investors; "More offerings" by cursor; `private_offerings: null` = no block), filings `/v1/filings?symbol=<cik>` (form facet, cursor; `symbol=` takes a CIK with a listed stock or a fund that is its own registrant — an unlisted filer answers 404, as 6.x's `company=<cik>` did) → panel, and for a 13F manager (phase `manager` or a 13F form in the facet) the portfolio `/v1/filers/{cik}/holdings?period_end=` (`useFilerHoldingsInfinite`, the `Holder` row; a fund registrant answers 404 naming `/v1/funds/{fund_key}/holdings`) on a click (`meta.coverage` / `pinned_at` / `counting` via `V2MetaLine`, "More positions" by cursor) (`sec-filer-views.tsx`, tested in `sec-filer.test.tsx`)
 - **Shared search pieces**: `src/components/search/search-highlight.tsx` (`SpanHighlightedText`, `HighlightedText`, `SearchCoverageNote`), re-exported by `ask-this-call.tsx`; `Notice` lives in `src/components/ui/notice.tsx` (re-exported by `media-state.tsx`)
 
+### Filings (backend `tasks/data-api-dashboard` O7 group 3)
+
+- **`$ticker/filings`**: `?form=&items=&from=&to=&sort=asc&live=true&search=true&source=&block=&filing=&docs=` —
+  `items` (8-K items, comma list) and the filed-day range go to `/v1/filings` as `items` / `filed_at.gte` / `.lte`
+  (the spec's `format: date`: an instant is a 400; `useV2FilingsInfinite` `from` / `to` / `items`); columns Items,
+  "Details" (`/filings/$accession`), HTML, Documents, EDGAR (the row's `edgar_index_url`, outbound); the header's
+  facet line `facetSummary` (one form's count + `newest_filing_date`, else the newest filing). "Search text" opens
+  `SecFilingSearch` for the page's symbol — stocks and funds alike (`[FU2870]`: an ETF / closed-end fund page searches
+  its SEC filings; `symbol=` takes the fund's ticker, a series is searched alone). "Live" = `useLiveFilings` (below):
+  rows whose frame `ticker` is the page's symbol join a newest-first list without an end date / items filter, marked
+  "New" (`mergeLiveRows`).
+- **Live filings** (`src/lib/live/use-live-filings.ts`, pure `live-filings.ts`, frame `parseFilingFrame` /
+  `newFilingFrameSchema` in `ws-frames.ts`): `new_filing` frames reach EVERY connection of `/v1/stream` (channel
+  `filings`, STANDARD; IDA `ablyRealtimeListener.ts` `broadcastToAll`) — no subscribe frame, nothing sent. One per
+  accession, newest first, ≤ 200; nothing is replayed. Close 4001 / 4003 / 4029 stop (no reconnect loop) and turn the
+  switch off with `LiveFilingsStopNotice`; other closes reconnect 1 s → 30 s × 10. The socket is not an HTTP request
+  and is not in the API inspector. Page wiring: `$ticker/filings/-components/use-live-filings-feed.ts`.
+- **`/filings`** (`src/routes/filings/index.tsx`): `/v1/filings` needs `symbol`, so no REST list — the live stream since
+  the page opened (on by default, `?paused=true`; `?form=` filters the arrived rows in the browser and says how many it
+  hides; a row links its instrument's filings or `/sec/$cik` and its filing page) and "Search every filer"
+  (`SecFilingSearch marketWide symbol=""`: `/v1/search/filings` without `symbol`; filters `?searchForm=&searchItem=
+  &filedFrom=&filedTo=` committed on Search only — every search page is billed 100 credits; `SearchMatchesNote` states
+  `meta.index.matches` — examined / total or "at least", order, `complete_since`, filed range — and `hint` /
+  `narrow_with`; a hit links `/filings/$accession`, since a hit names no company).
+- **`/filings/$accession`** (`src/routes/filings/$accession.tsx`, pure views `-components/filing-detail-views.tsx`):
+  header from `useV2Filing(accession, ["documents"])` (the cache the HTML dialog and source panel share); tabs
+  `?tab=` Documents (default) · Facts (`/facts`, `?tag=` concepts) · Notes (`/notes`, `?noteTag=`) · Review chain
+  (`/review-chain`, `?depth=` 1–6, `?direction=up|down`; nodes / edges / twins / completeness are free JSON read through
+  guards) · Holdings (`/holdings`, only for `hasFiledHoldings` = 13F-HR* / NPORT-P*; `meta.family`) · Parties &
+  relations (a second `useV2Filing(…, ["parties", "relations"])` on open). Each tab's hook runs only while it is open.
+  Documents: "Read" / "Sections" / "Fact places" per readable version (`V2FilingDocumentsView` `extraActions`) open it
+  below: `?version=&panel=sections|places&block=&outline=legacy` — the reader at `?block=`, the section outline
+  (`/sections`; a heading opens its first block, `sectionStartBlock`) or the fact places (`/v1/fact-places?document_version=`,
+  PRO; a place opens its block, links the annotated rendition). A filing fact carries no fact id, so places are listed
+  per document version (`fact=` takes a standardized fact id: the financials lineage, group 4).
+- **`/sec/datasets`** (`src/routes/sec/datasets.tsx`): `GET /v1/datasets` (`useV2DatasetsInfinite`), each SEC code with
+  its name (`DATASET_LABELS`; an unknown code shown as stated), newest release, date, forms; export.
+- Tests: `src/routes/-tests/filing-detail.test.tsx` (tabs, data sets, live list), `filings-page.test.tsx` (items,
+  EDGAR, details, live row, facet line), `sec-search.test.tsx` (market-wide cap note, filters on submit),
+  `src/lib/live/live-filings.test.ts`, the filings cases of `ws-frames.test.ts`, `v2-sec-queries.test.tsx`; fixtures
+  `src/lib/sec/filing-detail-fixtures.ts` (tests only).
+
 ### Data API v2 (served under `/v1` since 2026-11-11; backend tasks/data-api-v2 tasks 4–12)
 
 - **The cut-over (backend data-api-v2 task 12, owner decision 2026-11-11; pinned spec `info.version` 2026-11-11, invinite-data-api `0cfaa6f`)**: the OLD v1 API was deleted (`/v1/company/*`, `/v1/standardized/*`, `/v1/as-reported/*`, `/v1/sec/*`, `/v1/earnings-calls/*`, `/v1/ws`, …) and the redesigned v2 contract renamed to `/v1` (same operationIds, schemas, envelopes, problem codes; every `/v2/*` path answers 404). Every call of this app is on that contract: search = `GET /v1/instruments?q=` (`getInstruments`, `useInstrumentSearch`; see "Instruments and funds"), the layout = `useInstrument` (`GET /v1/instruments/{symbol}`), the news / documents / stock overview company details = `useV2Company` (`GET /v1/companies/{company}`, stocks only), fiscal periods = `/v1/fiscal-periods`, the SEC views as in "SEC document store", the realtime socket = `WS /v1/stream` (channels `events.live` and `news`). The `V2*` / `getV2*` / `useV2*` names, `v2.ts` and the `v2-*` file names are kept from when the contract was `/v2`; below, "v1" names the deleted old API. Pages: company overview (`$ticker/index.tsx`: `useV2Company(ticker, { expand: ["coverage"] })` — the `Company` object itself, a "Data available" card of the coverage families with their `through` day (`coverageEntries` in `src/lib/api/v2.ts`), the CIK links `/sec/$cik` via `filer_cik`, 404 `not_covered` = a notice), dividends (`useV2DividendsInfinite`, `symbol` = the ticker of any instrument, sort `-ex_date`), stock splits (`useV2SplitsInfinite`, `-execution_date`), market holidays (`useV2MarketHolidaysInfinite`, `-date`) and `/sec/$cik` identity + lifecycle (`useV2Filer(cik, ["lifecycle", "proposed_symbols", "former_names", "successors", "fund"])` → `SecFilerHeader` / `SecLifecycleView` in `sec-filer-views.tsx`: listing or "No ticker", phase, the snake_case `lifecycle` (phase, kind, first_public_seen_at, last_observed_at, registration_tracks with their review status, pending_actions, warnings; `null` = "No lifecycle evidence"), proposed symbols, successors, former names; 403 `excluded` / 404 `not_covered` / 503 `unavailable` are notices). The earnings calendar, calls list, call page and Documents page moved in task 7 ("Events family" below). The news page moved in task 8 ("News page" below). The filings, insider-trades, institutions (now Holders) and IPO pages moved in task 6 ("SEC family" below). The financials, ratios, growth, CAGR and segments pages moved in task 5 ("Financials family" below). The `/sec/$cik` filings list and 13F manager portfolio and the documents-page SEC search moved with the cut-over (task 12)
@@ -131,6 +173,8 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 - `$ticker/route.tsx`: Layout for all instrument routes: reads the instrument once (`useInstrument`), the pinned header, the gate sentence of a section its `datasets` lacks; unknown symbol = one notice
 - `$ticker/*.tsx`: Instrument pages (filings, financials, dividends, holdings, holders, etc.)
 - `funds.tsx`: the fund list (`/funds`); the global pages and redirects: "Shell (O5)"
+- `filings/index.tsx` (`/filings`: live filings + search every filer), `filings/$accession.tsx` (one filing's tabs),
+  `sec/datasets.tsx` (`/sec/datasets`): "Filings (O7 group 3)"
 - `news-feed.tsx`: the watchlist news feed (`/news-feed`, O7 group 2; see "News page")
 - `/status` redirects to `https://status.data.invinite.com` (the page lives in `../invinite-data-api/status/`): `status.tsx` is a server route answering 301 with the query kept — never a `netlify.toml` rule, which Netlify evaluates AFTER the SSR function (`path: "/*"`) and so never fires; the sidebar's Help block links there directly
 - `/licensing` redirects to `https://data.invinite.com/docs/licensing` (the licensing matrix lives in the Invinite Data app's docs): `licensing.tsx` is a 301 server route like `status.tsx`; the sidebar's Help block links there directly
@@ -390,13 +434,13 @@ group appends its rows, the alerts tasklist its 36 (→ 124); an operation with 
 | `getAudio` | `GET /v1/events/{event_id}/audio` | call page · player (on Play) |
 | `getCompany` | `GET /v1/companies/{company}` | `/$ticker` (overview); `/$ticker/documents`; `/$ticker/news` |
 | `getDocumentFigure` | `GET /v1/document-versions/{version_id}/figures/{block_id}` | SEC documents panel (`/$ticker/filings`, `/sec/$cik`) |
-| `getDocumentVersion` | `GET /v1/document-versions/{version_id}` | SEC documents panel (`/$ticker/filings`, `/sec/$cik`) |
+| `getDocumentVersion` | `GET /v1/document-versions/{version_id}` | SEC documents panel (`/$ticker/filings`, `/sec/$cik`); `/filings/$accession` reader (O7 group 3) |
 | `getEvent` | `GET /v1/events/{event_id}` | call page; `/people/$personId` (one per loaded call) |
 | `getEventComparison` | `GET /v1/events/{event_id}/comparison` | call page · Metrics & diff tab |
 | `getEventStats` | `GET /v1/events/{event_id}/stats` | call page · Metrics & diff tab |
 | `getFact` | `GET /v1/facts/{fact_id}` | `/$ticker/financials` Standardized · Detailed: a value opens "Explain this number" (O7 group 4) |
 | `getFiler` | `GET /v1/filers/{cik}` | `/sec/$cik`; sidebar (filer context) |
-| `getFiling` | `GET /v1/filings/{accession}` | SEC documents panel; `/$ticker/filings` (HTML dialog) |
+| `getFiling` | `GET /v1/filings/{accession}` | SEC documents panel; `/$ticker/filings` (HTML dialog); `/filings/$accession` (header, Documents; Parties & relations = `expand=parties,relations`; O7 group 3) |
 | `getFund` | `GET /v1/funds/{fund}` | `/$ticker` (fund overview) |
 | `getInstrument` | `GET /v1/instruments/{symbol}` | `/$ticker` layout + overview; `/$ticker/filings`; `/$ticker/financials`; sidebar |
 | `getInvestorDocument` | `GET /v1/investor-documents/{document_id}` | `/$ticker/documents`; call page · Documents tab |
@@ -421,10 +465,10 @@ group appends its rows, the alerts tasklist its 36 (→ 124); an operation with 
 | `listCagr` | `GET /v1/metrics/cagr` | `/$ticker/financials?view=cagr` |
 | `listDividends` | `GET /v1/dividends` | `/$ticker/dividends` |
 | `listEvents` | `GET /v1/events` | `/`; `/calendar`; `/live-calls`; `/$ticker` (overview); `/$ticker/earnings-calls`; `/$ticker/documents`; sidebar (live count); call page (live session); `/$ticker/news` "Filter by call" (on click) |
-| `listFactPlaces` | `GET /v1/fact-places` | "Explain this number" → Show in filing (`fact=`; O7 group 4) |
+| `listFactPlaces` | `GET /v1/fact-places` | "Explain this number" → Show in filing (`fact=`; O7 group 4); `/filings/$accession` Documents → Fact places (`document_version=`; O7 group 3) |
 | `listFilerHoldings` | `GET /v1/filers/{cik}/holdings` | `/sec/$cik` (13F portfolio) |
 | `listFilers` | `GET /v1/filers` | `/institutions`; top-bar search; filer lookup |
-| `listFilings` | `GET /v1/filings` | `/$ticker/filings`; `/$ticker` (overview); `/sec/$cik`; sidebar (filer context) |
+| `listFilings` | `GET /v1/filings` | `/$ticker/filings`; `/$ticker` (overview); `/sec/$cik`; sidebar (filer context); `items` / `filed_at` filters on `/$ticker/filings` (O7 group 3) |
 | `listFiscalPeriods` | `GET /v1/fiscal-periods` | `/$ticker/filings` (period labels) |
 | `listFundPositions` | `GET /v1/funds/{fund}/holdings` | `/$ticker/holdings`; `/$ticker` (fund overview) |
 | `listFundWeights` | `GET /v1/funds/{fund}/weights` | `/$ticker/holdings` |
@@ -449,7 +493,14 @@ group appends its rows, the alerts tasklist its 36 (→ 124); an operation with 
 | `listSegmentsDetailed` | `GET /v1/segments/detailed` | `/$ticker/financials?view=segments&layout=detailed` (O7 group 4; metric / axis sent) |
 | `listSplits` | `GET /v1/splits` | `/$ticker/stock-splits` |
 | `listTranscriptVersions` | `GET /v1/events/{event_id}/transcript-versions` | call page · Transcript tab (version select) |
-| `searchFilings` | `GET /v1/search/filings` | SEC filing search (`/$ticker/documents`) |
+| `searchFilings` | `GET /v1/search/filings` | SEC filing search (`/$ticker/documents`); `/$ticker/filings` "Search text" (stocks and funds); `/filings` "Search every filer" (no `symbol`; O7 group 3) |
 | `searchInvestorDocuments` | `GET /v1/search/investor-documents` | `/$ticker/documents` |
 | `searchTranscripts` | `GET /v1/search/transcripts` | call page / calls list · Search this call |
 | `searchNews` | `GET /v1/search/news` | `/$ticker/news` search box (company); `/news-feed` search box (watchlist comma list, or no company = every company) |
+| `getReviewChain` | `GET /v1/filings/{accession}/review-chain` | `/filings/$accession` Review chain tab (O7 group 3) |
+| `listDatasets` | `GET /v1/datasets` | `/sec/datasets` (O7 group 3) |
+| `listDocumentSections` | `GET /v1/document-versions/{version_id}/sections` | `/filings/$accession` Documents → Sections (O7 group 3) |
+| `listFilingFacts` | `GET /v1/filings/{accession}/facts` | `/filings/$accession` Facts tab (O7 group 3) |
+| `listFilingHoldings` | `GET /v1/filings/{accession}/holdings` | `/filings/$accession` Holdings tab, 13F-HR / NPORT-P only (O7 group 3) |
+| `listFilingNotes` | `GET /v1/filings/{accession}/notes` | `/filings/$accession` Notes tab (O7 group 3) |
+| `streamEvents` (channel `filings`) | `WS /v1/stream` `new_filing` | `/$ticker/filings` "Live"; `/filings` (O7 group 3) |

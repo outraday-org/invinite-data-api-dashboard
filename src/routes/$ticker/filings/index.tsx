@@ -1,34 +1,56 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { SearchIcon } from "lucide-react";
 import * as React from "react";
 import { z } from "zod";
 
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 import type { V2FilingsResponse } from "@/lib/api/types";
+import type { FilingListRow } from "@/lib/sec/parity";
 
+import { SecFilingSearch } from "@/components/sec/sec-filing-search";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
+import { Button } from "@/components/ui/button";
 import { useCompanyFiscalPeriods, useInstrument, useV2FilingsInfinite } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
-import { fiscalPeriodIndex, formTypesOfFacet, toFilingListRow } from "@/lib/sec/parity";
+import { commaList, hasLiveForm, isFilingOf, mergeLiveRows, toLiveFilingRow } from "@/lib/live/live-filings";
+import { facetSummary, fiscalPeriodIndex, formTypesOfFacet, toFilingListRow } from "@/lib/sec/parity";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
-import { IN_PLACE, optionalAccession, optionalEnum, optionalText } from "@/lib/url-state";
+import { IN_PLACE, optionalAccession, optionalDay, optionalEnum, optionalFlag, optionalText } from "@/lib/url-state";
 
 import type { FilingHtmlTarget } from "./-components/html-dialog";
 
 import { FilingsHeader } from "./-components/filings-header";
 import { FilingsList } from "./-components/filings-list";
 import { HtmlDialog } from "./-components/html-dialog";
+import { LiveFilingsStopNotice, LiveFilingsToggle } from "./-components/live-filings-toggle";
+import { useLiveFilingsFeed } from "./-components/use-live-filings-feed";
 
 /**
- * `?form=` (one form type of the facet), `?sort=asc` (oldest filed first; default newest), `?filing=<accession>` (the
+ * `?form=` (one form type of the facet), `?items=` (8-K items, comma list), `?from=&to=` (filed days, inclusive),
+ * `?sort=asc` (oldest filed first; default newest), `?live=true` (new filings over the stream on top), `?search=true`
+ * (the SEC filing search box; `?source=<version id>&block=<block id>` = a cited passage), `?filing=<accession>` (the
  * HTML view of a loaded row; a filing outside the loaded pages opens its documents instead), `?docs=<accession>` (the
  * SEC source panel of that accession).
  */
+/**
+ * `?items=`: the router reads a bare `?items=2.02` as the number 2.02 (JSON search values); an 8-K item is written with
+ * two decimals, so a number is read back as such (`2.1` → `2.10`).
+ */
+const itemsParam = z.preprocess(value => (typeof value === "number" ? value.toFixed(2) : value), z.string().trim().min(1).max(60)).optional().catch(undefined);
+
 const filingsSearchSchema = z.object({
+    block: z.string().regex(/^b\d+$/).optional().catch(undefined),
     docs: optionalAccession(),
     filing: optionalAccession(),
     form: optionalText(20),
+    from: optionalDay(),
+    items: itemsParam,
+    live: optionalFlag(),
+    search: optionalFlag(),
     sort: optionalEnum(["asc"]),
+    source: z.uuid().optional().catch(undefined),
+    to: optionalDay(),
 });
 
 type FilingsSearch = z.infer<typeof filingsSearchSchema>;
@@ -41,6 +63,12 @@ export const Route = createFileRoute("/$ticker/filings/")({
 
 /** Filings per page of `/v1/filings` (one page per `next_cursor`). */
 const FILINGS_PAGE = 40;
+
+const detailsLink = (filing: FilingListRow) => (
+    <Link className="text-primary hover:underline" params={{ accession: filing.accessionNumber }} title="Facts, notes, review chain, holdings and parties of this filing" to="/filings/$accession">
+        Details
+    </Link>
+);
 
 function FilingsPage() {
     const { ticker } = Route.useParams();
@@ -55,6 +83,8 @@ function FilingsPage() {
 
     const sortDirection = search.sort ?? "desc";
 
+    const items = commaList(search.items);
+
     // `/v1/filings?symbol=<ticker>`, newest filed first by default (`-filed_at`), one page per `next_cursor`.
     const {
         data: pagedData,
@@ -63,11 +93,15 @@ function FilingsPage() {
         hasNextPage,
         isFetchingNextPage,
         isLoading: loadingPaged,
+        refetch,
     } = useV2FilingsInfinite({
         form: formTypeFilter ? [formTypeFilter] : undefined,
+        from: search.from,
+        items: items.length > 0 ? items : undefined,
         limit: FILINGS_PAGE,
         sort: sortDirection === "desc" ? "-filed_at" : "filed_at",
         symbol: ticker,
+        to: search.to,
     });
 
     // Fiscal / calendar quarters by `report_date` = `period_end` (one request set per company, never per row); only for
@@ -80,7 +114,7 @@ function FilingsPage() {
 
     const pages: ReadonlyArray<V2FilingsResponse> = React.useMemo(() => pagedData?.pages ?? [], [pagedData]);
 
-    const displayFilings = React.useMemo(
+    const listedFilings = React.useMemo(
         () => pages.flatMap(page => page.data.flatMap((row) => {
             const filing = toFilingListRow(row, periods);
 
@@ -89,8 +123,28 @@ function FilingsPage() {
         [pages, periods],
     );
 
+    // Live: new filings whose primary ticker is this page's, on top of a newest-first list without a date / items
+    // filter (a live frame carries no 8-K items and is filed today).
+    const liveApplies = sortDirection === "desc" && !search.to && items.length === 0;
+
+    const live = useLiveFilingsFeed({
+        enabled: search.live === true,
+        onReconnected: () => void refetch(),
+        onStopped: () => onChange({ live: undefined }),
+    });
+
+    const liveRows = liveApplies
+        ? live.filings
+                .filter(({ filing }) => isFilingOf(filing, ticker) && hasLiveForm(filing, formTypeFilter ? [formTypeFilter] : []))
+                .map(({ filing }) => toLiveFilingRow(filing))
+        : [];
+
+    const displayFilings = mergeLiveRows(liveRows, listedFilings);
+
     // The form-type picker = the company's `meta.form_facet`; the last one seen stays while a filtered list loads.
-    const facetForms = React.useMemo(() => formTypesOfFacet(pages.at(0)?.meta.form_facet), [pages]);
+    const facet = pages.at(0)?.meta.form_facet;
+
+    const facetForms = React.useMemo(() => formTypesOfFacet(facet), [facet]);
 
     const [availableFormTypes, setAvailableFormTypes] = React.useState<{ forms: Array<string>; ticker: string }>({ forms: [], ticker });
 
@@ -109,10 +163,16 @@ function FilingsPage() {
 
     const docsRow = docsAccession ? displayFilings.find(row => row.accessionNumber === docsAccession) : undefined;
 
-    // The SEC store's documents of one accession (the source panel).
-    const secTarget: null | SecPanelTarget = docsAccession
-        ? { accession: docsAccession, kind: "filing", title: [ticker, docsRow?.formType, docsAccession].filter(Boolean).join(" · ") }
-        : null;
+    // The SEC store's documents of one accession, or a search hit's cited passage (the source panel).
+    let secTarget: null | SecPanelTarget = null;
+
+    if (docsAccession) secTarget = { accession: docsAccession, kind: "filing", title: [ticker, docsRow?.formType, docsAccession].filter(Boolean).join(" · ") };
+    else if (search.source && search.block) secTarget = { blockId: search.block, kind: "citation", title: `${ticker} · SEC filing`, versionId: search.source };
+
+    const onOpenCitation = (target: SecPanelTarget) => {
+        if (target.kind === "citation") onChange({ block: target.blockId, docs: undefined, source: target.versionId });
+        else onChange({ docs: target.accession });
+    };
 
     let content: React.ReactNode;
 
@@ -134,6 +194,7 @@ function FilingsPage() {
                     onOpenHtml={filing => onChange({ docs: undefined, filing: filing.accessionNumber })}
                     onOpenSecDocuments={filing => onChange({ docs: filing.accessionNumber, filing: undefined })}
                     onSortToggle={() => onChange({ sort: sortDirection === "desc" ? "asc" : undefined })}
+                    renderDetailsLink={detailsLink}
                     sortDirection={sortDirection}
                     ticker={ticker}
                 />
@@ -152,15 +213,58 @@ function FilingsPage() {
                 ticker={ticker}
             />
 
-            <SecSourceDialog onClose={() => onChange({ docs: undefined, filing: undefined })} target={secTarget} />
+            <SecSourceDialog onClose={() => onChange({ block: undefined, docs: undefined, filing: undefined, source: undefined })} target={secTarget} />
 
             <FilingsHeader
+                actions={(
+                    <>
+                        <Button aria-pressed={search.search === true} onClick={() => onChange({ search: search.search ? undefined : true })} type="button" variant={search.search ? "secondary" : "outline"}>
+                            <SearchIcon />
+                            Search text
+                        </Button>
+                        <LiveFilingsToggle
+                            live={search.live === true}
+                            mode={live.mode}
+                            onChange={(on) => {
+                                live.clearStop();
+
+                                onChange({ live: on || undefined });
+                            }}
+                        />
+                    </>
+                )}
                 availableFormTypes={formTypes}
+                facetLine={facetSummary(facet, formTypeFilter)}
                 formTypeFilter={formTypeFilter}
+                from={search.from}
+                items={search.items}
                 loadingFormTypes={loadingPaged && formTypes.length === 0}
                 onFormTypeChange={val => onChange({ form: val === "all" || !val ? undefined : val })}
+                onItemsChange={value => onChange({ items: value.trim() || undefined })}
+                onRangeChange={patch => onChange(patch)}
                 sortDirection={sortDirection}
+                to={search.to}
             />
+
+            <LiveFilingsStopNotice stop={live.stop} />
+            {search.live && !liveApplies && (
+                <div className="text-muted-foreground text-xs" role="status">Live filings join a newest-first list without an end date or 8-K items filter.</div>
+            )}
+            {search.live && liveApplies && (
+                <div className="text-muted-foreground text-xs" role="status">{`Live adds new filings whose primary ticker is ${ticker.toUpperCase()}, from when Live was switched on.`}</div>
+            )}
+
+            {search.search && (
+                <SecFilingSearch
+                    onOpen={onOpenCitation}
+                    renderFilingLink={accession => (
+                        <Link className="text-primary text-xs hover:underline" params={{ accession }} to="/filings/$accession">
+                            Filing details
+                        </Link>
+                    )}
+                    symbol={ticker}
+                />
+            )}
 
             {content}
         </div>

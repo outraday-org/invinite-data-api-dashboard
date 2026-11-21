@@ -21,11 +21,13 @@ import type {
     V2CagrResponse,
     V2CompanyExpand,
     V2CompanyResponse,
+    V2DatasetsResponse,
     V2DateKind,
     V2DisplaySign,
     V2DividendsResponse,
     V2DividendsSort,
     V2DocumentFigureResponse,
+    V2DocumentSectionsResponse,
     V2DocumentVersionResponse,
     V2Event,
     V2EventComparisonResponse,
@@ -44,6 +46,9 @@ import type {
     V2FilersResponse,
     V2FilersSort,
     V2FilingDetailResponse,
+    V2FilingFactsResponse,
+    V2FilingHoldingsResponse,
+    V2FilingNotesResponse,
     V2FilingExpand,
     V2FilingSearchResponse,
     V2FilingsResponse,
@@ -104,6 +109,9 @@ import type {
     V2QaResponse,
     V2RatioCategory,
     V2RatiosResponse,
+    V2ReviewChainResponse,
+    V2ReviewDirection,
+    V2SectionOutline,
     V2SegmentsDetailedResponse,
     V2SegmentsResponse,
     V2SlidesInclude,
@@ -146,8 +154,10 @@ import {
     getV2Audio,
     getV2Cagr,
     getV2Company,
+    getV2Datasets,
     getV2Dividends,
     getV2DocumentFigure,
+    getV2DocumentSections,
     getV2DocumentVersion,
     getV2Event,
     getV2EventComparison,
@@ -158,6 +168,9 @@ import {
     getV2Filer,
     getV2Filers,
     getV2Filing,
+    getV2FilingFacts,
+    getV2FilingHoldings,
+    getV2FilingNotes,
     getV2Filings,
     getV2FilingSearch,
     getV2Growth,
@@ -184,6 +197,7 @@ import {
     getV2Prosody,
     getV2Qa,
     getV2Ratios,
+    getV2ReviewChain,
     getV2Segments,
     getV2SegmentsDetailed,
     getV2Slides,
@@ -476,19 +490,43 @@ export type SecSearchInput = {
     /** `mode=literal` only. */
     caseSensitive?: boolean;
     form?: string;
+    /** Day (`YYYY-MM-DD`), inclusive: `filed_at.gte`. */
+    from?: string;
+    /** Section ids, comma list. */
+    item?: string;
     limit?: number;
+    /** true = search every filer when `symbol` is empty (`meta.index.matches` caps the read); else no symbol = no request. */
+    marketWide?: boolean;
     mode: SecSearchMode;
     q: string;
-    /** Ticker, fund key or CIK; empty = no request (the search stays scoped to one instrument). */
+    /** Ticker, fund key or CIK; empty = no request unless `marketWide` (a company's search stays scoped to it). */
     symbol: string;
+    /** Day (`YYYY-MM-DD`), inclusive: `filed_at.lte`. */
+    to?: string;
 };
 
-/** SEC filing search (`GET /v1/search/filings`): runs once `q` and `symbol` are set (on submit); "More results" follows `next_cursor`. */
+/** SEC filing search (`GET /v1/search/filings`): runs once `q` and `symbol` (or `marketWide`) are set (on submit); "More results" follows `next_cursor`. */
 export function useV2FilingSearchInfinite(input: SecSearchInput) {
+    const symbol = input.symbol.trim();
+
     return useEarningsInfinite<V2FilingSearchResponse>({
-        enabled: input.q.trim().length > 0 && input.symbol.trim().length > 0,
+        enabled: input.q.trim().length > 0 && (symbol.length > 0 || input.marketWide === true),
         errorMessage: null,
-        fetchPage: (cursor, apiKey) => getV2FilingSearch({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        fetchPage: (cursor, apiKey) => getV2FilingSearch({
+            data: {
+                apiKey,
+                caseSensitive: input.caseSensitive,
+                cursor: cursor ?? undefined,
+                filedFrom: input.from,
+                filedTo: input.to,
+                form: input.form,
+                item: input.item,
+                limit: input.limit,
+                mode: input.mode,
+                q: input.q,
+                symbol: symbol || undefined,
+            },
+        }),
         queryKey: [
             "v2",
             "search-filings",
@@ -498,6 +536,9 @@ export function useV2FilingSearchInfinite(input: SecSearchInput) {
             input.symbol,
             input.form ?? "",
             input.limit ?? "",
+            input.item ?? "",
+            input.from ?? "",
+            input.to ?? "",
         ],
         staleTime: SEC_STALE_MS,
     });
@@ -1057,13 +1098,15 @@ export function refetchWhileCoveragePending<TPage extends { meta: { coverage?: {
 export type V2FilingsInput = {
     /** Forms (any of). */
     form?: Array<string>;
-    /** Day (`YYYY-MM-DD`, UTC): `filed_at.gte` its midnight. */
+    /** Day (`YYYY-MM-DD`), inclusive: `filed_at.gte` (the spec's `format: date`). */
     from?: string;
+    /** 8-K items (any of). */
+    items?: Array<string>;
     limit?: number;
     sort?: V2FilingsSort;
     /** Ticker of any instrument, a fund key or a company CIK (its primary listing). */
     symbol: string;
-    /** Day (`YYYY-MM-DD`, UTC), inclusive: `filed_at.lt` the next midnight. */
+    /** Day (`YYYY-MM-DD`), inclusive: `filed_at.lte`. */
     to?: string;
 };
 
@@ -1076,15 +1119,16 @@ export function useV2FilingsInfinite(input: V2FilingsInput) {
             data: {
                 apiKey,
                 cursor: cursor ?? undefined,
-                filedAtGte: input.from ? dayStartInstant(input.from) : undefined,
-                filedAtLt: input.to ? dayStartInstant(input.to, true) : undefined,
+                filedFrom: input.from,
+                filedTo: input.to,
                 form: input.form,
+                items: input.items,
                 limit: input.limit,
                 sort: input.sort,
                 symbol: input.symbol,
             },
         }),
-        queryKey: ["v2", "filings", input.symbol, key(input.form), input.from ?? "", input.to ?? "", input.sort ?? "", input.limit ?? ""],
+        queryKey: ["v2", "filings", input.symbol, key(input.form), input.from ?? "", input.to ?? "", input.sort ?? "", input.limit ?? "", key(input.items)],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
@@ -1758,5 +1802,94 @@ export function useV2AnnouncementsInfinite(input: AnnouncementsInput) {
             input.limit,
         ],
         staleTime: EARNINGS_LIST_STALE_MS,
+    });
+}
+
+// Filings depth (backend tasks/data-api-dashboard O7 group 3): the filing detail page's tabs (each asked only while its
+// tab is open: an empty accession / version id keeps the hook idle), a document version's sections and fact places,
+// the SEC data sets.
+
+/** Rows per page of the filing detail's lists. */
+const FILING_TAB_PAGE = 50;
+
+/** A filing's numeric XBRL facts by cursor; `tag` = concepts (comma list). */
+export function useV2FilingFactsInfinite(accession: string, tag?: string) {
+    return useEarningsInfinite<V2FilingFactsResponse>({
+        enabled: accession.length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2FilingFacts({ data: { accession, apiKey, cursor: cursor ?? undefined, limit: FILING_TAB_PAGE, tag } }),
+        queryKey: ["v2", "filing-facts", accession, tag ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** A filing's text facts (XBRL text blocks) by cursor; `tag` = concepts (comma list). */
+export function useV2FilingNotesInfinite(accession: string, tag?: string) {
+    return useEarningsInfinite<V2FilingNotesResponse>({
+        enabled: accession.length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2FilingNotes({ data: { accession, apiKey, cursor: cursor ?? undefined, limit: FILING_TAB_PAGE, tag } }),
+        queryKey: ["v2", "filing-notes", accession, tag ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** The comment-letter graph around a filing (`maxDepth` hops, `direction`). */
+export function useV2ReviewChain(accession: string, options: { direction?: V2ReviewDirection; maxDepth?: number }) {
+    return useEarningsQuery<V2ReviewChainResponse>({
+        enabled: accession.length > 0,
+        errorMessage: null,
+        load: apiKey => getV2ReviewChain({ data: { accession, apiKey, direction: options.direction, maxDepth: options.maxDepth } }),
+        queryKey: ["v2", "review-chain", accession, options.direction ?? "", options.maxDepth ?? ""],
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** The reported lines of one 13F-HR / NPORT-P filing by cursor. */
+export function useV2FilingHoldingsInfinite(accession: string) {
+    return useEarningsInfinite<V2FilingHoldingsResponse>({
+        enabled: accession.length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2FilingHoldings({ data: { accession, apiKey, cursor: cursor ?? undefined, limit: FILING_TAB_PAGE } }),
+        queryKey: ["v2", "filing-holdings", accession],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** The section outline of one document version by cursor (`outline`: generic headings by default). */
+export function useV2DocumentSectionsInfinite(versionId: string, outline?: V2SectionOutline) {
+    return useEarningsInfinite<V2DocumentSectionsResponse>({
+        enabled: versionId.length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2DocumentSections({ data: { apiKey, cursor: cursor ?? undefined, limit: FILING_TAB_PAGE, outline, versionId } }),
+        queryKey: ["v2", "document-sections", versionId, outline ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** Where facts sit in one document version by cursor (PRO). */
+export function useV2FactPlacesInfinite(versionId: string) {
+    return useEarningsInfinite<V2FactPlacesResponse>({
+        enabled: versionId.length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2FactPlaces({ data: { apiKey, cursor: cursor ?? undefined, documentVersion: versionId, limit: FILING_TAB_PAGE } }),
+        queryKey: ["v2", "fact-places", "version", versionId],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** The SEC data set releases the filings routes serve (one short list). */
+export function useV2DatasetsInfinite() {
+    return useEarningsInfinite<V2DatasetsResponse>({
+        enabled: true,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2Datasets({ data: { apiKey, cursor: cursor ?? undefined, limit: 100 } }),
+        queryKey: ["v2", "datasets"],
+        staleTime: SEC_STALE_MS,
     });
 }

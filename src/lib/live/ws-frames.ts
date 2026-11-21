@@ -508,3 +508,56 @@ export function newsSubscribeFrame({ earningsOnly, kinds, sources, tickers }: Ne
         ...(sources?.length ? { sources: [...sources] } : {}),
     } as const;
 }
+
+// ── Filings (`filings`, STANDARD; backend tasks/data-api-dashboard O7 group 3) ─────────────────────────────────────
+// Mirrors the spec's `WebSocketNewFilingEvent` / `WebSocketFiling` (IDA `src/lib/ablyRealtimeListener.ts`
+// `toWebSocketFiling`) — change both or neither. `new_filing` is broadcast to EVERY connection of the stream: there is
+// no subscribe frame, and the frame carries no `channel`.
+
+export const newFilingFrameSchema = z.object({
+    filing: z.looseObject({
+        accession_number: z.string(),
+        calendar_quarter: z.number().int(),
+        calendar_year: z.number().int(),
+        cik: z.string(),
+        filing_date: z.string(),
+        fiscal_quarter: z.number().int().nullable(),
+        fiscal_year: z.number().int().nullable(),
+        form_type: z.string(),
+        html_url: z.string().nullable(),
+        period_end: z.string().nullable(),
+        proposed_symbols: z.array(z.looseObject({ symbol: z.string() })).nullable(),
+        ticker: z.string().nullable(),
+    }),
+    type: z.literal("new_filing"),
+});
+
+export type NewFilingFrame = z.infer<typeof newFilingFrameSchema>;
+
+/** One filing of a `new_filing` frame (snake_case, as sent). */
+export type LiveFiling = NewFilingFrame["filing"];
+
+/** One raw socket `message`: a `new_filing` frame, anything else on the socket (`other`), or a malformed `new_filing`. */
+export type ParsedFilingFrame
+    = | { frame: NewFilingFrame; kind: "frame" }
+        | { kind: "malformed" }
+        | { kind: "other" };
+
+export function parseFilingFrame(data: unknown): ParsedFilingFrame {
+    if (typeof data !== "string") return { kind: "other" };
+
+    let value: unknown;
+
+    try {
+        value = JSON.parse(data);
+    }
+    catch {
+        return { kind: "other" };
+    }
+
+    if (typeof value !== "object" || value === null || (value as Record<string, unknown>).type !== "new_filing") return { kind: "other" };
+
+    const parsed = newFilingFrameSchema.safeParse(value);
+
+    return parsed.success ? { frame: parsed.data, kind: "frame" } : { kind: "malformed" };
+}

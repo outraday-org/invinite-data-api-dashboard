@@ -11,6 +11,7 @@ import {
     ChartPieIcon,
     CircleUserRoundIcon,
     CoinsIcon,
+    DatabaseIcon,
     ContactIcon,
     FileTextIcon,
     FolderOpenIcon,
@@ -31,6 +32,7 @@ import {
     RocketIcon,
     RssIcon,
     ScaleIcon,
+    ScrollTextIcon,
     SplitIcon,
     UserRoundIcon,
     UsersIcon,
@@ -78,6 +80,8 @@ export const BROWSE_NAV: ReadonlyArray<NavPage> = [
     { description: "13F investment managers and their portfolios.", icon: LandmarkIcon, keywords: ["institutions", "managers", "13f", "holders", "filers"], label: "Institutions", to: "/institutions" },
     { description: "Executives and analysts who speak on calls, with every call of each.", icon: ContactIcon, keywords: ["people", "persons", "executives", "analysts", "speakers", "participants"], label: "People", to: "/people" },
     { description: "Your watchlist's news in one list, and every company's new items live.", icon: RssIcon, keywords: ["news", "feed", "watchlist", "live", "press releases"], label: "News feed", to: "/news-feed" },
+    { description: "New SEC filings as they arrive, and full-text search across every filer.", icon: ScrollTextIcon, keywords: ["filings", "sec", "edgar", "8-k", "10-k", "live", "search"], label: "Filings", to: "/filings" },
+    { description: "The SEC bulk data sets the API serves, with their newest release.", icon: DatabaseIcon, keywords: ["sec", "datasets", "data sets", "bulk", "releases", "13f", "n-port"], label: "SEC data sets", to: "/sec/datasets" },
 ];
 
 /** The account (bottom of the sidebar, with the plan badge). */

@@ -12,8 +12,10 @@ import type {
     V2CompanyResponse,
     V2DateKind,
     V2DividendsResponse,
+    V2DatasetsResponse,
     V2DividendsSort,
     V2DocumentFigureResponse,
+    V2DocumentSectionsResponse,
     V2DocumentVersionResponse,
     V2EventComparisonResponse,
     V2EventResponse,
@@ -31,6 +33,9 @@ import type {
     V2FilersResponse,
     V2FilersSort,
     V2FilingDetailResponse,
+    V2FilingFactsResponse,
+    V2FilingHoldingsResponse,
+    V2FilingNotesResponse,
     V2FilingSearchResponse,
     V2FilingsResponse,
     V2FilingsSort,
@@ -84,6 +89,9 @@ import type {
     V2ProsodySection,
     V2QaResponse,
     V2RatiosResponse,
+    V2ReviewChainResponse,
+    V2ReviewDirection,
+    V2SectionOutline,
     V2SegmentsDetailedResponse,
     V2SegmentsResponse,
     V2SlidesResponse,
@@ -419,12 +427,17 @@ const filingSearchSchema = z.object({
     apiKey: apiKeySchema,
     caseSensitive: z.boolean().optional(),
     cursor: cursorSchema,
+    /** Days (`YYYY-MM-DD`), inclusive: `filed_at.gte` / `filed_at.lte` (the spec's `format: date`). */
+    filedFrom: z.iso.date().optional(),
+    filedTo: z.iso.date().optional(),
     form: z.string().trim().min(1).optional(),
+    /** Section ids, comma list. */
+    item: z.string().trim().min(1).max(200).optional(),
     limit: z.number().int().min(1).max(50).optional(),
     mode: searchModeSchema.optional(),
     q: z.string().trim().min(1).max(500),
-    /** Ticker, fund key or company CIK: the search stays scoped to one instrument. */
-    symbol: z.string().trim().min(1),
+    /** Ticker, fund key or company CIK; none = every filer (`meta.index.matches` caps the read). */
+    symbol: z.string().trim().min(1).optional(),
 });
 
 /**
@@ -434,14 +447,17 @@ const filingSearchSchema = z.object({
 export const getV2FilingSearch = createServerFn({ method: "GET" })
     .inputValidator(filingSearchSchema)
     .handler(async ({ data }): Promise<V2FilingSearchResponse> => {
-        const { apiKey, caseSensitive, cursor, form, limit, mode, q, symbol } = data;
+        const { apiKey, caseSensitive, cursor, filedFrom, filedTo, form, item, limit, mode, q, symbol } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/search/filings", {
             params: {
                 query: v2Query({
-                    case_sensitive: mode === "literal" ? caseSensitive : undefined,
+                    "case_sensitive": mode === "literal" ? caseSensitive : undefined,
                     cursor,
+                    "filed_at.gte": filedFrom,
+                    "filed_at.lte": filedTo,
                     form,
+                    item,
                     limit,
                     mode,
                     q,
@@ -973,9 +989,12 @@ export const getV2InvestorDocumentSearch = createServerFn({ method: "GET" })
 const v2FilingsSchema = z.object({
     apiKey: apiKeySchema,
     cursor: cursorSchema,
-    filedAtGte: z.string().trim().min(1).optional(),
-    filedAtLt: z.string().trim().min(1).optional(),
+    /** Days (`YYYY-MM-DD`), inclusive: `filed_at.gte` / `filed_at.lte` (the spec's `format: date`; an instant is a 400). */
+    filedFrom: z.iso.date().optional(),
+    filedTo: z.iso.date().optional(),
     form: z.array(z.string().trim().min(1)).optional(),
+    /** 8-K items (any of). */
+    items: z.array(z.string().trim().min(1).max(10)).optional(),
     limit: v2LimitSchema,
     sort: z.enum(["filed_at", "-filed_at"] as const satisfies ReadonlyArray<V2FilingsSort>).optional(),
     /** Ticker of any instrument, a fund key or a company CIK (its primary listing). */
@@ -986,15 +1005,16 @@ const v2FilingsSchema = z.object({
 export const getV2Filings = createServerFn({ method: "GET" })
     .inputValidator(v2FilingsSchema)
     .handler(async ({ data }): Promise<V2FilingsResponse> => {
-        const { apiKey, cursor, filedAtGte, filedAtLt, form, limit, sort, symbol } = data;
+        const { apiKey, cursor, filedFrom, filedTo, form, items, limit, sort, symbol } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/filings", {
             params: {
                 query: v2Query({
                     cursor,
-                    "filed_at.gte": filedAtGte,
-                    "filed_at.lt": filedAtLt,
+                    "filed_at.gte": filedFrom,
+                    "filed_at.lte": filedTo,
                     "form": v2Expand(form),
+                    "items": v2Expand(items),
                     limit,
                     sort,
                     symbol,
@@ -1711,6 +1731,112 @@ export const getV2AnnouncementsList = createServerFn({ method: "GET" })
                     "topic": v2Expand(data.topic),
                 }),
             },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+// Filings depth (backend tasks/data-api-dashboard O7 group 3): the filing detail page's tabs, a document version's
+// sections and fact places, the SEC data sets. Each list pages by `cursor` with the same filters.
+
+/** A filing's numeric XBRL facts (SEC financial statement data sets), `tag` = concepts (comma list). */
+export const getV2FilingFacts = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema, cursor: cursorSchema, limit: v2LimitSchema, tag: z.string().trim().min(1).max(500).optional() }))
+    .handler(async ({ data }): Promise<V2FilingFactsResponse> => {
+        const { accession, apiKey, cursor, limit, tag } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/filings/{accession}/facts", {
+            params: { path: { accession }, query: v2Query({ cursor, limit, tag }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** A filing's text facts (XBRL text blocks), `tag` = concepts (comma list). */
+export const getV2FilingNotes = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema, cursor: cursorSchema, limit: v2LimitSchema, tag: z.string().trim().min(1).max(500).optional() }))
+    .handler(async ({ data }): Promise<V2FilingNotesResponse> => {
+        const { accession, apiKey, cursor, limit, tag } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/filings/{accession}/notes", {
+            params: { path: { accession }, query: v2Query({ cursor, limit, tag }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The comment-letter graph around a filing (`max_depth` hops, `direction`); one answer, no cursor. */
+export const getV2ReviewChain = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        accession: accessionSchema,
+        apiKey: apiKeySchema,
+        direction: z.enum(["both", "up", "down"] as const satisfies ReadonlyArray<V2ReviewDirection>).optional(),
+        maxDepth: z.number().int().min(1).max(6).optional(),
+    }))
+    .handler(async ({ data }): Promise<V2ReviewChainResponse> => {
+        const { accession, apiKey, direction, maxDepth } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/filings/{accession}/review-chain", {
+            params: { path: { accession }, query: v2Query({ direction, max_depth: maxDepth }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        // `nodes` / `edges` / `twins` / `completeness` are free JSON in the spec (see `SecJson` in types.ts).
+        return res as V2ReviewChainResponse;
+    });
+
+/** The reported lines of one 13F-HR or NPORT-P filing as filed (`meta.family`), in the filing's line order. */
+export const getV2FilingHoldings = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema, cursor: cursorSchema, limit: z.number().int().min(1).max(1000).optional() }))
+    .handler(async ({ data }): Promise<V2FilingHoldingsResponse> => {
+        const { accession, apiKey, cursor, limit } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/filings/{accession}/holdings", {
+            params: { path: { accession }, query: v2Query({ cursor, limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The section outline of a document version (`generic` headings by default, `legacy` = the old section ids). */
+export const getV2DocumentSections = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        cursor: cursorSchema,
+        limit: v2LimitSchema,
+        outline: z.enum(["legacy", "generic"] as const satisfies ReadonlyArray<V2SectionOutline>).optional(),
+        versionId: versionIdSchema,
+    }))
+    .handler(async ({ data }): Promise<V2DocumentSectionsResponse> => {
+        const { apiKey, cursor, limit, outline, versionId } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/document-versions/{version_id}/sections", {
+            params: { path: { version_id: versionId }, query: v2Query({ cursor, limit, outline }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        // `block_spans` is free JSON in the spec (see `SecJson` in types.ts).
+        return res as V2DocumentSectionsResponse;
+    });
+
+/** The SEC data set releases the filings routes serve (newest release per data set). */
+export const getV2Datasets = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: v2LimitSchema }))
+    .handler(async ({ data }): Promise<V2DatasetsResponse> => {
+        const { apiKey, cursor, limit } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/datasets", {
+            params: { query: v2Query({ cursor, limit }) },
         });
 
         if (error) throwApiError(error, response);

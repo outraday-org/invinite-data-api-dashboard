@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { SecSearchCoverage, V2FilingSearchHit, V2FilingSearchResponse } from "@/lib/api/types";
 
-import { SEC_SEARCH_OFF, SecFilingSearch, SecSearchResults } from "@/components/sec/sec-filing-search";
+import { matchesText, SEC_SEARCH_OFF, SecFilingSearch, SecSearchResults } from "@/components/sec/sec-filing-search";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useV2FilingSearchInfinite } from "@/lib/api/queries";
 import { V2_FILING_SEARCH } from "@/lib/sec/v2-fixtures";
@@ -167,5 +167,91 @@ describe("SecFilingSearch", () => {
         expect(screen.getByRole("button", { name: /Search/ })).toBeDisabled();
 
         expect(vi.mocked(useV2FilingSearchInfinite)).toHaveBeenLastCalledWith(expect.objectContaining({ q: "" }));
+    });
+});
+
+describe("market-wide search and filters (O7 group 3)", () => {
+    const idle = { data: null, error: null, fetchNextPage: vi.fn(), hasNextPage: false, isFetching: false, isFetchingNextPage: false };
+
+    const CAPPED: SecSearchCoverage = {
+        completeness: "partial",
+        hint: "Add a company, a form or a filing-date range for a complete answer.",
+        lexical: { failed: 0, indexed: 900000, pending: 0, state: "ready" },
+        matches: {
+            cap: 300,
+            capped: true,
+            complete_since: "2026-11-14",
+            examined: 300,
+            examined_in_scope: 290,
+            filed_from: "2026-09-01",
+            filed_to: "2026-11-19",
+            narrow_with: ["company", "form", "filed_at"],
+            order: "newest_first",
+            total: null,
+            total_at_least: 301,
+            window_from: "2026-09-01",
+        },
+        reasons: ["too_many_matches"],
+    };
+
+    it("states the cap of a search without a company: examined, at least how many, the order and the hint", () => {
+        render(results({ pages: [page([HIT], CAPPED)], renderFilingLink: accession => <a href={`/filings/${accession}`}>Filing</a> }));
+
+        expect(screen.getByTestId("search-matches")).toHaveTextContent("Examined 300 of at least 301 matching passages (cap 300, newest filings first — complete since 2026-11-14). Filed 2026-09-01 to 2026-11-19.");
+
+        expect(screen.getByText(CAPPED.hint ?? "")).toBeInTheDocument();
+
+        expect(screen.getByRole("link", { name: "Filing" })).toHaveAttribute("href", "/filings/0000320193-25-000079");
+    });
+
+    it("an uncapped market-wide answer gives its total; a company search (matches null) shows no cap line", () => {
+        if (!CAPPED.matches) throw new Error("fixture");
+
+        expect(matchesText({ ...CAPPED.matches, capped: false, complete_since: null, total: 12, total_at_least: null })).toBe(
+            "Examined 300 of 12 matching passages (cap 300, newest filings first). Filed 2026-09-01 to 2026-11-19.",
+        );
+
+        render(results({ pages: [page([HIT], COMPLETE)] }));
+
+        expect(screen.queryByTestId("search-matches")).toBeNull();
+    });
+
+    it("marketWide without a symbol can submit; form, items and the date range are sent on Search only", () => {
+        vi.mocked(useV2FilingSearchInfinite).mockReturnValue(idle as unknown as ReturnType<typeof useV2FilingSearchInfinite>);
+
+        const onFiltersChange = vi.fn();
+
+        render(<SecFilingSearch filters={{}} marketWide onFiltersChange={onFiltersChange} onOpen={() => undefined} symbol="" />);
+
+        fireEvent.change(screen.getByLabelText("Search every filer's SEC filings"), { target: { value: "tariff" } });
+
+        fireEvent.change(screen.getByLabelText("Form"), { target: { value: " 8-K " } });
+
+        fireEvent.change(screen.getByLabelText("Section items"), { target: { value: "2.02" } });
+
+        fireEvent.change(screen.getByLabelText("Search filed from"), { target: { value: "2026-11-01" } });
+
+        // Typing a filter sends nothing (each search page is billed).
+        expect(vi.mocked(useV2FilingSearchInfinite)).toHaveBeenLastCalledWith(expect.objectContaining({ form: undefined, marketWide: true, q: "" }));
+
+        fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+
+        expect(onFiltersChange).toHaveBeenCalledWith({ form: "8-K", from: "2026-11-01", item: "2.02", to: undefined });
+
+        expect(vi.mocked(useV2FilingSearchInfinite)).toHaveBeenLastCalledWith(expect.objectContaining({ marketWide: true, q: "tariff", symbol: "" }));
+    });
+
+    it("without onFiltersChange the box keeps the submitted filters itself", () => {
+        vi.mocked(useV2FilingSearchInfinite).mockReturnValue(idle as unknown as ReturnType<typeof useV2FilingSearchInfinite>);
+
+        render(<SecFilingSearch onOpen={() => undefined} symbol="SPY" />);
+
+        fireEvent.change(screen.getByLabelText("Search this company's SEC filings"), { target: { value: "securities lending" } });
+
+        fireEvent.change(screen.getByLabelText("Form"), { target: { value: "N-CSR" } });
+
+        fireEvent.click(screen.getByRole("button", { name: /Search/ }));
+
+        expect(vi.mocked(useV2FilingSearchInfinite)).toHaveBeenLastCalledWith(expect.objectContaining({ form: "N-CSR", q: "securities lending", symbol: "SPY" }));
     });
 });

@@ -339,3 +339,23 @@ export type V2NewsSort = NonNullable<ApiQuery<"/v1/news">["sort"]>;
 export type V2FactPlacesResponse = ApiResponse<"/v1/fact-places", "get">;
 export type V2FactPlace = V2FactPlacesResponse["data"][number];
 export type V2FactPlaceStatus = V2FactPlace["status"];
+
+// Filings depth (backend tasks/data-api-dashboard O7 group 3): a filing's facts, notes, review chain and reported
+// holdings, a document version's sections and fact places, the SEC data sets. The review chain's nodes / edges are free
+// JSON in the spec: narrowed to `JsonValue` (`SecJson`) and read through guards.
+export type V2FilingFactsResponse = ApiResponse<"/v1/filings/{accession}/facts", "get">;
+export type V2FilingFact = V2FilingFactsResponse["data"][number];
+export type V2FilingNotesResponse = ApiResponse<"/v1/filings/{accession}/notes", "get">;
+export type V2FilingNote = V2FilingNotesResponse["data"][number];
+export type V2ReviewChainResponse = SecJson<ApiResponse<"/v1/filings/{accession}/review-chain", "get">>;
+export type V2ReviewDirection = NonNullable<ApiQuery<"/v1/filings/{accession}/review-chain">["direction"]>;
+export type V2FilingHoldingsResponse = ApiResponse<"/v1/filings/{accession}/holdings", "get">;
+export type V2FiledHolding = V2FilingHoldingsResponse["data"][number];
+/** `block_spans` is free JSON in the spec. */
+export type V2DocumentSectionsResponse = SecJson<ApiResponse<"/v1/document-versions/{version_id}/sections", "get">>;
+export type V2DocumentSection = V2DocumentSectionsResponse["data"][number];
+export type V2SectionOutline = NonNullable<ApiQuery<"/v1/document-versions/{version_id}/sections">["outline"]>;
+export type V2DatasetsResponse = ApiResponse<"/v1/datasets", "get">;
+export type V2SecDataset = V2DatasetsResponse["data"][number];
+/** `meta.index.matches` of a search without a company filter (null when the search names one). */
+export type V2FilingSearchMatches = NonNullable<SecSearchCoverage["matches"]>;

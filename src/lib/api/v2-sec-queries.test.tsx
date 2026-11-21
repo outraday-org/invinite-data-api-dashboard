@@ -6,7 +6,8 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { V2_FILING_10K, V2_FILINGS, V2_HOLDERS_13F, V2_HOLDERS_OVERVIEW, V2_HOLDERS_PENDING, V2_INSIDER_TRADES, V2_IPOS } from "@/lib/sec/v2-fixtures";
+import { FILING_FACTS } from "@/lib/sec/filing-detail-fixtures";
+import { V2_FILING_10K, V2_FILING_SEARCH, V2_FILINGS, V2_HOLDERS_13F, V2_HOLDERS_OVERVIEW, V2_HOLDERS_PENDING, V2_INSIDER_TRADES, V2_IPOS } from "@/lib/sec/v2-fixtures";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import { ApiRequestError } from "./errors";
@@ -17,6 +18,8 @@ import {
     useHoldersInfinite,
     useV2DocumentVersion,
     useV2Filing,
+    useV2FilingFactsInfinite,
+    useV2FilingSearchInfinite,
     useV2FilingsInfinite,
     useV2InsiderTradesInfinite,
     useV2IposInfinite,
@@ -27,7 +30,9 @@ import {
     getHolders,
     getV2DocumentVersion,
     getV2Filing,
+    getV2FilingFacts,
     getV2Filings,
+    getV2FilingSearch,
     getV2InsiderTrades,
     getV2Ipos,
 } from "./server-functions";
@@ -38,7 +43,9 @@ vi.mock("./server-functions", () => ({
     getHolders: vi.fn(),
     getV2DocumentVersion: vi.fn(),
     getV2Filing: vi.fn(),
+    getV2FilingFacts: vi.fn(),
     getV2Filings: vi.fn(),
+    getV2FilingSearch: vi.fn(),
     getV2InsiderTrades: vi.fn(),
     getV2Ipos: vi.fn(),
 }));
@@ -62,7 +69,7 @@ beforeEach(() => {
 });
 
 describe("useV2FilingsInfinite", () => {
-    it("sends symbol, the form list, the sort and the day range as filed_at.gte / .lt; pages by next_cursor", async () => {
+    it("sends symbol, the form list, 8-K items, the sort and the day range as days (filed_at.gte / .lte); pages by next_cursor", async () => {
         vi.mocked(getV2Filings)
             .mockResolvedValueOnce(V2_FILINGS)
             .mockResolvedValueOnce({ ...V2_FILINGS, has_more: false, next_cursor: null });
@@ -70,6 +77,7 @@ describe("useV2FilingsInfinite", () => {
         const { result } = renderHook(() => useV2FilingsInfinite({
             form: ["10-K"],
             from: "2026-01-01",
+            items: ["2.02"],
             limit: 40,
             sort: "-filed_at",
             symbol: "AAPL",
@@ -82,9 +90,10 @@ describe("useV2FilingsInfinite", () => {
             data: {
                 apiKey: "test-key",
                 cursor: undefined,
-                filedAtGte: "2026-01-01T00:00:00.000Z",
-                filedAtLt: "2026-11-04T00:00:00.000Z",
+                filedFrom: "2026-01-01",
+                filedTo: "2026-11-03",
                 form: ["10-K"],
+                items: ["2.02"],
                 limit: 40,
                 sort: "-filed_at",
                 symbol: "AAPL",
@@ -256,6 +265,62 @@ describe("useV2IposInfinite", () => {
 
         expect(getV2Ipos).toHaveBeenCalledWith({
             data: { apiKey: "test-key", cursor: undefined, limit: 50, sort: "-listing_date", stage: ["priced", "trading"] },
+        });
+    });
+});
+
+describe("filings depth hooks (O7 group 3)", () => {
+    it("a filing's facts: idle without an accession; the accession and concepts as sent", async () => {
+        vi.mocked(getV2FilingFacts).mockResolvedValue(FILING_FACTS);
+
+        const { rerender, result } = renderHook(({ accession }) => useV2FilingFactsInfinite(accession, "Revenues"), { initialProps: { accession: "" }, wrapper });
+
+        expect(getV2FilingFacts).not.toHaveBeenCalled();
+
+        rerender({ accession: "0000320193-26-000020" });
+
+        await waitFor(() => expect(result.current.data?.pages).toHaveLength(1));
+
+        expect(getV2FilingFacts).toHaveBeenLastCalledWith({
+            data: { accession: "0000320193-26-000020", apiKey: "test-key", cursor: undefined, limit: 50, tag: "Revenues" },
+        });
+    });
+
+    it("the filing search asks without a symbol only when marketWide; filters and days as sent", async () => {
+        vi.mocked(getV2FilingSearch).mockResolvedValue(V2_FILING_SEARCH);
+
+        renderHook(() => useV2FilingSearchInfinite({ mode: "lexical", q: "tariff", symbol: "" }), { wrapper });
+
+        expect(getV2FilingSearch).not.toHaveBeenCalled();
+
+        const { result } = renderHook(() => useV2FilingSearchInfinite({
+            form: "8-K",
+            from: "2026-11-01",
+            item: "2.02",
+            limit: 10,
+            marketWide: true,
+            mode: "lexical",
+            q: "tariff",
+            symbol: "",
+            to: "2026-11-20",
+        }), { wrapper });
+
+        await waitFor(() => expect(result.current.data?.pages).toHaveLength(1));
+
+        expect(getV2FilingSearch).toHaveBeenLastCalledWith({
+            data: {
+                apiKey: "test-key",
+                caseSensitive: undefined,
+                cursor: undefined,
+                filedFrom: "2026-11-01",
+                filedTo: "2026-11-20",
+                form: "8-K",
+                item: "2.02",
+                limit: 10,
+                mode: "lexical",
+                q: "tariff",
+                symbol: undefined,
+            },
         });
     });
 });

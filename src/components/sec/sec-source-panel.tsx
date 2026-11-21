@@ -234,16 +234,21 @@ export function SecBlocksView({
     );
 }
 
-/** A filing's documents (pure): filename, EDGAR type, description, public copy, "Read" for a readable version. */
+/**
+ * A filing's documents (pure): filename, EDGAR type, description, public copy, "Read" for a readable version (+ the
+ * filing page's `extraActions` of a readable version: its sections and fact places).
+ */
 export function V2FilingDocumentsView({
     data,
     error,
+    extraActions,
     isLoading,
     onRead,
     selectedFilename,
 }: {
     data: null | V2FilingDetailResponse;
     error: unknown;
+    extraActions?: (doc: V2FilingDocumentView & { currentVersionId: string }) => React.ReactNode;
     isLoading: boolean;
     onRead: (doc: V2FilingDocumentView) => void;
     selectedFilename: null | string;
@@ -308,10 +313,13 @@ export function V2FilingDocumentsView({
                                             <td className="p-1 text-right">
                                                 {doc.currentVersionId
                                                     ? (
-                                                            <Button onClick={() => onRead(doc)} size="xs" type="button" variant="outline">
-                                                                <FileText />
-                                                                Read
-                                                            </Button>
+                                                            <div className="flex flex-wrap items-center justify-end gap-1">
+                                                                <Button onClick={() => onRead(doc)} size="xs" type="button" variant="outline">
+                                                                    <FileText />
+                                                                    Read
+                                                                </Button>
+                                                                {extraActions?.({ ...doc, currentVersionId: doc.currentVersionId })}
+                                                            </div>
                                                         )
                                                     : <span className="text-muted-foreground">No readable version</span>}
                                             </td>

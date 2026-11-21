@@ -18,6 +18,7 @@ export function FilingsList({
     onOpenHtml,
     onOpenSecDocuments,
     onSortToggle,
+    renderDetailsLink,
     sortDirection,
     ticker,
 }: {
@@ -32,6 +33,8 @@ export function FilingsList({
     onFetchNextPage: () => void;
     onOpenHtml: (filing: FilingListRow) => void;
     onOpenSecDocuments?: (filing: FilingListRow) => void;
+    /** The filing page link of a row (`/filings/$accession`). */
+    renderDetailsLink?: (filing: FilingListRow) => React.ReactNode;
     sortDirection: "asc" | "desc";
     onSortToggle: () => void;
     /** The export's file-name scope; none = no Export menu. */
@@ -39,7 +42,7 @@ export function FilingsList({
 }) {
     return (
         <DataTable
-            columns={filingColumns({ onOpenHtml, onOpenSecDocuments, onSortToggle, sortDirection })}
+            columns={filingColumns({ onOpenHtml, onOpenSecDocuments, onSortToggle, renderDetailsLink, sortDirection })}
             emptyIsGenuine={emptyIsGenuine}
             emptyText="No filings found."
             errorState={errorState}

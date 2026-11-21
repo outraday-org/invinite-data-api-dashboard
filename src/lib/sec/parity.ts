@@ -19,6 +19,10 @@ export type FilingListRow = {
     fiscalQuarter: null | number;
     fiscalYear: null | number;
     formType: string;
+    /** 8-K items (`2.02`, `9.01`); empty for other forms. */
+    items: ReadonlyArray<string>;
+    /** Arrived over the live stream since the page opened (not on a loaded page). */
+    live?: boolean;
     /** `report_date`; null = the filing states no period (never a made-up one). */
     periodEnd: null | string;
     /** The primary document's filename as the filings list states it (null = not stated yet). */
@@ -47,9 +51,29 @@ export function toFilingListRow(row: V2Filing, periods: ReadonlyMap<string, Comp
         fiscalQuarter: period?.fiscal_quarter ?? null,
         fiscalYear: period?.fiscal_year ?? null,
         formType: row.form,
+        items: row.items,
         periodEnd,
         primaryDocument: row.primary_document ?? null,
     };
+}
+
+/** "31 10-K filings, newest filed 2026-11-03" (one form) or "Newest filing 2026-11-19" (the whole facet); null = unknown. */
+export function facetSummary(facet: ReadonlyArray<V2FormFacet> | undefined, form: null | string): null | string {
+    const entries = facet ?? [];
+
+    if (form) {
+        const entry = entries.find(candidate => candidate.form === form);
+
+        if (!entry) return null;
+
+        const count = `${entry.count} ${entry.form} filing${entry.count === 1 ? "" : "s"}`;
+
+        return entry.newest_filing_date ? `${count}, newest filed ${entry.newest_filing_date}` : count;
+    }
+
+    const newest = entries.map(entry => entry.newest_filing_date ?? "").filter(Boolean).sort().at(-1);
+
+    return newest ? `Newest filing ${newest}` : null;
 }
 
 /** The form-type picker's options: `meta.form_facet[].form`, in the facet's order. */

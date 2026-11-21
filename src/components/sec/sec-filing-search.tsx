@@ -1,7 +1,7 @@
 import { ExternalLink, FileText, Search } from "lucide-react";
 import * as React from "react";
 
-import type { SecSearchMode, V2FilingSearchHit, V2FilingSearchResponse } from "@/lib/api/types";
+import type { SecSearchMode, V2FilingSearchHit, V2FilingSearchMatches, V2FilingSearchResponse } from "@/lib/api/types";
 
 import { HighlightedText, SearchCoverageNote, SpanHighlightedText } from "@/components/search/search-highlight";
 import { Badge } from "@/components/ui/badge";
@@ -29,11 +29,46 @@ export const SEC_SEARCH_OFF = "SEC filing search is not switched on yet";
 
 const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
 
-function SecHitCard({ hit, mode, onOpen, query }: {
+/** The filters of a search (all optional): `form`, `item` (section ids, comma list), `from` / `to` (filing days, inclusive). */
+export type SecSearchFilters = { form?: string; from?: string; item?: string; to?: string };
+
+/** "Examined 300 of at least 301 matching passages …": the selectivity cap of a search without a company (`meta.index.matches`). */
+export function matchesText(matches: V2FilingSearchMatches): string {
+    const total = matches.capped
+        ? (matches.total_at_least === null ? "more" : `at least ${matches.total_at_least}`)
+        : String(matches.total ?? matches.examined);
+
+    const order = matches.order === "newest_first"
+        ? (matches.complete_since ? `, newest filings first — complete since ${matches.complete_since}` : ", newest filings first")
+        : "";
+
+    const range = matches.filed_from && matches.filed_to ? ` Filed ${matches.filed_from} to ${matches.filed_to}.` : "";
+
+    return `Examined ${matches.examined} of ${total} matching passages (cap ${matches.cap}${order}).${range}`;
+}
+
+const NARROW_LABELS: Partial<Record<string, string>> = { company: "a company", filed_at: "a filing date range", form: "a form" };
+
+/** The completeness of a search without a company filter: what was examined of how many matches, and how to narrow it. */
+export function SearchMatchesNote({ hint, matches }: { hint: null | string | undefined; matches: null | undefined | V2FilingSearchMatches }) {
+    if (!matches) return null;
+
+    const narrow = matches.narrow_with.map(value => NARROW_LABELS[value] ?? value);
+
+    return (
+        <div className="text-muted-foreground flex flex-col gap-0.5 text-xs" data-testid="search-matches" role="status">
+            <span>{matchesText(matches)}</span>
+            {matches.capped && (hint ? <span>{hint}</span> : narrow.length > 0 && <span>{`For a complete answer narrow by ${narrow.join(", ")}.`}</span>)}
+        </div>
+    );
+}
+
+function SecHitCard({ hit, mode, onOpen, query, renderFilingLink }: {
     hit: V2FilingSearchHit;
     mode: SecSearchMode;
     onOpen: (target: SecPanelTarget) => void;
     query: string;
+    renderFilingLink?: (accession: string) => React.ReactNode;
 }) {
     const view = toSecHitView(hit);
 
@@ -75,6 +110,7 @@ function SecHitCard({ hit, mode, onOpen, query }: {
                             </a>
                         )
                     : <span className="text-muted-foreground text-xs">No public copy yet</span>}
+                {renderFilingLink && view.accession && renderFilingLink(view.accession)}
                 {versionId && blockId && (
                     <span className="text-muted-foreground text-[0.625rem]">{`version ${versionId} · block ${blockId}`}</span>
                 )}
@@ -87,7 +123,7 @@ function SecHitCard({ hit, mode, onOpen, query }: {
  * The answer body (pure): every loaded page's hits, the index coverage note of the last page (`meta.index`), a notice
  * for a pending / partial page (`meta.coverage`), "No passages found" only for a complete answer with a complete
  * index, "More results" while `next_cursor` is set. An error is its state (503 `unavailable` = search not switched
- * on), never an empty list.
+ * on), never an empty list. A search without a company states its cap (`meta.index.matches`, `SearchMatchesNote`).
  */
 export function SecSearchResults({
     error,
@@ -98,6 +134,7 @@ export function SecSearchResults({
     onOpen,
     pages,
     query,
+    renderFilingLink,
 }: {
     error: unknown;
     hasNextPage: boolean;
@@ -107,6 +144,8 @@ export function SecSearchResults({
     onOpen: (target: SecPanelTarget) => void;
     pages: ReadonlyArray<V2FilingSearchResponse>;
     query: string;
+    /** A hit's link to its filing (the market-wide search: a hit names no company). */
+    renderFilingLink?: (accession: string) => React.ReactNode;
 }) {
     if (error && pages.length === 0) {
         return <SecReadinessNotice error={error} title="SEC filing search failed" titles={{ not_ready: SEC_SEARCH_OFF }} />;
@@ -139,10 +178,12 @@ export function SecSearchResults({
                                     mode={mode}
                                     onOpen={onOpen}
                                     query={query}
+                                    renderFilingLink={renderFilingLink}
                                 />
                             ))}
                         </ul>
                     )}
+            <SearchMatchesNote hint={searchIndex?.hint} matches={searchIndex?.matches} />
             <SearchCoverageNote coverage={searchIndex ?? { completeness: "unknown", reasons: [] }} />
             {error ? <SecReadinessNotice error={error} title="Failed to load more results" /> : null}
             {hasNextPage && (
@@ -155,11 +196,28 @@ export function SecSearchResults({
 }
 
 /**
- * SEC filing search over one company (`/v1/search/filings?symbol=`, 100 credits a page): keywords (`lexical`, default) or exact
- * text (`literal`, + "Match case"). Runs on submit; a mode chip re-runs the submitted query. A hit opens its cited
- * version / block in the source panel.
+ * SEC filing search (`/v1/search/filings`, 100 credits a page): keywords (`lexical`, default) or exact text (`literal`,
+ * + "Match case"), with form, section items and a filing-date range. Over one instrument (`symbol` = a ticker, fund key
+ * or CIK: stocks and funds alike) or, with `marketWide` and no symbol, over every filer (capped, `SearchMatchesNote`).
+ * The query and the filters run on submit only (each request is billed); a mode chip re-runs the submitted query. A
+ * hit opens its cited version / block in the source panel. `filters` + `onFiltersChange` = the page keeps the submitted
+ * filters (its URL); without them the box keeps its own.
  */
-export function SecFilingSearch({ onOpen, symbol }: { onOpen: (target: SecPanelTarget) => void; symbol: string }) {
+export function SecFilingSearch({
+    filters: committedFilters,
+    marketWide = false,
+    onFiltersChange,
+    onOpen,
+    renderFilingLink,
+    symbol,
+}: {
+    filters?: SecSearchFilters;
+    marketWide?: boolean;
+    onFiltersChange?: (filters: SecSearchFilters) => void;
+    onOpen: (target: SecPanelTarget) => void;
+    renderFilingLink?: (accession: string) => React.ReactNode;
+    symbol: string;
+}) {
     const [draft, setDraft] = React.useState("");
 
     const [query, setQuery] = React.useState("");
@@ -168,37 +226,85 @@ export function SecFilingSearch({ onOpen, symbol }: { onOpen: (target: SecPanelT
 
     const [matchCase, setMatchCase] = React.useState(true);
 
+    const [ownFilters, setOwnFilters] = React.useState<SecSearchFilters>({});
+
+    const filters = committedFilters ?? ownFilters;
+
+    const [filterDraft, setFilterDraft] = React.useState<SecSearchFilters>(filters);
+
     const result = useV2FilingSearchInfinite({
         caseSensitive: mode === "literal" ? matchCase : undefined,
+        form: filters.form,
+        from: filters.from,
+        item: filters.item,
         limit: SEARCH_LIMIT,
+        marketWide,
         mode,
         q: query,
-        // No symbol = no request (a search must stay scoped to this company).
+        // No symbol = no request unless the page searches every filer.
         symbol,
+        to: filters.to,
     });
 
-    const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH && symbol.trim().length > 0;
+    const scoped = symbol.trim().length > 0;
+
+    const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH && (scoped || marketWide);
 
     const submit = (event: React.FormEvent) => {
         event.preventDefault();
 
-        if (canSubmit) setQuery(draft.trim());
+        if (!canSubmit) return;
+
+        const next = cleanFilters(filterDraft);
+
+        if (onFiltersChange) onFiltersChange(next);
+        else setOwnFilters(next);
+
+        setQuery(draft.trim());
     };
+
+    const label = scoped || !marketWide ? "Search this company's SEC filings" : "Search every filer's SEC filings";
+
+    const setFilter = (patch: SecSearchFilters) => setFilterDraft(prev => ({ ...prev, ...patch }));
 
     return (
         <section className="flex flex-col gap-2 rounded-md border p-3">
-            <form className="flex items-center gap-2" onSubmit={submit}>
-                <Input
-                    aria-label="Search this company's SEC filings"
-                    maxLength={500}
-                    onChange={event => setDraft(event.target.value)}
-                    placeholder="Search this company's SEC filings — e.g. supply chain risk"
-                    value={draft}
-                />
-                <Button disabled={!canSubmit || result.isFetching} type="submit">
-                    <Search />
-                    {result.isFetching ? "Searching…" : "Search"}
-                </Button>
+            <form className="flex flex-col gap-2" onSubmit={submit}>
+                <div className="flex items-center gap-2">
+                    <Input
+                        aria-label={label}
+                        maxLength={500}
+                        onChange={event => setDraft(event.target.value)}
+                        placeholder={`${label} — e.g. supply chain risk`}
+                        value={draft}
+                    />
+                    <Button disabled={!canSubmit || result.isFetching} type="submit">
+                        <Search />
+                        {result.isFetching ? "Searching…" : "Search"}
+                    </Button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Input
+                        aria-label="Form"
+                        className="w-[110px]"
+                        maxLength={20}
+                        onChange={event => setFilter({ form: event.target.value })}
+                        placeholder="Form, e.g. 10-K"
+                        value={filterDraft.form ?? ""}
+                    />
+                    <Input
+                        aria-label="Section items"
+                        className="w-[150px]"
+                        maxLength={200}
+                        onChange={event => setFilter({ item: event.target.value })}
+                        placeholder="Items, e.g. 1A,7"
+                        title="Section ids, comma list"
+                        value={filterDraft.item ?? ""}
+                    />
+                    <Input aria-label="Search filed from" className="w-[150px]" onChange={event => setFilter({ from: event.target.value })} type="date" value={filterDraft.from ?? ""} />
+                    <span className="text-muted-foreground">to</span>
+                    <Input aria-label="Search filed to" className="w-[150px]" onChange={event => setFilter({ to: event.target.value })} type="date" value={filterDraft.to ?? ""} />
+                </div>
             </form>
             <div className="flex flex-wrap items-center gap-1">
                 {SEARCH_MODES.map(value => (
@@ -224,7 +330,7 @@ export function SecFilingSearch({ onOpen, symbol }: { onOpen: (target: SecPanelT
                         Match case
                     </Button>
                 )}
-                <span className="text-muted-foreground ml-auto text-[0.625rem]">100 credits per search page</span>
+                <span className="text-muted-foreground ml-auto text-[0.625rem]">100 credits per search page; filters apply on Search</span>
             </div>
             {query && (
                 <>
@@ -238,9 +344,17 @@ export function SecFilingSearch({ onOpen, symbol }: { onOpen: (target: SecPanelT
                         onOpen={onOpen}
                         pages={result.data?.pages ?? []}
                         query={query}
+                        renderFilingLink={renderFilingLink}
                     />
                 </>
             )}
         </section>
     );
+}
+
+/** The filters as sent: trimmed, an empty value dropped (the plain search sends none). */
+export function cleanFilters(filters: SecSearchFilters): SecSearchFilters {
+    const clean = (value: string | undefined) => value?.trim() || undefined;
+
+    return { form: clean(filters.form), from: clean(filters.from), item: clean(filters.item), to: clean(filters.to) };
 }
