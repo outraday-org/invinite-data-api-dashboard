@@ -7,7 +7,7 @@ import type { Alert, AlertBatchOp, AlertBatchResult } from "@/lib/api/types";
 import { ConfirmAction } from "@/components/ui/confirm-action";
 import { errorDescription } from "@/lib/api/errors";
 import { useApiMutation } from "@/lib/api/mutations";
-import { ALERT_QUERY_KEYS } from "@/lib/api/queries";
+import { ALERT_QUERY_KEYS, ALERT_USER_QUERY_KEYS } from "@/lib/api/queries";
 import { ALERT_BATCH_MAX } from "@/lib/api/server-functions-alerts";
 
 export type AlertAction = "delete" | "pause" | "resume" | "test";
@@ -80,7 +80,8 @@ export function useAlertActions({ onBulkDone, onDeleted }: { onBulkDone?: (ids: 
 
     const [batch, setBatch] = React.useState<BatchOutcome | null>(null);
 
-    const listAndEvents = [ALERT_QUERY_KEYS.list, ALERT_QUERY_KEYS.events];
+    // A4: an end user's usage counts its alerts, so its views refresh with them.
+    const listAndEvents = [ALERT_QUERY_KEYS.list, ALERT_QUERY_KEYS.events, ALERT_USER_QUERY_KEYS.users];
 
     const pause = useApiMutation("pauseAlert", { invalidates: [...listAndEvents, ALERT_QUERY_KEYS.alert] });
 

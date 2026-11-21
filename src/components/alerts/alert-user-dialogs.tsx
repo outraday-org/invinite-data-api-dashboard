@@ -5,29 +5,20 @@ import type { AlertUserFormState, FormErrors, ParsedBatch } from "@/lib/alerts/a
 import type { BatchItemResult } from "@/lib/alerts/labels";
 import type { AlertUser, AlertUserDefaults } from "@/lib/api/types";
 
+import { FieldShell } from "@/components/alerts/alert-form-view";
 import { BatchResultsView } from "@/components/alerts/alert-parts";
 import { batchChunks } from "@/components/alerts/use-alert-actions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { problemFieldErrors } from "@/lib/alerts/alert-form";
 import { ALERT_USER_BATCH_MAX, BATCH_CSV_COLUMNS, batchPreviewText, LIMIT_SPECS, limitValueText, parseAlertUserBatch, toAlertUserBody } from "@/lib/alerts/alert-users";
 import { ApiRequestError, errorDescription } from "@/lib/api/errors";
 import { useApiMutation } from "@/lib/api/mutations";
 import { ALERT_USER_QUERY_KEYS } from "@/lib/api/queries";
 
 const fieldId = (key: string) => `alert-user-field-${key}`;
-
-function Field({ children, error, help, htmlFor, label }: { children: React.ReactNode; error?: string; help?: string; htmlFor: string; label: string }) {
-    return (
-        <div className="flex min-w-0 flex-col gap-1" data-field={htmlFor}>
-            <label className="font-medium" htmlFor={htmlFor}>{label}</label>
-            {children}
-            {help && <p className="text-muted-foreground">{help}</p>}
-            {error && <p className="text-destructive" role="alert">{error}</p>}
-        </div>
-    );
-}
 
 /**
  * The fields of an end user (pure): its id (only when adding — PATCH creates a missing one), display name, the three
@@ -37,17 +28,17 @@ export function AlertUserFormFields({ defaults, errors, mode, onChange, state }:
     return (
         <div className="grid gap-3 sm:grid-cols-2">
             {mode === "create" && (
-                <Field error={errors.external_user_id} help="Your own id of the end user: any text, 1–200 characters (kept exactly as typed)." htmlFor={fieldId("external_user_id")} label="End user id">
+                <FieldShell error={errors.external_user_id} help="Your own id of the end user: any text, 1–200 characters (kept exactly as typed)." htmlFor={fieldId("external_user_id")} label="End user id">
                     <Input id={fieldId("external_user_id")} onChange={event => onChange({ ...state, externalUserId: event.target.value })} value={state.externalUserId} />
-                </Field>
+                </FieldShell>
             )}
-            <Field error={errors.display_name} help="A name for your dashboards (empty = none)." htmlFor={fieldId("display_name")} label="Display name">
+            <FieldShell error={errors.display_name} help="A name for your dashboards (empty = none)." htmlFor={fieldId("display_name")} label="Display name">
                 <Input id={fieldId("display_name")} onChange={event => onChange({ ...state, displayName: event.target.value })} value={state.displayName} />
-            </Field>
+            </FieldShell>
             {LIMIT_SPECS.map(spec => (
-                <Field
+                <FieldShell
                     error={errors[spec.field]}
-                    help={`${spec.help} Empty = the account default (${defaults ? limitValueText(defaults[spec.field]).toLowerCase() : "see End-user defaults"}).`}
+                    help={`${spec.help} Empty = ${mode === "create" ? "left as it is (a new end user: " : ""}the account default (${defaults ? limitValueText(defaults[spec.field]).toLowerCase() : "see End-user defaults"})${mode === "create" ? ")" : ""}.`}
                     htmlFor={fieldId(spec.field)}
                     key={spec.field}
                     label={spec.label}
@@ -59,34 +50,28 @@ export function AlertUserFormFields({ defaults, errors, mode, onChange, state }:
                         placeholder="Account default"
                         value={state.limits[spec.field]}
                     />
-                </Field>
+                </FieldShell>
             ))}
             <div className="sm:col-span-2">
-                <Field error={errors.metadata} help="Your own key / value pairs as a JSON object (≤ 50 keys, ≤ 8 KB); replaces the stored object." htmlFor={fieldId("metadata")} label="Metadata">
+                <FieldShell error={errors.metadata} help="Your own key / value pairs as a JSON object (≤ 50 keys, ≤ 8 KB); replaces the stored object." htmlFor={fieldId("metadata")} label="Metadata">
                     <Textarea className="font-mono" id={fieldId("metadata")} onChange={event => onChange({ ...state, metadata: event.target.value })} placeholder={"{\"tier\": \"premium\"}"} rows={3} spellCheck={false} value={state.metadata} />
-                </Field>
+                </FieldShell>
             </div>
         </div>
     );
 }
 
-/** A refused upsert on the dialog's fields (a 400's `param` / `errors[]` by field name, else `form`). */
+const UPSERT_FIELDS = new Set(["display_name", "external_user_id", "metadata", ...LIMIT_SPECS.map(spec => spec.field)]);
+
+/** A refused upsert on the dialog's fields (a problem's `param` / `errors[]` by field name, else `form`). */
 export function upsertErrorsOf(error: unknown): FormErrors {
     if (!(error instanceof ApiRequestError)) return { form: errorDescription(error as Error) };
 
-    const problems = error.status === 400 && error.body.errors?.length ? error.body.errors : [{ detail: error.message, param: error.body.param ?? null }];
+    return problemFieldErrors(error, (param) => {
+        const field = param?.split(".")[0];
 
-    const known = new Set(["display_name", "external_user_id", "metadata", ...LIMIT_SPECS.map(spec => spec.field)]);
-
-    const out: FormErrors = {};
-
-    for (const problem of problems) {
-        const key = problem.param && known.has(problem.param.split(".")[0]) ? problem.param.split(".")[0] : "form";
-
-        out[key] = out[key] ? `${out[key]} ${problem.detail}` : problem.detail;
-    }
-
-    return out;
+        return field && UPSERT_FIELDS.has(field) ? field : null;
+    });
 }
 
 /**
@@ -101,7 +86,7 @@ export function AlertUserEditDialog({ defaults, initial, mode, onOpenChange, onS
     const save = useApiMutation("updateAlertUser", { invalidates: [ALERT_USER_QUERY_KEYS.users] });
 
     const onSubmit = async () => {
-        const { body, errors: local, id } = toAlertUserBody(state);
+        const { body, errors: local, id } = toAlertUserBody(state, { create: mode === "create" });
 
         setErrors(local);
 
@@ -137,7 +122,7 @@ export function AlertUserEditDialog({ defaults, initial, mode, onOpenChange, onS
                         <DialogTitle>{mode === "create" ? "Add end user" : `Edit ${state.externalUserId}`}</DialogTitle>
                         <DialogDescription>
                             {mode === "create"
-                                ? "Creates the end user (or updates it when the id exists). Its alerts are created with this id as external_user_id."
+                                ? "Creates the end user. When the id exists, only the fields filled in here change. Its alerts name this id as external_user_id."
                                 : "Changes apply at once. A limit lowered below the current count keeps the existing alerts and refuses new ones."}
                         </DialogDescription>
                     </DialogHeader>
@@ -195,9 +180,14 @@ export function AlertUserBatchDialog({ onOpenChange, open }: { onOpenChange: (op
 
     const batch = useApiMutation("batchAlertUsers", { invalidates: [ALERT_USER_QUERY_KEYS.users] });
 
-    const parsed = parseAlertUserBatch(text);
+    // A paste of thousands of items is parsed after typing, not on every keystroke.
+    const deferredText = React.useDeferredValue(text);
 
-    const ready = parsed.items.length > 0 && parsed.problems.length === 0;
+    const parsed = parseAlertUserBatch(deferredText);
+
+    const [fileError, setFileError] = React.useState<null | string>(null);
+
+    const ready = deferredText === text && parsed.items.length > 0 && parsed.problems.length === 0;
 
     const send = async () => {
         const ids = parsed.items.map(item => item.external_user_id);
@@ -220,8 +210,22 @@ export function AlertUserBatchDialog({ onOpenChange, open }: { onOpenChange: (op
         setOutcome({ ids, results });
     };
 
-    const onFile = async (file: File | undefined) => {
-        if (file) setText(await file.text());
+    const onFile = async (input: HTMLInputElement) => {
+        const file = input.files?.[0];
+
+        // Picking the same file again reads it again.
+        input.value = "";
+
+        if (!file) return;
+
+        try {
+            setText(await file.text());
+
+            setFileError(null);
+        }
+        catch {
+            setFileError(`${file.name} could not be read.`);
+        }
     };
 
     return (
@@ -249,8 +253,9 @@ export function AlertUserBatchDialog({ onOpenChange, open }: { onOpenChange: (op
                                 <Textarea aria-label="End users to create or update" className="min-h-40 font-mono" onChange={event => setText(event.target.value)} placeholder={PLACEHOLDER} spellCheck={false} value={text} />
                                 <label className="flex flex-wrap items-center gap-2">
                                     <span className="text-muted-foreground">Or read a file:</span>
-                                    <input accept=".csv,.json,text/csv,application/json,text/plain" aria-label="Read a CSV or JSON file" className="text-xs" onChange={event => void onFile(event.target.files?.[0])} type="file" />
+                                    <input accept=".csv,.json,text/csv,application/json,text/plain" aria-label="Read a CSV or JSON file" className="text-xs" onChange={event => void onFile(event.target)} type="file" />
                                 </label>
+                                {fileError && <p className="text-destructive" role="alert">{fileError}</p>}
                                 <AlertUserBatchPreview parsed={parsed} />
                                 <DialogFooter>
                                     <Button disabled={batch.isPending} onClick={() => onOpenChange(false)} type="button" variant="ghost">Cancel</Button>

@@ -48,11 +48,14 @@ function ScriptPage() {
 
     const [conflict, setConflict] = React.useState<null | string>(null);
 
-    const remove = useApiMutation("deleteScript", { invalidates: [SCRIPT_QUERY_KEYS.scripts] });
+    // The list only: the deleted script and its versions are not asked again (a 404 before the page navigates away).
+    const remove = useApiMutation("deleteScript", { invalidates: [[...SCRIPT_QUERY_KEYS.scripts, "list"]] });
 
     const pick = (version: number | undefined) => void navigate({ ...IN_PLACE, search: { version } });
 
     const onDelete = async () => {
+        setConflict(null);
+
         try {
             await remove.mutateAsync({ id });
 
@@ -123,7 +126,12 @@ function ScriptPage() {
                 <ScriptUploadDialog
                     onOpenChange={setUploading}
                     onUploaded={(result) => {
-                        if ("version" in result) pick(result.version.version);
+                        if (!("version" in result)) return;
+
+                        // A new version may be the one the alerts named in a refused delete use: ask again on Delete.
+                        setConflict(null);
+
+                        pick(result.version.version);
                     }}
                     open
                     scriptId={loaded.id}

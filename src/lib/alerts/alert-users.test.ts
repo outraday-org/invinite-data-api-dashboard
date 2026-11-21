@@ -10,9 +10,11 @@ import {
     csvRows,
     deleteResultText,
     DISPLAY_NAME_MAX,
+    emptyAlertUserForm,
     EXTERNAL_USER_ID_MAX,
     fromAlertUser,
     fromDefaults,
+    isPathSafeUserId,
     limitOriginText,
     limitRows,
     limitSource,
@@ -109,6 +111,25 @@ describe("the edit form", () => {
         expect(body).toEqual({ display_name: "Jane (premium)", max_active_alerts: null, max_fires_per_day: null, max_script_alerts: null, metadata: { tier: "premium" } });
     });
 
+    it("adding sends only the filled fields (an existing id keeps the rest); an empty add form asks for one", () => {
+        const add = { displayName: "", externalUserId: "u1", limits: { max_active_alerts: "", max_fires_per_day: "50", max_script_alerts: "" }, metadata: "" };
+
+        expect(toAlertUserBody(add, { create: true })).toEqual({ body: { max_fires_per_day: 50 }, errors: {}, id: "u1" });
+
+        expect(toAlertUserBody({ ...add, limits: { ...add.limits, max_fires_per_day: "" } }, { create: true }).errors.form).toContain("at least one field");
+
+        // Editing keeps sending every field it shows.
+        expect(toAlertUserBody(add).body).toEqual({ display_name: null, max_active_alerts: null, max_fires_per_day: 50, max_script_alerts: null, metadata: {} });
+    });
+
+    it("the ids . and .. cannot be addressed by path", () => {
+        expect(toAlertUserBody({ ...emptyAlertUserForm(".."), displayName: "x" }).errors.external_user_id).toContain("cannot be put into a URL path");
+
+        expect(isPathSafeUserId("...")).toBe(true);
+
+        expect(parseAlertUserBatch(JSON.stringify([{ external_user_id: ".." }])).problems).toEqual([]);
+    });
+
     it("refuses a bad limit, bad JSON, an empty id", () => {
         const state = { displayName: "", externalUserId: "", limits: { max_active_alerts: "-1", max_fires_per_day: "1.5", max_script_alerts: "100000001" }, metadata: "{" };
 
@@ -180,6 +201,10 @@ describe("bulk upsert: paste → checked items", () => {
     });
 
     it("csvRows: quotes, escaped quotes, CRLF, line breaks inside quotes, blank lines dropped", () => {
-        expect(csvRows("a,b\r\n\"x\"\"y\",\"1\n2\"\r\n\r\n")).toEqual([["a", "b"], ["x\"y", "1\n2"]]);
+        expect(csvRows("a,b\r\n\"x\"\"y\",\"1\n2\"\r\n\r\n")).toEqual({ rows: [["a", "b"], ["x\"y", "1\n2"]], unclosed: false });
+
+        expect(csvRows("a\n\"open,1\nb,2").unclosed).toBe(true);
+
+        expect(parseAlertUserBatch("external_user_id,display_name\nu1,\"Jane\nu2,x").problems).toEqual([{ item: 0, message: "A double quote is never closed: every quoted cell needs its closing \"." }]);
     });
 });

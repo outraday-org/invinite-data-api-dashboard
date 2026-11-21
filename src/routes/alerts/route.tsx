@@ -1,20 +1,16 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 
-import type { V2Me } from "@/lib/api/types";
-
 import { Notice } from "@/components/ui/notice";
-import { ALERTS_FAMILY } from "@/lib/alerts/labels";
+import { plansAlerts } from "@/lib/alerts/labels";
 import { ALERTS_TABS } from "@/lib/alerts/tabs";
 import { useKeyState } from "@/lib/api/queries";
+
+// The plan gate lives in `labels.ts` (A4's entry points and `/account` use it too); kept importable from here.
+export { plansAlerts };
 
 export const Route = createFileRoute("/alerts")({
     component: AlertsLayout,
 });
-
-/** Whether the key's plan reaches the alert operations (`/v1/me` `allowed_families` holds the docs group "Alerts"). */
-export function plansAlerts(me: null | Pick<V2Me, "allowed_families">) {
-    return me === null || me.allowed_families.includes(ALERTS_FAMILY);
-}
 
 /** The area's sub-navigation (Alerts · Events; A3 / A4 append theirs in `ALERTS_TABS`). */
 export function AlertsTabs() {

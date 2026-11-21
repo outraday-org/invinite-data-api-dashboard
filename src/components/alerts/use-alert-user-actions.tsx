@@ -34,7 +34,12 @@ export function useAlertUserActions({ onDeleted }: { onDeleted?: (outcome: Delet
 
     const resume = useApiMutation("resumeAlertUser", { invalidates: stale });
 
-    const remove = useApiMutation("deleteAlertUser", { invalidates: stale });
+    // A finished erasure refetches the lists, never the end user it removed (a 404 before the page navigates away).
+    const remove = useApiMutation("deleteAlertUser", {
+        invalidates: result => (result.status === "deleted"
+            ? [[...ALERT_USER_QUERY_KEYS.users, "list"], [...ALERT_USER_QUERY_KEYS.users, "suggest"], ALERT_QUERY_KEYS.list, ALERT_QUERY_KEYS.events]
+            : stale),
+    });
 
     const run = async (action: Action, { external_user_id: externalUserId }: Target) => {
         setBusy(current => new Set(current).add(externalUserId));

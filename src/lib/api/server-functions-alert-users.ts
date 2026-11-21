@@ -12,7 +12,7 @@ import type {
     UpdateAlertUserRequest,
 } from "./types";
 
-import { ALERT_USER_BATCH_MAX, ALERT_USER_STATUSES, alertUserBatchItemSchema, alertUserFieldsSchema, externalUserIdSchema, limitSchema } from "../alerts/alert-users";
+import { ALERT_USER_BATCH_MAX, ALERT_USER_STATUSES, alertUserBatchItemSchema, alertUserFieldsSchema, limitSchema, pathUserIdSchema } from "../alerts/alert-users";
 import {
     batchAlertUsersRequest,
     deleteAlertUserRequest,
@@ -53,7 +53,8 @@ export const listAlertUsers = createServerFn({ method: "GET" })
         status: data.status,
     }));
 
-const userInput = z.object({ apiKey: apiKeySchema, externalUserId: externalUserIdSchema });
+/** A per-user operation: the id goes into the path (any text but `.` / `..`, which a URL parser drops as dot segments). */
+const userInput = z.object({ apiKey: apiKeySchema, externalUserId: pathUserIdSchema });
 
 export const getAlertUser = createServerFn({ method: "GET" })
     .inputValidator(userInput)

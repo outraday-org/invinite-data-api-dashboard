@@ -14,7 +14,7 @@ import { Notice } from "@/components/ui/notice";
 import { fieldErrorsOf, toCreateBody, toUpdateBody } from "@/lib/alerts/alert-form";
 import { ApiRequestError, errorDescription } from "@/lib/api/errors";
 import { useApiMutation, useIdempotencyKey } from "@/lib/api/mutations";
-import { ALERT_QUERY_KEYS, useAlertsQuota, useAlertTemplates } from "@/lib/api/queries";
+import { ALERT_QUERY_KEYS, ALERT_USER_QUERY_KEYS, useAlertsQuota, useAlertTemplates } from "@/lib/api/queries";
 
 const isAlert = (value: Alert | AlertWriteDone): value is Alert => "type" in value;
 
@@ -81,7 +81,8 @@ export function CreateAlertForm({ initial }: { initial: AlertFormState }) {
 
     const endUserOptions = useAlertUserOptions(state.externalUserId);
 
-    const create = useApiMutation("createAlert", { invalidates: [ALERT_QUERY_KEYS.list] });
+    // A create naming a new end user creates it; an end user's usage counts its alerts (A4).
+    const create = useApiMutation("createAlert", { invalidates: [ALERT_QUERY_KEYS.list, ALERT_USER_QUERY_KEYS.users] });
 
     const check = useApiMutation("createAlert", { invalidates: [] });
 
@@ -183,7 +184,7 @@ export function EditAlertForm({ alert, initial, onDone, onReload }: { alert: Ale
 
     const endUserOptions = useAlertUserOptions(state.externalUserId);
 
-    const update = useApiMutation("updateAlert", { invalidates: [ALERT_QUERY_KEYS.list, ALERT_QUERY_KEYS.alert] });
+    const update = useApiMutation("updateAlert", { invalidates: [ALERT_QUERY_KEYS.list, ALERT_QUERY_KEYS.alert, ALERT_USER_QUERY_KEYS.users] });
 
     const onSubmit = async () => {
         const { body, errors: local } = toUpdateBody(state, version, templates.data?.data ?? []);

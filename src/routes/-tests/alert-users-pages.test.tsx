@@ -91,6 +91,18 @@ describe("/alerts/users list (`GET /v1/alert-users`)", () => {
     });
 });
 
+describe("ids a URL path cannot carry", () => {
+    it("`..` is listed as text, without a link or row actions", () => {
+        render(<AlertUsersListView busy={new Set()} onAction={vi.fn()} state={listState({ pages: [{ ...USERS_PAGE_FIXTURE, data: [{ ...USER_ODD, external_user_id: ".." }] }] })} />);
+
+        expect(screen.queryByRole("link", { name: ".." })).toBeNull();
+
+        expect(screen.getAllByTitle(/cannot be put into a URL path/).map(node => node.textContent)).toEqual(["..", "—"]);
+
+        expect(screen.queryByRole("button", { name: "Actions for .." })).toBeNull();
+    });
+});
+
 describe("/alerts/users/$externalUserId", () => {
     it("profile, metadata, and each limit: own vs effective and where it comes from", () => {
         render(<AlertUserProfileView user={USER_PAUSED} />);
@@ -120,12 +132,12 @@ describe("/alerts/users/$externalUserId", () => {
 });
 
 describe("add / edit an end user (PATCH upsert)", () => {
-    it("sends every field it shows for the id as typed; empty limits = null", async () => {
+    it("adding sends the filled fields for the id as typed", async () => {
         const onOpenChange = vi.fn();
 
         render(<AlertUserEditDialog defaults={DEFAULTS_FIXTURE} initial={emptyAlertUserForm()} mode="create" onOpenChange={onOpenChange} open />);
 
-        expect(screen.getByText(/Empty = the account default \(2\)/)).toBeInTheDocument();
+        expect(screen.getByText(/Empty = left as it is \(a new end user: the account default \(2\)\)/)).toBeInTheDocument();
 
         fireEvent.change(screen.getByLabelText("End user id"), { target: { value: ODD_USER_ID } });
 
@@ -136,9 +148,21 @@ describe("add / edit an end user (PATCH upsert)", () => {
         await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false));
 
         expect(mutations.calls).toEqual([{
-            input: { body: { display_name: null, max_active_alerts: null, max_fires_per_day: 50, max_script_alerts: null, metadata: {} }, externalUserId: ODD_USER_ID },
+            input: { body: { max_fires_per_day: 50 }, externalUserId: ODD_USER_ID },
             operation: "updateAlertUser",
         }]);
+    });
+
+    it("adding to an existing id sends only the fields filled in", async () => {
+        render(<AlertUserEditDialog defaults={null} initial={emptyAlertUserForm("smoke-a")} mode="create" onOpenChange={vi.fn()} open />);
+
+        fireEvent.change(screen.getByLabelText("Display name"), { target: { value: "Smoke" } });
+
+        fireEvent.click(screen.getByRole("button", { name: "Add end user" }));
+
+        await waitFor(() => expect(mutations.calls).toHaveLength(1));
+
+        expect(mutations.calls[0].input).toEqual({ body: { display_name: "Smoke" }, externalUserId: "smoke-a" });
     });
 
     it("a local problem is shown under its field and nothing is sent; an API 400 lands on its field", async () => {
@@ -155,6 +179,13 @@ describe("add / edit an end user (PATCH upsert)", () => {
         expect(upsertErrorsOf(new ApiRequestError(400, { error: "invalid_parameter", message: "too long", param: "display_name" }))).toEqual({ display_name: "too long" });
 
         expect(upsertErrorsOf(new ApiRequestError(409, { error: "conflict", message: "being deleted" }))).toEqual({ form: "being deleted" });
+
+        // Every problem of a 400 lands on its field (the shared mapper of the alert form).
+        expect(upsertErrorsOf(new ApiRequestError(400, {
+            error: "invalid_parameter",
+            errors: [{ code: "invalid_parameter", detail: "too big", param: "max_active_alerts" }, { code: "invalid_parameter", detail: "bad key", param: "metadata.x" }, { code: "x", detail: "other", param: "plan" }],
+            message: "2 problems",
+        }))).toEqual({ form: "other", max_active_alerts: "too big", metadata: "bad key" });
     });
 });
 

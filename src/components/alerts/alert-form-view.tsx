@@ -22,7 +22,8 @@ const fieldId = (key: string) => `alert-field-${key.replaceAll(".", "-")}`;
 
 const WIDE_KINDS = new Set<FieldSpec["kind"]>(["enum-list", "json", "string-list", "weekday-list"]);
 
-export function FieldShell({ children, error, help, htmlFor, label, wide }: { children: React.ReactNode; error?: string; help?: string; htmlFor?: string; label: string; wide?: boolean }) {
+/** One labelled field of the alerts forms: label, input, help, the field's error (A4's dialogs use it too). */
+export function FieldShell({ children, error, help, htmlFor, label, wide }: { children: React.ReactNode; error?: string; help?: React.ReactNode; htmlFor?: string; label: string; wide?: boolean }) {
     return (
         <div className={cn("flex min-w-0 flex-col gap-1", wide && "sm:col-span-2")} data-field={htmlFor}>
             {htmlFor ? <label className="font-medium" htmlFor={htmlFor}>{label}</label> : <span className="font-medium">{label}</span>}

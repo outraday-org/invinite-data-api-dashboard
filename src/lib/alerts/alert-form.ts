@@ -540,18 +540,26 @@ export function fieldKeyOf(param: null | string | undefined): null | string {
 }
 
 /**
- * A 400's problems on the form's fields (`param` and every `errors[]` entry); what names no field goes under `form`.
+ * A problem answer on a form's fields (`param` and every `errors[]` entry, joined per field); `keyOf` names the field
+ * of a `param` (null = none: the problem goes under `form`). Shared by the alert form and A4's end-user / script forms.
  */
-export function fieldErrorsOf(error: ApiRequestError): FieldErrors {
+export function problemFieldErrors(error: ApiRequestError, keyOf: (param: null | string | undefined) => null | string): FieldErrors {
     const out: FieldErrors = {};
 
     const problems = error.body.errors?.length ? error.body.errors : [{ code: error.code, detail: error.message, param: error.body.param ?? null }];
 
     for (const problem of problems) {
-        const key = fieldKeyOf(problem.param) ?? "form";
+        const key = keyOf(problem.param) ?? "form";
 
         out[key] = out[key] ? `${out[key]} ${problem.detail}` : problem.detail;
     }
 
     return out;
+}
+
+/**
+ * A 400's problems on the form's fields (`param` and every `errors[]` entry); what names no field goes under `form`.
+ */
+export function fieldErrorsOf(error: ApiRequestError): FieldErrors {
+    return problemFieldErrors(error, fieldKeyOf);
 }

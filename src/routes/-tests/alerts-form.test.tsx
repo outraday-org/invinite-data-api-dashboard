@@ -25,7 +25,7 @@ vi.mock("@/lib/api/mutations", async importOriginal => ({
 }));
 
 vi.mock("@/lib/api/queries", () => ({
-    ALERT_QUERY_KEYS: { alert: ["a"], event: ["e"], events: ["es"], list: ["l"], templates: ["t"] },
+    ALERT_QUERY_KEYS: { alert: ["a"], event: ["e"], events: ["es"], list: ["l"], templates: ["t"] }, ALERT_USER_QUERY_KEYS: { defaults: ["d"], users: ["u"] },
     useAlertsQuota: () => ({ data: null }),
     useAlertTemplates: () => ({ data: TEMPLATES_FIXTURE, error: null, isLoading: false }),
     useAlertUserSuggestions: () => ({ data: null }),

@@ -3,10 +3,12 @@ import { toast } from "sonner";
 
 import type { Script, ScriptVersion } from "@/lib/api/types";
 
+import { FieldShell } from "@/components/alerts/alert-form-view";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { problemFieldErrors } from "@/lib/alerts/alert-form";
 import { SCRIPT_DESCRIPTION_MAX, SCRIPT_NAME_MAX, SCRIPT_SOURCE_MAX, scriptUploadErrors } from "@/lib/alerts/scripts";
 import { ApiRequestError, errorDescription } from "@/lib/api/errors";
 import { useApiMutation } from "@/lib/api/mutations";
@@ -17,37 +19,26 @@ export type ScriptUploadState = { description: string; name: string; source: str
 
 const fieldId = (key: string) => `script-field-${key}`;
 
-function Field({ children, error, help, htmlFor, label }: { children: React.ReactNode; error?: string; help?: React.ReactNode; htmlFor: string; label: string }) {
-    return (
-        <div className="flex min-w-0 flex-col gap-1" data-field={htmlFor}>
-            <label className="font-medium" htmlFor={htmlFor}>{label}</label>
-            {children}
-            {help && <p className="text-muted-foreground">{help}</p>}
-            {error && <p className="text-destructive" role="alert">{error}</p>}
-        </div>
-    );
-}
-
 /**
  * The upload fields (pure): name and description only for a new script (fixed after upload: there is no update
  * operation), the source as text or from a file, with its size against the 204 800-character limit.
  */
-export function ScriptUploadFields({ errors, kind, onChange, onFile, state }: { errors: Record<string, string>; kind: "script" | "version"; onChange: (state: ScriptUploadState) => void; onFile: (file: File | undefined) => void; state: ScriptUploadState }) {
+export function ScriptUploadFields({ errors, kind, onChange, onFile, state }: { errors: Record<string, string>; kind: "script" | "version"; onChange: (state: ScriptUploadState) => void; onFile: (input: HTMLInputElement) => void; state: ScriptUploadState }) {
     const over = state.source.length > SCRIPT_SOURCE_MAX;
 
     return (
         <div className="flex flex-col gap-3">
             {kind === "script" && (
                 <>
-                    <Field error={errors.name} help={`At most ${SCRIPT_NAME_MAX} characters; fixed after upload.`} htmlFor={fieldId("name")} label="Name">
+                    <FieldShell error={errors.name} help={`At most ${SCRIPT_NAME_MAX} characters; fixed after upload.`} htmlFor={fieldId("name")} label="Name">
                         <Input id={fieldId("name")} onChange={event => onChange({ ...state, name: event.target.value })} value={state.name} />
-                    </Field>
-                    <Field error={errors.description} help={`Optional, at most ${SCRIPT_DESCRIPTION_MAX} characters; fixed after upload.`} htmlFor={fieldId("description")} label="Description">
+                    </FieldShell>
+                    <FieldShell error={errors.description} help={`Optional, at most ${SCRIPT_DESCRIPTION_MAX} characters; fixed after upload.`} htmlFor={fieldId("description")} label="Description">
                         <Input id={fieldId("description")} onChange={event => onChange({ ...state, description: event.target.value })} value={state.description} />
-                    </Field>
+                    </FieldShell>
                 </>
             )}
-            <Field
+            <FieldShell
                 error={errors.source}
                 help={(
                     <span className={over ? "text-destructive" : undefined} data-testid="source-size">
@@ -60,24 +51,26 @@ export function ScriptUploadFields({ errors, kind, onChange, onFile, state }: { 
                 <Textarea className="min-h-48 font-mono" id={fieldId("source")} onChange={event => onChange({ ...state, source: event.target.value })} spellCheck={false} value={state.source} />
                 <label className="flex flex-wrap items-center gap-2">
                     <span className="text-muted-foreground">Or read a file:</span>
-                    <input accept=".ts,.js,.txt,text/plain,text/typescript,application/typescript" aria-label="Read the source from a file" className="text-xs" onChange={event => onFile(event.target.files?.[0])} type="file" />
+                    <input accept=".ts,.js,.txt,text/plain,text/typescript,application/typescript" aria-label="Read the source from a file" className="text-xs" onChange={event => onFile(event.target)} type="file" />
                 </label>
-            </Field>
+            </FieldShell>
         </div>
     );
 }
 
-/** A refused upload on its fields (a 400's `param`: name / description / source), else one line. */
+const UPLOAD_FIELDS = new Set(["description", "name", "source"]);
+
+/** A refused upload on its fields (a problem's `param` / `errors[]`: name / description / source), else one line. */
 function uploadErrorsOf(error: unknown): Record<string, string> {
-    if (error instanceof ApiRequestError && error.status === 400) {
-        const param = error.body.param?.split(".")[0];
-
-        if (param === "name" || param === "description" || param === "source") return { [param]: error.message };
-    }
-
     if (error instanceof ApiRequestError && error.status === 429) return { form: `Another upload of this account is compiling; try again in a few seconds. (${errorDescription(error)})` };
 
-    return { form: errorDescription(error as Error) };
+    if (!(error instanceof ApiRequestError) || error.status !== 400) return { form: errorDescription(error as Error) };
+
+    return problemFieldErrors(error, (param) => {
+        const field = param?.split(".")[0];
+
+        return field && UPLOAD_FIELDS.has(field) ? field : null;
+    });
 }
 
 /**
@@ -97,14 +90,22 @@ export function ScriptUploadDialog({ onOpenChange, onUploaded, open, scriptId }:
 
     const pending = createScript.isPending || createVersion.isPending;
 
-    const onFile = async (file: File | undefined) => {
+    const onFile = async (input: HTMLInputElement) => {
+        const file = input.files?.[0];
+
+        // Picking the same file again reads it again.
+        input.value = "";
+
         if (!file) return;
 
-        setState(current => ({ ...current, name: current.name || file.name.replace(/\.[^.]+$/, "") }));
+        try {
+            const source = await file.text();
 
-        const source = await file.text();
-
-        setState(current => ({ ...current, source }));
+            setState(current => ({ ...current, name: current.name || file.name.replace(/\.[^.]+$/, ""), source }));
+        }
+        catch {
+            setErrors(current => ({ ...current, source: `${file.name} could not be read.` }));
+        }
     };
 
     const onSubmit = async () => {
@@ -157,7 +158,7 @@ export function ScriptUploadDialog({ onOpenChange, onUploaded, open, scriptId }:
                                 : "Adds the next version (at most 20 per script). Existing alerts keep their version."}
                         </DialogDescription>
                     </DialogHeader>
-                    <ScriptUploadFields errors={errors} kind={kind} onChange={setState} onFile={file => void onFile(file)} state={state} />
+                    <ScriptUploadFields errors={errors} kind={kind} onChange={setState} onFile={input => void onFile(input)} state={state} />
                     {errors.form && <p className="text-destructive" role="alert">{errors.form}</p>}
                     <DialogFooter>
                         <Button disabled={pending} onClick={() => onOpenChange(false)} type="button" variant="ghost">Cancel</Button>

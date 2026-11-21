@@ -17,11 +17,11 @@ import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PLAN_LABELS, toUsageWindow, USAGE_WINDOWS, usageErrorCount } from "@/lib/account";
+import { plansAlerts } from "@/lib/alerts/labels";
 import { useMe, useMyUsage } from "@/lib/api/queries";
 import { dataApiDashboardUrl } from "@/lib/app-url";
 import { formatDay, formatInstant, formatMoney, formatNumber } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
-import { plansAlerts } from "@/routes/alerts/route";
 
 export const Route = createFileRoute("/account")({
     component: AccountPage,

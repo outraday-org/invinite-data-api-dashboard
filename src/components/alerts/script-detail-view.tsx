@@ -89,7 +89,7 @@ export function ScriptSourceView({ diagnostics, source }: { diagnostics: Readonl
 
                     return (
                         <div
-                            className={cn("scroll-mt-24 [content-visibility:auto] target:bg-primary/15", severity === "error" && "bg-destructive/10", severity === "warning" && "bg-amber-500/10")}
+                            className={cn("scroll-mt-24 target:bg-primary/15", severity === "error" && "bg-destructive/10", severity === "warning" && "bg-amber-500/10")}
                             data-diagnostic={severity ?? undefined}
                             id={sourceLineId(line)}
                             key={line}

@@ -39,6 +39,17 @@ export const METADATA_MAX_BYTES = 8 * 1024;
 
 export const externalUserIdSchema = z.string().min(1, "An end user id is required.").max(EXTERNAL_USER_ID_MAX, `At most ${EXTERNAL_USER_ID_MAX} characters.`);
 
+/**
+ * Whether an id can be one path segment: `.` and `..` cannot — every URL parser (fetch, the browser, the router) reads
+ * them as dot segments, so `/v1/alert-users/..` would be `/v1/` (`encodeURIComponent` leaves dots as they are).
+ */
+export const isPathSafeUserId = (id: string) => id !== "." && id !== "..";
+
+export const UNADDRESSABLE_ID_TEXT = "The ids . and .. cannot be put into a URL path, so they cannot be read, changed, paused or deleted one by one (a bulk upsert still takes them).";
+
+/** The id of the per-user operations (`/v1/alert-users/{id}…`): any text except `.` / `..`. */
+export const pathUserIdSchema = externalUserIdSchema.refine(isPathSafeUserId, UNADDRESSABLE_ID_TEXT);
+
 const LIMIT_TEXT = `A whole number from 0 to ${formatNumber(ALERT_USER_LIMIT_MAX)}, or null.`;
 
 export const limitSchema = z.number(LIMIT_TEXT).int(LIMIT_TEXT).min(0, LIMIT_TEXT).max(ALERT_USER_LIMIT_MAX, LIMIT_TEXT).nullable();
@@ -200,28 +211,38 @@ function readLimit(text: string): { error: string } | { value: null | number } {
 }
 
 /**
- * The upsert of the form (`PATCH /v1/alert-users/{id}`): every field it shows (an empty limit = null = the account
- * default, an empty name = null, the metadata replaces the stored object), so the body always has a property.
+ * The upsert of the form (`PATCH /v1/alert-users/{id}`). Edit (`create: false`) sends every field it shows (an empty
+ * limit = null = the account default, an empty name = null, the metadata replaces the stored object). Add
+ * (`create: true`) sends only the fields filled in — the id may already exist, and a field left empty must not wipe
+ * its stored value; the API wants at least one field, so an empty add form asks for one.
  */
-export function toAlertUserBody(state: AlertUserFormState): { body: UpdateAlertUserRequest; errors: FormErrors; id: string } {
+export function toAlertUserBody(state: AlertUserFormState, { create = false }: { create?: boolean } = {}): { body: UpdateAlertUserRequest; errors: FormErrors; id: string } {
     const errors: FormErrors = {};
 
-    const id = externalUserIdSchema.safeParse(state.externalUserId);
+    const id = pathUserIdSchema.safeParse(state.externalUserId);
 
     if (!id.success) errors.external_user_id = id.error.issues[0].message;
 
-    const body: UpdateAlertUserRequest = { display_name: state.displayName.trim() || null };
+    const body: UpdateAlertUserRequest = {};
 
-    if (body.display_name && body.display_name.length > DISPLAY_NAME_MAX) errors.display_name = `At most ${DISPLAY_NAME_MAX} characters.`;
+    const name = state.displayName.trim();
+
+    if (name || !create) body.display_name = name || null;
+
+    if (name.length > DISPLAY_NAME_MAX) errors.display_name = `At most ${DISPLAY_NAME_MAX} characters.`;
 
     for (const { field } of LIMIT_SPECS) {
+        if (create && state.limits[field].trim() === "") continue;
+
         const read = readLimit(state.limits[field]);
 
         if ("error" in read) errors[field] = read.error;
         else body[field] = read.value;
     }
 
-    if (state.metadata.trim() === "") body.metadata = {};
+    if (state.metadata.trim() === "") {
+        if (!create) body.metadata = {};
+    }
     else {
         try {
             const parsed = metadataSchema.safeParse(JSON.parse(state.metadata) as JsonValue);
@@ -233,6 +254,8 @@ export function toAlertUserBody(state: AlertUserFormState): { body: UpdateAlertU
             errors.metadata = "Not valid JSON.";
         }
     }
+
+    if (Object.keys(body).length === 0 && Object.keys(errors).length === 0) errors.form = "Fill in at least one field: an existing end user keeps every field left empty.";
 
     return { body, errors, id: state.externalUserId };
 }
@@ -305,8 +328,8 @@ export const BATCH_CSV_COLUMNS = ["external_user_id", "display_name", "max_activ
 
 const LIMIT_COLUMNS = new Set<string>(["max_active_alerts", "max_fires_per_day", "max_script_alerts"]);
 
-/** RFC 4180 rows: commas, double quotes with `""` as a quote, line breaks inside quotes (pure). */
-export function csvRows(text: string): Array<Array<string>> {
+/** RFC 4180 rows: commas, double quotes with `""` as a quote, line breaks inside quotes (pure); `unclosed` = a quote never closed. */
+export function csvRows(text: string): { rows: Array<Array<string>>; unclosed: boolean } {
     const rows: Array<Array<string>> = [];
 
     let row: Array<string> = [];
@@ -357,7 +380,7 @@ export function csvRows(text: string): Array<Array<string>> {
     }
 
     // A blank line is no item.
-    return rows.filter(cells => cells.some(value => value.trim() !== ""));
+    return { rows: rows.filter(cells => cells.some(value => value.trim() !== "")), unclosed: quoted };
 }
 
 /** One CSV cell as the item's value: "" = not set (the field stays as it is), `null` = null. */
@@ -403,7 +426,9 @@ function rawItemsOf(text: string): { format: ParsedBatch["format"]; problems: Ar
         }
     }
 
-    const [header, ...rows] = csvRows(text);
+    const { rows: [header, ...rows], unclosed } = csvRows(text);
+
+    if (unclosed) return { format: "csv", problems: [{ item: 0, message: "A double quote is never closed: every quoted cell needs its closing \"." }], raw: [] };
 
     const columns = header.map(column => column.trim());
 

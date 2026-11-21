@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ALERT_USER_STATUS_INFO, LIMIT_SOURCE_TEXT, limitRows, usageShare, usageText } from "@/lib/alerts/alert-users";
+import { ALERT_USER_STATUS_INFO, isPathSafeUserId, LIMIT_SOURCE_TEXT, limitRows, UNADDRESSABLE_ID_TEXT, usageShare, usageText } from "@/lib/alerts/alert-users";
 import { formatInstant } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -52,8 +52,10 @@ export function UsageBar({ className, row }: { className?: string; row: Pick<Lim
     );
 }
 
-/** The link of an end user's page (the id is any text: the router encodes it as one path segment). */
+/** The link of an end user's page (the id is any text: the router encodes it as one path segment; `.` / `..` cannot be one). */
 export function AlertUserLink({ className, externalUserId }: { className?: string; externalUserId: string }) {
+    if (!isPathSafeUserId(externalUserId)) return <span className={cn("font-mono font-medium", className)} title={UNADDRESSABLE_ID_TEXT}>{externalUserId}</span>;
+
     return (
         <Link className={cn("font-mono font-medium break-all underline-offset-4 hover:underline", className)} params={{ externalUserId }} to="/alerts/users/$externalUserId">
             {externalUserId}
@@ -63,6 +65,8 @@ export function AlertUserLink({ className, externalUserId }: { className?: strin
 
 function RowActions({ busy, onAction, user }: { busy: boolean; onAction: (action: AlertUserAction, user: AlertUser) => void; user: AlertUser }) {
     const deleting = user.status === "deleting";
+
+    if (!isPathSafeUserId(user.external_user_id)) return <span className="text-muted-foreground" title={UNADDRESSABLE_ID_TEXT}>—</span>;
 
     return (
         <DropdownMenu>

@@ -25,7 +25,7 @@ vi.mock("@tanstack/react-router", () => ({
     useNavigate: () => vi.fn(),
 }));
 
-vi.mock("@/lib/api/queries", () => ({ ALERT_QUERY_KEYS: { alert: [], event: [], events: [], list: [], templates: [] }, useAlertsInfinite: vi.fn() }));
+vi.mock("@/lib/api/queries", () => ({ ALERT_QUERY_KEYS: { alert: [], event: [], events: [], list: [], templates: [] }, ALERT_USER_QUERY_KEYS: { defaults: [], users: [] }, useAlertsInfinite: vi.fn() }));
 
 vi.mock("@/lib/api/mutations", () => ({ useApiMutation: () => ({ isPending: false, mutateAsync: vi.fn() }) }));
 

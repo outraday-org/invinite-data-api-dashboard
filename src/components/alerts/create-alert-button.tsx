@@ -5,10 +5,9 @@ import type { AlertsListResponse, AlertType, V2Instrument } from "@/lib/api/type
 
 import { buttonVariants } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ALERT_TYPE_INFO, PRICE_ALERT_TYPES } from "@/lib/alerts/labels";
+import { ALERT_TYPE_INFO, plansAlerts, PRICE_ALERT_TYPES } from "@/lib/alerts/labels";
 import { useInstrument, useKeyState, useSymbolAlertCount } from "@/lib/api/queries";
 import { formatNumber } from "@/lib/format";
-import { plansAlerts } from "@/routes/alerts/route";
 
 /**
  * The "Create alert" entry points of ticker pages (backend tasks/data-api-dashboard 2-alerts task 4): a button in the

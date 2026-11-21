@@ -21,7 +21,7 @@ export function alertUserOptions(users: ReadonlyArray<Pick<AlertUser, "display_n
 
 /**
  * The alert form's end-user suggestions: existing end users whose id starts with the typed text (the API's `q`
- * prefix), asked once typing rests; idle while the form shows no end-user field.
+ * prefix), asked once typing rests; idle while the field is empty (opening the form asks nothing).
  */
 export function useAlertUserOptions(text: string): Array<AlertUserOption> {
     const [prefix, setPrefix] = React.useState(text);
@@ -32,7 +32,7 @@ export function useAlertUserOptions(text: string): Array<AlertUserOption> {
         return () => clearTimeout(timer);
     }, [text]);
 
-    const suggestions = useAlertUserSuggestions(prefix.slice(0, 200), true);
+    const suggestions = useAlertUserSuggestions(prefix.slice(0, 200), prefix.length > 0);
 
     return alertUserOptions(suggestions.data?.data ?? []);
 }

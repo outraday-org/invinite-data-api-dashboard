@@ -125,3 +125,8 @@ export function batchResultText<TResult extends BatchItemResult>(result: TResult
 
 /** The docs group of the alert operations in `/v1/me`'s `allowed_families` (the plan gate). */
 export const ALERTS_FAMILY = "Alerts";
+
+/** Whether the key's plan reaches the alert operations (`/v1/me` `allowed_families` holds the docs group "Alerts"). */
+export function plansAlerts(me: null | { allowed_families: ReadonlyArray<string> }) {
+    return me === null || me.allowed_families.includes(ALERTS_FAMILY);
+}
