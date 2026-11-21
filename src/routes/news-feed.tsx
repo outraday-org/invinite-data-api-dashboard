@@ -5,6 +5,7 @@ import * as React from "react";
 import type { LiveNewsStop } from "@/lib/live/use-live-news";
 import type { NewsFeedSearch, NewsFilters } from "@/lib/news/labels";
 
+import { LIVE_NEWS_PLAN_NOTE, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
 import { TabStrip } from "@/components/navigation/tab-strip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,10 +16,9 @@ import { parseTickers, useWatchlist, WATCHLIST_MAX } from "@/lib/news/watchlist"
 import { IN_PLACE } from "@/lib/url-state";
 import { NewsFilters as NewsFilterControls } from "@/routes/$ticker/news/-components/news-filters";
 import { NewsItemPanel } from "@/routes/$ticker/news/-components/news-item-panel";
-import { NewsLiveToggle } from "@/routes/$ticker/news/-components/news-live-toggle";
 import { NewsSearchBox } from "@/routes/$ticker/news/-components/news-search";
 import { useNewsList } from "@/routes/$ticker/news/-components/use-news-list";
-import { LiveStopNotice, NewsPageView } from "@/routes/$ticker/news/index";
+import { NewsPageView } from "@/routes/$ticker/news/index";
 
 export const Route = createFileRoute("/news-feed")({
     component: NewsFeedPage,
@@ -150,7 +150,8 @@ function NewsFeedPage() {
                 tags={[]}
                 windowFilters={scope === "watchlist"}
             />
-            <NewsLiveToggle
+            <LiveToggle
+                listening="Listening for new items"
                 live={live}
                 mode={news.liveMode}
                 onChange={(on) => {
@@ -158,6 +159,7 @@ function NewsFeedPage() {
 
                     onChange(on ? { live: true, sort: undefined } : { live: undefined });
                 }}
+                size="lg"
             />
         </div>
     );
@@ -184,7 +186,7 @@ function NewsFeedPage() {
                 isLoading={!watchlist.ready || news.isLoading}
                 items={news.items}
                 liveIds={news.liveIds}
-                notice={stop && <LiveStopNotice stop={stop} />}
+                notice={stop && <LiveStopNotice planNote={LIVE_NEWS_PLAN_NOTE} stop={stop} />}
                 pager={news.pager}
                 scopeLabel={scope === "market" ? "Every company" : "Your watchlist"}
                 search={(

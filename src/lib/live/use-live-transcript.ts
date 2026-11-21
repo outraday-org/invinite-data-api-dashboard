@@ -5,6 +5,8 @@ import type { EarningsServerFrame, KeywordWatch, UnsubscribeReason } from "./ws-
 import { INITIAL_LIVE_HIGHLIGHTS, liveHighlightsReducer } from "./live-highlights";
 import { INITIAL_LIVE_PRICES, livePricesReducer } from "./live-prices-reducer";
 import { INITIAL_LIVE_TRANSCRIPT, liveTranscriptReducer } from "./live-transcript-reducer";
+// The backoff and the re-subscribe delay (`attach_failed` / `unavailable`) of every `/v1/stream` hook.
+import { MAX_RECONNECT_TRIES, reconnectDelayMs, RESUBSCRIBE_AFTER_MS } from "./stream-socket";
 import {
     liveWsUrl,
     parseServerFrame,
@@ -63,18 +65,8 @@ type LiveTranscriptMode = "connecting" | "ended" | "error" | "live" | "retrying"
 /** No frame for this long while subscribed → the stalled pill. */
 const LIVE_WS_STALLED_AFTER_MS = 60_000;
 
-/** `attach_failed` / `unavailable` → the subscribe is sent again after this. */
-const RESUBSCRIBE_AFTER_MS = 10_000;
-
 /** After `call_ended` the socket stays open this long for late finals, then closes. */
 const CALL_ENDED_CLOSE_AFTER_MS = 5_000;
-
-const MAX_RECONNECT_TRIES = 10;
-
-/** Backoff of reconnect try `attempt` (1-based): 1 s, 2 s, 4 s … capped at 30 s. */
-function reconnectDelayMs(attempt: number) {
-    return Math.min(30_000, 1_000 * 2 ** Math.max(0, attempt - 1));
-}
 
 const LIVE_TRANSCRIPT_TIER_TEXT = "PRO plan required for the live transcript";
 

@@ -2,8 +2,10 @@ import { useEffect, useRef, useState } from "react";
 
 import type { NewsItemPublic } from "@/lib/api/types";
 
+import type { StreamMode, StreamStop } from "./stream-socket";
 import type { NewsServerFrame, NewsSubscribeOptions } from "./ws-frames";
 
+import { admissionCloses, openStreamSocket } from "./stream-socket";
 import { liveWsUrl, NEWS_LIVE_CHANNEL, newsSubscribeFrame, parseNewsFrame } from "./ws-frames";
 
 /**
@@ -20,30 +22,16 @@ import { liveWsUrl, NEWS_LIVE_CHANNEL, newsSubscribeFrame, parseNewsFrame } from
  *
  * STOPS (no reconnect loop): `forbidden_tier` (plan), `channel_unavailable` (live news not enabled on the API), close
  * 4029 (connection limit), 4001 / 4003 and `bad_message` call `onStop` and close; the page turns its switch off.
- * Other closes reconnect with backoff 1 s → 30 s (≤ 10 tries); `unavailable` re-subscribes after 10 s.
+ * Other closes reconnect with backoff 1 s → 30 s (≤ 10 tries); `unavailable` re-subscribes after 10 s. The socket
+ * lifecycle is `stream-socket.ts`'s.
  */
 
-export type LiveNewsStop = { kind: "error" | "limit" | "plan" | "unavailable"; message: string };
-
-type LiveNewsMode = "connecting" | "live" | "retrying";
-
-const RESUBSCRIBE_AFTER_MS = 10_000;
-
-const MAX_RECONNECT_TRIES = 10;
+export type LiveNewsStop = StreamStop;
 
 /** Most items held (newest first); older ones are on the REST pages anyway. */
 const MAX_LIVE_ITEMS = 200;
 
-function reconnectDelayMs(attempt: number) {
-    return Math.min(30_000, 1_000 * 2 ** Math.max(0, attempt - 1));
-}
-
-/** `/v1/stream` admission close codes (IDA `routes/websocket/filings.ts`): final. */
-const ADMISSION_CLOSE: Partial<Record<number, LiveNewsStop>> = {
-    4001: { kind: "error", message: "The API key was rejected by the live feed" },
-    4003: { kind: "plan", message: "Your plan does not include the live news feed" },
-    4029: { kind: "limit", message: "Live feed unavailable: connection limit" },
-};
+const ADMISSION_CLOSE = admissionCloses("Your plan does not include the live news feed");
 
 const ERROR_STOP: Record<Exclude<Extract<NewsServerFrame, { type: "error" }>["code"], "unavailable">, LiveNewsStop> = {
     bad_message: { kind: "error", message: "The live feed rejected a request of this page" },
@@ -68,7 +56,7 @@ export function useLiveNews({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, filters
 
     const [received, setReceived] = useState<{ items: Array<NewsItemPublic>; key: string }>({ items: [], key: "" });
 
-    const [mode, setMode] = useState<LiveNewsMode>("connecting");
+    const [mode, setMode] = useState<StreamMode>("connecting");
 
     const callbacks = useRef({ onResubscribed, onStop });
 
@@ -79,46 +67,9 @@ export function useLiveNews({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, filters
     useEffect(() => {
         if (!enabled || apiKey === null || baseUrl === null) return undefined;
 
-        // Carries the key: never logged (see the header).
-        const url = liveWsUrl(baseUrl, apiKey);
-
         const subscribe = JSON.parse(filterKey) as object;
 
-        let socket: null | WebSocket = null;
-
-        let disposed = false;
-
-        let stopped = false;
-
-        let tries = 0;
-
         let subscribedOnce = false;
-
-        let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
-
-        let resubscribeTimer: ReturnType<typeof setTimeout> | undefined;
-
-        const send = (frame: object) => {
-            if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(frame));
-        };
-
-        const close = () => {
-            send({ channel: NEWS_LIVE_CHANNEL, type: "unsubscribe" });
-
-            socket?.close(1000);
-        };
-
-        const stop = (reason: LiveNewsStop) => {
-            stopped = true;
-
-            clearTimeout(reconnectTimer);
-
-            clearTimeout(resubscribeTimer);
-
-            close();
-
-            callbacks.current.onStop(reason);
-        };
 
         const onFrame = (frame: NewsServerFrame) => {
             switch (frame.type) {
@@ -126,9 +77,7 @@ export function useLiveNews({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, filters
                     if (frame.code === "unavailable") {
                         setMode("retrying");
 
-                        clearTimeout(resubscribeTimer);
-
-                        resubscribeTimer = setTimeout(() => send(subscribe), RESUBSCRIBE_AFTER_MS);
+                        stream.resubscribeLater(() => stream.send(subscribe));
 
                         break;
                     }
@@ -136,7 +85,7 @@ export function useLiveNews({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, filters
                     // A client bug: the page sent a frame the API could not read (the message names the field).
                     if (frame.code === "bad_message") console.error("[live-news] bad_message:", frame.message);
 
-                    stop(ERROR_STOP[frame.code]);
+                    stream.stop(ERROR_STOP[frame.code]);
 
                     break;
                 }
@@ -156,7 +105,7 @@ export function useLiveNews({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, filters
                 }
 
                 case "subscribed": {
-                    tries = 0;
+                    stream.resetTries();
 
                     setMode("live");
 
@@ -173,61 +122,25 @@ export function useLiveNews({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, filters
             }
         };
 
-        const connect = () => {
-            const next = new WebSocket(url);
-
-            socket = next;
-
-            next.addEventListener("open", () => {
-                setMode("connecting");
-
-                send(subscribe);
-            });
-
-            next.addEventListener("message", (message: MessageEvent) => {
-                const parsed = parseNewsFrame(message.data);
+        // Carries the key: never logged (see the header).
+        const stream = openStreamSocket(liveWsUrl(baseUrl, apiKey), {
+            admission: ADMISSION_CLOSE,
+            closeFrame: { channel: NEWS_LIVE_CHANNEL, type: "unsubscribe" },
+            onMessage: (data) => {
+                const parsed = parseNewsFrame(data);
 
                 if (parsed.kind === "frame") onFrame(parsed.frame);
-            });
+            },
+            onOpen: () => {
+                setMode("connecting");
 
-            next.addEventListener("close", (event: CloseEvent) => {
-                clearTimeout(resubscribeTimer);
+                stream.send(subscribe);
+            },
+            onRetrying: () => setMode("retrying"),
+            onStop: reason => callbacks.current.onStop(reason),
+        });
 
-                if (disposed || stopped || socket !== next) return;
-
-                const admission = ADMISSION_CLOSE[event.code];
-
-                if (admission !== undefined) {
-                    stop(admission);
-
-                    return;
-                }
-
-                if (tries >= MAX_RECONNECT_TRIES) {
-                    stop({ kind: "error", message: "The live feed connection was lost; switch Live on again to retry" });
-
-                    return;
-                }
-
-                tries += 1;
-
-                setMode("retrying");
-
-                reconnectTimer = setTimeout(connect, reconnectDelayMs(tries));
-            });
-        };
-
-        connect();
-
-        return () => {
-            disposed = true;
-
-            clearTimeout(reconnectTimer);
-
-            clearTimeout(resubscribeTimer);
-
-            close();
-        };
+        return () => stream.dispose();
     }, [apiKey, apiKeyUpdatedAt, baseUrl, enabled, filterKey]);
 
     return {

@@ -79,4 +79,37 @@ describe("useLiveFilings", () => {
 
         expect(FakeSocket.last).toBe(socket);
     });
+
+    it("a dropped socket reconnects after 1 s, sends nothing, and the reopened socket calls onReconnected", () => {
+        vi.useFakeTimers();
+
+        try {
+            const onReconnected = vi.fn();
+
+            const { result } = renderHook(props => useLiveFilings(props), { initialProps: { ...input(true), onReconnected } });
+
+            const first = FakeSocket.last;
+
+            act(() => first?.emit("open"));
+
+            expect(onReconnected).not.toHaveBeenCalled();
+
+            act(() => first?.emit("close", { code: 1006 }));
+
+            expect(result.current.mode).toBe("retrying");
+
+            act(() => vi.advanceTimersByTime(1_000));
+
+            expect(FakeSocket.last).not.toBe(first);
+
+            act(() => FakeSocket.last?.emit("open"));
+
+            expect(onReconnected).toHaveBeenCalledTimes(1);
+
+            expect(result.current.mode).toBe("live");
+        }
+        finally {
+            vi.useRealTimers();
+        }
+    });
 });

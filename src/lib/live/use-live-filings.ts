@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
 import type { ReceivedFiling } from "./live-filings";
+import type { StreamMode, StreamStop } from "./stream-socket";
 
 import { addLiveFiling } from "./live-filings";
+import { admissionCloses, openStreamSocket } from "./stream-socket";
 import { liveWsUrl, parseFilingFrame } from "./ws-frames";
 
 /**
@@ -18,25 +20,14 @@ import { liveWsUrl, parseFilingFrame } from "./ws-frames";
  *
  * STOPS (no reconnect loop): close 4001 (key), 4003 (plan below STANDARD), 4029 (connection limit) call `onStop` and
  * close; the page turns its switch off. Other closes (1013 "try again later" included) reconnect with backoff 1 s → 30 s
- * (≤ 10 tries).
+ * (≤ 10 tries). The socket lifecycle is `stream-socket.ts`'s.
  */
 
-export type LiveFilingsStop = { kind: "error" | "limit" | "plan"; message: string };
+export type LiveFilingsStop = StreamStop;
 
-export type LiveFilingsMode = "connecting" | "live" | "retrying";
+export type LiveFilingsMode = StreamMode;
 
-const MAX_RECONNECT_TRIES = 10;
-
-function reconnectDelayMs(attempt: number) {
-    return Math.min(30_000, 1_000 * 2 ** Math.max(0, attempt - 1));
-}
-
-/** `/v1/stream` admission close codes (IDA `routes/websocket/filings.ts`): final. */
-const ADMISSION_CLOSE: Partial<Record<number, LiveFilingsStop>> = {
-    4001: { kind: "error", message: "The API key was rejected by the live feed" },
-    4003: { kind: "plan", message: "Your plan does not include the live filings feed" },
-    4029: { kind: "limit", message: "Live feed unavailable: connection limit" },
-};
+const ADMISSION_CLOSE = admissionCloses("Your plan does not include the live filings feed");
 
 type UseLiveFilingsInput = {
     apiKey: null | string;
@@ -63,88 +54,30 @@ export function useLiveFilings({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, onRe
         if (!enabled || apiKey === null || baseUrl === null) return undefined;
 
         // Carries the key: never logged (see the header).
-        const url = liveWsUrl(baseUrl, apiKey);
-
-        let socket: null | WebSocket = null;
-
-        let disposed = false;
-
-        let stopped = false;
-
-        let tries = 0;
-
-        let openedOnce = false;
-
-        let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
-
-        const stop = (reason: LiveFilingsStop) => {
-            stopped = true;
-
-            clearTimeout(reconnectTimer);
-
-            socket?.close(1000);
-
-            callbacks.current.onStop(reason);
-        };
-
-        const connect = () => {
-            const next = new WebSocket(url);
-
-            socket = next;
-
-            next.addEventListener("open", () => {
-                tries = 0;
-
-                setMode("live");
-
-                if (openedOnce) callbacks.current.onReconnected?.();
-
-                openedOnce = true;
-            });
-
-            next.addEventListener("message", (message: MessageEvent) => {
-                const parsed = parseFilingFrame(message.data);
+        const stream = openStreamSocket(liveWsUrl(baseUrl, apiKey), {
+            admission: ADMISSION_CLOSE,
+            onMessage: (data) => {
+                const parsed = parseFilingFrame(data);
 
                 if (parsed.kind !== "frame") return;
 
                 const receivedAt = new Date().toISOString();
 
                 setFilings(held => addLiveFiling(held, parsed.frame.filing, receivedAt));
-            });
+            },
+            onOpen: (reopened) => {
+                stream.resetTries();
 
-            next.addEventListener("close", (event: CloseEvent) => {
-                if (disposed || stopped || socket !== next) return;
+                setMode("live");
 
-                const admission = ADMISSION_CLOSE[event.code];
-
-                if (admission !== undefined) {
-                    stop(admission);
-
-                    return;
-                }
-
-                if (tries >= MAX_RECONNECT_TRIES) {
-                    stop({ kind: "error", message: "The live feed connection was lost; switch Live on again to retry" });
-
-                    return;
-                }
-
-                tries += 1;
-
-                setMode("retrying");
-
-                reconnectTimer = setTimeout(connect, reconnectDelayMs(tries));
-            });
-        };
-
-        connect();
+                if (reopened) callbacks.current.onReconnected?.();
+            },
+            onRetrying: () => setMode("retrying"),
+            onStop: reason => callbacks.current.onStop(reason),
+        });
 
         return () => {
-            disposed = true;
-
-            clearTimeout(reconnectTimer);
-
-            socket?.close(1000);
+            stream.dispose();
 
             // Switched off (or a new key / URL): the next session starts empty and connecting, never with old rows.
             setFilings([]);

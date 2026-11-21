@@ -8,6 +8,7 @@ import type { V2FilingsResponse } from "@/lib/api/types";
 import type { FilingListRow } from "@/lib/sec/parity";
 
 import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
+import { LIVE_FILINGS_PLAN_NOTE, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
 import { SecFilingSearch } from "@/components/sec/sec-filing-search";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
@@ -24,7 +25,6 @@ import type { FilingHtmlTarget } from "./-components/html-dialog";
 import { FilingsHeader } from "./-components/filings-header";
 import { FilingsList } from "./-components/filings-list";
 import { HtmlDialog } from "./-components/html-dialog";
-import { LiveFilingsStopNotice, LiveFilingsToggle } from "./-components/live-filings-toggle";
 import { useLiveFilingsFeed } from "./-components/use-live-filings-feed";
 
 /**
@@ -225,7 +225,8 @@ function FilingsPage() {
                             <SearchIcon />
                             Search text
                         </Button>
-                        <LiveFilingsToggle
+                        <LiveToggle
+                            listening="Listening for new filings"
                             live={search.live === true}
                             mode={live.mode}
                             onChange={(on) => {
@@ -249,7 +250,7 @@ function FilingsPage() {
                 to={search.to}
             />
 
-            <LiveFilingsStopNotice stop={live.stop} />
+            <LiveStopNotice planNote={LIVE_FILINGS_PLAN_NOTE} stop={live.stop} />
             {search.live && !liveApplies && (
                 <div className="text-muted-foreground text-xs" role="status">Live filings join a newest-first list without an end date or 8-K items filter.</div>
             )}

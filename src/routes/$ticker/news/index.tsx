@@ -10,6 +10,7 @@ import type { NewsFilters, NewsSearch } from "@/lib/news/labels";
 
 import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
 import { ExportMenu } from "@/components/api/export-menu";
+import { LIVE_NEWS_PLAN_NOTE, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
 import { TabStrip } from "@/components/navigation/tab-strip";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
@@ -25,7 +26,6 @@ import { AnnouncementsTab } from "./-components/announcements";
 import { NewsEventFilter } from "./-components/news-event-filter";
 import { NewsFilters as NewsFilterControls } from "./-components/news-filters";
 import { NewsItemPanel } from "./-components/news-item-panel";
-import { NewsLiveToggle } from "./-components/news-live-toggle";
 import { NewsPager } from "./-components/news-pager";
 import { NewsSearchBox } from "./-components/news-search";
 import { NewsTable } from "./-components/news-table";
@@ -42,15 +42,6 @@ function ListError({ error }: { error: unknown }) {
     if (isTierError(error)) return <Notice badge="FREE" title="Your plan does not include news" />;
 
     return <ErrorState error={error} title="Failed to load the news" />;
-}
-
-/** Why the live switch turned itself off (plan, connection limit, not enabled, error). */
-export function LiveStopNotice({ stop }: { stop: LiveNewsStop }) {
-    return (
-        <Notice badge={stop.kind === "plan" ? "STANDARD" : undefined} title={stop.message}>
-            {stop.kind === "plan" ? "The live news feed needs the STANDARD plan; the list above still works." : undefined}
-        </Notice>
-    );
 }
 
 /** The export's columns of a news row (the shown page; the pager has no "load all"). */
@@ -298,7 +289,8 @@ function CompanyNews({
                 search={search}
                 tags={publisherCik ? issuerLabels(news.fetched, publisherCik, "tags") : []}
             />
-            <NewsLiveToggle
+            <LiveToggle
+                listening="Listening for new items"
                 live={search.live === true}
                 mode={news.liveMode}
                 onChange={(on) => {
@@ -307,11 +299,12 @@ function CompanyNews({
                     // Live items join the newest-first list: switching it on drops `sort=oldest`.
                     onFilterChange(on ? { live: true, sort: undefined } : { live: undefined });
                 }}
+                size="lg"
             />
         </div>
     );
 
-    const notice = stop && <LiveStopNotice stop={stop} />;
+    const notice = stop && <LiveStopNotice planNote={LIVE_NEWS_PLAN_NOTE} stop={stop} />;
 
     return (
         <>

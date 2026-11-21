@@ -7,6 +7,7 @@ import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 import type { ReceivedFiling } from "@/lib/live/live-filings";
 import type { LiveFilingsMode } from "@/lib/live/use-live-filings";
 
+import { LIVE_FILINGS_PLAN_NOTE, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { SecFilingSearch } from "@/components/sec/sec-filing-search";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
@@ -18,7 +19,6 @@ import { DASH, formatDay, formatInstant } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import { commaList, hasLiveForm } from "@/lib/live/live-filings";
 import { IN_PLACE, optionalDay, optionalFlag, optionalText } from "@/lib/url-state";
-import { LiveFilingsStopNotice, LiveFilingsToggle } from "@/routes/$ticker/filings/-components/live-filings-toggle";
 import { useLiveFilingsFeed } from "@/routes/$ticker/filings/-components/use-live-filings-feed";
 
 /**
@@ -146,7 +146,8 @@ function FilingsPage() {
                                 placeholder="Forms, e.g. 8-K,S-1"
                                 value={search.form ?? ""}
                             />
-                            <LiveFilingsToggle
+                            <LiveToggle
+                                listening="Listening for new filings"
                                 live={!paused}
                                 mode={live.mode}
                                 onChange={(on) => {
@@ -160,7 +161,7 @@ function FilingsPage() {
                     description="New SEC filings of every filer as they arrive — only those since this page opened: the API lists filings per instrument, so there is no market-wide list to load. A filer's history is on its instrument or filer page."
                     title="Filings"
                 />
-                <LiveFilingsStopNotice stop={live.stop} />
+                <LiveStopNotice planNote={LIVE_FILINGS_PLAN_NOTE} stop={live.stop} />
                 {forms.length > 0 && (
                     <div className="text-muted-foreground text-xs" role="status">
                         {`Showing ${shown.length} of ${live.filings.length} arrived filings (forms ${forms.join(", ")}, filtered in the browser).`}
