@@ -32,13 +32,21 @@ const NEW_YORK = "America/New_York";
 export const LANDING_ROWS = 8;
 
 export type LandingData = {
-    holiday: { data: null | V2MarketHoliday; isLoading: boolean };
-    ipos: { data: ReadonlyArray<V2Ipo>; isLoading: boolean };
-    live: { asOf: Date; data: ReadonlyArray<V2Event>; isLoading: boolean };
+    holiday: LandingBlock<null | V2MarketHoliday>;
+    ipos: LandingBlock<ReadonlyArray<V2Ipo>>;
+    live: LandingBlock<ReadonlyArray<V2Event>> & { asOf: Date };
     recents: ReadonlyArray<RecentSubject>;
     today: string;
-    week: { data: ReadonlyArray<V2Event>; isLoading: boolean };
+    week: LandingBlock<ReadonlyArray<V2Event>>;
 };
+
+/** One block's answer; `failed` = its request failed (never shown as "nothing ahead"). */
+type LandingBlock<T> = { data: T; failed?: boolean; isLoading: boolean };
+
+/** A failed block's line (the block's page has the details). */
+function Failed() {
+    return <p className="text-destructive">Could not load this block. Open its page for details.</p>;
+}
 
 function Block({ action, children, title }: { action?: React.ReactNode; children: React.ReactNode; title: string }) {
     return (
@@ -85,70 +93,76 @@ export function LandingView({ holiday, ipos, live, recents, today, week }: Landi
     return (
         <div className="flex flex-col gap-6">
             <Block action={<MoreLink to="/live-calls">All live calls</MoreLink>} title="Live now">
-                {live.isLoading
-                    ? <Skeleton className="h-10 w-full" />
-                    : live.data.length === 0
-                        ? <p className="text-muted-foreground">No call is live right now.</p>
-                        : (
-                                <div className="flex flex-wrap gap-2" data-testid="landing-live">
-                                    {live.data.slice(0, LANDING_ROWS).map(event => (
-                                        <EventLink className="hover:bg-muted/50 flex items-center gap-2 rounded-md border px-2 py-1" event={event} key={event.event_id}>
-                                            <LiveDot />
-                                            <span className="font-medium">{event.symbol}</span>
-                                            <span className="text-muted-foreground">{event.started_at ? formatStartedAgo(event.started_at, live.asOf) : "starting"}</span>
-                                        </EventLink>
-                                    ))}
-                                    {live.data.length > LANDING_ROWS && <MoreLink to="/live-calls">{`+${live.data.length - LANDING_ROWS} more`}</MoreLink>}
-                                </div>
-                            )}
+                {live.failed
+                    ? <Failed />
+                    : live.isLoading
+                        ? <Skeleton className="h-10 w-full" />
+                        : live.data.length === 0
+                            ? <p className="text-muted-foreground">No call is live right now.</p>
+                            : (
+                                    <div className="flex flex-wrap gap-2" data-testid="landing-live">
+                                        {live.data.slice(0, LANDING_ROWS).map(event => (
+                                            <EventLink className="hover:bg-muted/50 flex items-center gap-2 rounded-md border px-2 py-1" event={event} key={event.event_id}>
+                                                <LiveDot />
+                                                <span className="font-medium">{event.symbol}</span>
+                                                <span className="text-muted-foreground">{event.started_at ? formatStartedAgo(event.started_at, live.asOf) : "starting"}</span>
+                                            </EventLink>
+                                        ))}
+                                        {live.data.length > LANDING_ROWS && <MoreLink to="/live-calls">{`+${live.data.length - LANDING_ROWS} more`}</MoreLink>}
+                                    </div>
+                                )}
             </Block>
 
             <div className="grid gap-6 lg:grid-cols-2">
                 <Block action={<MoreLink to="/calendar">Earnings calendar</MoreLink>} title="Earnings today">
-                    {week.isLoading ? <Skeleton className="h-32 w-full" /> : <EventRows empty="No earnings call today." events={todays.slice(0, LANDING_ROWS)} />}
+                    {week.failed ? <Failed /> : week.isLoading ? <Skeleton className="h-32 w-full" /> : <EventRows empty="No earnings call today." events={todays.slice(0, LANDING_ROWS)} />}
                 </Block>
                 <Block action={<MoreLink to="/calendar">This week</MoreLink>} title="Later this week">
-                    {week.isLoading ? <Skeleton className="h-32 w-full" /> : <EventRows empty="No more calls this week." events={later.slice(0, LANDING_ROWS)} />}
+                    {week.failed ? <Failed /> : week.isLoading ? <Skeleton className="h-32 w-full" /> : <EventRows empty="No more calls this week." events={later.slice(0, LANDING_ROWS)} />}
                 </Block>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
                 <Block action={<MoreLink to="/ipo-calendar">IPO calendar</MoreLink>} title="Next IPOs">
-                    {ipos.isLoading
-                        ? <Skeleton className="h-24 w-full" />
-                        : ipos.data.length === 0
-                            ? <p className="text-muted-foreground">No IPO with a listing date ahead.</p>
-                            : (
-                                    <ul className="flex flex-col divide-y" data-testid="landing-ipos">
-                                        {ipos.data.map((ipo) => {
-                                            const listed = ipoListedTicker(ipo);
+                    {ipos.failed
+                        ? <Failed />
+                        : ipos.isLoading
+                            ? <Skeleton className="h-24 w-full" />
+                            : ipos.data.length === 0
+                                ? <p className="text-muted-foreground">No IPO with a listing date ahead.</p>
+                                : (
+                                        <ul className="flex flex-col divide-y" data-testid="landing-ipos">
+                                            {ipos.data.map((ipo) => {
+                                                const listed = ipoListedTicker(ipo);
 
-                                            return (
-                                                <li className="flex items-baseline gap-3 py-1.5" key={ipo.ipo_id}>
-                                                    <span className="w-24 shrink-0 tabular-nums">{formatDay(ipo.listing_date)}</span>
-                                                    {listed
-                                                        ? <Link className="shrink-0 font-medium hover:underline" params={{ ticker: listed }} to="/$ticker">{listed}</Link>
-                                                        : <span className="shrink-0 font-medium">{ipoSymbolText(ipo)}</span>}
-                                                    <span className="min-w-0 grow truncate">{ipo.issuer_name}</span>
-                                                    <span className="text-muted-foreground shrink-0 tabular-nums">{offerPriceText(ipo)}</span>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                )}
+                                                return (
+                                                    <li className="flex items-baseline gap-3 py-1.5" key={ipo.ipo_id}>
+                                                        <span className="w-24 shrink-0 tabular-nums">{formatDay(ipo.listing_date)}</span>
+                                                        {listed
+                                                            ? <Link className="shrink-0 font-medium hover:underline" params={{ ticker: listed }} to="/$ticker">{listed}</Link>
+                                                            : <span className="shrink-0 font-medium">{ipoSymbolText(ipo)}</span>}
+                                                        <span className="min-w-0 grow truncate">{ipo.issuer_name}</span>
+                                                        <span className="text-muted-foreground shrink-0 tabular-nums">{offerPriceText(ipo)}</span>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    )}
                 </Block>
                 <Block action={<MoreLink to="/market-holidays">All holidays</MoreLink>} title="Next market holiday">
-                    {holiday.isLoading
-                        ? <Skeleton className="h-10 w-full" />
-                        : holiday.data
-                            ? (
-                                    <div className="flex items-baseline gap-3" data-testid="landing-holiday">
-                                        <span className="text-sm font-medium">{formatDay(holiday.data.day)}</span>
-                                        <span>{holiday.data.event_name}</span>
-                                        <Badge variant="outline">{holidayStatus(holiday.data)}</Badge>
-                                    </div>
-                                )
-                            : <p className="text-muted-foreground">No holiday announced ahead.</p>}
+                    {holiday.failed
+                        ? <Failed />
+                        : holiday.isLoading
+                            ? <Skeleton className="h-10 w-full" />
+                            : holiday.data
+                                ? (
+                                        <div className="flex items-baseline gap-3" data-testid="landing-holiday">
+                                            <span className="text-sm font-medium">{formatDay(holiday.data.day)}</span>
+                                            <span>{holiday.data.event_name}</span>
+                                            <Badge variant="outline">{holidayStatus(holiday.data)}</Badge>
+                                        </div>
+                                    )
+                                : <p className="text-muted-foreground">No holiday announced ahead.</p>}
                 </Block>
             </div>
 
@@ -228,12 +242,12 @@ function IndexPage() {
                 </p>
             </section>
             <LandingView
-                holiday={{ data: holidays.data?.pages.at(0)?.data.at(0) ?? null, isLoading: holidays.isLoading }}
-                ipos={{ data: ipos.data?.pages.at(0)?.data ?? [], isLoading: ipos.isLoading }}
-                live={{ asOf: new Date(live.dataUpdatedAt), data: live.data?.data ?? [], isLoading: live.isLoading }}
+                holiday={{ data: holidays.data?.pages.at(0)?.data.at(0) ?? null, failed: Boolean(holidays.error), isLoading: holidays.isLoading }}
+                ipos={{ data: ipos.data?.pages.at(0)?.data ?? [], failed: Boolean(ipos.error), isLoading: ipos.isLoading }}
+                live={{ asOf: new Date(live.dataUpdatedAt), data: live.data?.data ?? [], failed: Boolean(live.error) && !live.data, isLoading: live.isLoading }}
                 recents={recents}
                 today={today}
-                week={{ data: events.data?.pages.flatMap(page => page.data) ?? [], isLoading: events.isLoading }}
+                week={{ data: events.data?.pages.flatMap(page => page.data) ?? [], failed: Boolean(events.error), isLoading: events.isLoading }}
             />
             <Card className="border-border/60" size="sm">
                 <CardHeader>

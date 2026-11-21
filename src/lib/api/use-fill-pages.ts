@@ -5,17 +5,19 @@ export const FILL_PAGES_MAX = 10;
 
 /**
  * Whether a list filtered client-side (no API parameter for the filter) should load its next page by itself: the
- * filter is on, it shows no row yet, a next page exists, nothing is loading and fewer than `max` pages were loaded
- * since the filter changed.
+ * filter is on, it shows no row yet, a next page exists, nothing is loading, the last page did not fail (a failed page
+ * would be asked again at once, without end: the reader's "Load more" retries it) and fewer than `max` pages were
+ * loaded since the filter changed.
  */
 export function shouldFillPage(state: {
     filtering: boolean;
     hasNextPage: boolean;
     isFetching: boolean;
+    nextPageFailed: boolean;
     pagesSinceChange: number;
     shownRows: number;
 }, max = FILL_PAGES_MAX) {
-    return state.filtering && state.shownRows === 0 && state.hasNextPage && !state.isFetching && state.pagesSinceChange < max;
+    return state.filtering && state.shownRows === 0 && state.hasNextPage && !state.isFetching && !state.nextPageFailed && state.pagesSinceChange < max;
 }
 
 /**
@@ -28,11 +30,13 @@ export function useFillPages(options: {
     filtering: boolean;
     hasNextPage: boolean;
     isFetching: boolean;
+    /** The last `fetchNextPage` failed (React Query's `isFetchNextPageError`). */
+    nextPageFailed: boolean;
     pageCount: number;
     resetKey: string;
     shownRows: number;
 }) {
-    const { fetchNextPage, filtering, hasNextPage, isFetching, pageCount, resetKey, shownRows } = options;
+    const { fetchNextPage, filtering, hasNextPage, isFetching, nextPageFailed, pageCount, resetKey, shownRows } = options;
 
     // The page count when the filter last changed (state, not a ref: render stays pure).
     const [base, setBase] = React.useState({ key: resetKey, pages: pageCount });
@@ -41,7 +45,7 @@ export function useFillPages(options: {
 
     const pagesSinceChange = base.key === resetKey ? pageCount - base.pages : 0;
 
-    const fill = shouldFillPage({ filtering, hasNextPage, isFetching, pagesSinceChange, shownRows });
+    const fill = shouldFillPage({ filtering, hasNextPage, isFetching, nextPageFailed, pagesSinceChange, shownRows });
 
     React.useEffect(() => {
         if (fill) void fetchNextPage();

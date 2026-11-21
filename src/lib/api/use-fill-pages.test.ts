@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { FILL_PAGES_MAX, shouldFillPage } from "./use-fill-pages";
 
-const base = { filtering: true, hasNextPage: true, isFetching: false, pagesSinceChange: 1, shownRows: 0 };
+const base = { filtering: true, hasNextPage: true, isFetching: false, nextPageFailed: false, pagesSinceChange: 1, shownRows: 0 };
 
 describe("shouldFillPage (a client-side filter loads further pages by itself)", () => {
     it("loads while the filter shows nothing and a next page exists", () => {
@@ -17,6 +17,10 @@ describe("shouldFillPage (a client-side filter loads further pages by itself)", 
         expect(shouldFillPage({ ...base, isFetching: true })).toBe(false);
 
         expect(shouldFillPage({ ...base, filtering: false })).toBe(false);
+    });
+
+    it("stops after a failed page (a 429 / 5xx is not asked again in a loop; Load more retries it)", () => {
+        expect(shouldFillPage({ ...base, nextPageFailed: true })).toBe(false);
     });
 
     it("at most ten pages per filter change (every page is billed); then the reader's Load more", () => {

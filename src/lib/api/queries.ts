@@ -1451,13 +1451,26 @@ export function useKeyState(): { me: null | V2Me; state: KeyState } {
 
     const { data, error, isLoading } = useMe();
 
-    if (data) return { me: data, state: "ready" };
+    return keyStateOf({ data, error, hasHydrated, isLoading });
+}
 
+/**
+ * `useKeyState`'s rule (pure). A 401 wins over an earlier answer: a key revoked mid-session keeps the old `me` in the
+ * cache while its refetch (asked again after any 401, `__root.tsx`) is refused, and the gate must show the card.
+ */
+export function keyStateOf({ data, error, hasHydrated, isLoading }: { data: null | V2Me; error: unknown; hasHydrated: boolean; isLoading: boolean }): { me: null | V2Me; state: KeyState } {
     if (isUnauthorized(error)) return { me: null, state: "invalid" };
+
+    if (data) return { me: data, state: "ready" };
 
     if (error) return { me: null, state: "unavailable" };
 
     return { me: null, state: !hasHydrated || isLoading ? "checking" : "unavailable" };
+}
+
+/** Whether a query key is `useMe`'s (`[...ME_QUERY_KEY, <key version>]`), not another `/v1/me*` query. */
+export function isMeQueryKey(queryKey: ReadonlyArray<unknown>) {
+    return queryKey.length === ME_QUERY_KEY.length + 1 && ME_QUERY_KEY.every((part, index) => queryKey[index] === part);
 }
 
 /** Whether requests outside the gated page (top bar, sidebar) may run: the key answered `/v1/me`. */

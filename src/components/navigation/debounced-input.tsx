@@ -23,17 +23,27 @@ export function DebouncedInput({
 
     const [committed, setCommitted] = React.useState(value);
 
-    // Adopt a committed value that changed outside (state, not an effect: render stays pure).
+    // The last text this field committed itself.
+    const [sent, setSent] = React.useState<null | string>(null);
+
+    // Adopt a committed value that changed outside (back button; state, not an effect: render stays pure). Our own
+    // commit arriving keeps the draft as typed: its trailing space, and what was typed while the URL updated.
     if (committed !== value) {
         setCommitted(value);
 
-        setDraft(value);
+        // Our commit is consumed once: a later back / forward to the same text is adopted again.
+        if (value === sent) setSent(null);
+        else setDraft(value);
     }
 
     React.useEffect(() => {
         if (draft.trim() === value) return;
 
-        const timer = window.setTimeout(() => onCommit(draft.trim()), 300);
+        const timer = window.setTimeout(() => {
+            setSent(draft.trim());
+
+            onCommit(draft.trim());
+        }, 300);
 
         return () => window.clearTimeout(timer);
     }, [draft, onCommit, value]);

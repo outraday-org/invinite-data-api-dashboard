@@ -5,7 +5,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CALENDAR_EVENT } from "@/lib/earnings/calendar-fixtures";
-import { columnsForTab, loadedCount } from "@/routes/$ticker/earnings-calls/index";
+import { callTabCounts, columnsForTab, loadedCount } from "@/routes/$ticker/earnings-calls/index";
 import { CoverageCard, OverviewTilesView } from "@/routes/$ticker/index";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -60,6 +60,11 @@ describe("calls list", () => {
         expect(loadedCount(40, true)).toBe("40+");
 
         expect(loadedCount(12, false)).toBe("12");
+
+        // Newest first: once a past call is loaded, every upcoming one is too.
+        expect(callTabCounts(3, 37, true)).toEqual({ past: "37+", upcoming: "3" });
+
+        expect(callTabCounts(40, 0, true)).toEqual({ past: "0+", upcoming: "40+" });
     });
 
     it("the Upcoming tab has no Started / Ended columns", () => {

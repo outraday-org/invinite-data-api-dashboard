@@ -37,6 +37,14 @@ export const Route = createFileRoute("/$ticker/earnings-calls/")({
 /** A tab's count: "40+" while the list has a next page (the API has no totals). */
 export const loadedCount = (count: number, hasMore: boolean) => `${count}${hasMore ? "+" : ""}`;
 
+/**
+ * The tab counts of a newest-first list: further pages hold only older calls, so the upcoming count is complete once a
+ * past call is loaded ("3", not "3+"); the past count is "40+" while a next page exists.
+ */
+export function callTabCounts(upcoming: number, past: number, hasNextPage: boolean) {
+    return { past: loadedCount(past, hasNextPage), upcoming: loadedCount(upcoming, hasNextPage && past === 0) };
+}
+
 /** The columns of a tab: an upcoming call has not started or ended, so the Upcoming tab has no such columns. */
 export function columnsForTab<T extends { id?: string }>(columns: ReadonlyArray<T>, tab: "past" | "upcoming"): Array<T> {
     return tab === "upcoming" ? columns.filter(column => column.id !== "started_at" && column.id !== "ended_at") : [...columns];
@@ -99,6 +107,8 @@ function EarningsCallsPage() {
     }, [data, now]);
 
     // Until the user picks a tab: Upcoming when the company has a call ahead, else Past.
+    const counts = callTabCounts(upcoming.length, past.length, hasNextPage);
+
     const tab: CallsTab = selectedTab ?? (upcoming.length > 0 ? "upcoming" : "past");
 
     const events = tab === "upcoming" ? upcoming : past;
@@ -214,12 +224,12 @@ function EarningsCallsPage() {
                                         <TabsTrigger value="upcoming">
                                             Upcoming
                                             {" "}
-                                            <span className="text-muted-foreground">{loadedCount(upcoming.length, hasNextPage)}</span>
+                                            <span className="text-muted-foreground">{counts.upcoming}</span>
                                         </TabsTrigger>
                                         <TabsTrigger value="past">
                                             Past
                                             {" "}
-                                            <span className="text-muted-foreground">{loadedCount(past.length, hasNextPage)}</span>
+                                            <span className="text-muted-foreground">{counts.past}</span>
                                         </TabsTrigger>
                                     </TabsList>
                                 </Tabs>

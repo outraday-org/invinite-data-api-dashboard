@@ -15,8 +15,8 @@ import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2EventsInfinite } from "@/lib/api/queries";
 import { useFillPages } from "@/lib/api/use-fill-pages";
-import { calendarPresetWindow, dayHeading, presetOf } from "@/lib/earnings/calendar-groups";
-import { calendarWindow, callCalendarDate, eventLabel, isCallToday, SESSION_LABELS } from "@/lib/earnings/format";
+import { calendarPresetWindow, dayHeading, groupEventsByNewYorkDay, newYorkCallDay, presetOf } from "@/lib/earnings/calendar-groups";
+import { calendarWindow, eventLabel, isCallToday, SESSION_LABELS } from "@/lib/earnings/format";
 import { titleHead } from "@/lib/layout";
 import { AvailabilityIcons } from "@/routes/$ticker/earnings-calls/-components/availability-icons";
 import { CalendarFilters, matchesCalendarSearch, validateCalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
@@ -35,8 +35,6 @@ export const Route = createFileRoute("/calendar")({
 
 /** Events per page of `/v1/events` (every page is billed). */
 const CALENDAR_PAGE = 50;
-
-const NEW_YORK = "America/New_York";
 
 const PRESET_OPTIONS: Array<{ label: string; value: "custom" | CalendarPreset }> = [
     { label: "Today", value: "today" },
@@ -82,9 +80,6 @@ const COLUMNS: Array<ColumnDef<V2Event>> = [
     },
 ];
 
-/** The New York day a row is grouped under (`groupEventsByNewYorkDay`'s rule). */
-const dayOf = (event: V2Event) => callCalendarDate(event, NEW_YORK);
-
 export type CalendarViewProps = {
     capped: boolean;
     error: unknown;
@@ -105,6 +100,10 @@ export type CalendarViewProps = {
 export function CalendarView({ capped, error, events, filtering, hasNextPage, isFetchingNextPage, isLoading, now, onLoadMore }: CalendarViewProps) {
     const searching = filtering && events.length === 0 && hasNextPage && !capped;
 
+    // `DataTable` groups consecutive rows: a date-only event (`scheduled_at` = its day's UTC midnight, the evening before
+    // in New York) arrives before the previous day's late calls, so the rows are put in day order first.
+    const dayOrdered = React.useMemo(() => groupEventsByNewYorkDay(events).flatMap(group => group.events), [events]);
+
     return (
         <div className="flex flex-col gap-2">
             {capped && (
@@ -123,13 +122,13 @@ export function CalendarView({ capped, error, events, filtering, hasNextPage, is
                         <span className="text-muted-foreground font-normal tabular-nums">{`${rows.length} ${rows.length === 1 ? "call" : "calls"}${hasNextPage ? " loaded" : ""}`}</span>
                     </span>
                 )}
-                groupOf={dayOf}
+                groupOf={newYorkCallDay}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading || searching}
                 onLoadMore={onLoadMore}
                 rowClassName={event => (isCallToday(event, now) ? "bg-muted/30" : undefined)}
-                rows={events}
+                rows={dayOrdered}
             />
         </div>
     );
@@ -151,7 +150,7 @@ function CalendarPage() {
 
     const range = calendarWindow(search, now);
 
-    const { data, error, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage, isLoading } = useV2EventsInfinite({
+    const { data, error, fetchNextPage, hasNextPage, isFetching, isFetchingNextPage, isFetchNextPageError, isLoading } = useV2EventsInfinite({
         company: search.company,
         dateKind: search.dateKind,
         expand: ["calendar"],
@@ -180,6 +179,7 @@ function CalendarPage() {
         filtering,
         hasNextPage,
         isFetching,
+        nextPageFailed: isFetchNextPageError,
         pageCount: pages.length,
         resetKey: JSON.stringify(search),
         shownRows: events.length,

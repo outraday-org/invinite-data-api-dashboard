@@ -44,6 +44,19 @@ describe("/calendar (`/v1/events`, grouped by New York day)", () => {
         expect(headings).toHaveLength(2);
     });
 
+    it("a date-only event (UTC midnight = the evening before in New York) does not split the previous day's group", () => {
+        const dateOnly: V2Event = { ...CALENDAR_EVENT, call_time_source: null, event_id: "date-only", scheduled_at: "2026-11-05T00:00:00.000Z", symbol: "DATEONLY" };
+
+        const late: V2Event = { ...CALENDAR_EVENT, event_id: "late", scheduled_at: "2026-11-05T01:00:00.000Z", symbol: "LATE" };
+
+        // The API's `scheduled_at` order: Nov 4 call, Nov 5 date-only (00:00Z), Nov 4 20:00 New York call (01:00Z).
+        render(<CalendarView {...view} events={[CALENDAR_EVENT, dateOnly, late]} />);
+
+        const headings = screen.getAllByTestId("data-table-group").map(row => row.textContent);
+
+        expect(headings).toEqual(["Wed, Nov 42 calls", "Thu, Nov 51 call"]);
+    });
+
     it("a client-side filter that found nothing in ten pages says so; while it still looks, no empty line", () => {
         const { rerender } = render(<CalendarView {...view} events={[]} filtering hasNextPage />);
 
@@ -60,6 +73,14 @@ describe("/calendar (`/v1/events`, grouped by New York day)", () => {
 });
 
 describe("/live-calls", () => {
+    it("a failed next-calls request is an error, not \"nothing scheduled\"", () => {
+        render(<LiveCallsView asOf={new Date("2026-11-04T13:50:00Z")} error={null} isLoading={false} live={[]} next={[]} nextError={new Error("Network down")} nextLoading={false} />);
+
+        expect(screen.getByText("Failed to load the next calls")).toBeInTheDocument();
+
+        expect(screen.queryByText("No call is scheduled in the next days.")).toBeNull();
+    });
+
     it("one card per live call, linking its call page", () => {
         render(<LiveCallsView asOf={new Date("2026-11-04T13:50:00Z")} error={null} isLoading={false} live={[CALENDAR_EVENT]} next={[]} nextLoading={false} />);
 

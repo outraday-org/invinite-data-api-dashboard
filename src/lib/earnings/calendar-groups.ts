@@ -7,6 +7,9 @@ const NEW_YORK = "America/New_York";
 
 export type EventDayGroup<T> = { day: string; events: Array<T> };
 
+/** The New York calendar day an event is grouped under (a date-only event: its stated UTC date). */
+export const newYorkCallDay = (event: Pick<V2Event, "call_time_source" | "scheduled_at">) => callCalendarDate(event, NEW_YORK);
+
 /**
  * The calendar's day groups: every event under its New York calendar day (`callCalendarDate`: a timed call's day in
  * New York, a date-only event's stated UTC date — never shifted by a zone), days ascending, the events of a day in the
@@ -16,7 +19,7 @@ export function groupEventsByNewYorkDay<T extends Pick<V2Event, "call_time_sourc
     const byDay = new Map<string, Array<T>>();
 
     for (const event of events) {
-        const day = callCalendarDate(event, NEW_YORK);
+        const day = newYorkCallDay(event);
 
         const list = byDay.get(day);
 

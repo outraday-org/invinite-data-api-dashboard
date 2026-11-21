@@ -55,12 +55,14 @@ export function LiveCallCard({ asOf, event }: { asOf: Date; event: V2Event }) {
  * The live calls (pure): one card per call being captured now; none → the next scheduled calls by name (so the page
  * is never a blank "nothing live").
  */
-export function LiveCallsView({ asOf, error, isLoading, live, next, nextLoading }: {
+export function LiveCallsView({ asOf, error, isLoading, live, next, nextError = null, nextLoading }: {
     asOf: Date;
     error: unknown;
     isLoading: boolean;
     live: ReadonlyArray<V2Event>;
     next: ReadonlyArray<V2Event>;
+    /** The next-calls request failed (never shown as "nothing scheduled"). */
+    nextError?: unknown;
     nextLoading: boolean;
 }) {
     if (error) {
@@ -86,22 +88,24 @@ export function LiveCallsView({ asOf, error, isLoading, live, next, nextLoading 
             </Notice>
             <section className="flex flex-col gap-2">
                 <h3 className="text-sm font-semibold">Next scheduled calls</h3>
-                {nextLoading
-                    ? <Skeleton className="h-20 w-full" />
-                    : next.length === 0
-                        ? <p className="text-muted-foreground">No call is scheduled in the next days.</p>
-                        : (
-                                <ul className="flex flex-col divide-y" data-testid="next-calls">
-                                    {next.map(event => (
-                                        <li className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-1.5" key={event.event_id}>
-                                            <span className="text-muted-foreground w-44 tabular-nums">{formatCallTime(event)}</span>
-                                            <EventLink className="font-medium hover:underline" event={event}>{event.symbol}</EventLink>
-                                            <span className="truncate">{event.company_name}</span>
-                                            <span className="text-muted-foreground">{eventLabel(event)}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
+                {nextError
+                    ? <ErrorState error={nextError} title="Failed to load the next calls" />
+                    : nextLoading
+                        ? <Skeleton className="h-20 w-full" />
+                        : next.length === 0
+                            ? <p className="text-muted-foreground">No call is scheduled in the next days.</p>
+                            : (
+                                    <ul className="flex flex-col divide-y" data-testid="next-calls">
+                                        {next.map(event => (
+                                            <li className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-1.5" key={event.event_id}>
+                                                <span className="text-muted-foreground w-44 tabular-nums">{formatCallTime(event)}</span>
+                                                <EventLink className="font-medium hover:underline" event={event}>{event.symbol}</EventLink>
+                                                <span className="truncate">{event.company_name}</span>
+                                                <span className="text-muted-foreground">{eventLabel(event)}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
             </section>
         </div>
     );
@@ -141,6 +145,7 @@ function LiveCallsPage() {
                 isLoading={isLoading}
                 live={live}
                 next={next.data?.pages.flatMap(page => page.data).slice(0, NEXT_CALLS) ?? []}
+                nextError={next.error}
                 nextLoading={next.isLoading}
             />
         </div>

@@ -13,7 +13,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { isUnauthorized } from "@/lib/api/errors";
-import { ME_QUERY_KEY } from "@/lib/api/queries";
+import { isMeQueryKey, ME_QUERY_KEY } from "@/lib/api/queries";
 import { THEME_SCRIPT } from "@/lib/theme";
 
 import appCss from "../styles.css?url";
@@ -27,7 +27,7 @@ const iconHref = (path: string): string => `${path}?v=${BRAND_ICON_VERSION}`;
 // Any request answering 401 (a revoked key) asks `/v1/me` again: the key gate then shows the onboarding card.
 const queryCache = new QueryCache({
     onError: (error, query) => {
-        if (isUnauthorized(error) && query.queryKey[1] !== "me") void queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+        if (isUnauthorized(error) && !isMeQueryKey(query.queryKey)) void queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
     },
 });
 

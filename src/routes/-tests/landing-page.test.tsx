@@ -40,6 +40,16 @@ const data: LandingData = {
 };
 
 describe("landing page (with a valid key)", () => {
+    it("a failed block says so instead of \"nothing ahead\"", () => {
+        render(<LandingView {...data} holiday={{ data: null, failed: true, isLoading: false }} ipos={{ data: [], failed: true, isLoading: false }} />);
+
+        expect(screen.getAllByText(/Could not load this block/)).toHaveLength(2);
+
+        expect(screen.queryByText("No holiday announced ahead.")).toBeNull();
+
+        expect(screen.queryByText("No IPO with a listing date ahead.")).toBeNull();
+    });
+
     it("live calls, today's and the week's earnings, next IPOs and the next holiday from the answers", () => {
         render(<LandingView {...data} />);
 
