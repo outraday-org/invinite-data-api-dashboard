@@ -9,6 +9,7 @@ import { ApiRequestError } from "@/lib/api/errors";
 import { useInstrument } from "@/lib/api/queries";
 import { datasetGateText, instrumentBadges, sectionDatasets, sectionOf, servesSection } from "@/lib/instruments";
 import { TICKER_HEADER_HEIGHT_VAR, titleHead } from "@/lib/layout";
+import { recentInstrument, useRecordRecent } from "@/lib/recents";
 
 export const Route = createFileRoute("/$ticker")({
     component: TickerLayout,
@@ -73,6 +74,8 @@ function TickerLayout() {
     const headerRef = React.useRef<HTMLElement>(null);
 
     useTickerHeaderHeight(headerRef, showHeader);
+
+    useRecordRecent(instrument ? recentInstrument(instrument) : null);
 
     // The canonical symbol of the answer (BRK.B for a typed brk.b), not the raw URL param.
     const symbol = instrument?.symbol ?? ticker.toUpperCase();

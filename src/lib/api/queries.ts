@@ -423,15 +423,15 @@ const SEC_STALE_MS = 10 * 60 * 1000;
 const SEC_PENDING_REFETCH_MS = 30 * 1000;
 
 /** The filer registry by name (`GET /v1/filers?q=`, one page of ≤ 50): idle until `q` has ≥ 2 characters. */
-export function useV2Filers(input: { limit?: number; minLength?: number; q: string }) {
+export function useV2Filers(input: { limit?: number; minLength?: number; phase?: V2FilerPhase; q: string }) {
     const q = input.q.trim();
 
     return useEarningsQuery<V2FilersResponse>({
         enabled: q.length >= (input.minLength ?? 2),
         errorMessage: null,
-        load: apiKey => getV2Filers({ data: { apiKey, limit: input.limit, q } }),
+        load: apiKey => getV2Filers({ data: { apiKey, limit: input.limit, phase: input.phase, q } }),
         placeholderData: keepPreviousData,
-        queryKey: ["v2", "filers", q, input.limit ?? ""],
+        queryKey: ["v2", "filers", q, input.limit ?? "", input.phase ?? ""],
         staleTime: SEC_STALE_MS,
     });
 }

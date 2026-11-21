@@ -7,7 +7,6 @@ import { Separator } from "@/components/ui/separator";
 import { dataApiDashboardUrl } from "@/lib/app-url";
 import { titleHead } from "@/lib/layout";
 import { LICENSING_PAGE_URL, STATUS_PAGE_URL } from "@/lib/public-hosts";
-import { useTickerStore } from "@/lib/stores/ticker-store";
 
 export const Route = createFileRoute("/")({
     component: IndexPage,
@@ -15,9 +14,7 @@ export const Route = createFileRoute("/")({
 });
 
 function IndexPage() {
-    const { hasHydrated, lastTicker } = useTickerStore();
-
-    const sampleTicker = (hasHydrated ? lastTicker : null) ?? "AAPL";
+    const sampleTicker = "AAPL";
 
     const routeCards = [
         {

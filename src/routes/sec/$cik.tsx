@@ -19,6 +19,7 @@ import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import { formatDay } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import { FILER_ANCHORS, FILER_FILINGS_PAGE, isManagerFiler } from "@/lib/navigation";
+import { recentFiler, useRecordRecent } from "@/lib/recents";
 import { latest13fPeriodEnd } from "@/lib/sec/source";
 
 /**
@@ -66,6 +67,8 @@ function SecFilerPage() {
         enabled: (privateOfferings?.count ?? 0) > 0,
         limit: OFFERINGS_PAGE,
     });
+
+    useRecordRecent(filer.data ? recentFiler(filer.data) : null);
 
     if (!cik) return <NotFound />;
 
