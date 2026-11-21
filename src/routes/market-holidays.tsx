@@ -104,13 +104,16 @@ const yesterdayOf = (today: string) => {
  * yesterday (or the earlier "to"), newest first. The range narrows the tab, never leaves it.
  */
 export function holidaysRequest(search: HolidaysSearch, today: string) {
+    // A swapped range is put in order (as on the dividends page).
+    const [from, to] = search.from && search.to && search.from > search.to ? [search.to, search.from] : [search.from, search.to];
+
     const later = (a: string, b: string | undefined) => (b && b > a ? b : a);
 
     const earlier = (a: string, b: string | undefined) => (b && b < a ? b : a);
 
-    if (search.tab === "past") return { dateGte: search.from, dateLte: earlier(yesterdayOf(today), search.to), limit: 40, sort: "-date" as const };
+    if (search.tab === "past") return { dateGte: from, dateLte: earlier(yesterdayOf(today), to), limit: 40, sort: "-date" as const };
 
-    return { dateGte: later(today, search.from), dateLte: search.to, limit: 40, sort: "date" as const };
+    return { dateGte: later(today, from), dateLte: to, limit: 40, sort: "date" as const };
 }
 
 /**

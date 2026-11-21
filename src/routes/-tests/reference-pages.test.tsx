@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
+import { FinancialsFlatTable } from "@/components/financials-presentation/financials-flat-table";
 import { ApiStatusView, familyReach, LicensingView, overallStatus, StatusDot, statusSummary, uptimeText } from "@/components/reference/api-status";
 import { CompaniesList, companiesSort, fiscalYearEndText } from "@/components/reference/companies-list";
 import { FiscalPeriodsView, latestFiscalYearEnd } from "@/components/reference/fiscal-periods-card";
@@ -35,7 +36,17 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 // Keep the server functions (TanStack Start) unloaded.
-vi.mock("@/lib/api/queries", () => ({}));
+vi.mock("@/lib/api/queries", () => ({
+    // The flat statement table's "Explain this number" dialog: idle (no value clicked).
+    useV2Fact: () => ({ data: undefined, error: null, isLoading: false }),
+    useV2FactPlaces: () => ({ data: undefined, error: null, isLoading: false }),
+}));
+
+vi.mock("@/components/ui/credit-hint", async importOriginal => ({
+    ...await importOriginal<object>(),
+    PlanBadge: () => null,
+    usePlanAllows: () => null,
+}));
 
 afterEach(cleanup);
 
@@ -109,6 +120,14 @@ describe("metric catalog links on financial metric labels", () => {
         expect(screen.getByRole("link", { name: "Total Revenue in the metric catalog" })).toHaveAttribute("href", "/catalog?q=is_total_revenue");
 
         expect(screen.queryByRole("link", { name: "Revenues in the metric catalog" })).toBeNull();
+    });
+
+    it("a statement line links its metric; an as-reported concept line gets none", () => {
+        render(<FinancialsFlatTable columns={[{ label: "FY2025", title: "" }]} lines={[{ id: "is_total_revenue", label: "Total Revenue", values: [] }, { id: "Revenues", label: "Revenues", values: [] }]} />);
+
+        expect(screen.getAllByRole("link")).toHaveLength(1);
+
+        expect(screen.getByRole("link", { name: "Total Revenue in the metric catalog" })).toHaveAttribute("href", "/catalog?q=is_total_revenue");
     });
 
     it("the ratios table links the metric named in its first column", () => {
@@ -291,5 +310,8 @@ describe("dividends and holidays filters", () => {
         expect(holidaysRequest({ from: "2024-01-01", tab: "past", to: "2024-12-31" }, today)).toMatchObject({ dateGte: "2024-01-01", dateLte: "2024-12-31" });
 
         expect(holidaysRequest({ tab: "past", to: "2030-01-01" }, today)).toMatchObject({ dateLte: "2026-11-20" });
+
+        // A swapped range is put in order.
+        expect(holidaysRequest({ from: "2027-12-31", to: "2027-01-01" }, today)).toMatchObject({ dateGte: "2027-01-01", dateLte: "2027-12-31" });
     });
 });

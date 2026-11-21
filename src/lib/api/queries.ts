@@ -1945,7 +1945,7 @@ export function useV2KpiHistoryInfinite(input: V2KpiHistoryInput) {
 const REFERENCE_STALE_MS = 60 * 60 * 1000;
 
 /** Rows per catalog page (the contract's maximum: the whole metric catalog is 2 pages, the mapping rules 5). */
-export const CATALOG_PAGE_LIMIT = 200;
+const CATALOG_PAGE_LIMIT = 200;
 
 type CatalogStatementInput = { enabled: boolean; statement?: Array<StatementType> };
 

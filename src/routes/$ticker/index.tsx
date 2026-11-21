@@ -19,7 +19,7 @@ import { useFund, useFundPositionsInfinite, useInstrument, useV2Company, useV2Ev
 import { coverageEntries } from "@/lib/api/v2";
 import { eventLabel, formatCallTime } from "@/lib/earnings/format";
 import { formatDay, formatMoneyCompact, formatNumber, formatShares } from "@/lib/format";
-import { datasetGateText, FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS, isFundType, servesSection } from "@/lib/instruments";
+import { datasetGateText, FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS, isFundType } from "@/lib/instruments";
 import { tickerHead } from "@/lib/layout";
 import { fundReasonText, netAssetsScopeText } from "@/lib/sec/fund";
 import { formatFractionPercentCompact, formatNumberEn } from "@/lib/utils";
@@ -155,8 +155,8 @@ function CompanyOverview({ datasets, ticker }: { datasets: ReadonlyArray<V2Datas
 
             <CoverageCard coverage={company.coverage} ticker={ticker} />
 
-            {/* O7 group 7: the fiscal calendar (asked only when the company has financial data). */}
-            {servesSection(datasets, "financials") && <FiscalPeriodsCard ticker={ticker} />}
+            {/* O7 group 7: the fiscal calendar (asked only when the instrument has the dataset, as the filings list does). */}
+            {datasets.includes("fiscal_periods") && <FiscalPeriodsCard ticker={ticker} />}
 
             {company.description && (
                 <Card className="border-border/60 md:col-span-2">

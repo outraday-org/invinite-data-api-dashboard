@@ -483,8 +483,8 @@ not require a dashboard spec refresh or runtime deployment.
   overall status, the summary in its label). Both operations need no key and cost nothing. `/status` and `/licensing`
   stay 301 redirects; `/health` has no view (reason in the coverage table).
 - **Fiscal periods**: the stock overview has a "Fiscal periods" card (`fiscal-periods-card.tsx`) when the instrument
-  serves financials — `useCompanyFiscalPeriods` (the filings list's request, every page), newest 8 + "Show all", the
-  latest fiscal year end = the newest Q4's period end.
+  has the `fiscal_periods` dataset — `useCompanyFiscalPeriods` (the filings list's request, every page), newest 8 +
+  "Show all" (Export = the shown rows), the latest fiscal year end = the newest Q4's period end.
 - **Dividends** (`?from=&to=&sort=`): the ex-date range as `ex_date.gte` / `.lte` (a swapped range is ordered), sort
   ex-date / pay date either way, a Type column (`dividend_type` codes in words: CD regular cash, SC special cash, LT /
   ST capital gains; another code as itself). **Market holidays** (`?from=&to=`): a day range inside the Upcoming / Past
