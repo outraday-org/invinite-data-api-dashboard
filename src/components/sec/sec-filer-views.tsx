@@ -15,6 +15,7 @@ import type {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Copyable } from "@/components/ui/copy-button";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -99,7 +100,7 @@ export function SecFilerHeader({ cik, data, error, isLoading }: { cik: string; d
             description={(
                 <div className="flex flex-col gap-1">
                     <div className="flex flex-wrap items-center gap-2">
-                        <span className="tabular-nums">{`CIK ${data?.cik ?? cik}`}</span>
+                        <Copyable className="tabular-nums" label="Copy CIK" value={data?.cik ?? cik}>{`CIK ${data?.cik ?? cik}`}</Copyable>
                         {data?.listing
                             ? <Badge variant="secondary">{data.listing.exchange ? `${data.listing.ticker} · ${data.listing.exchange}` : data.listing.ticker}</Badge>
                             : <Badge variant="outline">No ticker</Badge>}
@@ -492,7 +493,7 @@ export function SecFilingsView({
                                         <td className="p-1 font-medium">{filing.form}</td>
                                         <td className="p-1">{filing.filing_date}</td>
                                         <td className="p-1">{filing.report_date ?? "—"}</td>
-                                        <td className="p-1 tabular-nums">{filing.accession}</td>
+                                        <td className="p-1 tabular-nums"><Copyable label="Copy accession number" value={filing.accession} /></td>
                                         <td className="p-1">{filing.roles.join(", ") || "—"}</td>
                                         <td className="flex items-center justify-end gap-2 p-1">
                                             {filing.edgar_index_url.startsWith("https://www.sec.gov/") && (
@@ -581,7 +582,7 @@ export function SecPortfolioView({
                                             <SecurityLink className="font-medium" security={row.security}>{row.security.symbol ?? row.security.name ?? "—"}</SecurityLink>
                                             {row.security.symbol && row.security.name && <span className="text-muted-foreground">{` · ${row.security.name}`}</span>}
                                         </td>
-                                        <td className="p-1 tabular-nums">{row.security.cusip ?? "—"}</td>
+                                        <td className="p-1 tabular-nums">{row.security.cusip ? <Copyable label="Copy CUSIP" value={row.security.cusip} /> : "—"}</td>
                                         <td className="p-1 text-right tabular-nums">
                                             {row.shares == null ? "—" : formatNumberEn(row.shares)}
                                         </td>

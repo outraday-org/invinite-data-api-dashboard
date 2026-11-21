@@ -14,6 +14,7 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { Toaster } from "@/components/ui/sonner";
 import { isUnauthorized } from "@/lib/api/errors";
 import { isMeQueryKey, ME_QUERY_KEY } from "@/lib/api/queries";
+import { shareWithRequests } from "@/lib/api/request-meta";
 import { THEME_SCRIPT } from "@/lib/theme";
 
 import appCss from "../styles.css?url";
@@ -36,6 +37,8 @@ const queryClient = new QueryClient({
         queries: {
             retry: 1,
             staleTime: 60 * 1000,
+            // React Query's own sharing, plus the API inspector's requests carried onto the kept copy.
+            structuralSharing: shareWithRequests,
         },
     },
     queryCache,

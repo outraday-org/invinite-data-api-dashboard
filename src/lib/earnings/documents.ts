@@ -108,11 +108,16 @@ export const categoryLabel = (category: string) =>
 // Every field optional: a bare `/$ticker/documents` link shows the whole library; an invalid value
 // falls back to "no filter" instead of failing the route (as the calendar filters).
 const documentsSearchSchema = z.object({
+    // The SEC source panel of a filing-search hit (O6 deep link): the cited document version and block.
+    block: z.string().trim().min(1).max(100).optional().catch(undefined),
     category: z.enum(ASSET_GROUP_CATEGORIES).optional().catch(undefined),
     kind: z.enum(COMPANY_DOCUMENT_KINDS).optional().catch(undefined),
     // The tree's text filter (client-side): trimmed, empty = no filter.
     q: z.string().trim().transform(q => q || undefined).optional().catch(undefined),
+    // The search box's source: `sec` = SEC filings (default: company documents).
+    searchIn: z.enum(["sec"]).optional().catch(undefined),
     section: z.enum(IR_SECTION_KINDS).optional().catch(undefined),
+    source: z.string().trim().min(1).max(100).optional().catch(undefined),
     year: z.coerce.number().int().min(1990).max(2100).optional().catch(undefined),
 });
 

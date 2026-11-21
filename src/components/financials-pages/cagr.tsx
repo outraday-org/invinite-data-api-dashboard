@@ -12,6 +12,8 @@ import { completePeriodsOnly, periodLabel, periodLabels } from "@/lib/financials
 import { formatFractionPercentCompact, formatMetricId } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
+import { useFinancialsSearch } from "./financials-search";
+
 /** Periods per page of `/v1/metrics/cagr`: one row per period and horizon (every horizon = three rows per period). */
 const CAGR_PERIODS = 8;
 
@@ -81,7 +83,9 @@ export function CagrView({ pages, ...state }: MetricsListState & { pages: Readon
 
 /** The page body of the Financials route's tab (`/$ticker/financials?view=`). */
 export function CagrFinancials({ ticker }: { ticker: string }) {
-    const [horizon, setHorizon] = React.useState<HorizonFilter>("all");
+    const [search, update] = useFinancialsSearch();
+
+    const horizon: HorizonFilter = search.horizon ?? "all";
 
     // `/v1/metrics/cagr?company=<ticker>&period=annual[&horizon=3|5|10]` (v1 `period_years`; CAGR is annual only).
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2CagrInfinite({
@@ -96,7 +100,7 @@ export function CagrFinancials({ ticker }: { ticker: string }) {
             <PageHeader
                 actions={(
                     <>
-                        <FilterSelect className="w-[200px]" onValueChange={setHorizon} options={cagrPeriodOptions} value={horizon} />
+                        <FilterSelect className="w-[200px]" onValueChange={value => update({ horizon: value === "all" ? undefined : value })} options={cagrPeriodOptions} value={horizon} />
                     </>
                 )}
                 description="Compound annual growth rates by metric."

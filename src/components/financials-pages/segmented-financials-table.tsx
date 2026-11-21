@@ -3,6 +3,7 @@ import * as React from "react";
 import type { SegmentLine } from "@/lib/financials/statements";
 
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
+import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatMetricId, formatNumberEnCompact, formatSegmentId } from "@/lib/utils";
@@ -16,12 +17,12 @@ export const formatSegmentLabel = (row: Pick<SegmentLine, "details" | "segmentId
 
 /** The segments table: one line per metric × segment × dimensions, one column per period (newest first). */
 export function SegmentedFinancialsTable({ periodLabels, rows: lines }: { periodLabels: Array<string>; rows: Array<SegmentLine> }) {
-    const [selectedRow, setSelectedRow] = React.useState<null | SegmentLine>(null);
-
     const rows = React.useMemo(
         () => lines.filter(row => !periodLabels.every(label => (row.values[label] ?? 0) === 0)),
         [lines, periodLabels],
     );
+
+    const [selectedRow, setSelectedRow] = useChartSelection(rows, row => row.key);
 
     return (
         <div className="flex flex-col gap-2">

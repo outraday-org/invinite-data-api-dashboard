@@ -4,6 +4,7 @@ import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 
 import type { FilingListRow } from "@/lib/sec/parity";
 
+import { Copyable } from "@/components/ui/copy-button";
 import { DASH, formatDay } from "@/lib/format";
 
 /** "Q4 FY26" when the fiscal period is known, else null. */
@@ -31,7 +32,11 @@ export function filingColumns({
 }): Array<ColumnDef<FilingListRow>> {
     return [
         { cell: ({ row }) => <span className="font-semibold">{row.original.formType}</span>, header: "Form Type", id: "form" },
-        { cell: ({ row }) => <span className="text-muted-foreground">{row.original.accessionNumber}</span>, header: "Accession Number", id: "accession" },
+        {
+            cell: ({ row }) => <Copyable className="text-muted-foreground" label="Copy accession number" value={row.original.accessionNumber} />,
+            header: "Accession Number",
+            id: "accession",
+        },
         {
             cell: ({ row }) => <span className="text-muted-foreground">{fiscalPeriodLabel(row.original) ?? row.original.periodEnd ?? DASH}</span>,
             header: "Fiscal Period",

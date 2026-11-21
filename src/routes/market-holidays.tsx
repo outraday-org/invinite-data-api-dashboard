@@ -68,10 +68,12 @@ export function MarketHolidaysView({ error, hasNextPage, isFetchingNextPage, isL
             columns={COLUMNS}
             emptyText="No market holidays in this list."
             errorState={error ? <ErrorState error={error} title="Failed to load market holidays" /> : null}
+            exportConfig={{ dataset: "market-holidays", scope: "us" }}
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
             isLoading={isLoading}
             onLoadMore={onLoadMore}
+            operationId="listMarketHolidays"
             rows={holidays}
         />
     );

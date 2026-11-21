@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import type { V2Event } from "@/lib/api/types";
 
+import { CopyButton } from "@/components/ui/copy-button";
 import { DataTable } from "@/components/ui/data-table";
 import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
@@ -15,6 +16,7 @@ import { ApiRequestError } from "@/lib/api/errors";
 import { useV2EventsInfinite } from "@/lib/api/queries";
 import { eventLabel, formatInstant, isUpcoming } from "@/lib/earnings/format";
 import { tickerHead } from "@/lib/layout";
+import { IN_PLACE, optionalEnum } from "@/lib/url-state";
 import { DocumentSearch } from "@/routes/$ticker/documents/-components/document-search";
 
 import { AskThisCall } from "./-components/ask-this-call";
@@ -26,7 +28,12 @@ import { EventLink } from "./-components/event-link";
 import { EventTypeBadge } from "./-components/event-type-badge";
 import { LiveNowStrip } from "./-components/live-now-strip";
 
-const callsSearchSchema = z.object({ fiscalYear: z.coerce.number().int().min(1900).max(2200).optional().catch(undefined) });
+/** `?fiscalYear=`, `?tab=upcoming|past` (default: Upcoming when a call is ahead), `?search=documents` (default transcripts). */
+const callsSearchSchema = z.object({
+    fiscalYear: z.coerce.number().int().min(1900).max(2200).optional().catch(undefined),
+    search: optionalEnum(["documents"]),
+    tab: optionalEnum(["upcoming", "past"]),
+});
 
 export const Route = createFileRoute("/$ticker/earnings-calls/")({
     component: EarningsCallsPage,
@@ -72,9 +79,13 @@ function EarningsCallsPage() {
     // Once per mount (lazy initializer: render stays pure).
     const [now] = React.useState(() => new Date());
 
-    const [selectedTab, setSelectedTab] = React.useState<CallsTab | null>(null);
+    const search = Route.useSearch();
 
-    const [searchScope, setSearchScope] = React.useState<SearchScope>("transcripts");
+    const selectedTab: CallsTab | null = search.tab ?? null;
+
+    const searchScope: SearchScope = search.search ?? "transcripts";
+
+    const setSearch = (patch: Partial<typeof search>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
     const {
         data,
@@ -124,6 +135,7 @@ function EarningsCallsPage() {
                             {eventLabel(row.original)}
                         </EventLink>
                         <EventTypeBadge event={row.original} />
+                        <CopyButton label="Copy event id" value={row.original.event_id} />
                     </div>
                 ),
                 header: "Period",
@@ -207,7 +219,7 @@ function EarningsCallsPage() {
 
                             {/* Company-wide search: transcripts ("Search this call", hits link to their call) or documents. */}
                             <div className="flex flex-col gap-1">
-                                <Tabs onValueChange={value => setSearchScope(value as SearchScope)} value={searchScope}>
+                                <Tabs onValueChange={value => setSearch({ search: value === "documents" ? "documents" : undefined })} value={searchScope}>
                                     <TabsList variant="line">
                                         <TabsTrigger value="transcripts">Transcripts</TabsTrigger>
                                         <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -219,7 +231,7 @@ function EarningsCallsPage() {
                             </div>
 
                             <div className="flex flex-wrap items-center justify-between gap-2">
-                                <Tabs onValueChange={value => setSelectedTab(value as CallsTab)} value={tab}>
+                                <Tabs onValueChange={value => setSearch({ tab: value as CallsTab })} value={tab}>
                                     <TabsList variant="line">
                                         <TabsTrigger value="upcoming">
                                             Upcoming
@@ -236,7 +248,7 @@ function EarningsCallsPage() {
                                 <FilterSelect
                                     aria-label="Fiscal year"
                                     className="w-[150px]"
-                                    onValueChange={value => void navigate({ resetScroll: false, search: { fiscalYear: value === "all" ? undefined : Number(value) } })}
+                                    onValueChange={value => setSearch({ fiscalYear: value === "all" ? undefined : Number(value) })}
                                     options={yearOptions}
                                     value={fiscalYear ? String(fiscalYear) : "all"}
                                 />
@@ -245,10 +257,12 @@ function EarningsCallsPage() {
                             <DataTable
                                 columns={shownColumns}
                                 emptyText={tab === "upcoming" ? "No upcoming calls." : "No past calls."}
+                                exportConfig={{ dataset: `calls-${tab}`, scope: ticker }}
                                 hasNextPage={hasNextPage}
                                 isFetchingNextPage={isFetchingNextPage}
                                 isLoading={isLoading}
                                 onLoadMore={() => void fetchNextPage()}
+                                operationId="listEvents"
                                 rows={events}
                             />
                         </div>

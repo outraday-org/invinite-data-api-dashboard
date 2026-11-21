@@ -22,6 +22,11 @@ const segmentOptions: Array<{ label: string; value: "all" | SegmentedFinancialsS
     },
 ];
 
+/** `?segment=` as a segment id of the picker ("all" for none or an unknown value). */
+export function toSegmentId(value: string | undefined): "all" | SegmentedFinancialsSegmentId {
+    return segmentOptions.find(option => option.value === value)?.value ?? "all";
+}
+
 export function SegmentSelect({
     onValueChange,
     value,

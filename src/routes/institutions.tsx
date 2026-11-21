@@ -83,10 +83,12 @@ export function InstitutionsList({ error, hasNextPage, isFetchingNextPage, isLoa
                 columns={COLUMNS}
                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
                 emptyText="No 13F manager matches this name."
+                exportConfig={{ dataset: "institutions", scope: "13f" }}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
                 onLoadMore={onLoadMore}
+                operationId="listFilers"
                 rows={pages.flatMap(page => page.data)}
             />
             {error ? <SecReadinessNotice error={error} title="Failed to load more institutions" /> : null}

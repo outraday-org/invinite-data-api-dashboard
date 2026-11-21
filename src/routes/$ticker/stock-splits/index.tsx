@@ -62,10 +62,12 @@ function StockSplitsPage() {
                 columns={COLUMNS}
                 emptyText="No splits available."
                 errorState={error ? <ErrorState error={error} title="Failed to load splits" /> : null}
+                exportConfig={{ dataset: "splits", scope: ticker }}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
                 onLoadMore={() => void fetchNextPage()}
+                operationId="listSplits"
                 rows={splits}
             />
         </div>

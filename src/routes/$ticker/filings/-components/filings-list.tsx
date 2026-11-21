@@ -19,6 +19,7 @@ export function FilingsList({
     onOpenSecDocuments,
     onSortToggle,
     sortDirection,
+    ticker,
 }: {
     displayFilings: ReadonlyArray<FilingListRow>;
     /** false while the answer's coverage is pending / partial: no rows is then not "No filings found". */
@@ -33,6 +34,8 @@ export function FilingsList({
     onOpenSecDocuments?: (filing: FilingListRow) => void;
     sortDirection: "asc" | "desc";
     onSortToggle: () => void;
+    /** The export's file-name scope; none = no Export menu. */
+    ticker?: string;
 }) {
     return (
         <DataTable
@@ -40,10 +43,12 @@ export function FilingsList({
             emptyIsGenuine={emptyIsGenuine}
             emptyText="No filings found."
             errorState={errorState}
+            exportConfig={ticker ? { dataset: "filings", scope: ticker } : undefined}
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
             isLoading={isLoading}
             onLoadMore={onFetchNextPage}
+            operationId="listFilings"
             rows={[...displayFilings]}
         />
     );

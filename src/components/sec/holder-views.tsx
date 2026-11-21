@@ -3,7 +3,9 @@ import type * as React from "react";
 
 import { Link } from "@tanstack/react-router";
 
+import type { ExportConfig } from "@/components/api/export-menu";
 import type { FundListState } from "@/components/sec/fund-views";
+import type { OperationId } from "@/lib/api/operations.gen";
 import type {
     V2Holder,
     V2HolderChange,
@@ -154,14 +156,18 @@ function HolderListFrame<TPage extends Page, TRow>({
     columns,
     emptyText,
     errorTitle,
+    exportConfig,
     note,
+    operationId,
     rowsOf,
     state,
 }: {
     columns: Array<ColumnDef<TRow>>;
     emptyText: string;
     errorTitle: string;
+    exportConfig?: ExportConfig<TRow>;
     note?: null | string;
+    operationId: OperationId;
     rowsOf: (page: TPage) => Array<TRow>;
     state: FundListState<TPage>;
 }) {
@@ -180,10 +186,12 @@ function HolderListFrame<TPage extends Page, TRow>({
                 columns={columns}
                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
                 emptyText={emptyText}
+                exportConfig={exportConfig}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
                 onLoadMore={onLoadMore}
+                operationId={operationId}
                 rows={pages.flatMap(rowsOf)}
             />
             {error ? <SecReadinessNotice error={error} title={errorTitle} /> : null}
@@ -199,7 +207,7 @@ function issuerFileNote(meta: undefined | V2HoldersResponse["meta"]): string {
 }
 
 /** The full list of ONE source (`/v1/holders?symbol=&source=`), by cursor. */
-export function HoldersList({ source, state }: { source: V2HolderSource; state: FundListState<V2HoldersResponse> }) {
+export function HoldersList({ exportScope, source, state }: { exportScope?: string; source: V2HolderSource; state: FundListState<V2HoldersResponse> }) {
     const meta = state.pages.at(0)?.meta;
 
     const reason = holderReasonText(meta?.reason);
@@ -211,7 +219,9 @@ export function HoldersList({ source, state }: { source: V2HolderSource; state: 
             columns={HOLDER_COLUMNS[source]}
             emptyText={EMPTY_TEXT[source]}
             errorTitle={`Failed to load the ${HOLDER_SOURCE_LABELS[source]} holders`}
+            exportConfig={exportScope ? { dataset: `holders-${source}`, scope: exportScope } : undefined}
             note={note}
+            operationId="listHolders"
             rowsOf={page => page.data}
             state={state}
         />
@@ -273,12 +283,14 @@ const CHANGE_COLUMNS: Array<ColumnDef<V2HolderChange>> = [
 ];
 
 /** 13F position changes of the security's holders vs the prior quarter (`/v1/holder-changes`). */
-export function HolderChangesList({ state }: { state: FundListState<V2HolderChangesResponse> }) {
+export function HolderChangesList({ exportScope, state }: { exportScope?: string; state: FundListState<V2HolderChangesResponse> }) {
     return (
         <HolderListFrame<V2HolderChangesResponse, V2HolderChange>
             columns={CHANGE_COLUMNS}
             emptyText="No position changes for this quarter."
             errorTitle="Failed to load the 13F changes"
+            exportConfig={exportScope ? { dataset: "holder-changes", scope: exportScope } : undefined}
+            operationId="listHolderChanges"
             rowsOf={page => page.data}
             state={state}
         />

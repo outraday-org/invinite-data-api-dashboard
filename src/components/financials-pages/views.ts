@@ -4,13 +4,13 @@ import type { V2Dataset } from "@/lib/api/types";
 
 import { AsReportedFinancials } from "./as-reported";
 import { CagrFinancials } from "./cagr";
+import { FINANCIAL_VIEW_VALUES } from "./financials-search";
 import { GrowthFinancials } from "./growth";
 import { RatiosFinancials } from "./ratios";
 import { SegmentsFinancials } from "./segments";
 import { StandardizedFinancials } from "./standardized";
 
-/** `?view=` of `/$ticker/financials`: one tab per former financial page. */
-export const FINANCIAL_VIEW_VALUES = ["standardized", "as-reported", "ratios", "growth", "cagr", "segments"] as const;
+export { FINANCIAL_VIEW_VALUES };
 
 export type FinancialView = (typeof FINANCIAL_VIEW_VALUES)[number];
 

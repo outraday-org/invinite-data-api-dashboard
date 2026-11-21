@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import type { MetricsListState } from "@/components/financial-metrics/metrics-list-body";
-import type { FiscalPeriodType, SegmentedFinancialsSegmentId, V2SegmentsResponse } from "@/lib/api/types";
+import type { SegmentedFinancialsSegmentId, V2SegmentsResponse } from "@/lib/api/types";
 
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
@@ -9,7 +9,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { useV2SegmentsInfinite } from "@/lib/api/queries";
 import { completePeriodsOnly, periodLabels, segmentLines } from "@/lib/financials/statements";
 
-import { SegmentSelect } from "./segment-select";
+import { useFinancialsSearch } from "./financials-search";
+import { SegmentSelect, toSegmentId } from "./segment-select";
 import { SegmentedFinancialsTable } from "./segmented-financials-table";
 
 /** Segment facts per page of `/v1/segments` (one row per fact, many per period: the maximum page). */
@@ -64,9 +65,11 @@ export function SegmentsView({
 
 /** The page body of the Financials route's tab (`/$ticker/financials?view=`). */
 export function SegmentsFinancials({ ticker }: { ticker: string }) {
-    const [periodType, setPeriodType] = React.useState<FiscalPeriodType>("quarterly");
+    const [search, update] = useFinancialsSearch();
 
-    const [segmentId, setSegmentId] = React.useState<"all" | SegmentedFinancialsSegmentId>("all");
+    const periodType = search.period ?? "quarterly";
+
+    const segmentId = toSegmentId(search.segment);
 
     // `/v1/segments?company=<ticker>&period=<type>`, newest first; the segment picker filters the loaded rows.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2SegmentsInfinite({
@@ -80,8 +83,8 @@ export function SegmentsFinancials({ ticker }: { ticker: string }) {
             <PageHeader
                 actions={(
                     <>
-                        <SegmentSelect onValueChange={setSegmentId} value={segmentId} />
-                        <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
+                        <SegmentSelect onValueChange={value => update({ chart: undefined, segment: value === "all" ? undefined : value })} value={segmentId} />
+                        <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
                     </>
                 )}
                 description="Financial data broken out by business segment in tabular format."

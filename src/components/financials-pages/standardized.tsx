@@ -1,13 +1,16 @@
 import * as React from "react";
 
-import type { FiscalPeriodType, StatementType, V2FinancialsView } from "@/lib/api/types";
+import type { V2FinancialsView } from "@/lib/api/types";
 
 import { FinancialsStatementsView, ViewButtons } from "@/components/financials-presentation/financials-statements-view";
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
 import { StatementSelect } from "@/components/financials-presentation/statement-select";
+import { usePlanAllows } from "@/components/ui/credit-hint";
 import { PageHeader } from "@/components/ui/page-header";
 import { isTierError } from "@/lib/api/errors";
 import { useV2FinancialsInfinite } from "@/lib/api/queries";
+
+import { useFinancialsSearch } from "./financials-search";
 
 /** Periods per page of `/v1/financials/standardized*` (one row per period; "Load more" adds older ones). */
 const STATEMENT_PAGE = 8;
@@ -18,19 +21,30 @@ const VIEW_SUBTITLES: Record<V2FinancialsView, string> = {
     summary: "Financial data normalized to standard metrics",
 };
 
+/** The PRO operations behind the views (their badges show before a request when the plan lacks them). */
+const STANDARDIZED_VIEW_OPERATIONS = {
+    detailed: "getStandardizedFinancialsDetailed",
+    presentation: "getStandardizedFinancialsPresentation",
+} as const;
+
 /** The page body of the Financials route's tab (`/$ticker/financials?view=`). */
 export function StandardizedFinancials({ ticker }: { ticker: string }) {
-    const [statement, setStatement] = React.useState<StatementType>("income-statement");
+    const [search, update] = useFinancialsSearch();
 
-    const [periodType, setPeriodType] = React.useState<FiscalPeriodType>("quarterly");
+    const statement = search.statement ?? "income-statement";
 
-    // The default view is the presentation tree (PRO); a plan without it falls back to the summary once the request
-    // answers `plan_required`. A view the reader picks is kept (its refusal is the view's notice).
-    const [pickedView, setView] = React.useState<null | V2FinancialsView>(null);
+    const periodType = search.period ?? "quarterly";
+
+    // The default view is the presentation tree (PRO); a plan without it (`useMe()`'s plan vs the operation's `x-tier`)
+    // starts at the summary before any request, and a refusal still falls back. A view the reader picks (`?layout=`)
+    // is kept (its refusal is the view's notice).
+    const pickedView = search.layout ?? null;
+
+    const presentationAllowed = usePlanAllows("getStandardizedFinancialsPresentation");
 
     const [presentationRefused, setPresentationRefused] = React.useState(false);
 
-    const view: V2FinancialsView = pickedView ?? (presentationRefused ? "summary" : "presentation");
+    const view: V2FinancialsView = pickedView ?? (presentationRefused || presentationAllowed === false ? "summary" : "presentation");
 
     // `/v1/financials/standardized[/detailed|/presentation]?company=<ticker>&statement=<one>&period=<type>`, newest first.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2FinancialsInfinite({
@@ -51,9 +65,9 @@ export function StandardizedFinancials({ ticker }: { ticker: string }) {
             <PageHeader
                 actions={(
                     <>
-                        <StatementSelect onValueChange={setStatement} value={statement} />
-                        <ViewButtons onValueChange={setView} value={view} />
-                        <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
+                        <StatementSelect onValueChange={value => update({ chart: undefined, statement: value === "income-statement" ? undefined : value })} value={statement} />
+                        <ViewButtons badges={STANDARDIZED_VIEW_OPERATIONS} onValueChange={value => update({ chart: undefined, layout: value })} value={view} />
+                        <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
                     </>
                 )}
                 description={VIEW_SUBTITLES[view]}

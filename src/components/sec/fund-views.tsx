@@ -5,6 +5,7 @@ import type { V2FundPosition, V2FundPositionsResponse, V2FundSource, V2FundWeigh
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecurityLink } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
+import { Copyable } from "@/components/ui/copy-button";
 import { DataTable } from "@/components/ui/data-table";
 import { Notice } from "@/components/ui/notice";
 import {
@@ -68,6 +69,13 @@ const COMPOSITION_COLUMNS: Array<ColumnDef<V2FundPosition>> = [
         id: "name",
     },
     { cell: ({ row }) => row.original.security.symbol ?? "—", header: "Ticker", id: "symbol" },
+    {
+        cell: ({ row }) => (row.original.security.cusip
+            ? <Copyable className="tabular-nums" label="Copy CUSIP" value={row.original.security.cusip} />
+            : "—"),
+        header: "CUSIP",
+        id: "cusip",
+    },
     { accessorKey: "asset_class", cell: ({ row }) => row.original.asset_class ?? "—", header: "Asset Class" },
     {
         accessorKey: "weight_pct",
@@ -100,7 +108,7 @@ const hasNotional = (rows: ReadonlyArray<V2FundPosition>) => rows.some(row => ro
  * One fund's composition (`/v1/funds/{fund}/holdings`), largest weight first: the source badge, the reason of a partial or
  * deliberately empty answer (a single-asset trust is a notice, never an empty table), the rows and "Load more".
  */
-export function FundCompositionList({ state }: { state: FundListState<V2FundPositionsResponse> }) {
+export function FundCompositionList({ exportScope, state }: { exportScope?: string; state: FundListState<V2FundPositionsResponse> }) {
     const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
 
     if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the fund holdings" />;
@@ -130,10 +138,12 @@ export function FundCompositionList({ state }: { state: FundListState<V2FundPosi
                                 columns={columns}
                                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
                                 emptyText="No positions in this composition."
+                                exportConfig={exportScope ? { dataset: "fund-holdings", scope: exportScope } : undefined}
                                 hasNextPage={hasNextPage}
                                 isFetchingNextPage={isFetchingNextPage}
                                 isLoading={isLoading}
                                 onLoadMore={onLoadMore}
+                                operationId="listFundPositions"
                                 rows={rows}
                             />
                         </>

@@ -10,7 +10,7 @@ pnpm run build        # Production build
 pnpm run test         # Run tests (vitest; vitest.config.ts, node env, src/**/*.test.ts + *.test.tsx — a component test starts with `// @vitest-environment jsdom`; kept apart from the Netlify / Start plugins of vite.config.ts)
 pnpm run lint         # Run ESLint
 pnpm run check        # Run ESLint --fix && tsc --noEmit
-pnpm run generate:api # Regenerate API types from openapi.json
+pnpm run generate:api # Regenerate API types (schema.d.ts) and the operations table (operations.gen.ts) from openapi.json
 ```
 
 ## Architecture
@@ -158,7 +158,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   (skeleton while it loads), so a gated section never requests and no refusal flashes before the gate sentence; the
   The `h1` is the answer's canonical `symbol`.
 - **`PageHeader`** (`src/components/ui/page-header.tsx`): THE page title — `h2`, muted description, `actions` slot
-  (filters; O6 adds "API" / "Export"). Every page renders it, in its error state too.
+  (filters) and the "API" button (O6). Every page renders it, in its error state too.
 - **`DataTable`** (`src/components/ui/data-table.tsx`, grown from `V2ListTable`): `columns`, `rows`, skeleton rows while
   the first page loads, `errorState` (a rendered `ErrorState` / `SecReadinessNotice`) in a full-width row, the empty row
   only when `emptyIsGenuine`, `LoadMoreButton` with "N loaded", `columnClassName`, `rowClassName`, `stickyFirstColumn`.
@@ -248,6 +248,64 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   `ticker-search`, `overview-and-calls` in `src/routes/-tests/`; `navigation.test.ts`, `calendar-groups.test.ts`,
   `use-fill-pages.test.ts`, `theme.test.ts`, `start-adapter.test.ts`, `client.server.test.ts`. Fixtures:
   `src/lib/account-fixtures.ts`.
+
+### API inspector, export, URL state (backend `tasks/data-api-dashboard` O6)
+
+- **Operations table** `src/lib/api/operations.gen.ts` (generated, committed after `pnpm run check`): `pnpm generate:api`
+  = `openapi-typescript` + `node scripts/generate-operations.mjs`. One entry per operation of `openapi.json` (124,
+  `operations.test.ts` counts them): method, path template, summary, `credits` (`x-credits`, null for `/health`,
+  `/status*`), `tier` (`x-tier`), `cli` (`x-cli` group / action / positional), `docsUrl`
+  (`https://data.invinite.com/docs/<method>--<path, / → _>`); `OPERATION_IDS_BY_ROUTE` (`"GET /v1/funds/{fund}"` → id);
+  `PLAN_ORDER` = `/v1/me`'s `plan` enum (the access order). Regenerated only by O6, A2's spec adoption and A3.
+- **Request descriptors — nothing to register**: `client.server.ts` records every Data API answer of a server function
+  call (openapi-fetch middleware → `AsyncLocalStorage`: method, the concrete path + query AS SENT, status,
+  `X-Request-Id`, `X-Credits-Charged`; never a request header, so never the key) and the global function middleware
+  `src/lib/api/request-middleware.ts` (registered in `src/start.ts`; its server half imports `client.server` lazily, so
+  `node:async_hooks` never reaches the browser bundle) sends the list back as the server's send context; its client half
+  files it under the returned answer / thrown error (`fileRequests`, a `WeakMap`). The root `QueryClient`'s
+  `structuralSharing: shareWithRequests` carries the entry onto the copy React Query keeps (page by page for lists).
+  `RequestMeta` (`src/lib/api/request-meta.ts`) = `operationId, method, path, query, body?, credits, requestId, status`;
+  `body` is unset for reads (A2 fills it for writes, redacted). So EVERY hook is inspectable without a code change; an
+  answer that is not an object (none today) or a `queryFn` that returns a transformed copy is not.
+- **Inspector**: `PageHeader` always ends in `ApiButton` (`src/components/api/api-sheet.tsx`; nothing outside a
+  `QueryClientProvider`, so pure view tests are unchanged): a side sheet listing `useViewRequests()` = the requests of
+  every query with a mounted observer (each page of a list), minus `/v1/me`; per request method + path + query, summary,
+  plan badge, base cost + charged, HTTP status, request id (copy), `curlOf` (ALWAYS `$INVINITE_API_KEY`), `cliOf`
+  (`invd <group> <action> <positional> --<flag>`, flags = the CLI's `flagName`), the docs link and the answer as a
+  `JsonTree` (`json-tree.tsx`: open to depth 2, children mounted only when open and 50 at a time) with copy / download.
+  `useViewRequests` ignores the cache's `observerOptionsUpdated` / `observerResultsUpdated` events (each `useQuery`
+  render emits them: a render loop). The call page has no `PageHeader`: O6-final puts `ApiButton` in its tab bar.
+- **Export**: `src/lib/export.ts` (`toCsv` RFC 4180 + CRLF, `csvCell` neutralises a TEXT cell starting with `= + - @`
+  tab / CR by a leading `'` — numbers stay numbers —, `flattenRow` dotted keys, `exportFileName`
+  `<scope>-<dataset>-<yyyy-mm-dd>.<ext>`, `downloadCsv` with a UTF-8 BOM, `downloadJson`; `saveBlob` of
+  `src/lib/download.ts`). `DataTable` `exportConfig={{ dataset, scope, columns? }}` renders `ExportMenu`
+  (`src/components/api/export-menu.tsx`) above the table: CSV / JSON of the loaded rows (default columns = every API field
+  flattened), "N rows loaded", "Load all pages first…" behind a confirm naming the per-page cost (`loadAllText`),
+  stopping at the last page, after a page that added no row (failed / empty) or after `LOAD_ALL_MAX_PAGES` (25). On:
+  dividends, splits, insider trades, filings, holders (each source + changes), fund holdings, calls list, market
+  holidays, funds, instruments, institutions. The calendar and `/ipo-calendar` have none yet (their rows are grouped /
+  split client-side).
+- **Hints**: `src/components/ui/credit-hint.tsx` — `creditText(operationId)`, `CreditHint` (tooltip),
+  `PlanBadge({ operationId })` (`useMe()` plan vs `x-tier` in `PLAN_ORDER`; nothing while the plan is unknown or
+  outside a query client), `usePlanAllows`. `DataTable` / `LoadMoreButton` take `operationId` (the page's cost in the
+  "Load more" tooltip). The statement pages' `ViewButtons` take `badges` (detailed / presentation = their own PRO
+  operations) and start at `summary` when the plan lacks the presentation operation (no refused request first).
+- **Copy buttons** `src/components/ui/copy-button.tsx` (`CopyButton`, `Copyable`): accession numbers (filings,
+  `/sec/$cik`), CIKs (`/sec/$cik` header, insider owner CIK), event ids (calls list), CUSIPs (fund holdings, 13F
+  portfolio).
+- **URL state rule**: every filter, tab, sort and open item is a search param — `validateSearch` with each field
+  optional + `.catch(undefined)` (helpers `src/lib/url-state.ts`: `optionalDay`, `optionalText`, `optionalEnum`,
+  `optionalAccession`, `optionalFlag`), written with `IN_PLACE` (`replace: true, resetScroll: false`), a default written
+  as `undefined`. Filings `?form=&sort=asc&filing=<accession>&docs=<accession>` (a `?filing=` outside the loaded pages
+  opens its documents panel), insider `?side=&from=&to=`, holders `?tab=&period=`, holdings `?day=`, `/sec/$cik`
+  `?form=&period=&docs=`, calls list `?tab=&search=documents&fiscalYear=`, documents `?searchIn=sec&source=<version
+  id>&block=<block id>` (the SEC citation panel), Financials `?view=` + `statement, period, layout, reportedOnly, sign,
+  category, basis, horizon, segment, chart` (`components/financials-pages/financials-search.ts`
+  `financialsSearchSchema` / `useFinancialsSearch`; `?chart=` = the charted row's key, through `ChartParamContext` +
+  `useChartSelection` of `components/metric-chart/use-chart-selection.ts`, local state without a provider). Not in the
+  URL: the News pager's page (a keyset cursor stack), search boxes' typed queries (submit-only). Tests:
+  `src/routes/-tests/url-state.test.ts`, `api-inspector.test.tsx`, `src/lib/export.test.ts`,
+  `src/lib/api/request-meta.test.ts`, `operations.test.ts`.
 
 ### UI Components (`src/components/ui/`)
 

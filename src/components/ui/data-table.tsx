@@ -3,6 +3,10 @@ import type { ColumnDef, Row } from "@tanstack/react-table";
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import * as React from "react";
 
+import type { ExportConfig } from "@/components/api/export-menu";
+import type { OperationId } from "@/lib/api/operations.gen";
+
+import { ExportMenu } from "@/components/api/export-menu";
 import { LoadMoreButton } from "@/components/ui/load-more-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -56,6 +60,8 @@ function useTableFits(wrapper: React.RefObject<HTMLDivElement | null>, enabled: 
  * - States: skeleton rows while the first page loads, `errorState` in a full-width row (first page or a failed next
  *   page), the empty row only for a genuine empty answer (`emptyIsGenuine`: a pending / partial coverage's notice
  *   stands above the table instead), "Load more" with "N loaded" by `next_cursor`.
+ * - O6: `operationId` (the list's operation) puts its cost on "Load more"; `exportConfig` adds the "Export" menu above
+ *   the table (CSV / JSON of the loaded rows, "load all" after a confirm naming the per-page cost).
  */
 export function DataTable<TRow>({
     columnClassName,
@@ -63,12 +69,14 @@ export function DataTable<TRow>({
     emptyIsGenuine = true,
     emptyText,
     errorState,
+    exportConfig,
     groupHeading,
     groupOf,
     hasNextPage = false,
     isFetchingNextPage = false,
     isLoading,
     onLoadMore,
+    operationId,
     rowClassName,
     rows,
     stickyFirstColumn = false,
@@ -80,6 +88,8 @@ export function DataTable<TRow>({
     emptyText: string;
     /** A rendered error (`ErrorState`, `SecReadinessNotice`) for a failed request; null / undefined = none. */
     errorState?: React.ReactNode;
+    /** The "Export" menu above the table (rows as given; columns default to every field, flattened). */
+    exportConfig?: ExportConfig<TRow>;
     /** The heading row of a group (its key and its rows); rendered with `groupOf`. */
     groupHeading?: (group: string, rows: ReadonlyArray<TRow>) => React.ReactNode;
     /**
@@ -91,6 +101,8 @@ export function DataTable<TRow>({
     isFetchingNextPage?: boolean;
     isLoading: boolean;
     onLoadMore?: () => void;
+    /** The list's operation: its cost on "Load more" and in the export's "load all". */
+    operationId?: OperationId;
     rowClassName?: (row: TRow) => string | undefined;
     rows: Array<TRow>;
     stickyFirstColumn?: boolean;
@@ -123,6 +135,19 @@ export function DataTable<TRow>({
 
     return (
         <div className="flex min-w-0 flex-col" data-slot="data-table" ref={wrapper}>
+            {exportConfig && (
+                <div className="flex justify-end pb-2">
+                    <ExportMenu
+                        config={exportConfig}
+                        failed={!!errorState}
+                        hasNextPage={hasNextPage}
+                        isFetchingNextPage={isFetchingNextPage}
+                        onLoadMore={onLoadMore}
+                        operationId={operationId}
+                        rows={rows}
+                    />
+                </div>
+            )}
             <Table containerClassName={stickyHeader || (groupOf && fits) ? "lg:overflow-x-visible" : undefined}>
                 <TableHeader className={cn(stickyHeader && cn("bg-background lg:sticky lg:z-20", LG_STICKY_TOP_CLASS))}>
                     {table.getHeaderGroups().map(headerGroup => (
@@ -192,6 +217,7 @@ export function DataTable<TRow>({
                     isFetchingNextPage={isFetchingNextPage}
                     loadedCount={rows.length}
                     onLoadMore={onLoadMore}
+                    operationId={operationId}
                 />
             )}
         </div>

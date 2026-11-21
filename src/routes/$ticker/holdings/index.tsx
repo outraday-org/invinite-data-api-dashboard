@@ -1,16 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { z } from "zod";
 
 import { FundCompositionList, FundWeightsBlock } from "@/components/sec/fund-views";
 import { PageHeader } from "@/components/ui/page-header";
 import { useFundPositionsInfinite, useFundWeightsInfinite } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
 import { fundPickerDays } from "@/lib/sec/fund";
+import { IN_PLACE, optionalDay } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export const Route = createFileRoute("/$ticker/holdings/")({
     component: FundHoldingsPage,
     head: ({ params }) => tickerHead(params.ticker, "Holdings"),
+    // `?day=<as of>` (default: the freshest composition, nothing sent).
+    validateSearch: z.object({ day: optionalDay() }),
 });
 
 /** Positions per page (the API allows up to 200; the top of the fund first). */
@@ -29,9 +33,13 @@ const FRESHEST = "freshest";
 function FundHoldingsPage() {
     const { ticker } = Route.useParams();
 
-    const [day, setDay] = React.useState<string>(FRESHEST);
+    const { day: asOf } = Route.useSearch();
 
-    const asOf = day === FRESHEST ? undefined : day;
+    const navigate = Route.useNavigate();
+
+    const day = asOf ?? FRESHEST;
+
+    const setDay = (value: string) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, day: value === FRESHEST ? undefined : value }) });
 
     const holdings = useFundPositionsInfinite({ asOf, fund: ticker, limit: POSITIONS_PAGE });
 
@@ -39,7 +47,12 @@ function FundHoldingsPage() {
 
     const stored = holdings.data?.pages.at(0)?.meta.composition?.stored_dates;
 
-    const options = React.useMemo(() => [{ label: "Freshest", value: FRESHEST }, ...fundPickerDays(stored)], [stored]);
+    // A linked day not among the stored ones (yet) is offered too.
+    const options = React.useMemo(() => {
+        const days = fundPickerDays(stored);
+
+        return [{ label: "Freshest", value: FRESHEST }, ...days, ...(asOf && !days.some(entry => entry.value === asOf) ? [{ label: asOf, value: asOf }] : [])];
+    }, [asOf, stored]);
 
     return (
         <div className="flex flex-col gap-4">
@@ -67,6 +80,7 @@ function FundHoldingsPage() {
 
             <div className="relative">
                 <FundCompositionList
+                    exportScope={ticker}
                     state={{
                         error: holdings.error,
                         hasNextPage: holdings.hasNextPage,

@@ -2,12 +2,14 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { z } from "zod";
 
 import type { V2InsiderSide, V2InsiderTrade, V2InsiderTradesResponse } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
+import { Copyable } from "@/components/ui/copy-button";
 import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
@@ -15,11 +17,20 @@ import { useV2InsiderTradesInfinite } from "@/lib/api/queries";
 import { formatDay, formatInstant, formatMoney, formatShares } from "@/lib/format";
 import { tickerHead } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
+import { IN_PLACE, optionalDay, optionalEnum } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
+
+/** `?side=buy|sell&from=&to=` (filed day range, New York days as typed). */
+const insiderSearchSchema = z.object({
+    from: optionalDay(),
+    side: optionalEnum(["buy", "sell"] as const satisfies ReadonlyArray<V2InsiderSide>),
+    to: optionalDay(),
+});
 
 export const Route = createFileRoute("/$ticker/insider-trades/")({
     component: InsiderTradesPage,
     head: ({ params }) => tickerHead(params.ticker, "Insider Trades"),
+    validateSearch: insiderSearchSchema,
 });
 
 /** Trades per page of `/v1/insider-trades` (one page per `next_cursor`). */
@@ -80,7 +91,9 @@ const COLUMNS: Array<ColumnDef<V2InsiderTrade>> = [
     {
         // One row per reporting owner of a joint filing; sec-api rows carry no owner CIK.
         accessorKey: "owner_cik",
-        cell: ({ row }) => <div className="tabular-nums">{row.original.owner_cik ?? "—"}</div>,
+        cell: ({ row }) => (row.original.owner_cik
+            ? <Copyable className="tabular-nums" label="Copy owner CIK" value={row.original.owner_cik} />
+            : <div className="tabular-nums">—</div>),
         header: "Owner CIK",
     },
     {
@@ -142,6 +155,7 @@ export function InsiderTradesView({
     isLoading,
     onLoadMore,
     pages,
+    symbol,
 }: {
     error: unknown;
     hasNextPage: boolean;
@@ -149,6 +163,8 @@ export function InsiderTradesView({
     isLoading: boolean;
     onLoadMore: () => void;
     pages: ReadonlyArray<V2InsiderTradesResponse>;
+    /** The export's file-name scope (the page's ticker). */
+    symbol?: string;
 }) {
     const rows = React.useMemo(() => pages.flatMap(page => page.data), [pages]);
 
@@ -164,10 +180,12 @@ export function InsiderTradesView({
                 columns={COLUMNS}
                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
                 emptyText="No insider trades for these filters."
+                exportConfig={symbol ? { dataset: "insider-trades", scope: symbol } : undefined}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
                 onLoadMore={onLoadMore}
+                operationId="listInsiderTrades"
                 rows={rows}
                 stickyFirstColumn
             />
@@ -179,11 +197,11 @@ export function InsiderTradesView({
 function InsiderTradesPage() {
     const { ticker } = Route.useParams();
 
-    const [side, setSide] = React.useState<SideFilter>(ALL);
+    const { from = "", side = ALL, to = "" } = Route.useSearch();
 
-    const [from, setFrom] = React.useState("");
+    const navigate = Route.useNavigate();
 
-    const [to, setTo] = React.useState("");
+    const onChange = (patch: z.infer<typeof insiderSearchSchema>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
     // `/v1/insider-trades?company=<ticker>`, newest filed first; the day range = `filed_at.gte` / `.lt` the next midnight.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2InsiderTradesInfinite({
@@ -199,10 +217,10 @@ function InsiderTradesPage() {
             <PageHeader
                 actions={(
                     <>
-                        <FilterSelect className="w-[170px]" onValueChange={setSide} options={SIDE_OPTIONS} value={side} />
-                        <Input aria-label="Filed from" className="w-[150px]" onChange={e => setFrom(e.target.value)} type="date" value={from} />
+                        <FilterSelect className="w-[170px]" onValueChange={(value: SideFilter) => onChange({ side: value === ALL ? undefined : value })} options={SIDE_OPTIONS} value={side} />
+                        <Input aria-label="Filed from" className="w-[150px]" onChange={e => onChange({ from: e.target.value || undefined })} type="date" value={from} />
                         <span className="text-muted-foreground">to</span>
-                        <Input aria-label="Filed to" className="w-[150px]" onChange={e => setTo(e.target.value)} type="date" value={to} />
+                        <Input aria-label="Filed to" className="w-[150px]" onChange={e => onChange({ to: e.target.value || undefined })} type="date" value={to} />
                     </>
                 )}
                 description="Insider transactions, newest filing first."
@@ -216,6 +234,7 @@ function InsiderTradesPage() {
                 isLoading={isLoading}
                 onLoadMore={() => fetchNextPage()}
                 pages={data?.pages ?? []}
+                symbol={ticker}
             />
         </div>
     );

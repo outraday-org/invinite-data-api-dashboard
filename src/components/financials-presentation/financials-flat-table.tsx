@@ -1,8 +1,7 @@
-import * as React from "react";
-
 import type { StatementColumn, StatementLine } from "@/lib/financials/statements";
 
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
+import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
@@ -26,7 +25,7 @@ function cellTitle(cell: NonNullable<StatementLine["values"][number]>) {
  * (newest first). A derived value is italic (its tooltip says so); a click charts the line.
  */
 export function FinancialsFlatTable({ columns, lines }: { columns: Array<StatementColumn>; lines: Array<StatementLine> }) {
-    const [selected, setSelected] = React.useState<null | StatementLine>(null);
+    const [selected, setSelected] = useChartSelection(lines, line => line.id);
 
     return (
         <div className="flex flex-col gap-2">

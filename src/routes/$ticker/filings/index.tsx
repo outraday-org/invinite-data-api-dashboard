@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { z } from "zod";
 
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 import type { V2FilingsResponse } from "@/lib/api/types";
@@ -10,6 +11,7 @@ import { useCompanyFiscalPeriods, useInstrument, useV2FilingsInfinite } from "@/
 import { tickerHead } from "@/lib/layout";
 import { fiscalPeriodIndex, formTypesOfFacet, toFilingListRow } from "@/lib/sec/parity";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
+import { IN_PLACE, optionalAccession, optionalEnum, optionalText } from "@/lib/url-state";
 
 import type { FilingHtmlTarget } from "./-components/html-dialog";
 
@@ -17,9 +19,24 @@ import { FilingsHeader } from "./-components/filings-header";
 import { FilingsList } from "./-components/filings-list";
 import { HtmlDialog } from "./-components/html-dialog";
 
+/**
+ * `?form=` (one form type of the facet), `?sort=asc` (oldest filed first; default newest), `?filing=<accession>` (the
+ * HTML view of a loaded row; a filing outside the loaded pages opens its documents instead), `?docs=<accession>` (the
+ * SEC source panel of that accession).
+ */
+const filingsSearchSchema = z.object({
+    docs: optionalAccession(),
+    filing: optionalAccession(),
+    form: optionalText(20),
+    sort: optionalEnum(["asc"]),
+});
+
+type FilingsSearch = z.infer<typeof filingsSearchSchema>;
+
 export const Route = createFileRoute("/$ticker/filings/")({
     component: FilingsPage,
     head: ({ params }) => tickerHead(params.ticker, "Filings"),
+    validateSearch: filingsSearchSchema,
 });
 
 /** Filings per page of `/v1/filings` (one page per `next_cursor`). */
@@ -28,14 +45,15 @@ const FILINGS_PAGE = 40;
 function FilingsPage() {
     const { ticker } = Route.useParams();
 
-    const [formTypeFilter, setFormTypeFilter] = React.useState<null | string>(null);
+    const search = Route.useSearch();
 
-    const [sortDirection, setSortDirection] = React.useState<"asc" | "desc">("desc");
+    const navigate = Route.useNavigate();
 
-    const [htmlDialog, setHtmlDialog] = React.useState<FilingHtmlTarget | null>(null);
+    const onChange = (patch: FilingsSearch) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
-    // The SEC store's documents of one accession (the source panel).
-    const [secTarget, setSecTarget] = React.useState<null | SecPanelTarget>(null);
+    const formTypeFilter = search.form ?? null;
+
+    const sortDirection = search.sort ?? "desc";
 
     // `/v1/filings?symbol=<ticker>`, newest filed first by default (`-filed_at`), one page per `next_cursor`.
     const {
@@ -82,6 +100,20 @@ function FilingsPage() {
 
     const formTypes = availableFormTypes.ticker === ticker ? availableFormTypes.forms : [];
 
+    // The open HTML view: the loaded row of `?filing=`; not loaded (once the first page is in) = its documents panel.
+    const filingRow = search.filing ? displayFilings.find(row => row.accessionNumber === search.filing) : undefined;
+
+    const htmlDialog: FilingHtmlTarget | null = filingRow ? { ...filingRow, ticker } : null;
+
+    const docsAccession = search.docs ?? (search.filing && !filingRow && !loadingPaged ? search.filing : undefined);
+
+    const docsRow = docsAccession ? displayFilings.find(row => row.accessionNumber === docsAccession) : undefined;
+
+    // The SEC store's documents of one accession (the source panel).
+    const secTarget: null | SecPanelTarget = docsAccession
+        ? { accession: docsAccession, kind: "filing", title: [ticker, docsRow?.formType, docsAccession].filter(Boolean).join(" · ") }
+        : null;
+
     let content: React.ReactNode;
 
     if (errorPaged && pages.length === 0) {
@@ -99,14 +131,11 @@ function FilingsPage() {
                     isFetchingNextPage={isFetchingNextPage}
                     isLoading={loadingPaged}
                     onFetchNextPage={() => fetchNextPage()}
-                    onOpenHtml={filing => setHtmlDialog({ ...filing, ticker })}
-                    onOpenSecDocuments={filing => setSecTarget({
-                        accession: filing.accessionNumber,
-                        kind: "filing",
-                        title: `${ticker} · ${filing.formType} · ${filing.accessionNumber}`,
-                    })}
-                    onSortToggle={() => setSortDirection(prev => (prev === "desc" ? "asc" : "desc"))}
+                    onOpenHtml={filing => onChange({ docs: undefined, filing: filing.accessionNumber })}
+                    onOpenSecDocuments={filing => onChange({ docs: filing.accessionNumber, filing: undefined })}
+                    onSortToggle={() => onChange({ sort: sortDirection === "desc" ? "asc" : undefined })}
                     sortDirection={sortDirection}
+                    ticker={ticker}
                 />
             </>
         );
@@ -117,27 +146,19 @@ function FilingsPage() {
             <HtmlDialog
                 dialog={htmlDialog}
                 onOpenChange={(open) => {
-                    if (!open) setHtmlDialog(null);
+                    if (!open) onChange({ filing: undefined });
                 }}
-                onOpenDocuments={(filing) => {
-                    setHtmlDialog(null);
-
-                    setSecTarget({
-                        accession: filing.accessionNumber,
-                        kind: "filing",
-                        title: `${filing.ticker} · ${filing.formType} · ${filing.accessionNumber}`,
-                    });
-                }}
+                onOpenDocuments={filing => onChange({ docs: filing.accessionNumber, filing: undefined })}
                 ticker={ticker}
             />
 
-            <SecSourceDialog onClose={() => setSecTarget(null)} target={secTarget} />
+            <SecSourceDialog onClose={() => onChange({ docs: undefined, filing: undefined })} target={secTarget} />
 
             <FilingsHeader
                 availableFormTypes={formTypes}
                 formTypeFilter={formTypeFilter}
                 loadingFormTypes={loadingPaged && formTypes.length === 0}
-                onFormTypeChange={val => setFormTypeFilter(val === "all" ? null : val)}
+                onFormTypeChange={val => onChange({ form: val === "all" || !val ? undefined : val })}
                 sortDirection={sortDirection}
             />
 

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import * as React from "react";
+import { z } from "zod";
 
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 
@@ -21,6 +21,10 @@ import { titleHead } from "@/lib/layout";
 import { FILER_ANCHORS, FILER_FILINGS_PAGE, isManagerFiler } from "@/lib/navigation";
 import { recentFiler, useRecordRecent } from "@/lib/recents";
 import { latest13fPeriodEnd } from "@/lib/sec/source";
+import { IN_PLACE, optionalAccession, optionalDay, optionalText } from "@/lib/url-state";
+
+/** `?form=` (the filings' form filter), `?period=<quarter end>` (the 13F portfolio, asked once set), `?docs=<accession>`. */
+const filerSearchSchema = z.object({ docs: optionalAccession(), form: optionalText(20), period: optionalDay() });
 
 /**
  * One SEC filer by CIK — outside `$ticker` on purpose: a pre-IPO issuer, a SPAC or a 13F manager without an exchange
@@ -34,6 +38,7 @@ import { latest13fPeriodEnd } from "@/lib/sec/source";
 export const Route = createFileRoute("/sec/$cik")({
     component: SecFilerPage,
     head: ({ params }) => titleHead(`SEC filer ${params.cik}`),
+    validateSearch: filerSearchSchema,
 });
 
 const PORTFOLIO_PAGE = 25;
@@ -45,12 +50,18 @@ function SecFilerPage() {
 
     const cik = /^\d{1,10}$/.test(rawCik) ? String(Number(rawCik)) : "";
 
-    const [form, setForm] = React.useState<null | string>(null);
+    const search = Route.useSearch();
 
-    const [target, setTarget] = React.useState<null | SecPanelTarget>(null);
+    const navigate = Route.useNavigate();
+
+    const onChange = (patch: z.infer<typeof filerSearchSchema>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
+
+    const form = search.form ?? null;
+
+    const target: null | SecPanelTarget = search.docs ? { accession: search.docs, kind: "filing", title: `CIK ${cik} · ${search.docs}` } : null;
 
     // The 13F portfolio costs a request: asked on a click, for the newest quarter whose reports are due.
-    const [period, setPeriod] = React.useState<null | string>(null);
+    const period = search.period ?? null;
 
     const filer = useV2Filer(cik, V2_FILER_EXPANDS);
 
@@ -111,7 +122,7 @@ function SecFilerPage() {
                     <div className="flex items-center gap-2">
                         <h3 className="text-sm font-semibold">13F portfolio</h3>
                         {!period && (
-                            <Button onClick={() => setPeriod(latest13fPeriodEnd(new Date()))} size="xs" type="button" variant="outline">
+                            <Button onClick={() => onChange({ period: latest13fPeriodEnd(new Date()) })} size="xs" type="button" variant="outline">
                                 Load the latest quarter
                             </Button>
                         )}
@@ -136,14 +147,14 @@ function SecFilerPage() {
                     hasNextPage={Boolean(filings.hasNextPage)}
                     isFetchingNextPage={filings.isFetchingNextPage}
                     isLoading={filings.isLoading}
-                    onFormChange={setForm}
+                    onFormChange={value => onChange({ form: value ?? undefined })}
                     onMore={() => void filings.fetchNextPage()}
-                    onOpen={setTarget}
+                    onOpen={next => onChange({ docs: next.kind === "filing" ? next.accession : undefined })}
                     pages={filings.data?.pages ?? []}
                 />
             </section>
 
-            <SecSourceDialog onClose={() => setTarget(null)} target={target} />
+            <SecSourceDialog onClose={() => onChange({ docs: undefined })} target={target} />
         </div>
     );
 }

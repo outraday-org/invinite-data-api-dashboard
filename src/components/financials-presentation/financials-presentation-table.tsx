@@ -2,6 +2,7 @@ import { ChevronDown, ChevronRight } from "lucide-react";
 import * as React from "react";
 
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
+import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
@@ -61,8 +62,6 @@ export function FinancialsPresentationTable({
 
     const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set(allExpandableIds));
 
-    const [selectedRow, setSelectedRow] = React.useState<null | TreeRow>(null);
-
     React.useEffect(() => {
         // keep expanded set in sync when switching statement/period type/ticker
         setExpanded(new Set(allExpandableIds));
@@ -95,6 +94,9 @@ export function FinancialsPresentationTable({
             }))
             .filter(row => !Object.values(row.values).every(value => value === 0));
     }, [canonicalTree, isVisible, periodLabels, valueMaps]);
+
+    // A chart's key is the metric id (`?chart=` on the Financials route).
+    const [selectedRow, setSelectedRow] = useChartSelection(rows, row => row.metricId);
 
     const getFormatValue = React.useCallback(
         (metricId: string) => (metricId === "is_effective_tax_rate" ? formatPercentCompact : formatNumberEnCompact),

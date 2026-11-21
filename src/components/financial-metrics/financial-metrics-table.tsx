@@ -1,6 +1,5 @@
-import * as React from "react";
-
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
+import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact } from "@/lib/utils";
@@ -28,7 +27,7 @@ export function FinancialMetricsTable({
 }) {
     const hasGroupColumn = rows.some(row => row.group);
 
-    const [selectedRow, setSelectedRow] = React.useState<MetricsTableRow | null>(null);
+    const [selectedRow, setSelectedRow] = useChartSelection(rows, row => row.key);
 
     return (
         <div className="flex flex-col gap-2">

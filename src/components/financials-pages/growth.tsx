@@ -2,7 +2,7 @@ import * as React from "react";
 
 import type { MetricsTableRow } from "@/components/financial-metrics/financial-metrics-table";
 import type { MetricsListState } from "@/components/financial-metrics/metrics-list-body";
-import type { FiscalPeriodType, V2GrowthBasis, V2GrowthPeriod, V2GrowthResponse } from "@/lib/api/types";
+import type { V2GrowthBasis, V2GrowthPeriod, V2GrowthResponse } from "@/lib/api/types";
 
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
@@ -12,6 +12,8 @@ import { useV2GrowthInfinite } from "@/lib/api/queries";
 import { completePeriodsOnly, periodLabel, periodLabels } from "@/lib/financials/statements";
 import { formatFractionPercentCompact, formatMetricId } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
+
+import { useFinancialsSearch } from "./financials-search";
 
 /** Periods per page of `/v1/metrics/growth`: one row per period and basis (both bases = two rows per period). */
 const GROWTH_PERIODS = 8;
@@ -78,9 +80,11 @@ export function GrowthView({ pages, ...state }: MetricsListState & { pages: Read
 
 /** The page body of the Financials route's tab (`/$ticker/financials?view=`). */
 export function GrowthFinancials({ ticker }: { ticker: string }) {
-    const [periodType, setPeriodType] = React.useState<FiscalPeriodType>("quarterly");
+    const [search, update] = useFinancialsSearch();
 
-    const [basis, setBasis] = React.useState<typeof ALL | V2GrowthBasis>(ALL);
+    const periodType = search.period ?? "quarterly";
+
+    const basis: typeof ALL | V2GrowthBasis = search.basis ?? ALL;
 
     // `/v1/metrics/growth?company=<ticker>&period=<type>[&basis=yoy|qoq]` (v1 `growth_type`), newest first.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2GrowthInfinite({
@@ -95,8 +99,8 @@ export function GrowthFinancials({ ticker }: { ticker: string }) {
             <PageHeader
                 actions={(
                     <>
-                        <FilterSelect className="w-[220px]" onValueChange={setBasis} options={basisOptions} value={basis} />
-                        <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
+                        <FilterSelect className="w-[220px]" onValueChange={value => update({ basis: value === ALL ? undefined : value })} options={basisOptions} value={basis} />
+                        <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
                     </>
                 )}
                 description="Period-over-period growth metrics (YoY/ QoQ)."

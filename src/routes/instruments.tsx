@@ -106,10 +106,12 @@ export function InstrumentsList({ error, hasNextPage, isFetchingNextPage, isLoad
                 columns={COLUMNS}
                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
                 emptyText="No instrument matches these filters."
+                exportConfig={{ dataset: "instruments", scope: "us" }}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
                 onLoadMore={onLoadMore}
+                operationId="listInstruments"
                 rows={pages.flatMap(page => page.data)}
             />
             {error ? <SecReadinessNotice error={error} title="Failed to load more instruments" /> : null}

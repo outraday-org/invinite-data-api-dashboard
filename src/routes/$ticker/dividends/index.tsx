@@ -63,10 +63,12 @@ function DividendsPage() {
                 columns={COLUMNS}
                 emptyText="No dividends available."
                 errorState={error ? <ErrorState error={error} title="Failed to load dividends" /> : null}
+                exportConfig={{ dataset: "dividends", scope: ticker }}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
                 onLoadMore={() => void fetchNextPage()}
+                operationId="listDividends"
                 rows={dividends}
             />
         </div>

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
+import { z } from "zod";
 
 import type { V2HolderSource } from "@/lib/api/types";
 
@@ -11,11 +12,18 @@ import { formatDay } from "@/lib/format";
 import { tickerHead } from "@/lib/layout";
 import { HOLDER_SOURCE_LABELS } from "@/lib/sec/fund";
 import { latest13fPeriodEnd, recentQuarterEnds } from "@/lib/sec/source";
+import { IN_PLACE, optionalDay, optionalEnum } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
+
+const TABS = ["overview", "13f", "nport", "issuer_file", "changes"] as const;
+
+/** `?tab=` (default overview) and `?period=<quarter end>` (default: the latest due quarter, nothing sent). */
+const holdersSearchSchema = z.object({ period: optionalDay(), tab: optionalEnum(TABS) });
 
 export const Route = createFileRoute("/$ticker/holders/")({
     component: HoldersPage,
     head: ({ params }) => tickerHead(params.ticker, "Holders"),
+    validateSearch: holdersSearchSchema,
 });
 
 /** Holder rows per page (the API allows up to 1 000). */
@@ -27,7 +35,7 @@ const PICKER_QUARTERS = 8;
 /** The picker's "server default" entry: no `period_end` sent (13F: the newest quarter whose deadline passed; N-PORT: today). */
 const LATEST = "latest";
 
-type Tab = "changes" | "overview" | V2HolderSource;
+type Tab = (typeof TABS)[number];
 
 const SOURCES: ReadonlyArray<V2HolderSource> = ["13f", "nport", "issuer_file"];
 
@@ -58,18 +66,31 @@ function listState<TPage>(query: {
 function HoldersPage() {
     const { ticker } = Route.useParams();
 
-    const [tab, setTab] = React.useState<Tab>("overview");
+    const search = Route.useSearch();
+
+    const navigate = Route.useNavigate();
+
+    const tab: Tab = search.tab ?? "overview";
+
+    const setTab = (value: Tab) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, tab: value === "overview" ? undefined : value }) });
 
     // The picker's quarters, from the newest one whose 13F reports are due (taken once per mount).
     const [quarters] = React.useState(() => recentQuarterEnds(latest13fPeriodEnd(new Date()), PICKER_QUARTERS));
 
-    const [period, setPeriod] = React.useState<string>(LATEST);
+    const periodEnd = search.period;
 
-    const periodEnd = period === LATEST ? undefined : period;
+    const period = periodEnd ?? LATEST;
 
+    const setPeriod = (value: string) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, period: value === LATEST ? undefined : value }) });
+
+    // A linked quarter older than the picker's is offered too (the URL is the state).
     const periodOptions = React.useMemo(
-        () => [{ label: "Latest due quarter", value: LATEST }, ...quarters.map(quarter => ({ label: `Quarter ending ${formatDay(quarter)}`, value: quarter }))],
-        [quarters],
+        () => [
+            { label: "Latest due quarter", value: LATEST },
+            ...[...quarters, ...(periodEnd && !quarters.includes(periodEnd) ? [periodEnd] : [])]
+                .map(quarter => ({ label: `Quarter ending ${formatDay(quarter)}`, value: quarter })),
+        ],
+        [periodEnd, quarters],
     );
 
     const overview = useHoldersInfinite({ limit: 25, periodEnd, symbol: tab === "overview" ? ticker : "" });
@@ -125,12 +146,12 @@ function HoldersPage() {
 
                 {SOURCES.map(source => (
                     <TabsContent className="relative mt-2" key={source} value={source}>
-                        <HoldersList source={source} state={listState(bySource[source])} />
+                        <HoldersList exportScope={ticker} source={source} state={listState(bySource[source])} />
                     </TabsContent>
                 ))}
 
                 <TabsContent className="relative mt-2" value="changes">
-                    <HolderChangesList state={listState(changes)} />
+                    <HolderChangesList exportScope={ticker} state={listState(changes)} />
                 </TabsContent>
             </Tabs>
         </div>

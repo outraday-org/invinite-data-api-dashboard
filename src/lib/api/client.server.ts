@@ -1,8 +1,39 @@
+import type { Middleware } from "openapi-fetch";
+
+import { AsyncLocalStorage } from "node:async_hooks";
 import createClient from "openapi-fetch";
 
+import type { RequestMeta } from "./request-meta";
 import type { paths } from "./schema";
 
 import { env } from "../env";
+import { requestMetaOf } from "./request-meta";
+
+// The requests of the server function call in progress (`recordApiRequests`); none outside one.
+const apiRequests = new AsyncLocalStorage<Array<RequestMeta>>();
+
+/**
+ * Runs `fn` (one server function call) while every Data API answer it receives is recorded into `into`: method, the
+ * concrete path and query as sent, status, `X-Request-Id`, `X-Credits-Charged` — never a header of the request, so
+ * the key cannot be recorded. The global function middleware (`request-middleware.ts`) sends the list to the browser.
+ */
+export function recordApiRequests<T>(into: Array<RequestMeta>, fn: () => T): T {
+    return apiRequests.run(into, fn);
+}
+
+const recordingMiddleware: Middleware = {
+    onResponse({ request, response, schemaPath }) {
+        apiRequests.getStore()?.push(requestMetaOf({
+            headers: response.headers,
+            method: request.method,
+            schemaPath,
+            status: response.status,
+            url: request.url,
+        }));
+
+        return undefined;
+    },
+};
 
 /** The problem `code` of the synthetic 401 a request without any key answers (no network call is made). */
 export const MISSING_API_KEY_CODE = "missing_api_key";
@@ -32,10 +63,14 @@ export function createApiClient(apiKey?: string) {
 
     if (!resolvedKey) return createClient<paths>({ baseUrl: env.INVINITE_DATA_API_URL, fetch: missingKeyFetch });
 
-    return createClient<paths>({
+    const client = createClient<paths>({
         baseUrl: env.INVINITE_DATA_API_URL,
         headers: {
             Authorization: `Bearer ${resolvedKey}`,
         },
     });
+
+    client.use(recordingMiddleware);
+
+    return client;
 }

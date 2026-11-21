@@ -2,7 +2,7 @@ import * as React from "react";
 
 import type { MetricsTableRow } from "@/components/financial-metrics/financial-metrics-table";
 import type { MetricsListState } from "@/components/financial-metrics/metrics-list-body";
-import type { FiscalPeriodType, V2RatioCategory, V2RatioPeriod, V2RatiosResponse } from "@/lib/api/types";
+import type { V2RatioCategory, V2RatioPeriod, V2RatiosResponse } from "@/lib/api/types";
 
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
@@ -12,6 +12,8 @@ import { useV2RatiosInfinite } from "@/lib/api/queries";
 import { periodLabel, periodLabels } from "@/lib/financials/statements";
 import { formatMetricId, formatNumberEnCompact } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
+
+import { useFinancialsSearch } from "./financials-search";
 
 /** Periods per page of `/v1/metrics/ratios` (one row per period). */
 const RATIOS_PAGE = 8;
@@ -91,9 +93,11 @@ export function RatiosView({ pages, ...state }: MetricsListState & { pages: Read
 
 /** The page body of the Financials route's tab (`/$ticker/financials?view=`). */
 export function RatiosFinancials({ ticker }: { ticker: string }) {
-    const [periodType, setPeriodType] = React.useState<FiscalPeriodType>("quarterly");
+    const [search, update] = useFinancialsSearch();
 
-    const [category, setCategory] = React.useState<typeof ALL | V2RatioCategory>(ALL);
+    const periodType = search.period ?? "quarterly";
+
+    const category: typeof ALL | V2RatioCategory = search.category ?? ALL;
 
     // `/v1/metrics/ratios?company=<ticker>&period=<type>[&category=<one>]`, newest first.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2RatiosInfinite({
@@ -108,8 +112,8 @@ export function RatiosFinancials({ ticker }: { ticker: string }) {
             <PageHeader
                 actions={(
                     <>
-                        <FilterSelect className="w-[220px]" onValueChange={setCategory} options={ratioCategoryOptions} value={category} />
-                        <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
+                        <FilterSelect className="w-[220px]" onValueChange={value => update({ category: value === ALL ? undefined : value })} options={ratioCategoryOptions} value={category} />
+                        <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
                     </>
                 )}
                 description="Financial ratios grouped by category."

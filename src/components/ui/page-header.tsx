@@ -1,10 +1,12 @@
 import type * as React from "react";
 
+import { ApiButton } from "@/components/api/api-sheet";
 import { cn } from "@/lib/utils";
 
 /**
  * The one page title of the dashboard: an `h2` at one size, a muted description under it and an actions slot on the
- * right (filters today; the "API" / "Export" buttons of task 6). Every page renders it, in its error state too.
+ * right (filters) ending in the "API" button (O6: the side sheet of the Data API requests the page shows; nothing
+ * outside a query client). Every page renders it, in its error state too.
  */
 export function PageHeader({
     actions,
@@ -23,7 +25,10 @@ export function PageHeader({
                 <h2 className="text-base font-semibold tracking-tight">{title}</h2>
                 {description && <div className="text-muted-foreground">{description}</div>}
             </div>
-            {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+            <div className="flex flex-wrap items-center gap-2">
+                {actions}
+                <ApiButton />
+            </div>
         </div>
     );
 }

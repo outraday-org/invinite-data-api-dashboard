@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
+import * as React from "react";
 
 import type { FinancialView } from "@/components/financials-pages/views";
 
-import { FINANCIAL_VIEW_VALUES, financialViewsFor } from "@/components/financials-pages/views";
+import { financialsSearchSchema } from "@/components/financials-pages/financials-search";
+import { financialViewsFor } from "@/components/financials-pages/views";
+import { ChartParamContext } from "@/components/metric-chart/use-chart-selection";
 import { TabStrip } from "@/components/navigation/tab-strip";
 import { useInstrument } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
-
-const financialsSearchSchema = z.object({ view: z.enum(FINANCIAL_VIEW_VALUES).optional().catch(undefined) });
 
 /**
  * The one Financials page of an instrument: `?view=standardized|as-reported|ratios|growth|cagr|segments` (default
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/$ticker/financials/")({
 function FinancialsPage() {
     const { ticker } = Route.useParams();
 
-    const { view } = Route.useSearch();
+    const { chart, view } = Route.useSearch();
 
     const navigate = Route.useNavigate();
 
@@ -34,6 +34,12 @@ function FinancialsPage() {
     const views = financialViewsFor(instrument?.datasets ?? null);
 
     const active = views.find(entry => entry.value === view) ?? views.at(0);
+
+    // `?chart=` opens the charted row of the tab's table (a deep link; closing it clears the param).
+    const chartParam = React.useMemo(() => ({
+        chart: chart ?? null,
+        setChart: (key: null | string) => void navigate({ replace: true, resetScroll: false, search: prev => ({ ...prev, chart: key ?? undefined }) }),
+    }), [chart, navigate]);
 
     if (!active) return null;
 
@@ -45,7 +51,9 @@ function FinancialsPage() {
                 options={views.map(entry => ({ label: entry.label, value: entry.value }))}
                 value={active.value}
             />
-            <active.Body key={active.value} ticker={ticker} />
+            <ChartParamContext value={chartParam}>
+                <active.Body key={active.value} ticker={ticker} />
+            </ChartParamContext>
         </div>
     );
 }

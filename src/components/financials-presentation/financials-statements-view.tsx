@@ -1,10 +1,12 @@
 import * as React from "react";
 
 import type { MetricsListState } from "@/components/financial-metrics/metrics-list-body";
+import type { OperationId } from "@/lib/api/operations.gen";
 import type { StatementType, V2FinancialsBasis, V2FinancialsView, V2StatementPeriod, V2StatementsResponse } from "@/lib/api/types";
 
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
 import { Button } from "@/components/ui/button";
+import { PlanBadge } from "@/components/ui/credit-hint";
 import { hasStatement, presentationPeriods, statementColumns, statementLines } from "@/lib/financials/statements";
 
 import { FinancialsFlatTable } from "./financials-flat-table";
@@ -17,7 +19,12 @@ const VIEW_OPTIONS: Array<{ label: string; value: V2FinancialsView }> = [
 ];
 
 /** The view switch of the statement pages (summary / detailed (PRO) / presentation (PRO)), the same for both bases. */
-export function ViewButtons({ onValueChange, value }: { onValueChange: (value: V2FinancialsView) => void; value: V2FinancialsView }) {
+export function ViewButtons({ badges, onValueChange, value }: {
+    /** The operation behind a view: its PRO badge shows before any request when the plan lacks it (O6). */
+    badges?: Partial<Record<V2FinancialsView, OperationId>>;
+    onValueChange: (value: V2FinancialsView) => void;
+    value: V2FinancialsView;
+}) {
     return (
         <div aria-label="View" className="flex gap-1" role="group">
             {VIEW_OPTIONS.map(opt => (
@@ -28,6 +35,7 @@ export function ViewButtons({ onValueChange, value }: { onValueChange: (value: V
                     variant={value === opt.value ? "default" : "outline"}
                 >
                     {opt.label}
+                    {badges?.[opt.value] && <PlanBadge operationId={badges[opt.value]!} />}
                 </Button>
             ))}
         </div>

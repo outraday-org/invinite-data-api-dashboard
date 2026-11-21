@@ -118,10 +118,12 @@ export function FundsList({ state }: { state: FundListState<V2FundsResponse> }) 
                 columns={COLUMNS}
                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
                 emptyText="No fund matches these filters."
+                exportConfig={{ dataset: "funds", scope: "us" }}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
                 onLoadMore={onLoadMore}
+                operationId="listFunds"
                 rows={pages.flatMap(page => page.data)}
             />
             {error ? <SecReadinessNotice error={error} title="Failed to load more funds" /> : null}

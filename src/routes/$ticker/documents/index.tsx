@@ -15,6 +15,7 @@ import { useV2Company, useV2EventsInfinite, useV2InvestorDocumentsInfinite } fro
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
 import { buildDocumentTree, callEntries, eventTitleMap, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
 import { tickerHead } from "@/lib/layout";
+import { IN_PLACE } from "@/lib/url-state";
 import { MediaState, Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
 import { DocumentFilters } from "./-components/document-filters";
@@ -50,13 +51,11 @@ const SEARCH_SOURCES = [
 type SearchSource = (typeof SEARCH_SOURCES)[number]["value"];
 
 /** SEC filing search scoped to the company (`symbol=<ticker>`). */
-function SecFilingsSource({ ticker }: { ticker: string }) {
-    const [target, setTarget] = React.useState<null | SecPanelTarget>(null);
-
+function SecFilingsSource({ onOpen, target, ticker }: { onOpen: (target: null | SecPanelTarget) => void; target: null | SecPanelTarget; ticker: string }) {
     return (
         <>
-            <SecFilingSearch onOpen={setTarget} symbol={ticker} />
-            <SecSourceDialog onClose={() => setTarget(null)} target={target} />
+            <SecFilingSearch onOpen={onOpen} symbol={ticker} />
+            <SecSourceDialog onClose={() => onOpen(null)} target={target} />
         </>
     );
 }
@@ -70,7 +69,21 @@ function DocumentsPage() {
 
     const [textOf, setTextOf] = React.useState<null | V2InvestorDocument>(null);
 
-    const [searchSource, setSearchSource] = React.useState<SearchSource>("company");
+    const searchSource: SearchSource = search.searchIn === "sec" ? "sec" : "company";
+
+    // `?source=<version id>&block=<block id>`: the cited block of an SEC hit in the source panel (a shareable link).
+    const secTarget: null | SecPanelTarget = search.source && search.block
+        ? { blockId: search.block, kind: "citation", title: `${ticker} · SEC filing`, versionId: search.source }
+        : null;
+
+    const openSecTarget = (target: null | SecPanelTarget) => void navigate({
+        ...IN_PLACE,
+        search: prev => ({
+            ...prev,
+            block: target?.kind === "citation" ? target.blockId : undefined,
+            source: target?.kind === "citation" ? target.versionId : undefined,
+        }),
+    });
 
     // The IR library and every call's documents in one list (`source: company | call`).
     const library = useV2InvestorDocumentsInfinite({
@@ -143,7 +156,7 @@ function DocumentsPage() {
                             <Button
                                 aria-pressed={searchSource === source.value}
                                 key={source.value}
-                                onClick={() => setSearchSource(source.value)}
+                                onClick={() => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, block: undefined, searchIn: source.value === "sec" ? "sec" : undefined, source: undefined }) })}
                                 size="xs"
                                 type="button"
                                 variant={searchSource === source.value ? "secondary" : "outline"}
@@ -152,7 +165,7 @@ function DocumentsPage() {
                             </Button>
                         ))}
                     </div>
-                    {searchSource === "company" ? <DocumentSearch identifier={ticker} /> : <SecFilingsSource ticker={ticker} />}
+                    {searchSource === "company" ? <DocumentSearch identifier={ticker} /> : <SecFilingsSource onOpen={openSecTarget} target={secTarget} ticker={ticker} />}
                 </div>
 
                 <section className="flex flex-col gap-2">

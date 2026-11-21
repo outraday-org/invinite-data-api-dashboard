@@ -4,6 +4,7 @@ import { createStart } from "@tanstack/react-start";
 import type { ApiErrorBody } from "@/lib/api/errors";
 
 import { ApiRequestError } from "@/lib/api/errors";
+import { apiRequestsMiddleware } from "@/lib/api/request-middleware";
 
 /**
  * An `ApiRequestError` crosses the server-function boundary whole (status, code, body, request id). The default error
@@ -18,5 +19,7 @@ export const apiRequestErrorAdapter = createSerializationAdapter({
 });
 
 export const startInstance = createStart(() => ({
+    // The API inspector: every server function reports the Data API requests it made (`request-middleware.ts`).
+    functionMiddleware: [apiRequestsMiddleware],
     serializationAdapters: [apiRequestErrorAdapter],
 }));
