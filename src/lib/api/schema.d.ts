@@ -16697,6 +16697,16 @@ export interface operations {
                  * @example watchlist-aapl-8k
                  */
                 client_reference_id?: string;
+                /**
+                 * @description Only alerts whose condition names this symbol, case-insensitive: its one `symbol` (a price, indicator or script alert's instrument as stored: a ticker, a commodity pair `XAUUSD`, a crypto coin by its slug `bitcoin`) or an entry of its `symbols` (multi-company alerts included). An alert that names companies by `cik` / `ciks` is found through the company the ticker resolves to (any of its listings: `GOOG` and `GOOGL` both find an alert on Alphabet's CIK); an alert given by symbol only through that symbol. Whole-market alerts (no company named) are not found. A symbol no alert names answers an empty page
+                 * @example AAPL
+                 */
+                symbol?: string;
+                /**
+                 * @description Only alerts that deliver to this destination (one of their `destination_ids`). An unknown id or one of another account answers an empty page
+                 * @example dst_01JD2Q4X7Y8Z9A0B1C2D3E4F5G
+                 */
+                destination_id?: string;
             };
             header?: never;
             path?: never;
