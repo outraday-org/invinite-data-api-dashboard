@@ -7,16 +7,19 @@ import type { CallTabProps } from "@/routes/$ticker/earnings-calls/-components/c
 import { SlideTimeline } from "@/routes/$ticker/earnings-calls/-components/slide-timeline";
 import { SlidesTab } from "@/routes/$ticker/earnings-calls/-components/tabs/slides-tab";
 
-// The page's audio host, stubbed: `loaded` / `seekMs` and the element's position.
+// The page's player, stubbed: media loaded or not, `seekMs` (null = no media to play) and the position.
 const audio = vi.hoisted(() => ({
     loaded: false,
     positionMs: 0,
     seekMs: null as ((ms: number) => void) | null,
 }));
 
-vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
-    useCallAudio: () => ({ loaded: audio.loaded, seekMs: audio.seekMs }),
-    useCallPlayback: () => ({ durationMs: null, playing: true, positionMs: audio.positionMs }),
+vi.mock("@/lib/player/player-context", () => ({
+    usePlayer: () => ({
+        canSeek: audio.seekMs !== null,
+        engine: { seekMs: audio.seekMs, state: audio.loaded ? "recording" : "idle" },
+    }),
+    usePlayerPosition: () => ({ bufferedMs: 0, durationMs: null, playing: true, positionMs: audio.positionMs }),
 }));
 
 // The Slides tab's request, stubbed: an answer without `timeline` (opt-in in v2, absent unless asked), with a

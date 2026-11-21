@@ -2,9 +2,10 @@ import * as React from "react";
 
 import { buildCaptionWords, captionWindow, indexAt } from "@/lib/earnings/follow-along";
 import { speakerName } from "@/lib/earnings/transcript";
+import { usePlayerPosition } from "@/lib/player/player-context";
 import { cn } from "@/lib/utils";
 
-import { useCallAudio, useCallPlayback } from "./audio-context";
+import { useCallAudio } from "./audio-context";
 
 /** A move of more words than this is a seek: re-centre without gliding. */
 const GLIDE_MAX_WORDS = 4;
@@ -26,7 +27,7 @@ const GLIDE_MAX_WORDS = 4;
 export function CaptionLine({ className }: { className?: string }) {
     const { wordTurns } = useCallAudio();
 
-    const { positionMs } = useCallPlayback();
+    const { positionMs } = usePlayerPosition();
 
     const words = React.useMemo(() => buildCaptionWords(wordTurns, speakerName), [wordTurns]);
 

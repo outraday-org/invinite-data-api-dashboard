@@ -6,8 +6,8 @@ import type { V2SlideTimelineEntry } from "@/lib/api/types";
 import { Button } from "@/components/ui/button";
 import { indexAt } from "@/lib/earnings/follow-along";
 import { formatMs } from "@/lib/earnings/format";
-
-import { useCallAudio, useCallPlayback } from "./audio-context";
+import { engineHasMedia } from "@/lib/player/engine";
+import { usePlayer, usePlayerPosition } from "@/lib/player/player-context";
 
 /**
  * The webcast player's slides on the audio's clock (`timeline`, ascending `at_ms`). While a
@@ -17,16 +17,18 @@ import { useCallAudio, useCallPlayback } from "./audio-context";
  * false) it is a plain carousel.
  */
 export function SlideTimeline({ timeline }: { timeline: Array<V2SlideTimelineEntry> }) {
-    const { loaded, seekMs } = useCallAudio();
+    const { canSeek, engine } = usePlayer();
 
-    const { positionMs } = useCallPlayback();
+    const { positionMs } = usePlayerPosition();
+
+    const seekMs = canSeek ? engine.seekMs : null;
 
     const entries = React.useMemo(() => timeline.map(entry => ({ startMs: entry.at_ms })), [timeline]);
 
     // The carousel's own position while no recording plays.
     const [browsed, setBrowsed] = React.useState(0);
 
-    const following = loaded && seekMs !== null;
+    const following = seekMs !== null && engineHasMedia(engine.state);
 
     const index = Math.min(timeline.length - 1, following ? Math.max(0, indexAt(entries, positionMs)) : browsed);
 

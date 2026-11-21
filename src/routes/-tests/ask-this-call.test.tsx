@@ -20,7 +20,11 @@ vi.mock("@/lib/api/queries", () => ({
 }));
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
-    useCallAudio: () => ({ loaded: false, playUrl: vi.fn(), seekMs: null }),
+    useCallAudio: () => ({ canSeek: false, loaded: false, playUrl: vi.fn(), seekMs: vi.fn() }),
+}));
+
+vi.mock("@/lib/player/player-context", () => ({
+    usePlayer: () => ({ canSeek: false }),
 }));
 
 afterEach(cleanup);

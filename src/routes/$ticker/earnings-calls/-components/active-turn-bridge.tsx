@@ -3,15 +3,14 @@ import * as React from "react";
 import type { TranscriptTurn } from "@/lib/earnings/transcript";
 
 import { activeTurnIndex } from "@/lib/earnings/follow-along";
-
-import { useCallPlayback } from "./audio-context";
+import { usePlayerPosition } from "@/lib/player/player-context";
 
 /**
  * Marks the Transcript tab's turn being heard (`data-active="true"` on the
- * `[data-turn-index]` element inside `containerRef`) while a recording is in the player —
+ * `[data-turn-index]` element inside `containerRef`) while the player has media —
  * by the DOM, never by re-rendering the turns at frame rate (the admin console's
  * `TranscriptActiveWordBridge` pattern). It never scrolls: the reader is reading; the Audio
- * tab's follow view is the one that follows.
+ * follow view (`FollowAlong`, under the turns until O3) is the one that follows.
  */
 export function ActiveTurnBridge({
     containerRef,
@@ -20,7 +19,7 @@ export function ActiveTurnBridge({
     containerRef: React.RefObject<HTMLDivElement | null>;
     turns: ReadonlyArray<Pick<TranscriptTurn, "start_ms">>;
 }) {
-    const { positionMs } = useCallPlayback();
+    const { positionMs } = usePlayerPosition();
 
     const activeIndex = activeTurnIndex(turns, positionMs);
 

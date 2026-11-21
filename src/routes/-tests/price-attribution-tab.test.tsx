@@ -23,9 +23,9 @@ vi.mock("recharts", async importOriginal => ({
     ),
 }));
 
-// The timestamps' SeekButton reads the page's audio host; a call without a recording renders text.
-vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
-    useCallAudio: () => ({ seekMs: null }),
+// The timestamps' SeekButton reads the page's player; a call without media renders text.
+vi.mock("@/lib/player/player-context", () => ({
+    usePlayer: () => ({ canSeek: false }),
 }));
 
 // The view is rendered with its data directly: keep the server functions (TanStack Start) unloaded.

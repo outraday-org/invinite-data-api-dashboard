@@ -8,9 +8,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { activeTurnIndex, indexAt, timedWordsOf } from "@/lib/earnings/follow-along";
 import { formatMs } from "@/lib/earnings/format";
 import { speakerName } from "@/lib/earnings/transcript";
+import { usePlayer, usePlayerPosition } from "@/lib/player/player-context";
 import { cn } from "@/lib/utils";
 
-import { useCallAudio, useCallPlayback } from "../audio-context";
+import { useCallAudio } from "../audio-context";
 import { MediaState } from "../media-state";
 
 type TurnState = "active" | "spoken" | "upcoming";
@@ -99,20 +100,24 @@ const FollowTurn = React.memo(function FollowTurn({
 });
 
 /**
- * The Audio tab's follow view: the transcript, the turn being heard highlighted and its words
- * lit as they are spoken, what was said in full, what comes next faint — the replay twin of the
- * live player's follow mode. The view keeps the heard turn in sight; a wheel / touch scroll by
- * the reader pauses that ("Follow the audio" resumes it), and a turn's timestamp seeks there.
- * Untimed turns (a company-document transcript) are read, never followed.
+ * The follow view (under the Transcript tab's turns until O3's `TurnBlock` replaces it; nothing before a recording is
+ * in): the transcript, the turn being heard highlighted and its words lit as they are spoken, what was said in full,
+ * what comes next faint. The view keeps the heard turn in sight while the player's `follow` is on; a wheel / touch
+ * scroll by the reader switches it off ("Follow the audio" or the player's Follow button resumes), and a turn's
+ * timestamp seeks there. Untimed turns (a company-document transcript) are read, never followed.
  */
 export function FollowAlong() {
-    const { seekMs, words, wordTurns } = useCallAudio();
+    const { loaded, seekMs, words, wordTurns } = useCallAudio();
 
-    const { positionMs } = useCallPlayback();
+    const { follow, setFollow } = usePlayer();
+
+    const { positionMs } = usePlayerPosition();
 
     const containerRef = React.useRef<HTMLDivElement | null>(null);
 
-    const [paused, setPaused] = React.useState(false);
+    const paused = !follow;
+
+    const setPaused = (on: boolean) => setFollow(!on);
 
     const timed = React.useMemo(
         () => wordTurns.map((turn, index) => {
@@ -131,10 +136,15 @@ export function FollowAlong() {
     React.useEffect(() => {
         if (paused || activeIndex < 0) return;
 
-        const node = containerRef.current?.querySelector<HTMLElement>(`[data-follow-turn-index="${activeIndex}"]`);
+        const box = containerRef.current;
 
-        node?.scrollIntoView({ behavior: "smooth", block: "center" });
+        const node = box?.querySelector<HTMLElement>(`[data-follow-turn-index="${activeIndex}"]`);
+
+        // Only the box scrolls (never the page: the reader may be reading the turns above it).
+        if (box && node) box.scrollTo({ behavior: "smooth", top: node.offsetTop - box.clientHeight / 2 + node.offsetHeight / 2 });
     }, [activeIndex, paused]);
+
+    if (!loaded) return null;
 
     if (words.error) return <MediaState error={words.error} title="The transcript could not be loaded to follow the recording" />;
 
@@ -159,7 +169,7 @@ export function FollowAlong() {
                 )}
             </div>
             <div
-                className="max-h-[60vh] overflow-y-auto rounded-md border p-2 text-sm"
+                className="relative max-h-[60vh] overflow-y-auto rounded-md border p-2 text-sm"
                 onTouchMove={() => setPaused(true)}
                 onWheel={() => setPaused(true)}
                 ref={containerRef}

@@ -6,8 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 import { Notice, NoTranscriptNotice } from "./media-state";
-import { AudioTab } from "./tabs/audio-tab";
 import { DocumentsTab } from "./tabs/documents-tab";
+import { FollowAlong } from "./tabs/follow-along";
 import { GuidanceTab } from "./tabs/guidance-tab";
 import { MetricsDiffTab } from "./tabs/metrics-diff-tab";
 import { ParticipantsTab } from "./tabs/participants-tab";
@@ -18,10 +18,12 @@ import { QaTab } from "./tabs/qa-tab";
 import { SlidesTab } from "./tabs/slides-tab";
 import { TranscriptTab } from "./tabs/transcript-tab";
 
-/** Every tab of the call page, in bar order (`?tab=`; the route's `validateSearch` reads this list). */
+/**
+ * Every tab of the call page, in bar order (`?tab=`; the route's `validateSearch` reads this list). No Audio tab since
+ * O2: the player sits above every tab, and an old `?tab=audio` falls back to the transcript.
+ */
 export const CALL_TAB_VALUES = [
     "transcript",
-    "audio",
     "slides",
     "press-release",
     "documents",
@@ -64,7 +66,6 @@ type CallTabDefinition = {
 // `NoTranscriptNotice` and send no request; a transcribed but underived call shows each tab's own empty state
 // ("No guidance extracted", "not derived yet"). Price moves keeps no flag (its own 404 state).
 const CALL_TABS: Record<CallTab, CallTabDefinition> = {
-    "audio": { flag: "has_audio", label: "Audio", render: () => <AudioTab /> },
     "documents": { flag: "has_documents", label: "Documents", render: props => <DocumentsTab {...props} /> },
     "guidance": { flag: "has_transcript", label: "Guidance & KPIs", render: props => <GuidanceTab {...props} /> },
     "metrics": { flag: "has_transcript", label: "Metrics & diff", render: props => <MetricsDiffTab {...props} /> },
@@ -74,23 +75,30 @@ const CALL_TABS: Record<CallTab, CallTabDefinition> = {
     "prosody": { flag: "has_transcript", label: "Prosody", render: props => <ProsodyTab {...props} /> },
     "qa": { flag: "has_transcript", label: "Q&A", render: props => <QaTab {...props} /> },
     "slides": { flag: "has_slides", label: "Slides", render: props => <SlidesTab {...props} /> },
-    "transcript": { flag: "has_transcript", label: "Transcript", render: props => <TranscriptTab {...props} /> },
+    // The follow view stays under the turns until O3's one turn layout highlights the words in place.
+    "transcript": {
+        flag: "has_transcript",
+        label: "Transcript",
+        render: props => (
+            <div className="flex flex-col gap-6">
+                <TranscriptTab {...props} />
+                <FollowAlong />
+            </div>
+        ),
+    },
 };
 
 /**
  * The call page's tab bar and the active panel. Only the selected panel is mounted, so an
- * unselected tab never sends its request. `aboveContent` (the audio host) stays mounted
- * between the bar and the panel on every tab.
+ * unselected tab never sends its request. The player (`CallPlayer`) is the page's, above the bar.
  */
 export function CallTabs({
-    aboveContent,
     event,
     onTabChange,
     onTranscriptJumpHandled,
     tab,
     transcriptJump,
 }: {
-    aboveContent?: React.ReactNode;
     event: V2Event;
     onTabChange: (tab: CallTab) => void;
     onTranscriptJumpHandled: () => void;
@@ -138,8 +146,6 @@ export function CallTabs({
                     })}
                 </TabsList>
             </div>
-
-            {aboveContent}
 
             <TabsContent className="pt-2" value={shownTab}>
                 {available

@@ -14,12 +14,11 @@ import type { CallTab, TranscriptJump } from "../-components/call-tabs";
 
 import { AskThisCall } from "../-components/ask-this-call";
 import { CallAudioProvider } from "../-components/audio-context";
-import { AudioPlayer } from "../-components/audio-player";
 import { CallHeader } from "../-components/call-header";
 import { CALL_TAB_VALUES, CallTabs, DEFAULT_CALL_TAB } from "../-components/call-tabs";
 import { EventVideoSlot } from "../-components/event-video";
 import { LivePlayerSlot } from "../-components/live-player-slot";
-import { MiniPlayer } from "../-components/mini-player";
+import { RecordingPlayer } from "../-components/player/recording-player";
 
 // `tab` stays optional (every `EventLink` would otherwise have to pass search); an unknown
 // value falls back to the transcript instead of failing the route.
@@ -94,9 +93,9 @@ function CallPage({ eventId }: { eventId: string }) {
     }
 
     return (
-        // The recording is requested the first time the Audio tab opens or a timestamp is
-        // clicked, then stays loaded so timestamps on any tab can play it.
-        <CallAudioProvider audioTabOpen={tab === "audio"} eventId={event.event_id} hasAudio={event.has_audio}>
+        // The recording is requested on the first play or timestamp click (never on page load, an old `?tab=audio`
+        // link included), then stays loaded so timestamps on any tab can play it.
+        <CallAudioProvider eventId={event.event_id} hasAudio={event.has_audio}>
             <div className="flex flex-col gap-4">
                 <CallHeader event={event} />
 
@@ -114,13 +113,10 @@ function CallPage({ eventId }: { eventId: string }) {
                     }}
                 />
 
+                {/* The one player bar, sticky below the ticker header on every tab (nothing without a recording). */}
+                <RecordingPlayer event={event} />
+
                 <CallTabs
-                    aboveContent={(
-                        <>
-                            <AudioPlayer visible={tab === "audio"} />
-                            {tab !== "audio" && <MiniPlayer onOpenAudioTab={() => onTabChange("audio")} />}
-                        </>
-                    )}
                     event={event}
                     onTabChange={onTabChange}
                     onTranscriptJumpHandled={() => setTranscriptJump(null)}

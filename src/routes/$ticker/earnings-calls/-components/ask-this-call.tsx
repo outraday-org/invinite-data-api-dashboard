@@ -111,7 +111,7 @@ function EventHitActions({ hit, onJumpToTranscript }: { hit: V2TranscriptSearchH
                         <Button
                             // A loaded recording seeks; otherwise the hit's own URL (`#t=<sec>`) is
                             // loaded — no extra `/audio` request.
-                            onClick={() => (loaded && seekMs && startMs !== null ? seekMs(startMs) : playUrl(audioUrl))}
+                            onClick={() => (loaded && startMs !== null ? seekMs(startMs) : playUrl(audioUrl))}
                             size="xs"
                             type="button"
                             variant="outline"

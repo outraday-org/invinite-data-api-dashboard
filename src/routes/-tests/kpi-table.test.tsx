@@ -10,8 +10,8 @@ import { KpiTable } from "@/routes/$ticker/earnings-calls/-components/tabs/kpi-t
 // Keep the server functions (TanStack Start) unloaded; the hook's answer is set per test.
 vi.mock("@/lib/api/queries", () => ({ useV2KpisInfinite: vi.fn() }));
 
-vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
-    useCallAudio: () => ({ seekMs: null }),
+vi.mock("@/lib/player/player-context", () => ({
+    usePlayer: () => ({ canSeek: false }),
 }));
 
 afterEach(cleanup);
