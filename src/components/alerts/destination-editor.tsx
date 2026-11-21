@@ -78,9 +78,9 @@ export function DestinationEditorDialog({ destination, onClose, onCreated }: { d
                 else {
                     toast.success(`Destination ${answer.id} created`);
 
-                    onCreated?.(answer);
-
                     onClose();
+
+                    onCreated?.(answer);
                 }
             }
             catch (error) {
@@ -129,9 +129,10 @@ export function DestinationEditorDialog({ destination, onClose, onCreated }: { d
 
                     setCreated(null);
 
-                    onCreated?.(done);
-
+                    // Closed first: a caller that navigates on `onCreated` gets the last word.
                     onClose();
+
+                    onCreated?.(done);
                 }}
                 secret={created.secret}
                 title="Destination created: its signing secret"

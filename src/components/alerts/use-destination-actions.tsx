@@ -78,7 +78,8 @@ type Shown = { destinationId: string; expiresAt: string; secret: string };
  * The actions of a destination (list rows and the detail page): send a test delivery, rotate the secret, disable /
  * re-enable, delete — each only after `ConfirmAction` stated the effect (the delete dialog also lists the alerts that
  * deliver there). A rotation shows the new secret ONCE (`SecretOnceDialog`, the mutation reset on close). One toast per
- * outcome; `onTested` gets the accepted test (its delivery id is then watched), `onDeleted` the deleted id.
+ * outcome (a test's is the watched delivery's notice); `onTested` gets the accepted test (its delivery id is then
+ * watched), `onDeleted` the deleted id.
  */
 export function useDestinationActions({ onDeleted, onTested }: { onDeleted?: (id: string) => void; onTested?: (id: string, deliveryId: string) => void } = {}) {
     const [pending, setPending] = React.useState<null | Pending>(null);
@@ -145,8 +146,7 @@ export function useDestinationActions({ onDeleted, onTested }: { onDeleted?: (id
                 case "test": {
                     const accepted = await test.mutateAsync({ id: target.id });
 
-                    toast.success("Test delivery queued", { description: accepted.delivery_id });
-
+                    // No toast: the watched delivery's notice on the destination page is the one message.
                     onTested?.(target.id, accepted.delivery_id);
 
                     break;
