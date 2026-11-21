@@ -1,5 +1,7 @@
 import type { StatementType, V2MappingRule } from "@/lib/api/types";
 
+import { isRecord } from "@/lib/guards";
+
 /**
  * The `/catalog` page's model (backend tasks/data-api-dashboard O7 group 7): its tabs, the text filter over the loaded
  * rows and the guards over a mapping rule's free JSON (`rule`: `additionalProperties` in the spec, never cast).
@@ -66,8 +68,6 @@ export function filterCatalogRows<TRow>(rows: ReadonlyArray<TRow>, query: string
         return words.every(word => haystack.includes(word));
     });
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
 const text = (value: unknown) => (typeof value === "string" && value.trim() ? value.trim() : null);
 

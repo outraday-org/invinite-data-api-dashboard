@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/u
 import { kindLabel, presetLabel } from "@/lib/alerts/destinations";
 import { defaultText, inputRangeText, manifestInputs, versionsNewestFirst } from "@/lib/alerts/scripts";
 import { useDestinationsInfinite, useScriptsInfinite, useScriptVersions } from "@/lib/api/queries";
+import { isRecord } from "@/lib/guards";
 
 /**
  * The alert form's pickers (backend tasks/data-api-dashboard 2-alerts task 4; the second lane to hand over owns them):
@@ -205,14 +206,12 @@ export function declaredInputsOf(options: ScriptOptions | undefined, versionId: 
     return version ? manifestInputs(version.manifest) : [];
 }
 
-const isRecord = (value: unknown): value is Record<string, JsonValue> => typeof value === "object" && value !== null && !Array.isArray(value);
-
 /** The `inputs` JSON text as an object (anything else = empty; pure). */
 export function inputsObjectOf(text: string): Record<string, JsonValue> {
     try {
         const parsed: unknown = JSON.parse(text);
 
-        return isRecord(parsed) ? parsed : {};
+        return isRecord<JsonValue>(parsed) ? parsed : {};
     }
     catch {
         return {};

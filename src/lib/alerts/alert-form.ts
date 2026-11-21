@@ -12,6 +12,8 @@ import type {
     UpdateAlertRequest,
 } from "@/lib/api/types";
 
+import { isRecord } from "@/lib/guards";
+
 import type { FieldSpec, TriggerScalarField } from "./condition-fields";
 
 import { ACTIVE_WINDOW_DAYS, CONDITION_FIELDS, INDICATOR_STRUCTURED_FIELDS, triggerFieldsFor } from "./condition-fields";
@@ -429,8 +431,6 @@ export function fieldText(spec: FieldSpec, value: unknown): FieldText | undefine
         default: return String(value);
     }
 }
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
 /**
  * The form of a stored alert (edit; `duplicate` drops the client reference id, which is unique per account). Fields of

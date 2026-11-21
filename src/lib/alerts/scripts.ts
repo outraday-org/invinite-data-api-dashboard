@@ -1,6 +1,7 @@
 import type { AlertTemplate, JsonValue, Script, ScriptDiagnostic, ScriptVersion } from "@/lib/api/types";
 
 import { formatNumber } from "@/lib/format";
+import { isRecord } from "@/lib/guards";
 
 /**
  * Hosted scripts and the built-in indicator templates (backend tasks/data-api-dashboard 2-alerts task 4), pure and
@@ -67,16 +68,14 @@ export type DeclaredInput = {
     title: string;
 };
 
-const isRecord = (value: unknown): value is Record<string, JsonValue> => typeof value === "object" && value !== null && !Array.isArray(value);
-
 const numberOf = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? value : undefined);
 
 /** The declared inputs of a version's manifest (null manifest = a failed compile = none; an unknown shape = none). */
 export function manifestInputs(manifest: JsonValue | null): Array<DeclaredInput> {
-    if (!isRecord(manifest) || !isRecord(manifest.inputs)) return [];
+    if (!isRecord<JsonValue>(manifest) || !isRecord<JsonValue>(manifest.inputs)) return [];
 
     return Object.entries(manifest.inputs).flatMap(([name, descriptor]) => {
-        if (!isRecord(descriptor)) return [];
+        if (!isRecord<JsonValue>(descriptor)) return [];
 
         const options = Array.isArray(descriptor.options) ? descriptor.options.map(String) : undefined;
 

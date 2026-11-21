@@ -1,5 +1,7 @@
 import type { V2TranscriptTextResponse } from "@/lib/api/types";
 
+import { isRecord } from "@/lib/guards";
+
 /**
  * The renderings of the Transcript tab: `speakers` / `cleaned` = the turns of `/transcript` (`layer` raw / cleaned),
  * `text` / `sections` = the blocks of `/transcript-text` (`split` none / sections).
@@ -33,9 +35,6 @@ export type TranscriptView
         | { kind: "sections"; sections: TranscriptSections }
         | { kind: "text"; text: string }
         | { kind: "turns"; turns: Array<TranscriptTurn> };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-    typeof value === "object" && value !== null && !Array.isArray(value);
 
 const stringOrNull = (value: unknown) => (typeof value === "string" ? value : null);
 

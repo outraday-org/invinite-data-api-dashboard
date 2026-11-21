@@ -48,6 +48,9 @@ function useTableFits(wrapper: React.RefObject<HTMLDivElement | null>, enabled: 
     return fits;
 }
 
+/** A right-aligned, tabular-figure cell (numbers, amounts) of a `DataTable` column. */
+export const right = (text: string) => <div className="text-right tabular-nums">{text}</div>;
+
 /**
  * The one table of the dashboard's lists (grown from `V2ListTable`): the page scrolls, not the table.
  *

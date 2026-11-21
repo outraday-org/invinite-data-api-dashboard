@@ -21,13 +21,14 @@ import type {
     V2ReviewChainResponse,
 } from "@/lib/api/types";
 
-import { count, money, right, weightText } from "@/components/sec/fund-views";
+import { count, money, weightText } from "@/components/sec/fund-views";
 import { SecListFrame } from "@/components/sec/sec-list-frame";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { filerCikParam, SecurityLink } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copyable } from "@/components/ui/copy-button";
+import { right } from "@/components/ui/data-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DASH, formatDay, formatNumber } from "@/lib/format";
 import { boolOf, listOf, numberOf, recordOf, scalarEntries, textOf } from "@/lib/sec/source";

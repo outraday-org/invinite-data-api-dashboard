@@ -14,8 +14,7 @@ import { alertTarget } from "@/lib/alerts/alert-view";
 import { CONDITION_FIELDS, triggerFieldsFor, WEEKDAY_LABELS } from "@/lib/alerts/condition-fields";
 import { ALERT_TYPE_INFO, canPause, canResume } from "@/lib/alerts/labels";
 import { formatInstant, formatNumber } from "@/lib/format";
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
+import { isRecord } from "@/lib/guards";
 
 /** A stored condition / trigger value in words (pure). */
 export function valueText(spec: FieldSpec, value: unknown): React.ReactNode {

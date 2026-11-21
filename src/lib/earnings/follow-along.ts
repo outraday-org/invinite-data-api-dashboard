@@ -1,5 +1,7 @@
 import type { TranscriptTurn } from "@/lib/earnings/transcript";
 
+import { isRecord } from "@/lib/guards";
+
 /**
  * Following a recording with its text, pure: the `format=words` transcript on ONE clock and
  * the turn / word the player is on. A port of the admin console's `caption-line.ts`
@@ -19,9 +21,6 @@ export type TimedWord = {
     startMs: number;
     text: string;
 };
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-    typeof value === "object" && value !== null && !Array.isArray(value);
 
 const stringOrNull = (value: unknown) => (typeof value === "string" ? value : null);
 

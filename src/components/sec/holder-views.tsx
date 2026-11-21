@@ -15,14 +15,14 @@ import type {
     V2HoldersResponse,
 } from "@/lib/api/types";
 
-import { count, money, right, weightText } from "@/components/sec/fund-views";
+import { count, money, weightText } from "@/components/sec/fund-views";
 import { SecListFrame } from "@/components/sec/sec-list-frame";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { filerCikParam, SecurityLink } from "@/components/sec/security-link";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable, right } from "@/components/ui/data-table";
 import { formatDay } from "@/lib/format";
 import {
     HOLDER_SECTION_STATE_LABELS,

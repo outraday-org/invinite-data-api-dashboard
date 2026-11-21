@@ -1,13 +1,13 @@
 import type { Alert, AlertEvent, AlertEventsResponse } from "@/lib/api/types";
 
+import { isRecord } from "@/lib/guards";
+
 import { alertEventTypeLabel } from "./labels";
 
 /**
  * Pure view helpers of the alerts pages (tested): what an alert watches in one line, an event in one line, and the
  * event list newest first (the API lists events oldest first: the loaded pages are re-ordered, the live ones joined).
  */
-
-const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === "object" && value !== null && !Array.isArray(value);
 
 const strings = (value: unknown): Array<string> => (Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : []);
 

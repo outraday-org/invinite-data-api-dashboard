@@ -7,7 +7,7 @@ import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecurityLink } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
 import { Copyable } from "@/components/ui/copy-button";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable, right } from "@/components/ui/data-table";
 import { Notice } from "@/components/ui/notice";
 import {
     FUND_DIMENSION_LABELS,
@@ -37,8 +37,6 @@ export const count = (value: null | number | undefined) => (value == null || !Nu
 /** `weight_pct` is already percent (7.1 = 7.1 %). */
 export const weightText = (value: null | number | undefined) =>
     value == null || !Number.isFinite(value) ? "—" : `${formatNumberEn(value, { maximumFractionDigits: 2 })}%`;
-
-export const right = (text: string) => <div className="text-right tabular-nums">{text}</div>;
 
 /** The "Issuer file · as of Nov 13, 2026" badge (nothing when the answer names no source). */
 export function FundSourceBadge({ asOf, source }: { asOf: null | string | undefined; source: null | undefined | V2FundSource }) {

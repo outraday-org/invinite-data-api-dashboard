@@ -308,8 +308,6 @@ export type SegmentedFinancialsSegmentId
 export type V2Me = ApiResponse<"/v1/me", "get">;
 export type V2Plan = V2Me["plan"];
 export type V2Usage = ApiResponse<"/v1/me/usage", "get">;
-export type V2UsageDay = V2Usage["daily"][number];
-export type V2UsageWindow = V2Usage["window_days"];
 /** One offering (`GET /v1/ipos/{ipo_id}`): the list's row, asked again for the detail dialog. */
 export type V2IpoDetail = ApiResponse<"/v1/ipos/{ipo_id}", "get">;
 export type V2InstrumentsSort = NonNullable<ApiQuery<"/v1/instruments">["sort"]>;
@@ -392,7 +390,6 @@ export type V2InsiderTradesSort = NonNullable<ApiQuery<"/v1/insider-trades">["so
 export type V2InsiderTradeDetail = ApiResponse<"/v1/insider-trades/{id}", "get">;
 /** One Form D offering (`GET /v1/offerings/{offering_id}`): the list row, asked again for the detail page. */
 export type V2OfferingDetail = ApiResponse<"/v1/offerings/{offering_id}", "get">;
-export type V2OfferingRelatedPerson = V2OfferingDetail["related_persons"][number];
 /** A 13F manager's position changes vs the prior quarter (the `HolderChange` row). */
 export type V2FilerHoldingChangesResponse = ApiResponse<"/v1/filers/{cik}/holding-changes", "get">;
 export type V2FundAdviser = V2Fund["advisers"][number];
@@ -475,4 +472,3 @@ export type ScriptVersionsResponse = SecJson<ApiResponse<"/v1/scripts/{id}/versi
 export type ScriptVersion = ScriptVersionsResponse["data"][number];
 export type ScriptDiagnostic = ScriptVersion["diagnostics"][number];
 export type CreateScriptRequest = NonNullable<paths["/v1/scripts"]["post"]["requestBody"]>["content"]["application/json"];
-export type CreateScriptVersionRequest = NonNullable<paths["/v1/scripts/{id}/versions"]["post"]["requestBody"]>["content"]["application/json"];

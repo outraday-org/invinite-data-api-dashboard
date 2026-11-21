@@ -11,7 +11,7 @@ import { TabStrip } from "@/components/navigation/tab-strip";
 import { AccountStatusCards } from "@/components/reference/api-status";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable, right } from "@/components/ui/data-table";
 import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
@@ -33,8 +33,6 @@ export const Route = createFileRoute("/account")({
 type FamilyRow = V2Usage["by_family"][number];
 
 type CallerRow = V2Usage["by_key"][number];
-
-const right = (text: string) => <div className="text-right tabular-nums">{text}</div>;
 
 const FAMILY_COLUMNS: Array<ColumnDef<FamilyRow>> = [
     { cell: ({ row }) => row.original.label, header: "Family", id: "label" },
