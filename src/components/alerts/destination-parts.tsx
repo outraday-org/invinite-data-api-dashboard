@@ -54,9 +54,11 @@ export function DestinationAlertsView({ state }: { state: DestinationAlertsState
 
     if (alerts.length === 0) return <p className="text-muted-foreground" data-testid="destination-alerts">No alert delivers here.</p>;
 
+    const one = alerts.length === 1 && !hasMore;
+
     return (
         <div className="flex flex-col gap-1" data-testid="destination-alerts">
-            <p className="font-medium">{`${alertsUsingText(alerts.length, hasMore)} alert${alerts.length === 1 && !hasMore ? "" : "s"} deliver${alerts.length === 1 && !hasMore ? "s" : ""} here`}</p>
+            <p className="font-medium">{`${alertsUsingText(alerts.length, hasMore)} ${one ? "alert delivers" : "alerts deliver"} here`}</p>
             <ul className="flex flex-wrap gap-x-3 gap-y-1">
                 {alerts.map(alert => (
                     <li key={alert.id}>

@@ -49,7 +49,7 @@ const kindSchema = z.enum(["webhook", "batch_webhook"]);
 const presetSchema = z.enum(["standard", "claude_routine"]);
 
 /** Custom headers: at most 20, each value ≤ 1 024 characters (stored encrypted, never returned). */
-const headersSchema = z.record(z.string().min(1).max(256), z.string().max(HEADER_VALUE_MAX)).refine(headers => Object.keys(headers).length <= HEADERS_MAX, `At most ${HEADERS_MAX} headers`);
+const headersSchema = z.record(z.string().min(1), z.string().max(HEADER_VALUE_MAX)).refine(headers => Object.keys(headers).length <= HEADERS_MAX, `At most ${HEADERS_MAX} headers`);
 
 /** `body_template` ≤ 16 KB (UTF-8 bytes). */
 const templateSchema = z.string().refine(text => new TextEncoder().encode(text).length <= BODY_TEMPLATE_MAX_BYTES, "At most 16 KB");

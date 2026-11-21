@@ -82,6 +82,16 @@ describe("DestinationsListView (`GET /v1/destinations`)", () => {
         expect(within(failing).getByLabelText(/Status Disabled: Disabled after only failures for 72 hours/)).toBeInTheDocument();
     });
 
+    it("a disabled destination offers no test delivery in its row (the detail page disables it too)", () => {
+        render(<DestinationsListView actions={{ busy: new Set(), onAction: vi.fn() }} state={listState({ pages: [{ ...DESTINATIONS_PAGE_FIXTURE, data: [DESTINATION_DISABLED] }] })} />);
+
+        fireEvent.click(screen.getByRole("button", { name: `Actions for ${DESTINATION_DISABLED.id}` }));
+
+        expect(screen.queryByText("Send test delivery…")).toBeNull();
+
+        expect(screen.getByText("Re-enable…")).toBeInTheDocument();
+    });
+
     it("a 503 is the switched-off notice, never an empty list", () => {
         render(<DestinationsListView actions={{ busy: new Set(), onAction: vi.fn() }} state={listState({ error: new ApiRequestError(503, { error: "unavailable", message: "off" }), pages: [] })} />);
 
@@ -164,6 +174,12 @@ describe("DeliveriesView (`listDestinationDeliveries`, newest first)", () => {
         expect(ok).toHaveTextContent("HTTP 200");
 
         expect(screen.getByText("bat_01")).toBeInTheDocument();
+
+        cleanup();
+
+        render(<DeliveriesView onStatusChange={vi.fn()} state={deliveriesState({ pages: [{ ...DELIVERIES_PAGE_FIXTURE, data: [fixtureDelivery("b1", { batch_id: "bat_09" }), fixtureDelivery("b2", { batch_id: "bat_09" })] }] })} status={null} />);
+
+        expect(screen.getAllByText("bat_09 (2)")).toHaveLength(2);
     });
 
     it("the status filter runs over the loaded rows and says so", () => {

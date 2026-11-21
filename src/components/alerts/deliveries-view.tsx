@@ -32,7 +32,18 @@ const STATUS_OPTIONS: Array<{ label: string; value: DestinationDeliveryStatus | 
 
 const muted = (text: string) => <span className="text-muted-foreground">{text}</span>;
 
-const COLUMNS: Array<ColumnDef<DestinationDelivery>> = [
+/** How many loaded deliveries share each batch id (the rows of one `alert.fired.batch`). */
+export function batchSizes(rows: ReadonlyArray<DestinationDelivery>): ReadonlyMap<string, number> {
+    const sizes = new Map<string, number>();
+
+    for (const row of rows) {
+        if (row.batch_id) sizes.set(row.batch_id, (sizes.get(row.batch_id) ?? 0) + 1);
+    }
+
+    return sizes;
+}
+
+const columnsOf = (sizes: ReadonlyMap<string, number>): Array<ColumnDef<DestinationDelivery>> => [
     { cell: ({ row }) => <DeliveryStatusBadge status={row.original.status} />, header: "Status", id: "status" },
     {
         cell: ({ row }) => (
@@ -44,7 +55,19 @@ const COLUMNS: Array<ColumnDef<DestinationDelivery>> = [
         header: "Event · delivery",
         id: "event",
     },
-    { cell: ({ row }) => (row.original.batch_id ? <span className="font-mono">{row.original.batch_id}</span> : muted("—")), header: "Batch", id: "batch" },
+    {
+        cell: ({ row }) => {
+            const batch = row.original.batch_id;
+
+            if (!batch) return muted("—");
+
+            const size = sizes.get(batch) ?? 1;
+
+            return <span className="font-mono" title={`${size} loaded deliver${size === 1 ? "y" : "ies"} in this batch`}>{size > 1 ? `${batch} (${size})` : batch}</span>;
+        },
+        header: "Batch",
+        id: "batch",
+    },
     { cell: ({ row }) => <div className="text-right tabular-nums">{formatNumber(row.original.attempts)}</div>, header: () => <div className="text-right">Attempts</div>, id: "attempts" },
     { cell: ({ row }) => (row.original.last_status === null ? muted("—") : <span className="tabular-nums">{`HTTP ${row.original.last_status}`}</span>), header: "Last answer", id: "last_status" },
     { cell: ({ row }) => (row.original.last_error ? <span className="break-words text-destructive">{row.original.last_error}</span> : muted("—")), header: "Last error", id: "last_error" },
@@ -105,7 +128,7 @@ export function TestDeliveryNotice({ deliveryId, onDismiss, onRefresh, tracking 
 
 /**
  * A destination's delivery log (pure; newest first, as the API lists it): status, event (links to it in the event
- * feed) and delivery id, batch id (rows of one `alert.fired.batch` share it), attempts, last HTTP answer, last error,
+ * feed) and delivery id, batch id (rows of one `alert.fired.batch` share it; the loaded rows of a batch are counted), attempts, last HTTP answer, last error,
  * duration, next attempt, created, delivered. The operation has no status filter: the status select filters the LOADED
  * rows and says so. `highlight` marks the watched test delivery.
  */
@@ -129,7 +152,7 @@ export function DeliveriesView({ highlight, onStatusChange, state, status }: { h
                 )}
             </div>
             <DataTable
-                columns={COLUMNS}
+                columns={columnsOf(batchSizes(loaded))}
                 emptyText={status === null ? "No delivery yet: send a test delivery to see one." : "No loaded delivery has this status."}
                 exportConfig={{ dataset: "deliveries", scope: "destination" }}
                 hasNextPage={hasNextPage}

@@ -36,7 +36,7 @@ function RowActions({ busy, destination, onAction }: { busy: boolean; destinatio
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuGroup>
-                    <DropdownMenuItem onClick={() => onAction("test", destination)}>Send test delivery…</DropdownMenuItem>
+                    {destination.status === "active" && <DropdownMenuItem onClick={() => onAction("test", destination)}>Send test delivery…</DropdownMenuItem>}
                     <DropdownMenuItem onClick={() => onAction("rotate", destination)}>Rotate secret…</DropdownMenuItem>
                     {destination.status === "disabled"
                         ? <DropdownMenuItem onClick={() => onAction("enable", destination)}>Re-enable…</DropdownMenuItem>
