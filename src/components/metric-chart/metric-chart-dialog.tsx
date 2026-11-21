@@ -33,9 +33,6 @@ type ChartType = "bar" | "line";
 
 const formatDefaultValue = (value: number) => formatNumberEnCompact(value);
 
-/** The statement tables' first column: it stays while the table scrolls sideways in its wrapper (opaque, row hover kept). */
-export const STICKY_FIRST_CELL = "sticky left-0 z-10 bg-background group-hover:bg-muted";
-
 /**
  * The visible chart button of a metric row (the row stays clickable too): a real button, so the keyboard reaches it.
  * It stops the click from also reaching the row.

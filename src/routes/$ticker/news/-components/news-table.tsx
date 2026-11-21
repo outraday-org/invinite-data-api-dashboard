@@ -59,8 +59,9 @@ export function NewsTable({
                                         {liveIds?.has(item.id) && <Badge className="ml-2" variant="default">New</Badge>}
                                     </TableCell>
                                     <TableCell className="max-w-[460px] align-top whitespace-normal">
-                                        {/* A link (`?item=`): opens the item panel, and in a new tab with the panel open. */}
-                                        <Link className="text-left font-medium hover:underline" search={prev => ({ ...prev, item: item.id })} to=".">
+                                        {/* A link (`?item=`): opens the item panel, and in a new tab with the panel open. The page keeps its
+                                            scroll position behind the panel (the document scrolls, so a reset would jump to the top). */}
+                                        <Link className="text-left font-medium hover:underline" resetScroll={false} search={prev => ({ ...prev, item: item.id })} to=".">
                                             {item.title}
                                         </Link>
                                         <div className="text-muted-foreground text-xs">

@@ -2,8 +2,9 @@ import * as React from "react";
 
 import type { SegmentLine } from "@/lib/financials/statements";
 
-import { ChartRowButton, MetricChartDialog, STICKY_FIRST_CELL } from "@/components/metric-chart/metric-chart-dialog";
+import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatMetricId, formatNumberEnCompact, formatSegmentId } from "@/lib/utils";
 
 /** "Revenue Product · IPhone": the segment id in words, then its dimensions' members. */

@@ -8,6 +8,9 @@ export const STICKY_TOP_CLASS = "top-[calc(var(--app-topbar-height,0px)+var(--ti
 /** The same offset from the `lg` breakpoint up (a literal: Tailwind only sees class names written out in the source). */
 export const LG_STICKY_TOP_CLASS = "lg:top-[calc(var(--app-topbar-height,0px)+var(--ticker-header-height,0px))]";
 
+/** The statement tables' first column: it stays while the table scrolls sideways in its wrapper (opaque, row hover kept). */
+export const STICKY_FIRST_CELL = "sticky left-0 z-10 bg-background group-hover:bg-muted";
+
 /** The CSS variable the ticker layout writes on `<html>` (the instrument header's height, `0px` without one). */
 export const TICKER_HEADER_HEIGHT_VAR = "--ticker-header-height";
 

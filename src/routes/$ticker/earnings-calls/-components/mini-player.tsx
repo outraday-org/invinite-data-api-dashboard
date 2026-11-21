@@ -3,6 +3,8 @@ import * as React from "react";
 
 import { Button } from "@/components/ui/button";
 import { formatMs } from "@/lib/earnings/format";
+import { STICKY_TOP_CLASS } from "@/lib/layout";
+import { cn } from "@/lib/utils";
 
 import { useCallAudio } from "./audio-context";
 import { CaptionLine } from "./caption-line";
@@ -95,7 +97,7 @@ export function MiniPlayer({ onOpenAudioTab }: { onOpenAudioTab: () => void }) {
     }
 
     return (
-        <div className="bg-background/95 sticky top-[calc(var(--app-topbar-height,0px)+var(--ticker-header-height,0px))] z-20 flex flex-wrap items-center gap-2 rounded-md border px-2 py-1 text-xs backdrop-blur">
+        <div className={cn("bg-background/95 sticky z-20 flex flex-wrap items-center gap-2 rounded-md border px-2 py-1 text-xs backdrop-blur", STICKY_TOP_CLASS)}>
             {body}
             <div className="ml-auto">{openPlayer}</div>
             {/* The words being spoken, so the other tabs still show what is said. */}

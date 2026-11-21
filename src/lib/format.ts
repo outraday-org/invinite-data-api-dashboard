@@ -9,6 +9,8 @@
  * Absent or unparsable values are "—" (an unparsable string is shown as given).
  */
 
+import { formatNumberEn } from "@/lib/utils";
+
 export const DASH = "—";
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
@@ -127,5 +129,5 @@ export function formatShares(value: Absent | number): string {
 export function formatNumber(value: Absent | number, options?: Intl.NumberFormatOptions): string {
     if (value === null || value === undefined || !Number.isFinite(value)) return DASH;
 
-    return new Intl.NumberFormat("en-US", options).format(value);
+    return formatNumberEn(value, options);
 }

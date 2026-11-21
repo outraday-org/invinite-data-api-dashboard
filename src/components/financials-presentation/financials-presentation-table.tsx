@@ -1,8 +1,9 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import * as React from "react";
 
-import { ChartRowButton, MetricChartDialog, STICKY_FIRST_CELL } from "@/components/metric-chart/metric-chart-dialog";
+import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
 
 import type { PresentationPeriod, TreeRow } from "./types";

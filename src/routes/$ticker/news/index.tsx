@@ -200,7 +200,7 @@ function NewsPage() {
     const onLiveStop = (reason: LiveNewsStop) => {
         setStop(reason);
 
-        void navigate({ replace: true, search: prev => ({ ...prev, live: undefined }) });
+        void navigate({ replace: true, resetScroll: false, search: prev => ({ ...prev, live: undefined }) });
     };
 
     const { refetch } = list;
@@ -290,7 +290,7 @@ function NewsPage() {
             />
             <NewsItemPanel
                 id={search.item ?? null}
-                onClose={() => void navigate({ search: prev => ({ ...prev, item: undefined }) })}
+                onClose={() => void navigate({ resetScroll: false, search: prev => ({ ...prev, item: undefined }) })}
                 title={selectedTitle}
             />
         </>

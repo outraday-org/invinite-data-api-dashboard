@@ -2,8 +2,9 @@ import * as React from "react";
 
 import type { StatementColumn, StatementLine } from "@/lib/financials/statements";
 
-import { ChartRowButton, MetricChartDialog, STICKY_FIRST_CELL } from "@/components/metric-chart/metric-chart-dialog";
+import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
 
 const formatterOf = (id: string) => (id === "is_effective_tax_rate" ? formatPercentCompact : formatNumberEnCompact);

@@ -16,6 +16,7 @@ import type {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
 import { formatDay, formatMoneyCompact } from "@/lib/format";
@@ -71,7 +72,15 @@ function V2FilerErrorNotice({ error, title }: { error: unknown; title: string })
  * issuer, a SPAC, a manager), phase, entity type, SIC, state of incorporation, fiscal year end.
  */
 export function SecFilerHeader({ cik, data, error, isLoading }: { cik: string; data: null | V2FilerResponse; error: unknown; isLoading: boolean }) {
-    if (error) return <V2FilerErrorNotice error={error} title="Failed to load the filer" />;
+    // The page title renders in the error state too (task data-api-dashboard O1).
+    if (error) {
+        return (
+            <div className="flex flex-col gap-2">
+                <PageHeader title={`CIK ${cik}`} />
+                <V2FilerErrorNotice error={error} title="Failed to load the filer" />
+            </div>
+        );
+    }
 
     if (isLoading && !data) return <Skeleton className="h-12 w-full" />;
 
@@ -85,17 +94,21 @@ export function SecFilerHeader({ cik, data, error, isLoading }: { cik: string; d
     const facts = stated.flatMap(([key, value]): Array<[string, string]> => (value ? [[key, value]] : []));
 
     return (
-        <div className="flex flex-col gap-1">
-            <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-lg font-semibold">{data?.name || `CIK ${cik}`}</h1>
-                <span className="text-muted-foreground text-sm tabular-nums">{`CIK ${data?.cik ?? cik}`}</span>
-                {data?.listing
-                    ? <Badge variant="secondary">{data.listing.exchange ? `${data.listing.ticker} · ${data.listing.exchange}` : data.listing.ticker}</Badge>
-                    : <Badge variant="outline">No ticker</Badge>}
-                {data?.phase && <Badge variant="outline">{PHASE_LABELS[data.phase]}</Badge>}
-            </div>
-            <Facts entries={facts} />
-        </div>
+        <PageHeader
+            description={(
+                <div className="flex flex-col gap-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="tabular-nums">{`CIK ${data?.cik ?? cik}`}</span>
+                        {data?.listing
+                            ? <Badge variant="secondary">{data.listing.exchange ? `${data.listing.ticker} · ${data.listing.exchange}` : data.listing.ticker}</Badge>
+                            : <Badge variant="outline">No ticker</Badge>}
+                        {data?.phase && <Badge variant="outline">{PHASE_LABELS[data.phase]}</Badge>}
+                    </div>
+                    <Facts entries={facts} />
+                </div>
+            )}
+            title={data?.name || `CIK ${cik}`}
+        />
     );
 }
 

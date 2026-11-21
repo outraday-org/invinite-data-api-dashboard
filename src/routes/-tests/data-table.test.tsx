@@ -41,6 +41,49 @@ describe("DataTable", () => {
         expect(header?.className).toContain("--ticker-header-height");
     });
 
+    it("a table wider than its column keeps its own horizontal scroller: the header is then not window-sticky and the page never scrolls sideways", () => {
+        const observed: Array<() => void> = [];
+
+        vi.stubGlobal("ResizeObserver", class {
+            constructor(callback: () => void) {
+                observed.push(callback);
+            }
+
+            disconnect() {}
+
+            observe() {}
+        });
+
+        const width = vi.spyOn(HTMLTableElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 1600 } as DOMRect);
+
+        const column = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(900);
+
+        try {
+            render(table());
+
+            const header = screen.getByText("Day").closest("thead");
+
+            expect(header?.className ?? "").not.toContain("lg:sticky");
+
+            expect(document.querySelector("[data-slot=table-container]")?.className ?? "").not.toContain("overflow-x-visible");
+
+            expect(observed).toHaveLength(1);
+        }
+        finally {
+            width.mockRestore();
+
+            column.mockRestore();
+
+            vi.unstubAllGlobals();
+        }
+    });
+
+    it("a table that fits its column lets its wrapper overflow visibly from lg up (the header can stick to the window)", () => {
+        render(table());
+
+        expect(document.querySelector("[data-slot=table-container]")?.className).toContain("lg:overflow-x-visible");
+    });
+
     it("skeleton rows while the first page loads; no empty row then", () => {
         render(table({ isLoading: true, rows: [] }));
 

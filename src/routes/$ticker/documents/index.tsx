@@ -114,8 +114,9 @@ function DocumentsPage() {
     const companyName = details?.name ?? null;
 
     const onFilterChange = (patch: Partial<DocumentsSearch>) => {
-        // The text filter updates as you type: replace the history entry instead of adding one per keystroke.
-        void navigate({ replace: Object.keys(patch).every(key => key === "q"), search: prev => ({ ...prev, ...patch }) });
+        // The text filter updates as you type: replace the history entry instead of adding one per keystroke. The filters
+        // sit above the tree, so the page keeps its scroll position (the document scrolls; a reset would jump to the top).
+        void navigate({ replace: Object.keys(patch).every(key => key === "q"), resetScroll: false, search: prev => ({ ...prev, ...patch }) });
     };
 
     const filtered = search.category !== undefined || search.section !== undefined || search.kind !== undefined || search.year !== undefined;

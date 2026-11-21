@@ -1,7 +1,7 @@
 import type { ColumnDef, Row } from "@tanstack/react-table";
-import type * as React from "react";
 
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import * as React from "react";
 
 import { LoadMoreButton } from "@/components/ui/load-more-button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,11 +13,44 @@ import { cn } from "@/lib/utils";
 const SKELETON_ROWS = 5;
 
 /**
+ * Whether the table fits its column (no horizontal scroller needed). A table wider than its column keeps the wrapper as
+ * its horizontal scroller, so the page never scrolls sideways; only a table that fits lets its header stick to the window.
+ * Without `ResizeObserver` (tests, SSR) the table counts as fitting.
+ */
+function useTableFits(wrapper: React.RefObject<HTMLDivElement | null>, enabled: boolean) {
+    const [fits, setFits] = React.useState(true);
+
+    React.useEffect(() => {
+        const element = wrapper.current;
+
+        const table = element?.querySelector("table");
+
+        if (!enabled || !element || !table || typeof ResizeObserver === "undefined") return;
+
+        // +1: sub-pixel rounding of a table exactly as wide as its column.
+        const measure = () => setFits(table.getBoundingClientRect().width <= element.clientWidth + 1);
+
+        measure();
+
+        const observer = new ResizeObserver(measure);
+
+        observer.observe(element);
+
+        observer.observe(table);
+
+        return () => observer.disconnect();
+    }, [enabled, wrapper]);
+
+    return fits;
+}
+
+/**
  * The one table of the dashboard's lists (grown from `V2ListTable`): the page scrolls, not the table.
  *
- * - Header: sticks below the pinned top bar + ticker header (`STICKY_TOP_CLASS`) from `lg` up, where the table never
- *   needs a horizontal scroller. Below `lg` the wrapper scrolls sideways and the header scrolls with the page (a
- *   sticky header inside a horizontal scroller binds to the scroller — CSS cannot do both).
+ * - Header: sticks below the pinned top bar + ticker header (`LG_STICKY_TOP_CLASS`) from `lg` up while the table fits
+ *   its column (`useTableFits`). Below `lg`, and for a table wider than its column, the wrapper scrolls sideways and the
+ *   header scrolls with the page (a sticky header inside a horizontal scroller binds to the scroller — CSS cannot do
+ *   both); the page itself never scrolls sideways.
  * - `stickyFirstColumn` (wide tables: insider trades): the wrapper scrolls sideways at every width, the first column
  *   stays; the header is then never window-sticky (same CSS limit).
  * - States: skeleton rows while the first page loads, `errorState` in a full-width row (first page or a failed next
@@ -57,6 +90,12 @@ export function DataTable<TRow>({
 
     const columnCount = Math.max(1, columns.length);
 
+    const wrapper = React.useRef<HTMLDivElement>(null);
+
+    const fits = useTableFits(wrapper, !stickyFirstColumn);
+
+    const stickyHeader = !stickyFirstColumn && fits;
+
     const firstColumn = (index: number) => (stickyFirstColumn && index === 0 ? "sticky left-0 z-10 bg-background" : undefined);
 
     const showSkeleton = isLoading && rows.length === 0 && !errorState;
@@ -64,11 +103,9 @@ export function DataTable<TRow>({
     const showEmpty = !isLoading && rows.length === 0 && emptyIsGenuine && !errorState;
 
     return (
-        <div className="flex flex-col" data-slot="data-table">
-            <Table containerClassName={stickyFirstColumn ? undefined : "lg:overflow-x-visible"}>
-                <TableHeader
-                    className={cn(!stickyFirstColumn && cn("bg-background lg:sticky lg:z-20", LG_STICKY_TOP_CLASS))}
-                >
+        <div className="flex min-w-0 flex-col" data-slot="data-table" ref={wrapper}>
+            <Table containerClassName={stickyHeader ? "lg:overflow-x-visible" : undefined}>
+                <TableHeader className={cn(stickyHeader && cn("bg-background lg:sticky lg:z-20", LG_STICKY_TOP_CLASS))}>
                     {table.getHeaderGroups().map(headerGroup => (
                         <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header, index) => (

@@ -17,9 +17,12 @@ export const Route = createFileRoute("/$ticker/market-holidays/")({
     head: () => titleHead("Market Holidays"),
 });
 
+/** The US exchanges' clock: a partial day's open / close reads in New York time ("1:00 PM EST"), not the viewer's zone. */
+const EXCHANGE_TIME_ZONE = "America/New_York";
+
 /** A partial day's open / close; a day closed all day has neither ("Closed"). */
 const sessionTime = (holiday: V2MarketHoliday, value: null | string) => {
-    if (value) return formatInstant(value);
+    if (value) return formatInstant(value, EXCHANGE_TIME_ZONE);
 
     return holiday.start_time || holiday.end_time ? DASH : "Closed";
 };
