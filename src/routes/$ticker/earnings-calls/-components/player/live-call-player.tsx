@@ -50,7 +50,18 @@ function liveNotice(live: LiveCall): React.ReactNode {
 
     if (stream === null) return "Asking for the live stream…";
 
-    if (stream.status === "not_started") return "Waiting for audio… the live transcript runs meanwhile.";
+    if (stream.status === "not_started") {
+        // Never polled (5 credits a request): the listener asks again.
+        return (
+            <span className="inline-flex flex-wrap items-center gap-2">
+                No live audio yet — the live transcript runs meanwhile.
+                <Button onClick={live.retryStream} size="sm" title="Asks for the live stream again (5 credits)" type="button" variant="outline">
+                    <RefreshCw />
+                    Check again
+                </Button>
+            </span>
+        );
+    }
 
     if (stream.status === "disabled") return "No live audio for this call — the live transcript runs below.";
 
@@ -91,7 +102,7 @@ function PlaybackModeMenu({ live }: { live: LiveCall }) {
 
 /**
  * The live call's player (O4; the live twin of `RecordingPlayer`): `CallPlayer` on the HLS engine with the live pieces —
- * the stream's states in place of the controls (asking, waiting for audio, no live audio, the call ended while the
+ * the stream's states in place of the controls (asking, no audio yet + "Check again", no live audio, the call ended while the
  * recording is prepared + "Reload" after an hour), the status pills (buffering, waiting for the transcript,
  * reconnecting, no data for 60 s, a stream warning) and the playback mode in the `⋯` menu.
  */

@@ -77,6 +77,11 @@ export type LiveCall = {
     streamError: unknown;
     streamStatus: "not_requested" | "request failed" | "requesting" | V2LiveAudioResponse["status"];
     transcript: ReturnType<typeof useLiveTranscript>;
+    /**
+     * Asks `/live-audio` once more (5 credits), on the listener's click only: a `not_started` answer is never polled
+     * (one request per live view), so "Check again" is how the audio is found once it starts.
+     */
+    retryStream: () => void;
     /** A refused subscription ends the transcript for good: nothing to sync to, no mode choice. */
     transcriptVisible: boolean;
     watch: KeywordWatch;
@@ -165,7 +170,9 @@ export function CallAudioProvider({
     // The socket opens from this browser with the stored key: no key, no live session ("Enter your API key").
     const following = live?.sawLive === true && hasHydrated && apiKey !== null;
 
-    const onAir = following && !hasAudio;
+    // A played search hit carries the recording's URL: it is published, even before the event's poll says `has_audio`
+    // (never two elements playing at once).
+    const onAir = following && !hasAudio && playedUrl === null;
 
     const baseUrl = useApiBaseUrl();
 
@@ -212,7 +219,9 @@ export function CallAudioProvider({
 
     const hls = useHlsEngine({ audio: liveAudio, callT0, mediaRef: liveAudioRef, mode, streamError: streamQuery.error });
 
-    // The recording took over: the live audio's place carries over (only if the listener tuned in).
+    // The HLS engine is no longer the page's. The recording published (`has_audio`): the live audio's place carries
+    // over (only if the listener tuned in). A played search hit plays from its own `#t=`; a key removed mid-call
+    // (no recording) only stops the stream — `/audio` would answer 404.
     const handOver = React.useEffectEvent(() => {
         if (!liveAudio.started) return;
 
@@ -224,7 +233,7 @@ export function CallAudioProvider({
 
         liveAudio.stop();
 
-        fileEngine.seekMs(positionMs, { play });
+        if (hasAudio && playedUrl === null) fileEngine.seekMs(positionMs, { play });
     });
 
     const wasOnAirRef = React.useRef(onAir);
@@ -268,6 +277,7 @@ export function CallAudioProvider({
                 newestFinal,
                 onAir,
                 recordingWait: live.recordingWait,
+                retryStream: () => void refetch(),
                 setWatch,
                 stream,
                 streamError: streamQuery.error,

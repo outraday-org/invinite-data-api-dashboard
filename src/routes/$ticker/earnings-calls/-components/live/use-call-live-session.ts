@@ -9,6 +9,9 @@ export const RECORDING_WAIT_MS = 60 * 60 * 1000;
 
 export const RECORDING_WAIT_POLL_MS = 30 * 1000;
 
+/** Capture states of a call that has not ended: about to be captured, or being captured. */
+const NOT_ENDED_CAPTURE_STATUSES = new Set(["armed", "capturing"]);
+
 /** What the page knows of its live session: whether it saw the call live, and when it saw it end (`null` = not yet). */
 export type LiveSessionClock = { endedAtMs: null | number; sawLive: boolean };
 
@@ -31,7 +34,7 @@ export type RecordingWait = "gave-up" | "waiting" | null;
 export type CallLiveSession = {
     /** The page saw the call live (capturing, or in `/v1/events?status=live`); sticky for the page's life. */
     sawLive: boolean;
-    /** Ended: `capture_status` left `capturing` after the page saw it live. */
+    /** Ended: `capture_status` is past `armed` / `capturing` after the page saw it live. */
     ended: boolean;
     recordingWait: RecordingWait;
     /** What `recordingWaitInterval` reads (the page hands it to `useV2Event`'s poll through a ref). */
@@ -57,14 +60,20 @@ export function useCallLiveSession(event: null | V2Event): CallLiveSession {
 
     if (!sawLive && event !== null && (event.capture_status === "capturing" || listed)) setSawLive(true);
 
-    const ended = sawLive && event !== null && event.capture_status !== "capturing";
+    // `armed` is not over: a call listed live a moment before its capture starts has not ended yet.
+    const ended = sawLive && event !== null && !NOT_ENDED_CAPTURE_STATUSES.has(event.capture_status);
 
+    // The wait counts from the end the page saw last: a status back to `capturing` (a capture restart) resets it.
     React.useEffect(() => {
-        if (ended) setEndedAtMs(previous => previous ?? Date.now());
+        setEndedAtMs(previous => (ended ? (previous ?? Date.now()) : null));
     }, [ended]);
 
     React.useEffect(() => {
-        if (endedAtMs === null) return undefined;
+        if (endedAtMs === null) {
+            setGaveUp(false);
+
+            return undefined;
+        }
 
         const timer = setTimeout(() => setGaveUp(true), Math.max(0, endedAtMs + RECORDING_WAIT_MS - Date.now()));
 

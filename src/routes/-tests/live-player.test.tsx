@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,7 +12,7 @@ import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import { CallAudioProvider } from "@/routes/$ticker/earnings-calls/-components/audio-context";
 import { LivePlayerSlot } from "@/routes/$ticker/earnings-calls/-components/live-player-slot";
 import { LiveTranscript } from "@/routes/$ticker/earnings-calls/-components/live/live-transcript-view";
-import { RECORDING_WAIT_MS, recordingWaitInterval } from "@/routes/$ticker/earnings-calls/-components/live/use-call-live-session";
+import { RECORDING_WAIT_MS, recordingWaitInterval, useCallLiveSession } from "@/routes/$ticker/earnings-calls/-components/live/use-call-live-session";
 import { CallPlayerBar, LIVE_WAITING_FOR_TEXT_TEXT, RECORDING_PREPARING_TEXT } from "@/routes/$ticker/earnings-calls/-components/player/live-call-player";
 
 const T0 = "2026-10-31T14:00:00.000Z";
@@ -77,7 +77,9 @@ const RECORDING = { bytes: 1, capture_path: "live", codec: "mp3", duration_secon
 
 const mocks = vi.hoisted(() => ({
     audioIds: [] as Array<string>,
+    liveList: [] as Array<{ event_id: string }>,
     stream: {} as Record<string, unknown>,
+    streamRequests: 0,
     transcript: {} as Record<string, unknown>,
 }));
 
@@ -97,8 +99,13 @@ vi.mock("@/lib/api/queries", () => ({
     useV2LiveAudio: (eventId: string) => ({
         data: eventId ? mocks.stream : undefined,
         error: null,
-        refetch: () => Promise.resolve({ data: mocks.stream, isError: false }),
+        refetch: () => {
+            mocks.streamRequests += 1;
+
+            return Promise.resolve({ data: mocks.stream, isError: false });
+        },
     }),
+    useV2LiveEvents: () => ({ data: { data: mocks.liveList } }),
     useV2Participants: () => ({ data: undefined }),
     useV2PriceAttribution: () => ({ data: undefined }),
     useV2Transcript: () => ({ data: undefined, error: null }),
@@ -242,6 +249,10 @@ beforeEach(() => {
     FakeHls.instances = [];
 
     mocks.audioIds = [];
+
+    mocks.liveList = [];
+
+    mocks.streamRequests = 0;
 
     // jsdom answers no ranges at all.
     Object.defineProperty(HTMLMediaElement.prototype, "seekable", { configurable: true, get: () => ({ length: 0 }) });
@@ -714,5 +725,67 @@ describe("live → recording without a reload", () => {
         expect(recordingWaitInterval({ has_audio: false }, { ...seen, endedAtMs: now - RECORDING_WAIT_MS }, now)).toBe(false);
 
         expect(recordingWaitInterval({ has_audio: false }, { endedAtMs: null, sawLive: false }, now)).toBe(false);
+    });
+});
+
+describe("quality pass", () => {
+    it("a stream not started yet is never polled: Check again asks once more on a click", () => {
+        mocks.stream = { call_t0: T0, expires_at: null, status: "not_started", url: null };
+
+        render(<Page />);
+
+        const bar = screen.getByRole("region", { name: "Call player" });
+
+        expect(bar.textContent).toContain("No live audio yet");
+
+        expect(mocks.streamRequests).toBe(0);
+
+        fireEvent.click(within(bar).getByRole("button", { name: "Check again" }));
+
+        expect(mocks.streamRequests).toBe(1);
+    });
+
+    it("the key removed mid-call: hls.js stops, no /audio request (nothing is published)", async () => {
+        setTranscript([segment(0, 6_000, "Opening remarks.")]);
+
+        const { hls, tick, view } = await tuneIn();
+
+        tick(50, 100, 60_000);
+
+        act(() => useApiKeyStore.setState({ apiKey: null }));
+
+        view.rerender(<Page />);
+
+        expect(hls.destroy).toHaveBeenCalled();
+
+        expect(mocks.audioIds.every(id => id === "")).toBe(true);
+    });
+
+    it("the live session: armed + listed is not ended; the wait counts from the last end, a capture restart resets it", () => {
+        const event = (capture_status: string) => ({ ...eventOf(), capture_status }) as V2Event;
+
+        mocks.liveList = [{ event_id: "evt" }];
+
+        const { rerender, result } = renderHook(({ current }: { current: V2Event }) => useCallLiveSession(current), { initialProps: { current: event("armed") } });
+
+        expect(result.current.sawLive).toBe(true);
+
+        expect(result.current.ended).toBe(false);
+
+        expect(result.current.clock.endedAtMs).toBeNull();
+
+        rerender({ current: event("captured") });
+
+        expect(result.current.ended).toBe(true);
+
+        expect(result.current.recordingWait).toBe("waiting");
+
+        expect(result.current.clock.endedAtMs).not.toBeNull();
+
+        rerender({ current: event("capturing") });
+
+        expect(result.current.ended).toBe(false);
+
+        expect(result.current.clock.endedAtMs).toBeNull();
     });
 });
