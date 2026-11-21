@@ -215,15 +215,7 @@ export function ComparisonView({
         );
     }
 
-    if (error) {
-        return (
-            <MediaState
-                error={error}
-                notFound="No comparison yet — the first call on record, or not derived yet"
-                title="Failed to load the comparison with the prior call"
-            />
-        );
-    }
+    if (error) return <MediaState error={error} title="Failed to load the comparison with the prior call" />;
 
     if (isLoading || !data) return <Skeleton className="h-48 w-full" />;
 

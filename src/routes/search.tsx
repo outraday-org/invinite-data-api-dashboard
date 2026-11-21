@@ -26,6 +26,9 @@ export const EXACT_MIN_UNSCOPED = 3;
 
 const MIN_QUERY_LENGTH = 2;
 
+/** The `type` values in the URL (the operation's `type` enum; `TYPES` of the hit labels follows the same order). */
+const TYPE_VALUES = ["transcript", "qa", "prepared", "presentation"] as const satisfies ReadonlyArray<V2TranscriptSearchType>;
+
 /**
  * `/search` URL state: `q` = the submitted query (written on submit, never per keystroke: a search costs 10 credits),
  * `mode` (absent = keyword), `type` (absent = every type), `company` (one ticker or CIK), `from` / `to` (call days).
@@ -36,7 +39,7 @@ const searchPageSchema = z.object({
     mode: optionalEnum(SEARCH_MODES),
     q: optionalText(500),
     to: optionalDay(),
-    type: optionalEnum(TYPES as [V2TranscriptSearchType, ...Array<V2TranscriptSearchType>]),
+    type: optionalEnum(TYPE_VALUES),
 });
 
 export type TranscriptSearchPageSearch = z.infer<typeof searchPageSchema>;

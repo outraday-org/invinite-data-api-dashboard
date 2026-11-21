@@ -140,6 +140,16 @@ describe("ComparisonView + PriorPicker (Metrics & diff)", () => {
         expect(screen.getByText(/Only the comparison with the previous call/)).toBeInTheDocument();
     });
 
+    it("keeps the default 404 (first call / not derived) a notice with the API's reason", () => {
+        const error = new ApiRequestError(404, { error: "not_found", message: "No comparison for this event: no earlier call of this company to compare with." });
+
+        render(<ComparisonView data={null} error={error} isLoading={false} symbol="AAPL" />);
+
+        expect(screen.getByText("No comparison yet — the first call on record, or not derived yet")).toBeInTheDocument();
+
+        expect(screen.getByText(/no earlier call of this company/)).toBeInTheDocument();
+    });
+
     it("names the default and the picked call", () => {
         const { rerender } = render(<PriorPicker calls={[]} isLoading={false} onOpenChange={vi.fn()} onPriorChange={vi.fn()} prior={undefined} />);
 

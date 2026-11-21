@@ -475,7 +475,7 @@ group appends its rows, the alerts tasklist its 36 (→ 124); an operation with 
 | `getEventStats` | `GET /v1/events/{event_id}/stats` | call page · Metrics & diff tab |
 | `getFact` | `GET /v1/facts/{fact_id}` | `/$ticker/financials` Standardized · Detailed: a value opens "Explain this number" (O7 group 4) |
 | `getFiler` | `GET /v1/filers/{cik}` | `/sec/$cik`; sidebar (filer context) |
-| `getFiling` | `GET /v1/filings/{accession}` | SEC documents panel; `/$ticker/filings` (HTML dialog); `/filings/$accession` (header, Documents; Parties & relations = `expand=parties,relations`; O7 group 3) |
+| `getFiling` | `GET /v1/filings/{accession}` | SEC documents panel; `/$ticker/filings` (HTML dialog); `/filings/$accession` (header, Documents; Parties & relations = `expand=parties,relations`; O7 group 3); call page header (results filing / periodic report, O7 group 5) |
 | `getFund` | `GET /v1/funds/{fund}` | `/$ticker` (fund overview) |
 | `getInstrument` | `GET /v1/instruments/{symbol}` | `/$ticker` layout + overview; `/$ticker/filings`; `/$ticker/financials`; sidebar |
 | `getInvestorDocument` | `GET /v1/investor-documents/{document_id}` | `/$ticker/documents`; call page · Documents tab (`expand=pages`) |
@@ -499,7 +499,7 @@ group appends its rows, the alerts tasklist its 36 (→ 124); an operation with 
 | `listAnnouncements` | `GET /v1/announcements` | `/$ticker/news` (item panel, by news item); `/$ticker/news?view=announcements` (Announcements tab, `?company=`) |
 | `listCagr` | `GET /v1/metrics/cagr` | `/$ticker/financials?view=cagr` |
 | `listDividends` | `GET /v1/dividends` | `/$ticker/dividends` |
-| `listEvents` | `GET /v1/events` | `/`; `/calendar`; `/live-calls`; `/$ticker` (overview); `/$ticker/earnings-calls`; `/$ticker/documents`; sidebar (live count); call page (live session); `/$ticker/news` "Filter by call" (on click) |
+| `listEvents` | `GET /v1/events` | `/`; `/calendar`; `/live-calls`; `/$ticker` (overview); `/$ticker/earnings-calls`; `/$ticker/documents`; sidebar (live count); call page (live session); `/$ticker/news` "Filter by call" (on click); call page · Metrics & diff (`prior` picker, on open; O7 group 5) |
 | `listFactPlaces` | `GET /v1/fact-places` | "Explain this number" → Show in filing (`fact=`; O7 group 4); `/filings/$accession` Documents → Fact places (`document_version=`; O7 group 3) |
 | `listFilerHoldings` | `GET /v1/filers/{cik}/holdings` | `/sec/$cik` (13F portfolio) |
 | `listFilers` | `GET /v1/filers` | `/institutions`; top-bar search; filer lookup |
