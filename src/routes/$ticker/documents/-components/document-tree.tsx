@@ -19,6 +19,12 @@ const rowClass = "hover:bg-muted/60 flex min-h-7 items-center gap-1.5 rounded-md
 
 const guideClass = "ml-[13px] border-l pl-1";
 
+// A document / call row: one line from `sm` up; below it the row wraps and its date + actions take their own line,
+// right-aligned (the Page shell rule: the page never scrolls sideways — the actions column alone is ~250 px).
+const itemRowClass = `${rowClass} flex-wrap sm:flex-nowrap`;
+
+const rowMetaClass = "text-muted-foreground ml-auto flex w-full shrink-0 items-center justify-end gap-3 text-xs tabular-nums sm:w-auto sm:justify-start sm:pl-3";
+
 /** "Q3 2025" / "2025"; "Undated" without a year. */
 function periodLabel(doc: V2InvestorDocument) {
     if (doc.year === null) return "Undated";
@@ -57,13 +63,13 @@ function DocumentRow({
     const filing = doc.kind === "sec_filing";
 
     return (
-        <li className={`${rowClass} group`} data-document-id={doc.document_id}>
+        <li className={`${itemRowClass} group`} data-document-id={doc.document_id}>
             <ChevronSpacer />
             <Icon className="text-muted-foreground size-3.5 shrink-0" />
             <span className="min-w-0 truncate" title={doc.title ?? undefined}>{doc.title ?? "Untitled"}</span>
             <Badge className="font-normal" variant="outline">{documentKindLabel(doc.kind)}</Badge>
             {doc.link_status === "expired" && <Badge variant="secondary">replay expired</Badge>}
-            <div className="text-muted-foreground ml-auto flex shrink-0 items-center gap-3 pl-3 text-xs tabular-nums">
+            <div className={rowMetaClass}>
                 <span className="w-20" title={filing && doc.filing_date ? "Filed on EDGAR" : undefined}>
                     {documentDate(doc)}
                 </span>
@@ -122,7 +128,7 @@ function CallRow({ call }: { call: CallEntry }) {
     const ticker = event.symbol;
 
     return (
-        <li className={rowClass} data-event-id={event.event_id}>
+        <li className={itemRowClass} data-event-id={event.event_id}>
             <ChevronSpacer />
             <Mic className="text-primary size-3.5 shrink-0" />
             <CallLink
@@ -136,7 +142,7 @@ function CallRow({ call }: { call: CallEntry }) {
             <span className="text-muted-foreground [&_svg]:size-3">
                 <AvailabilityIcons event={event} />
             </span>
-            <div className="text-muted-foreground ml-auto flex shrink-0 items-center gap-3 pl-3 text-xs tabular-nums">
+            <div className={rowMetaClass}>
                 <span className="w-20">{call.date}</span>
                 <div className="flex items-center justify-end gap-2.5">
                     {event.has_press_release && (
