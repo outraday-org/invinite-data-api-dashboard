@@ -15,6 +15,7 @@ import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { ALERT_USER_STATUS_INFO, ALERT_USER_STATUSES, emptyAlertUserForm, fromAlertUser } from "@/lib/alerts/alert-users";
+import { listState } from "@/lib/api/list-state";
 import { useAlertUserDefaults, useAlertUsersInfinite } from "@/lib/api/queries";
 import { titleHead } from "@/lib/layout";
 import { IN_PLACE, optionalEnum, optionalText } from "@/lib/url-state";
@@ -90,14 +91,7 @@ function AlertUsersPage() {
             <AlertUsersListView
                 busy={actions.busy}
                 onAction={onAction}
-                state={{
-                    error: users.error,
-                    hasNextPage: users.hasNextPage,
-                    isFetchingNextPage: users.isFetchingNextPage,
-                    isLoading: users.isLoading,
-                    onLoadMore: () => void users.fetchNextPage(),
-                    pages: users.data?.pages ?? [],
-                }}
+                state={listState(users)}
             />
             <AlertUserDefaultsPanel />
             {edit && (

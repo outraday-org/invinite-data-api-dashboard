@@ -6,6 +6,7 @@ import type { V2FundWeightDimension } from "@/lib/api/types";
 
 import { FundCompositionList, FundWeightsBlock } from "@/components/sec/fund-views";
 import { PageHeader } from "@/components/ui/page-header";
+import { listState } from "@/lib/api/list-state";
 import { useFundPositionsInfinite, useFundWeightsInfinite } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
 import { FUND_DIMENSION_LABELS, fundPickerDays } from "@/lib/sec/fund";
@@ -90,27 +91,13 @@ function FundHoldingsPage() {
             />
 
             <FundWeightsBlock
-                state={{
-                    error: weights.error,
-                    hasNextPage: weights.hasNextPage,
-                    isFetchingNextPage: weights.isFetchingNextPage,
-                    isLoading: weights.isLoading,
-                    onLoadMore: () => weights.fetchNextPage(),
-                    pages: weights.data?.pages ?? [],
-                }}
+                state={listState(weights)}
             />
 
             <div className="relative">
                 <FundCompositionList
                     exportScope={ticker}
-                    state={{
-                        error: holdings.error,
-                        hasNextPage: holdings.hasNextPage,
-                        isFetchingNextPage: holdings.isFetchingNextPage,
-                        isLoading: holdings.isLoading,
-                        onLoadMore: () => holdings.fetchNextPage(),
-                        pages: holdings.data?.pages ?? [],
-                    }}
+                    state={listState(holdings)}
                 />
             </div>
         </div>

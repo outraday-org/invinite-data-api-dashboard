@@ -227,6 +227,11 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   keyboard-reachable); `MetricChartDialog` takes the table's order (newest first) and charts oldest → newest, the series
   named by the metric. `Table` takes `containerClassName` for its scroll wrapper.
 - **`LoadMoreButton`** lives in `src/components/ui/load-more-button.tsx` (optional `loadedCount`).
+- **List state**: a pure list view takes `ListState<TPage>` (`src/lib/api/list-state.ts`: error, pages, "Load more"),
+  built from an infinite query by `listState(query)` — never spelled out by hand. The v2 SEC lists (the filing page's
+  tabs, the holder lists and 13F changes) render through ONE frame, `src/components/sec/sec-list-frame.tsx`
+  `SecListFrame` (readiness notice, coverage, `V2MetaLine` with `counting` / `pinned_at`, an optional note, `DataTable`
+  with export, a failed next page).
 - **Formatters** (`src/lib/format.ts`, tested): `formatDay` ("Oct 29, 2026"; a date-only string is its calendar day),
   `formatInstant` ("Oct 29, 2026, 4:30 PM EDT", viewer's zone with label; re-exported by `lib/earnings/format.ts`),
   `formatMoneyCompact` ("$3.95T", K / M / B / T), `formatMoney` (exact; a dividend keeps 4 decimals), `formatShares`,

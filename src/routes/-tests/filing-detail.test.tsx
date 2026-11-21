@@ -4,7 +4,7 @@ import type * as React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { FundListState } from "@/components/sec/fund-views";
+import type { ListState } from "@/lib/api/list-state";
 
 import { ApiRequestError } from "@/lib/api/errors";
 import {
@@ -48,7 +48,7 @@ vi.mock("@/lib/api/queries", () => ({}));
 
 afterEach(cleanup);
 
-function state<TPage>(pages: Array<TPage>, extra: Partial<FundListState<TPage>> = {}): FundListState<TPage> {
+function state<TPage>(pages: Array<TPage>, extra: Partial<ListState<TPage>> = {}): ListState<TPage> {
     return {
         error: null,
         hasNextPage: false,

@@ -16,6 +16,7 @@ import {
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
 import { NotFound } from "@/components/ui/not-found";
+import { listState } from "@/lib/api/list-state";
 import { useFilerHoldingChangesInfinite, useFilerHoldingsInfinite, useV2Filer, useV2FilingsInfinite, useV2OfferingsInfinite } from "@/lib/api/queries";
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import { formatDay } from "@/lib/format";
@@ -190,14 +191,7 @@ function SecFilerPage() {
                             <ChangeTypeChips onChange={types => onChange({ ctypes: changeTypesParam(types) })} value={changeTypes} />
                             <HolderChangesList
                                 exportScope={`cik-${cik}`}
-                                state={{
-                                    error: changes.error,
-                                    hasNextPage: changes.hasNextPage,
-                                    isFetchingNextPage: changes.isFetchingNextPage,
-                                    isLoading: changes.isLoading,
-                                    onLoadMore: () => void changes.fetchNextPage(),
-                                    pages: changes.data?.pages ?? [],
-                                }}
+                                state={listState(changes)}
                                 subject="security"
                             />
                         </div>

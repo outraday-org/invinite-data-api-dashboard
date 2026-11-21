@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fromAlertUser } from "@/lib/alerts/alert-users";
+import { listState } from "@/lib/api/list-state";
 import { useAlertEventsInfinite, useAlertsInfinite, useAlertUser, useAlertUserDefaults } from "@/lib/api/queries";
 import { titleHead } from "@/lib/layout";
 
@@ -36,14 +37,7 @@ function AlertUserAlerts({ externalUserId }: { externalUserId: string }) {
             {actions.batch && <BatchResultsView ids={actions.batch.ids} onDismiss={actions.dismissBatch} results={actions.batch.results} />}
             <AlertsListView
                 selection={{ busy: actions.busy, onAction: actions.request, onSelect: setSelected, selected }}
-                state={{
-                    error: alerts.error,
-                    hasNextPage: alerts.hasNextPage,
-                    isFetchingNextPage: alerts.isFetchingNextPage,
-                    isLoading: alerts.isLoading,
-                    onLoadMore: () => void alerts.fetchNextPage(),
-                    pages: alerts.data?.pages ?? [],
-                }}
+                state={listState(alerts)}
             />
             {actions.dialog}
         </section>

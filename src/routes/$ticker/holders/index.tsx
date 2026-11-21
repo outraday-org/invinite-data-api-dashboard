@@ -9,6 +9,7 @@ import { HolderChangesList, HoldersList, HoldersOverview } from "@/components/se
 import { ChangeTypeChips } from "@/components/sec/ownership-views";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { listState } from "@/lib/api/list-state";
 import { useHolderChangesInfinite, useHoldersInfinite } from "@/lib/api/queries";
 import { formatDay } from "@/lib/format";
 import { tickerHead } from "@/lib/layout";
@@ -57,25 +58,6 @@ const SOURCES: ReadonlyArray<V2HolderSource> = ["13f", "nport", "issuer_file"];
 
 /** The default prior quarter: the API's previous quarter (nothing sent). */
 const PREVIOUS = "previous";
-
-/** A list view's state from an infinite query (the pages so far, "Load more"). */
-function listState<TPage>(query: {
-    data: null | { pages: Array<TPage> };
-    error: unknown;
-    fetchNextPage: () => unknown;
-    hasNextPage: boolean;
-    isFetchingNextPage: boolean;
-    isLoading: boolean;
-}) {
-    return {
-        error: query.error,
-        hasNextPage: query.hasNextPage,
-        isFetchingNextPage: query.isFetchingNextPage,
-        isLoading: query.isLoading,
-        onLoadMore: () => void query.fetchNextPage(),
-        pages: query.data?.pages ?? [],
-    };
-}
 
 /**
  * Who holds this stock or fund (Data API 7.0, `/v1/holders?symbol=`, owner decision 12): an overview of the three

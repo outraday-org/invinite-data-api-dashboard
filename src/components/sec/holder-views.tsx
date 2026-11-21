@@ -3,9 +3,7 @@ import type * as React from "react";
 
 import { Link } from "@tanstack/react-router";
 
-import type { ExportConfig } from "@/components/api/export-menu";
-import type { FundListState } from "@/components/sec/fund-views";
-import type { OperationId } from "@/lib/api/operations.gen";
+import type { ListState } from "@/lib/api/list-state";
 import type {
     V2FilerHoldingChangesResponse,
     V2Holder,
@@ -18,6 +16,7 @@ import type {
 } from "@/lib/api/types";
 
 import { count, money, right, weightText } from "@/components/sec/fund-views";
+import { SecListFrame } from "@/components/sec/sec-list-frame";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { filerCikParam, SecurityLink } from "@/components/sec/security-link";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
@@ -31,7 +30,6 @@ import {
     HOLDER_SOURCE_NOTES,
     holderReasonText,
 } from "@/lib/sec/fund";
-import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { formatNumberEn } from "@/lib/utils";
 
 /**
@@ -183,60 +181,6 @@ const EMPTY_TEXT: Record<V2HolderSource, string> = {
     "nport": "No fund reported this security in its latest N-PORT report.",
 };
 
-type Page = V2FilerHoldingChangesResponse | V2HolderChangesResponse | V2HoldersResponse;
-
-/**
- * One holder list (pure): the request's honest state (403 `excluded`, 404 `not_covered`, 503 `unavailable`, plan gate),
- * the answer's coverage (`pending` = still being filled, `partial`), its provenance (`pinned_at`, `counting`,
- * `meta.source`), the rows and "Load more".
- */
-function HolderListFrame<TPage extends Page, TRow>({
-    columns,
-    emptyText,
-    errorTitle,
-    exportConfig,
-    note,
-    operationId,
-    rowsOf,
-    state,
-}: {
-    columns: Array<ColumnDef<TRow>>;
-    emptyText: string;
-    errorTitle: string;
-    exportConfig?: ExportConfig<TRow>;
-    note?: null | string;
-    operationId: OperationId;
-    rowsOf: (page: TPage) => Array<TRow>;
-    state: FundListState<TPage>;
-}) {
-    const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
-
-    if (error && pages.length === 0) return <SecReadinessNotice error={error} title={errorTitle} />;
-
-    const meta = pages.at(0)?.meta;
-
-    return (
-        <div className="flex flex-col gap-2">
-            <SecReadinessNotice coverage={meta?.coverage} />
-            <V2MetaLine meta={meta && { counting: "counting" in meta ? meta.counting : null, coverage: meta.coverage, pinned_at: "pinned_at" in meta ? meta.pinned_at : null }} />
-            {note && <div className="text-muted-foreground text-xs" data-testid="holders-note">{note}</div>}
-            <DataTable
-                columns={columns}
-                emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
-                emptyText={emptyText}
-                exportConfig={exportConfig}
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                isLoading={isLoading}
-                onLoadMore={onLoadMore}
-                operationId={operationId}
-                rows={pages.flatMap(rowsOf)}
-            />
-            {error ? <SecReadinessNotice error={error} title={errorTitle} /> : null}
-        </div>
-    );
-}
-
 /** The scope line of the issuer-file source: never presented as complete (only ETFs with an issuer file). */
 function issuerFileNote(meta: undefined | V2HoldersResponse["meta"]): string {
     const funds = meta?.funds_with_issuer_file;
@@ -245,7 +189,7 @@ function issuerFileNote(meta: undefined | V2HoldersResponse["meta"]): string {
 }
 
 /** The full list of ONE source (`/v1/holders?symbol=&source=`), by cursor. */
-export function HoldersList({ exportScope, source, state }: { exportScope?: string; source: V2HolderSource; state: FundListState<V2HoldersResponse> }) {
+export function HoldersList({ exportScope, source, state }: { exportScope?: string; source: V2HolderSource; state: ListState<V2HoldersResponse> }) {
     const meta = state.pages.at(0)?.meta;
 
     const reason = holderReasonText(meta?.reason);
@@ -253,14 +197,13 @@ export function HoldersList({ exportScope, source, state }: { exportScope?: stri
     const note = source === "issuer_file" ? [issuerFileNote(meta), reason].filter(Boolean).join(" ") : reason;
 
     return (
-        <HolderListFrame<V2HoldersResponse, V2Holder>
+        <SecListFrame<V2Holder>
             columns={HOLDER_COLUMNS[source]}
             emptyText={EMPTY_TEXT[source]}
             errorTitle={`Failed to load the ${HOLDER_SOURCE_LABELS[source]} holders`}
             exportConfig={exportScope ? { dataset: `holders-${source}`, scope: exportScope } : undefined}
-            note={note}
+            note={note && <div className="text-muted-foreground text-xs" data-testid="holders-note">{note}</div>}
             operationId="listHolders"
-            rowsOf={page => page.data}
             state={state}
         />
     );
@@ -367,17 +310,16 @@ export function HolderChangesList({
     subject = "holder",
 }: {
     exportScope?: string;
-    state: FundListState<V2FilerHoldingChangesResponse | V2HolderChangesResponse>;
+    state: ListState<V2FilerHoldingChangesResponse | V2HolderChangesResponse>;
     subject?: "holder" | "security";
 }) {
     return (
-        <HolderListFrame<V2FilerHoldingChangesResponse | V2HolderChangesResponse, V2HolderChange>
+        <SecListFrame<V2HolderChange>
             columns={subject === "holder" ? HOLDER_CHANGE_COLUMNS : FILER_CHANGE_COLUMNS}
             emptyText="No position changes for these filters."
             errorTitle="Failed to load the 13F changes"
             exportConfig={exportScope ? { dataset: subject === "holder" ? "holder-changes" : "position-changes", scope: exportScope } : undefined}
             operationId={subject === "holder" ? "listHolderChanges" : "listFilerHoldingChanges"}
-            rowsOf={page => page.data}
             state={state}
         />
     );
@@ -431,7 +373,7 @@ function HolderSectionView({ onShowAll, rows, section }: { onShowAll: (source: V
  * the API's order, each with its own state, as-of and count — never one merged list. "Show all" opens that source's
  * full list (`onShowAll`).
  */
-export function HoldersOverview({ onShowAll, state }: { onShowAll: (source: V2HolderSource) => void; state: FundListState<V2HoldersResponse> }) {
+export function HoldersOverview({ onShowAll, state }: { onShowAll: (source: V2HolderSource) => void; state: ListState<V2HoldersResponse> }) {
     const { error, isLoading, pages } = state;
 
     if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the holders" />;

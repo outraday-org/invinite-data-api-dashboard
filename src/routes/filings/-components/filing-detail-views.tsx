@@ -4,9 +4,7 @@ import { Link } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
 import * as React from "react";
 
-import type { ExportConfig } from "@/components/api/export-menu";
-import type { FundListState } from "@/components/sec/fund-views";
-import type { OperationId } from "@/lib/api/operations.gen";
+import type { ListState } from "@/lib/api/list-state";
 import type {
     JsonValue,
     V2DocumentSection,
@@ -20,21 +18,18 @@ import type {
     V2FilingHoldingsResponse,
     V2FilingNote,
     V2FilingNotesResponse,
-    V2MetaCoverage,
     V2ReviewChainResponse,
 } from "@/lib/api/types";
 
 import { count, money, right, weightText } from "@/components/sec/fund-views";
+import { SecListFrame } from "@/components/sec/sec-list-frame";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { filerCikParam, SecurityLink } from "@/components/sec/security-link";
-import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copyable } from "@/components/ui/copy-button";
-import { DataTable } from "@/components/ui/data-table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DASH, formatDay, formatNumber } from "@/lib/format";
-import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { boolOf, listOf, numberOf, recordOf, scalarEntries, textOf } from "@/lib/sec/source";
 
 /**
@@ -80,54 +75,6 @@ export function factValueText(fact: Pick<V2FilingFact, "unit" | "value">) {
     return formatNumber(fact.value, { maximumFractionDigits: 6 });
 }
 
-type Page<TRow> = { data: Array<TRow>; meta: Record<string, unknown> & { coverage?: V2MetaCoverage } };
-
-/** One cursor list of the filing page: its readiness, provenance, the table, "Load more" and a failed next page. */
-function SecListFrame<TRow>({
-    columns,
-    emptyText,
-    errorTitle,
-    exportConfig,
-    note,
-    operationId,
-    state,
-}: {
-    columns: Array<ColumnDef<TRow>>;
-    emptyText: string;
-    errorTitle: string;
-    exportConfig?: ExportConfig<TRow>;
-    note?: React.ReactNode;
-    operationId: OperationId;
-    state: FundListState<Page<TRow>>;
-}) {
-    const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
-
-    if (error && pages.length === 0) return <SecReadinessNotice error={error} title={errorTitle} />;
-
-    const meta = pages.at(0)?.meta;
-
-    return (
-        <div className="flex flex-col gap-2">
-            <SecReadinessNotice coverage={meta?.coverage} />
-            <V2MetaLine meta={meta && { counting: typeof meta.counting === "string" ? meta.counting : null, coverage: meta.coverage }} />
-            {note}
-            <DataTable
-                columns={columns}
-                emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
-                emptyText={emptyText}
-                exportConfig={exportConfig}
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                isLoading={isLoading}
-                onLoadMore={onLoadMore}
-                operationId={operationId}
-                rows={pages.flatMap(page => page.data)}
-            />
-            {error ? <SecReadinessNotice error={error} title={errorTitle} /> : null}
-        </div>
-    );
-}
-
 // ── Facts ─────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const FACT_COLUMNS: Array<ColumnDef<V2FilingFact>> = [
@@ -140,7 +87,7 @@ const FACT_COLUMNS: Array<ColumnDef<V2FilingFact>> = [
 ];
 
 /** A filing's numeric XBRL facts as filed (SEC financial statement data sets). */
-export function FilingFactsView({ accession, state }: { accession: string; state: FundListState<V2FilingFactsResponse> }) {
+export function FilingFactsView({ accession, state }: { accession: string; state: ListState<V2FilingFactsResponse> }) {
     return (
         <SecListFrame<V2FilingFact>
             columns={FACT_COLUMNS}
@@ -191,7 +138,7 @@ const NOTE_COLUMNS: Array<ColumnDef<V2FilingNote>> = [
 ];
 
 /** A filing's text facts (XBRL text blocks) as filed. */
-export function FilingNotesView({ accession, state }: { accession: string; state: FundListState<V2FilingNotesResponse> }) {
+export function FilingNotesView({ accession, state }: { accession: string; state: ListState<V2FilingNotesResponse> }) {
     return (
         <SecListFrame<V2FilingNote>
             columns={NOTE_COLUMNS}
@@ -249,7 +196,7 @@ const HOLDING_COLUMNS: Array<ColumnDef<V2FiledHolding>> = [
 const FAMILY_LABELS: Record<"13f" | "nport", string> = { "13f": "13F information table", "nport": "N-PORT report" };
 
 /** The reported lines of one 13F-HR / NPORT-P filing as filed, in the filing's line order (`meta.family`). */
-export function FilingHoldingsView({ accession, state }: { accession: string; state: FundListState<V2FilingHoldingsResponse> }) {
+export function FilingHoldingsView({ accession, state }: { accession: string; state: ListState<V2FilingHoldingsResponse> }) {
     const family = state.pages.at(0)?.meta.family;
 
     return (
@@ -268,7 +215,7 @@ export function FilingHoldingsView({ accession, state }: { accession: string; st
 // ── Sections and fact places of a document version ───────────────────────────────────────────────────────────────
 
 /** A document version's section outline (`generic` headings or the `legacy` section ids); a row opens its first block. */
-export function DocumentSectionsView({ onOpenBlock, state }: { onOpenBlock: (blockId: string) => void; state: FundListState<V2DocumentSectionsResponse> }) {
+export function DocumentSectionsView({ onOpenBlock, state }: { onOpenBlock: (blockId: string) => void; state: ListState<V2DocumentSectionsResponse> }) {
     const columns: Array<ColumnDef<V2DocumentSection>> = [
         { cell: ({ row }) => right(String(row.original.ordinal)), header: () => <div className="text-right">#</div>, id: "ordinal" },
         { cell: ({ row }) => [row.original.part, row.original.item_id ? `Item ${row.original.item_id}` : null].filter(Boolean).join(" · ") || DASH, header: "Part · item", id: "item" },
@@ -306,7 +253,7 @@ const PLACE_STATUS_LABELS: Record<V2FactPlace["status"], string> = {
 };
 
 /** Where facts sit in one document version (PRO): concept, status, the block (opens the reader), table cell, page, the annotated rendition. */
-export function FactPlacesView({ onOpenBlock, state, versionId }: { onOpenBlock: (blockId: string) => void; state: FundListState<V2FactPlacesResponse>; versionId: string }) {
+export function FactPlacesView({ onOpenBlock, state, versionId }: { onOpenBlock: (blockId: string) => void; state: ListState<V2FactPlacesResponse>; versionId: string }) {
     const columns: Array<ColumnDef<V2FactPlace>> = [
         { cell: ({ row }) => <span className="font-medium break-all">{row.original.concept}</span>, header: "Concept", id: "concept" },
         { cell: ({ row }) => <Badge variant={row.original.status === "placed" ? "secondary" : "outline"}>{PLACE_STATUS_LABELS[row.original.status]}</Badge>, header: "Status", id: "status" },

@@ -6,6 +6,7 @@ import { DestinationsListView } from "@/components/alerts/destinations-list-view
 import { useDestinationActions } from "@/components/alerts/use-destination-actions";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { listState } from "@/lib/api/list-state";
 import { useDestinationsInfinite } from "@/lib/api/queries";
 import { titleHead } from "@/lib/layout";
 import { IN_PLACE, optionalFlag } from "@/lib/url-state";
@@ -45,14 +46,7 @@ function DestinationsPage() {
             />
             <DestinationsListView
                 actions={{ busy: actions.busy, onAction: (action, destination) => actions.request(action, destination) }}
-                state={{
-                    error: destinations.error,
-                    hasNextPage: destinations.hasNextPage,
-                    isFetchingNextPage: destinations.isFetchingNextPage,
-                    isLoading: destinations.isLoading,
-                    onLoadMore: () => void destinations.fetchNextPage(),
-                    pages: destinations.data?.pages ?? [],
-                }}
+                state={listState(destinations)}
             />
             {search.new && (
                 <DestinationEditorDialog

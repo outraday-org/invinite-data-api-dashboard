@@ -12,6 +12,7 @@ import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
 import { ALERT_STATUS_INFO, ALERT_STATUSES, ALERT_TYPE_INFO, ALERT_TYPES } from "@/lib/alerts/labels";
+import { listState } from "@/lib/api/list-state";
 import { useAlertsInfinite } from "@/lib/api/queries";
 import { titleHead } from "@/lib/layout";
 import { IN_PLACE, optionalEnum, optionalText } from "@/lib/url-state";
@@ -94,14 +95,7 @@ function AlertsPage() {
             {actions.batch && <BatchResultsView ids={actions.batch.ids} onDismiss={actions.dismissBatch} results={actions.batch.results} />}
             <AlertsListView
                 selection={{ busy: actions.busy, onAction: actions.request, onSelect: setSelected, selected }}
-                state={{
-                    error: alerts.error,
-                    hasNextPage: alerts.hasNextPage,
-                    isFetchingNextPage: alerts.isFetchingNextPage,
-                    isLoading: alerts.isLoading,
-                    onLoadMore: () => void alerts.fetchNextPage(),
-                    pages: alerts.data?.pages ?? [],
-                }}
+                state={listState(alerts)}
             />
             {actions.dialog}
         </div>

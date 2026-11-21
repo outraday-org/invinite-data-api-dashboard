@@ -1,5 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
+import type { ListState } from "@/lib/api/list-state";
 import type { V2FundAdviser, V2FundPosition, V2FundPositionsResponse, V2FundSource, V2FundWeightsResponse } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
@@ -26,15 +27,6 @@ import { formatNumberEn } from "@/lib/utils";
  * country / asset-class weights (`/v1/funds/{fund}/weights`). Every answer names its source and as-of date; pure (state
  * in, markup out). A position links its instrument or issuer (`SecurityLink`). Who holds a security is `holder-views.tsx`.
  */
-
-export type FundListState<TPage> = {
-    error: unknown;
-    hasNextPage: boolean;
-    isFetchingNextPage: boolean;
-    isLoading: boolean;
-    onLoadMore: () => void;
-    pages: ReadonlyArray<TPage>;
-};
 
 export const currency = new Intl.NumberFormat("en", { currency: "USD", maximumFractionDigits: 0, style: "currency" });
 
@@ -134,7 +126,7 @@ const hasNotional = (rows: ReadonlyArray<V2FundPosition>) => rows.some(row => ro
  * One fund's composition (`/v1/funds/{fund}/holdings`), largest weight first: the source badge, the reason of a partial or
  * deliberately empty answer (a single-asset trust is a notice, never an empty table), the rows and "Load more".
  */
-export function FundCompositionList({ exportScope, state }: { exportScope?: string; state: FundListState<V2FundPositionsResponse> }) {
+export function FundCompositionList({ exportScope, state }: { exportScope?: string; state: ListState<V2FundPositionsResponse> }) {
     const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
 
     if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the fund holdings" />;
@@ -184,7 +176,7 @@ export function FundCompositionList({ exportScope, state }: { exportScope?: stri
  * "Unclassified" / "Cash and other" shown as buckets), the basis in plain words under each block. Weights that do not
  * add up to 100 % (leveraged / inverse funds) are drawn as stated, never scaled.
  */
-export function FundWeightsBlock({ state }: { state: FundListState<V2FundWeightsResponse> }) {
+export function FundWeightsBlock({ state }: { state: ListState<V2FundWeightsResponse> }) {
     const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
 
     if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the fund weights" />;

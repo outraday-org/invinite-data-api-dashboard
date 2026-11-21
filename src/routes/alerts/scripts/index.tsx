@@ -8,6 +8,7 @@ import { TemplateListView } from "@/components/alerts/template-list";
 import { TabStrip } from "@/components/navigation/tab-strip";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { listState } from "@/lib/api/list-state";
 import { useAlertTemplates, useScriptsInfinite } from "@/lib/api/queries";
 import { titleHead } from "@/lib/layout";
 import { IN_PLACE, optionalEnum } from "@/lib/url-state";
@@ -25,14 +26,7 @@ function ScriptsTab() {
 
     return (
         <ScriptsListView
-            state={{
-                error: scripts.error,
-                hasNextPage: scripts.hasNextPage,
-                isFetchingNextPage: scripts.isFetchingNextPage,
-                isLoading: scripts.isLoading,
-                onLoadMore: () => void scripts.fetchNextPage(),
-                pages: scripts.data?.pages ?? [],
-            }}
+            state={listState(scripts)}
         />
     );
 }

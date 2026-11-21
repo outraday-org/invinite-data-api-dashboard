@@ -13,6 +13,7 @@ import { Copyable } from "@/components/ui/copy-button";
 import { PlanBadge } from "@/components/ui/credit-hint";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { listState } from "@/lib/api/list-state";
 import {
     useV2DocumentSectionsInfinite,
     useV2FactPlacesInfinite,
@@ -69,25 +70,6 @@ export const Route = createFileRoute("/filings/$accession")({
 });
 
 const linkClass = "text-primary inline-flex items-center gap-1 underline-offset-4 hover:underline";
-
-/** A list view's state from an infinite query (the pages so far, "Load more"). */
-function listState<TPage>(query: {
-    data: null | { pages: Array<TPage> };
-    error: unknown;
-    fetchNextPage: () => unknown;
-    hasNextPage: boolean;
-    isFetchingNextPage: boolean;
-    isLoading: boolean;
-}) {
-    return {
-        error: query.error,
-        hasNextPage: query.hasNextPage,
-        isFetchingNextPage: query.isFetchingNextPage,
-        isLoading: query.isLoading,
-        onLoadMore: () => void query.fetchNextPage(),
-        pages: query.data?.pages ?? [],
-    };
-}
 
 /**
  * One SEC filing (`/v1/filings/{accession}?expand=documents`): its documents (+ a version's reader, sections and fact

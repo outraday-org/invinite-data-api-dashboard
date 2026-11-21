@@ -3,7 +3,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { z } from "zod";
 
-import type { FundListState } from "@/components/sec/fund-views";
+import type { ListState } from "@/lib/api/list-state";
 import type { V2FundListItem, V2FundsResponse, V2FundStructure, V2FundType } from "@/lib/api/types";
 
 import { DebouncedInput } from "@/components/navigation/debounced-input";
@@ -11,6 +11,7 @@ import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
+import { listState } from "@/lib/api/list-state";
 import { useFunds } from "@/lib/api/queries";
 import { formatMoneyCompact } from "@/lib/format";
 import { EXCHANGE_LABELS, FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS } from "@/lib/instruments";
@@ -104,7 +105,7 @@ const COLUMNS: Array<ColumnDef<V2FundListItem>> = [
 ];
 
 /** The fund list (pure): its state, the rows, "Load more". */
-export function FundsList({ state }: { state: FundListState<V2FundsResponse> }) {
+export function FundsList({ state }: { state: ListState<V2FundsResponse> }) {
     const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
 
     if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the funds" />;
@@ -165,14 +166,7 @@ function FundsPage() {
                 <FilterSelect aria-label="Sort" className="w-[150px]" onValueChange={value => onChange({ sort: value === "symbol" ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? "symbol"} />
             </div>
             <FundsList
-                state={{
-                    error: funds.error,
-                    hasNextPage: funds.hasNextPage,
-                    isFetchingNextPage: funds.isFetchingNextPage,
-                    isLoading: funds.isLoading,
-                    onLoadMore: () => void funds.fetchNextPage(),
-                    pages: funds.data?.pages ?? [],
-                }}
+                state={listState(funds)}
             />
         </div>
     );
