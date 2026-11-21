@@ -10,16 +10,19 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useFund, useFundPositionsInfinite, useInstrument, useV2Company } from "@/lib/api/queries";
 import { coverageEntries } from "@/lib/api/v2";
-import { formatEnDateTime } from "@/lib/date";
+import { formatDay, formatMoneyCompact, formatNumber, formatShares } from "@/lib/format";
 import { datasetGateText, FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS, isFundType } from "@/lib/instruments";
+import { tickerHead } from "@/lib/layout";
 import { fundReasonText, netAssetsScopeText } from "@/lib/sec/fund";
-import { formatFractionPercentCompact, formatNumberEn, formatNumberEnCompact } from "@/lib/utils";
+import { formatFractionPercentCompact, formatNumberEn } from "@/lib/utils";
 
 export const Route = createFileRoute("/$ticker/")({
     component: TickerOverview,
+    head: ({ params }) => tickerHead(params.ticker, "Overview"),
 });
 
 /**
@@ -31,7 +34,7 @@ function TickerOverview() {
 
     const { data: instrument, isLoading } = useInstrument(ticker);
 
-    if (isLoading) return <div className="text-muted-foreground">Loading...</div>;
+    if (isLoading) return <Skeleton className="h-64 w-full" />;
 
     // The layout renders the unknown / failed instrument states.
     if (!instrument) return null;
@@ -55,7 +58,7 @@ function CompanyOverview({ ticker }: { ticker: string }) {
     }
 
     if (isLoading) {
-        return <div className="text-muted-foreground">Loading company details...</div>;
+        return <Skeleton className="h-64 w-full" />;
     }
 
     if (!company) {
@@ -101,12 +104,10 @@ function CompanyOverview({ ticker }: { ticker: string }) {
                         <span className="text-muted-foreground">Currency</span>
                         <span className="font-medium">{company.currency}</span>
                     </div>
-                    {company.employees && (
+                    {company.employees != null && (
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Employees</span>
-                            <span className="font-medium">
-                                {company.employees.toLocaleString()}
-                            </span>
+                            <span className="font-medium">{formatNumber(company.employees)}</span>
                         </div>
                     )}
                 </CardContent>
@@ -118,42 +119,27 @@ function CompanyOverview({ ticker }: { ticker: string }) {
                     <CardDescription>Key financial metrics</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
-                    {company.market_cap && (
+                    {company.market_cap != null && (
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Market Cap</span>
-                            <span className="font-medium">
-                                $
-                                {(company.market_cap / 1e9).toFixed(2)}
-                                B
-                            </span>
+                            <span className="font-medium">{formatMoneyCompact(company.market_cap)}</span>
                         </div>
                     )}
-                    {company.shares_outstanding && (
+                    {company.shares_outstanding != null && (
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Shares Outstanding</span>
-                            <span className="font-medium">
-                                {(company.shares_outstanding / 1e6).toFixed(1)}
-                                M
-                            </span>
+                            <span className="font-medium">{formatShares(company.shares_outstanding)}</span>
                         </div>
                     )}
                     <div className="flex justify-between">
                         <span className="text-muted-foreground">Exchange</span>
                         <span className="font-medium">{company.exchange ?? "-"}</span>
                     </div>
-                    {company.employees && (
-                        <div className="flex justify-between">
-                            <span className="text-muted-foreground">Employees</span>
-                            <span className="font-medium">
-                                {company.employees.toLocaleString()}
-                            </span>
-                        </div>
-                    )}
                     {company.list_date && (
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Listed since</span>
                             <span className="font-medium">
-                                {formatEnDateTime(company.list_date, { hideTime: true })}
+                                {formatDay(company.list_date)}
                             </span>
                         </div>
                     )}
@@ -210,7 +196,7 @@ function Row({ children, label }: { children: ReactNode; label: string }) {
     );
 }
 
-const day = (value: null | string | undefined) => (value ? formatEnDateTime(value, { hideTime: true }) : null);
+const day = (value: null | string | undefined) => (value ? formatDay(value) : null);
 
 /** The listing facts every instrument has (`GET /v1/instruments/{symbol}`); an ETN's whole overview. */
 export function InstrumentCard({ instrument }: { instrument: V2Instrument }) {
@@ -241,7 +227,7 @@ export function InstrumentCard({ instrument }: { instrument: V2Instrument }) {
 export function netAssetsText(fund: Pick<V2Fund, "net_assets_as_of" | "net_assets_scope" | "net_assets_usd">): null | string {
     if (fund.net_assets_usd == null) return null;
 
-    return [`$${formatNumberEnCompact(fund.net_assets_usd)}`, fund.net_assets_as_of && `as of ${fund.net_assets_as_of}`, netAssetsScopeText(fund.net_assets_scope)]
+    return [formatMoneyCompact(fund.net_assets_usd), fund.net_assets_as_of && `as of ${formatDay(fund.net_assets_as_of)}`, netAssetsScopeText(fund.net_assets_scope)]
         .filter(Boolean)
         .join(" · ");
 }
@@ -332,14 +318,14 @@ export function FundProfileView({ composition, fund }: { composition: ReactNode;
                     <Row label="Net assets">
                         <span data-testid="fund-net-assets">{netAssets ?? "—"}</span>
                     </Row>
-                    {fund.market_cap != null && <Row label="Market cap">{`$${formatNumberEnCompact(fund.market_cap)}`}</Row>}
+                    {fund.market_cap != null && <Row label="Market cap">{formatMoneyCompact(fund.market_cap)}</Row>}
                     {fund.expense_ratio_net != null && (
                         <Row label="Expense ratio (net)">
-                            {[formatFractionPercentCompact(fund.expense_ratio_net), fund.expense_ratio_as_of && `as of ${fund.expense_ratio_as_of}`].filter(Boolean).join(" · ")}
+                            {[formatFractionPercentCompact(fund.expense_ratio_net), fund.expense_ratio_as_of && `as of ${formatDay(fund.expense_ratio_as_of)}`].filter(Boolean).join(" · ")}
                         </Row>
                     )}
                     {fund.expense_ratio_gross != null && <Row label="Expense ratio (gross)">{formatFractionPercentCompact(fund.expense_ratio_gross)}</Row>}
-                    {fund.shares_outstanding != null && <Row label="Shares outstanding">{formatNumberEn(fund.shares_outstanding)}</Row>}
+                    {fund.shares_outstanding != null && <Row label="Shares outstanding">{formatShares(fund.shares_outstanding)}</Row>}
                     {fund.short_float_pct != null && <Row label="Short interest">{`${formatNumberEn(fund.short_float_pct, { maximumFractionDigits: 2 })}% of float`}</Row>}
                 </CardContent>
             </Card>

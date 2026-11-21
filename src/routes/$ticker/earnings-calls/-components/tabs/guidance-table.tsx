@@ -5,6 +5,7 @@ import type { V2GuidanceItem } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LoadMoreButton } from "@/components/ui/load-more-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useV2GuidanceInfinite } from "@/lib/api/queries";
@@ -19,7 +20,6 @@ import {
     REVIEW_STATUS_LABELS,
 } from "@/lib/earnings/labels";
 import { cn } from "@/lib/utils";
-import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
 import type { CallTabProps } from "../call-tabs";
 

@@ -36,9 +36,9 @@ describe("company coverage", () => {
         });
 
         expect(entries.map(entry => entry.text)).toEqual([
-            "financials through 2026-09-26",
+            "financials through Sep 26, 2026",
             "insider trades",
-            "new family through 2026-11-01",
+            "new family through Nov 1, 2026",
         ]);
     });
 

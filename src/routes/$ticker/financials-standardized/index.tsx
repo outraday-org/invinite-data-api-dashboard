@@ -6,10 +6,14 @@ import type { FiscalPeriodType, StatementType, V2FinancialsView } from "@/lib/ap
 import { FinancialsStatementsView, ViewButtons } from "@/components/financials-presentation/financials-statements-view";
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
 import { StatementSelect } from "@/components/financials-presentation/statement-select";
+import { PageHeader } from "@/components/ui/page-header";
+import { isTierError } from "@/lib/api/errors";
 import { useV2FinancialsInfinite } from "@/lib/api/queries";
+import { tickerHead } from "@/lib/layout";
 
 export const Route = createFileRoute("/$ticker/financials-standardized/")({
     component: StandardizedFinancialsPage,
+    head: ({ params }) => tickerHead(params.ticker, "Standardized Financials"),
 });
 
 /** Periods per page of `/v1/financials/standardized*` (one row per period; "Load more" adds older ones). */
@@ -28,7 +32,13 @@ function StandardizedFinancialsPage() {
 
     const [periodType, setPeriodType] = React.useState<FiscalPeriodType>("quarterly");
 
-    const [view, setView] = React.useState<V2FinancialsView>("presentation");
+    // The default view is the presentation tree (PRO); a plan without it falls back to the summary once the request
+    // answers `plan_required`. A view the reader picks is kept (its refusal is the view's notice).
+    const [pickedView, setView] = React.useState<null | V2FinancialsView>(null);
+
+    const [presentationRefused, setPresentationRefused] = React.useState(false);
+
+    const view: V2FinancialsView = pickedView ?? (presentationRefused ? "summary" : "presentation");
 
     // `/v1/financials/standardized[/detailed|/presentation]?company=<ticker>&statement=<one>&period=<type>`, newest first.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2FinancialsInfinite({
@@ -40,19 +50,23 @@ function StandardizedFinancialsPage() {
         view,
     });
 
+    React.useEffect(() => {
+        if (pickedView === null && view === "presentation" && isTierError(error)) setPresentationRefused(true);
+    }, [error, pickedView, view]);
+
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-col shrink-0 gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <div>Standardized Financials</div>
-                    <div>{VIEW_SUBTITLES[view]}</div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    <StatementSelect onValueChange={setStatement} value={statement} />
-                    <ViewButtons onValueChange={setView} value={view} />
-                    <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
-                </div>
-            </div>
+        <div className="flex flex-col gap-4">
+            <PageHeader
+                actions={(
+                    <>
+                        <StatementSelect onValueChange={setStatement} value={statement} />
+                        <ViewButtons onValueChange={setView} value={view} />
+                        <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
+                    </>
+                )}
+                description={VIEW_SUBTITLES[view]}
+                title="Standardized Financials"
+            />
             <FinancialsStatementsView
                 basis="standardized"
                 error={error}

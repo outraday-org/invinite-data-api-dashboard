@@ -4,14 +4,18 @@ import * as React from "react";
 import type { V2HolderSource } from "@/lib/api/types";
 
 import { HolderChangesList, HoldersList, HoldersOverview } from "@/components/sec/holder-views";
+import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useHolderChangesInfinite, useHoldersInfinite } from "@/lib/api/queries";
+import { formatDay } from "@/lib/format";
+import { tickerHead } from "@/lib/layout";
 import { HOLDER_SOURCE_LABELS } from "@/lib/sec/fund";
 import { latest13fPeriodEnd, recentQuarterEnds } from "@/lib/sec/source";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export const Route = createFileRoute("/$ticker/holders/")({
     component: HoldersPage,
+    head: ({ params }) => tickerHead(params.ticker, "Holders"),
 });
 
 /** Holder rows per page (the API allows up to 1 000). */
@@ -64,7 +68,7 @@ function HoldersPage() {
     const periodEnd = period === LATEST ? undefined : period;
 
     const periodOptions = React.useMemo(
-        () => [{ label: "Latest due quarter", value: LATEST }, ...quarters.map(quarter => ({ label: `Quarter ending ${quarter}`, value: quarter }))],
+        () => [{ label: "Latest due quarter", value: LATEST }, ...quarters.map(quarter => ({ label: `Quarter ending ${formatDay(quarter)}`, value: quarter }))],
         [quarters],
     );
 
@@ -82,39 +86,50 @@ function HoldersPage() {
     const bySource = { "13f": thirteenF, "issuer_file": issuerFile, "nport": nport };
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-wrap items-end justify-between gap-2">
-                <div className="flex flex-col gap-1">
-                    <div>Holders</div>
-                    <div className="text-muted-foreground text-sm">
+        <div className="flex flex-col gap-4">
+            <PageHeader
+                actions={(
+                    // Issuer files are read as of their newest file: the quarter does not apply on that tab ([FU2870]).
+                    <FilterSelect
+                        aria-label="Quarter"
+                        className="w-[220px]"
+                        disabled={tab === "issuer_file"}
+                        onValueChange={setPeriod}
+                        options={periodOptions}
+                        title={tab === "issuer_file" ? "Issuer files are read as of their newest file" : undefined}
+                        value={period}
+                    />
+                )}
+                description={(
+                    <>
                         Who holds this security, per source: managers&apos; quarterly 13F reports, funds&apos; N-PORT
                         reports and ETFs&apos; own daily holdings files. The sources overlap and have different dates, so
                         each is listed on its own.
-                    </div>
-                </div>
-                <FilterSelect className="w-[220px]" onValueChange={setPeriod} options={periodOptions} value={period} />
-            </div>
+                    </>
+                )}
+                title="Holders"
+            />
 
-            <Tabs className="grow" onValueChange={value => setTab(value as Tab)} value={tab}>
+            <Tabs onValueChange={value => setTab(value as Tab)} value={tab}>
                 <TabsList variant="line">
-                    <TabsTrigger className="h-[34px] text-sm" value="overview">Overview</TabsTrigger>
+                    <TabsTrigger className="h-[34px]" value="overview">Overview</TabsTrigger>
                     {SOURCES.map(source => (
-                        <TabsTrigger className="h-[34px] text-sm" key={source} value={source}>{HOLDER_SOURCE_LABELS[source]}</TabsTrigger>
+                        <TabsTrigger className="h-[34px]" key={source} value={source}>{HOLDER_SOURCE_LABELS[source]}</TabsTrigger>
                     ))}
-                    <TabsTrigger className="h-[34px] text-sm" value="changes">13F changes</TabsTrigger>
+                    <TabsTrigger className="h-[34px]" value="changes">13F changes</TabsTrigger>
                 </TabsList>
 
-                <TabsContent className="grow relative mt-2" value="overview">
+                <TabsContent className="relative mt-2" value="overview">
                     <HoldersOverview onShowAll={setTab} state={listState(overview)} />
                 </TabsContent>
 
                 {SOURCES.map(source => (
-                    <TabsContent className="grow relative mt-2" key={source} value={source}>
+                    <TabsContent className="relative mt-2" key={source} value={source}>
                         <HoldersList source={source} state={listState(bySource[source])} />
                     </TabsContent>
                 ))}
 
-                <TabsContent className="grow relative mt-2" value="changes">
+                <TabsContent className="relative mt-2" value="changes">
                     <HolderChangesList state={listState(changes)} />
                 </TabsContent>
             </Tabs>

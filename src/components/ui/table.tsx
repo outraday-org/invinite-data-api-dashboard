@@ -2,9 +2,10 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+/** `containerClassName` styles the wrapper: the horizontal scroller (a scroll container — a `sticky` header inside it binds to it, not to the page). */
+function Table({ className, containerClassName, ...props }: React.ComponentProps<"table"> & { containerClassName?: string }) {
     return (
-        <div className="relative w-full overflow-x-auto" data-slot="table-container">
+        <div className={cn("relative w-full overflow-x-auto", containerClassName)} data-slot="table-container">
             <table
                 className={cn("w-full caption-bottom text-xs", className)}
                 data-slot="table"

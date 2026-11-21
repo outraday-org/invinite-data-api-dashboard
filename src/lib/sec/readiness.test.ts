@@ -49,7 +49,7 @@ describe("meta.coverage on a 200, problems for refusals", () => {
         expect(v2CoverageState({ state: "pending" })).toEqual({ kind: "readiness", message: null, reason: null, status: "pending" });
 
         expect(v2CoverageState({ state: "partial", through: "2026-09-30" }))
-            .toEqual({ kind: "readiness", message: "Complete through 2026-09-30", reason: null, status: "partial" });
+            .toEqual({ kind: "readiness", message: "Complete through Sep 30, 2026", reason: null, status: "partial" });
 
         expect(v2CoverageState({ state: "complete", through: "2026-09-30" })).toBeNull();
 

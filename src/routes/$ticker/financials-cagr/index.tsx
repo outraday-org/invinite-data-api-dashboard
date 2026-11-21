@@ -7,13 +7,16 @@ import type { V2CagrHorizon, V2CagrPeriod, V2CagrResponse } from "@/lib/api/type
 
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
+import { PageHeader } from "@/components/ui/page-header";
 import { useV2CagrInfinite } from "@/lib/api/queries";
 import { completePeriodsOnly, periodLabel, periodLabels } from "@/lib/financials/statements";
+import { tickerHead } from "@/lib/layout";
 import { formatFractionPercentCompact, formatMetricId } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export const Route = createFileRoute("/$ticker/financials-cagr/")({
     component: FinancialCagrPage,
+    head: ({ params }) => tickerHead(params.ticker, "CAGR Financials"),
 });
 
 /** Periods per page of `/v1/metrics/cagr`: one row per period and horizon (every horizon = three rows per period). */
@@ -97,14 +100,16 @@ function FinancialCagrPage() {
     });
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-col shrink-0 gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <div>CAGR Financials</div>
-                    <div>Compound annual growth rates by metric.</div>
-                </div>
-                <FilterSelect className="w-[200px]" onValueChange={setHorizon} options={cagrPeriodOptions} value={horizon} />
-            </div>
+        <div className="flex flex-col gap-4">
+            <PageHeader
+                actions={(
+                    <>
+                        <FilterSelect className="w-[200px]" onValueChange={setHorizon} options={cagrPeriodOptions} value={horizon} />
+                    </>
+                )}
+                description="Compound annual growth rates by metric."
+                title="CAGR Financials"
+            />
             <CagrView
                 error={error}
                 hasNextPage={hasNextPage}

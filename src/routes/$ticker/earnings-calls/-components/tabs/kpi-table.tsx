@@ -3,12 +3,12 @@ import { ExternalLink } from "lucide-react";
 import type { V2KpiMention } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
+import { LoadMoreButton } from "@/components/ui/load-more-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useV2KpisInfinite } from "@/lib/api/queries";
 import { formatDecimal, metricLabel } from "@/lib/earnings/labels";
-import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
 import type { CallTabProps } from "../call-tabs";
 

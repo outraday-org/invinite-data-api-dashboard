@@ -6,13 +6,16 @@ import type { FiscalPeriodType, SegmentedFinancialsSegmentId, V2SegmentsResponse
 
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
+import { PageHeader } from "@/components/ui/page-header";
 import { useV2SegmentsInfinite } from "@/lib/api/queries";
 import { completePeriodsOnly, periodLabels, segmentLines } from "@/lib/financials/statements";
+import { tickerHead } from "@/lib/layout";
 import { SegmentSelect } from "@/routes/$ticker/segmented-financials/-components/segment-select";
 import { SegmentedFinancialsTable } from "@/routes/$ticker/segmented-financials/-components/segmented-financials-table";
 
 export const Route = createFileRoute("/$ticker/segmented-financials/")({
     component: SegmentedFinancialsPage,
+    head: ({ params }) => tickerHead(params.ticker, "Segmented Financials"),
 });
 
 /** Segment facts per page of `/v1/segments` (one row per fact, many per period: the maximum page). */
@@ -80,17 +83,17 @@ function SegmentedFinancialsPage() {
     });
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-col shrink-0 gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <div>Segmented Financials</div>
-                    <div>Financial data broken out by business segment in tabular format.</div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    <SegmentSelect onValueChange={setSegmentId} value={segmentId} />
-                    <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
-                </div>
-            </div>
+        <div className="flex flex-col gap-4">
+            <PageHeader
+                actions={(
+                    <>
+                        <SegmentSelect onValueChange={setSegmentId} value={segmentId} />
+                        <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
+                    </>
+                )}
+                description="Financial data broken out by business segment in tabular format."
+                title="Segmented Financials"
+            />
             <SegmentsView
                 error={error}
                 hasNextPage={hasNextPage}

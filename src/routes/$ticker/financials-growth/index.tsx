@@ -8,13 +8,16 @@ import type { FiscalPeriodType, V2GrowthBasis, V2GrowthPeriod, V2GrowthResponse 
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
+import { PageHeader } from "@/components/ui/page-header";
 import { useV2GrowthInfinite } from "@/lib/api/queries";
 import { completePeriodsOnly, periodLabel, periodLabels } from "@/lib/financials/statements";
+import { tickerHead } from "@/lib/layout";
 import { formatFractionPercentCompact, formatMetricId } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export const Route = createFileRoute("/$ticker/financials-growth/")({
     component: FinancialGrowthPage,
+    head: ({ params }) => tickerHead(params.ticker, "Growth Financials"),
 });
 
 /** Periods per page of `/v1/metrics/growth`: one row per period and basis (both bases = two rows per period). */
@@ -96,17 +99,17 @@ function FinancialGrowthPage() {
     });
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-col shrink-0 gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <div>Growth Financials</div>
-                    <div>Period-over-period growth metrics (YoY/ QoQ).</div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    <FilterSelect className="w-[220px]" onValueChange={setBasis} options={basisOptions} value={basis} />
-                    <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
-                </div>
-            </div>
+        <div className="flex flex-col gap-4">
+            <PageHeader
+                actions={(
+                    <>
+                        <FilterSelect className="w-[220px]" onValueChange={setBasis} options={basisOptions} value={basis} />
+                        <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
+                    </>
+                )}
+                description="Period-over-period growth metrics (YoY/ QoQ)."
+                title="Growth Financials"
+            />
             <GrowthView
                 error={error}
                 hasNextPage={hasNextPage}

@@ -1,15 +1,16 @@
+import type * as React from "react";
+
 import type { FilingListRow } from "@/lib/sec/parity";
 
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
+import { DataTable } from "@/components/ui/data-table";
 
-import { FilingItem } from "./filing-item";
-import { FilingsTableHeader } from "./filings-table-header";
-import { LoadMoreButton } from "./load-more-button";
+import { filingColumns } from "./filing-columns";
 
+/** The filings table: one row per accession (`DataTable`), "Load more" by `next_cursor`. */
 export function FilingsList({
     displayFilings,
     emptyIsGenuine = true,
+    errorState,
     hasNextPage,
     isFetchingNextPage,
     isLoading,
@@ -22,6 +23,8 @@ export function FilingsList({
     displayFilings: ReadonlyArray<FilingListRow>;
     /** false while the answer's coverage is pending / partial: no rows is then not "No filings found". */
     emptyIsGenuine?: boolean;
+    /** A failed next page (the first page's failure replaces the table). */
+    errorState?: React.ReactNode;
     isLoading: boolean;
     hasNextPage: boolean;
     isFetchingNextPage: boolean;
@@ -32,35 +35,16 @@ export function FilingsList({
     onSortToggle: () => void;
 }) {
     return (
-        <div className="flex flex-col h-0 grow">
-            <FilingsTableHeader onSortToggle={onSortToggle} sortDirection={sortDirection} />
-            <Separator />
-            <ScrollArea className="h-0 grow">
-                <div className="space-y-4 pt-4">
-                    {displayFilings.map(filing => (
-                        <FilingItem
-                            filing={filing}
-                            key={filing.accessionNumber}
-                            onOpenHtml={() => onOpenHtml(filing)}
-                            onOpenSecDocuments={onOpenSecDocuments ? () => onOpenSecDocuments(filing) : undefined}
-                        />
-                    ))}
-                </div>
-
-                <LoadMoreButton
-                    hasNextPage={hasNextPage}
-                    isFetchingNextPage={isFetchingNextPage}
-                    onLoadMore={onFetchNextPage}
-                />
-
-                {!isLoading && emptyIsGenuine && displayFilings.length === 0 && (
-                    <div className="text-muted-foreground w-full text-center text-xs p-2">No filings found.</div>
-                )}
-
-                {isLoading && displayFilings.length === 0 && (
-                    <div className="text-muted-foreground w-full text-center text-xs p-2">Loading...</div>
-                )}
-            </ScrollArea>
-        </div>
+        <DataTable
+            columns={filingColumns({ onOpenHtml, onOpenSecDocuments, onSortToggle, sortDirection })}
+            emptyIsGenuine={emptyIsGenuine}
+            emptyText="No filings found."
+            errorState={errorState}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            isLoading={isLoading}
+            onLoadMore={onFetchNextPage}
+            rows={[...displayFilings]}
+        />
     );
 }

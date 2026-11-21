@@ -4,10 +4,11 @@ import type { V2MetaCoverage } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { ErrorState } from "@/components/ui/error-state";
+import { LoadMoreButton } from "@/components/ui/load-more-button";
 import { Notice } from "@/components/ui/notice";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, errorDescription, isTierError } from "@/lib/api/errors";
 import { isV2GenuineEmpty, secErrorState } from "@/lib/sec/readiness";
-import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
 export const METRICS_PENDING_TITLE = "Metrics are being prepared — asked again in 30 s";
 
@@ -91,14 +92,14 @@ export function MetricsListBody({
 
     if (error && loadedPages === 0) return <FinancialsStateNotice error={error} pendingTitle={pendingTitle} title={title} />;
 
-    if (isLoading && loadedPages === 0) return <div className="text-muted-foreground text-sm">Loading financials...</div>;
+    if (isLoading && loadedPages === 0) return <Skeleton className="h-64 w-full" />;
 
     return (
-        <div className="flex flex-col gap-2 h-0 grow">
+        <div className="flex flex-col gap-2">
             <FinancialsStateNotice coverage={coverage} pendingTitle={pendingTitle} title={title} />
             {hasRows
                 ? children
-                : (isV2GenuineEmpty(coverage) && !hasNextPage ? <div className="text-muted-foreground text-sm">{emptyText}</div> : null)}
+                : (isV2GenuineEmpty(coverage) && !hasNextPage ? <div className="text-muted-foreground">{emptyText}</div> : null)}
             <LoadMoreButton hasNextPage={hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={onLoadMore} />
             {error ? <FinancialsStateNotice error={error} pendingTitle={pendingTitle} title="Failed to load more periods" /> : null}
         </div>

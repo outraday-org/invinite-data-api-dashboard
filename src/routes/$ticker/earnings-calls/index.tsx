@@ -7,14 +7,15 @@ import type { V2Event } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DataTable } from "@/components/ui/data-table";
 import { ErrorState } from "@/components/ui/error-state";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useV2EventsInfinite } from "@/lib/api/queries";
 import { eventLabel, formatInstant, isUpcoming } from "@/lib/earnings/format";
+import { tickerHead } from "@/lib/layout";
 import { DocumentSearch } from "@/routes/$ticker/documents/-components/document-search";
-import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
 import { AskThisCall } from "./-components/ask-this-call";
 import { AvailabilityIcons } from "./-components/availability-icons";
@@ -22,11 +23,11 @@ import { CallStatusBadge } from "./-components/call-status-badge";
 import { CallTime } from "./-components/call-time";
 import { EventLink } from "./-components/event-link";
 import { EventTypeBadge } from "./-components/event-type-badge";
-import { EventsTable } from "./-components/events-table";
 import { LiveNowStrip } from "./-components/live-now-strip";
 
 export const Route = createFileRoute("/$ticker/earnings-calls/")({
     component: EarningsCallsPage,
+    head: ({ params }) => tickerHead(params.ticker, "Earnings Calls"),
 });
 
 type CallsTab = "past" | "upcoming";
@@ -55,6 +56,7 @@ function EarningsCallsPage() {
         company: ticker,
         limit: 40,
         sort: "-scheduled_at",
+        toastErrors: false,
         // Investor days, conferences and AGMs too (badge + title per row).
         type: "all",
     });
@@ -129,24 +131,30 @@ function EarningsCallsPage() {
         [],
     );
 
+    const header = (
+        <PageHeader
+            description={(
+                <>
+                    The company&apos;s earnings calls and other events (investor days, conferences, shareholder meetings),
+                    newest first: transcript, audio, slides, press release and documents per event.
+                </>
+            )}
+            title="Earnings Calls"
+        />
+    );
+
     if (error && covered) {
         return (
-            <div className="space-y-4 relative flex flex-col h-0 grow">
+            <div className="flex flex-col gap-4">
+                {header}
                 <ErrorState error={error} title="Failed to load earnings calls" />
             </div>
         );
     }
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-col gap-1 shrink-0">
-                <div>Earnings Calls</div>
-                <div className="text-muted-foreground text-sm">
-                    The company&apos;s earnings calls and other events (investor days, conferences,
-                    shareholder meetings), newest first: transcript, audio, slides, press release and
-                    documents per event.
-                </div>
-            </div>
+        <div className="flex flex-col gap-4">
+            {header}
 
             {!covered
                 ? (
@@ -164,14 +172,12 @@ function EarningsCallsPage() {
                         </Card>
                     )
                 : (
-                        <div className="flex flex-col h-0 grow gap-2">
+                        <div className="flex flex-col gap-2">
                             {/* Only while this company has an event live; nothing otherwise. */}
-                            <div className="shrink-0">
-                                <LiveNowStrip ticker={ticker} />
-                            </div>
+                            <LiveNowStrip ticker={ticker} />
 
                             {/* Company-wide search: transcripts ("Search this call", hits link to their call) or documents. */}
-                            <div className="shrink-0 max-h-[45vh] overflow-y-auto flex flex-col gap-1">
+                            <div className="flex flex-col gap-1">
                                 <Tabs onValueChange={value => setSearchScope(value as SearchScope)} value={searchScope}>
                                     <TabsList variant="line">
                                         <TabsTrigger value="transcripts">Transcripts</TabsTrigger>
@@ -198,21 +204,15 @@ function EarningsCallsPage() {
                                 </TabsList>
                             </Tabs>
 
-                            <ScrollArea className="h-0 grow">
-                                <EventsTable columns={columns} events={events} isLoading={isLoading} />
-
-                                <LoadMoreButton
-                                    hasNextPage={Boolean(hasNextPage)}
-                                    isFetchingNextPage={isFetchingNextPage}
-                                    onLoadMore={() => fetchNextPage()}
-                                />
-
-                                {!isLoading && events.length === 0 && (
-                                    <div className="text-muted-foreground w-full text-center text-xs p-2">
-                                        {tab === "upcoming" ? "No upcoming calls." : "No past calls."}
-                                    </div>
-                                )}
-                            </ScrollArea>
+                            <DataTable
+                                columns={columns}
+                                emptyText={tab === "upcoming" ? "No upcoming calls." : "No past calls."}
+                                hasNextPage={hasNextPage}
+                                isFetchingNextPage={isFetchingNextPage}
+                                isLoading={isLoading}
+                                onLoadMore={() => void fetchNextPage()}
+                                rows={events}
+                            />
                         </div>
                     )}
         </div>

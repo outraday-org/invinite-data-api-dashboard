@@ -8,6 +8,7 @@
 import type { SecReadinessStatus, SecSearchCoverage, V2MetaCoverage } from "@/lib/api/types";
 
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
+import { formatDay } from "@/lib/format";
 
 export const SEC_READINESS_STATUSES = [
     "ready",
@@ -71,7 +72,7 @@ export function secErrorState(error: unknown): SecState {
 export function v2CoverageState(coverage: null | Pick<V2MetaCoverage, "state" | "through"> | undefined): null | SecState {
     if (!coverage || coverage.state === "complete") return null;
 
-    const through = coverage.through ? `Complete through ${coverage.through}` : null;
+    const through = coverage.through ? `Complete through ${formatDay(coverage.through)}` : null;
 
     return { kind: "readiness", message: through, reason: null, status: coverage.state };
 }

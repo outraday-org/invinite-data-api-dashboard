@@ -1,4 +1,6 @@
 // @vitest-environment jsdom
+import type * as React from "react";
+
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -13,6 +15,10 @@ import { NewsPageView } from "@/routes/$ticker/news/index";
 // The page module's route needs a router; the pure views do not.
 vi.mock("@tanstack/react-router", () => ({
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
+    // The headline is a `?item=` link: the mock shows the search it would navigate to.
+    Link: ({ children, className, search }: { children: React.ReactNode; className?: string; search: (prev: Record<string, unknown>) => Record<string, unknown> }) => (
+        <a className={className} href={`?item=${String(search({}).item)}`}>{children}</a>
+    ),
 }));
 
 // Keep the server functions (TanStack Start) unloaded.
@@ -34,15 +40,12 @@ afterEach(() => {
 const pageProps = {
     error: null,
     isLoading: false,
-    onOpen: () => undefined,
     pager: { hasNext: false, isFetching: false, onNext: () => undefined, onPrevious: () => undefined, page: 1 },
     scopeLabel: "News about NVDA",
 };
 
 describe("NewsPageView", () => {
     it("lists items with their publisher, source and kind; opens one; pages on by cursor", () => {
-        const onOpen = vi.fn();
-
         const onNext = vi.fn();
 
         render(
@@ -50,7 +53,6 @@ describe("NewsPageView", () => {
                 {...pageProps}
                 items={[newsroomItem(), edgarItem()]}
                 liveIds={new Set([newsroomItem().id])}
-                onOpen={onOpen}
                 pager={{ ...pageProps.pager, hasNext: true, onNext }}
             />,
         );
@@ -72,9 +74,9 @@ describe("NewsPageView", () => {
 
         expect(within(rows[1]).getByText("Earnings")).toBeTruthy();
 
-        fireEvent.click(within(rows[1]).getByText("NVIDIA Announces Financial Results for Third Quarter Fiscal 2027"));
-
-        expect(onOpen).toHaveBeenCalledWith(edgarItem().id);
+        // The headline is a link to the item (`?item=`), so it opens in a new tab too.
+        expect(within(rows[1]).getByRole("link", { name: "NVIDIA Announces Financial Results for Third Quarter Fiscal 2027" }))
+            .toHaveAttribute("href", `?item=${edgarItem().id}`);
 
         const pager = screen.getByTestId("news-pager");
 

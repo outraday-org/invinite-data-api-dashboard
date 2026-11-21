@@ -68,7 +68,7 @@ describe("useV2DividendsInfinite", () => {
         expect(result.current.hasNextPage).toBe(false);
     });
 
-    it("revives the problem error with its request id and never retries it", async () => {
+    it("revives the problem error with its request id, never retries it and never toasts", async () => {
         const thrown = Object.assign(new Error("Unknown parameter: offset"), {
             body: { error: "unknown_parameter", message: "Unknown parameter: offset", requestId: "req_9" },
             code: "unknown_parameter",
@@ -87,8 +87,7 @@ describe("useV2DividendsInfinite", () => {
 
         expect(getDividends).toHaveBeenCalledTimes(1);
 
-        await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to load dividends", {
-            description: "Unknown parameter: offset (unknown_parameter, request req_9)",
-        }));
+        // The page renders the error in its table: no toast on top (task data-api-dashboard O1).
+        expect(toast.error).not.toHaveBeenCalled();
     });
 });

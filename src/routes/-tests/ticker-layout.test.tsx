@@ -133,6 +133,43 @@ describe("$ticker layout: navigation from `datasets`", () => {
         expect(screen.getByText("SPY is an ETF: financial statements are not served for it.")).toBeInTheDocument();
     });
 
+    it("a section mounts only once the instrument is known: no request and no refusal flash while it loads ([FU2870], [FU2838])", () => {
+        route.ticker = "GLD";
+
+        route.pathname = "/GLD/holdings";
+
+        vi.mocked(useInstrument).mockReturnValue({ data: null, error: null, isLoading: true } as never);
+
+        const { unmount } = render(<TickerLayout />);
+
+        expect(screen.queryByTestId("outlet")).toBeNull();
+
+        expect(screen.getByTestId("page-skeleton")).toBeInTheDocument();
+
+        expect(screen.queryByText(/files no holdings report/)).toBeNull();
+
+        unmount();
+
+        // A market page needs no instrument: it renders at once.
+        route.pathname = "/GLD/market-holidays";
+
+        render(<TickerLayout />);
+
+        expect(screen.getByTestId("outlet")).toBeInTheDocument();
+    });
+
+    it("the header shows the instrument's canonical symbol, not the URL's spelling", () => {
+        route.ticker = "aapl";
+
+        route.pathname = "/aapl/dividends";
+
+        vi.mocked(useInstrument).mockReturnValue(answer(AAPL_INSTRUMENT) as never);
+
+        render(<TickerLayout />);
+
+        expect(screen.getByRole("heading", { level: 1, name: "AAPL" })).toBeInTheDocument();
+    });
+
     it("an unknown symbol is one notice; the market pages still render under it", () => {
         route.ticker = "ZZZZ";
 

@@ -33,13 +33,13 @@ describe("fund overview (`/v1/funds/{fund}`)", () => {
     it("VOO: net assets with date and scope 'series total', no market cap; the registrant links its filer page; classes", () => {
         render(<FundProfileView composition={null} fund={VOO_FUND} />);
 
-        expect(screen.getByTestId("fund-net-assets")).toHaveTextContent("$1.70 T · as of 2026-06-30 · series total, all share classes");
+        expect(screen.getByTestId("fund-net-assets")).toHaveTextContent("$1.7T · as of Jun 30, 2026 · series total, all share classes");
 
         expect(screen.queryByText("Market cap")).toBeNull();
 
         expect(screen.getByRole("link", { name: "Vanguard Index Funds" })).toHaveAttribute("href", "/sec/36405");
 
-        expect(screen.getByText("0.03% · as of 2026-04-29")).toBeInTheDocument();
+        expect(screen.getByText("0.03% · as of Apr 29, 2026")).toBeInTheDocument();
 
         expect(screen.getByRole("link", { name: "VOO" })).toHaveAttribute("href", "/VOO");
 
@@ -51,7 +51,7 @@ describe("fund overview (`/v1/funds/{fund}`)", () => {
     it("the composition line names its source and as-of and links the Holdings page", () => {
         render(<CompositionMeta error={null} page={V2_FUND_POSITIONS} ticker="SPY" />);
 
-        expect(screen.getByTestId("fund-source-badge")).toHaveTextContent("Issuer file · as of 2026-11-13");
+        expect(screen.getByTestId("fund-source-badge")).toHaveTextContent("Issuer file · as of Nov 13, 2026");
 
         expect(screen.getByRole("link", { name: "Holdings and weights" })).toHaveAttribute("href", "/SPY/holdings");
     });

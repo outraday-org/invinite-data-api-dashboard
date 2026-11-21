@@ -1,7 +1,7 @@
 import type { V2MetaCoverage, V2MetaSource } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
-import { formatInstant } from "@/lib/earnings/format";
+import { formatDay, formatInstant } from "@/lib/format";
 import { metaSourceParts, toMetaSource } from "@/lib/sec/source";
 
 const COVERAGE_LABELS: Record<V2MetaCoverage["state"], string> = {
@@ -38,7 +38,7 @@ export function V2MetaLine({ meta }: { meta: undefined | V2SecMeta }) {
             {coverage && (
                 <span className="inline-flex items-center gap-1">
                     <Badge variant={coverage.state === "complete" ? "secondary" : "outline"}>{COVERAGE_LABELS[coverage.state]}</Badge>
-                    {coverage.through && <span>{`through ${coverage.through}`}</span>}
+                    {coverage.through && <span>{`through ${formatDay(coverage.through)}`}</span>}
                 </span>
             )}
             {pinnedAt && <span>{`Snapshot ${formatInstant(pinnedAt)}`}</span>}

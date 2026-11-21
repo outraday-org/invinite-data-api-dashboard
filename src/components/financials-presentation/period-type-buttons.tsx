@@ -17,9 +17,10 @@ export function PeriodTypeButtons({
     onValueChange: (value: FiscalPeriodType) => void;
 }) {
     return (
-        <div className="flex gap-1">
+        <div aria-label="Period" className="flex gap-1" role="group">
             {periodOptions.map(opt => (
                 <Button
+                    aria-pressed={value === opt.value}
                     key={opt.value}
                     onClick={() => onValueChange(opt.value)}
                     variant={value === opt.value ? "default" : "outline"}

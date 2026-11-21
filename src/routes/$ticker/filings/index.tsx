@@ -7,6 +7,7 @@ import type { V2FilingsResponse } from "@/lib/api/types";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { useCompanyFiscalPeriods, useInstrument, useV2FilingsInfinite } from "@/lib/api/queries";
+import { tickerHead } from "@/lib/layout";
 import { fiscalPeriodIndex, formTypesOfFacet, toFilingListRow } from "@/lib/sec/parity";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 
@@ -18,6 +19,7 @@ import { HtmlDialog } from "./-components/html-dialog";
 
 export const Route = createFileRoute("/$ticker/filings/")({
     component: FilingsPage,
+    head: ({ params }) => tickerHead(params.ticker, "Filings"),
 });
 
 /** Filings per page of `/v1/filings` (one page per `next_cursor`). */
@@ -92,6 +94,7 @@ function FilingsPage() {
                 <FilingsList
                     displayFilings={displayFilings}
                     emptyIsGenuine={isV2GenuineEmpty(pages.at(0)?.meta.coverage)}
+                    errorState={errorPaged ? <SecReadinessNotice error={errorPaged} title="Failed to load more filings" /> : null}
                     hasNextPage={hasNextPage}
                     isFetchingNextPage={isFetchingNextPage}
                     isLoading={loadingPaged}
@@ -105,13 +108,12 @@ function FilingsPage() {
                     onSortToggle={() => setSortDirection(prev => (prev === "desc" ? "asc" : "desc"))}
                     sortDirection={sortDirection}
                 />
-                {errorPaged ? <SecReadinessNotice error={errorPaged} title="Failed to load more filings" /> : null}
             </>
         );
     }
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
+        <div className="flex flex-col gap-4">
             <HtmlDialog
                 dialog={htmlDialog}
                 onOpenChange={(open) => {

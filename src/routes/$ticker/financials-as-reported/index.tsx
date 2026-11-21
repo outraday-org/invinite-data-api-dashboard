@@ -7,11 +7,15 @@ import { FinancialsStatementsView, ViewButtons } from "@/components/financials-p
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
 import { StatementSelect } from "@/components/financials-presentation/statement-select";
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { isTierError } from "@/lib/api/errors";
 import { useV2FinancialsInfinite } from "@/lib/api/queries";
+import { tickerHead } from "@/lib/layout";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export const Route = createFileRoute("/$ticker/financials-as-reported/")({
     component: AsReportedFinancialsPage,
+    head: ({ params }) => tickerHead(params.ticker, "As Reported Financials"),
 });
 
 /** Periods per page of `/v1/financials/as-reported*` (one row per period; "Load more" adds older ones). */
@@ -35,7 +39,13 @@ function AsReportedFinancialsPage() {
 
     const [periodType, setPeriodType] = React.useState<FiscalPeriodType>("quarterly");
 
-    const [view, setView] = React.useState<V2FinancialsView>("presentation");
+    // The default view is the presentation tree (PRO); a plan without it falls back to the summary once the request
+    // answers `plan_required`. A view the reader picks is kept (its refusal is the view's notice).
+    const [pickedView, setView] = React.useState<null | V2FinancialsView>(null);
+
+    const [presentationRefused, setPresentationRefused] = React.useState(false);
+
+    const view: V2FinancialsView = pickedView ?? (presentationRefused ? "summary" : "presentation");
 
     const [reportedOnly, setReportedOnly] = React.useState(false);
 
@@ -54,28 +64,32 @@ function AsReportedFinancialsPage() {
         view,
     });
 
+    React.useEffect(() => {
+        if (pickedView === null && view === "presentation" && isTierError(error)) setPresentationRefused(true);
+    }, [error, pickedView, view]);
+
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-col shrink-0 gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <div>As Reported Financials</div>
-                    <div>{VIEW_SUBTITLES[view]}</div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    <StatementSelect onValueChange={setStatement} value={statement} />
-                    <ViewButtons onValueChange={setView} value={view} />
-                    <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
-                    <Button
-                        aria-pressed={reportedOnly}
-                        onClick={() => setReportedOnly(value => !value)}
-                        title="Hide the values Invinite derived (Q4, TTM, YTD)"
-                        variant={reportedOnly ? "default" : "outline"}
-                    >
-                        Reported only
-                    </Button>
-                    <FilterSelect className="w-[190px]" onValueChange={setDisplaySign} options={DISPLAY_SIGN_OPTIONS} value={displaySign} />
-                </div>
-            </div>
+        <div className="flex flex-col gap-4">
+            <PageHeader
+                actions={(
+                    <>
+                        <StatementSelect onValueChange={setStatement} value={statement} />
+                        <ViewButtons onValueChange={setView} value={view} />
+                        <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
+                        <Button
+                            aria-pressed={reportedOnly}
+                            onClick={() => setReportedOnly(value => !value)}
+                            title="Hide the values Invinite derived (Q4, TTM, YTD)"
+                            variant={reportedOnly ? "default" : "outline"}
+                        >
+                            Reported only
+                        </Button>
+                        <FilterSelect className="w-[190px]" onValueChange={setDisplaySign} options={DISPLAY_SIGN_OPTIONS} value={displaySign} />
+                    </>
+                )}
+                description={VIEW_SUBTITLES[view]}
+                title="As Reported Financials"
+            />
             <FinancialsStatementsView
                 basis="as-reported"
                 error={error}

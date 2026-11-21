@@ -1,3 +1,5 @@
+import { formatDay } from "@/lib/format";
+
 /**
  * Pure helpers of the Data API v2 calls (`/v1/*`, backend tasks/data-api-v2 task 4): the query builder (an unknown
  * parameter is a 400 `unknown_parameter`, so an unset one is never sent), the `expand` lists and the company
@@ -99,10 +101,10 @@ export function coverageFamilyLabel(family: string) {
     return FAMILY_LABELS[family] ?? family.replaceAll("_", " ");
 }
 
-/** "financials through 2026-09-26" / "news" (no `through` date): one entry per family, in the API's order. */
+/** "financials through Sep 26, 2026" / "news" (no `through` date): one entry per family, in the API's order. */
 export function coverageEntries(coverage: null | undefined | V2CompanyCoverage) {
     return (coverage?.families ?? []).map(({ family, through }) => ({
         family,
-        text: through ? `${coverageFamilyLabel(family)} through ${through}` : coverageFamilyLabel(family),
+        text: through ? `${coverageFamilyLabel(family)} through ${formatDay(through)}` : coverageFamilyLabel(family),
     }));
 }

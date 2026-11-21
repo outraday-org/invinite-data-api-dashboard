@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
+import { formatDay, formatMoneyCompact } from "@/lib/format";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { listOf, reviewStatusOf, scalarEntries } from "@/lib/sec/source";
 import { formatFractionPercentCompact, formatNumberEn, formatNumberEnCompact } from "@/lib/utils";
@@ -212,7 +213,7 @@ function netAssetsText(series: V2FilerFundSeries) {
 
     const scope = series.net_assets_scope ? NET_ASSETS_SCOPE_LABELS[series.net_assets_scope] : null;
 
-    return [`$${formatNumberEnCompact(series.net_assets_usd)}`, scope, series.net_assets_as_of && `as of ${series.net_assets_as_of}`]
+    return [formatMoneyCompact(series.net_assets_usd), scope, series.net_assets_as_of && `as of ${formatDay(series.net_assets_as_of)}`]
         .filter(Boolean)
         .join(" · ");
 }

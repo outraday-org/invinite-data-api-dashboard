@@ -90,19 +90,25 @@ const CALENDAR_STATUS_OPTIONS: Array<{ label: string; value: "all" | V2CalendarS
 
 /** A labelled `Select` over fixed options (the calendar and News filters). */
 export function FilterSelect<T extends string>({
+    "aria-label": ariaLabel,
     className,
+    disabled,
     onValueChange,
     options,
+    title,
     value,
 }: {
-    className: string;
-    onValueChange: (value: T) => void;
-    options: Array<{ label: string; value: T }>;
-    value: T;
+    "aria-label"?: string;
+    "className": string;
+    "disabled"?: boolean;
+    "onValueChange": (value: T) => void;
+    "options": Array<{ label: string; value: T }>;
+    "title"?: string;
+    "value": T;
 }) {
     return (
-        <Select onValueChange={v => onValueChange(v as T)} value={value}>
-            <SelectTrigger className={className}>
+        <Select disabled={disabled} onValueChange={v => onValueChange(v as T)} value={value}>
+            <SelectTrigger aria-label={ariaLabel} className={className} title={title}>
                 {options.find(opt => opt.value === value)?.label}
             </SelectTrigger>
             <SelectContent>

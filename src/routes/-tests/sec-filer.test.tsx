@@ -244,7 +244,7 @@ describe("SecFundView (`expand=fund`)", () => {
 
         expect(screen.getByText("0.03%")).toBeInTheDocument();
 
-        expect(screen.getByText("$1.54 T · series total, all classes · as of 2026-09-30")).toBeInTheDocument();
+        expect(screen.getByText("$1.54T · series total, all classes · as of Sep 30, 2026")).toBeInTheDocument();
 
         // The expense ratio's class (VOO) supplies the returns, not the first class listed.
         expect(screen.getByText("24.99%")).toBeInTheDocument();
@@ -254,7 +254,7 @@ describe("SecFundView (`expand=fund`)", () => {
         // A unit trust without a series name reads its fund key; no fees = a dash.
         expect(screen.getByText("cik:884394")).toBeInTheDocument();
 
-        expect(screen.getByText("$712.35 B · fund")).toBeInTheDocument();
+        expect(screen.getByText("$712.35B · fund")).toBeInTheDocument();
 
         expect(screen.getByText("N-1A")).toBeInTheDocument();
     });
@@ -336,7 +336,7 @@ describe("SecPortfolioView (`/v1/filers/{cik}/holdings`)", () => {
 
         expect(screen.getByText("$412,000,000,000")).toBeInTheDocument();
 
-        expect(screen.getByTestId("v2-meta-line")).toHaveTextContent("through 2026-09-30");
+        expect(screen.getByTestId("v2-meta-line")).toHaveTextContent("through Sep 30, 2026");
 
         fireEvent.click(screen.getByRole("button", { name: "More positions" }));
 

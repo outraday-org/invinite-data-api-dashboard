@@ -1,3 +1,4 @@
+import { ChartLineIcon } from "lucide-react";
 import * as React from "react";
 import {
     Bar,
@@ -20,6 +21,7 @@ export type MetricChartDataPoint = {
 };
 
 type MetricChartDialogProps = {
+    /** The points in the table's column order (newest period first); the chart reads oldest → newest. */
     data: Array<MetricChartDataPoint>;
     formatValue?: (value: number) => string;
     metricLabel: string;
@@ -30,6 +32,31 @@ type MetricChartDialogProps = {
 type ChartType = "bar" | "line";
 
 const formatDefaultValue = (value: number) => formatNumberEnCompact(value);
+
+/** The statement tables' first column: it stays while the table scrolls sideways in its wrapper (opaque, row hover kept). */
+export const STICKY_FIRST_CELL = "sticky left-0 z-10 bg-background group-hover:bg-muted";
+
+/**
+ * The visible chart button of a metric row (the row stays clickable too): a real button, so the keyboard reaches it.
+ * It stops the click from also reaching the row.
+ */
+export function ChartRowButton({ label, onOpen }: { label: string; onOpen: () => void }) {
+    return (
+        <button
+            aria-label={`Chart ${label}`}
+            className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex size-6 shrink-0 items-center justify-center rounded focus-visible:ring-2 focus-visible:outline-none"
+            onClick={(event) => {
+                event.stopPropagation();
+
+                onOpen();
+            }}
+            title={`Chart ${label}`}
+            type="button"
+        >
+            <ChartLineIcon className="size-3.5" />
+        </button>
+    );
+}
 
 export function MetricChartDialog({
     data,
@@ -46,8 +73,9 @@ export function MetricChartDialog({
         }
     }, [metricLabel, open]);
 
+    // Oldest → newest (the tables list the newest period first).
     const chartData = React.useMemo(
-        () => data.map(point => ({
+        () => [...data].reverse().map(point => ({
             period: point.period,
             value: point.value ?? null,
         })),
@@ -66,7 +94,7 @@ export function MetricChartDialog({
 
     return (
         <Dialog onOpenChange={onOpenChange} open={open}>
-            <DialogContent className="max-w-4xl">
+            <DialogContent className="sm:max-w-4xl">
                 <DialogHeader>
                     <DialogTitle>{metricLabel}</DialogTitle>
                 </DialogHeader>
@@ -113,6 +141,7 @@ export function MetricChartDialog({
                                                     <Bar
                                                         dataKey="value"
                                                         fill="var(--color-chart-1)"
+                                                        name={metricLabel}
                                                         radius={[4, 4, 0, 0]}
                                                     />
                                                 </BarChart>
@@ -139,6 +168,7 @@ export function MetricChartDialog({
                                                     <Line
                                                         dataKey="value"
                                                         dot={false}
+                                                        name={metricLabel}
                                                         stroke="var(--color-chart-1)"
                                                         strokeWidth={2}
                                                         type="monotone"

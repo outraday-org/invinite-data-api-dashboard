@@ -21,6 +21,7 @@ import { ApiRequestError, isTierError } from "@/lib/api/errors";
 import { useV2TranscriptSearch } from "@/lib/api/queries";
 import { formatFiscalPeriod, formatMs } from "@/lib/earnings/format";
 import { MATCH_TYPE_LABELS } from "@/lib/earnings/labels";
+import { formatDay } from "@/lib/format";
 
 import { useCallAudio } from "./audio-context";
 import { EventLink } from "./event-link";
@@ -166,7 +167,7 @@ function HitCard({ hit, mode, query, scope }: { hit: V2TranscriptSearchHit; mode
                 <MatchBadge match={hit.match} />
                 {scope.kind === "company" && (
                     <EventLink className="font-medium underline-offset-4 hover:underline" event={hit}>
-                        {`${hit.conference_date.slice(0, 10)} · ${formatFiscalPeriod(hit)}`}
+                        {`${formatDay(hit.conference_date)} · ${formatFiscalPeriod(hit)}`}
                     </EventLink>
                 )}
                 {hit.speaker.name && (

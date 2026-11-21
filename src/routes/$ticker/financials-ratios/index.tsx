@@ -8,13 +8,16 @@ import type { FiscalPeriodType, V2RatioCategory, V2RatioPeriod, V2RatiosResponse
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
+import { PageHeader } from "@/components/ui/page-header";
 import { useV2RatiosInfinite } from "@/lib/api/queries";
 import { periodLabel, periodLabels } from "@/lib/financials/statements";
+import { tickerHead } from "@/lib/layout";
 import { formatMetricId, formatNumberEnCompact } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export const Route = createFileRoute("/$ticker/financials-ratios/")({
     component: FinancialRatiosPage,
+    head: ({ params }) => tickerHead(params.ticker, "Ratio Financials"),
 });
 
 /** Periods per page of `/v1/metrics/ratios` (one row per period). */
@@ -109,17 +112,17 @@ function FinancialRatiosPage() {
     });
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-col shrink-0 gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <div>Ratio Financials</div>
-                    <div>Financial ratios grouped by category.</div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                    <FilterSelect className="w-[220px]" onValueChange={setCategory} options={ratioCategoryOptions} value={category} />
-                    <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
-                </div>
-            </div>
+        <div className="flex flex-col gap-4">
+            <PageHeader
+                actions={(
+                    <>
+                        <FilterSelect className="w-[220px]" onValueChange={setCategory} options={ratioCategoryOptions} value={category} />
+                        <PeriodTypeButtons onValueChange={setPeriodType} value={periodType} />
+                    </>
+                )}
+                description="Financial ratios grouped by category."
+                title="Ratio Financials"
+            />
             <RatiosView
                 error={error}
                 hasNextPage={hasNextPage}

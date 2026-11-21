@@ -5,10 +5,10 @@ import { z } from "zod";
 
 import { ErrorState } from "@/components/ui/error-state";
 import { NotFound } from "@/components/ui/not-found";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useV2Event } from "@/lib/api/queries";
+import { tickerHead } from "@/lib/layout";
 
 import type { CallTab, TranscriptJump } from "../-components/call-tabs";
 
@@ -31,6 +31,7 @@ const eventIdSchema = z.string().uuid();
 
 export const Route = createFileRoute("/$ticker/earnings-calls/$eventId/")({
     component: EarningsCallPage,
+    head: ({ params }) => tickerHead(params.ticker, "Earnings Call"),
     validateSearch: (search: Record<string, unknown>) => callSearchSchema.parse(search),
 });
 
@@ -76,7 +77,7 @@ function CallPage({ eventId }: { eventId: string }) {
 
     if (error) {
         return (
-            <div className="space-y-4 relative flex flex-col h-0 grow">
+            <div className="flex flex-col gap-4">
                 <ErrorState error={error} title="Failed to load the earnings call" />
             </div>
         );
@@ -84,7 +85,7 @@ function CallPage({ eventId }: { eventId: string }) {
 
     if (isLoading || !event) {
         return (
-            <div className="space-y-4 relative flex flex-col h-0 grow">
+            <div className="flex flex-col gap-4">
                 <Skeleton className="h-6 w-72" />
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-64 w-full" />
@@ -96,39 +97,37 @@ function CallPage({ eventId }: { eventId: string }) {
         // The recording is requested the first time the Audio tab opens or a timestamp is
         // clicked, then stays loaded so timestamps on any tab can play it.
         <CallAudioProvider audioTabOpen={tab === "audio"} eventId={event.event_id} hasAudio={event.has_audio}>
-            <ScrollArea className="h-0 grow">
-                <div className="flex flex-col gap-4 pr-3">
-                    <CallHeader event={event} />
+            <div className="flex flex-col gap-4">
+                <CallHeader event={event} />
 
-                    {/* The live player while the call is in progress (nothing for other calls). */}
-                    <LivePlayerSlot event={event} />
+                {/* The live player while the call is in progress (nothing for other calls). */}
+                <LivePlayerSlot event={event} />
 
-                    {/* The company's public broadcast (click-to-load), collapsed while the call is captured live. */}
-                    <EventVideoSlot event={event} />
+                {/* The company's public broadcast (click-to-load), collapsed while the call is captured live. */}
+                <EventVideoSlot event={event} />
 
-                    <AskThisCall
-                        scope={{
-                            eventId: event.event_id,
-                            kind: "event",
-                            onJumpToTranscript,
-                        }}
-                    />
+                <AskThisCall
+                    scope={{
+                        eventId: event.event_id,
+                        kind: "event",
+                        onJumpToTranscript,
+                    }}
+                />
 
-                    <CallTabs
-                        aboveContent={(
-                            <>
-                                <AudioPlayer visible={tab === "audio"} />
-                                {tab !== "audio" && <MiniPlayer onOpenAudioTab={() => onTabChange("audio")} />}
-                            </>
-                        )}
-                        event={event}
-                        onTabChange={onTabChange}
-                        onTranscriptJumpHandled={() => setTranscriptJump(null)}
-                        tab={tab}
-                        transcriptJump={transcriptJump}
-                    />
-                </div>
-            </ScrollArea>
+                <CallTabs
+                    aboveContent={(
+                        <>
+                            <AudioPlayer visible={tab === "audio"} />
+                            {tab !== "audio" && <MiniPlayer onOpenAudioTab={() => onTabChange("audio")} />}
+                        </>
+                    )}
+                    event={event}
+                    onTabChange={onTabChange}
+                    onTranscriptJumpHandled={() => setTranscriptJump(null)}
+                    tab={tab}
+                    transcriptJump={transcriptJump}
+                />
+            </div>
         </CallAudioProvider>
     );
 }

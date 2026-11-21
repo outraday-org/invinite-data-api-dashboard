@@ -193,7 +193,7 @@ export function NewsItemPanel({ id, onClose, title }: { id: null | string; onClo
                     <DialogTitle>{item.data?.title ?? title ?? "News item"}</DialogTitle>
                     <DialogDescription>Invinite&apos;s summary of the announcement</DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="h-[80vh] pr-3">
+                <ScrollArea className="max-h-[80vh] pr-3">
                     {/* p-px: the viewport clips what lies outside it, and a Card's ring-1 does */}
                     <div className="p-px">
                         <NewsItemView

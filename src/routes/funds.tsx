@@ -7,17 +7,20 @@ import type { FundListState } from "@/components/sec/fund-views";
 import type { V2FundListItem, V2FundsResponse, V2FundStructure, V2FundType } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
-import { V2ListTable } from "@/components/sec/v2-list-table";
 import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
 import { useFunds } from "@/lib/api/queries";
+import { formatMoneyCompact } from "@/lib/format";
 import { FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS } from "@/lib/instruments";
+import { titleHead } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
-import { formatNumberEnCompact } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export const Route = createFileRoute("/funds")({
     component: FundsPage,
+    head: () => titleHead("Funds"),
 });
 
 /** Funds per page of `/v1/funds` (one page per `next_cursor`). */
@@ -61,7 +64,7 @@ const COLUMNS: Array<ColumnDef<V2FundListItem>> = [
     { cell: ({ row }) => row.original.exchange ?? "—", header: "Exchange", id: "exchange" },
     {
         cell: ({ row }) => (
-            <div className="text-right tabular-nums">{row.original.net_assets_usd == null ? "—" : `$${formatNumberEnCompact(row.original.net_assets_usd)}`}</div>
+            <div className="text-right tabular-nums">{formatMoneyCompact(row.original.net_assets_usd)}</div>
         ),
         header: () => <div className="text-right">Net assets</div>,
         id: "net_assets_usd",
@@ -77,16 +80,15 @@ export function FundsList({ state }: { state: FundListState<V2FundsResponse> }) 
     const meta = pages.at(0)?.meta;
 
     return (
-        <div className="flex flex-col gap-2 h-full">
+        <div className="flex flex-col gap-2">
             <SecReadinessNotice coverage={meta?.coverage} />
-            <V2ListTable
+            <DataTable
                 columns={COLUMNS}
                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
                 emptyText="No fund matches these filters."
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
-                loadingText="Loading funds..."
                 onLoadMore={onLoadMore}
                 rows={pages.flatMap(page => page.data)}
             />
@@ -123,20 +125,24 @@ function FundsPage() {
     });
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl grow flex-col gap-4 px-4 py-8 lg:px-8">
-            <div className="flex flex-col gap-1">
-                <h1 className="text-2xl font-bold tracking-tight">Funds</h1>
-                <div className="text-muted-foreground text-sm">
-                    Every listed ETF and closed-end fund. Exchange-traded trusts (gold, bitcoin, futures pools) file
-                    no holdings report; the others show their holdings and weights.
-                </div>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-                <Input aria-label="Search funds" className="w-[260px]" onChange={event => setDraft(event.target.value)} placeholder="Ticker or name" value={draft} />
-                <FilterSelect className="w-[180px]" onValueChange={setType} options={TYPE_OPTIONS} value={type} />
-                <FilterSelect className="w-[220px]" onValueChange={setStructure} options={STRUCTURE_OPTIONS} value={structure} />
-            </div>
-            <div className="relative flex h-[70vh] flex-col">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 lg:px-8">
+            <PageHeader
+                actions={(
+                    <>
+                        <Input aria-label="Search funds" className="w-[260px]" onChange={event => setDraft(event.target.value)} placeholder="Ticker or name" value={draft} />
+                        <FilterSelect className="w-[180px]" onValueChange={setType} options={TYPE_OPTIONS} value={type} />
+                        <FilterSelect className="w-[220px]" onValueChange={setStructure} options={STRUCTURE_OPTIONS} value={structure} />
+                    </>
+                )}
+                description={(
+                    <>
+                        Every listed ETF and closed-end fund. Exchange-traded trusts (gold, bitcoin, futures pools) file no
+                        holdings report; the others show their holdings and weights.
+                    </>
+                )}
+                title="Funds"
+            />
+            <div className="relative flex flex-col">
                 <FundsList
                     state={{
                         error: funds.error,

@@ -1,156 +1,60 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { createFileRoute } from "@tanstack/react-router";
-import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import * as React from "react";
 
 import type { V2MarketHoliday } from "@/lib/api/types";
 
+import { DataTable } from "@/components/ui/data-table";
 import { ErrorState } from "@/components/ui/error-state";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { PageHeader } from "@/components/ui/page-header";
 import { useV2MarketHolidaysInfinite } from "@/lib/api/queries";
-import { formatEnDateTime } from "@/lib/date";
-import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
+import { DASH, formatDay, formatInstant } from "@/lib/format";
+import { titleHead } from "@/lib/layout";
 
 export const Route = createFileRoute("/$ticker/market-holidays/")({
     component: MarketHolidaysPage,
+    head: () => titleHead("Market Holidays"),
 });
 
+/** A partial day's open / close; a day closed all day has neither ("Closed"). */
+const sessionTime = (holiday: V2MarketHoliday, value: null | string) => {
+    if (value) return formatInstant(value);
+
+    return holiday.start_time || holiday.end_time ? DASH : "Closed";
+};
+
+const COLUMNS: Array<ColumnDef<V2MarketHoliday>> = [
+    { cell: ({ row }) => formatDay(row.original.day), header: "Date", id: "day" },
+    { cell: ({ row }) => row.original.event_name.trim() || DASH, header: "Holiday", id: "event_name" },
+    { cell: ({ row }) => sessionTime(row.original, row.original.start_time), header: "Open", id: "start_time" },
+    { cell: ({ row }) => sessionTime(row.original, row.original.end_time), header: "Close", id: "end_time" },
+];
+
 function MarketHolidaysPage() {
-    const {
-        data,
-        error,
-        fetchNextPage,
-        hasNextPage,
-        isFetchingNextPage,
-        isLoading,
-    } = useV2MarketHolidaysInfinite({
+    const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2MarketHolidaysInfinite({
         limit: 40,
         sort: "-date",
     });
 
-    const holidays = React.useMemo(
-        () => data?.pages.flatMap(page => page.data) ?? [],
-        [data],
-    );
-
-    const columns = React.useMemo<Array<ColumnDef<V2MarketHoliday>>>(
-        () => [
-            {
-                accessorKey: "day",
-                cell: ({ getValue }) => {
-                    const raw = String(getValue() ?? "").trim();
-
-                    return raw.length > 0 ? formatEnDateTime(raw, { hideTime: true }) : "-";
-                },
-                header: "Date",
-            },
-            {
-                accessorKey: "event_name",
-                cell: ({ getValue }) => {
-                    const raw = String(getValue() ?? "").trim();
-
-                    return raw.length > 0 ? raw : "-";
-                },
-                header: "Holiday",
-            },
-            {
-                accessorKey: "start_time",
-                cell: ({ getValue }) => {
-                    const raw = String(getValue() ?? "").trim();
-
-                    return raw.length > 0 ? raw : "-";
-                },
-                header: "Start Time",
-            },
-            {
-                accessorKey: "end_time",
-                cell: ({ getValue }) => {
-                    const raw = String(getValue() ?? "").trim();
-
-                    return raw.length > 0 ? raw : "-";
-                },
-                header: "End Time",
-            },
-        ],
-        [],
-    );
-
-    const table = useReactTable({
-        columns,
-        data: holidays,
-        getCoreRowModel: getCoreRowModel(),
-    });
-
-    if (error) {
-        return (
-            <div className="space-y-4 relative flex flex-col h-0 grow">
-                <ErrorState error={error} title="Failed to load market holidays" />
-            </div>
-        );
-    }
+    const holidays = React.useMemo(() => data?.pages.flatMap(page => page.data) ?? [], [data]);
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-col gap-1">
-                <div>Market Holidays</div>
-                <div className="text-muted-foreground text-sm">
-                    Market holiday calendar sorted by date (future to past).
-                </div>
-            </div>
-
-            <div className="flex flex-col h-0 grow">
-                <ScrollArea className="h-0 grow">
-                    <Table>
-                        <TableHeader>
-                            {table.getHeaderGroups().map(headerGroup => (
-                                <TableRow key={headerGroup.id}>
-                                    {headerGroup.headers.map(header => (
-                                        <TableHead key={header.id}>
-                                            {header.isPlaceholder
-                                                ? null
-                                                : flexRender(
-                                                        header.column.columnDef.header,
-                                                        header.getContext(),
-                                                    )}
-                                        </TableHead>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableHeader>
-                        <TableBody>
-                            {table.getRowModel().rows.map(row => (
-                                <TableRow key={row.id}>
-                                    {row.getVisibleCells().map(cell => (
-                                        <TableCell key={cell.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-
-                    <LoadMoreButton
-                        hasNextPage={Boolean(hasNextPage)}
-                        isFetchingNextPage={isFetchingNextPage}
-                        onLoadMore={() => fetchNextPage()}
-                    />
-
-                    {!isLoading && holidays.length === 0 && (
-                        <div className="text-muted-foreground w-full text-center text-xs p-2">
-                            No market holidays available.
-                        </div>
-                    )}
-
-                    {isLoading && holidays.length === 0 && (
-                        <div className="text-muted-foreground w-full text-center text-xs p-2">
-                            Loading market holidays...
-                        </div>
-                    )}
-                </ScrollArea>
-            </div>
+        <div className="flex flex-col gap-4">
+            <PageHeader
+                description="US market holidays, future to past. A partial day shows its open and close; any other day is closed all day."
+                title="Market Holidays"
+            />
+            <DataTable
+                columns={COLUMNS}
+                emptyText="No market holidays available."
+                errorState={error ? <ErrorState error={error} title="Failed to load market holidays" /> : null}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                isLoading={isLoading}
+                onLoadMore={() => void fetchNextPage()}
+                rows={holidays}
+            />
         </div>
     );
 }

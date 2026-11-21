@@ -37,7 +37,7 @@ describe("/funds (`GET /v1/funds`)", () => {
 
         expect(within(pdi).getByText("Closed-end fund")).toBeInTheDocument();
 
-        expect(within(pdi).getByText("$5.20 B")).toBeInTheDocument();
+        expect(within(pdi).getByText("$5.2B")).toBeInTheDocument();
 
         expect(screen.getByRole("button", { name: /load more/i })).toBeInTheDocument();
     });

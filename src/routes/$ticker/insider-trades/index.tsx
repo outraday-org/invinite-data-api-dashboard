@@ -6,18 +6,20 @@ import * as React from "react";
 import type { V2InsiderSide, V2InsiderTrade, V2InsiderTradesResponse } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
-import { V2ListTable } from "@/components/sec/v2-list-table";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
 import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/ui/page-header";
 import { useV2InsiderTradesInfinite } from "@/lib/api/queries";
-import { formatEnDateTime } from "@/lib/date";
+import { formatDay, formatInstant, formatMoney, formatShares } from "@/lib/format";
+import { tickerHead } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
-import { formatNumberEn } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export const Route = createFileRoute("/$ticker/insider-trades/")({
     component: InsiderTradesPage,
+    head: ({ params }) => tickerHead(params.ticker, "Insider Trades"),
 });
 
 /** Trades per page of `/v1/insider-trades` (one page per `next_cursor`). */
@@ -35,11 +37,9 @@ const SIDE_OPTIONS: Array<{ label: string; value: SideFilter }> = [
 
 const SIDE_LABELS: Record<V2InsiderSide, string> = { buy: "Buy", sell: "Sell" };
 
-const currency = new Intl.NumberFormat("en", { currency: "USD", style: "currency" });
+const money = (value: null | number) => formatMoney(value);
 
-const money = (value: null | number) => (value === null || !Number.isFinite(value) ? "—" : currency.format(value));
-
-const count = (value: null | number | undefined) => (value === null || value === undefined || !Number.isFinite(value) ? "—" : formatNumberEn(value));
+const count = (value: null | number | undefined) => formatShares(value);
 
 /** The insider's roles in words ("Officer (Chief Executive Officer)", "Director", "10% Owner", the other text). */
 export function insiderRoles(trade: V2InsiderTrade) {
@@ -63,13 +63,13 @@ export function insiderRoles(trade: V2InsiderTrade) {
 const COLUMNS: Array<ColumnDef<V2InsiderTrade>> = [
     {
         accessorKey: "filed_at",
-        cell: ({ row }) => formatEnDateTime(row.original.filed_at, { hideTime: false }),
+        cell: ({ row }) => formatInstant(row.original.filed_at),
         header: "Filed",
     },
     {
         // The Form 3/4/5 dataset's transaction date (release 5.7); realtime sec-api rows carry none.
         accessorKey: "transaction_date",
-        cell: ({ row }) => (row.original.transaction_date ? formatEnDateTime(row.original.transaction_date) : "—"),
+        cell: ({ row }) => formatDay(row.original.transaction_date),
         header: "Traded",
     },
     {
@@ -157,19 +157,19 @@ export function InsiderTradesView({
     const meta = pages.at(0)?.meta;
 
     return (
-        <div className="flex flex-col gap-2 h-0 grow">
+        <div className="flex flex-col gap-2">
             <SecReadinessNotice coverage={meta?.coverage} />
             <V2MetaLine meta={meta} />
-            <V2ListTable
+            <DataTable
                 columns={COLUMNS}
                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
                 emptyText="No insider trades for these filters."
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
-                loadingText="Loading insider trades..."
                 onLoadMore={onLoadMore}
                 rows={rows}
+                stickyFirstColumn
             />
             {error ? <SecReadinessNotice error={error} title="Failed to load more insider trades" /> : null}
         </div>
@@ -195,21 +195,19 @@ function InsiderTradesPage() {
     });
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-wrap items-end justify-between gap-2">
-                <div className="flex flex-col gap-1">
-                    <div>Insider Trades</div>
-                    <div className="text-muted-foreground text-sm">
-                        Insider transactions sorted by filing time (newest first).
-                    </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    <FilterSelect className="w-[170px]" onValueChange={setSide} options={SIDE_OPTIONS} value={side} />
-                    <Input aria-label="Filed from" className="w-[150px]" onChange={e => setFrom(e.target.value)} type="date" value={from} />
-                    <span className="text-muted-foreground text-xs">to</span>
-                    <Input aria-label="Filed to" className="w-[150px]" onChange={e => setTo(e.target.value)} type="date" value={to} />
-                </div>
-            </div>
+        <div className="flex flex-col gap-4">
+            <PageHeader
+                actions={(
+                    <>
+                        <FilterSelect className="w-[170px]" onValueChange={setSide} options={SIDE_OPTIONS} value={side} />
+                        <Input aria-label="Filed from" className="w-[150px]" onChange={e => setFrom(e.target.value)} type="date" value={from} />
+                        <span className="text-muted-foreground">to</span>
+                        <Input aria-label="Filed to" className="w-[150px]" onChange={e => setTo(e.target.value)} type="date" value={to} />
+                    </>
+                )}
+                description="Insider transactions, newest filing first."
+                title="Insider Trades"
+            />
 
             <InsiderTradesView
                 error={error}

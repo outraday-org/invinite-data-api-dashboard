@@ -16,11 +16,11 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2Filing } from "@/lib/api/queries";
-import { formatEnDateTime } from "@/lib/date";
+import { formatDay } from "@/lib/format";
 import { primaryDocumentOf } from "@/lib/sec/parity";
 import { toV2FilingDocuments } from "@/lib/sec/source";
 
-import { fiscalPeriodLabel } from "./filing-item";
+import { fiscalPeriodLabel } from "./filing-columns";
 
 /** The filing whose primary document the dialog shows. */
 export type FilingHtmlTarget = FilingListRow & { ticker: string };
@@ -140,7 +140,7 @@ export function HtmlDialog({
                                         <>
                                             <span>•</span>
                                             <span className="truncate">
-                                                {formatEnDateTime(dialog.filingDate, { hideTime: true })}
+                                                {formatDay(dialog.filingDate)}
                                             </span>
                                         </>
                                     )
@@ -148,7 +148,7 @@ export function HtmlDialog({
                         </div>
                     </div>
 
-                    <div className="px-4 pb-4 min-h-0 grow">
+                    <div className="px-4 pb-4 grow min-h-0">
                         {dialog && (
                             <FilingHtmlBody
                                 data={manifest.data}

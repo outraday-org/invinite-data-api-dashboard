@@ -1,9 +1,8 @@
 import * as React from "react";
 
-import { MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChartRowButton, MetricChartDialog, STICKY_FIRST_CELL } from "@/components/metric-chart/metric-chart-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatNumberEnCompact } from "@/lib/utils";
+import { cn, formatNumberEnCompact } from "@/lib/utils";
 
 export type MetricsTableRow = {
     group?: string;
@@ -31,69 +30,70 @@ export function FinancialMetricsTable({
     const [selectedRow, setSelectedRow] = React.useState<MetricsTableRow | null>(null);
 
     return (
-        <div className="space-y-2 flex flex-col h-0 grow">
-            <ScrollArea className="grow h-0">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
+        <div className="flex flex-col gap-2">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        {hasGroupColumn
+                            ? (
+                                    <TableHead className={cn(STICKY_FIRST_CELL, "w-[140px] min-w-[140px] max-w-[140px] sm:w-[320px] sm:min-w-[320px] sm:max-w-[320px]")}>
+                                        {groupLabel}
+                                    </TableHead>
+                                )
+                            : null}
+                        <TableHead className={cn(!hasGroupColumn && STICKY_FIRST_CELL, "w-[160px] min-w-[160px] max-w-[160px]")}>
+                            {labelHeader}
+                        </TableHead>
+                        {periodLabels.map(label => (
+                            <TableHead className="text-right" key={label}>
+                                {label}
+                            </TableHead>
+                        ))}
+                    </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y-0">
+                    {rows.map(row => (
+                        <TableRow
+                            className="group h-[41px] leading-5 cursor-pointer hover:bg-muted/50"
+                            key={row.key}
+                            onClick={() => setSelectedRow(row)}
+                        >
                             {hasGroupColumn
                                 ? (
-                                        <TableHead className="w-[320px] min-w-[320px] max-w-[320px]">
-                                            {groupLabel}
-                                        </TableHead>
+                                        <TableCell className={cn(STICKY_FIRST_CELL, "w-[140px] min-w-[140px] max-w-[140px] sm:w-[320px] sm:min-w-[320px] sm:max-w-[320px]")}>
+                                            <div className="truncate" title={row.group ?? ""}>
+                                                {row.group ?? "—"}
+                                            </div>
+                                        </TableCell>
                                     )
                                 : null}
-                            <TableHead className="w-[140px] min-w-[140px] max-w-[140px]">
-                                {labelHeader}
-                            </TableHead>
-                            {periodLabels.map(label => (
-                                <TableHead className="text-right" key={label}>
-                                    {label}
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody className="divide-y-0">
-                        {rows.map(row => (
-                            <TableRow
-                                className="h-[41px] leading-5 cursor-pointer hover:bg-muted/50"
-                                key={row.key}
-                                onClick={() => setSelectedRow(row)}
-                            >
-                                {hasGroupColumn
-                                    ? (
-                                            <TableCell className="w-[320px] min-w-[320px] max-w-[320px]">
-                                                <div className="truncate" title={row.group ?? ""}>
-                                                    {row.group ?? "—"}
-                                                </div>
-                                            </TableCell>
-                                        )
-                                    : null}
-                                <TableCell className="w-[140px] min-w-[140px] max-w-[140px]">
-                                    <div className="truncate" title={row.label}>
+                            <TableCell className={cn(!hasGroupColumn && STICKY_FIRST_CELL, "w-[160px] min-w-[160px] max-w-[160px]")}>
+                                <div className="flex min-w-0 items-center gap-1">
+                                    <div className="min-w-0 flex-1 truncate" title={row.label}>
                                         {row.label}
                                     </div>
-                                </TableCell>
-                                {periodLabels.map((label) => {
-                                    const val = row.values[label];
+                                    <ChartRowButton label={row.label} onOpen={() => setSelectedRow(row)} />
+                                </div>
+                            </TableCell>
+                            {periodLabels.map((label) => {
+                                const val = row.values[label];
 
-                                    return (
-                                        <TableCell className="text-right" key={`${row.key}:${label}`}>
-                                            <span className="tabular-nums">
-                                                {val === undefined
-                                                    ? "—"
-                                                    : ((row.formatValue ?? formatValue)
-                                                            ? (row.formatValue ?? formatValue)!(val)
-                                                            : formatNumberEnCompact(val))}
-                                            </span>
-                                        </TableCell>
-                                    );
-                                })}
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </ScrollArea>
+                                return (
+                                    <TableCell className="text-right" key={`${row.key}:${label}`}>
+                                        <span className="tabular-nums">
+                                            {val === undefined
+                                                ? "—"
+                                                : ((row.formatValue ?? formatValue)
+                                                        ? (row.formatValue ?? formatValue)!(val)
+                                                        : formatNumberEnCompact(val))}
+                                        </span>
+                                    </TableCell>
+                                );
+                            })}
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
             <MetricChartDialog
                 data={selectedRow
                     ? periodLabels.map(period => ({

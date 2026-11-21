@@ -50,7 +50,7 @@ export const Route = createRootRoute({
                 name: "viewport",
             },
             {
-                title: "Invinite API Dashboard",
+                title: "Invinite Data",
             },
         ],
     }),
@@ -101,17 +101,20 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <QueryClientProvider client={queryClient}>
                     <SidebarProvider className="has-data-[variant=inset]:bg-background" defaultOpen>
                         {children}
-                        <TanStackDevtools
-                            config={{
-                                position: "bottom-right",
-                            }}
-                            plugins={[
-                                {
-                                    name: "Tanstack Router",
-                                    render: <TanStackRouterDevtoolsPanel />,
-                                },
-                            ]}
-                        />
+                        {/* Developer tools only on `pnpm run dev`, never in the deployed build. */}
+                        {import.meta.env.DEV && (
+                            <TanStackDevtools
+                                config={{
+                                    position: "bottom-right",
+                                }}
+                                plugins={[
+                                    {
+                                        name: "Tanstack Router",
+                                        render: <TanStackRouterDevtoolsPanel />,
+                                    },
+                                ]}
+                            />
+                        )}
                         <Toaster />
                         <Scripts />
                     </SidebarProvider>

@@ -9,6 +9,8 @@ import type {
     V2HolderSource,
 } from "@/lib/api/types";
 
+import { formatDay } from "@/lib/format";
+
 /**
  * View helpers of a listed fund's composition (`/v1/funds/{fund}/holdings` + `/weights`) and of the holders of a
  * security (`/v1/holders`, Data API 7.0). Every value of the contract's enums has its label here (`fund.test.ts` reads
@@ -21,11 +23,11 @@ export const FUND_SOURCE_LABELS: Record<V2FundSource, string> = {
     nport: "SEC N-PORT filing",
 };
 
-/** "Issuer file · as of 2026-11-13": the label every composition carries (never "current" or "live"). */
+/** "Issuer file · as of Nov 13, 2026": the label every composition carries (never "current" or "live"). */
 export function fundSourceText(source: null | undefined | V2FundSource, asOf: null | string | undefined): null | string {
     if (!source || !asOf) return null;
 
-    return `${FUND_SOURCE_LABELS[source]} · as of ${asOf}`;
+    return `${FUND_SOURCE_LABELS[source]} · as of ${formatDay(asOf)}`;
 }
 
 export const FUND_REASON_TEXT: Record<V2FundCompositionReason, string> = {

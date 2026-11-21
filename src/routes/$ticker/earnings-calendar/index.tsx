@@ -6,24 +6,24 @@ import * as React from "react";
 import type { V2Event } from "@/lib/api/types";
 import type { CalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
+import { DataTable } from "@/components/ui/data-table";
 import { ErrorState } from "@/components/ui/error-state";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { PageHeader } from "@/components/ui/page-header";
 import { useV2EventsInfinite } from "@/lib/api/queries";
 import { calendarWindow, eventLabel, isCallToday, SESSION_LABELS } from "@/lib/earnings/format";
+import { titleHead } from "@/lib/layout";
 import { AvailabilityIcons } from "@/routes/$ticker/earnings-calls/-components/availability-icons";
 import { CalendarFilters, matchesCalendarSearch, validateCalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
-import { CalendarCallCell, CalendarReportCell, CalendarStatusBadge } from "@/routes/$ticker/earnings-calls/-components/calendar-semantics";
-import { CallStatusBadge } from "@/routes/$ticker/earnings-calls/-components/call-status-badge";
+import { CalendarCallCell, CalendarReportCell, CalendarRowStatus } from "@/routes/$ticker/earnings-calls/-components/calendar-semantics";
 import { EventLink } from "@/routes/$ticker/earnings-calls/-components/event-link";
 import { EventTypeBadge } from "@/routes/$ticker/earnings-calls/-components/event-type-badge";
 import { EventVideoLink } from "@/routes/$ticker/earnings-calls/-components/event-video";
-import { EventsTable } from "@/routes/$ticker/earnings-calls/-components/events-table";
 import { LiveNowStrip } from "@/routes/$ticker/earnings-calls/-components/live-now-strip";
 import { WebcastLink } from "@/routes/$ticker/earnings-calls/-components/webcast-link";
-import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
 export const Route = createFileRoute("/$ticker/earnings-calendar/")({
     component: EarningsCalendarPage,
+    head: () => titleHead("Earnings Calendar"),
     validateSearch: validateCalendarSearch,
 });
 
@@ -52,6 +52,7 @@ function EarningsCalendarPage() {
         scheduledAtGte: range.from,
         scheduledAtLte: range.to,
         sort: "scheduled_at",
+        toastErrors: false,
         type: search.eventType,
     });
 
@@ -103,12 +104,7 @@ function EarningsCalendarPage() {
                 id: "session",
             },
             {
-                cell: ({ row }) => (
-                    <div className="flex flex-wrap items-center gap-1">
-                        <CallStatusBadge event={row.original} />
-                        <CalendarStatusBadge calendar={row.original.calendar} />
-                    </div>
-                ),
+                cell: ({ row }) => <CalendarRowStatus event={row.original} />,
                 header: "Status",
                 id: "status",
             },
@@ -132,18 +128,20 @@ function EarningsCalendarPage() {
     };
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-col shrink-0 gap-3">
-                <div className="flex flex-col gap-1">
-                    <div>Earnings Calendar</div>
-                    <div className="text-muted-foreground text-sm">
-                        Calls of all covered US companies by New York call day (at most 92 days at once). Estimated = a
-                        vendor or history estimate, unconfirmed = a first-party date without a time, confirmed = a
-                        first-party start time. The report (results release) is shown apart from the call: its day and
-                        before open / after close come from the results filing&apos;s acceptance. Session and event
-                        status filter the loaded rows.
-                    </div>
-                </div>
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
+                <PageHeader
+                    description={(
+                        <>
+                            Calls of all covered US companies by New York call day (at most 92 days at once). Estimated = a
+                            vendor or history estimate, unconfirmed = a first-party date without a time, confirmed = a
+                            first-party start time. The report (results release) is shown apart from the call: its day and
+                            before open / after close come from the results filing&apos;s acceptance. Session and event
+                            status filter the loaded rows.
+                        </>
+                    )}
+                    title="Earnings Calendar"
+                />
                 <CalendarFilters
                     from={range.from}
                     onChange={onFilterChange}
@@ -154,32 +152,17 @@ function EarningsCalendarPage() {
 
             <LiveNowStrip />
 
-            {error
-                ? <ErrorState error={error} title="Failed to load the earnings calendar" />
-                : (
-                        <div className="flex flex-col h-0 grow">
-                            <ScrollArea className="h-0 grow">
-                                <EventsTable
-                                    columns={columns}
-                                    events={events}
-                                    isLoading={isLoading}
-                                    rowClassName={event => (isCallToday(event, now) ? "bg-muted/30" : undefined)}
-                                />
-
-                                <LoadMoreButton
-                                    hasNextPage={Boolean(hasNextPage)}
-                                    isFetchingNextPage={isFetchingNextPage}
-                                    onLoadMore={() => fetchNextPage()}
-                                />
-
-                                {!isLoading && events.length === 0 && (
-                                    <div className="text-muted-foreground w-full text-center text-xs p-2">
-                                        {hasNextPage ? "No matching calls loaded yet." : "No calls in this window."}
-                                    </div>
-                                )}
-                            </ScrollArea>
-                        </div>
-                    )}
+            <DataTable
+                columns={columns}
+                emptyText={hasNextPage ? "No matching calls loaded yet." : "No calls in this window."}
+                errorState={error ? <ErrorState error={error} title="Failed to load the earnings calendar" /> : null}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                isLoading={isLoading}
+                onLoadMore={() => void fetchNextPage()}
+                rowClassName={event => (isCallToday(event, now) ? "bg-muted/30" : undefined)}
+                rows={events}
+            />
         </div>
     );
 }

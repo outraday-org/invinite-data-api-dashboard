@@ -21,7 +21,7 @@ describe("Fund holdings (`/v1/funds/{fund}/holdings`)", () => {
     it("the source + as-of badge, the top positions as stated, and 'Load more' for the next page", () => {
         render(<FundCompositionList state={{ ...list, error: null, hasNextPage: true, pages: [V2_FUND_POSITIONS] }} />);
 
-        expect(screen.getByTestId("fund-source-badge")).toHaveTextContent("Issuer file · as of 2026-11-13");
+        expect(screen.getByTestId("fund-source-badge")).toHaveTextContent("Issuer file · as of Nov 13, 2026");
 
         expect(screen.getByText("NVIDIA CORP")).toBeInTheDocument();
 

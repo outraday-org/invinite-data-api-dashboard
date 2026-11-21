@@ -3,10 +3,10 @@ import type { V2QaPair } from "@/lib/api/types";
 import { SpeakerAvatar } from "@/components/earnings/speaker-avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { LoadMoreButton } from "@/components/ui/load-more-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2Participants, useV2QaInfinite } from "@/lib/api/queries";
 import { cn } from "@/lib/utils";
-import { LoadMoreButton } from "@/routes/$ticker/filings/-components/load-more-button";
 
 import type { CallTabProps } from "../call-tabs";
 import type { SpeakerImages } from "./transcript-turns";

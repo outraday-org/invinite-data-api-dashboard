@@ -35,7 +35,7 @@ describe("calendar semantics", () => {
             </>,
         );
 
-        expect(screen.getByText("2026-11-05")).toBeInTheDocument();
+        expect(screen.getByText("Nov 5, 2026")).toBeInTheDocument();
 
         expect(screen.getByText("Before open · from the filing's acceptance")).toBeInTheDocument();
 
@@ -60,7 +60,7 @@ describe("calendar semantics", () => {
 
         expect(screen.getByText("no call")).toBeInTheDocument();
 
-        expect(screen.getByText("2026-11-05")).toBeInTheDocument();
+        expect(screen.getByText("Nov 5, 2026")).toBeInTheDocument();
     });
 
     it("an expired date-only call keeps its date with 'date only' quality", () => {

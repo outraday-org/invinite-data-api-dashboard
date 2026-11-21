@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { changePercentText, HolderChangesList, HoldersList, HoldersOverview } from "@/components/sec/holder-views";
 import { ApiRequestError } from "@/lib/api/errors";
-import { formatEnDateTime } from "@/lib/date";
+import { formatDay } from "@/lib/format";
 import {
     V2_HOLDER_CHANGES,
     V2_HOLDERS_13F,
@@ -53,7 +53,7 @@ describe("Holders, one source (`/v1/holders?source=`)", () => {
 
         expect(within(line).getByText("Complete")).toBeInTheDocument();
 
-        expect(within(line).getByText("through 2026-09-30")).toBeInTheDocument();
+        expect(within(line).getByText("through Sep 30, 2026")).toBeInTheDocument();
 
         expect(within(line).getByText(/^Snapshot /)).toBeInTheDocument();
 
@@ -65,7 +65,7 @@ describe("Holders, one source (`/v1/holders?source=`)", () => {
 
         expect(screen.getByRole("link", { name: "Vanguard 500 Index Fund" })).toHaveAttribute("href", "/VOO");
 
-        expect(screen.getByText("Issuer file 2026-10-31")).toBeInTheDocument();
+        expect(screen.getByText("Issuer file Oct 31, 2026")).toBeInTheDocument();
 
         expect(screen.getByText("Fidelity Contrafund").closest("a")).toBeNull();
 
@@ -129,7 +129,7 @@ describe("Holders overview (`/v1/holders` without `source`, owner decision 12)",
 
         expect(within(thirteenF).getByText("Institutions (13F)")).toBeInTheDocument();
 
-        expect(within(thirteenF).getByText("as of 2026-09-30")).toBeInTheDocument();
+        expect(within(thirteenF).getByText("as of Sep 30, 2026")).toBeInTheDocument();
 
         expect(within(thirteenF).getByText("1 shown, more available")).toBeInTheDocument();
 
@@ -211,7 +211,7 @@ describe("Insider trades (`/v1/insider-trades`)", () => {
 
         const dataset = screen.getByText("Adams Katherine L").closest("tr")!;
 
-        expect(within(dataset).getByText(formatEnDateTime("2026-10-15"))).toBeInTheDocument();
+        expect(within(dataset).getByText(formatDay("2026-10-15"))).toBeInTheDocument();
 
         expect(within(dataset).getByText("0001631982")).toBeInTheDocument();
 

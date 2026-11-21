@@ -10,9 +10,10 @@ import type { NewsFilters, NewsSearch } from "@/lib/news/labels";
 
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { PageHeader } from "@/components/ui/page-header";
 import { isTierError } from "@/lib/api/errors";
 import { useApiBaseUrl, useNewsPage, useV2Company } from "@/lib/api/queries";
+import { tickerHead } from "@/lib/layout";
 import { useLiveNews } from "@/lib/live/use-live-news";
 import { issuerLabels, matchesNewsFilters, mergeLiveItems, validateNewsSearch } from "@/lib/news/labels";
 import { firstNewsPage, newsPageCursor, newsPageNumber, newsPagerFor, nextNewsPage, previousNewsPage } from "@/lib/news/pager";
@@ -27,6 +28,7 @@ import { NewsTable } from "./-components/news-table";
 
 export const Route = createFileRoute("/$ticker/news/")({
     component: NewsPage,
+    head: ({ params }) => tickerHead(params.ticker, "News"),
     validateSearch: validateNewsSearch,
 });
 
@@ -77,7 +79,6 @@ export function NewsPageView({
     items,
     liveIds,
     notice,
-    onOpen,
     pager,
     scopeLabel,
 }: {
@@ -94,21 +95,22 @@ export function NewsPageView({
     items: ReadonlyArray<NewsItemPublic>;
     liveIds?: ReadonlySet<string>;
     notice?: React.ReactNode;
-    onOpen: (id: string) => void;
     /** The page shown and its neighbours (`NewsPager`, centred under the table). */
     pager: React.ComponentProps<typeof NewsPager>;
     scopeLabel: string;
 }) {
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-col gap-3 shrink-0">
-                <div className="flex flex-col gap-1">
-                    <div>News</div>
-                    <div className="text-muted-foreground text-sm">
-                        {`${scopeLabel}: SEC filings and the companies' own newsroom publications, newest first. `}
-                        Texts are the publishers&apos; own words, shown with their source and date; wire services are never a source.
-                    </div>
-                </div>
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
+                <PageHeader
+                    description={(
+                        <>
+                            {`${scopeLabel}: SEC filings and the companies' own newsroom publications, newest first. `}
+                            Texts are the publishers&apos; own words, shown with their source and date; wire services are never a source.
+                        </>
+                    )}
+                    title="News"
+                />
                 {controls}
                 {notice}
             </div>
@@ -117,17 +119,16 @@ export function NewsPageView({
                 ? <ListError error={error} />
                 : (
                         <>
-                            {/* Keyed by page: a new page starts at the top of the table. */}
-                            <ScrollArea className="h-0 grow" key={pager.page}>
+                            <div>
                                 {!isLoading && items.length === 0 && hiddenByFilters === 0
                                     ? <div className="text-muted-foreground w-full p-2 text-center text-xs">{emptyText}</div>
                                     : !isLoading && items.length === 0
                                             ? <FilteredOut hidden={hiddenByFilters} pager={pager} shown={0} />
-                                            : <NewsTable isLoading={isLoading} items={items} liveIds={liveIds} onOpen={onOpen} />}
+                                            : <NewsTable isLoading={isLoading} items={items} liveIds={liveIds} />}
                                 {!isLoading && items.length > 0 && hiddenByFilters > 0 && (
                                     <FilteredOut hidden={hiddenByFilters} pager={pager} shown={items.length} />
                                 )}
-                            </ScrollArea>
+                            </div>
                             <NewsPager {...pager} />
                         </>
                     )}
@@ -237,8 +238,6 @@ function NewsPage() {
 
     const liveIds = new Set(liveItems.map(item => item.id));
 
-    const openItem = (id: string) => void navigate({ search: prev => ({ ...prev, item: id }) });
-
     const selectedTitle = items.find(item => item.id === search.item)?.title;
 
     const controls = (
@@ -278,7 +277,6 @@ function NewsPage() {
                 items={items}
                 liveIds={liveIds}
                 notice={notice}
-                onOpen={openItem}
                 pager={{
                     hasNext: nextCursor !== null,
                     isFetching: list.isFetching,

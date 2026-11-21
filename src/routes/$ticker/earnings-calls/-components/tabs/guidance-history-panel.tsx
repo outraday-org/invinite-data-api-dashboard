@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useV2GuidanceInfinite } from "@/lib/api/queries";
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
 import { BASIS_LABELS, formatGuidanceRange, formatGuidanceValue, metricLabel, PERIOD_KIND_LABELS } from "@/lib/earnings/labels";
+import { formatDay } from "@/lib/format";
 
 import { EventLink } from "../event-link";
 import { Notice } from "../media-state";
@@ -39,7 +40,7 @@ function formatDelta(delta: null | number, unit: null | string, currency: null |
 }
 
 /** The call day of a guidance row (`conference_date` is a timestamp in v2). */
-const callDay = (conferenceDate: null | string) => conferenceDate?.slice(0, 10) ?? "—";
+const callDay = (conferenceDate: null | string) => formatDay(conferenceDate);
 
 function HistoryBody({ company, target }: { company: string; target: GuidanceHistoryTarget }) {
     // The company's items for the metric across its calls, newest call first (`/v1/guidance`, every review state).

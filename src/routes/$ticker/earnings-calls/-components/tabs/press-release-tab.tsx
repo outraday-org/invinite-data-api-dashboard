@@ -1,9 +1,8 @@
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2PressRelease } from "@/lib/api/queries";
-import { formatEnDateTime } from "@/lib/date";
 import { edgarFolderUrl } from "@/lib/earnings/edgar";
+import { formatInstant } from "@/lib/format";
 import { paragraphs } from "@/lib/utils";
 
 import type { CallTabProps } from "../call-tabs";
@@ -29,7 +28,7 @@ export function PressReleaseTab({ event, eventId }: CallTabProps) {
             <div className="flex flex-col gap-1">
                 <div className="text-sm font-medium">{data.title ?? "Press release"}</div>
                 <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
-                    {data.published_at && <span>{formatEnDateTime(data.published_at, { hideTime: false })}</span>}
+                    {data.published_at && <span>{formatInstant(data.published_at)}</span>}
                     <Badge variant="outline">{data.origin}</Badge>
                     {data.trust_tier && <Badge variant="secondary">{data.trust_tier}</Badge>}
                     {edgarUrl && (
@@ -58,14 +57,14 @@ export function PressReleaseTab({ event, eventId }: CallTabProps) {
             {body.length === 0
                 ? <Notice title="No body text stored for this release" />
                 : (
-                        <ScrollArea className="h-[65vh] rounded-md border">
+                        <div className="rounded-md border">
                             <div className="flex flex-col gap-3 p-3 leading-relaxed">
                                 {body.map((paragraph, index) => (
                                     // Paragraphs have no id; their order within one release is stable.
                                     <p className="whitespace-pre-wrap" key={index}>{paragraph}</p>
                                 ))}
                             </div>
-                        </ScrollArea>
+                        </div>
                     )}
         </div>
     );

@@ -7,7 +7,7 @@ import type { FilingListRow } from "@/lib/sec/parity";
 
 import { ApiRequestError } from "@/lib/api/errors";
 import { V2_FILING_10K } from "@/lib/sec/v2-fixtures";
-import { FilingItem } from "@/routes/$ticker/filings/-components/filing-item";
+import { FilingsList } from "@/routes/$ticker/filings/-components/filings-list";
 import { FilingHtmlBody, primaryDocumentUrl } from "@/routes/$ticker/filings/-components/html-dialog";
 
 // Pure views: keep the server functions (TanStack Start) and the HTML fetcher unloaded.
@@ -49,11 +49,25 @@ const ROW: FilingListRow = {
 
 const noop = () => undefined;
 
+/** The filings table with one row (the page's `DataTable`). */
+const list = (filing: FilingListRow, onOpenHtml: () => void = noop) => (
+    <FilingsList
+        displayFilings={[filing]}
+        hasNextPage={false}
+        isFetchingNextPage={false}
+        isLoading={false}
+        onFetchNextPage={noop}
+        onOpenHtml={onOpenHtml}
+        onSortToggle={noop}
+        sortDirection="desc"
+    />
+);
+
 describe("filings row", () => {
     it("shows form, accession, the fiscal quarter of its period end, and opens the HTML view on click", () => {
         const onOpenHtml = vi.fn();
 
-        render(<FilingItem filing={ROW} onOpenHtml={onOpenHtml} />);
+        render(list(ROW, onOpenHtml));
 
         expect(screen.getByText("10-K")).toBeInTheDocument();
 
@@ -65,11 +79,11 @@ describe("filings row", () => {
     });
 
     it("an unmatched period shows its period end; no period at all shows a dash", () => {
-        const { rerender } = render(<FilingItem filing={{ ...ROW, fiscalQuarter: null, fiscalYear: null }} onOpenHtml={noop} />);
+        const { rerender } = render(list({ ...ROW, fiscalQuarter: null, fiscalYear: null }));
 
         expect(screen.getByText("2026-09-26")).toBeInTheDocument();
 
-        rerender(<FilingItem filing={{ ...ROW, fiscalQuarter: null, fiscalYear: null, periodEnd: null }} onOpenHtml={noop} />);
+        rerender(list({ ...ROW, fiscalQuarter: null, fiscalYear: null, periodEnd: null }));
 
         expect(screen.getByText("—")).toBeInTheDocument();
     });

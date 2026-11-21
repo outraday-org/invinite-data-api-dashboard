@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+
 import type { NewsItemPublic } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +13,7 @@ const SKELETON_ROWS = 8;
 const COLUMNS = 5;
 
 /**
- * The feed: publication time, headline (opens the item panel) with "Published by <issuer>" when a company published
+ * The feed: publication time, headline (a link to `?item=`, which opens the item panel) with "Published by <issuer>" when a company published
  * it itself, the first source, kind / earnings badges and the companies mentioned. The headline is the publisher's,
  * shown with its publisher and source on the same row.
  */
@@ -19,13 +21,11 @@ export function NewsTable({
     isLoading,
     items,
     liveIds,
-    onOpen,
 }: {
     isLoading: boolean;
     items: ReadonlyArray<NewsItemPublic>;
     /** Items that arrived over the live feed (marked "New"). */
     liveIds?: ReadonlySet<string>;
-    onOpen: (id: string) => void;
 }) {
     return (
         <Table>
@@ -59,9 +59,10 @@ export function NewsTable({
                                         {liveIds?.has(item.id) && <Badge className="ml-2" variant="default">New</Badge>}
                                     </TableCell>
                                     <TableCell className="max-w-[460px] align-top whitespace-normal">
-                                        <button className="text-left font-medium hover:underline" onClick={() => onOpen(item.id)} type="button">
+                                        {/* A link (`?item=`): opens the item panel, and in a new tab with the panel open. */}
+                                        <Link className="text-left font-medium hover:underline" search={prev => ({ ...prev, item: item.id })} to=".">
                                             {item.title}
-                                        </button>
+                                        </Link>
                                         <div className="text-muted-foreground text-xs">
                                             {publishers.length > 0 ? `Published by ${publishers.join(", ")}` : `By ${item.attribution.publisher}`}
                                         </div>

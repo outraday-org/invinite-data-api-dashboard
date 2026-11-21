@@ -2,8 +2,7 @@ import * as React from "react";
 
 import type { StatementColumn, StatementLine } from "@/lib/financials/statements";
 
-import { MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ChartRowButton, MetricChartDialog, STICKY_FIRST_CELL } from "@/components/metric-chart/metric-chart-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
 
@@ -29,45 +28,46 @@ export function FinancialsFlatTable({ columns, lines }: { columns: Array<Stateme
     const [selected, setSelected] = React.useState<null | StatementLine>(null);
 
     return (
-        <div className="space-y-2 flex flex-col h-0 grow">
-            <ScrollArea className="grow h-0">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="w-[420px] min-w-[420px] max-w-[420px]">Metric</TableHead>
-                            {columns.map(column => (
-                                <TableHead className="text-right" key={column.label} title={column.title}>
-                                    {column.label}
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody className="divide-y-0">
-                        {lines.map(line => (
-                            <TableRow className="h-[41px] leading-5 cursor-pointer hover:bg-muted/50" key={line.id} onClick={() => setSelected(line)}>
-                                <TableCell className="w-[420px] min-w-[420px] max-w-[420px]">
-                                    <div className="font-medium truncate" title={line.title ?? line.label}>{line.label}</div>
-                                </TableCell>
-                                {columns.map((column, index) => {
-                                    const cell = line.values[index];
-
-                                    return (
-                                        <TableCell className="text-right" key={`${line.id}:${column.label}`}>
-                                            {cell
-                                                ? (
-                                                        <span className={cn("tabular-nums", cell.derived ? "italic text-muted-foreground" : null)} title={cellTitle(cell)}>
-                                                            {formatterOf(line.id)(cell.value)}
-                                                        </span>
-                                                    )
-                                                : <span className="tabular-nums">—</span>}
-                                        </TableCell>
-                                    );
-                                })}
-                            </TableRow>
+        <div className="flex flex-col gap-2">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead className={cn(STICKY_FIRST_CELL, "w-[160px] min-w-[160px] max-w-[160px] sm:w-[420px] sm:min-w-[420px] sm:max-w-[420px]")}>Metric</TableHead>
+                        {columns.map(column => (
+                            <TableHead className="text-right" key={column.label} title={column.title}>
+                                {column.label}
+                            </TableHead>
                         ))}
-                    </TableBody>
-                </Table>
-            </ScrollArea>
+                    </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y-0">
+                    {lines.map(line => (
+                        <TableRow className="group h-[41px] leading-5 cursor-pointer hover:bg-muted/50" key={line.id} onClick={() => setSelected(line)}>
+                            <TableCell className={cn(STICKY_FIRST_CELL, "w-[160px] min-w-[160px] max-w-[160px] sm:w-[420px] sm:min-w-[420px] sm:max-w-[420px]")}>
+                                <div className="flex min-w-0 items-center gap-1">
+                                    <div className="min-w-0 flex-1 truncate font-medium" title={line.title ?? line.label}>{line.label}</div>
+                                    <ChartRowButton label={line.label} onOpen={() => setSelected(line)} />
+                                </div>
+                            </TableCell>
+                            {columns.map((column, index) => {
+                                const cell = line.values[index];
+
+                                return (
+                                    <TableCell className="text-right" key={`${line.id}:${column.label}`}>
+                                        {cell
+                                            ? (
+                                                    <span className={cn("tabular-nums", cell.derived ? "italic text-muted-foreground" : null)} title={cellTitle(cell)}>
+                                                        {formatterOf(line.id)(cell.value)}
+                                                    </span>
+                                                )
+                                            : <span className="tabular-nums">—</span>}
+                                    </TableCell>
+                                );
+                            })}
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
             <MetricChartDialog
                 data={selected ? columns.map((column, index) => ({ period: column.label, value: selected.values[index]?.value })) : []}
                 formatValue={selected ? formatterOf(selected.id) : undefined}

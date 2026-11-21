@@ -6,18 +6,20 @@ import * as React from "react";
 import type { V2Ipo, V2IposResponse, V2IpoStage } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
-import { V2ListTable } from "@/components/sec/v2-list-table";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
+import { PageHeader } from "@/components/ui/page-header";
 import { useV2IposInfinite } from "@/lib/api/queries";
 import { V2_IPO_STAGES } from "@/lib/api/v2";
-import { formatEnDateTime } from "@/lib/date";
+import { formatDay, formatShares } from "@/lib/format";
+import { titleHead } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
-import { formatNumberEn } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export const Route = createFileRoute("/$ticker/ipos/")({
     component: IposPage,
+    head: () => titleHead("IPOs"),
 });
 
 /** Offerings per page of `/v1/ipos` (one page per `next_cursor`). */
@@ -93,7 +95,7 @@ export function ipoSymbolText(ipo: Pick<V2Ipo, "company" | "proposed_symbols" | 
 const COLUMNS: Array<ColumnDef<V2Ipo>> = [
     {
         accessorKey: "listing_date",
-        cell: ({ row }) => (row.original.listing_date ? formatEnDateTime(row.original.listing_date, { hideTime: true }) : "—"),
+        cell: ({ row }) => formatDay(row.original.listing_date),
         header: "Listing Date",
     },
     {
@@ -147,7 +149,7 @@ const COLUMNS: Array<ColumnDef<V2Ipo>> = [
         accessorKey: "shares_offered",
         cell: ({ row }) => (
             <div className="text-right tabular-nums">
-                {row.original.shares_offered === null ? "—" : formatNumberEn(row.original.shares_offered)}
+                {formatShares(row.original.shares_offered)}
             </div>
         ),
         header: () => <div className="text-right">Shares</div>,
@@ -202,17 +204,16 @@ export function IposView({
     const meta = pages.at(0)?.meta;
 
     return (
-        <div className="flex flex-col gap-2 h-0 grow">
+        <div className="flex flex-col gap-2">
             <SecReadinessNotice coverage={meta?.coverage} />
             <V2MetaLine meta={meta} />
-            <V2ListTable
+            <DataTable
                 columns={COLUMNS}
                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
                 emptyText="No IPOs for this stage."
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
-                loadingText="Loading IPOs..."
                 onLoadMore={onLoadMore}
                 rows={rows}
             />
@@ -232,16 +233,12 @@ function IposPage() {
     });
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-wrap items-end justify-between gap-2">
-                <div className="flex flex-col gap-1">
-                    <div>IPOs</div>
-                    <div className="text-muted-foreground text-sm">
-                        Offerings from SEC registration to listing, sorted by listing date (future to past).
-                    </div>
-                </div>
-                <FilterSelect className="w-[180px]" onValueChange={setStage} options={STAGE_OPTIONS} value={stage} />
-            </div>
+        <div className="flex flex-col gap-4">
+            <PageHeader
+                actions={<FilterSelect className="w-[180px]" onValueChange={setStage} options={STAGE_OPTIONS} value={stage} />}
+                description="Offerings from SEC registration to listing, sorted by listing date (future to past)."
+                title="IPOs"
+            />
 
             <IposView
                 error={error}

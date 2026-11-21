@@ -15,11 +15,11 @@ import type {
 
 import { count, money, right, weightText } from "@/components/sec/fund-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
-import { V2ListTable } from "@/components/sec/v2-list-table";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatEnDateTime } from "@/lib/date";
+import { DataTable } from "@/components/ui/data-table";
+import { formatDay } from "@/lib/format";
 import {
     HOLDER_SECTION_STATE_LABELS,
     HOLDER_SOURCE_LABELS,
@@ -36,7 +36,7 @@ import { formatNumberEn } from "@/lib/utils";
  * `meta.sections[]`; the sources overlap, so they are never merged or summed. Pure views (state in, markup out).
  */
 
-const day = (value: null | string | undefined) => (value ? formatEnDateTime(value, { hideTime: true }) : "—");
+const day = (value: null | string | undefined) => formatDay(value);
 
 /** The holder's name; a listed fund links to its page (`holder.symbols`), an unlisted fund is text only (decision 13). */
 function HolderCell({ holder }: { holder: V2Holder["holder"] }) {
@@ -59,7 +59,7 @@ function HolderCell({ holder }: { holder: V2Holder["holder"] }) {
                 : <span className="truncate" title={title}>{name}</span>}
             {holder.issuer_file_as_of && (
                 <Badge title="This fund also has an issuer holdings file, a fresher source than its N-PORT report" variant="outline">
-                    {`Issuer file ${holder.issuer_file_as_of}`}
+                    {`Issuer file ${formatDay(holder.issuer_file_as_of)}`}
                 </Badge>
             )}
         </div>
@@ -126,7 +126,6 @@ function HolderListFrame<TPage extends Page, TRow>({
     columns,
     emptyText,
     errorTitle,
-    loadingText,
     note,
     rowsOf,
     state,
@@ -134,7 +133,6 @@ function HolderListFrame<TPage extends Page, TRow>({
     columns: Array<ColumnDef<TRow>>;
     emptyText: string;
     errorTitle: string;
-    loadingText: string;
     note?: null | string;
     rowsOf: (page: TPage) => Array<TRow>;
     state: FundListState<TPage>;
@@ -146,18 +144,17 @@ function HolderListFrame<TPage extends Page, TRow>({
     const meta = pages.at(0)?.meta;
 
     return (
-        <div className="flex flex-col gap-2 h-full">
+        <div className="flex flex-col gap-2">
             <SecReadinessNotice coverage={meta?.coverage} />
             <V2MetaLine meta={meta && { counting: "counting" in meta ? meta.counting : null, coverage: meta.coverage, pinned_at: "pinned_at" in meta ? meta.pinned_at : null }} />
             {note && <div className="text-muted-foreground text-xs" data-testid="holders-note">{note}</div>}
-            <V2ListTable
+            <DataTable
                 columns={columns}
                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
                 emptyText={emptyText}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
-                loadingText={loadingText}
                 onLoadMore={onLoadMore}
                 rows={pages.flatMap(rowsOf)}
             />
@@ -186,7 +183,6 @@ export function HoldersList({ source, state }: { source: V2HolderSource; state: 
             columns={HOLDER_COLUMNS[source]}
             emptyText={EMPTY_TEXT[source]}
             errorTitle={`Failed to load the ${HOLDER_SOURCE_LABELS[source]} holders`}
-            loadingText="Loading holders..."
             note={note}
             rowsOf={page => page.data}
             state={state}
@@ -255,7 +251,6 @@ export function HolderChangesList({ state }: { state: FundListState<V2HolderChan
             columns={CHANGE_COLUMNS}
             emptyText="No position changes for this quarter."
             errorTitle="Failed to load the 13F changes"
-            loadingText="Loading 13F changes..."
             rowsOf={page => page.data}
             state={state}
         />
@@ -280,7 +275,7 @@ function HolderSectionView({ onShowAll, rows, section }: { onShowAll: (source: V
             <div className="flex flex-wrap items-center gap-2">
                 <div className="text-sm font-medium">{HOLDER_SOURCE_LABELS[section.source]}</div>
                 <Badge variant={section.state === "complete" ? "secondary" : "outline"}>{HOLDER_SECTION_STATE_LABELS[section.state]}</Badge>
-                {section.as_of && <span className="text-muted-foreground text-xs">{`as of ${section.as_of}`}</span>}
+                {section.as_of && <span className="text-muted-foreground text-xs">{`as of ${formatDay(section.as_of)}`}</span>}
                 <span className="text-muted-foreground text-xs">{sectionCountText(section)}</span>
                 {section.has_more && (
                     <Button onClick={() => onShowAll(section.source)} size="xs" type="button" variant="outline">
@@ -291,17 +286,12 @@ function HolderSectionView({ onShowAll, rows, section }: { onShowAll: (source: V
             <div className="text-muted-foreground text-xs">{HOLDER_SOURCE_NOTES[section.source]}</div>
             {reason && <div className="text-muted-foreground text-xs">{reason}</div>}
             {rows.length > 0 && (
-                // `V2ListTable` scrolls inside a sized flex column: the header plus up to ~10 rows.
-                <div className="flex flex-col" style={{ height: Math.min(400, 44 + rows.length * 37) }}>
-                    <V2ListTable
+                <div className="flex flex-col">
+                    <DataTable
                         columns={HOLDER_COLUMNS[section.source]}
                         emptyIsGenuine={false}
                         emptyText=""
-                        hasNextPage={false}
-                        isFetchingNextPage={false}
                         isLoading={false}
-                        loadingText=""
-                        onLoadMore={() => undefined}
                         rows={rows}
                     />
                 </div>

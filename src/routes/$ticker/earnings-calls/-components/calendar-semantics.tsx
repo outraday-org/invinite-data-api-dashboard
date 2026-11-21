@@ -1,8 +1,12 @@
 import type { V2CalendarStatus, V2Event, V2EventCalendar } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
+import { dateStatusVariant } from "@/lib/earnings/format";
+import { formatDay } from "@/lib/format";
 
+import { DATE_STATUS_LABELS } from "./call-status-badge";
 import { CallTime } from "./call-time";
+import { LiveDot } from "./live-dot";
 
 /**
  * The per-event `calendar` (2026-11): the report (results release) and the call kept apart, each with its quality and
@@ -57,6 +61,31 @@ export function CalendarStatusBadge({ calendar }: { calendar: null | undefined |
     return <Badge title="Event status (calendar)" variant="outline">{CALENDAR_STATUS_LABELS[calendar.status]}</Badge>;
 }
 
+/**
+ * ONE status badge per calendar row: "Live" while capturing, else "Published" once the transcript is out, else the
+ * call's date status; the other dimensions (date status, event status) in its tooltip.
+ */
+export function CalendarRowStatus({ event }: { event: Pick<V2Event, "calendar" | "capture_status" | "date_status"> }) {
+    const dateLabel = DATE_STATUS_LABELS[event.date_status];
+
+    const eventStatus = event.calendar?.status ? CALENDAR_STATUS_LABELS[event.calendar.status] : null;
+
+    const detail = [`Date: ${dateLabel}`, eventStatus ? `Event: ${eventStatus}` : null].filter(Boolean).join(" · ");
+
+    if (event.capture_status === "capturing") {
+        return (
+            <Badge title={detail} variant="destructive">
+                <LiveDot className="size-1.5" />
+                Live
+            </Badge>
+        );
+    }
+
+    if (event.capture_status === "published") return <Badge title={detail} variant="secondary">Published</Badge>;
+
+    return <Badge title={detail} variant={dateStatusVariant(event.date_status)}>{dateLabel}</Badge>;
+}
+
 /** Report day + time kind + quality + its filing (form · accession); "—" before the results. */
 export function CalendarReportCell({ calendar }: { calendar: null | undefined | V2EventCalendar }) {
     const report = calendar?.report;
@@ -67,7 +96,7 @@ export function CalendarReportCell({ calendar }: { calendar: null | undefined | 
 
     return (
         <div className="flex flex-col">
-            <span className="tabular-nums whitespace-nowrap">{report.date}</span>
+            <span className="tabular-nums whitespace-nowrap">{formatDay(report.date)}</span>
             <span className="text-muted-foreground text-[0.625rem]">
                 {[
                     report.time_kind ? REPORT_TIME_LABELS[report.time_kind] : null,

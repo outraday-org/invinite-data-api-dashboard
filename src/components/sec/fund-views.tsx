@@ -3,8 +3,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { V2FundPosition, V2FundPositionsResponse, V2FundSource, V2FundWeightsResponse } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
-import { V2ListTable } from "@/components/sec/v2-list-table";
 import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
 import { Notice } from "@/components/ui/notice";
 import {
     FUND_DIMENSION_LABELS,
@@ -43,7 +43,7 @@ export const weightText = (value: null | number | undefined) =>
 
 export const right = (text: string) => <div className="text-right tabular-nums">{text}</div>;
 
-/** The "Issuer file · as of 2026-11-13" badge (nothing when the answer names no source). */
+/** The "Issuer file · as of Nov 13, 2026" badge (nothing when the answer names no source). */
 export function FundSourceBadge({ asOf, source }: { asOf: null | string | undefined; source: null | undefined | V2FundSource }) {
     const text = fundSourceText(source, asOf);
 
@@ -105,7 +105,7 @@ export function FundCompositionList({ state }: { state: FundListState<V2FundPosi
     const columns = hasNotional(rows) ? [...COMPOSITION_COLUMNS, NOTIONAL_COLUMN] : COMPOSITION_COLUMNS;
 
     return (
-        <div className="flex flex-col gap-2 h-full">
+        <div className="flex flex-col gap-2">
             <SecReadinessNotice coverage={meta?.coverage} />
             <div className="flex flex-wrap items-center gap-2 text-xs">
                 <FundSourceBadge asOf={meta?.as_of} source={meta?.source} />
@@ -117,14 +117,13 @@ export function FundCompositionList({ state }: { state: FundListState<V2FundPosi
                 : (
                         <>
                             {reason && <div className="text-muted-foreground text-xs">{reason}</div>}
-                            <V2ListTable
+                            <DataTable
                                 columns={columns}
                                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
                                 emptyText="No positions in this composition."
                                 hasNextPage={hasNextPage}
                                 isFetchingNextPage={isFetchingNextPage}
                                 isLoading={isLoading}
-                                loadingText="Loading fund holdings..."
                                 onLoadMore={onLoadMore}
                                 rows={rows}
                             />

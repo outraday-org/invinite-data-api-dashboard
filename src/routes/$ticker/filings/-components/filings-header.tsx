@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/ui/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export function FilingsHeader({
@@ -14,16 +15,8 @@ export function FilingsHeader({
     sortDirection: "asc" | "desc";
 }) {
     return (
-        <div className="flex items-center justify-between mb-6">
-            <div className="space-y-1">
-                <div className="text-sm font-semibold">SEC Filings</div>
-                <div className="text-muted-foreground text-xs">
-                    Filtered by form type,
-                    {" "}
-                    {sortDirection === "desc" ? "newest first" : "oldest first"}
-                </div>
-            </div>
-            <div className="flex items-center gap-2">
+        <PageHeader
+            actions={(
                 <Select
                     disabled={loadingFormTypes || availableFormTypes.length === 0}
                     onValueChange={val => onFormTypeChange(val === "all" ? null : val)}
@@ -41,7 +34,9 @@ export function FilingsHeader({
                         ))}
                     </SelectContent>
                 </Select>
-            </div>
-        </div>
+            )}
+            description={`SEC filings by form type, ${sortDirection === "desc" ? "newest first" : "oldest first"}.`}
+            title="Filings"
+        />
     );
 }

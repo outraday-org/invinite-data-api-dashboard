@@ -5,11 +5,13 @@ import { SecFilerLookup } from "@/components/sec/sec-filer-lookup";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { dataApiDashboardUrl } from "@/lib/app-url";
+import { titleHead } from "@/lib/layout";
 import { LICENSING_PAGE_URL, STATUS_PAGE_URL } from "@/lib/public-hosts";
 import { useTickerStore } from "@/lib/stores/ticker-store";
 
 export const Route = createFileRoute("/")({
     component: IndexPage,
+    head: () => titleHead(),
 });
 
 function IndexPage() {
@@ -98,14 +100,12 @@ function IndexPage() {
                     Financial Data Dashboard
                 </h1>
                 <p className="text-muted-foreground max-w-3xl text-lg">
-                    Demo project for using the Invinite API. Enter a ticker — a stock, an ETF, a closed-end fund or an
+                    Explore what the Invinite Data API serves. Enter a ticker — a stock, an ETF, a closed-end fund or an
                     ETN — to view what the API serves for it: company or fund profile, financial statements, holdings,
                     holders and SEC filings. The Funds page lists every listed fund.
                 </p>
                 <p className="text-muted-foreground text-sm">
-                    Use the search bar to jump to any ticker. Cards below use
-                    {sampleTicker}
-                    as a quick preview.
+                    {`Use the search bar to jump to any ticker. Cards below use ${sampleTicker} as a quick preview.`}
                 </p>
             </section>
 

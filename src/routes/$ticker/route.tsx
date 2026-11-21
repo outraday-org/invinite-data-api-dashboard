@@ -13,6 +13,7 @@ import {
     SplitIcon,
     UserRoundIcon,
 } from "lucide-react";
+import * as React from "react";
 
 import type { V2Dataset, V2Instrument } from "@/lib/api/types";
 
@@ -29,14 +30,51 @@ import {
     SidebarMenu,
     SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useFund, useInstrument, useV2Company } from "@/lib/api/queries";
 import { datasetGateText, instrumentBadges, isFundType, SECTION_DATASETS, sectionOf, servesSection } from "@/lib/instruments";
+import { TICKER_HEADER_HEIGHT_VAR, titleHead } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/$ticker")({
     component: TickerLayout,
+    head: ({ params }) => titleHead(params.ticker.toUpperCase()),
 });
+
+/**
+ * Publishes the pinned instrument header's height as `--ticker-header-height` on `<html>` (sticky table headers and the
+ * call player sit below it); `0px` when the header is gone (market pages, an unknown symbol, leaving the layout).
+ */
+function useTickerHeaderHeight(header: React.RefObject<HTMLElement | null>, shown: boolean) {
+    React.useEffect(() => {
+        const root = document.documentElement;
+
+        const element = header.current;
+
+        if (!shown || !element) {
+            root.style.setProperty(TICKER_HEADER_HEIGHT_VAR, "0px");
+
+            return;
+        }
+
+        const publish = () => root.style.setProperty(TICKER_HEADER_HEIGHT_VAR, `${element.getBoundingClientRect().height}px`);
+
+        publish();
+
+        if (typeof ResizeObserver === "undefined") return () => root.style.setProperty(TICKER_HEADER_HEIGHT_VAR, "0px");
+
+        const observer = new ResizeObserver(publish);
+
+        observer.observe(element);
+
+        return () => {
+            observer.disconnect();
+
+            root.style.setProperty(TICKER_HEADER_HEIGHT_VAR, "0px");
+        };
+    }, [header, shown]);
+}
 
 /**
  * Every section of `/$ticker`. Which ones the sidebar shows comes from the instrument's `datasets` (Data API 7.0) through
@@ -88,7 +126,7 @@ const groupLabel = (instrument: null | V2Instrument) => {
 };
 
 const linkClass = cn(
-    "ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground/80 flex h-8 w-full items-center gap-2 overflow-hidden rounded-[calc(var(--radius-sm)+2px)] px-2 text-left text-xs outline-hidden transition-colors focus-visible:ring-2",
+    "ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground/80 flex h-8 w-full items-center gap-2 overflow-hidden rounded-[calc(var(--radius-sm)+2px)] px-2 text-left text-sm outline-hidden transition-colors focus-visible:ring-2",
     "data-[status=active]:bg-sidebar-accent data-[status=active]:text-sidebar-accent-foreground data-[status=active]:font-medium",
 );
 
@@ -137,12 +175,38 @@ function TickerLayout() {
 
     const gatedDataset = instrument && !isMarketRoute && !servesSection(instrument.datasets, section) ? SECTION_DATASETS[section] : null;
 
+    const showHeader = !isMarketRoute && !isUnknown;
+
+    const headerRef = React.useRef<HTMLElement>(null);
+
+    useTickerHeaderHeight(headerRef, showHeader);
+
+    // The canonical symbol of the answer (BRK.B for a typed brk.b), not the raw URL param.
+    const symbol = instrument?.symbol ?? ticker.toUpperCase();
+
+    // A section mounts (and requests) only once the instrument is known: no gated page asks the API while the
+    // instrument loads, and no refusal flashes before the gate sentence ([FU2870], [FU2838]). The market pages need no
+    // instrument; a failed instrument read (not a 404) still renders the page under the error.
+    let body: React.ReactNode;
+
+    if (isMarketRoute) body = <Outlet />;
+    else if (isUnknown) {
+        body = (
+            <Notice badge="Not known" title={`${ticker.toUpperCase()} is not a known instrument`}>
+                {error.message}
+            </Notice>
+        );
+    }
+    else if (isLoading) body = <PageSkeleton />;
+    else if (instrument && gatedDataset) body = <Notice badge="Not served" title={datasetGateText(instrument, gatedDataset)} />;
+    else body = <Outlet />;
+
     return (
         <>
             <Sidebar className="group-data-[side=left]:border-none [&>div]:bg-background">
                 <SidebarContent>
                     <SidebarGroup>
-                        <SidebarGroupLabel className="mt-7">{groupLabel(instrument)}</SidebarGroupLabel>
+                        <SidebarGroupLabel>{groupLabel(instrument)}</SidebarGroupLabel>
                         <SidebarGroupContent>
                             <NavLinks items={items} ticker={ticker} />
                         </SidebarGroupContent>
@@ -156,58 +220,67 @@ function TickerLayout() {
                 </SidebarContent>
             </Sidebar>
 
-            <div className="relative h-full grow flex flex-col">
+            {/* The sidebar is `fixed` and its wrapper a column: the content steps aside by the sidebar's width while it is open. */}
+            <div className="relative flex min-w-0 grow flex-col md:peer-data-[state=expanded]:pl-(--sidebar-width)">
                 <SidebarInset>
-                    <div className="mx-auto flex w-full h-full max-w-6xl flex-col gap-6 px-4 py-8 lg:px-8">
-                        {!isMarketRoute && !isUnknown && (
-                            <header className="flex flex-col gap-2">
-                                <div className="flex flex-wrap items-center gap-3">
-                                    {instrument?.logo_url && (
-                                        <img
-                                            alt={`${ticker} logo`}
-                                            className="bg-muted ring-border/60 h-9 w-9 rounded-md object-contain ring-1"
-                                            src={instrument.logo_url}
-                                        />
-                                    )}
-                                    <h1 className="text-3xl font-bold tracking-tight">{ticker}</h1>
-                                    {instrument && (
-                                        <span className="text-muted-foreground text-lg">{instrument.name}</span>
-                                    )}
-                                    {instrument && instrumentBadges(instrument).map(badge => (
-                                        <Badge data-testid="instrument-badge" key={badge} variant="secondary">{badge}</Badge>
-                                    ))}
-                                    {brandColors.length > 0 && (
-                                        <div className="flex items-center gap-1.5 ml-2">
-                                            {brandColors.map((color, index) => (
-                                                <div
-                                                    className="size-5 rounded-full ring-1 ring-border/60"
-                                                    key={index}
-                                                    style={{ backgroundColor: color }}
-                                                    title={color}
+                    <div className="mx-auto flex w-full min-w-0 max-w-6xl flex-col gap-6 px-4 pb-8 lg:px-8">
+                        {showHeader
+                            ? (
+                                    <header
+                                        className="bg-background/95 supports-backdrop-filter:backdrop-blur sticky top-(--app-topbar-height) z-30 -mx-4 flex flex-col gap-2 px-4 pt-4 pb-3 lg:-mx-8 lg:px-8"
+                                        ref={headerRef}
+                                    >
+                                        <div className="flex flex-wrap items-center gap-3">
+                                            {instrument?.logo_url && (
+                                                <img
+                                                    alt={`${symbol} logo`}
+                                                    className="bg-muted ring-border/60 h-9 w-9 rounded-md object-contain ring-1"
+                                                    src={instrument.logo_url}
                                                 />
+                                            )}
+                                            <h1 className="text-2xl font-bold tracking-tight">{symbol}</h1>
+                                            {instrument && (
+                                                <span className="text-muted-foreground text-base">{instrument.name}</span>
+                                            )}
+                                            {instrument && instrumentBadges(instrument).map(badge => (
+                                                <Badge data-testid="instrument-badge" key={badge} variant="secondary">{badge}</Badge>
                                             ))}
+                                            {brandColors.length > 0 && (
+                                                <div className="ml-2 flex items-center gap-1.5">
+                                                    {brandColors.map((color, index) => (
+                                                        <div
+                                                            className="ring-border/60 size-5 rounded-full ring-1"
+                                                            key={index}
+                                                            style={{ backgroundColor: color }}
+                                                            title={color}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
-                                    )}
-                                </div>
-                            </header>
-                        )}
+                                    </header>
+                                )
+                            : <div className="pt-4" />}
 
                         {!isMarketRoute && error && !isUnknown && (
                             <ErrorState error={error} title="Failed to load the instrument" />
                         )}
 
-                        {!isMarketRoute && isUnknown
-                            ? (
-                                    <Notice badge="Not known" title={`${ticker.toUpperCase()} is not a known instrument`}>
-                                        {error.message}
-                                    </Notice>
-                                )
-                            : !isMarketRoute && instrument && gatedDataset
-                                    ? <Notice badge="Not served" title={datasetGateText(instrument, gatedDataset)} />
-                                    : <Outlet />}
+                        {body}
                     </div>
                 </SidebarInset>
             </div>
         </>
+    );
+}
+
+/** The page placeholder while the instrument loads (no section is mounted yet). */
+function PageSkeleton() {
+    return (
+        <div className="flex flex-col gap-4" data-testid="page-skeleton">
+            <Skeleton className="h-6 w-56" />
+            <Skeleton className="h-4 w-96 max-w-full" />
+            <Skeleton className="h-64 w-full" />
+        </div>
     );
 }

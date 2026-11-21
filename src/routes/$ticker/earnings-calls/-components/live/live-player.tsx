@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { isEarningsEventLiveish, useApiBaseUrl, useV2LiveAudio, useV2PriceAttribution } from "@/lib/api/queries";
-import { formatEnDateTime } from "@/lib/date";
+import { formatInstant } from "@/lib/format";
 import { newestReleasedFinal, parseLiveMode, resolveLiveMode, textBehindEdgeS } from "@/lib/live/live-sync";
 import { liveTurns } from "@/lib/live/live-transcript-reducer";
 import { activeTurnIndex, positionToCallMs } from "@/lib/live/position-to-call-ms";
@@ -174,7 +174,7 @@ export function LivePlayer({
                     <p className="text-sm" role="status">
                         This call was rescheduled to
                         {" "}
-                        {formatEnDateTime(transcript.rescheduledTo, { hideTime: false })}
+                        {formatInstant(transcript.rescheduledTo)}
                         .
                         {" "}
                         <Link className="text-primary underline-offset-4 hover:underline" params={{ ticker: event.symbol }} to="/$ticker/earnings-calls">

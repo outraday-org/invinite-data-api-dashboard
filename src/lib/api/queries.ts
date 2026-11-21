@@ -557,7 +557,8 @@ type V2DividendsInput = { exDateGte?: string; exDateLte?: string; limit?: number
 export function useV2DividendsInfinite(input: V2DividendsInput) {
     return useEarningsInfinite<V2DividendsResponse>({
         enabled: input.symbol.trim().length > 0,
-        errorMessage: "Failed to load dividends",
+        // The page renders the error (`ErrorState` in its table): no toast on top.
+        errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2Dividends({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
         queryKey: ["v2", "dividends", input.symbol, input.exDateGte ?? "", input.exDateLte ?? "", input.sort ?? "", input.limit ?? ""],
         staleTime: V2_STALE_MS,
@@ -569,7 +570,8 @@ type V2SplitsInput = { limit?: number; sort?: V2SplitsSort; symbol: string };
 export function useV2SplitsInfinite(input: V2SplitsInput) {
     return useEarningsInfinite<V2SplitsResponse>({
         enabled: input.symbol.trim().length > 0,
-        errorMessage: "Failed to load splits",
+        // The page renders the error (`ErrorState` in its table): no toast on top.
+        errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2Splits({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
         queryKey: ["v2", "splits", input.symbol, input.sort ?? "", input.limit ?? ""],
         staleTime: V2_STALE_MS,
@@ -581,7 +583,8 @@ type V2MarketHolidaysInput = { dateGte?: string; dateLte?: string; limit?: numbe
 export function useV2MarketHolidaysInfinite(input: V2MarketHolidaysInput) {
     return useEarningsInfinite<V2MarketHolidaysResponse>({
         enabled: true,
-        errorMessage: "Failed to load market holidays",
+        // The page renders the error (`ErrorState` in its table): no toast on top.
+        errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2MarketHolidays({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
         queryKey: ["v2", "market-holidays", input.dateGte ?? "", input.dateLte ?? "", input.sort ?? "", input.limit ?? ""],
         staleTime: V2_STALE_MS,
@@ -606,6 +609,8 @@ export type V2EventsInput = {
     scheduledAtLte?: string;
     sort?: V2EventsSort;
     status?: Array<V2EventStatus>;
+    /** `false` when the page renders the error itself (calendar, calls list): no toast on top. Default true. */
+    toastErrors?: boolean;
     /** Omitted = the API's default `earnings_call`; `all` = every event type. */
     type?: V2EventType;
 };
@@ -615,11 +620,11 @@ export type V2EventsInput = {
  * `not_covered` (company outside the coverage) is a page state, never a toast.
  */
 export function useV2EventsInfinite(input: V2EventsInput) {
-    const { enabled = true, ...query } = input;
+    const { enabled = true, toastErrors = true, ...query } = input;
 
     return useEarningsInfinite<V2EventsResponse>({
         enabled: enabled && (query.company === undefined || query.company.trim().length > 0),
-        errorMessage: "Failed to load events",
+        errorMessage: toastErrors ? "Failed to load events" : null,
         fetchPage: (cursor, apiKey) => getV2Events({ data: { ...query, apiKey, cursor: cursor ?? undefined } }),
         queryKey: [
             "v2",

@@ -20,11 +20,11 @@ import { V2_FUND_POSITIONS, V2_FUND_WEIGHTS } from "@/lib/sec/v2-fixtures";
 
 describe("fund composition helpers (Data API 7.0)", () => {
     it("labels a composition by source and as-of date, never 'current'", () => {
-        expect(fundSourceText("issuer_daily", "2026-11-13")).toBe("Issuer file · as of 2026-11-13");
+        expect(fundSourceText("issuer_daily", "2026-11-13")).toBe("Issuer file · as of Nov 13, 2026");
 
-        expect(fundSourceText("issuer_monthly", "2026-10-31")).toBe("Issuer file (monthly) · as of 2026-10-31");
+        expect(fundSourceText("issuer_monthly", "2026-10-31")).toBe("Issuer file (monthly) · as of Oct 31, 2026");
 
-        expect(fundSourceText("nport", "2026-09-30")).toBe("SEC N-PORT filing · as of 2026-09-30");
+        expect(fundSourceText("nport", "2026-09-30")).toBe("SEC N-PORT filing · as of Sep 30, 2026");
 
         expect(fundSourceText(null, "2026-09-30")).toBeNull();
     });

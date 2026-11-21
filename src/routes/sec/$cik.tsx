@@ -16,6 +16,8 @@ import { Button } from "@/components/ui/button";
 import { NotFound } from "@/components/ui/not-found";
 import { useFilerHoldingsInfinite, useV2Filer, useV2FilingsInfinite, useV2OfferingsInfinite } from "@/lib/api/queries";
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
+import { formatDay } from "@/lib/format";
+import { titleHead } from "@/lib/layout";
 import { latest13fPeriodEnd } from "@/lib/sec/source";
 
 /**
@@ -28,6 +30,7 @@ import { latest13fPeriodEnd } from "@/lib/sec/source";
  */
 export const Route = createFileRoute("/sec/$cik")({
     component: SecFilerPage,
+    head: ({ params }) => titleHead(`SEC filer ${params.cik}`),
 });
 
 const FILINGS_PAGE = 40;
@@ -77,20 +80,20 @@ function SecFilerPage() {
             <SecFilerHeader cik={cik} data={filer.data} error={filer.error} isLoading={filer.isLoading} />
 
             <section className="flex flex-col gap-2">
-                <div className="font-medium">Lifecycle</div>
+                <h3 className="text-sm font-semibold">Lifecycle</h3>
                 <SecLifecycleView data={filer.data} error={filer.error} isLoading={filer.isLoading} />
             </section>
 
             {filer.data?.fund && (
                 <section className="flex flex-col gap-2">
-                    <div className="font-medium">Fund</div>
+                    <h3 className="text-sm font-semibold">Fund</h3>
                     <SecFundView data={filer.data} />
                 </section>
             )}
 
             {privateOfferings && (
                 <section className="flex flex-col gap-2">
-                    <div className="font-medium">Private offerings (Form D)</div>
+                    <h3 className="text-sm font-semibold">Private offerings (Form D)</h3>
                     <SecPrivateOfferingsView
                         error={offerings.error}
                         hasNextPage={Boolean(offerings.hasNextPage)}
@@ -106,13 +109,13 @@ function SecFilerPage() {
             {isManager && (
                 <section className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
-                        <div className="font-medium">13F portfolio</div>
+                        <h3 className="text-sm font-semibold">13F portfolio</h3>
                         {!period && (
                             <Button onClick={() => setPeriod(latest13fPeriodEnd(new Date()))} size="xs" type="button" variant="outline">
                                 Load the latest quarter
                             </Button>
                         )}
-                        {period && <span className="text-muted-foreground text-xs">{`Period ending ${period}`}</span>}
+                        {period && <span className="text-muted-foreground text-xs">{`Period ending ${formatDay(period)}`}</span>}
                     </div>
                     <SecPortfolioView
                         error={portfolio.error}
@@ -126,7 +129,7 @@ function SecFilerPage() {
             )}
 
             <section className="flex flex-col gap-2">
-                <div className="font-medium">Filings</div>
+                <h3 className="text-sm font-semibold">Filings</h3>
                 <SecFilingsView
                     error={filings.error}
                     form={form}

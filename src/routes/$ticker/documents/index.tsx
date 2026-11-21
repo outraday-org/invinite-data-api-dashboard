@@ -8,12 +8,13 @@ import type { DocumentsSearch } from "@/lib/earnings/documents";
 import { SecFilingSearch } from "@/components/sec/sec-filing-search";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isTierError } from "@/lib/api/errors";
 import { useV2Company, useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
 import { useLoadAllPages } from "@/lib/api/use-load-all-pages";
 import { buildDocumentTree, callEntries, eventTitleMap, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
+import { tickerHead } from "@/lib/layout";
 import { MediaState, Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
 import { DocumentFilters } from "./-components/document-filters";
@@ -23,6 +24,7 @@ import { DocumentTree } from "./-components/document-tree";
 
 export const Route = createFileRoute("/$ticker/documents/")({
     component: DocumentsPage,
+    head: ({ params }) => tickerHead(params.ticker, "Documents"),
     validateSearch: validateDocumentsSearch,
 });
 
@@ -121,73 +123,73 @@ function DocumentsPage() {
     const loadingMore = Boolean(library.hasNextPage) || Boolean(events.hasNextPage);
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-col gap-1 shrink-0">
-                <div>Documents</div>
-                <div className="text-muted-foreground text-sm">
-                    The company&apos;s whole document tree by category and folder — earnings quarters with each call&apos;s
-                    documents, press release and slides, events, reports, proxy statements, ESG reports, investor-day and
-                    conference decks, letters. Company-published material, shown as published.
-                </div>
-            </div>
+        <div className="flex flex-col gap-4">
+            <PageHeader
+                description={(
+                    <>
+                        The company&apos;s whole document tree by category and folder — earnings quarters with each call&apos;s
+                        documents, press release and slides, events, reports, proxy statements, ESG reports, investor-day and
+                        conference decks, letters. Company-published material, shown as published.
+                    </>
+                )}
+                title="Documents"
+            />
 
-            <ScrollArea className="h-0 grow">
-                <div className="flex flex-col gap-4 pr-3">
-                    <div className="flex flex-col gap-1">
-                        <div aria-label="Search source" className="flex items-center gap-1" role="group">
-                            {SEARCH_SOURCES.map(source => (
-                                <Button
-                                    aria-pressed={searchSource === source.value}
-                                    key={source.value}
-                                    onClick={() => setSearchSource(source.value)}
-                                    size="xs"
-                                    type="button"
-                                    variant={searchSource === source.value ? "secondary" : "outline"}
-                                >
-                                    {source.label}
-                                </Button>
-                            ))}
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1">
+                    <div aria-label="Search source" className="flex items-center gap-1" role="group">
+                        {SEARCH_SOURCES.map(source => (
+                            <Button
+                                aria-pressed={searchSource === source.value}
+                                key={source.value}
+                                onClick={() => setSearchSource(source.value)}
+                                size="xs"
+                                type="button"
+                                variant={searchSource === source.value ? "secondary" : "outline"}
+                            >
+                                {source.label}
+                            </Button>
+                        ))}
+                    </div>
+                    {searchSource === "company" ? <DocumentSearch identifier={ticker} /> : <SecFilingsSource ticker={ticker} />}
+                </div>
+
+                <section className="flex flex-col gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="text-sm font-medium">
+                            Documents
+                            {!isLoading && !error && (
+                                <span className="text-muted-foreground font-normal">
+                                    {` · ${documents.length}${loadingMore ? "+" : ""} document${documents.length === 1 ? "" : "s"}`}
+                                    {companyName ? ` · ${companyName}` : ""}
+                                </span>
+                            )}
                         </div>
-                        {searchSource === "company" ? <DocumentSearch identifier={ticker} /> : <SecFilingsSource ticker={ticker} />}
+                        <DocumentFilters onChange={onFilterChange} search={search} />
                     </div>
 
-                    <section className="flex flex-col gap-2">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                            <div className="text-sm font-medium">
-                                Documents
-                                {!isLoading && !error && (
-                                    <span className="text-muted-foreground font-normal">
-                                        {` · ${documents.length}${loadingMore ? "+" : ""} document${documents.length === 1 ? "" : "s"}`}
-                                        {companyName ? ` · ${companyName}` : ""}
-                                    </span>
-                                )}
-                            </div>
-                            <DocumentFilters onChange={onFilterChange} search={search} />
-                        </div>
-
-                        {error
-                            ? <LibraryError error={error} />
-                            : isLoading
-                                ? <Skeleton className="h-40 w-full" />
-                                : tree.length === 0
-                                    ? (
-                                            <div className="text-muted-foreground w-full p-2 text-center text-xs">
-                                                {search.q
-                                                    ? `No documents match “${search.q}”.`
-                                                    : filtered ? "No documents match these filters." : "No documents stored for this company yet."}
-                                            </div>
-                                        )
-                                    : (
-                                            <DocumentTree
-                                                filtering={Boolean(search.q)}
-                                                onShowText={setTextOf}
-                                                ticker={ticker}
-                                                tree={tree}
-                                            />
-                                        )}
-                    </section>
-                </div>
-            </ScrollArea>
+                    {error
+                        ? <LibraryError error={error} />
+                        : isLoading
+                            ? <Skeleton className="h-40 w-full" />
+                            : tree.length === 0
+                                ? (
+                                        <div className="text-muted-foreground w-full p-2 text-center text-xs">
+                                            {search.q
+                                                ? `No documents match “${search.q}”.`
+                                                : filtered ? "No documents match these filters." : "No documents stored for this company yet."}
+                                        </div>
+                                    )
+                                : (
+                                        <DocumentTree
+                                            filtering={Boolean(search.q)}
+                                            onShowText={setTextOf}
+                                            ticker={ticker}
+                                            tree={tree}
+                                        />
+                                    )}
+                </section>
+            </div>
 
             <DocumentTextDialog doc={textOf} onClose={() => setTextOf(null)} />
         </div>

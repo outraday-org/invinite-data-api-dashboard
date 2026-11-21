@@ -2,12 +2,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 
 import { FundCompositionList, FundWeightsBlock } from "@/components/sec/fund-views";
+import { PageHeader } from "@/components/ui/page-header";
 import { useFundPositionsInfinite, useFundWeightsInfinite } from "@/lib/api/queries";
+import { tickerHead } from "@/lib/layout";
 import { fundPickerDays } from "@/lib/sec/fund";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export const Route = createFileRoute("/$ticker/holdings/")({
     component: FundHoldingsPage,
+    head: ({ params }) => tickerHead(params.ticker, "Holdings"),
 });
 
 /** Positions per page (the API allows up to 200; the top of the fund first). */
@@ -39,17 +42,17 @@ function FundHoldingsPage() {
     const options = React.useMemo(() => [{ label: "Freshest", value: FRESHEST }, ...fundPickerDays(stored)], [stored]);
 
     return (
-        <div className="space-y-4 relative flex flex-col h-0 grow">
-            <div className="flex flex-wrap items-end justify-between gap-2">
-                <div className="flex flex-col gap-1">
-                    <div>Holdings</div>
-                    <div className="text-muted-foreground text-sm">
+        <div className="flex flex-col gap-4">
+            <PageHeader
+                actions={<FilterSelect aria-label="As of" className="w-[260px]" onValueChange={setDay} options={options} value={day} />}
+                description={(
+                    <>
                         What this fund holds, from the issuer&apos;s own holdings file (daily or monthly) or else the fund&apos;s
                         latest N-PORT filing, always with its as-of date; weights by sector, country and asset class.
-                    </div>
-                </div>
-                <FilterSelect className="w-[260px]" onValueChange={setDay} options={options} value={day} />
-            </div>
+                    </>
+                )}
+                title="Holdings"
+            />
 
             <FundWeightsBlock
                 state={{
@@ -62,7 +65,7 @@ function FundHoldingsPage() {
                 }}
             />
 
-            <div className="grow relative">
+            <div className="relative">
                 <FundCompositionList
                     state={{
                         error: holdings.error,

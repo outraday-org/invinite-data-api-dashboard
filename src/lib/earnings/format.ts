@@ -3,8 +3,6 @@ import type { VariantProps } from "class-variance-authority";
 import type { badgeVariants } from "@/components/ui/badge";
 import type { V2DateStatus, V2Event } from "@/lib/api/types";
 
-import { formatEnDateTime } from "@/lib/date";
-
 type CallTimeFields = Pick<V2Event, "call_time_source" | "scheduled_at" | "tz">;
 
 type FiscalFields = Pick<V2Event, "fiscal_quarter" | "fiscal_year">;
@@ -203,7 +201,5 @@ export function formatBytes(bytes: null | number) {
     return `${value.toFixed(1)} ${units[unit]}`;
 }
 
-/** An API timestamp with its time ("Oct 29, 2026, 4:30 PM"), "—" when absent. */
-export function formatInstant(value: null | string | undefined) {
-    return value ? formatEnDateTime(value, { hideTime: false }) : "—";
-}
+/** An API timestamp with its time and zone: the one implementation is `src/lib/format.ts`. */
+export { formatInstant } from "@/lib/format";
