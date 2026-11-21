@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Search } from "lucide-react";
 import * as React from "react";
 import { z } from "zod";
 
@@ -7,12 +6,12 @@ import type { SearchMode, V2TranscriptSearchResponse, V2TranscriptSearchType } f
 
 import { ExportMenu } from "@/components/api/export-menu";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
-import { Button } from "@/components/ui/button";
+import { SearchChip, SearchModeChips, SearchQueryForm } from "@/components/search/search-box";
 import { Input } from "@/components/ui/input";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2TranscriptSearch } from "@/lib/api/queries";
-import { SEARCH_MODE_LABELS, SEARCH_MODES } from "@/lib/earnings/labels";
+import { SEARCH_MODES } from "@/lib/earnings/labels";
 import { formatDay } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import { IN_PLACE, optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
@@ -23,8 +22,6 @@ export const TRANSCRIPT_SEARCH_LIMIT = 8;
 
 /** The API's scope rule (`LITERAL_MIN_UNSCOPED_CODE_POINTS`): an exact pattern shorter than this needs a company. */
 export const EXACT_MIN_UNSCOPED = 3;
-
-const MIN_QUERY_LENGTH = 2;
 
 /** The `type` values in the URL (the operation's `type` enum; `TYPES` of the hit labels follows the same order). */
 const TYPE_VALUES = ["transcript", "qa", "prepared", "presentation"] as const satisfies ReadonlyArray<V2TranscriptSearchType>;
@@ -106,29 +103,15 @@ export function TranscriptSearchView({
 function SearchBox({ initial, isFetching, onSubmit }: { initial: string; isFetching: boolean; onSubmit: (q: string) => void }) {
     const [draft, setDraft] = React.useState(initial);
 
-    const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH;
-
     return (
-        <form
-            className="flex items-center gap-2"
-            onSubmit={(event) => {
-                event.preventDefault();
-
-                if (canSubmit) onSubmit(draft.trim());
-            }}
-        >
-            <Input
-                aria-label="Search every call"
-                maxLength={500}
-                onChange={event => setDraft(event.target.value)}
-                placeholder="e.g. gross margin, tariffs, &quot;free cash flow&quot;"
-                value={draft}
-            />
-            <Button disabled={!canSubmit || isFetching} type="submit">
-                <Search />
-                {isFetching ? "Searching…" : "Search"}
-            </Button>
-        </form>
+        <SearchQueryForm
+            busy={isFetching}
+            label="Search every call"
+            onSubmit={onSubmit}
+            onValueChange={setDraft}
+            placeholder="e.g. gross margin, tariffs, &quot;free cash flow&quot;"
+            value={draft}
+        />
     );
 }
 
@@ -178,41 +161,15 @@ function SearchPage() {
             <div className="flex flex-wrap items-center gap-2">
                 <span className="text-muted-foreground">Match</span>
                 <div aria-label="Mode" className="flex gap-1" role="group">
-                    {SEARCH_MODES.map(mode => (
-                        <Button
-                            aria-pressed={(search.mode ?? "lexical") === mode}
-                            key={mode}
-                            onClick={() => setMode(mode)}
-                            size="xs"
-                            type="button"
-                            variant={(search.mode ?? "lexical") === mode ? "secondary" : "outline"}
-                        >
-                            {SEARCH_MODE_LABELS[mode]}
-                        </Button>
-                    ))}
+                    <SearchModeChips mode={search.mode ?? "lexical"} onModeChange={setMode} />
                 </div>
                 <span className="text-muted-foreground sm:ml-3">In</span>
                 <div aria-label="Type" className="flex flex-wrap gap-1" role="group">
-                    <Button
-                        aria-pressed={search.type === undefined}
-                        onClick={() => onChange({ type: undefined })}
-                        size="xs"
-                        type="button"
-                        variant={search.type === undefined ? "secondary" : "outline"}
-                    >
-                        All
-                    </Button>
+                    <SearchChip onClick={() => onChange({ type: undefined })} pressed={search.type === undefined}>All</SearchChip>
                     {TYPES.map(type => (
-                        <Button
-                            aria-pressed={search.type === type}
-                            key={type}
-                            onClick={() => onChange({ type })}
-                            size="xs"
-                            type="button"
-                            variant={search.type === type ? "secondary" : "outline"}
-                        >
+                        <SearchChip key={type} onClick={() => onChange({ type })} pressed={search.type === type}>
                             {TYPE_LABELS[type]}
-                        </Button>
+                        </SearchChip>
                     ))}
                 </div>
             </div>

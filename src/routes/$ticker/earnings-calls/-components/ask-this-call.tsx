@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ExternalLink, FileText, ImageIcon, Play, Search, X } from "lucide-react";
+import { ChevronDown, ExternalLink, FileText, ImageIcon, Play, X } from "lucide-react";
 import * as React from "react";
 
 import type {
@@ -10,11 +10,11 @@ import type {
     V2TranscriptSearchType,
 } from "@/lib/api/types";
 
+import { SearchChip, SearchCostNote, SearchQueryForm } from "@/components/search/search-box";
 import { HighlightedText, SearchCoverageNote, SpanHighlightedText } from "@/components/search/search-highlight";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
 import { useV2Participants, useV2TranscriptSearch } from "@/lib/api/queries";
@@ -48,8 +48,6 @@ export type AskScope
         | { kind: "market" };
 
 const SEARCH_LIMIT = 8;
-
-const MIN_QUERY_LENGTH = 2;
 
 export const TYPE_LABELS: Record<V2TranscriptSearchType, string> = {
     prepared: "Prepared remarks",
@@ -406,14 +404,14 @@ export function AskThisCall({ scope }: { scope: Exclude<AskScope, { kind: "marke
 
     const imagesByName = useSpeakerImagesByName(participants.data);
 
-    const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH;
+    const submit = (trimmed: string) => {
+        setQuery(trimmed);
 
-    const submit = (event: React.FormEvent) => {
-        event.preventDefault();
+        setExpanded(true);
+    };
 
-        if (!canSubmit) return;
-
-        setQuery(draft.trim());
+    const pickType = (value: undefined | V2TranscriptSearchType) => {
+        setType(value);
 
         setExpanded(true);
     };
@@ -426,51 +424,23 @@ export function AskThisCall({ scope }: { scope: Exclude<AskScope, { kind: "marke
 
     return (
         <section className="flex flex-col gap-2 rounded-md border p-3 text-xs/relaxed">
-            <form className="flex items-center gap-2" onSubmit={submit}>
-                <Input
-                    aria-label={scope.kind === "event" ? "Search this call" : "Search this company's calls"}
-                    maxLength={500}
-                    onChange={event => setDraft(event.target.value)}
-                    placeholder={scope.kind === "event" ? "e.g. gross margin, data center revenue, \"free cash flow\"" : "Search this company's calls"}
-                    value={draft}
-                />
-                <Button disabled={!canSubmit || isFetching} type="submit">
-                    <Search />
-                    {isFetching ? "Searching…" : "Search"}
-                </Button>
-            </form>
+            <SearchQueryForm
+                busy={isFetching}
+                label={scope.kind === "event" ? "Search this call" : "Search this company's calls"}
+                onSubmit={submit}
+                onValueChange={setDraft}
+                placeholder={scope.kind === "event" ? "e.g. gross margin, data center revenue, \"free cash flow\"" : "Search this company's calls"}
+                value={draft}
+            />
 
             <div className="flex flex-wrap items-center gap-1">
-                <Button
-                    aria-pressed={type === undefined}
-                    onClick={() => {
-                        setType(undefined);
-
-                        setExpanded(true);
-                    }}
-                    size="xs"
-                    type="button"
-                    variant={type === undefined ? "secondary" : "outline"}
-                >
-                    All
-                </Button>
+                <SearchChip onClick={() => pickType(undefined)} pressed={type === undefined}>All</SearchChip>
                 {TYPES.map(value => (
-                    <Button
-                        aria-pressed={type === value}
-                        key={value}
-                        onClick={() => {
-                            setType(value);
-
-                            setExpanded(true);
-                        }}
-                        size="xs"
-                        type="button"
-                        variant={type === value ? "secondary" : "outline"}
-                    >
+                    <SearchChip key={value} onClick={() => pickType(value)} pressed={type === value}>
                         {TYPE_LABELS[value]}
-                    </Button>
+                    </SearchChip>
                 ))}
-                <span className="text-muted-foreground ml-auto text-[0.625rem]">10 credits per search</span>
+                <SearchCostNote>10 credits per search</SearchCostNote>
             </div>
 
             {query && (

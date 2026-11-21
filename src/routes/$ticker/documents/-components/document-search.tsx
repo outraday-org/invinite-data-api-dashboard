@@ -1,16 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, Search } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import * as React from "react";
 
 import type { SearchMode, V2InvestorDocumentSearchHit, V2InvestorDocumentSearchResponse } from "@/lib/api/types";
 
+import { SearchCostNote, SearchModeChips, SearchQueryForm } from "@/components/search/search-box";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2InvestorDocumentSearch } from "@/lib/api/queries";
 import { documentKindLabel, documentPageHref } from "@/lib/earnings/documents";
-import { SEARCH_MODE_LABELS, SEARCH_MODES } from "@/lib/earnings/labels";
 import {
     HitPassage,
     MatchBadge,
@@ -20,8 +18,6 @@ import {
 } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
 
 const SEARCH_LIMIT = 10;
-
-const MIN_QUERY_LENGTH = 2;
 
 /** The API's literal scope rule; the page always sends `identifier`, so this 400 should not occur. */
 const EXACT_TOO_SHORT = "Exact search needs 3 characters or a company";
@@ -138,44 +134,20 @@ export function DocumentSearch({ identifier }: { identifier: string }) {
         q: query,
     });
 
-    const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH;
-
-    const submit = (event: React.FormEvent) => {
-        event.preventDefault();
-
-        if (canSubmit) setQuery(draft.trim());
-    };
-
     return (
         <section className="flex flex-col gap-2 rounded-md border p-3">
-            <form className="flex items-center gap-2" onSubmit={submit}>
-                <Input
-                    aria-label="Search this company's documents"
-                    maxLength={500}
-                    onChange={event => setDraft(event.target.value)}
-                    placeholder="Search this company's documents — e.g. capital allocation"
-                    value={draft}
-                />
-                <Button disabled={!canSubmit || isFetching} type="submit">
-                    <Search />
-                    {isFetching ? "Searching…" : "Search"}
-                </Button>
-            </form>
+            <SearchQueryForm
+                busy={isFetching}
+                label="Search this company's documents"
+                onSubmit={setQuery}
+                onValueChange={setDraft}
+                placeholder="Search this company's documents — e.g. capital allocation"
+                value={draft}
+            />
 
             <div className="flex flex-wrap items-center gap-1">
-                {SEARCH_MODES.map(value => (
-                    <Button
-                        aria-pressed={mode === value}
-                        key={value}
-                        onClick={() => setMode(value)}
-                        size="xs"
-                        type="button"
-                        variant={mode === value ? "secondary" : "outline"}
-                    >
-                        {SEARCH_MODE_LABELS[value]}
-                    </Button>
-                ))}
-                <span className="text-muted-foreground ml-auto text-[0.625rem]">10 credits per search</span>
+                <SearchModeChips mode={mode} onModeChange={setMode} />
+                <SearchCostNote>10 credits per search</SearchCostNote>
             </div>
 
             {query && (

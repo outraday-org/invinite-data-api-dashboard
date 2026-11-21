@@ -1,23 +1,20 @@
 import { Link } from "@tanstack/react-router";
-import { Search, X } from "lucide-react";
+import { X } from "lucide-react";
 import * as React from "react";
 
 import type { SearchMode, V2NewsSearchField, V2NewsSearchHit, V2NewsSearchResponse } from "@/lib/api/types";
 
+import { SearchCostNote, SearchModeChips, SearchQueryForm } from "@/components/search/search-box";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2NewsSearchInfinite } from "@/lib/api/queries";
 import { formatInstant } from "@/lib/earnings/format";
-import { SEARCH_MODE_LABELS, SEARCH_MODES } from "@/lib/earnings/labels";
 import { HitPassage, MatchBadge, SearchCoverageNote, SearchEmptyState, SearchError } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 /** Hits per page (10 credits a page whatever the size). */
 const NEWS_SEARCH_LIMIT = 20;
-
-const MIN_QUERY_LENGTH = 2;
 
 const NEWS_SEARCH_TIER = { badge: "STANDARD", title: "Your plan does not include news search" };
 
@@ -148,14 +145,6 @@ export function NewsSearchBox({
         to,
     });
 
-    const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH;
-
-    const submit = (event: React.FormEvent) => {
-        event.preventDefault();
-
-        if (canSubmit) setQuery(draft.trim());
-    };
-
     const clear = () => {
         setDraft("");
 
@@ -164,38 +153,23 @@ export function NewsSearchBox({
 
     return (
         <section aria-label="News search" className="flex flex-col gap-2 rounded-md border p-3">
-            <form className="flex items-center gap-2" onSubmit={submit}>
-                <Input
-                    aria-label="Search the news"
-                    maxLength={500}
-                    onChange={event => setDraft(event.target.value)}
-                    placeholder={placeholder}
-                    value={draft}
-                />
-                <Button disabled={!canSubmit || search.isFetching} type="submit">
-                    <Search />
-                    {search.isFetching && !search.isFetchingNextPage ? "Searching…" : "Search"}
-                </Button>
-                {query && (
+            <SearchQueryForm
+                busy={search.isFetching}
+                label="Search the news"
+                onSubmit={setQuery}
+                onValueChange={setDraft}
+                placeholder={placeholder}
+                searching={search.isFetching && !search.isFetchingNextPage}
+                trailing={query && (
                     <Button aria-label="Clear the search" onClick={clear} size="icon" type="button" variant="ghost">
                         <X />
                     </Button>
                 )}
-            </form>
+                value={draft}
+            />
 
             <div className="flex flex-wrap items-center gap-1">
-                {SEARCH_MODES.map(value => (
-                    <Button
-                        aria-pressed={mode === value}
-                        key={value}
-                        onClick={() => setMode(value)}
-                        size="xs"
-                        type="button"
-                        variant={mode === value ? "secondary" : "outline"}
-                    >
-                        {SEARCH_MODE_LABELS[value]}
-                    </Button>
-                ))}
+                <SearchModeChips mode={mode} onModeChange={setMode} />
                 <FilterSelect
                     aria-label="Search in"
                     className="h-6 w-[210px] text-xs"
@@ -203,7 +177,7 @@ export function NewsSearchBox({
                     options={NEWS_SEARCH_FIELDS.map(value => ({ label: NEWS_SEARCH_FIELD_LABELS[value], value }))}
                     value={field}
                 />
-                <span className="text-muted-foreground ml-auto text-[0.625rem]">10 credits per page · the page&apos;s date window applies</span>
+                <SearchCostNote>10 credits per page · the page&apos;s date window applies</SearchCostNote>
             </div>
 
             {query && (

@@ -1,15 +1,16 @@
-import { ExternalLink, FileText, Search } from "lucide-react";
+import { ExternalLink, FileText } from "lucide-react";
 import * as React from "react";
 
 import type { SecSearchMode, V2FilingSearchHit, V2FilingSearchMatches, V2FilingSearchResponse } from "@/lib/api/types";
 
+import { SearchChip, SearchCostNote, SearchModeChips, SearchQueryForm } from "@/components/search/search-box";
 import { HighlightedText, SearchCoverageNote, SpanHighlightedText } from "@/components/search/search-highlight";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2FilingSearchInfinite } from "@/lib/api/queries";
-import { MATCH_TYPE_LABELS, SEARCH_MODE_LABELS, SEARCH_MODES } from "@/lib/earnings/labels";
+import { MATCH_TYPE_LABELS } from "@/lib/earnings/labels";
 import { isSearchGenuineEmpty } from "@/lib/sec/readiness";
 import { toSecHitView } from "@/lib/sec/source";
 
@@ -18,8 +19,6 @@ import type { SecPanelTarget } from "./sec-source-panel";
 import { SecReadinessNotice } from "./sec-readiness-notice";
 
 const SEARCH_LIMIT = 10;
-
-const MIN_QUERY_LENGTH = 2;
 
 /** The lead of every SEC answer: cited passages, never facts or a prose answer. */
 export const SEC_SEARCH_LEAD = "Passages from SEC filings as filed, cited by document version and block — not verified facts.";
@@ -248,16 +247,10 @@ export function SecFilingSearch({
 
     const scoped = symbol.trim().length > 0;
 
-    const canSubmit = draft.trim().length >= MIN_QUERY_LENGTH && (scoped || marketWide);
-
-    const submit = (event: React.FormEvent) => {
-        event.preventDefault();
-
-        if (!canSubmit) return;
-
+    const submit = (trimmed: string) => {
         const next = cleanFilters(filterDraft);
 
-        setSubmitted({ filters: next, query: draft.trim() });
+        setSubmitted({ filters: next, query: trimmed });
 
         onFiltersChange?.(next);
     };
@@ -268,20 +261,15 @@ export function SecFilingSearch({
 
     return (
         <section className="flex flex-col gap-2 rounded-md border p-3">
-            <form className="flex flex-col gap-2" onSubmit={submit}>
-                <div className="flex items-center gap-2">
-                    <Input
-                        aria-label={label}
-                        maxLength={500}
-                        onChange={event => setDraft(event.target.value)}
-                        placeholder={`${label} — e.g. supply chain risk`}
-                        value={draft}
-                    />
-                    <Button disabled={!canSubmit || result.isFetching} type="submit">
-                        <Search />
-                        {result.isFetching ? "Searching…" : "Search"}
-                    </Button>
-                </div>
+            <SearchQueryForm
+                busy={result.isFetching}
+                canSubmit={scoped || marketWide}
+                label={label}
+                onSubmit={submit}
+                onValueChange={setDraft}
+                placeholder={`${label} — e.g. supply chain risk`}
+                value={draft}
+            >
                 <div className="flex flex-wrap items-center gap-2">
                     <Input
                         aria-label="Form"
@@ -304,32 +292,11 @@ export function SecFilingSearch({
                     <span className="text-muted-foreground">to</span>
                     <Input aria-label="Search filed to" className="w-[150px]" onChange={event => setFilter({ to: event.target.value })} type="date" value={filterDraft.to ?? ""} />
                 </div>
-            </form>
+            </SearchQueryForm>
             <div className="flex flex-wrap items-center gap-1">
-                {SEARCH_MODES.map(value => (
-                    <Button
-                        aria-pressed={mode === value}
-                        key={value}
-                        onClick={() => setMode(value)}
-                        size="xs"
-                        type="button"
-                        variant={mode === value ? "secondary" : "outline"}
-                    >
-                        {SEARCH_MODE_LABELS[value]}
-                    </Button>
-                ))}
-                {mode === "literal" && (
-                    <Button
-                        aria-pressed={matchCase}
-                        onClick={() => setMatchCase(value => !value)}
-                        size="xs"
-                        type="button"
-                        variant={matchCase ? "secondary" : "outline"}
-                    >
-                        Match case
-                    </Button>
-                )}
-                <span className="text-muted-foreground ml-auto text-[0.625rem]">100 credits per search page; filters apply on Search</span>
+                <SearchModeChips mode={mode} onModeChange={setMode} />
+                {mode === "literal" && <SearchChip onClick={() => setMatchCase(value => !value)} pressed={matchCase}>Match case</SearchChip>}
+                <SearchCostNote>100 credits per search page; filters apply on Search</SearchCostNote>
             </div>
             {query && (
                 <>
