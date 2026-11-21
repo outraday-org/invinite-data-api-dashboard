@@ -2,13 +2,15 @@ import * as React from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import { cn } from "@/lib/utils";
 
+import { ApiKeyInput, KeyCheckMessage } from "./api-key-input";
 import { NoKeyYetHint } from "./no-key-yet";
+import { useKeyValidation } from "./use-key-validation";
 
+/** The key field of the onboarding card: saving validates the key (`/v1/me`) before storing it. */
 export function ApiKeyInlineField({ className }: { className?: string }) {
     const apiKey = useApiKeyStore(s => s.apiKey);
 
@@ -16,28 +18,20 @@ export function ApiKeyInlineField({ className }: { className?: string }) {
 
     const hasHydrated = useApiKeyStore(s => s.hasHydrated);
 
-    const setApiKey = useApiKeyStore(s => s.setApiKey);
+    const { check, reset, save } = useKeyValidation();
 
     const [draft, setDraft] = React.useState("");
 
-    React.useEffect(() => {
-        if (!hasHydrated) return;
-
-        setDraft(apiKey ?? "");
-    }, [apiKey, hasHydrated]);
-
     const hasKey = hasHydrated && Boolean(apiKey);
 
-    const isDirty = hasHydrated && draft.trim() !== (apiKey ?? "");
-
-    function onSave() {
-        setApiKey(draft);
-    }
+    const isDirty = hasHydrated && draft.trim().length > 0 && draft.trim() !== (apiKey ?? "");
 
     function onClear() {
         clearApiKey();
 
         setDraft("");
+
+        reset();
     }
 
     return (
@@ -45,14 +39,7 @@ export function ApiKeyInlineField({ className }: { className?: string }) {
             <div className="flex items-center justify-between gap-3">
                 <Label className="flex items-center gap-2" htmlFor="api-key-inline">
                     API Key
-                    {hasHydrated
-                        && (hasKey
-                            ? (
-                                    <Badge variant="secondary">set</Badge>
-                                )
-                            : (
-                                    <Badge variant="outline">not set</Badge>
-                                ))}
+                    {hasHydrated && <Badge variant={hasKey ? "secondary" : "outline"}>{hasKey ? "set" : "not set"}</Badge>}
                 </Label>
 
                 {hasKey && (
@@ -64,25 +51,18 @@ export function ApiKeyInlineField({ className }: { className?: string }) {
 
             <form
                 className="flex items-center gap-2"
-                onSubmit={(e) => {
-                    e.preventDefault();
+                onSubmit={(event) => {
+                    event.preventDefault();
 
-                    onSave();
+                    void save(draft).then(stored => stored && setDraft(""));
                 }}
             >
-                <Input
-                    autoComplete="off"
-                    id="api-key-inline"
-                    onChange={e => setDraft(e.target.value)}
-                    placeholder="invd_..."
-                    spellCheck={false}
-                    type="password"
-                    value={draft}
-                />
-                <Button disabled={!isDirty} type="submit">
+                <ApiKeyInput id="api-key-inline" invalid={check.kind === "invalid"} onChange={setDraft} value={draft} />
+                <Button disabled={!isDirty || check.kind === "checking"} type="submit">
                     Save
                 </Button>
             </form>
+            <KeyCheckMessage check={check} />
             <NoKeyYetHint />
         </div>
     );

@@ -302,3 +302,17 @@ export type SegmentedFinancialsSegmentId
         | "seg_revenue_geographic"
         | "seg_revenue_product"
         | "seg_selling_and_marketing_expenses_business_segment";
+
+// Account (`/v1/me`, `/v1/me/usage`, 0 credits; backend tasks/data-api-dashboard O5): the caller's plan, rate limits,
+// credits and the docs groups the plan may call; usage per UTC day, per endpoint family and per caller.
+export type V2Me = ApiResponse<"/v1/me", "get">;
+export type V2Plan = V2Me["plan"];
+export type V2Usage = ApiResponse<"/v1/me/usage", "get">;
+export type V2UsageDay = V2Usage["daily"][number];
+export type V2UsageWindow = V2Usage["window_days"];
+/** One offering (`GET /v1/ipos/{ipo_id}`): the list's row, asked again for the detail dialog. */
+export type V2IpoDetail = ApiResponse<"/v1/ipos/{ipo_id}", "get">;
+export type V2InstrumentsSort = NonNullable<ApiQuery<"/v1/instruments">["sort"]>;
+export type V2FundsSort = NonNullable<ApiQuery<"/v1/funds">["sort"]>;
+export type V2FilerPhase = NonNullable<ApiQuery<"/v1/filers">["phase"]>;
+export type V2FilersSort = NonNullable<ApiQuery<"/v1/filers">["sort"]>;

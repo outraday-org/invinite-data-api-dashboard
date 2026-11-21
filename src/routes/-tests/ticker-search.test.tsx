@@ -14,7 +14,7 @@ vi.mock("@tanstack/react-router", () => ({
     useRouterState: ({ select }: { select: (state: { location: { pathname: string } }) => string }) => select({ location: { pathname: router.pathname } }),
 }));
 
-vi.mock("@/lib/api/queries", () => ({ useInstrumentSearch: vi.fn() }));
+vi.mock("@/lib/api/queries", () => ({ useInstrumentSearch: vi.fn(), useKeyReady: () => true }));
 
 afterEach(cleanup);
 

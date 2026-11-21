@@ -7,7 +7,7 @@ import type { V2Dataset } from "@/lib/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useInstrumentSearch } from "@/lib/api/queries";
+import { useInstrumentSearch, useKeyReady } from "@/lib/api/queries";
 import { instrumentBadges, servesSection } from "@/lib/instruments";
 import { useTickerStore } from "@/lib/stores/ticker-store";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,10 @@ export function TickerSearch({ defaultTicker = "", placeholder = "Search stocks,
         return () => window.clearTimeout(timer);
     }, [trimmedQuery, debounceMs]);
 
-    const { data, isFetching } = useInstrumentSearch(debouncedQuery);
+    // No request (and no toast) before the key answered `/v1/me`.
+    const keyReady = useKeyReady();
+
+    const { data, isFetching } = useInstrumentSearch(keyReady ? debouncedQuery : "");
 
     const instruments = React.useMemo(() => data?.data ?? [], [data]);
 

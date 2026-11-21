@@ -68,6 +68,7 @@ import type {
     V2InvestorDocumentSearchResponse,
     V2InvestorDocumentsResponse,
     V2InvestorDocumentsSort,
+    V2IpoDetail,
     V2IposResponse,
     V2IposSort,
     V2IpoStage,
@@ -75,6 +76,7 @@ import type {
     V2LiveAudioResponse,
     V2MarketHolidaysResponse,
     V2MarketHolidaysSort,
+    V2Me,
     V2NewsItem,
     V2NewsListResponse,
     V2NewsText,
@@ -102,9 +104,10 @@ import type {
     V2TranscriptSplit,
     V2TranscriptTextResponse,
     V2TranscriptVersionsResponse,
+    V2Usage,
 } from "./types";
 
-import { ApiRequestError, errorDescription, rethrowApiError, retryUnlessApiError } from "./errors";
+import { ApiRequestError, errorDescription, isUnauthorized, rethrowApiError, retryUnlessApiError } from "./errors";
 import {
     getApiBaseUrl,
     getCompanyFiscalPeriods,
@@ -117,6 +120,9 @@ import {
     getHolders,
     getInstrument,
     getInstruments,
+    getIpo,
+    getMe,
+    getMyUsage,
     getV2Announcements,
     getV2AsReported,
     getV2AsReportedDetailed,
@@ -1378,5 +1384,73 @@ export function useV2Fact(factId: null | string) {
         load: apiKey => getV2Fact({ data: { apiKey, factId: factId ?? "" } }),
         queryKey: ["v2", "fact", factId ?? ""],
         staleTime: FINANCIALS_STALE_MS,
+    });
+}
+
+// Account (`/v1/me`, `/v1/me/usage`, 0 credits) and the IPO detail (backend tasks/data-api-dashboard O5).
+
+/** The query key prefix of `useMe` (the root's query cache asks it again after any 401). */
+export const ME_QUERY_KEY = ["v2", "me"] as const;
+
+/**
+ * Who the caller is (plan, limits, credits, allowed families): the key validator of the key gate and the plan source of
+ * PRO badges. Status-aware (a 401 = no or an invalid key, the gate's onboarding card; no toast) and never retried on an
+ * API answer.
+ */
+export function useMe() {
+    return useEarningsQuery<V2Me>({
+        enabled: true,
+        errorMessage: null,
+        load: apiKey => getMe({ data: { apiKey } }),
+        queryKey: ME_QUERY_KEY,
+        staleTime: 5 * 60 * 1000,
+    });
+}
+
+export type KeyState = "checking" | "invalid" | "ready" | "unavailable";
+
+/**
+ * The key gate's state from `useMe`: `checking` until the store is hydrated and `/v1/me` answered, `invalid` on a 401
+ * (no key at all is a 401 too, answered without a network call), `unavailable` on any other failure (the pages still
+ * render and show their own errors), else `ready`.
+ */
+export function useKeyState(): { me: null | V2Me; state: KeyState } {
+    const hasHydrated = useApiKeyStore(s => s.hasHydrated);
+
+    const { data, error, isLoading } = useMe();
+
+    if (data) return { me: data, state: "ready" };
+
+    if (isUnauthorized(error)) return { me: null, state: "invalid" };
+
+    if (error) return { me: null, state: "unavailable" };
+
+    return { me: null, state: !hasHydrated || isLoading ? "checking" : "unavailable" };
+}
+
+/** Whether requests outside the gated page (top bar, sidebar) may run: the key answered `/v1/me`. */
+export function useKeyReady() {
+    return useKeyState().state === "ready";
+}
+
+/** The caller's usage over a window of days (`/v1/me/usage?days=`). */
+export function useMyUsage(days: number) {
+    return useEarningsQuery<V2Usage>({
+        enabled: true,
+        errorMessage: null,
+        load: apiKey => getMyUsage({ data: { apiKey, days } }),
+        queryKey: ["v2", "me", "usage", days],
+        staleTime: 60 * 1000,
+    });
+}
+
+/** One offering (`/v1/ipos/{ipo_id}`, the IPO calendar's row detail); idle for "". */
+export function useIpo(ipoId: string) {
+    return useEarningsQuery<V2IpoDetail>({
+        enabled: ipoId.length > 0,
+        errorMessage: null,
+        load: apiKey => getIpo({ data: { apiKey, ipoId } }),
+        queryKey: ["v2", "ipo", ipoId],
+        staleTime: SEC_STALE_MS,
     });
 }

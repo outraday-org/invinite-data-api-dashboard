@@ -54,12 +54,14 @@ import type {
     V2InvestorDocumentSearchResponse,
     V2InvestorDocumentsResponse,
     V2InvestorDocumentsSort,
+    V2IpoDetail,
     V2IposResponse,
     V2IposSort,
     V2KpisResponse,
     V2LiveAudioResponse,
     V2MarketHolidaysResponse,
     V2MarketHolidaysSort,
+    V2Me,
     V2NewsItem,
     V2NewsListResponse,
     V2NewsText,
@@ -87,6 +89,7 @@ import type {
     V2TranscriptSplit,
     V2TranscriptTextResponse,
     V2TranscriptVersionsResponse,
+    V2Usage,
 } from "./types";
 
 import { ASSET_GROUP_CATEGORIES } from "../earnings/documents";
@@ -1450,4 +1453,43 @@ export const getV2Fact = createServerFn({ method: "GET" })
         if (error) throwApiError(error, response);
 
         return res as V2FactResponse;
+    });
+
+// Account and IPO detail (backend tasks/data-api-dashboard O5). `/v1/me` (0 credits) is the key validator.
+
+/** Who the caller is: plan, rate limits, credits, allowed families (0 credits; 401 = no or an invalid key). */
+export const getMe = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema }))
+    .handler(async ({ data }): Promise<V2Me> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/me");
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The caller's usage over the last `days` UTC days (1–90; the API answers a 7 / 30 / 90 window; 0 credits). */
+export const getMyUsage = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, days: z.number().int().min(1).max(90).optional() }))
+    .handler(async ({ data }): Promise<V2Usage> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/me/usage", {
+            params: { query: v2Query({ days: data.days }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** One offering by its id (the IPO calendar's row detail). */
+export const getIpo = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, ipoId: z.string().trim().min(1).max(200) }))
+    .handler(async ({ data }): Promise<V2IpoDetail> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/ipos/{ipo_id}", {
+            params: { path: { ipo_id: data.ipoId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
     });

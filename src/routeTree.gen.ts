@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as StatusRouteImport } from './routes/status'
 import { Route as LicensingRouteImport } from './routes/licensing'
 import { Route as FundsRouteImport } from './routes/funds'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as TickerRouteRouteImport } from './routes/$ticker/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TickerIndexRouteImport } from './routes/$ticker/index'
@@ -49,6 +50,11 @@ const LicensingRoute = LicensingRouteImport.update({
 const FundsRoute = FundsRouteImport.update({
   id: '/funds',
   path: '/funds',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TickerRouteRoute = TickerRouteRouteImport.update({
@@ -181,6 +187,7 @@ const TickerEarningsCallsEventIdIndexRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$ticker': typeof TickerRouteRouteWithChildren
+  '/account': typeof AccountRoute
   '/funds': typeof FundsRoute
   '/licensing': typeof LicensingRoute
   '/status': typeof StatusRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/funds': typeof FundsRoute
   '/licensing': typeof LicensingRoute
   '/status': typeof StatusRoute
@@ -237,6 +245,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/$ticker': typeof TickerRouteRouteWithChildren
+  '/account': typeof AccountRoute
   '/funds': typeof FundsRoute
   '/licensing': typeof LicensingRoute
   '/status': typeof StatusRoute
@@ -267,6 +276,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$ticker'
+    | '/account'
     | '/funds'
     | '/licensing'
     | '/status'
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/account'
     | '/funds'
     | '/licensing'
     | '/status'
@@ -322,6 +333,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/$ticker'
+    | '/account'
     | '/funds'
     | '/licensing'
     | '/status'
@@ -351,6 +363,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TickerRouteRoute: typeof TickerRouteRouteWithChildren
+  AccountRoute: typeof AccountRoute
   FundsRoute: typeof FundsRoute
   LicensingRoute: typeof LicensingRoute
   StatusRoute: typeof StatusRoute
@@ -378,6 +391,13 @@ declare module '@tanstack/react-router' {
       path: '/funds'
       fullPath: '/funds'
       preLoaderRoute: typeof FundsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$ticker': {
@@ -598,6 +618,7 @@ const TickerRouteRouteWithChildren = TickerRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TickerRouteRoute: TickerRouteRouteWithChildren,
+  AccountRoute: AccountRoute,
   FundsRoute: FundsRoute,
   LicensingRoute: LicensingRoute,
   StatusRoute: StatusRoute,

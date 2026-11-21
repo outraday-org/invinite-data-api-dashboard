@@ -1,14 +1,17 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRootRoute, HeadContent, Link, Outlet, Scripts, useRouterState } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { PanelLeftIcon } from "lucide-react";
 import * as React from "react";
 
 import { ApiKeyDialogButton } from "@/components/api-key/api-key-dialog";
+import { KeyGate } from "@/components/api-key/key-gate";
 import { TickerSearch } from "@/components/search/ticker-search";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
+import { isUnauthorized } from "@/lib/api/errors";
+import { ME_QUERY_KEY } from "@/lib/api/queries";
 
 import appCss from "../styles.css?url";
 
@@ -18,6 +21,13 @@ const BRAND_ICON_VERSION = "99ea9cdc";
 
 const iconHref = (path: string): string => `${path}?v=${BRAND_ICON_VERSION}`;
 
+// Any request answering 401 (a revoked key) asks `/v1/me` again: the key gate then shows the onboarding card.
+const queryCache = new QueryCache({
+    onError: (error, query) => {
+        if (isUnauthorized(error) && query.queryKey[1] !== "me") void queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+    },
+});
+
 const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
@@ -25,6 +35,7 @@ const queryClient = new QueryClient({
             staleTime: 60 * 1000,
         },
     },
+    queryCache,
 });
 
 export const Route = createRootRoute({
@@ -86,7 +97,9 @@ function RootLayout() {
                     </div>
                 </div>
             </div>
-            <Outlet />
+            <KeyGate>
+                <Outlet />
+            </KeyGate>
         </>
     );
 }

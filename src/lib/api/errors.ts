@@ -183,3 +183,8 @@ export function errorDescription(error: Error) {
 
     return `${error.message} (${error.code}, request ${error.requestId})`;
 }
+
+/** No key, or a key the API refused (401): the key gate shows the onboarding card. */
+export function isUnauthorized(error: unknown) {
+    return error instanceof ApiRequestError && error.status === 401;
+}
