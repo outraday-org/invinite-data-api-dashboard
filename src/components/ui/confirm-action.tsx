@@ -30,6 +30,7 @@ export function affectedText(ids: ReadonlyArray<string>, shown = CONFIRM_IDS_SHO
 export function ConfirmAction({
     confirmLabel,
     destructive = false,
+    details,
     effect,
     ids,
     noun = "alert",
@@ -41,6 +42,8 @@ export function ConfirmAction({
 }: {
     confirmLabel: string;
     destructive?: boolean;
+    /** More below the ids (A3: the alerts that deliver to a destination about to be deleted); may hold block elements. */
+    details?: React.ReactNode;
     /** What the action does, in words ("The alert stops firing; its events stay readable. This cannot be undone."). */
     effect: React.ReactNode;
     /** The affected ids (listed, the rest counted); omitted = none listed. */
@@ -65,6 +68,7 @@ export function ConfirmAction({
                                 {`${ids.length === 1 ? noun.charAt(0).toUpperCase() + noun.slice(1) : `${ids.length} ${noun}s`}: ${affectedText(ids)}`}
                             </p>
                         )}
+                        {details && <div className="mt-2">{details}</div>}
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

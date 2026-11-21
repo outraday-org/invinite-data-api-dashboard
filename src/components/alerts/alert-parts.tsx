@@ -1,5 +1,7 @@
 import type * as React from "react";
 
+import { Link } from "@tanstack/react-router";
+
 import type { AlertBatchResult, AlertQuotaUsage, AlertStatus } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
@@ -27,13 +29,13 @@ export function AlertStatusBadge({ disabledReason, status }: { disabledReason: n
     );
 }
 
-/** Destination ids as chips (empty = "Feed only": the pull feed and the WebSocket). */
+/** Destination ids as chips linking each destination's page (empty = "Feed only": the pull feed and the WebSocket). */
 export function DestinationChips({ ids }: { ids: ReadonlyArray<string> }) {
     if (ids.length === 0) return <span className="text-muted-foreground">Feed only</span>;
 
     return (
         <div className="flex flex-wrap gap-1">
-            {ids.map(id => <Badge className="font-mono" key={id} variant="outline">{id}</Badge>)}
+            {ids.map(id => <Badge className="font-mono" key={id} render={<Link params={{ id }} to="/alerts/destinations/$id" />} variant="outline">{id}</Badge>)}
         </div>
     );
 }

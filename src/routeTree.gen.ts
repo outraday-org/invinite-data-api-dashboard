@@ -35,9 +35,11 @@ import { Route as SecCikRouteImport } from './routes/sec/$cik'
 import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
 import { Route as OfferingsOfferingIdRouteImport } from './routes/offerings/$offeringId'
 import { Route as FilingsAccessionRouteImport } from './routes/filings/$accession'
+import { Route as AlertsWebhooksRouteImport } from './routes/alerts/webhooks'
 import { Route as AlertsNewRouteImport } from './routes/alerts/new'
 import { Route as AlertsEventsRouteImport } from './routes/alerts/events'
 import { Route as AlertsIdRouteImport } from './routes/alerts/$id'
+import { Route as AlertsDestinationsIndexRouteImport } from './routes/alerts/destinations/index'
 import { Route as TickerStockSplitsIndexRouteImport } from './routes/$ticker/stock-splits/index'
 import { Route as TickerSegmentedFinancialsIndexRouteImport } from './routes/$ticker/segmented-financials/index'
 import { Route as TickerNewsIndexRouteImport } from './routes/$ticker/news/index'
@@ -57,6 +59,7 @@ import { Route as TickerEarningsCallsIndexRouteImport } from './routes/$ticker/e
 import { Route as TickerEarningsCalendarIndexRouteImport } from './routes/$ticker/earnings-calendar/index'
 import { Route as TickerDocumentsIndexRouteImport } from './routes/$ticker/documents/index'
 import { Route as TickerDividendsIndexRouteImport } from './routes/$ticker/dividends/index'
+import { Route as AlertsDestinationsIdRouteImport } from './routes/alerts/destinations/$id'
 import { Route as TickerEarningsCallsEventIdIndexRouteImport } from './routes/$ticker/earnings-calls/$eventId/index'
 
 const StatusRoute = StatusRouteImport.update({
@@ -189,6 +192,11 @@ const FilingsAccessionRoute = FilingsAccessionRouteImport.update({
   path: '/filings/$accession',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AlertsWebhooksRoute = AlertsWebhooksRouteImport.update({
+  id: '/webhooks',
+  path: '/webhooks',
+  getParentRoute: () => AlertsRouteRoute,
+} as any)
 const AlertsNewRoute = AlertsNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -202,6 +210,11 @@ const AlertsEventsRoute = AlertsEventsRouteImport.update({
 const AlertsIdRoute = AlertsIdRouteImport.update({
   id: '/$id',
   path: '/$id',
+  getParentRoute: () => AlertsRouteRoute,
+} as any)
+const AlertsDestinationsIndexRoute = AlertsDestinationsIndexRouteImport.update({
+  id: '/destinations/',
+  path: '/destinations/',
   getParentRoute: () => AlertsRouteRoute,
 } as any)
 const TickerStockSplitsIndexRoute = TickerStockSplitsIndexRouteImport.update({
@@ -309,6 +322,11 @@ const TickerDividendsIndexRoute = TickerDividendsIndexRouteImport.update({
   path: '/dividends/',
   getParentRoute: () => TickerRouteRoute,
 } as any)
+const AlertsDestinationsIdRoute = AlertsDestinationsIdRouteImport.update({
+  id: '/destinations/$id',
+  path: '/destinations/$id',
+  getParentRoute: () => AlertsRouteRoute,
+} as any)
 const TickerEarningsCallsEventIdIndexRoute =
   TickerEarningsCallsEventIdIndexRouteImport.update({
     id: '/earnings-calls/$eventId/',
@@ -336,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/alerts/$id': typeof AlertsIdRoute
   '/alerts/events': typeof AlertsEventsRoute
   '/alerts/new': typeof AlertsNewRoute
+  '/alerts/webhooks': typeof AlertsWebhooksRoute
   '/filings/$accession': typeof FilingsAccessionRoute
   '/offerings/$offeringId': typeof OfferingsOfferingIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
@@ -346,6 +365,7 @@ export interface FileRoutesByFullPath {
   '/filings': typeof FilingsIndexRoute
   '/offerings': typeof OfferingsIndexRoute
   '/people': typeof PeopleIndexRoute
+  '/alerts/destinations/$id': typeof AlertsDestinationsIdRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
   '/$ticker/documents': typeof TickerDocumentsIndexRoute
   '/$ticker/earnings-calendar': typeof TickerEarningsCalendarIndexRoute
@@ -365,6 +385,7 @@ export interface FileRoutesByFullPath {
   '/$ticker/news': typeof TickerNewsIndexRoute
   '/$ticker/segmented-financials': typeof TickerSegmentedFinancialsIndexRoute
   '/$ticker/stock-splits': typeof TickerStockSplitsIndexRoute
+  '/alerts/destinations': typeof AlertsDestinationsIndexRoute
   '/$ticker/earnings-calls/$eventId': typeof TickerEarningsCallsEventIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -385,6 +406,7 @@ export interface FileRoutesByTo {
   '/alerts/$id': typeof AlertsIdRoute
   '/alerts/events': typeof AlertsEventsRoute
   '/alerts/new': typeof AlertsNewRoute
+  '/alerts/webhooks': typeof AlertsWebhooksRoute
   '/filings/$accession': typeof FilingsAccessionRoute
   '/offerings/$offeringId': typeof OfferingsOfferingIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
@@ -395,6 +417,7 @@ export interface FileRoutesByTo {
   '/filings': typeof FilingsIndexRoute
   '/offerings': typeof OfferingsIndexRoute
   '/people': typeof PeopleIndexRoute
+  '/alerts/destinations/$id': typeof AlertsDestinationsIdRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
   '/$ticker/documents': typeof TickerDocumentsIndexRoute
   '/$ticker/earnings-calendar': typeof TickerEarningsCalendarIndexRoute
@@ -414,6 +437,7 @@ export interface FileRoutesByTo {
   '/$ticker/news': typeof TickerNewsIndexRoute
   '/$ticker/segmented-financials': typeof TickerSegmentedFinancialsIndexRoute
   '/$ticker/stock-splits': typeof TickerStockSplitsIndexRoute
+  '/alerts/destinations': typeof AlertsDestinationsIndexRoute
   '/$ticker/earnings-calls/$eventId': typeof TickerEarningsCallsEventIdIndexRoute
 }
 export interface FileRoutesById {
@@ -437,6 +461,7 @@ export interface FileRoutesById {
   '/alerts/$id': typeof AlertsIdRoute
   '/alerts/events': typeof AlertsEventsRoute
   '/alerts/new': typeof AlertsNewRoute
+  '/alerts/webhooks': typeof AlertsWebhooksRoute
   '/filings/$accession': typeof FilingsAccessionRoute
   '/offerings/$offeringId': typeof OfferingsOfferingIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
@@ -447,6 +472,7 @@ export interface FileRoutesById {
   '/filings/': typeof FilingsIndexRoute
   '/offerings/': typeof OfferingsIndexRoute
   '/people/': typeof PeopleIndexRoute
+  '/alerts/destinations/$id': typeof AlertsDestinationsIdRoute
   '/$ticker/dividends/': typeof TickerDividendsIndexRoute
   '/$ticker/documents/': typeof TickerDocumentsIndexRoute
   '/$ticker/earnings-calendar/': typeof TickerEarningsCalendarIndexRoute
@@ -466,6 +492,7 @@ export interface FileRoutesById {
   '/$ticker/news/': typeof TickerNewsIndexRoute
   '/$ticker/segmented-financials/': typeof TickerSegmentedFinancialsIndexRoute
   '/$ticker/stock-splits/': typeof TickerStockSplitsIndexRoute
+  '/alerts/destinations/': typeof AlertsDestinationsIndexRoute
   '/$ticker/earnings-calls/$eventId/': typeof TickerEarningsCallsEventIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -490,6 +517,7 @@ export interface FileRouteTypes {
     | '/alerts/$id'
     | '/alerts/events'
     | '/alerts/new'
+    | '/alerts/webhooks'
     | '/filings/$accession'
     | '/offerings/$offeringId'
     | '/people/$personId'
@@ -500,6 +528,7 @@ export interface FileRouteTypes {
     | '/filings'
     | '/offerings'
     | '/people'
+    | '/alerts/destinations/$id'
     | '/$ticker/dividends'
     | '/$ticker/documents'
     | '/$ticker/earnings-calendar'
@@ -519,6 +548,7 @@ export interface FileRouteTypes {
     | '/$ticker/news'
     | '/$ticker/segmented-financials'
     | '/$ticker/stock-splits'
+    | '/alerts/destinations'
     | '/$ticker/earnings-calls/$eventId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -539,6 +569,7 @@ export interface FileRouteTypes {
     | '/alerts/$id'
     | '/alerts/events'
     | '/alerts/new'
+    | '/alerts/webhooks'
     | '/filings/$accession'
     | '/offerings/$offeringId'
     | '/people/$personId'
@@ -549,6 +580,7 @@ export interface FileRouteTypes {
     | '/filings'
     | '/offerings'
     | '/people'
+    | '/alerts/destinations/$id'
     | '/$ticker/dividends'
     | '/$ticker/documents'
     | '/$ticker/earnings-calendar'
@@ -568,6 +600,7 @@ export interface FileRouteTypes {
     | '/$ticker/news'
     | '/$ticker/segmented-financials'
     | '/$ticker/stock-splits'
+    | '/alerts/destinations'
     | '/$ticker/earnings-calls/$eventId'
   id:
     | '__root__'
@@ -590,6 +623,7 @@ export interface FileRouteTypes {
     | '/alerts/$id'
     | '/alerts/events'
     | '/alerts/new'
+    | '/alerts/webhooks'
     | '/filings/$accession'
     | '/offerings/$offeringId'
     | '/people/$personId'
@@ -600,6 +634,7 @@ export interface FileRouteTypes {
     | '/filings/'
     | '/offerings/'
     | '/people/'
+    | '/alerts/destinations/$id'
     | '/$ticker/dividends/'
     | '/$ticker/documents/'
     | '/$ticker/earnings-calendar/'
@@ -619,6 +654,7 @@ export interface FileRouteTypes {
     | '/$ticker/news/'
     | '/$ticker/segmented-financials/'
     | '/$ticker/stock-splits/'
+    | '/alerts/destinations/'
     | '/$ticker/earnings-calls/$eventId/'
   fileRoutesById: FileRoutesById
 }
@@ -833,6 +869,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FilingsAccessionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/alerts/webhooks': {
+      id: '/alerts/webhooks'
+      path: '/webhooks'
+      fullPath: '/alerts/webhooks'
+      preLoaderRoute: typeof AlertsWebhooksRouteImport
+      parentRoute: typeof AlertsRouteRoute
+    }
     '/alerts/new': {
       id: '/alerts/new'
       path: '/new'
@@ -852,6 +895,13 @@ declare module '@tanstack/react-router' {
       path: '/$id'
       fullPath: '/alerts/$id'
       preLoaderRoute: typeof AlertsIdRouteImport
+      parentRoute: typeof AlertsRouteRoute
+    }
+    '/alerts/destinations/': {
+      id: '/alerts/destinations/'
+      path: '/destinations'
+      fullPath: '/alerts/destinations'
+      preLoaderRoute: typeof AlertsDestinationsIndexRouteImport
       parentRoute: typeof AlertsRouteRoute
     }
     '/$ticker/stock-splits/': {
@@ -987,6 +1037,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TickerDividendsIndexRouteImport
       parentRoute: typeof TickerRouteRoute
     }
+    '/alerts/destinations/$id': {
+      id: '/alerts/destinations/$id'
+      path: '/destinations/$id'
+      fullPath: '/alerts/destinations/$id'
+      preLoaderRoute: typeof AlertsDestinationsIdRouteImport
+      parentRoute: typeof AlertsRouteRoute
+    }
     '/$ticker/earnings-calls/$eventId/': {
       id: '/$ticker/earnings-calls/$eventId/'
       path: '/earnings-calls/$eventId'
@@ -1054,14 +1111,20 @@ interface AlertsRouteRouteChildren {
   AlertsIdRoute: typeof AlertsIdRoute
   AlertsEventsRoute: typeof AlertsEventsRoute
   AlertsNewRoute: typeof AlertsNewRoute
+  AlertsWebhooksRoute: typeof AlertsWebhooksRoute
   AlertsIndexRoute: typeof AlertsIndexRoute
+  AlertsDestinationsIdRoute: typeof AlertsDestinationsIdRoute
+  AlertsDestinationsIndexRoute: typeof AlertsDestinationsIndexRoute
 }
 
 const AlertsRouteRouteChildren: AlertsRouteRouteChildren = {
   AlertsIdRoute: AlertsIdRoute,
   AlertsEventsRoute: AlertsEventsRoute,
   AlertsNewRoute: AlertsNewRoute,
+  AlertsWebhooksRoute: AlertsWebhooksRoute,
   AlertsIndexRoute: AlertsIndexRoute,
+  AlertsDestinationsIdRoute: AlertsDestinationsIdRoute,
+  AlertsDestinationsIndexRoute: AlertsDestinationsIndexRoute,
 }
 
 const AlertsRouteRouteWithChildren = AlertsRouteRoute._addFileChildren(

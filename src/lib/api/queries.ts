@@ -18,6 +18,9 @@ import type {
     AlertTemplatesResponse,
     AlertType,
     CompanyFiscalPeriod,
+    Destination,
+    DestinationDeliveriesResponse,
+    DestinationsListResponse,
     FiscalPeriodType,
     SearchMode,
     SecSearchMode,
@@ -254,6 +257,7 @@ import {
     listAlerts,
     listAlertTemplates,
 } from "./server-functions-alerts";
+import { getDestination, listDestinationDeliveries, listDestinations } from "./server-functions-destinations";
 
 function useApiKey() {
     const apiKey = useApiKeyStore(s => s.apiKey);
@@ -2297,5 +2301,62 @@ export function useFilerHoldingChangesInfinite(input: FilerHoldingChangesInput) 
         queryKey: ["v2", "filer-holding-changes", input.cik, input.periodEnd ?? "", input.priorPeriodEnd ?? "", key(input.type), input.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
+    });
+}
+
+// Destinations (backend tasks/data-api-dashboard 2-alerts task 3): where alerts are delivered and their delivery log.
+// Status-aware like the alert reads (no toast); writes through `useApiMutation`. A read answer never carries a secret
+// (`withoutSecrets` on the server).
+
+/** The query key prefixes of the destination reads (a destination write invalidates them). */
+export const DESTINATION_QUERY_KEYS = {
+    /** Every destination's delivery log (`["v2", "destination-deliveries", id]`). */
+    deliveries: ["v2", "destination-deliveries"],
+    /** One destination (`["v2", "destination", id]`). */
+    destination: ["v2", "destination"],
+    /** The destinations list (and the alert form's picker). */
+    list: ["v2", "destinations"],
+} as const;
+
+/** Destinations per page of `/v1/destinations` (the most the API gives, 1 credit a page). */
+export const DESTINATIONS_PAGE = 200;
+
+/** Deliveries per page of `/v1/destinations/{id}/deliveries`. */
+export const DELIVERIES_PAGE = 100;
+
+/** The account's destinations by cursor (oldest first, as the API lists them). */
+export function useDestinationsInfinite(enabled = true) {
+    return useEarningsInfinite<DestinationsListResponse>({
+        enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => listDestinations({ data: { apiKey, cursor: cursor ?? undefined, limit: DESTINATIONS_PAGE } }),
+        queryKey: [...DESTINATION_QUERY_KEYS.list],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** One destination by id; idle for "". */
+export function useDestination(id: string) {
+    return useEarningsQuery<Destination>({
+        enabled: id.length > 0,
+        errorMessage: null,
+        load: apiKey => getDestination({ data: { apiKey, id } }),
+        queryKey: [...DESTINATION_QUERY_KEYS.destination, id],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/**
+ * One destination's delivery log by cursor (newest first); idle for "". `poll` (a test delivery being watched) says,
+ * from the loaded pages, after how many ms to ask them again, or false (no polling; the default).
+ */
+export function useDestinationDeliveriesInfinite(id: string, poll?: (pages: ReadonlyArray<DestinationDeliveriesResponse>) => false | number) {
+    return useEarningsInfinite<DestinationDeliveriesResponse>({
+        enabled: id.length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => listDestinationDeliveries({ data: { apiKey, cursor: cursor ?? undefined, id, limit: DELIVERIES_PAGE } }),
+        queryKey: [...DESTINATION_QUERY_KEYS.deliveries, id],
+        refetchInterval: query => (poll ? poll(query.state.data?.pages ?? []) : false),
+        staleTime: ALERTS_STALE_MS,
     });
 }

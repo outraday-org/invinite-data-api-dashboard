@@ -20,7 +20,7 @@ const fieldId = (key: string) => `alert-field-${key.replaceAll(".", "-")}`;
 
 const WIDE_KINDS = new Set<FieldSpec["kind"]>(["enum-list", "json", "string-list", "weekday-list"]);
 
-function FieldShell({ children, error, help, htmlFor, label, wide }: { children: React.ReactNode; error?: string; help?: string; htmlFor?: string; label: string; wide?: boolean }) {
+export function FieldShell({ children, error, help, htmlFor, label, wide }: { children: React.ReactNode; error?: string; help?: string; htmlFor?: string; label: string; wide?: boolean }) {
     return (
         <div className={cn("flex min-w-0 flex-col gap-1", wide && "sm:col-span-2")} data-field={htmlFor}>
             {htmlFor ? <label className="font-medium" htmlFor={htmlFor}>{label}</label> : <span className="font-medium">{label}</span>}

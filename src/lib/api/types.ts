@@ -430,3 +430,22 @@ export type AlertTemplate = AlertTemplatesResponse["data"][number];
 export type AlertTemplateInput = AlertTemplate["inputs"][number];
 /** What a write answered with no body (204): an object, so the inspector can file its request under it. */
 export type AlertWriteDone = { done: "deleted" | "validated"; id: null | string };
+
+// Destinations (backend tasks/data-api-dashboard 2-alerts task 3): where alerts are delivered, their delivery log. The
+// signing secret is in `DestinationCreated` / `DestinationSecret` only (the write answers); a `Destination` never carries
+// it nor a header value (`header_names` only).
+type CreateDestinationBody = NonNullable<paths["/v1/destinations"]["post"]["requestBody"]>["content"]["application/json"];
+
+export type DestinationsListResponse = ApiResponse<"/v1/destinations", "get">;
+export type Destination = DestinationsListResponse["data"][number];
+export type DestinationKind = Destination["kind"];
+export type DestinationPreset = Destination["preset"];
+export type DestinationStatus = Destination["status"];
+export type CreateDestinationRequest = CreateDestinationBody;
+export type UpdateDestinationRequest = NonNullable<paths["/v1/destinations/{id}"]["patch"]["requestBody"]>["content"]["application/json"];
+export type DestinationCreated = paths["/v1/destinations"]["post"]["responses"][201]["content"]["application/json"];
+export type DestinationSecret = ApiResponse<"/v1/destinations/{id}:rotate-secret", "post">;
+export type DestinationTestAccepted = paths["/v1/destinations/{id}:test"]["post"]["responses"][202]["content"]["application/json"];
+export type DestinationDeliveriesResponse = ApiResponse<"/v1/destinations/{id}/deliveries", "get">;
+export type DestinationDelivery = DestinationDeliveriesResponse["data"][number];
+export type DestinationDeliveryStatus = DestinationDelivery["status"];

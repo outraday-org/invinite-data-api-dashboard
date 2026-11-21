@@ -7,6 +7,7 @@ import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import { ApiRequestError, rethrowApiError } from "./errors";
 import { batchAlerts, createAlert, deleteAlert, pauseAlert, resumeAlert, testAlert, updateAlert } from "./server-functions-alerts";
+import { createDestination, deleteDestination, rotateDestinationSecret, testDestination, updateDestination } from "./server-functions-destinations";
 
 /**
  * The write layer (backend tasks/data-api-dashboard 2-alerts task 2): one entry per write operation (A3 appends the
@@ -15,11 +16,16 @@ import { batchAlerts, createAlert, deleteAlert, pauseAlert, resumeAlert, testAle
 const WRITES = {
     batchAlerts,
     createAlert,
+    createDestination,
     deleteAlert,
+    deleteDestination,
     pauseAlert,
     resumeAlert,
+    rotateDestinationSecret,
     testAlert,
+    testDestination,
     updateAlert,
+    updateDestination,
 };
 
 export type WriteOperationId = keyof typeof WRITES;
