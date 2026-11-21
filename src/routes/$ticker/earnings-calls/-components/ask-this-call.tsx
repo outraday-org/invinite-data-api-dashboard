@@ -145,7 +145,6 @@ function hitSpeaker(hit: V2TranscriptSearchHit, imagesByName: SpeakerImages): nu
 type HitCardProps = {
     hit: V2TranscriptSearchHit;
     imagesByName: SpeakerImages;
-    mode: SearchMode;
     onPlayed: () => void;
     query: string;
     scope: AskScope;
@@ -156,7 +155,6 @@ function HitShell({
     actions,
     hit,
     imagesByName,
-    mode,
     query,
     timestamp,
     title,
@@ -167,7 +165,7 @@ function HitShell({
                 badge={(
                     <>
                         <Badge variant="outline">{TYPE_LABELS[hit.type]}</Badge>
-                        <MatchBadge match={hit.match} score={mode === "literal" ? undefined : hit.score} />
+                        <MatchBadge match={hit.match} score={hit.score} />
                         {title}
                     </>
                 )}
@@ -378,7 +376,6 @@ export function AskResults({
                                         imagesByName={imagesByName}
                                         // A hit has no id: call + position + type is unique within one answer.
                                         key={`${hit.event_id}:${hit.type}:${hit.start_ms ?? hit.slide?.page ?? ""}:${hit.text.slice(0, 32)}`}
-                                        mode={hit.match.type}
                                         onPlayed={onPlayed}
                                         query={query}
                                         scope={scope}

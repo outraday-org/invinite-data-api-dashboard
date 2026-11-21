@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PdfDocumentSection } from "@/components/pdf/pdf-inline-viewer";
+import { OBJECT_URL_REVOKE_DELAY_MS } from "@/lib/download";
 
 const pdf = (version: number) => ({ bytes: 79_457, pages: 14, url: `https://storage.example.com/transcript-v${version}.pdf` });
 
@@ -54,11 +55,22 @@ describe("PdfDocumentSection", () => {
             names.push(this.download);
         });
 
+        // The object URL outlives the click (a browser still reading the blob fails a save revoked at once).
+        const timers = vi.spyOn(globalThis, "setTimeout");
+
         render(<PdfDocumentSection filename="FDX-transcript-v2.pdf" pdf={pdf(2)} />);
 
         fireEvent.click(screen.getByText("Download"));
 
         await waitFor(() => expect(names).toEqual(["FDX-transcript-v2.pdf"]));
+
+        expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+
+        const revoke = timers.mock.calls.find(([, delay]) => delay === OBJECT_URL_REVOKE_DELAY_MS)?.[0];
+
+        expect(revoke).toBeTypeOf("function");
+
+        (revoke as () => void)();
 
         expect(URL.revokeObjectURL).toHaveBeenCalledWith("blob:local");
     });

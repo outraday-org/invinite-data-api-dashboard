@@ -2,6 +2,12 @@ import type { V2Event } from "@/lib/api/types";
 
 import { formatFiscalPeriod } from "@/lib/earnings/format";
 
+/**
+ * How long an object URL outlives its click. The click only starts the download; a browser still reading the blob
+ * (Firefox, Safari, a large recording) fails the save when the URL is revoked at once.
+ */
+export const OBJECT_URL_REVOKE_DELAY_MS = 60_000;
+
 /** Saves bytes made in the browser under `filename` (an object URL clicked through a hidden anchor). */
 export function saveBlob(blob: Blob, filename: string) {
     const objectUrl = URL.createObjectURL(blob);
@@ -20,7 +26,7 @@ export function saveBlob(blob: Blob, filename: string) {
 
     anchor.remove();
 
-    URL.revokeObjectURL(objectUrl);
+    setTimeout(() => URL.revokeObjectURL(objectUrl), OBJECT_URL_REVOKE_DELAY_MS);
 }
 
 /** Saves text as a UTF-8 file. */

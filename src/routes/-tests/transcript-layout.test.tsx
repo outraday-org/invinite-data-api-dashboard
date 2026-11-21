@@ -248,6 +248,36 @@ describe("useFollowScroll", () => {
         container.remove();
     });
 
+    it("keeps Follow on for a touch drag on the seek bar and a wheel inside an open menu; a page touch scroll counts", () => {
+        const { container } = setup(true);
+
+        const slider = document.createElement("div");
+
+        slider.setAttribute("role", "slider");
+
+        const menu = document.createElement("div");
+
+        menu.setAttribute("role", "menu");
+
+        container.append(slider, menu);
+
+        act(() => {
+            slider.dispatchEvent(new Event("touchmove", { bubbles: true }));
+
+            menu.dispatchEvent(new WheelEvent("wheel", { bubbles: true }));
+        });
+
+        expect(player.setFollow).not.toHaveBeenCalled();
+
+        act(() => {
+            container.dispatchEvent(new Event("touchmove", { bubbles: true }));
+        });
+
+        expect(player.setFollow).toHaveBeenCalledWith(false);
+
+        container.remove();
+    });
+
     it("neither scrolls nor listens while paused or with Follow off", () => {
         const paused = setup(false);
 
