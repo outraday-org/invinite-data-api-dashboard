@@ -79,7 +79,7 @@ function RootLayout() {
     return (
         <>
             <div className="sticky shrink-0 top-0 z-40 h-14 bg-background/80 supports-backdrop-filter:backdrop-blur-md">
-                <div className="grid h-full w-full grid-cols-[1fr_auto_1fr] items-center gap-3 pl-2 pr-4">
+                <div className="grid h-full w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 pl-2 pr-2 md:grid-cols-[1fr_auto_1fr] md:gap-3 md:pr-4">
                     <div className="justify-self-start shrink-0">
                         <SidebarTrigger
                             aria-label="Toggle sidebar"

@@ -87,7 +87,21 @@ describe("the sidebar on every page (Market · Browse · Context)", () => {
 
         expect(useV2LiveEvents).toHaveBeenLastCalledWith(false);
 
+        // No key: no context to load (the page is the onboarding card).
+        expect(useInstrument).not.toHaveBeenCalled();
+
+        expect(screen.queryByTestId("sidebar-context")).toBeNull();
+
+        cleanup();
+
+        // While `/v1/me` is checked: the context waits idle.
+        vi.mocked(useKeyState).mockReturnValue({ me: null, state: "checking" });
+
+        render(<AppSidebar />);
+
         expect(useInstrument).toHaveBeenLastCalledWith("");
+
+        expect(screen.getByTestId("context-skeleton")).toBeInTheDocument();
     });
 
     it("an instrument: its type-labelled context with the sections its datasets allow (Financials one entry)", () => {

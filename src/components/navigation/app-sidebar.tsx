@@ -205,8 +205,9 @@ export function AppSidebar() {
                         <PageLinks liveCount={0} pages={BROWSE_NAV} />
                     </SidebarGroupContent>
                 </SidebarGroup>
-                {params.ticker && <InstrumentContext enabled={keyReady} ticker={params.ticker} />}
-                {cik && <FilerContext cik={cik} enabled={keyReady} />}
+                {/* The subject's context once the key answered (no key: the onboarding card, no context to load). */}
+                {params.ticker && state !== "invalid" && <InstrumentContext enabled={keyReady} ticker={params.ticker} />}
+                {cik && state !== "invalid" && <FilerContext cik={cik} enabled={keyReady} />}
             </SidebarContent>
             <SidebarFooter>
                 <SidebarGroup className="p-0">
