@@ -3,36 +3,38 @@ import type * as React from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import type { NewsListInput } from "@/lib/api/queries";
 import type { NewsItemPublic } from "@/lib/api/types";
+import type { ExportColumn } from "@/lib/export";
 import type { LiveNewsStop } from "@/lib/live/use-live-news";
 import type { NewsFilters, NewsSearch } from "@/lib/news/labels";
 
+import { ExportMenu } from "@/components/api/export-menu";
+import { TabStrip } from "@/components/navigation/tab-strip";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
+import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { isTierError } from "@/lib/api/errors";
-import { useApiBaseUrl, useNewsPage, useV2Company } from "@/lib/api/queries";
+import { useV2Company } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
-import { useLiveNews } from "@/lib/live/use-live-news";
-import { issuerLabels, matchesNewsFilters, mergeLiveItems, validateNewsSearch } from "@/lib/news/labels";
-import { firstNewsPage, newsPageCursor, newsPageNumber, newsPagerFor, nextNewsPage, previousNewsPage } from "@/lib/news/pager";
-import { useApiKeyStore } from "@/lib/stores/api-key-store";
-import { Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
+import { issuerLabels, validateNewsSearch } from "@/lib/news/labels";
+import { IN_PLACE } from "@/lib/url-state";
 
+import { AnnouncementsTab } from "./-components/announcements";
+import { NewsEventFilter } from "./-components/news-event-filter";
 import { NewsFilters as NewsFilterControls } from "./-components/news-filters";
 import { NewsItemPanel } from "./-components/news-item-panel";
 import { NewsLiveToggle } from "./-components/news-live-toggle";
 import { NewsPager } from "./-components/news-pager";
+import { NewsSearchBox } from "./-components/news-search";
 import { NewsTable } from "./-components/news-table";
+import { useNewsList } from "./-components/use-news-list";
 
 export const Route = createFileRoute("/$ticker/news/")({
     component: NewsPage,
     head: ({ params }) => tickerHead(params.ticker, "News"),
     validateSearch: validateNewsSearch,
 });
-
-const PAGE_SIZE = 50;
 
 /** The list's request state: `/v1/news` is FREE, so a plan gate is unexpected but still a notice, not an error. */
 function ListError({ error }: { error: unknown }) {
@@ -41,12 +43,35 @@ function ListError({ error }: { error: unknown }) {
     return <ErrorState error={error} title="Failed to load the news" />;
 }
 
+/** Why the live switch turned itself off (plan, connection limit, not enabled, error). */
+export function LiveStopNotice({ stop }: { stop: LiveNewsStop }) {
+    return (
+        <Notice badge={stop.kind === "plan" ? "STANDARD" : undefined} title={stop.message}>
+            {stop.kind === "plan" ? "The live news feed needs the STANDARD plan; the list above still works." : undefined}
+        </Notice>
+    );
+}
+
+/** The export's columns of a news row (the shown page; the pager has no "load all"). */
+export const NEWS_EXPORT_COLUMNS: ReadonlyArray<ExportColumn<NewsItemPublic>> = [
+    { header: "published_at", value: item => item.published_at },
+    { header: "title", value: item => item.title },
+    { header: "kind", value: item => item.kind },
+    { header: "topics", value: item => item.topics },
+    { header: "is_earnings_news", value: item => item.is_earnings_news },
+    { header: "source", value: item => item.source.id },
+    { header: "publisher", value: item => item.attribution.publisher },
+    { header: "symbols", value: item => item.symbols },
+    { header: "url", value: item => item.url },
+    { header: "id", value: item => item.id },
+];
+
 /**
  * The list when the page-side filters hid rows of the loaded page: never an empty-looking list while older news
- * follows — every row hidden + a next page = a line saying so and a button to load it; some hidden = a count under
- * the table.
+ * follows. Every row hidden: the page asks the next pages by itself (≤ 10 per filter change, `useNewsList`); once that
+ * stops with a next page left, a line saying so and a button to load it. Some hidden = a count under the table.
  */
-function FilteredOut({ hidden, pager, shown }: { hidden: number; pager: React.ComponentProps<typeof NewsPager>; shown: number }) {
+function FilteredOut({ hidden, pager, shown, skippedPages }: { hidden: number; pager: React.ComponentProps<typeof NewsPager>; shown: number; skippedPages: number }) {
     if (shown > 0) {
         return (
             <div className="text-muted-foreground p-2 text-center text-xs" data-testid="news-filtered-out">
@@ -55,11 +80,13 @@ function FilteredOut({ hidden, pager, shown }: { hidden: number; pager: React.Co
         );
     }
 
+    const scanned = skippedPages > 0 ? ` (${skippedPages.toLocaleString("en-US")} earlier ${skippedPages === 1 ? "page" : "pages"} skipped, none matched)` : "";
+
     return (
         <div className="text-muted-foreground flex flex-col items-center gap-2 p-2 text-center text-xs" data-testid="news-filtered-out">
             {pager.hasNext
-                ? `None of the ${hidden.toLocaleString("en-US")} items on this page match the filters; older news follows.`
-                : "No news on this page matches the filters."}
+                ? `None of the ${hidden.toLocaleString("en-US")} items on this page match the filters${scanned}; older news follows.`
+                : `No news on this page matches the filters${scanned}.`}
             {pager.hasNext && (
                 <Button disabled={pager.isFetching} onClick={pager.onNext} size="sm" type="button" variant="outline">
                     Load the next page
@@ -69,11 +96,14 @@ function FilteredOut({ hidden, pager, shown }: { hidden: number; pager: React.Co
     );
 }
 
-/** The News page body (pure: tested in `src/routes/-tests/news-page.test.tsx`). */
+/** The News page body (pure: tested in `src/routes/-tests/news-page.test.tsx`); the watchlist feed renders it too. */
 export function NewsPageView({
     controls,
+    description,
     emptyText = "No news in this window.",
     error,
+    exportScope,
+    headerActions,
     hiddenByFilters = 0,
     isLoading,
     items,
@@ -81,11 +111,20 @@ export function NewsPageView({
     notice,
     pager,
     scopeLabel,
+    search,
+    skippedPages = 0,
+    title = "News",
 }: {
     controls?: React.ReactNode;
+    /** Replaces the default description (the watchlist feed's). */
+    description?: React.ReactNode;
     /** The empty list's line. */
     emptyText?: string;
     error: unknown;
+    /** The export file's scope (the ticker, `watchlist`); none = no export menu. */
+    exportScope?: string;
+    /** The header's actions (the News | Announcements tabs). */
+    headerActions?: React.ReactNode;
     /**
      * Rows of the loaded page the page-side filters hid (source, earnings, Company-published: `/v1/news` has no
      * parameter for them), so a page can show fewer rows than it loaded, or none.
@@ -98,19 +137,26 @@ export function NewsPageView({
     /** The page shown and its neighbours (`NewsPager`, centred under the table). */
     pager: React.ComponentProps<typeof NewsPager>;
     scopeLabel: string;
+    /** The news search box (above the filters). */
+    search?: React.ReactNode;
+    /** Pages the auto-advance skipped since the last filter change (all hidden). */
+    skippedPages?: number;
+    title?: string;
 }) {
     return (
         <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-3">
                 <PageHeader
-                    description={(
+                    actions={headerActions}
+                    description={description ?? (
                         <>
-                            {`${scopeLabel}: SEC filings and the companies' own newsroom publications, newest first. `}
+                            {`${scopeLabel}: SEC filings and the companies' own newsroom publications. `}
                             Texts are the publishers&apos; own words, shown with their source and date; wire services are never a source.
                         </>
                     )}
-                    title="News"
+                    title={title}
                 />
+                {search}
                 {controls}
                 {notice}
             </div>
@@ -120,13 +166,25 @@ export function NewsPageView({
                 : (
                         <>
                             <div>
+                                {exportScope && (
+                                    <div className="flex justify-end pb-2">
+                                        <ExportMenu
+                                            config={{ columns: NEWS_EXPORT_COLUMNS, dataset: "news", scope: exportScope }}
+                                            failed={false}
+                                            hasNextPage={false}
+                                            isFetchingNextPage={false}
+                                            operationId="listNews"
+                                            rows={items}
+                                        />
+                                    </div>
+                                )}
                                 {!isLoading && items.length === 0 && hiddenByFilters === 0
                                     ? <div className="text-muted-foreground w-full p-2 text-center text-xs">{emptyText}</div>
                                     : !isLoading && items.length === 0
-                                            ? <FilteredOut hidden={hiddenByFilters} pager={pager} shown={0} />
+                                            ? <FilteredOut hidden={hiddenByFilters} pager={pager} shown={0} skippedPages={skippedPages} />
                                             : <NewsTable isLoading={isLoading} items={items} liveIds={liveIds} />}
                                 {!isLoading && items.length > 0 && hiddenByFilters > 0 && (
-                                    <FilteredOut hidden={hiddenByFilters} pager={pager} shown={items.length} />
+                                    <FilteredOut hidden={hiddenByFilters} pager={pager} shown={items.length} skippedPages={skippedPages} />
                                 )}
                             </div>
                             <NewsPager {...pager} />
@@ -143,37 +201,66 @@ function NewsPage() {
 
     const navigate = Route.useNavigate();
 
+    const onFilterChange = (patch: Partial<NewsSearch>) => {
+        void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
+    };
+
+    const tabs = (
+        <TabStrip
+            aria-label="News view"
+            onSelect={value => onFilterChange({ view: value === "announcements" ? "announcements" : undefined })}
+            options={VIEW_OPTIONS}
+            value={search.view ?? "news"}
+        />
+    );
+
+    // The item panel (`?item=`); `title` = the list row's headline, shown before the item answers.
+    const panel = (title?: string) => (
+        <NewsItemPanel
+            id={search.item ?? null}
+            onClose={() => void navigate({ resetScroll: false, search: prev => ({ ...prev, item: undefined }) })}
+            title={title}
+        />
+    );
+
+    if (search.view === "announcements") {
+        return (
+            <>
+                <div className="flex flex-col gap-4">
+                    <PageHeader actions={tabs} title="News" />
+                    <AnnouncementsTab onChange={onFilterChange} search={search} ticker={ticker} />
+                </div>
+                {panel()}
+            </>
+        );
+    }
+
+    return <CompanyNews navigate={navigate} onFilterChange={onFilterChange} panel={panel} search={search} tabs={tabs} ticker={ticker} />;
+}
+
+const VIEW_OPTIONS = [{ label: "News", value: "news" }, { label: "Announcements", value: "announcements" }] as const;
+
+/** The News view of one company: search box, filters, the paged list, the live switch. */
+function CompanyNews({
+    navigate,
+    onFilterChange,
+    panel,
+    search,
+    tabs,
+    ticker,
+}: {
+    navigate: ReturnType<typeof Route.useNavigate>;
+    onFilterChange: (patch: Partial<NewsSearch>) => void;
+    panel: (title?: string) => React.ReactNode;
+    search: NewsSearch;
+    tabs: React.ReactNode;
+    ticker: string;
+}) {
     // "Company-published" keeps the items the company published itself (its verified publications, by CIK) among the
     // ones that mention it: v2 has no publisher filter, so it filters the loaded page (as source and earnings do).
     const company = useV2Company(ticker).data;
 
     const publisherCik = search.published ? company?.cik.replace(/^0+/, "") : undefined;
-
-    // `/v1/news` filters by company, kind, topic and the published window; v2 has no market-wide feed (decision 15:
-    // a company scope is required), so a stale `?scope=market` URL reads the company's news.
-    const listInput: NewsListInput = {
-        company: ticker,
-        from: search.from,
-        kind: search.kind ? [search.kind] : undefined,
-        limit: PAGE_SIZE,
-        to: search.to,
-        topic: search.topic ? [search.topic] : undefined,
-    };
-
-    // Previous / Next over the keyset cursor: the visited cursors stack up; any filter or date change is page 1.
-    const filterKey = JSON.stringify(listInput);
-
-    const [storedPager, setPager] = useState(() => firstNewsPage(filterKey));
-
-    const pager = newsPagerFor(storedPager, filterKey);
-
-    const page = newsPageNumber(pager);
-
-    const list = useNewsPage({ ...listInput, cursor: newsPageCursor(pager) });
-
-    const fetched = list.data?.data ?? [];
-
-    const nextCursor = list.data?.next_cursor ?? null;
 
     const filters: NewsFilters = {
         category: search.category,
@@ -186,113 +273,61 @@ function NewsPage() {
         topic: search.topic,
     };
 
-    // The filters `/v1/news` has no parameter for (source, earnings, Company-published + its type / category / tag) are
-    // applied to the loaded page; a page may then show fewer rows than PAGE_SIZE.
-    const listed = fetched.filter(item => matchesNewsFilters(item, filters));
-
-    const onFilterChange = (patch: Partial<NewsSearch>) => {
-        void navigate({ search: prev => ({ ...prev, ...patch }) });
-    };
-
     const [stop, setStop] = useState<LiveNewsStop | null>(null);
 
-    // React Compiler memoizes these (no manual useCallback): the live hook reads them through a ref anyway.
+    // React Compiler memoizes this (no manual useCallback): the live hook reads it through a ref anyway.
     const onLiveStop = (reason: LiveNewsStop) => {
         setStop(reason);
 
         void navigate({ replace: true, resetScroll: false, search: prev => ({ ...prev, live: undefined }) });
     };
 
-    const { refetch } = list;
-
-    const onResubscribed = () => {
-        void refetch();
-    };
-
-    const apiKey = useApiKeyStore(s => s.apiKey);
-
-    const apiKeyUpdatedAt = useApiKeyStore(s => s.apiKeyUpdatedAt);
-
-    const baseUrl = useApiBaseUrl();
-
-    const live = useLiveNews({
-        apiKey,
-        apiKeyUpdatedAt,
-        baseUrl,
-        enabled: search.live === true,
-        // What the socket filters; topic, publisher and publication type are re-checked below.
-        filters: {
-            earningsOnly: search.earnings === "true",
-            kinds: search.kind ? [search.kind] : undefined,
-            sources: search.source ? [search.source] : undefined,
-            tickers: [ticker],
-        },
-        onResubscribed,
-        onStop: onLiveStop,
-    });
-
-    // Live items land on top of the newest page only.
-    const liveItems = page === 1 ? live.items.filter(item => matchesNewsFilters(item, filters)) : [];
-
-    const items = mergeLiveItems(liveItems, listed);
-
-    const liveIds = new Set(liveItems.map(item => item.id));
-
-    const selectedTitle = items.find(item => item.id === search.item)?.title;
+    // `/v1/news` needs a company or an event (a 400 without both: no market-wide list), so the page asks per company.
+    const news = useNewsList({ company: ticker, event: search.event, filters, liveTickers: [ticker], onLiveStop, search });
 
     const controls = (
         <div className="flex flex-wrap items-start justify-between gap-2">
             <NewsFilterControls
-                categories={publisherCik ? issuerLabels(fetched, publisherCik, "categories") : []}
-                onChange={onFilterChange}
+                categories={publisherCik ? issuerLabels(news.fetched, publisherCik, "categories") : []}
+                eventFilter={<NewsEventFilter event={search.event} onChange={event => onFilterChange({ event })} ticker={ticker} />}
+                onChange={patch => onFilterChange(patch.sort === "oldest" ? { ...patch, live: undefined } : patch)}
                 search={search}
-                tags={publisherCik ? issuerLabels(fetched, publisherCik, "tags") : []}
+                tags={publisherCik ? issuerLabels(news.fetched, publisherCik, "tags") : []}
             />
             <NewsLiveToggle
                 live={search.live === true}
-                mode={live.mode}
+                mode={news.liveMode}
                 onChange={(on) => {
                     setStop(null);
 
-                    onFilterChange({ live: on || undefined });
+                    // Live items join the newest-first list: switching it on drops `sort=oldest`.
+                    onFilterChange(on ? { live: true, sort: undefined } : { live: undefined });
                 }}
             />
         </div>
     );
 
-    const notice = stop && (
-        <Notice badge={stop.kind === "plan" ? "STANDARD" : undefined} title={stop.message}>
-            {stop.kind === "plan" ? "The live news feed needs the STANDARD plan; the list above still works." : undefined}
-        </Notice>
-    );
+    const notice = stop && <LiveStopNotice stop={stop} />;
 
     return (
         <>
             <NewsPageView
                 controls={controls}
-                emptyText={search.from || search.to ? undefined : "No news yet."}
-                error={list.error}
-                hiddenByFilters={fetched.length - listed.length}
-                isLoading={list.isLoading}
-                items={items}
-                liveIds={liveIds}
+                emptyText={search.from || search.to || search.event ? undefined : "No news yet."}
+                error={news.error}
+                exportScope={ticker}
+                headerActions={tabs}
+                hiddenByFilters={news.hidden}
+                isLoading={news.isLoading}
+                items={news.items}
+                liveIds={news.liveIds}
                 notice={notice}
-                pager={{
-                    hasNext: nextCursor !== null,
-                    isFetching: list.isFetching,
-                    onNext: () => {
-                        if (nextCursor !== null) setPager(nextNewsPage(pager, nextCursor));
-                    },
-                    onPrevious: () => setPager(previousNewsPage(pager)),
-                    page,
-                }}
+                pager={news.pager}
                 scopeLabel={search.published ? `Published by ${company?.name ?? ticker}` : `News about ${ticker}`}
+                search={<NewsSearchBox company={ticker} from={search.from} placeholder={`Search ${ticker}'s news — e.g. data center, buyback`} to={search.to} />}
+                skippedPages={news.skippedPages}
             />
-            <NewsItemPanel
-                id={search.item ?? null}
-                onClose={() => void navigate({ resetScroll: false, search: prev => ({ ...prev, item: undefined }) })}
-                title={selectedTitle}
-            />
+            {panel(news.items.find(item => item.id === search.item)?.title)}
         </>
     );
 }

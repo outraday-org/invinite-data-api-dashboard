@@ -4,10 +4,11 @@ import type * as React from "react";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import type { NewsDevelopment } from "@/lib/api/types";
+import type { NewsDevelopment, V2Event } from "@/lib/api/types";
 
 import { ApiRequestError } from "@/lib/api/errors";
 import { edgarItem, newsroomItem, newsText } from "@/lib/news/news-fixtures";
+import { eventChoices } from "@/routes/$ticker/news/-components/news-event-filter";
 import { NewsFilters } from "@/routes/$ticker/news/-components/news-filters";
 import { NewsItemView } from "@/routes/$ticker/news/-components/news-item-panel";
 import { NewsPageView } from "@/routes/$ticker/news/index";
@@ -161,7 +162,57 @@ describe("NewsPageView", () => {
     });
 });
 
+describe("NewsPageView (O7 group 2)", () => {
+    it("offers the shown page as an export, and names the pages the auto-advance skipped", () => {
+        render(<NewsPageView {...pageProps} exportScope="NVDA" hiddenByFilters={50} items={[]} pager={{ ...pageProps.pager, hasNext: true, page: 4 }} skippedPages={3} />);
+
+        expect(screen.getByText("Export")).toBeTruthy();
+
+        expect(screen.getByText(/\(3 earlier pages skipped, none matched\); older news follows/u)).toBeTruthy();
+    });
+
+    it("renders the search box and the header actions (the News | Announcements tabs)", () => {
+        render(<NewsPageView {...pageProps} headerActions={<span>tabs</span>} items={[]} search={<span>search box</span>} />);
+
+        expect(screen.getByText("tabs")).toBeTruthy();
+
+        expect(screen.getByText("search box")).toBeTruthy();
+    });
+});
+
+describe("eventChoices", () => {
+    it("lists the company's events newest first and keeps a linked event the list does not name", () => {
+        const event = { event_id: "e1", event_title: null, event_type: "earnings_call", fiscal_quarter: 3, fiscal_year: 2027, scheduled_at: "2026-11-19T21:00:00.000Z" } as V2Event;
+
+        const choices = eventChoices([event], "e-old");
+
+        expect(choices.map(choice => choice.value)).toEqual(["all", "e1", "e-old"]);
+
+        expect(choices[1].label).toMatch(/Nov 19, 2026$/u);
+
+        expect(eventChoices([event], "e1")).toHaveLength(2);
+    });
+});
+
 describe("NewsFilters", () => {
+    it("writes the order; the watchlist feed has no Company-published and the market scope no window", () => {
+        const onChange = vi.fn();
+
+        render(<NewsFilters categories={[]} onChange={onChange} search={{ sort: "oldest" }} tags={[]} />);
+
+        expect(screen.getByText("Oldest first")).toBeTruthy();
+
+        cleanup();
+
+        render(<NewsFilters categories={[]} companyScope={false} onChange={onChange} search={{}} tags={[]} windowFilters={false} />);
+
+        expect(screen.queryByText("Company-published")).toBeNull();
+
+        expect(screen.queryByLabelText("From")).toBeNull();
+
+        expect(screen.queryByText("Newest first")).toBeNull();
+    });
+
     it("offers no Has media filter", () => {
         render(<NewsFilters categories={[]} onChange={vi.fn()} search={{}} tags={[]} />);
 

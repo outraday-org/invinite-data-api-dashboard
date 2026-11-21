@@ -324,6 +324,16 @@ export type V2Person = ApiResponse<"/v1/people/{person_id}", "get">;
 export type V2PersonRole = NonNullable<ApiQuery<"/v1/people">["role"]>;
 export type V2PeopleSort = NonNullable<ApiQuery<"/v1/people">["sort"]>;
 
+// News search and announcements (backend tasks/data-api-dashboard O7 group 2).
+/** `GET /v1/search/news`: one page of hits (headline, lede or a summary passage), `meta.index` = the coverage. */
+export type V2NewsSearchResponse = ApiResponse<"/v1/search/news", "get">;
+export type V2NewsSearchHit = V2NewsSearchResponse["data"][number];
+export type V2NewsSearchField = NonNullable<ApiQuery<"/v1/search/news">["field"]>;
+/** An announcement's topic (the row itself is `NewsDevelopment`). */
+export type V2AnnouncementTopic = NewsDevelopment["topic"];
+export type V2AnnouncementsSort = NonNullable<ApiQuery<"/v1/announcements">["sort"]>;
+export type V2NewsSort = NonNullable<ApiQuery<"/v1/news">["sort"]>;
+
 // Fact places (`GET /v1/fact-places`, PRO; backend tasks/data-api-dashboard O7): where a standardized fact's source
 // facts sit in a document version (block, table cell, inline-XBRL id), with a typed `status`.
 export type V2FactPlacesResponse = ApiResponse<"/v1/fact-places", "get">;

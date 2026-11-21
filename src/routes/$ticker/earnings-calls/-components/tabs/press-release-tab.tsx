@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2PressRelease } from "@/lib/api/queries";
@@ -41,6 +43,12 @@ export function PressReleaseTab({ event, eventId }: CallTabProps) {
                     <a className="underline underline-offset-4" href={data.url} rel="noopener noreferrer" target="_blank">
                         Source
                     </a>
+                    {data.news_id && (
+                        // The archival news item: the News page with its item panel open (summary, attribution, PDF).
+                        <Link className="underline underline-offset-4" params={{ ticker: event.symbol }} search={{ item: data.news_id }} to="/$ticker/news">
+                            News item
+                        </Link>
+                    )}
                 </div>
             </div>
 

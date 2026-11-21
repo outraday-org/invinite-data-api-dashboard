@@ -68,7 +68,7 @@ export function NewsTable({
                                             {publishers.length > 0 ? `Published by ${publishers.join(", ")}` : `By ${item.attribution.publisher}`}
                                         </div>
                                     </TableCell>
-                                    <TableCell className="align-top">{sourceLabel(item.source.id)}</TableCell>
+                                    <TableCell className="align-top">{sourceLabel(item.source)}</TableCell>
                                     <TableCell className="align-top">
                                         <div className="flex flex-wrap gap-1">
                                             <Badge variant="outline">{NEWS_KIND_LABELS[item.kind]}</Badge>

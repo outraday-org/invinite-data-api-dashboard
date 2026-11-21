@@ -1,3 +1,5 @@
+import type * as React from "react";
+
 import type { NewsSearch } from "@/lib/news/labels";
 
 import { Button } from "@/components/ui/button";
@@ -5,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import {
     NEWS_KIND_LABELS,
     NEWS_KINDS,
+    NEWS_ORDER_LABELS,
     NEWS_PUBLICATION_TYPES,
     NEWS_SOURCE_LABELS,
     NEWS_SOURCES,
@@ -15,6 +18,9 @@ import {
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const ALL = "all";
+
+/** The search params the filter row reads and writes (the News page and the watchlist feed share them). */
+export type NewsFilterValues = Pick<NewsSearch, "category" | "earnings" | "from" | "kind" | "published" | "pubType" | "sort" | "source" | "tag" | "to" | "topic">;
 
 const options = <T extends string>(allLabel: string, values: ReadonlyArray<T>, label: (value: T) => string) => [
     { label: allLabel, value: ALL as T | typeof ALL },
@@ -31,45 +37,68 @@ const orNone = <T extends string>(value: T | typeof ALL) => (value === ALL ? und
  */
 export function NewsFilters({
     categories,
+    companyScope = true,
+    eventFilter,
     onChange,
     search,
     tags,
+    windowFilters = true,
 }: {
     /** The publisher's newsroom categories seen in the loaded items. */
     categories: ReadonlyArray<string>;
-    onChange: (patch: Partial<NewsSearch>) => void;
-    search: NewsSearch;
+    /** One company's page: "Company-published" and its pickers (the watchlist feed has several companies: none). */
+    companyScope?: boolean;
+    /** The "news of one call" picker (company scope). */
+    eventFilter?: React.ReactNode;
+    onChange: (patch: Partial<NewsFilterValues>) => void;
+    search: NewsFilterValues;
     tags: ReadonlyArray<string>;
+    /** The day window and the order (off for the live-only market scope: nothing is listed). */
+    windowFilters?: boolean;
 }) {
     return (
         <div className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
-                <Button
-                    aria-pressed={search.published === true}
-                    onClick={() => onChange(search.published
-                        ? { category: undefined, published: undefined, pubType: undefined, tag: undefined }
-                        : { published: true })}
-                    size="lg"
-                    type="button"
-                    variant={search.published ? "default" : "outline"}
-                >
-                    Company-published
-                </Button>
-                <Input
-                    aria-label="From"
-                    className="w-[150px]"
-                    onChange={e => onChange({ from: e.target.value || undefined })}
-                    type="date"
-                    value={search.from ?? ""}
-                />
-                <span className="text-muted-foreground text-xs">to</span>
-                <Input
-                    aria-label="To"
-                    className="w-[150px]"
-                    onChange={e => onChange({ to: e.target.value || undefined })}
-                    type="date"
-                    value={search.to ?? ""}
-                />
+                {companyScope && (
+                    <Button
+                        aria-pressed={search.published === true}
+                        onClick={() => onChange(search.published
+                            ? { category: undefined, published: undefined, pubType: undefined, tag: undefined }
+                            : { published: true })}
+                        size="lg"
+                        type="button"
+                        variant={search.published ? "default" : "outline"}
+                    >
+                        Company-published
+                    </Button>
+                )}
+                {eventFilter}
+                {windowFilters && (
+                    <>
+                        <Input
+                            aria-label="From"
+                            className="w-[150px]"
+                            onChange={e => onChange({ from: e.target.value || undefined })}
+                            type="date"
+                            value={search.from ?? ""}
+                        />
+                        <span className="text-muted-foreground text-xs">to</span>
+                        <Input
+                            aria-label="To"
+                            className="w-[150px]"
+                            onChange={e => onChange({ to: e.target.value || undefined })}
+                            type="date"
+                            value={search.to ?? ""}
+                        />
+                        <FilterSelect
+                            aria-label="Order"
+                            className="w-[140px]"
+                            onValueChange={value => onChange({ sort: value === "oldest" ? "oldest" : undefined })}
+                            options={[{ label: NEWS_ORDER_LABELS.newest, value: "newest" }, { label: NEWS_ORDER_LABELS.oldest, value: "oldest" }]}
+                            value={search.sort ?? "newest"}
+                        />
+                    </>
+                )}
             </div>
             <div className="flex flex-wrap items-center gap-2">
                 <FilterSelect
@@ -100,7 +129,7 @@ export function NewsFilters({
                     ]}
                     value={search.earnings ?? ALL}
                 />
-                {search.published && (
+                {companyScope && search.published && (
                     <>
                         <FilterSelect
                             className="w-[170px]"

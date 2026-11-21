@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StatusRouteImport } from './routes/status'
+import { Route as NewsFeedRouteImport } from './routes/news-feed'
 import { Route as MarketHolidaysRouteImport } from './routes/market-holidays'
 import { Route as LiveCallsRouteImport } from './routes/live-calls'
 import { Route as LicensingRouteImport } from './routes/licensing'
@@ -49,6 +50,11 @@ import { Route as TickerEarningsCallsEventIdIndexRouteImport } from './routes/$t
 const StatusRoute = StatusRouteImport.update({
   id: '/status',
   path: '/status',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NewsFeedRoute = NewsFeedRouteImport.update({
+  id: '/news-feed',
+  path: '/news-feed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MarketHolidaysRoute = MarketHolidaysRouteImport.update({
@@ -250,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/licensing': typeof LicensingRoute
   '/live-calls': typeof LiveCallsRoute
   '/market-holidays': typeof MarketHolidaysRoute
+  '/news-feed': typeof NewsFeedRoute
   '/status': typeof StatusRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
@@ -287,6 +294,7 @@ export interface FileRoutesByTo {
   '/licensing': typeof LicensingRoute
   '/live-calls': typeof LiveCallsRoute
   '/market-holidays': typeof MarketHolidaysRoute
+  '/news-feed': typeof NewsFeedRoute
   '/status': typeof StatusRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
@@ -326,6 +334,7 @@ export interface FileRoutesById {
   '/licensing': typeof LicensingRoute
   '/live-calls': typeof LiveCallsRoute
   '/market-holidays': typeof MarketHolidaysRoute
+  '/news-feed': typeof NewsFeedRoute
   '/status': typeof StatusRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
@@ -366,6 +375,7 @@ export interface FileRouteTypes {
     | '/licensing'
     | '/live-calls'
     | '/market-holidays'
+    | '/news-feed'
     | '/status'
     | '/people/$personId'
     | '/sec/$cik'
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/licensing'
     | '/live-calls'
     | '/market-holidays'
+    | '/news-feed'
     | '/status'
     | '/people/$personId'
     | '/sec/$cik'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/licensing'
     | '/live-calls'
     | '/market-holidays'
+    | '/news-feed'
     | '/status'
     | '/people/$personId'
     | '/sec/$cik'
@@ -480,6 +492,7 @@ export interface RootRouteChildren {
   LicensingRoute: typeof LicensingRoute
   LiveCallsRoute: typeof LiveCallsRoute
   MarketHolidaysRoute: typeof MarketHolidaysRoute
+  NewsFeedRoute: typeof NewsFeedRoute
   StatusRoute: typeof StatusRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   SecCikRoute: typeof SecCikRoute
@@ -493,6 +506,13 @@ declare module '@tanstack/react-router' {
       path: '/status'
       fullPath: '/status'
       preLoaderRoute: typeof StatusRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/news-feed': {
+      id: '/news-feed'
+      path: '/news-feed'
+      fullPath: '/news-feed'
+      preLoaderRoute: typeof NewsFeedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/market-holidays': {
@@ -808,6 +828,7 @@ const rootRouteChildren: RootRouteChildren = {
   LicensingRoute: LicensingRoute,
   LiveCallsRoute: LiveCallsRoute,
   MarketHolidaysRoute: MarketHolidaysRoute,
+  NewsFeedRoute: NewsFeedRoute,
   StatusRoute: StatusRoute,
   PeoplePersonIdRoute: PeoplePersonIdRoute,
   SecCikRoute: SecCikRoute,

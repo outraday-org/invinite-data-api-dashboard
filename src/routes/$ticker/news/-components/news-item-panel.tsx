@@ -133,7 +133,7 @@ export function NewsItemView({
             <div className="flex flex-wrap items-center gap-2 text-xs">
                 <Badge variant="outline">{NEWS_KIND_LABELS[item.kind]}</Badge>
                 {item.is_earnings_news && <Badge variant="secondary">Earnings</Badge>}
-                <span className="text-muted-foreground">{sourceLabel(item.source.id)}</span>
+                <span className="text-muted-foreground">{sourceLabel(item.source)}</span>
                 {publishers.length > 0 && <span>{`Published by ${publishers.join(", ")}`}</span>}
                 {item.publications.map(publication => (
                     <Badge key={`${publication.source_id}:${publication.url}`} variant="outline">

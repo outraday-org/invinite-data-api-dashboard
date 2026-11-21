@@ -15,6 +15,7 @@ import type {
     SecSearchMode,
     StatementType,
     V2AnnouncementsResponse,
+    V2AnnouncementsSort,
     V2AudioResponse,
     V2CagrHorizon,
     V2CagrResponse,
@@ -86,6 +87,9 @@ import type {
     V2Me,
     V2NewsItem,
     V2NewsListResponse,
+    V2NewsSearchField,
+    V2NewsSearchResponse,
+    V2NewsSort,
     V2NewsText,
     V2OfferingsResponse,
     V2ParticipantsResponse,
@@ -135,6 +139,7 @@ import {
     getMe,
     getMyUsage,
     getV2Announcements,
+    getV2AnnouncementsList,
     getV2AsReported,
     getV2AsReportedDetailed,
     getV2AsReportedPresentation,
@@ -167,6 +172,7 @@ import {
     getV2MarketHolidays,
     getV2News,
     getV2NewsItem,
+    getV2NewsSearch,
     getV2NewsText,
     getV2Offerings,
     getV2Participants,
@@ -323,10 +329,14 @@ export function isEarningsEventLiveish(event: Pick<V2Event, "capture_status" | "
 export type NewsListInput = {
     /** The company (ticker): v2 lists a company's news only. */
     company: string;
+    /** An event id: the news linked to that call. */
+    event?: string;
     /** Day (`YYYY-MM-DD`, UTC): `published_at.gte` its midnight. */
     from?: string;
     kind?: Array<string>;
     limit: number;
+    /** Omitted = newest first. */
+    sort?: V2NewsSort;
     /** Day (`YYYY-MM-DD`, UTC), inclusive: `published_at.lt` the next midnight. */
     to?: string;
     topic?: Array<string>;
@@ -357,10 +367,12 @@ export function useNewsPage(input: NewsListInput & { cursor: null | string }) {
                     apiKey,
                     company: input.company,
                     cursor: input.cursor ?? undefined,
+                    event: input.event,
                     kind: input.kind,
                     limit: input.limit,
                     publishedAtGte: input.from ? dayStartInstant(input.from) : undefined,
                     publishedAtLt: input.to ? dayStartInstant(input.to, true) : undefined,
+                    sort: input.sort,
                     topic: input.topic,
                 },
             }),
@@ -375,6 +387,8 @@ export function useNewsPage(input: NewsListInput & { cursor: null | string }) {
             input.topic?.join(",") ?? "",
             input.limit,
             input.cursor ?? "",
+            input.event ?? "",
+            input.sort ?? "",
         ],
         staleTime: EARNINGS_LIST_STALE_MS,
     });
@@ -1653,5 +1667,96 @@ export function useV2FactPlaces(factId: null | string, options: { limit?: number
         load: apiKey => getV2FactPlaces({ data: { apiKey, fact: factId ?? "", limit: options.limit, status: options.status } }),
         queryKey: ["v2", "fact-places", factId ?? "", key(options.status), options.limit ?? ""],
         staleTime: FINANCIALS_STALE_MS,
+    });
+}
+// News search and announcements by company (backend tasks/data-api-dashboard O7 group 2).
+
+export type NewsSearchInput = {
+    /** A ticker or a comma list; omitted = the whole market. */
+    company?: string;
+    field?: V2NewsSearchField;
+    /** Day (`YYYY-MM-DD`, UTC): `published_at.gte` its midnight. */
+    from?: string;
+    limit: number;
+    mode: SearchMode;
+    /** The submitted query; empty = no request. */
+    q: string;
+    /** Day (`YYYY-MM-DD`, UTC), inclusive: `published_at.lt` the next midnight. */
+    to?: string;
+};
+
+/** News search (`GET /v1/search/news`, 10 credits a page): runs once `q` is set (on submit); "More results" by `next_cursor`. */
+export function useV2NewsSearchInfinite(input: NewsSearchInput) {
+    const q = input.q.trim();
+
+    return useEarningsInfinite<V2NewsSearchResponse>({
+        enabled: q.length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2NewsSearch({
+            data: {
+                apiKey,
+                company: input.company || undefined,
+                cursor: cursor ?? undefined,
+                field: input.field,
+                limit: input.limit,
+                mode: input.mode,
+                publishedAtGte: input.from ? dayStartInstant(input.from) : undefined,
+                publishedAtLt: input.to ? dayStartInstant(input.to, true) : undefined,
+                q,
+            },
+        }),
+        queryKey: ["news", "v2", "search", q, input.company ?? "", input.field ?? "", input.mode, input.from ?? "", input.to ?? "", input.limit],
+        staleTime: EARNINGS_LIST_STALE_MS,
+    });
+}
+
+export type AnnouncementsInput = {
+    company: string;
+    /** Effective on or after this day (`effective_from.gte`). */
+    effectiveFrom?: string;
+    /** Effective until on or before this day (`effective_to.lte`). */
+    effectiveTo?: string;
+    /** Day (`YYYY-MM-DD`, UTC): `announced_at.gte` its midnight. */
+    from?: string;
+    limit: number;
+    sort?: V2AnnouncementsSort;
+    /** Day (`YYYY-MM-DD`, UTC), inclusive: `announced_at.lt` the next midnight. */
+    to?: string;
+    topic?: Array<string>;
+};
+
+/** A company's announcements (`GET /v1/announcements?company=`, STANDARD) by cursor; status-aware (the tab renders errors). */
+export function useV2AnnouncementsInfinite(input: AnnouncementsInput) {
+    return useEarningsInfinite<V2AnnouncementsResponse>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2AnnouncementsList({
+            data: {
+                announcedAtGte: input.from ? dayStartInstant(input.from) : undefined,
+                announcedAtLt: input.to ? dayStartInstant(input.to, true) : undefined,
+                apiKey,
+                company: input.company,
+                cursor: cursor ?? undefined,
+                effectiveFromGte: input.effectiveFrom,
+                effectiveToLte: input.effectiveTo,
+                limit: input.limit,
+                sort: input.sort,
+                topic: input.topic,
+            },
+        }),
+        queryKey: [
+            "news",
+            "v2",
+            "announcements-list",
+            input.company,
+            key(input.topic),
+            input.from ?? "",
+            input.to ?? "",
+            input.effectiveFrom ?? "",
+            input.effectiveTo ?? "",
+            input.sort ?? "",
+            input.limit,
+        ],
+        staleTime: EARNINGS_LIST_STALE_MS,
     });
 }

@@ -1,15 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { issuerLabels, matchesNewsFilters, mergeLiveItems, publishedBy, sourceLabel, validateNewsSearch } from "./labels";
+import { issuerLabels, matchesNewsFilters, mergeLiveItems, publishedBy, sourceLabel, validateNewsFeedSearch, validateNewsSearch } from "./labels";
 import { edgarItem, newsroomItem } from "./news-fixtures";
 
 describe("sourceLabel", () => {
     it("names EDGAR and a newsroom by host; no wire labels exist", () => {
-        expect(sourceLabel("edgar")).toBe("SEC EDGAR");
+        expect(sourceLabel({ host: "www.sec.gov", id: "edgar" })).toBe("SEC EDGAR");
 
-        expect(sourceLabel("ir:nvidianews.nvidia.com")).toBe("Company newsroom (nvidianews.nvidia.com)");
+        // v2 states `ir` and the host apart (live 2026-11-21); a publication's source id still reads `ir:<host>`.
+        expect(sourceLabel({ host: "nvidianews.nvidia.com", id: "ir" })).toBe("Company newsroom (nvidianews.nvidia.com)");
 
-        expect(sourceLabel("prnewswire")).toBe("prnewswire");
+        expect(sourceLabel({ host: null, id: "ir" })).toBe("Company newsroom");
+
+        expect(sourceLabel({ id: "ir:nvidianews.nvidia.com" })).toBe("Company newsroom (nvidianews.nvidia.com)");
+
+        expect(sourceLabel({ id: "prnewswire" })).toBe("prnewswire");
     });
 });
 
@@ -108,5 +113,27 @@ describe("issuerLabels", () => {
         expect(issuerLabels(items, "1045810", "tags")).toEqual(["Data Center"]);
 
         expect(issuerLabels(items, "320193", "tags")).toEqual([]);
+    });
+});
+
+describe("validateNewsSearch (O7 group 2)", () => {
+    it("keeps the event, the order, the Announcements view and its filters; drops invalid values", () => {
+        const event = "00000000-0000-4000-8000-0000000000e1";
+
+        expect(validateNewsSearch({ aFrom: "2026-01-01", aSort: "oldest", aTopic: "partnership", effTo: "2027-12-31", event, sort: "oldest", view: "announcements" }))
+            .toMatchObject({ aFrom: "2026-01-01", aSort: "oldest", aTopic: "partnership", effTo: "2027-12-31", event, sort: "oldest", view: "announcements" });
+
+        expect(validateNewsSearch({ aTopic: "other", event: "e1", sort: "newest", view: "news" }))
+            .toMatchObject({ aTopic: undefined, event: undefined, sort: undefined, view: undefined });
+    });
+});
+
+describe("validateNewsFeedSearch", () => {
+    it("keeps the list filters, never writes the default scope, and drops the window and order in the live-only market scope", () => {
+        expect(validateNewsFeedSearch({ from: "2026-11-01", kind: "dividend", published: true, scope: "company", sort: "oldest" }))
+            .toEqual({ from: "2026-11-01", kind: "dividend", scope: undefined, sort: "oldest" });
+
+        expect(validateNewsFeedSearch({ from: "2026-11-01", live: true, scope: "market", sort: "oldest", topic: "partnership" }))
+            .toEqual({ from: undefined, live: true, scope: "market", sort: undefined, to: undefined, topic: "partnership" });
     });
 });

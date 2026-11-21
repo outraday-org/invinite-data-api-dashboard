@@ -70,6 +70,7 @@ import type {
     V2Me,
     V2NewsItem,
     V2NewsListResponse,
+    V2NewsSearchResponse,
     V2NewsText,
     V2OfferingsResponse,
     V2ParticipantsResponse,
@@ -272,28 +273,34 @@ const newsListSchema = z.object({
     /** Ticker or CIK: v2 lists a company's news only (no market-wide feed, decision 15). */
     company: z.string().trim().min(1),
     cursor: z.string().optional(),
+    /** An event id: the news linked to that call (O7 group 2). */
+    event: z.string().trim().min(1).max(100).optional(),
     kind: z.array(z.string()).optional(),
     limit: z.number().int().min(1).max(200).optional(),
     /** ISO instants: `published_at.gte` / `published_at.lt`. */
     publishedAtGte: z.string().optional(),
     publishedAtLt: z.string().optional(),
+    /** Omitted = the API's `-published_at` (newest first). */
+    sort: z.enum(["published_at", "-published_at"]).optional(),
     topic: z.array(z.string()).optional(),
 });
 
 export const getV2News = createServerFn({ method: "GET" })
     .inputValidator(newsListSchema)
     .handler(async ({ data }): Promise<V2NewsListResponse> => {
-        const { apiKey, company, cursor, kind, limit, publishedAtGte, publishedAtLt, topic } = data;
+        const { apiKey, company, cursor, event, kind, limit, publishedAtGte, publishedAtLt, sort, topic } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/news", {
             params: {
                 query: v2Query({
                     company,
                     cursor,
+                    event,
                     "kind": v2Expand(kind),
                     limit,
                     "published_at.gte": publishedAtGte,
                     "published_at.lt": publishedAtLt,
+                    sort,
                     "topic": v2Expand(topic),
                 }),
             },
@@ -1625,6 +1632,83 @@ export const getV2FactPlaces = createServerFn({ method: "GET" })
                     fact: data.fact,
                     limit: data.limit,
                     status: v2Expand(data.status),
+                }),
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+// News search and announcements by company (backend tasks/data-api-dashboard O7 group 2).
+
+/**
+ * `GET /v1/search/news` (STANDARD, 10 credits a page): headlines, ledes and summary passages; `company` (a ticker or a
+ * comma list) is optional — without it the whole market is searched. The window = `published_at.gte` / `.lt`.
+ */
+export const getV2NewsSearch = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        company: z.string().trim().min(1).optional(),
+        cursor: z.string().optional(),
+        field: z.enum(["title", "lede", "summary", "any"]).optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+        mode: z.enum(["lexical", "literal"]).optional(),
+        publishedAtGte: z.string().optional(),
+        publishedAtLt: z.string().optional(),
+        q: z.string().trim().min(1).max(500),
+    }))
+    .handler(async ({ data }): Promise<V2NewsSearchResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/search/news", {
+            params: {
+                query: v2Query({
+                    "company": data.company,
+                    "cursor": data.cursor,
+                    "field": data.field,
+                    "limit": data.limit,
+                    "mode": data.mode,
+                    "published_at.gte": data.publishedAtGte,
+                    "published_at.lt": data.publishedAtLt,
+                    "q": data.q,
+                }),
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/**
+ * `GET /v1/announcements?company=` (STANDARD, 2 credits a page): a company's announcements with the topic, the
+ * announced window (`announced_at.gte` / `.lt`) and the effective range (`effective_from.gte`, `effective_to.lte`).
+ */
+export const getV2AnnouncementsList = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        announcedAtGte: z.string().optional(),
+        announcedAtLt: z.string().optional(),
+        apiKey: apiKeySchema,
+        company: z.string().trim().min(1),
+        cursor: z.string().optional(),
+        effectiveFromGte: z.iso.date().optional(),
+        effectiveToLte: z.iso.date().optional(),
+        limit: z.number().int().min(1).max(200).optional(),
+        sort: z.enum(["announced_at", "-announced_at"]).optional(),
+        topic: z.array(z.string()).optional(),
+    }))
+    .handler(async ({ data }): Promise<V2AnnouncementsResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/announcements", {
+            params: {
+                query: v2Query({
+                    "announced_at.gte": data.announcedAtGte,
+                    "announced_at.lt": data.announcedAtLt,
+                    "company": data.company,
+                    "cursor": data.cursor,
+                    "effective_from.gte": data.effectiveFromGte,
+                    "effective_to.lte": data.effectiveToLte,
+                    "limit": data.limit,
+                    "sort": data.sort,
+                    "topic": v2Expand(data.topic),
                 }),
             },
         });

@@ -29,6 +29,7 @@ import {
     RadioIcon,
     ReceiptIcon,
     RocketIcon,
+    RssIcon,
     ScaleIcon,
     SplitIcon,
     UserRoundIcon,
@@ -76,6 +77,7 @@ export const BROWSE_NAV: ReadonlyArray<NavPage> = [
     { description: "Every listed ETF and closed-end fund with net assets.", icon: LayersIcon, keywords: ["funds", "etf", "etfs", "closed-end", "holdings"], label: "Funds", to: "/funds" },
     { description: "13F investment managers and their portfolios.", icon: LandmarkIcon, keywords: ["institutions", "managers", "13f", "holders", "filers"], label: "Institutions", to: "/institutions" },
     { description: "Executives and analysts who speak on calls, with every call of each.", icon: ContactIcon, keywords: ["people", "persons", "executives", "analysts", "speakers", "participants"], label: "People", to: "/people" },
+    { description: "Your watchlist's news in one list, and every company's new items live.", icon: RssIcon, keywords: ["news", "feed", "watchlist", "live", "press releases"], label: "News feed", to: "/news-feed" },
 ];
 
 /** The account (bottom of the sidebar, with the plan badge). */
