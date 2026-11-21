@@ -9,7 +9,7 @@ import { exemptionLabel, offeringColumns } from "@/components/sec/sec-filer-view
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { DataTable } from "@/components/ui/data-table";
-import { Input } from "@/components/ui/input";
+import { DayRange } from "@/components/ui/day-range";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2OfferingsInfinite } from "@/lib/api/queries";
 import { titleHead } from "@/lib/layout";
@@ -142,12 +142,7 @@ function OfferingsPage() {
                         <FilterSelect aria-label="Amount sold" className="w-[170px]" onValueChange={value => onChange({ sold: value === ANY ? undefined : Number(value) })} options={soldOptions} value={search.sold === undefined ? ANY : String(search.sold)} />
                         <FilterSelect aria-label="Amendment" className="w-[210px]" onValueChange={value => onChange({ amendment: value === ANY ? undefined : value })} options={AMENDMENT_OPTIONS} value={search.amendment ?? ANY} />
                         <DebouncedInput aria-label="Industry group" className="w-[220px]" onCommit={value => onChange({ industry: value.trim().length >= 2 ? value.trim() : undefined })} placeholder="Industry, as filed" value={search.industry ?? ""} />
-                        <span className="flex flex-wrap items-center gap-2">
-                            <span className="text-muted-foreground">Filed</span>
-                            <Input aria-label="Filed from" className="w-[150px]" onChange={e => onChange({ from: e.target.value || undefined })} type="date" value={search.from ?? ""} />
-                            <span className="text-muted-foreground">to</span>
-                            <Input aria-label="Filed to" className="w-[150px]" onChange={e => onChange({ to: e.target.value || undefined })} type="date" value={search.to ?? ""} />
-                        </span>
+                        <DayRange from={search.from} group labels={{ from: "Filed from", to: "Filed to" }} lead="Filed" onChange={onChange} to={search.to} />
                     </>
                 )}
                 description={(

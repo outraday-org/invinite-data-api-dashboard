@@ -7,7 +7,7 @@ import type { SearchMode, V2TranscriptSearchResponse, V2TranscriptSearchType } f
 import { ExportMenu } from "@/components/api/export-menu";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { SearchChip, SearchModeChips, SearchQueryForm } from "@/components/search/search-box";
-import { Input } from "@/components/ui/input";
+import { DayRange } from "@/components/ui/day-range";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2TranscriptSearch } from "@/lib/api/queries";
@@ -182,9 +182,7 @@ function SearchPage() {
                     placeholder="One company"
                     value={search.company ?? ""}
                 />
-                <Input aria-label="Calls from" className="w-[150px]" onChange={event => onChange({ from: event.target.value || undefined })} type="date" value={search.from ?? ""} />
-                <span className="text-muted-foreground">to</span>
-                <Input aria-label="Calls to" className="w-[150px]" onChange={event => onChange({ to: event.target.value || undefined })} type="date" value={search.to ?? ""} />
+                <DayRange from={search.from} labels={{ from: "Calls from", to: "Calls to" }} onChange={onChange} to={search.to} />
                 <span className="text-muted-foreground" data-testid="search-window">{windowText(search)}</span>
                 {hits.length > 0 && (
                     <div className="ml-auto">

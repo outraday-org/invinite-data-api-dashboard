@@ -1,7 +1,7 @@
 import type * as React from "react";
 
 import { DebouncedInput } from "@/components/navigation/debounced-input";
-import { Input } from "@/components/ui/input";
+import { DayRange } from "@/components/ui/day-range";
 import { PageHeader } from "@/components/ui/page-header";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -68,11 +68,7 @@ export function FilingsHeader({
                         />
                     )}
                     {onRangeChange && (
-                        <>
-                            <Input aria-label="Filed from" className="w-[150px]" onChange={e => onRangeChange({ from: e.target.value || undefined })} type="date" value={from ?? ""} />
-                            <span className="text-muted-foreground">to</span>
-                            <Input aria-label="Filed to" className="w-[150px]" onChange={e => onRangeChange({ to: e.target.value || undefined })} type="date" value={to ?? ""} />
-                        </>
+                        <DayRange from={from} labels={{ from: "Filed from", to: "Filed to" }} onChange={onRangeChange} to={to} />
                     )}
                     {actions}
                 </>

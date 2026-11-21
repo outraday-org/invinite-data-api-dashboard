@@ -3,7 +3,7 @@ import type * as React from "react";
 import type { NewsSearch } from "@/lib/news/labels";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DayRange } from "@/components/ui/day-range";
 import {
     NEWS_KIND_LABELS,
     NEWS_KINDS,
@@ -75,21 +75,7 @@ export function NewsFilters({
                 {eventFilter}
                 {windowFilters && (
                     <>
-                        <Input
-                            aria-label="From"
-                            className="w-[150px]"
-                            onChange={e => onChange({ from: e.target.value || undefined })}
-                            type="date"
-                            value={search.from ?? ""}
-                        />
-                        <span className="text-muted-foreground text-xs">to</span>
-                        <Input
-                            aria-label="To"
-                            className="w-[150px]"
-                            onChange={e => onChange({ to: e.target.value || undefined })}
-                            type="date"
-                            value={search.to ?? ""}
-                        />
+                        <DayRange from={search.from} labels={{ from: "From", to: "To" }} onChange={onChange} separatorClassName="text-muted-foreground text-xs" to={search.to} />
                         <FilterSelect
                             aria-label="Order"
                             className="w-[140px]"

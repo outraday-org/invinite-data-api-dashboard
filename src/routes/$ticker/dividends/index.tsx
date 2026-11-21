@@ -8,8 +8,8 @@ import type { V2Dividend, V2DividendsResponse, V2DividendsSort } from "@/lib/api
 
 import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
 import { DataTable } from "@/components/ui/data-table";
+import { DayRange } from "@/components/ui/day-range";
 import { ErrorState } from "@/components/ui/error-state";
-import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2DividendsInfinite } from "@/lib/api/queries";
 import { DASH, formatDay, formatMoney } from "@/lib/format";
@@ -139,10 +139,7 @@ function DividendsPage() {
         <div className="flex flex-col gap-4">
             <PageHeader actions={<AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.dividends} />} description="Cash dividends; filter by ex-dividend date and sort by ex-date or pay date." title="Dividends" />
             <div className="flex flex-wrap items-center gap-2">
-                <span className="text-muted-foreground">Ex-date</span>
-                <Input aria-label="Ex-date from" className="w-[150px]" onChange={event => onChange({ from: event.target.value || undefined })} type="date" value={search.from ?? ""} />
-                <span className="text-muted-foreground">to</span>
-                <Input aria-label="Ex-date to" className="w-[150px]" onChange={event => onChange({ to: event.target.value || undefined })} type="date" value={search.to ?? ""} />
+                <DayRange from={search.from} labels={{ from: "Ex-date from", to: "Ex-date to" }} lead="Ex-date" onChange={onChange} to={search.to} />
                 <FilterSelect aria-label="Sort" className="w-[200px]" onValueChange={value => onChange({ sort: value === DEFAULT_SORT ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? DEFAULT_SORT} />
             </div>
             <DividendsView

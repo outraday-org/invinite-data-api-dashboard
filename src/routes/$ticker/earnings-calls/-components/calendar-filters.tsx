@@ -8,6 +8,7 @@ import type {
     V2Session,
 } from "@/lib/api/types";
 
+import { DayRange } from "@/components/ui/day-range";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { orderedWindow } from "@/lib/earnings/format";
@@ -185,21 +186,7 @@ export function CalendarFilters({
                 }}
                 placeholder="Symbol"
             />
-            <Input
-                aria-label="From"
-                className="w-[150px]"
-                onChange={e => onChange({ from: e.target.value || undefined })}
-                type="date"
-                value={from}
-            />
-            <span className="text-muted-foreground text-xs">to</span>
-            <Input
-                aria-label="To"
-                className="w-[150px]"
-                onChange={e => onChange({ to: e.target.value || undefined })}
-                type="date"
-                value={to}
-            />
+            <DayRange from={from} labels={{ from: "From", to: "To" }} onChange={onChange} separatorClassName="text-muted-foreground text-xs" to={to} />
             <FilterSelect
                 className="w-[140px]"
                 onValueChange={value => onChange({ session: value === "all" ? undefined : value })}

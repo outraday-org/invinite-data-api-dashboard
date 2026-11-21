@@ -7,6 +7,7 @@ import { SearchChip, SearchCostNote, SearchModeChips, SearchQueryForm } from "@/
 import { HighlightedText, SearchCoverageNote, SpanHighlightedText } from "@/components/search/search-highlight";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DayRange } from "@/components/ui/day-range";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2FilingSearchInfinite } from "@/lib/api/queries";
@@ -288,9 +289,7 @@ export function SecFilingSearch({
                         title="Section ids, comma list"
                         value={filterDraft.item ?? ""}
                     />
-                    <Input aria-label="Search filed from" className="w-[150px]" onChange={event => setFilter({ from: event.target.value })} type="date" value={filterDraft.from ?? ""} />
-                    <span className="text-muted-foreground">to</span>
-                    <Input aria-label="Search filed to" className="w-[150px]" onChange={event => setFilter({ to: event.target.value })} type="date" value={filterDraft.to ?? ""} />
+                    <DayRange from={filterDraft.from} labels={{ from: "Search filed from", to: "Search filed to" }} onChange={setFilter} to={filterDraft.to} />
                 </div>
             </SearchQueryForm>
             <div className="flex flex-wrap items-center gap-1">

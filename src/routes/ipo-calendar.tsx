@@ -12,8 +12,8 @@ import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { DayRange } from "@/components/ui/day-range";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { useIpo, useV2IposInfinite } from "@/lib/api/queries";
 import { V2_IPO_STAGES } from "@/lib/api/v2";
@@ -398,9 +398,7 @@ function IposPage() {
                     options={SPAC_OPTIONS}
                     value={search.spac ?? ALL}
                 />
-                <Input aria-label="Listing from" className="w-[150px]" onChange={event => onChange({ from: event.target.value || undefined })} type="date" value={search.from ?? ""} />
-                <span className="text-muted-foreground">to</span>
-                <Input aria-label="Listing to" className="w-[150px]" onChange={event => onChange({ to: event.target.value || undefined })} type="date" value={search.to ?? ""} />
+                <DayRange from={search.from} labels={{ from: "Listing from", to: "Listing to" }} onChange={onChange} to={search.to} />
             </div>
 
             <IposView

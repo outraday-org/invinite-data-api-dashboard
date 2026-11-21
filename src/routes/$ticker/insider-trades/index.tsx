@@ -13,8 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copyable } from "@/components/ui/copy-button";
 import { DataTable } from "@/components/ui/data-table";
+import { DayRange } from "@/components/ui/day-range";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInsiderTrade, useV2InsiderTradesInfinite } from "@/lib/api/queries";
@@ -407,10 +407,6 @@ function InsiderTradesPage() {
 
     const onOpen = React.useCallback((trade: V2InsiderTrade) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, trade: trade.id }) }), [navigate]);
 
-    const dayInput = (label: string, value: string, field: "from" | "tfrom" | "to" | "tto") => (
-        <Input aria-label={label} className="w-[150px]" onChange={e => onChange({ [field]: e.target.value || undefined })} title={label} type="date" value={value} />
-    );
-
     return (
         <div className="flex flex-col gap-4">
             <PageHeader
@@ -419,18 +415,16 @@ function InsiderTradesPage() {
                         <FilterSelect aria-label="Side" className="w-[170px]" onValueChange={(value: SideFilter) => onChange({ side: value === ALL ? undefined : value })} options={SIDE_OPTIONS} value={side} />
                         <FilterSelect aria-label="Line kind" className="w-[200px]" onValueChange={value => onChange({ kind: value === ALL ? undefined : value })} options={KIND_OPTIONS} value={kind} />
                         <FilterSelect aria-label="Order" className="w-[170px]" onValueChange={value => onChange({ sort: value === NEWEST ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? NEWEST} />
-                        <span className="flex flex-wrap items-center gap-2">
-                            <span className="text-muted-foreground">Filed</span>
-                            {dayInput("Filed from", from, "from")}
-                            <span className="text-muted-foreground">to</span>
-                            {dayInput("Filed to", to, "to")}
-                        </span>
-                        <span className="flex flex-wrap items-center gap-2">
-                            <span className="text-muted-foreground">Traded</span>
-                            {dayInput("Traded from", tfrom, "tfrom")}
-                            <span className="text-muted-foreground">to</span>
-                            {dayInput("Traded to", tto, "tto")}
-                        </span>
+                        <DayRange from={from} group labels={{ from: "Filed from", to: "Filed to" }} lead="Filed" onChange={onChange} titled to={to} />
+                        <DayRange
+                            from={tfrom}
+                            group
+                            labels={{ from: "Traded from", to: "Traded to" }}
+                            lead="Traded"
+                            onChange={patch => onChange("from" in patch ? { tfrom: patch.from } : { tto: patch.to })}
+                            titled
+                            to={tto}
+                        />
                     </>
                 )}
                 description="Insider transactions from Forms 3, 4 and 5. A traded-day filter leaves out lines without a transaction date (the realtime feed's)."

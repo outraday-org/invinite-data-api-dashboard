@@ -9,8 +9,8 @@ import type { V2MarketHoliday, V2MarketHolidaysResponse } from "@/lib/api/types"
 import { TabStrip } from "@/components/navigation/tab-strip";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
+import { DayRange } from "@/components/ui/day-range";
 import { ErrorState } from "@/components/ui/error-state";
-import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2MarketHolidaysInfinite } from "@/lib/api/queries";
 import { zonedDate } from "@/lib/earnings/format";
@@ -151,10 +151,7 @@ function MarketHolidaysPage() {
                 title="Market holidays"
             />
             <div className="flex flex-wrap items-center gap-2">
-                <span className="text-muted-foreground">Between</span>
-                <Input aria-label="Holidays from" className="w-[150px]" onChange={event => onRange({ from: event.target.value || undefined })} type="date" value={search.from ?? ""} />
-                <span className="text-muted-foreground">and</span>
-                <Input aria-label="Holidays to" className="w-[150px]" onChange={event => onRange({ to: event.target.value || undefined })} type="date" value={search.to ?? ""} />
+                <DayRange from={search.from} labels={{ from: "Holidays from", to: "Holidays to" }} lead="Between" onChange={onRange} separator="and" to={search.to} />
             </div>
             <MarketHolidaysView
                 error={error}
