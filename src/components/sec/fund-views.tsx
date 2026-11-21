@@ -62,7 +62,7 @@ export function FundSourceBadge({ asOf, source }: { asOf: null | string | undefi
 }
 
 /** A classified value with its basis as a short muted tag (the basis in words on hover): "Technology SIC". */
-export function BasisValue({ basis, value }: { basis: null | string | undefined; value: null | string | undefined }) {
+function BasisValue({ basis, value }: { basis: null | string | undefined; value: null | string | undefined }) {
     if (!value) return <span>—</span>;
 
     const tag = basis ? POSITION_BASIS_TAGS[basis] : undefined;

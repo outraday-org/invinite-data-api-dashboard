@@ -76,7 +76,18 @@ export function changeTypesParam(types: ReadonlyArray<V2HolderChangeType>): stri
 
 /** A comma list of manager CIKs as typed ("102909, 2012383") → digits only, de-duplicated, ≤ 50; none = undefined. */
 export function parseCikList(text: string | undefined): Array<string> | undefined {
-    const ciks = [...new Set((text ?? "").split(/[\s,]+/).filter(part => /^\d{1,10}$/.test(part)).map(part => String(Number(part))))].slice(0, 50);
+    const digits = (text ?? "").split(/[\s,]+/).filter(part => /^\d{1,10}$/.test(part));
+
+    const ciks = [...new Set(digits.map(part => String(Number(part))))].slice(0, 50);
 
     return ciks.length > 0 ? ciks : undefined;
 }
+
+/** A filed yes / no flag in words; not stated = null (a fact grid leaves it out). */
+export const yesNoText = (value: boolean | null | undefined) => (value == null ? null : value ? "Yes" : "No");
+
+/** The 13F `instruments=` picker (`/v1/holders`, `/v1/filers/{cik}/holdings`): absent = common shares, the default. */
+export const INSTRUMENT_OPTIONS: Array<{ label: string; value: "all" | "shares" }> = [
+    { label: "Common shares", value: "shares" },
+    { label: "Shares, options and notes", value: "all" },
+];

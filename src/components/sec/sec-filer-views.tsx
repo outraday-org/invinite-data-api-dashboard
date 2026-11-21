@@ -32,9 +32,9 @@ import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calend
 
 import type { SecPanelTarget } from "./sec-source-panel";
 
-import { discretionText, FilingLink, votingText } from "./holder-views";
+import { discretionText, FilingLink, HeldSecurityCell, sharesTypeText, votingText } from "./holder-views";
 import { SecReadinessNotice } from "./sec-readiness-notice";
-import { filerCikParam, SecurityLink } from "./security-link";
+import { filerCikParam } from "./security-link";
 import { V2MetaLine } from "./v2-meta-line";
 
 function Facts({ entries }: { entries: Array<[string, string]> }) {
@@ -572,12 +572,7 @@ const usd = new Intl.NumberFormat("en", { currency: "USD", maximumFractionDigits
 
 const PORTFOLIO_COLUMNS: Array<ColumnDef<V2Holder>> = [
     {
-        cell: ({ row }) => (
-            <div className="max-w-[280px] truncate">
-                <SecurityLink className="font-medium" security={row.original.security}>{row.original.security.symbol ?? row.original.security.name ?? "—"}</SecurityLink>
-                {row.original.security.symbol && row.original.security.name && <span className="text-muted-foreground">{` · ${row.original.security.name}`}</span>}
-            </div>
-        ),
+        cell: ({ row }) => <HeldSecurityCell className="max-w-[280px] truncate" security={row.original.security} />,
         header: "Company",
         id: "security",
     },
@@ -591,7 +586,7 @@ const PORTFOLIO_COLUMNS: Array<ColumnDef<V2Holder>> = [
         header: () => <div className="text-right">Shares / principal</div>,
         id: "shares",
     },
-    { cell: ({ row }) => [row.original.shares_type, row.original.put_call].filter(Boolean).join(" · ") || "—", header: "Unit", id: "shares_type" },
+    { cell: ({ row }) => sharesTypeText(row.original), header: "Unit", id: "shares_type" },
     {
         cell: ({ row }) => <div className="text-right tabular-nums">{row.original.value_usd == null ? "—" : usd.format(row.original.value_usd)}</div>,
         header: () => <div className="text-right">Value</div>,

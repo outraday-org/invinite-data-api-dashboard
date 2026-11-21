@@ -13,7 +13,7 @@ import { useHolderChangesInfinite, useHoldersInfinite } from "@/lib/api/queries"
 import { formatDay } from "@/lib/format";
 import { tickerHead } from "@/lib/layout";
 import { HOLDER_SOURCE_LABELS } from "@/lib/sec/fund";
-import { changeTypesParam, parseChangeTypes, parseCikList } from "@/lib/sec/ownership";
+import { changeTypesParam, INSTRUMENT_OPTIONS, parseChangeTypes, parseCikList } from "@/lib/sec/ownership";
 import { latest13fPeriodEnd, recentQuarterEnds } from "@/lib/sec/source";
 import { IN_PLACE, optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
@@ -57,11 +57,6 @@ const SOURCES: ReadonlyArray<V2HolderSource> = ["13f", "nport", "issuer_file"];
 
 /** The default prior quarter: the API's previous quarter (nothing sent). */
 const PREVIOUS = "previous";
-
-const INSTRUMENT_OPTIONS = [
-    { label: "Common shares", value: "shares" },
-    { label: "Shares, options and notes", value: "all" },
-] as const satisfies ReadonlyArray<{ label: string; value: "all" | "shares" }>;
 
 /** A list view's state from an infinite query (the pages so far, "Load more"). */
 function listState<TPage>(query: {
@@ -181,7 +176,7 @@ function HoldersPage() {
                             className="w-[210px]"
                             disabled={!instrumentsApply}
                             onValueChange={value => onChange({ instruments: value === "all" ? "all" : undefined })}
-                            options={[...INSTRUMENT_OPTIONS]}
+                            options={INSTRUMENT_OPTIONS}
                             title={instrumentsApply ? "13F positions counted" : "Applies to the overview and the 13F list"}
                             value={instruments ?? "shares"}
                         />
@@ -234,6 +229,7 @@ function HoldersPage() {
                             placeholder="Manager CIKs (comma list)"
                             value={search.filer ?? ""}
                         />
+                        {search.filer && !filers && <span className="text-muted-foreground text-xs">No CIK in this list: every manager is shown</span>}
                     </div>
                     <HolderChangesList exportScope={ticker} state={listState(changes)} />
                 </TabsContent>

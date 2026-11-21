@@ -18,7 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useOffering } from "@/lib/api/queries";
 import { formatDay, formatMoney } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
-import { OFFERING_ID_PATTERN } from "@/lib/sec/ownership";
+import { OFFERING_ID_PATTERN, yesNoText as yesNo } from "@/lib/sec/ownership";
 import { formatNumberEn } from "@/lib/utils";
 
 export const Route = createFileRoute("/offerings/$offeringId")({
@@ -27,8 +27,6 @@ export const Route = createFileRoute("/offerings/$offeringId")({
 });
 
 const usd = (value: null | number) => (value === null ? null : formatMoney(value, { maximumFractionDigits: 0 }));
-
-const yesNo = (value: boolean | null) => (value === null ? null : value ? "Yes" : "No");
 
 const countText = (value: null | number) => (value === null ? null : formatNumberEn(value));
 

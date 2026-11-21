@@ -22,7 +22,7 @@ import { formatDay } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import { FILER_ANCHORS, FILER_FILINGS_PAGE, isManagerFiler } from "@/lib/navigation";
 import { recentFiler, useRecordRecent } from "@/lib/recents";
-import { changeTypesParam, parseChangeTypes } from "@/lib/sec/ownership";
+import { changeTypesParam, INSTRUMENT_OPTIONS, parseChangeTypes } from "@/lib/sec/ownership";
 import { latest13fPeriodEnd } from "@/lib/sec/source";
 import { IN_PLACE, optionalAccession, optionalDay, optionalEnum, optionalFlag, optionalText } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
@@ -61,11 +61,6 @@ const PORTFOLIO_PAGE = 25;
 const OFFERINGS_PAGE = 25;
 
 const CHANGES_PAGE = 50;
-
-const INSTRUMENT_OPTIONS: Array<{ label: string; value: "all" | "shares" }> = [
-    { label: "Common shares", value: "shares" },
-    { label: "Shares, options and notes", value: "all" },
-];
 
 function SecFilerPage() {
     const { cik: rawCik } = Route.useParams();

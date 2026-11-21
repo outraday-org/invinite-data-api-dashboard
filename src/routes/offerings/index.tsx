@@ -18,10 +18,10 @@ import { IN_PLACE, optionalDay, optionalEnum, optionalText } from "@/lib/url-sta
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 /** Exemptions the picker offers (as filed; the API takes any code matching `^[A-Za-z0-9.()]{1,12}$`). */
-export const EXEMPTION_CODES = ["06b", "06c", "04", "4a5", "3C", "3C.1", "3C.7"] as const;
+const EXEMPTION_CODES = ["06b", "06c", "04", "4a5", "3C", "3C.1", "3C.7"] as const;
 
 /** Minimum amounts sold the picker offers (USD, `total_sold.gte`). */
-export const MIN_SOLD_OPTIONS = [1_000_000, 10_000_000, 100_000_000, 1_000_000_000] as const;
+const MIN_SOLD_OPTIONS = [1_000_000, 10_000_000, 100_000_000, 1_000_000_000] as const;
 
 /**
  * `?from=&to=` (latest filing days), `?exemption=` (as filed), `?industry=` (industry group as filed, exact),
@@ -36,7 +36,7 @@ const offeringsSearchSchema = z.object({
     to: optionalDay(),
 });
 
-export type OfferingsSearch = z.infer<typeof offeringsSearchSchema>;
+type OfferingsSearch = z.infer<typeof offeringsSearchSchema>;
 
 export const Route = createFileRoute("/offerings/")({
     component: OfferingsPage,

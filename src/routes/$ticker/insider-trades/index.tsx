@@ -20,7 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useInsiderTrade, useV2InsiderTradesInfinite } from "@/lib/api/queries";
 import { formatDay, formatInstant, formatMoney, formatShares } from "@/lib/format";
 import { tickerHead } from "@/lib/layout";
-import { insiderCodeLegend, insiderCodeText } from "@/lib/sec/ownership";
+import { insiderCodeLegend, insiderCodeText, yesNoText as yesNo } from "@/lib/sec/ownership";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { IN_PLACE, optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
@@ -271,8 +271,6 @@ export function InsiderTradesView({
         </div>
     );
 }
-
-const yesNo = (value: boolean | null | undefined) => (value == null ? null : value ? "Yes" : "No");
 
 const OWNERSHIP_FORMS: Record<NonNullable<V2InsiderTradeDetail["direct_indirect"]>, string> = { D: "Direct", I: "Indirect" };
 

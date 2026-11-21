@@ -103,7 +103,8 @@ const tickersText = (holder: V2Holder["holder"]) => {
     return tickers.join(", ") || "—";
 };
 
-const sharesTypeText = (row: Pick<V2Holder, "put_call" | "shares_type">) => [row.shares_type, row.put_call].filter(Boolean).join(" · ") || "—";
+/** "SH · Put": the unit and an option's side. */
+export const sharesTypeText = (row: Pick<V2Holder, "put_call" | "shares_type">) => [row.shares_type, row.put_call].filter(Boolean).join(" · ") || "—";
 
 const AS_OF: ColumnDef<V2Holder> = { cell: ({ row }) => day(row.original.as_of), header: "As of", id: "as_of" };
 
@@ -282,23 +283,28 @@ export function changePercentText(fraction: null | number) {
     return `${percent > 0 ? "+" : ""}${formatNumberEn(percent, { maximumFractionDigits: 2 })}%`;
 }
 
+/** A held security: its ticker (links its page, else its issuer's filer page) and its name. */
+export function HeldSecurityCell({ className = "truncate", security }: { className?: string; security: V2Holder["security"] }) {
+    return (
+        <div className={className}>
+            <SecurityLink className="font-medium" security={security}>{security.symbol ?? security.name ?? "—"}</SecurityLink>
+            {security.symbol && security.name && <span className="text-muted-foreground">{` · ${security.name}`}</span>}
+        </div>
+    );
+}
+
 /** The other side of a change: the manager (a security's holders) or the security (a manager's positions). */
 const CHANGE_SUBJECT_COLUMNS: Record<"holder" | "security", ColumnDef<V2HolderChange>> = {
     holder: { cell: ({ row }) => <HolderCell holder={row.original.holder} />, header: "Institution", id: "holder" },
     security: {
-        cell: ({ row }) => (
-            <div className="truncate">
-                <SecurityLink className="font-medium" security={row.original.security}>{row.original.security.symbol ?? row.original.security.name ?? "—"}</SecurityLink>
-                {row.original.security.symbol && row.original.security.name && <span className="text-muted-foreground">{` · ${row.original.security.name}`}</span>}
-            </div>
-        ),
+        cell: ({ row }) => <HeldSecurityCell security={row.original.security} />,
         header: "Security",
         id: "security",
     },
 };
 
 /** The columns of a change list; `subject` = who / what the row names besides the change. */
-export function changeColumns(subject: "holder" | "security"): Array<ColumnDef<V2HolderChange>> {
+function changeColumns(subject: "holder" | "security"): Array<ColumnDef<V2HolderChange>> {
     return [
         { cell: ({ row }) => day(row.original.as_of), header: "Period End", id: "as_of" },
         { cell: ({ row }) => day(row.original.prior_as_of), header: "Compared With", id: "prior_as_of" },
@@ -341,7 +347,7 @@ const CHANGE_VALUE_COLUMNS: Array<ColumnDef<V2HolderChange>> = [
         id: "value_usd",
     },
     {
-        cell: ({ row }) => [row.original.shares_type, row.original.put_call].filter(Boolean).join(" · ") || "—",
+        cell: ({ row }) => sharesTypeText(row.original),
         header: "Unit",
         id: "shares_type",
     },
