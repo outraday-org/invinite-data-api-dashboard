@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { ALERT_STATUS_INFO, batchResultText, disabledReasonText } from "@/lib/alerts/labels";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
 import { formatNumber } from "@/lib/format";
@@ -20,14 +20,7 @@ export function AlertStatusBadge({ disabledReason, status }: { disabledReason: n
 
     const reason = disabledReasonText(disabledReason);
 
-    return (
-        <Tooltip>
-            <TooltipTrigger aria-label={`Status ${info.label}${reason ? `: ${reason}` : ""}`} render={<span />}>
-                <Badge variant={info.tone}>{info.label}</Badge>
-            </TooltipTrigger>
-            <TooltipContent>{reason ? `${info.meaning} ${reason}` : info.meaning}</TooltipContent>
-        </Tooltip>
-    );
+    return <StatusBadge label={info.label} reason={reason} tone={info.tone} tooltip={reason ? `${info.meaning} ${reason}` : info.meaning} />;
 }
 
 /** Destination ids as chips linking each destination's page (empty = "Feed only": the pull feed and the WebSocket). */

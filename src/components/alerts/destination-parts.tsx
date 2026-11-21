@@ -3,9 +3,8 @@ import { Link } from "@tanstack/react-router";
 import type { Alert, DestinationDeliveryStatus, DestinationStatus } from "@/lib/api/types";
 
 import { AlertsState } from "@/components/alerts/alert-parts";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { alertsUsingText, DELIVERY_STATUS_INFO, destinationDisabledText } from "@/lib/alerts/destinations";
 import { alertTypeLabel } from "@/lib/alerts/labels";
 
@@ -13,15 +12,15 @@ import { alertTypeLabel } from "@/lib/alerts/labels";
 export function DestinationStatusBadge({ disabledReason, status }: { disabledReason: null | string; status: DestinationStatus }) {
     const reason = destinationDisabledText(disabledReason);
 
-    const label = status === "active" ? "Active" : "Disabled";
+    const active = status === "active";
 
     return (
-        <Tooltip>
-            <TooltipTrigger aria-label={`Status ${label}${reason ? `: ${reason}` : ""}`} render={<span />}>
-                <Badge variant={status === "active" ? "default" : "destructive"}>{label}</Badge>
-            </TooltipTrigger>
-            <TooltipContent>{reason ?? (status === "active" ? "Deliveries go out." : "No deliveries go out.")}</TooltipContent>
-        </Tooltip>
+        <StatusBadge
+            label={active ? "Active" : "Disabled"}
+            reason={reason}
+            tone={active ? "default" : "destructive"}
+            tooltip={reason ?? (active ? "Deliveries go out." : "No deliveries go out.")}
+        />
     );
 }
 
@@ -29,14 +28,7 @@ export function DestinationStatusBadge({ disabledReason, status }: { disabledRea
 export function DeliveryStatusBadge({ status }: { status: DestinationDeliveryStatus }) {
     const info = DELIVERY_STATUS_INFO[status];
 
-    return (
-        <Tooltip>
-            <TooltipTrigger aria-label={`Delivery ${info.label}`} render={<span />}>
-                <Badge variant={info.tone}>{info.label}</Badge>
-            </TooltipTrigger>
-            <TooltipContent>{info.meaning}</TooltipContent>
-        </Tooltip>
-    );
+    return <StatusBadge label={info.label} prefix="Delivery" tone={info.tone} tooltip={info.meaning} />;
 }
 
 export type DestinationAlertsState = { alerts: ReadonlyArray<Alert>; error: unknown; hasMore: boolean; isLoading: boolean };
