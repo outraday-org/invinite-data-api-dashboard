@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 
+import { HolderChangesList } from "@/components/sec/holder-views";
+import { ChangeTypeChips } from "@/components/sec/ownership-views";
 import {
     SecFilerHeader,
     SecFilingsView,
@@ -14,17 +16,30 @@ import {
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
 import { NotFound } from "@/components/ui/not-found";
-import { useFilerHoldingsInfinite, useV2Filer, useV2FilingsInfinite, useV2OfferingsInfinite } from "@/lib/api/queries";
+import { useFilerHoldingChangesInfinite, useFilerHoldingsInfinite, useV2Filer, useV2FilingsInfinite, useV2OfferingsInfinite } from "@/lib/api/queries";
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import { formatDay } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import { FILER_ANCHORS, FILER_FILINGS_PAGE, isManagerFiler } from "@/lib/navigation";
 import { recentFiler, useRecordRecent } from "@/lib/recents";
+import { changeTypesParam, parseChangeTypes } from "@/lib/sec/ownership";
 import { latest13fPeriodEnd } from "@/lib/sec/source";
-import { IN_PLACE, optionalAccession, optionalDay, optionalText } from "@/lib/url-state";
+import { IN_PLACE, optionalAccession, optionalDay, optionalEnum, optionalFlag, optionalText } from "@/lib/url-state";
+import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
-/** `?form=` (the filings' form filter), `?period=<quarter end>` (the 13F portfolio, asked once set), `?docs=<accession>`. */
-const filerSearchSchema = z.object({ docs: optionalAccession(), form: optionalText(20), period: optionalDay() });
+/**
+ * `?form=` (the filings' form filter), `?period=<quarter end>` (the 13F portfolio, asked once set), `?instruments=all`
+ * (the portfolio incl. options and principal amounts), `?changes=true` (the position changes, asked once set) with
+ * `?ctypes=new,added`, `?docs=<accession>`.
+ */
+const filerSearchSchema = z.object({
+    changes: optionalFlag(),
+    ctypes: optionalText(60),
+    docs: optionalAccession(),
+    form: optionalText(20),
+    instruments: optionalEnum(["all"]),
+    period: optionalDay(),
+});
 
 /**
  * One SEC filer by CIK — outside `$ticker` on purpose: a pre-IPO issuer, a SPAC or a 13F manager without an exchange
@@ -44,6 +59,13 @@ export const Route = createFileRoute("/sec/$cik")({
 const PORTFOLIO_PAGE = 25;
 
 const OFFERINGS_PAGE = 25;
+
+const CHANGES_PAGE = 50;
+
+const INSTRUMENT_OPTIONS: Array<{ label: string; value: "all" | "shares" }> = [
+    { label: "Common shares", value: "shares" },
+    { label: "Shares, options and notes", value: "all" },
+];
 
 function SecFilerPage() {
     const { cik: rawCik } = Route.useParams();
@@ -68,14 +90,24 @@ function SecFilerPage() {
     const filings = useV2FilingsInfinite({ form: form ? [form] : undefined, limit: FILER_FILINGS_PAGE, symbol: cik });
 
     // Idle (no CIK) until a quarter is picked.
-    const portfolio = useFilerHoldingsInfinite({ cik: period ? cik : "", limit: PORTFOLIO_PAGE, periodEnd: period ?? undefined });
+    const portfolio = useFilerHoldingsInfinite({ cik: period ? cik : "", instruments: search.instruments, limit: PORTFOLIO_PAGE, periodEnd: period ?? undefined });
+
+    const changeTypes = parseChangeTypes(search.ctypes) ?? [];
+
+    // The position changes cost a request: asked on a click, for the portfolio's quarter (else the newest due one).
+    const changes = useFilerHoldingChangesInfinite({
+        cik: search.changes ? cik : "",
+        limit: CHANGES_PAGE,
+        periodEnd: period ?? undefined,
+        type: changeTypes.length > 0 ? changeTypes : undefined,
+    });
 
     const privateOfferings = filer.data?.private_offerings ?? null;
 
     // The offerings list costs a request: only for a filer whose summary names at least one offering.
     const offerings = useV2OfferingsInfinite({
         company: cik,
-        enabled: (privateOfferings?.count ?? 0) > 0,
+        enabled: cik.length > 0 && (privateOfferings?.count ?? 0) > 0,
         limit: OFFERINGS_PAGE,
     });
 
@@ -107,6 +139,7 @@ function SecFilerPage() {
                     <h3 className="text-sm font-semibold">Private offerings (Form D)</h3>
                     <SecPrivateOfferingsView
                         error={offerings.error}
+                        exportScope={`cik-${cik}`}
                         hasNextPage={Boolean(offerings.hasNextPage)}
                         isFetchingNextPage={offerings.isFetchingNextPage}
                         isLoading={offerings.isLoading}
@@ -119,7 +152,7 @@ function SecFilerPage() {
 
             {isManager && (
                 <section className="flex scroll-mt-20 flex-col gap-2" id={FILER_ANCHORS.portfolio}>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                         <h3 className="text-sm font-semibold">13F portfolio</h3>
                         {!period && (
                             <Button onClick={() => onChange({ period: latest13fPeriodEnd(new Date()) })} size="xs" type="button" variant="outline">
@@ -127,15 +160,53 @@ function SecFilerPage() {
                             </Button>
                         )}
                         {period && <span className="text-muted-foreground text-xs">{`Period ending ${formatDay(period)}`}</span>}
+                        <FilterSelect
+                            aria-label="13F instruments"
+                            className="w-[210px]"
+                            onValueChange={value => onChange({ instruments: value === "all" ? "all" : undefined })}
+                            options={INSTRUMENT_OPTIONS}
+                            value={search.instruments ?? "shares"}
+                        />
                     </div>
-                    <SecPortfolioView
-                        error={portfolio.error}
-                        hasNextPage={Boolean(portfolio.hasNextPage)}
-                        isFetchingNextPage={portfolio.isFetchingNextPage}
-                        isLoading={portfolio.isLoading}
-                        onMore={() => void portfolio.fetchNextPage()}
-                        pages={portfolio.data?.pages ?? []}
-                    />
+                    {period && (
+                        <SecPortfolioView
+                            error={portfolio.error}
+                            exportScope={`cik-${cik}`}
+                            hasNextPage={Boolean(portfolio.hasNextPage)}
+                            isFetchingNextPage={portfolio.isFetchingNextPage}
+                            isLoading={portfolio.isLoading}
+                            onMore={() => void portfolio.fetchNextPage()}
+                            pages={portfolio.data?.pages ?? []}
+                        />
+                    )}
+
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-semibold">Position changes</h3>
+                        {search.changes
+                            ? <span className="text-muted-foreground text-xs">{period ? `Quarter ending ${formatDay(period)} vs the one before` : "The latest due quarter vs the one before"}</span>
+                            : (
+                                    <Button onClick={() => onChange({ changes: true })} size="xs" type="button" variant="outline">
+                                        Load the changes
+                                    </Button>
+                                )}
+                    </div>
+                    {search.changes && (
+                        <div className="flex flex-col gap-2" data-testid="position-changes">
+                            <ChangeTypeChips onChange={types => onChange({ ctypes: changeTypesParam(types) })} value={changeTypes} />
+                            <HolderChangesList
+                                exportScope={`cik-${cik}`}
+                                state={{
+                                    error: changes.error,
+                                    hasNextPage: changes.hasNextPage,
+                                    isFetchingNextPage: changes.isFetchingNextPage,
+                                    isLoading: changes.isLoading,
+                                    onLoadMore: () => void changes.fetchNextPage(),
+                                    pages: changes.data?.pages ?? [],
+                                }}
+                                subject="security"
+                            />
+                        </div>
+                    )}
                 </section>
             )}
 

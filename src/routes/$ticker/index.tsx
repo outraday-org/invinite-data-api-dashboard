@@ -7,7 +7,7 @@ import type { V2CompanyCoverage, V2CompanyResponse, V2Dataset, V2Event, V2Filing
 import type { TickerPath } from "@/lib/navigation";
 
 import { FiscalPeriodsCard } from "@/components/reference/fiscal-periods-card";
-import { FundSourceBadge } from "@/components/sec/fund-views";
+import { FundAdvisersView, FundSourceBadge } from "@/components/sec/fund-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -188,19 +188,19 @@ const COVERAGE_SECTIONS: Partial<Record<string, { to: "/$ticker/financials"; vie
     splits: { to: "/$ticker/stock-splits" },
 };
 
-/** `expand=coverage`: which data families hold rows for the company and through which day; each links its section. */
-export function CoverageCard({ coverage, ticker }: { coverage: null | undefined | V2CompanyCoverage; ticker: string }) {
+/** `expand=coverage`: which data families hold rows for the company (or fund) and through which day; each links its section. */
+export function CoverageCard({ coverage, noun = "company", ticker }: { coverage: null | undefined | V2CompanyCoverage; noun?: "company" | "fund"; ticker: string }) {
     const entries = coverageEntries(coverage);
 
     return (
         <Card className="border-border/60 md:col-span-2">
             <CardHeader>
                 <CardTitle>Data available</CardTitle>
-                <CardDescription>The data families that hold rows for this company</CardDescription>
+                <CardDescription>{`The data families that hold rows for this ${noun}`}</CardDescription>
             </CardHeader>
             <CardContent>
                 {entries.length === 0
-                    ? <div className="text-muted-foreground text-sm">No data family holds rows for this company yet.</div>
+                    ? <div className="text-muted-foreground text-sm">{`No data family holds rows for this ${noun} yet.`}</div>
                     : (
                             <div className="flex flex-wrap gap-2">
                                 {entries.map((entry) => {
@@ -466,7 +466,7 @@ export function CompositionMeta({ error, page, ticker }: { error: unknown; page:
 
 /** A listed fund's profile (`GET /v1/funds/{fund}`): the fund, its size and costs, its classes, its composition. */
 function FundOverview({ instrument, ticker }: { instrument: V2Instrument; ticker: string }) {
-    const { data: fund, error, isLoading } = useFund(ticker);
+    const { data: fund, error, isLoading } = useFund(ticker, ["coverage"]);
 
     if (error) return <SecReadinessNotice error={error} title="Failed to load the fund profile" />;
 
@@ -479,7 +479,7 @@ function FundOverview({ instrument, ticker }: { instrument: V2Instrument; ticker
 export function FundProfileView({ composition, fund }: { composition: ReactNode; fund: V2Fund }) {
     const netAssets = netAssetsText(fund);
 
-    const advisers = fund.advisers.flatMap(adviser => (adviser.name ? [adviser.name] : []));
+    const homepage = httpsHref(fund.homepage_url);
 
     return (
         <div className="grid gap-6 md:grid-cols-2" data-testid="fund-overview">
@@ -503,7 +503,11 @@ export function FundProfileView({ composition, fund }: { composition: ReactNode;
                     {fund.series_id && <Row label="Series">{fund.series_id}</Row>}
                     {fund.investment_company_type && <Row label="Registration">{fund.investment_company_type}</Row>}
                     {fund.is_index != null && <Row label="Index fund">{fund.is_index ? "Yes" : "No"}</Row>}
-                    {advisers.length > 0 && <Row label="Advisers">{advisers.join(", ")}</Row>}
+                    {homepage && (
+                        <Row label="Website">
+                            <a className="underline-offset-4 hover:underline" href={homepage} rel="noreferrer" target="_blank">{homepage.replace(/^https?:\/\/(www\.)?/i, "").replace(/\/$/, "")}</a>
+                        </Row>
+                    )}
                     <Row label="Exchange">{fund.exchange ?? "—"}</Row>
                     {fund.list_date && <Row label="Listed since">{day(fund.list_date)}</Row>}
                 </CardContent>
@@ -554,6 +558,20 @@ export function FundProfileView({ composition, fund }: { composition: ReactNode;
                 </CardHeader>
                 <CardContent>{composition}</CardContent>
             </Card>
+
+            {fund.advisers.length > 0 && (
+                <Card className="border-border/60">
+                    <CardHeader>
+                        <CardTitle>Advisers</CardTitle>
+                        <CardDescription>Advisers and sub-advisers as reported on Form N-CEN</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <FundAdvisersView advisers={fund.advisers} />
+                    </CardContent>
+                </Card>
+            )}
+
+            <CoverageCard coverage={fund.coverage} noun="fund" ticker={fund.symbol} />
         </div>
     );
 }

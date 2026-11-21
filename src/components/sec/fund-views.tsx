@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
-import type { V2FundPosition, V2FundPositionsResponse, V2FundSource, V2FundWeightsResponse } from "@/lib/api/types";
+import type { V2FundAdviser, V2FundPosition, V2FundPositionsResponse, V2FundSource, V2FundWeightsResponse } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecurityLink } from "@/components/sec/security-link";
@@ -11,9 +11,12 @@ import { Notice } from "@/components/ui/notice";
 import {
     FUND_DIMENSION_LABELS,
     fundBasisNote,
+    fundBasisText,
     fundReasonText,
     fundSourceText,
     fundWeightsByDimension,
+    POSITION_BASIS_TAGS,
+    weightSumText,
 } from "@/lib/sec/fund";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { formatNumberEn } from "@/lib/utils";
@@ -58,6 +61,20 @@ export function FundSourceBadge({ asOf, source }: { asOf: null | string | undefi
     );
 }
 
+/** A classified value with its basis as a short muted tag (the basis in words on hover): "Technology SIC". */
+export function BasisValue({ basis, value }: { basis: null | string | undefined; value: null | string | undefined }) {
+    if (!value) return <span>—</span>;
+
+    const tag = basis ? POSITION_BASIS_TAGS[basis] : undefined;
+
+    return (
+        <span className="whitespace-nowrap" title={basis ? fundBasisText(basis) : undefined}>
+            {value}
+            {tag && <span className="text-muted-foreground ml-1 text-[10px] uppercase">{tag}</span>}
+        </span>
+    );
+}
+
 const COMPOSITION_COLUMNS: Array<ColumnDef<V2FundPosition>> = [
     {
         cell: ({ row }) => (
@@ -76,7 +93,16 @@ const COMPOSITION_COLUMNS: Array<ColumnDef<V2FundPosition>> = [
         header: "CUSIP",
         id: "cusip",
     },
+    {
+        cell: ({ row }) => (row.original.security.isin
+            ? <Copyable className="tabular-nums" label="Copy ISIN" value={row.original.security.isin} />
+            : "—"),
+        header: "ISIN",
+        id: "isin",
+    },
     { accessorKey: "asset_class", cell: ({ row }) => row.original.asset_class ?? "—", header: "Asset Class" },
+    { cell: ({ row }) => <BasisValue basis={row.original.sector_basis} value={row.original.sector} />, header: "Sector", id: "sector" },
+    { cell: ({ row }) => <BasisValue basis={row.original.country_basis} value={row.original.country} />, header: "Country", id: "country" },
     {
         accessorKey: "weight_pct",
         cell: ({ row }) => right(weightText(row.original.weight_pct)),
@@ -170,17 +196,25 @@ export function FundWeightsBlock({ state }: { state: FundListState<V2FundWeights
     const groups = fundWeightsByDimension(pages.flatMap(page => page.data));
 
     if (groups.length === 0) {
+        // `weights_unavailable` (no weight stated or derivable: TQQQ's issuer file) says why, whatever the coverage.
+        const reason = fundReasonText(meta?.reason);
+
         return (
             <div className="flex flex-col gap-2">
                 <SecReadinessNotice coverage={meta?.coverage} />
-                {isV2GenuineEmpty(meta?.coverage) && <div className="text-muted-foreground text-sm">No weights for this composition.</div>}
+                {reason
+                    ? <div className="text-muted-foreground text-sm" data-testid="fund-weights-reason">{reason}</div>
+                    : isV2GenuineEmpty(meta?.coverage) && <div className="text-muted-foreground text-sm">No weights for this composition.</div>}
             </div>
         );
     }
 
+    const sum = weightSumText(meta);
+
     return (
         <div className="flex flex-col gap-3" data-testid="fund-weights">
             <SecReadinessNotice coverage={meta?.coverage} />
+            {sum && <div className="text-muted-foreground text-xs" data-testid="fund-weight-sum">{sum}</div>}
             <div className="grid gap-4 md:grid-cols-3">
                 {groups.map(group => (
                     <div className="flex flex-col gap-1" key={group.dimension}>
@@ -207,5 +241,47 @@ export function FundWeightsBlock({ state }: { state: FundListState<V2FundWeights
             )}
             {error ? <SecReadinessNotice error={error} title="Failed to load the fund weights" /> : null}
         </div>
+    );
+}
+
+const ADVISER_ROLE_ORDER = ["Advisor", "Subadvisor"];
+
+/**
+ * A fund's advisers and sub-advisers as reported on Form N-CEN (pure): name, role, CRD and LEI (copyable), and whether
+ * the adviser is an affiliated person of the fund. Advisers first, then sub-advisers, then the others (terminated …).
+ */
+export function FundAdvisersView({ advisers }: { advisers: ReadonlyArray<V2FundAdviser> }) {
+    const rank = (role: null | string) => {
+        const index = ADVISER_ROLE_ORDER.indexOf(role ?? "");
+
+        return index === -1 ? ADVISER_ROLE_ORDER.length : index;
+    };
+
+    const sorted = [...advisers].sort((a, b) => rank(a.role) - rank(b.role));
+
+    return (
+        <ul className="flex flex-col gap-3 text-sm" data-testid="fund-advisers">
+            {sorted.map((adviser, index) => (
+                // N-CEN can name an adviser twice (two roles): name + role + index keys the row.
+                <li className="flex flex-col gap-1" key={`${adviser.name ?? ""}-${adviser.role ?? ""}-${index}`}>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-medium">{adviser.name ?? "—"}</span>
+                        {adviser.role && <Badge variant="outline">{adviser.role}</Badge>}
+                        {adviser.is_affiliated === true && <Badge title="An affiliated person of the fund" variant="secondary">Affiliated</Badge>}
+                        {adviser.is_affiliated === false && <Badge title="Not an affiliated person of the fund" variant="outline">Unaffiliated</Badge>}
+                    </div>
+                    <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                        <span className="flex items-center gap-1">
+                            CRD
+                            {adviser.crd ? <Copyable className="tabular-nums" label="Copy CRD number" value={adviser.crd} /> : " —"}
+                        </span>
+                        <span className="flex items-center gap-1">
+                            LEI
+                            {adviser.lei ? <Copyable className="tabular-nums" label="Copy LEI" value={adviser.lei} /> : " —"}
+                        </span>
+                    </div>
+                </li>
+            ))}
+        </ul>
     );
 }

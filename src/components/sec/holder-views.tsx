@@ -7,6 +7,7 @@ import type { ExportConfig } from "@/components/api/export-menu";
 import type { FundListState } from "@/components/sec/fund-views";
 import type { OperationId } from "@/lib/api/operations.gen";
 import type {
+    V2FilerHoldingChangesResponse,
     V2Holder,
     V2HolderChange,
     V2HolderChangesResponse,
@@ -18,7 +19,7 @@ import type {
 
 import { count, money, right, weightText } from "@/components/sec/fund-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
-import { filerCikParam } from "@/components/sec/security-link";
+import { filerCikParam, SecurityLink } from "@/components/sec/security-link";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -132,11 +133,47 @@ const WEIGHT: ColumnDef<V2Holder> = {
     id: "weight_pct",
 };
 
+const DISCRETION_LABELS: Record<string, string> = { DFND: "Shared (defined)", OTR: "Shared (other)", SOLE: "Sole" };
+
+/** 13F investment discretion as filed (`SOLE`, `DFND`, `OTR`) in words; an unknown code stays as filed. */
+export const discretionText = (code: null | string | undefined) => (code ? (DISCRETION_LABELS[code] ?? code) : "—");
+
+/** 13F voting authority (shares): "Sole 1,200 · Shared 0 · None 300"; null on N-PORT and issuer-file rows. */
+export function votingText(voting: V2Holder["voting_authority"]): string {
+    if (!voting) return "—";
+
+    const parts: Array<[string, null | number]> = [["Sole", voting.sole], ["Shared", voting.shared], ["None", voting.none]];
+
+    return parts.map(([label, value]) => `${label} ${count(value)}`).join(" · ");
+}
+
+const DISCRETION: ColumnDef<V2Holder> = { cell: ({ row }) => discretionText(row.original.investment_discretion), header: "Discretion", id: "investment_discretion" };
+
+const VOTING: ColumnDef<V2Holder> = {
+    cell: ({ row }) => <div className="tabular-nums whitespace-nowrap">{votingText(row.original.voting_authority)}</div>,
+    header: "Voting authority",
+    id: "voting_authority",
+};
+
+/** The filing's EDGAR index page (13F, N-PORT); an issuer file has none. */
+export function FilingLink({ url }: { url: null | string | undefined }) {
+    // Only an EDGAR page is linked (the URL comes from the API; never a script or another host).
+    if (!url?.startsWith("https://www.sec.gov/")) return <span>—</span>;
+
+    return (
+        <a className="text-primary underline-offset-4 hover:underline" href={url} rel="noopener noreferrer" target="_blank" title="The filing on SEC EDGAR">
+            EDGAR
+        </a>
+    );
+}
+
+const FILING: ColumnDef<V2Holder> = { cell: ({ row }) => <FilingLink url={row.original.filing_url} />, header: "Filing", id: "filing_url" };
+
 /** The columns of one source: 13F has no fund weight or tickers; an issuer file has no filing. */
 export const HOLDER_COLUMNS: Record<V2HolderSource, Array<ColumnDef<V2Holder>>> = {
-    "13f": [AS_OF, FILED, HOLDER, SHARES, SHARES_TYPE, VALUE],
+    "13f": [AS_OF, FILED, HOLDER, SHARES, SHARES_TYPE, VALUE, DISCRETION, VOTING, FILING],
     "issuer_file": [AS_OF, HOLDER, TICKERS, SHARES, VALUE, WEIGHT],
-    "nport": [AS_OF, FILED, HOLDER, TICKERS, SHARES, SHARES_TYPE, VALUE, WEIGHT],
+    "nport": [AS_OF, FILED, HOLDER, TICKERS, SHARES, SHARES_TYPE, VALUE, WEIGHT, FILING],
 };
 
 const EMPTY_TEXT: Record<V2HolderSource, string> = {
@@ -145,7 +182,7 @@ const EMPTY_TEXT: Record<V2HolderSource, string> = {
     "nport": "No fund reported this security in its latest N-PORT report.",
 };
 
-type Page = V2HolderChangesResponse | V2HoldersResponse;
+type Page = V2FilerHoldingChangesResponse | V2HolderChangesResponse | V2HoldersResponse;
 
 /**
  * One holder list (pure): the request's honest state (403 `excluded`, 404 `not_covered`, 503 `unavailable`, plan gate),
@@ -245,11 +282,34 @@ export function changePercentText(fraction: null | number) {
     return `${percent > 0 ? "+" : ""}${formatNumberEn(percent, { maximumFractionDigits: 2 })}%`;
 }
 
-const CHANGE_COLUMNS: Array<ColumnDef<V2HolderChange>> = [
-    { cell: ({ row }) => day(row.original.as_of), header: "Period End", id: "as_of" },
-    { cell: ({ row }) => day(row.original.filing_date), header: "Filed", id: "filing_date" },
-    { cell: ({ row }) => CHANGE_TYPE_LABELS[row.original.type], header: "Type", id: "type" },
-    { cell: ({ row }) => <HolderCell holder={row.original.holder} />, header: "Institution", id: "holder" },
+/** The other side of a change: the manager (a security's holders) or the security (a manager's positions). */
+const CHANGE_SUBJECT_COLUMNS: Record<"holder" | "security", ColumnDef<V2HolderChange>> = {
+    holder: { cell: ({ row }) => <HolderCell holder={row.original.holder} />, header: "Institution", id: "holder" },
+    security: {
+        cell: ({ row }) => (
+            <div className="truncate">
+                <SecurityLink className="font-medium" security={row.original.security}>{row.original.security.symbol ?? row.original.security.name ?? "—"}</SecurityLink>
+                {row.original.security.symbol && row.original.security.name && <span className="text-muted-foreground">{` · ${row.original.security.name}`}</span>}
+            </div>
+        ),
+        header: "Security",
+        id: "security",
+    },
+};
+
+/** The columns of a change list; `subject` = who / what the row names besides the change. */
+export function changeColumns(subject: "holder" | "security"): Array<ColumnDef<V2HolderChange>> {
+    return [
+        { cell: ({ row }) => day(row.original.as_of), header: "Period End", id: "as_of" },
+        { cell: ({ row }) => day(row.original.prior_as_of), header: "Compared With", id: "prior_as_of" },
+        { cell: ({ row }) => day(row.original.filing_date), header: "Filed", id: "filing_date" },
+        { cell: ({ row }) => CHANGE_TYPE_LABELS[row.original.type], header: "Type", id: "type" },
+        CHANGE_SUBJECT_COLUMNS[subject],
+        ...CHANGE_VALUE_COLUMNS,
+    ];
+}
+
+const CHANGE_VALUE_COLUMNS: Array<ColumnDef<V2HolderChange>> = [
     {
         cell: ({ row }) => right(money(row.original.value_change_usd)),
         header: () => <div className="text-right">Change $</div>,
@@ -280,17 +340,37 @@ const CHANGE_COLUMNS: Array<ColumnDef<V2HolderChange>> = [
         header: () => <div className="text-right">Value</div>,
         id: "value_usd",
     },
+    {
+        cell: ({ row }) => [row.original.shares_type, row.original.put_call].filter(Boolean).join(" · ") || "—",
+        header: "Unit",
+        id: "shares_type",
+    },
 ];
 
-/** 13F position changes of the security's holders vs the prior quarter (`/v1/holder-changes`). */
-export function HolderChangesList({ exportScope, state }: { exportScope?: string; state: FundListState<V2HolderChangesResponse> }) {
+const HOLDER_CHANGE_COLUMNS = changeColumns("holder");
+
+const FILER_CHANGE_COLUMNS = changeColumns("security");
+
+/**
+ * 13F position changes vs the prior quarter: a security's holders (`/v1/holder-changes`, `subject` holder) or one
+ * manager's positions (`/v1/filers/{cik}/holding-changes`, `subject` security).
+ */
+export function HolderChangesList({
+    exportScope,
+    state,
+    subject = "holder",
+}: {
+    exportScope?: string;
+    state: FundListState<V2FilerHoldingChangesResponse | V2HolderChangesResponse>;
+    subject?: "holder" | "security";
+}) {
     return (
-        <HolderListFrame<V2HolderChangesResponse, V2HolderChange>
-            columns={CHANGE_COLUMNS}
-            emptyText="No position changes for this quarter."
+        <HolderListFrame<V2FilerHoldingChangesResponse | V2HolderChangesResponse, V2HolderChange>
+            columns={subject === "holder" ? HOLDER_CHANGE_COLUMNS : FILER_CHANGE_COLUMNS}
+            emptyText="No position changes for these filters."
             errorTitle="Failed to load the 13F changes"
-            exportConfig={exportScope ? { dataset: "holder-changes", scope: exportScope } : undefined}
-            operationId="listHolderChanges"
+            exportConfig={exportScope ? { dataset: subject === "holder" ? "holder-changes" : "position-changes", scope: exportScope } : undefined}
+            operationId={subject === "holder" ? "listHolderChanges" : "listFilerHoldingChanges"}
             rowsOf={page => page.data}
             state={state}
         />

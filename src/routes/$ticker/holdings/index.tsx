@@ -2,19 +2,30 @@ import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 import { z } from "zod";
 
+import type { V2FundWeightDimension } from "@/lib/api/types";
+
 import { FundCompositionList, FundWeightsBlock } from "@/components/sec/fund-views";
 import { PageHeader } from "@/components/ui/page-header";
 import { useFundPositionsInfinite, useFundWeightsInfinite } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
-import { fundPickerDays } from "@/lib/sec/fund";
-import { IN_PLACE, optionalDay } from "@/lib/url-state";
+import { FUND_DIMENSION_LABELS, fundPickerDays } from "@/lib/sec/fund";
+import { IN_PLACE, optionalDay, optionalEnum } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
+
+const DIMENSIONS = ["sector", "country", "asset_class"] as const satisfies ReadonlyArray<V2FundWeightDimension>;
+
+const ALL_DIMENSIONS = "all";
+
+const DIMENSION_OPTIONS: Array<{ label: string; value: typeof ALL_DIMENSIONS | V2FundWeightDimension }> = [
+    { label: "Every weight dimension", value: ALL_DIMENSIONS },
+    ...DIMENSIONS.map(dimension => ({ label: `${FUND_DIMENSION_LABELS[dimension]} weights`, value: dimension })),
+];
 
 export const Route = createFileRoute("/$ticker/holdings/")({
     component: FundHoldingsPage,
     head: ({ params }) => tickerHead(params.ticker, "Holdings"),
-    // `?day=<as of>` (default: the freshest composition, nothing sent).
-    validateSearch: z.object({ day: optionalDay() }),
+    // `?day=<as of>` (default: the freshest composition, nothing sent), `?dim=` (one weight dimension; default all three).
+    validateSearch: z.object({ day: optionalDay(), dim: optionalEnum(DIMENSIONS) }),
 });
 
 /** Positions per page (the API allows up to 200; the top of the fund first). */
@@ -33,7 +44,7 @@ const FRESHEST = "freshest";
 function FundHoldingsPage() {
     const { ticker } = Route.useParams();
 
-    const { day: asOf } = Route.useSearch();
+    const { day: asOf, dim } = Route.useSearch();
 
     const navigate = Route.useNavigate();
 
@@ -43,7 +54,7 @@ function FundHoldingsPage() {
 
     const holdings = useFundPositionsInfinite({ asOf, fund: ticker, limit: POSITIONS_PAGE });
 
-    const weights = useFundWeightsInfinite({ asOf, fund: ticker, limit: 200 });
+    const weights = useFundWeightsInfinite({ asOf, dimension: dim, fund: ticker, limit: 200 });
 
     const stored = holdings.data?.pages.at(0)?.meta.composition?.stored_dates;
 
@@ -57,7 +68,18 @@ function FundHoldingsPage() {
     return (
         <div className="flex flex-col gap-4">
             <PageHeader
-                actions={<FilterSelect aria-label="As of" className="w-[260px]" onValueChange={setDay} options={options} value={day} />}
+                actions={(
+                    <>
+                        <FilterSelect aria-label="As of" className="w-[260px]" onValueChange={setDay} options={options} value={day} />
+                        <FilterSelect
+                            aria-label="Weight dimension"
+                            className="w-[210px]"
+                            onValueChange={value => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, dim: value === ALL_DIMENSIONS ? undefined : value }) })}
+                            options={DIMENSION_OPTIONS}
+                            value={dim ?? ALL_DIMENSIONS}
+                        />
+                    </>
+                )}
                 description={(
                     <>
                         What this fund holds, from the issuer&apos;s own holdings file (daily or monthly) or else the fund&apos;s

@@ -48,6 +48,58 @@ describe("fund overview (`/v1/funds/{fund}`)", () => {
         expect(netAssetsText({ ...VOO_FUND, net_assets_usd: null })).toBeNull();
     });
 
+    it("advisers with role, CRD, LEI and affiliation; the website (https only); the data families of expand=coverage", () => {
+        render(
+            <FundProfileView
+                composition={null}
+                fund={{
+                    ...VOO_FUND,
+                    advisers: [
+                        { crd: "000105958", is_affiliated: false, lei: "549300LNYY7KJ8XVHU53", name: "Example Sub-Advisor LLC", role: "Subadvisor" },
+                        ...VOO_FUND.advisers,
+                    ],
+                    coverage: { families: [{ family: "dividends", through: "2026-09-18" }] },
+                    homepage_url: "https://investor.vanguard.com/",
+                }}
+            />,
+        );
+
+        const advisers = screen.getByTestId("fund-advisers");
+
+        // Advisers before sub-advisers.
+        expect(advisers.firstElementChild).toHaveTextContent("The Vanguard Group, Inc.AdvisorAffiliated");
+
+        expect(advisers.lastElementChild).toHaveTextContent("Example Sub-Advisor LLCSubadvisorUnaffiliated");
+
+        expect(screen.getByText("000105958")).toBeInTheDocument();
+
+        expect(screen.getByText("549300LNYY7KJ8XVHU53")).toBeInTheDocument();
+
+        expect(screen.getByRole("link", { name: "investor.vanguard.com" })).toHaveAttribute("href", "https://investor.vanguard.com/");
+
+        expect(screen.getByText("The data families that hold rows for this fund")).toBeInTheDocument();
+
+        expect(screen.getByRole("link", { name: "dividends through Sep 18, 2026" })).toHaveAttribute("href", "/VOO/dividends");
+
+        cleanup();
+
+        render(<FundProfileView composition={null} fund={{ ...VOO_FUND, homepage_url: "javascript:alert(1)" }} />);
+
+        expect(screen.queryByText("Website")).toBeNull();
+    });
+
+    it("the overview asks the fund profile with expand=coverage", () => {
+        route.ticker = "VOO";
+
+        vi.mocked(useInstrument).mockReturnValue({ data: { ...GLD_INSTRUMENT, structure: "registered_fund", symbol: "VOO" }, isLoading: false } as never);
+
+        vi.mocked(useFund).mockReturnValue({ data: VOO_FUND, error: null, isLoading: false } as never);
+
+        render(<TickerOverview />);
+
+        expect(useFund).toHaveBeenCalledWith("VOO", ["coverage"]);
+    });
+
     it("the composition line names its source and as-of and links the Holdings page", () => {
         render(<CompositionMeta error={null} page={V2_FUND_POSITIONS} ticker="SPY" />);
 

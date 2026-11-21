@@ -45,6 +45,7 @@ import type {
     V2FactPlaceStatus,
     V2FactResponse,
     V2FilerExpand,
+    V2FilerHoldingChangesResponse,
     V2FilerHoldingsResponse,
     V2FilerPhase,
     V2FilerResponse,
@@ -74,11 +75,14 @@ import type {
     V2GuidancePeriodKind,
     V2GuidanceResponse,
     V2HolderChangesResponse,
+    V2HolderChangeType,
     V2HoldersInstruments,
     V2HolderSource,
     V2HoldersResponse,
     V2InsiderSide,
+    V2InsiderTradeDetail,
     V2InsiderTradesResponse,
+    V2InsiderTradesSort,
     V2Instrument,
     V2InstrumentsResponse,
     V2InstrumentsSort,
@@ -105,6 +109,7 @@ import type {
     V2NewsSearchResponse,
     V2NewsSort,
     V2NewsText,
+    V2OfferingDetail,
     V2OfferingsResponse,
     V2ParticipantsResponse,
     V2PeopleResponse,
@@ -149,6 +154,7 @@ import {
     getCompanyFiscalPeriods,
     getDocumentKindCatalog,
     getEventTypeCatalog,
+    getFilerHoldingChanges,
     getFilerHoldings,
     getFormCatalog,
     getFund,
@@ -157,6 +163,7 @@ import {
     getFundWeights,
     getHolderChanges,
     getHolders,
+    getInsiderTrade,
     getInstrument,
     getInstruments,
     getIpo,
@@ -164,6 +171,7 @@ import {
     getMe,
     getMetricCatalog,
     getMyUsage,
+    getOffering,
     getSectionCatalog,
     getV2Announcements,
     getV2AnnouncementsList,
@@ -628,13 +636,13 @@ export function useFunds(input: FundsInput) {
     });
 }
 
-/** One fund's profile (ticker or fund key); idle for "" (a stock or an ETN never asks). */
-export function useFund(fund: string) {
+/** One fund's profile (ticker or fund key), `expand=coverage` when asked; idle for "" (a stock or an ETN never asks). */
+export function useFund(fund: string, expand: ReadonlyArray<V2CompanyExpand> = []) {
     return useEarningsQuery<V2Fund>({
         enabled: fund.trim().length > 0,
         errorMessage: null,
-        load: apiKey => getFund({ data: { apiKey, fund } }),
-        queryKey: ["v2", "fund", fund.toUpperCase()],
+        load: apiKey => getFund({ data: { apiKey, expand: [...expand], fund } }),
+        queryKey: ["v2", "fund", fund.toUpperCase(), key(expand)],
         staleTime: V2_STALE_MS,
     });
 }
@@ -1231,25 +1239,37 @@ export function useHoldersInfinite(input: HoldersInput) {
     });
 }
 
+export type HolderChangesInput = {
+    /** Only these managers' changes (CIKs, 1–50). */
+    filer?: Array<string>;
+    limit?: number;
+    periodEnd?: string;
+    /** The quarter compared against (default the previous one). */
+    priorPeriodEnd?: string;
+    symbol: string;
+    /** Omitted = every change but `unchanged`. */
+    type?: Array<V2HolderChangeType>;
+};
+
 /** The proven 13F position changes of one security's holders vs the prior quarter, by cursor. */
-export function useHolderChangesInfinite(input: { limit?: number; periodEnd?: string; symbol: string }) {
+export function useHolderChangesInfinite(input: HolderChangesInput) {
     return useEarningsInfinite<V2HolderChangesResponse>({
         enabled: input.symbol.trim().length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getHolderChanges({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "holder-changes", input.symbol, input.periodEnd ?? "", input.limit ?? ""],
+        queryKey: ["v2", "holder-changes", input.symbol, input.periodEnd ?? "", input.limit ?? "", key(input.type), key(input.filer), input.priorPeriodEnd ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
 }
 
 /** A 13F manager's portfolio by cursor (`GET /v1/filers/{cik}/holdings`); idle for "" (asked on a click). */
-export function useFilerHoldingsInfinite(input: { cik: string; limit?: number; periodEnd?: string }) {
+export function useFilerHoldingsInfinite(input: { cik: string; instruments?: V2HoldersInstruments; limit?: number; periodEnd?: string }) {
     return useEarningsInfinite<V2FilerHoldingsResponse>({
         enabled: input.cik.length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getFilerHoldings({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "filer-holdings", input.cik, input.periodEnd ?? "", input.limit ?? ""],
+        queryKey: ["v2", "filer-holdings", input.cik, input.periodEnd ?? "", input.limit ?? "", input.instruments ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
@@ -1281,12 +1301,18 @@ export function useFundWeightsInfinite(input: { asOf?: string; dimension?: strin
 
 export type V2InsiderTradesInput = {
     company: string;
-    /** Day (`YYYY-MM-DD`, UTC): `filed_at.gte` its midnight. */
+    /** Day (`YYYY-MM-DD`): `filed_at.gte` (the spec's `format: date`; an instant is a 400, [FU2994]). */
     from?: string;
+    /** true = derivative lines only, false = non-derivative only; omitted = both. */
+    isDerivative?: boolean;
     limit?: number;
     side?: V2InsiderSide;
-    /** Day (`YYYY-MM-DD`, UTC), inclusive: `filed_at.lt` the next midnight. */
+    sort?: V2InsiderTradesSort;
+    /** Day (`YYYY-MM-DD`), inclusive: `filed_at.lte`. */
     to?: string;
+    /** Days (`YYYY-MM-DD`), inclusive: `transaction_date.gte` / `.lte` (rows without a transaction date drop out). */
+    tradedFrom?: string;
+    tradedTo?: string;
 };
 
 /** A company's insider trades, newest filed first, by cursor. A 404 `not_covered` (none ever stored) is a page state. */
@@ -1299,13 +1325,29 @@ export function useV2InsiderTradesInfinite(input: V2InsiderTradesInput) {
                 apiKey,
                 company: input.company,
                 cursor: cursor ?? undefined,
-                filedAtGte: input.from ? dayStartInstant(input.from) : undefined,
-                filedAtLt: input.to ? dayStartInstant(input.to, true) : undefined,
+                filedAtGte: input.from,
+                filedAtLte: input.to,
+                isDerivative: input.isDerivative,
                 limit: input.limit,
                 side: input.side,
+                sort: input.sort,
+                transactionDateGte: input.tradedFrom,
+                transactionDateLte: input.tradedTo,
             },
         }),
-        queryKey: ["v2", "insider-trades", input.company, input.side ?? "", input.from ?? "", input.to ?? "", input.limit ?? ""],
+        queryKey: [
+            "v2",
+            "insider-trades",
+            input.company,
+            input.side ?? "",
+            input.from ?? "",
+            input.to ?? "",
+            input.limit ?? "",
+            input.tradedFrom ?? "",
+            input.tradedTo ?? "",
+            input.isDerivative ?? "",
+            input.sort ?? "",
+        ],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
@@ -1345,15 +1387,41 @@ export function useV2IposInfinite(input: V2IposInput) {
     });
 }
 
-/** A filer's Form D private offerings by cursor (`company` = its CIK); idle while `enabled` is false. */
-export function useV2OfferingsInfinite(input: { company: string; enabled?: boolean; limit?: number }) {
-    const { enabled = true, ...query } = input;
+export type OfferingsInput = {
+    /** ONE issuer CIK or listed ticker; omitted = every offering (`/offerings`). */
+    company?: string;
+    enabled?: boolean;
+    exemption?: string;
+    /** Days (`YYYY-MM-DD`), inclusive: the latest filing's `filed_at.gte` / `.lte`. */
+    filedFrom?: string;
+    filedTo?: string;
+    industry?: string;
+    isAmendment?: boolean;
+    limit?: number;
+    /** USD: `total_sold.gte`. */
+    totalSoldGte?: number;
+};
+
+/** Form D private offerings by cursor (a filer's with `company` = its CIK; every issuer's without); idle while `enabled` is false. */
+export function useV2OfferingsInfinite(input: OfferingsInput) {
+    const { enabled = true, filedFrom, filedTo, ...query } = input;
 
     return useEarningsInfinite<V2OfferingsResponse>({
-        enabled: enabled && query.company.trim().length > 0,
+        enabled,
         errorMessage: null,
-        fetchPage: (cursor, apiKey) => getV2Offerings({ data: { ...query, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "offerings", query.company, query.limit ?? ""],
+        fetchPage: (cursor, apiKey) => getV2Offerings({ data: { ...query, apiKey, cursor: cursor ?? undefined, filedGte: filedFrom, filedLte: filedTo } }),
+        queryKey: [
+            "v2",
+            "offerings",
+            query.company ?? "",
+            query.limit ?? "",
+            filedFrom ?? "",
+            filedTo ?? "",
+            query.exemption ?? "",
+            query.industry ?? "",
+            query.isAmendment ?? "",
+            query.totalSoldGte ?? "",
+        ],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
@@ -2050,5 +2118,52 @@ export function useApiLicensing(enabled = true) {
         load: apiKey => getApiLicensing({ data: { apiKey } }),
         queryKey: ["status", "licensing"],
         staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+// Ownership and offerings (backend tasks/data-api-dashboard O7 group 6): one insider transaction (row detail), one Form D
+// offering (`/offerings/$offeringId`), a 13F manager's position changes (`/sec/$cik`). Status-aware: the page renders errors.
+
+/** One insider transaction line (the insider table's row detail); idle for "". */
+export function useInsiderTrade(id: string) {
+    return useEarningsQuery<V2InsiderTradeDetail>({
+        enabled: id.length > 0,
+        errorMessage: null,
+        load: apiKey => getInsiderTrade({ data: { apiKey, id } }),
+        queryKey: ["v2", "insider-trade", id],
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+/** One Form D offering; idle for "". */
+export function useOffering(offeringId: string) {
+    return useEarningsQuery<V2OfferingDetail>({
+        enabled: offeringId.length > 0,
+        errorMessage: null,
+        load: apiKey => getOffering({ data: { apiKey, offeringId } }),
+        queryKey: ["v2", "offering", offeringId],
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export type FilerHoldingChangesInput = {
+    /** The manager's CIK; "" = idle (asked on a click). */
+    cik: string;
+    limit?: number;
+    periodEnd?: string;
+    priorPeriodEnd?: string;
+    /** Omitted = every change but `unchanged`. */
+    type?: Array<V2HolderChangeType>;
+};
+
+/** A 13F manager's position changes vs the prior quarter by cursor (`GET /v1/filers/{cik}/holding-changes`). */
+export function useFilerHoldingChangesInfinite(input: FilerHoldingChangesInput) {
+    return useEarningsInfinite<V2FilerHoldingChangesResponse>({
+        enabled: input.cik.length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getFilerHoldingChanges({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
+        queryKey: ["v2", "filer-holding-changes", input.cik, input.periodEnd ?? "", input.priorPeriodEnd ?? "", key(input.type), input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
     });
 }

@@ -2,10 +2,11 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { changePercentText, HolderChangesList, HoldersList, HoldersOverview } from "@/components/sec/holder-views";
+import { changePercentText, discretionText, HolderChangesList, HoldersList, HoldersOverview, votingText } from "@/components/sec/holder-views";
 import { ApiRequestError } from "@/lib/api/errors";
 import { formatDay } from "@/lib/format";
 import {
+    V2_FILER_HOLDING_CHANGES,
     V2_HOLDER_CHANGES,
     V2_HOLDERS_13F,
     V2_HOLDERS_ISSUER_FILE,
@@ -13,10 +14,11 @@ import {
     V2_HOLDERS_OVERVIEW,
     V2_HOLDERS_OVERVIEW_NOT_COVERED,
     V2_HOLDERS_PENDING,
+    V2_INSIDER_TRADE_DETAIL,
     V2_INSIDER_TRADES,
     V2_IPOS,
 } from "@/lib/sec/v2-fixtures";
-import { insiderRoles, InsiderTradesView } from "@/routes/$ticker/insider-trades/index";
+import { insiderRoles, InsiderTradeDetailView, InsiderTradesView } from "@/routes/$ticker/insider-trades/index";
 import { ipoIssuerCik, IposView, ipoSymbolText, offerPriceText } from "@/routes/ipo-calendar";
 
 // The page modules' routes need a router; the pure views do not.
@@ -29,6 +31,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 // Keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
+    useInsiderTrade: vi.fn(),
     useV2InsiderTradesInfinite: vi.fn(),
     useV2IposInfinite: vi.fn(),
 }));
@@ -126,6 +129,32 @@ describe("Holders, one source (`/v1/holders?source=`)", () => {
     });
 });
 
+describe("13F holder columns (Data API 7.0 `Holder` row)", () => {
+    it("investment discretion in words, voting authority, the filing's EDGAR page; N-PORT has a filing column, no voting", () => {
+        render(<HoldersList source="13f" state={{ ...list, error: null, pages: [V2_HOLDERS_13F] }} />);
+
+        const row = screen.getByText("VANGUARD GROUP INC").closest("tr")!;
+
+        expect(within(row).getByText("Sole")).toBeInTheDocument();
+
+        expect(within(row).getByText("Sole 1,390,000,000 · Shared 0 · None 0")).toBeInTheDocument();
+
+        expect(within(row).getByRole("link", { name: "EDGAR" })).toHaveAttribute("href", V2_HOLDERS_13F.data[0].filing_url);
+
+        cleanup();
+
+        render(<HoldersList source="nport" state={{ ...list, error: null, pages: [V2_HOLDERS_NPORT] }} />);
+
+        expect(screen.getByRole("columnheader", { name: "Filing" })).toBeInTheDocument();
+
+        expect(screen.queryByRole("columnheader", { name: "Voting authority" })).toBeNull();
+
+        expect(discretionText("OTR")).toBe("Shared (other)");
+
+        expect(votingText(null)).toBe("—");
+    });
+});
+
 describe("Holders overview (`/v1/holders` without `source`, owner decision 12)", () => {
     it("one section per source with its own state, as-of and count; rows never merged; 'Show all' opens the source", () => {
         const onShowAll = vi.fn();
@@ -192,6 +221,26 @@ describe("13F changes (`/v1/holder-changes`)", () => {
 
         expect(changePercentText(null)).toBe("—");
     });
+
+    it("a manager's position changes name the security, the compared quarter and the unit; export + Load more", () => {
+        render(<HolderChangesList exportScope="cik-102909" state={{ ...list, error: null, hasNextPage: true, pages: [V2_FILER_HOLDING_CHANGES] }} subject="security" />);
+
+        expect(screen.getByRole("columnheader", { name: "Security" })).toBeInTheDocument();
+
+        expect(screen.queryByRole("columnheader", { name: "Institution" })).toBeNull();
+
+        const sold = screen.getByText("Sold out").closest("tr")!;
+
+        expect(within(sold).getByRole("link", { name: "NVDA" })).toHaveAttribute("href", "/NVDA");
+
+        expect(within(sold).getByText("-100%")).toBeInTheDocument();
+
+        expect(within(sold).getByText(formatDay("2026-06-30"))).toBeInTheDocument();
+
+        expect(screen.getByRole("button", { name: /export/i })).toBeInTheDocument();
+
+        expect(screen.getByRole("button", { name: /load more/i })).toBeInTheDocument();
+    });
 });
 
 describe("Insider trades (`/v1/insider-trades`)", () => {
@@ -209,26 +258,75 @@ describe("Insider trades (`/v1/insider-trades`)", () => {
         expect(screen.queryByText(/No insider trades/)).toBeNull();
     });
 
-    it("Form 3/4/5 dataset row: transaction date, owner CIK and the derivative flag; a sec-api row shows dashes", () => {
+    it("Form 3/4/5 dataset row: transaction date, code + derivative marker in one column with a legend; no owner CIK column", () => {
         render(<InsiderTradesView {...list} error={null} pages={[V2_INSIDER_TRADES]} />);
 
         expect(screen.getByRole("columnheader", { name: "Traded" })).toBeInTheDocument();
 
-        expect(screen.getByRole("columnheader", { name: "Owner CIK" })).toBeInTheDocument();
+        expect(screen.queryByRole("columnheader", { name: "Owner CIK" })).toBeNull();
+
+        expect(screen.queryByRole("columnheader", { name: "Derivative" })).toBeNull();
 
         const dataset = screen.getByText("Adams Katherine L").closest("tr")!;
 
         expect(within(dataset).getByText(formatDay("2026-10-15"))).toBeInTheDocument();
 
-        expect(within(dataset).getByText("0001631982")).toBeInTheDocument();
+        expect(within(dataset).getByText("M")).toHaveAttribute("title", "M · Exercise or conversion of a derivative (exempt)");
 
-        expect(within(dataset).getByText("Derivative")).toBeInTheDocument();
+        expect(within(dataset).getByText("Deriv.")).toBeInTheDocument();
 
         const secApi = screen.getByText("Cook Timothy D").closest("tr")!;
 
-        expect(within(secApi).queryByText("Derivative")).toBeNull();
+        expect(within(secApi).queryByText("Deriv.")).toBeNull();
 
-        expect(within(secApi).getAllByText("—").length).toBeGreaterThanOrEqual(3);
+        expect(within(secApi).getAllByText("—").length).toBeGreaterThanOrEqual(1);
+
+        // The legend names the loaded codes in their first order, then the marker.
+        expect(screen.getByTestId("insider-code-legend")).toHaveTextContent("S Open market or private saleM Exercise or conversion of a derivative (exempt)Deriv. a derivative-security line");
+    });
+
+    it("a row's Details opens it; the detail shows the 10b5-1 plan, the indirect ownership, the derivative's terms and footnotes", () => {
+        const onOpen = vi.fn();
+
+        render(<InsiderTradesView {...list} error={null} onOpen={onOpen} pages={[V2_INSIDER_TRADES]} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Details of Adams Katherine L's line" }));
+
+        expect(onOpen).toHaveBeenCalledWith(V2_INSIDER_TRADES.data[1]);
+
+        cleanup();
+
+        render(<InsiderTradeDetailView docsLink={<a href="/AAPL/filings">Open the filing</a>} trade={V2_INSIDER_TRADE_DETAIL} />);
+
+        const detail = screen.getByTestId("insider-trade-detail");
+
+        expect(within(detail).getByText("10b5-1 plan").nextSibling).toHaveTextContent("Yes");
+
+        expect(within(detail).getByText("Ownership").nextSibling).toHaveTextContent("Indirect · By Trust");
+
+        expect(within(detail).getByText("Exercise / conversion price").nextSibling).toHaveTextContent("$112.50");
+
+        expect(within(detail).getByText("Expires").nextSibling).toHaveTextContent(formatDay("2031-03-01"));
+
+        expect(within(detail).getByText("Owned before").nextSibling).toHaveTextContent("80,000");
+
+        expect(within(detail).getByText("Owner CIK").nextSibling).toHaveTextContent("0001631982");
+
+        expect(within(detail).getByText(/adopted on May 2, 2026/)).toBeInTheDocument();
+
+        expect(within(detail).getByRole("link", { name: "Open the filing" })).toBeInTheDocument();
+    });
+
+    it("a realtime-feed line leaves the dataset's fields out (no row of dashes)", () => {
+        render(<InsiderTradeDetailView trade={{ ...V2_INSIDER_TRADES.data[0], shares_owned_before_transaction: null }} />);
+
+        const detail = screen.getByTestId("insider-trade-detail");
+
+        expect(within(detail).queryByText("10b5-1 plan")).toBeNull();
+
+        expect(within(detail).queryByText("Ownership")).toBeNull();
+
+        expect(within(detail).getByText("Source").nextSibling).toHaveTextContent("Realtime Form 4 feed");
     });
 
     it("roles: every flag in words, 'Other' text kept, none = dash", () => {

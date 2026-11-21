@@ -420,6 +420,38 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 - Tests `src/routes/-tests/earnings-o7.test.tsx`, `src/lib/earnings/kpi-history.test.ts`, the order case of
   `documents-tab.test.tsx`; fixtures `src/lib/earnings/o7-earnings-fixtures.ts` (live shapes of 2026-11-21).
 
+### Ownership and offerings (backend `tasks/data-api-dashboard` O7 group 6)
+
+- **Insider trades** (`$ticker/insider-trades`): URL `?side=&from=&to=` (filed days) `&tfrom=&tto=` (transaction days;
+  a line without a transaction date — the realtime feed's — drops out) `&kind=derivative|non_derivative`
+  (`is_derivative`) `&sort=oldest` (`filed_at`; default `-filed_at`, the only two orders) `&trade=<id>`. Every day
+  filter is sent as a DAY (`filed_at.gte` / `.lte` are `format: date`: an instant was the 400 of `[FU2994]`; `.lte` is
+  inclusive of the UTC day). Columns: no Owner CIK (in the detail), one "Code" column = the code (tooltip in words) +
+  a "Deriv." marker, with a legend of the loaded codes under the table (`src/lib/sec/ownership.ts` `INSIDER_CODE_LABELS`).
+  "Details" → `InsiderTradeDetailView` in a dialog (`/v1/insider-trades/{id}`, the loaded row shown at once): 10b5-1,
+  direct / indirect + nature, derivative terms, before / after, footnotes, source, "Open the filing" (`/$ticker/filings?docs=`).
+- **Holders** (`$ticker/holders`): `?instruments=all` (13F incl. options and principal; sent with the overview and the 13F
+  tab only); 13F columns Discretion (`SOLE` / `DFND` / `OTR` in words), Voting authority, Filing (EDGAR index page; also
+  N-PORT). Changes tab: type chips `?types=new,added` (none = the API's default, every change but unchanged), prior
+  quarter `?prior=`, manager CIKs `?filer=` (DebouncedInput, comma list → `filer=`). The tab list wraps at phone width.
+- **`/sec/$cik`** (13F manager): the portfolio is a `DataTable` (export, `?instruments=all`, discretion / voting, the
+  quarter's 13F filing once above the table); "Position changes" under it, asked on a click (`?changes=true`, chips
+  `?ctypes=`), the portfolio's quarter (`?period=`) else the latest due one; `HolderChangesList subject="security"`.
+  Private offerings are a `DataTable` (export); an offering opens `/offerings/$offeringId`.
+- **`/offerings`** (`BROWSE_NAV` "Offerings"): every Form D offering, `?from=&to=` (latest filing days), `?exemption=`
+  (picker of the common codes), `?industry=` (as filed, exact, ≥ 2 characters), `?sold=` (USD presets),
+  `?amendment=original|amendment`; one order (`-filed_latest`), no sort control; export. `/offerings/$offeringId`:
+  `OfferingDetailView` (amounts incl. remaining, minimum, commissions / finders' fees, investors; issuer + co-issuers →
+  `/sec/$cik`; exemptions; related persons; the filings, latest marked). The id = `OFFERING_ID_PATTERN`.
+- **Funds**: the overview asks `useFund(ticker, ["coverage"])` (`CoverageCard noun="fund"`), lists the advisers
+  (`FundAdvisersView`: role, CRD, LEI, affiliated) and the website (https only); holdings add ISIN and sector / country
+  with their basis as a short tag (`BasisValue`); weights: `?dim=sector|country|asset_class` and the weight sum line
+  (`weightSumText`: `meta.weight_pct_sum` + `weight_basis`; a leveraged fund is said to be far from 100 %).
+- Shared files touched in place (beside appends): the insider hook / server function ([FU2994], assigned), the optional
+  fields of `getHolderChanges`, `getV2Offerings` / `useV2OfferingsInfinite` (company optional), `getFund` / `useFund`
+  (`expand`), `useFilerHoldingsInfinite` (`instruments`). Tests: `sec-v2-pages`, `sec-filer`, `holdings-page`,
+  `fund-overview`, `offerings-pages` (`src/routes/-tests/`), `src/lib/sec/ownership.test.ts`.
+
 ### UI Components (`src/components/ui/`)
 
 Base UI components built on `@base-ui/react` primitives with `class-variance-authority` for variants. Uses `cn()` utility from `src/lib/utils.ts` (clsx + tailwind-merge).
@@ -498,7 +530,7 @@ Operation → the page that shows it (backend `tasks/data-api-dashboard` O7, req
 calls, with its page. Created by O7 group 1 from `server-functions.ts` at `ab8a89c` (62 + task 5's `getMe`,
 `getMyUsage`, `getIpo` = 65) plus group 1's rows (`listPeople`, `getPerson`; `listParticipants?person=`) and group 4's (`listFactPlaces`; `getFact` and
 `listSegmentsDetailed` were called with no view before), group 7's (the six catalogs, `listCompanies`, `statusGet`, `statusLicensing`;
-`healthGet` with its reason); group 5 adds no operation, it widens five rows (`listKpis`,
+`healthGet` with its reason), group 6's (`getInsiderTrade`, `getOffering`, `listFilerHoldingChanges`); group 5 adds no operation, it widens five rows (`listKpis`,
 `searchTranscripts`, `getEventComparison`, `listInvestorDocuments`, `getInvestorDocument`). Every O7
 group appends its rows, the alerts tasklist its 36 (→ 124); an operation with no view states why here.
 
@@ -517,7 +549,8 @@ group appends its rows, the alerts tasklist its 36 (→ 124); an operation with 
 | `getFact` | `GET /v1/facts/{fact_id}` | `/$ticker/financials` Standardized · Detailed: a value opens "Explain this number" (O7 group 4) |
 | `getFiler` | `GET /v1/filers/{cik}` | `/sec/$cik`; sidebar (filer context) |
 | `getFiling` | `GET /v1/filings/{accession}` | SEC documents panel; `/$ticker/filings` (HTML dialog); `/filings/$accession` (header, Documents; Parties & relations = `expand=parties,relations`; O7 group 3); call page header (results filing / periodic report, O7 group 5) |
-| `getFund` | `GET /v1/funds/{fund}` | `/$ticker` (fund overview) |
+| `getFund` | `GET /v1/funds/{fund}` | `/$ticker` (fund overview; `expand=coverage`, advisers, website — O7 group 6) |
+| `getInsiderTrade` | `GET /v1/insider-trades/{id}` | `/$ticker/insider-trades` (row detail, `?trade=`; O7 group 6) |
 | `getInstrument` | `GET /v1/instruments/{symbol}` | `/$ticker` layout + overview; `/$ticker/filings`; `/$ticker/financials`; sidebar |
 | `getInvestorDocument` | `GET /v1/investor-documents/{document_id}` | `/$ticker/documents`; call page · Documents tab (`expand=pages`) |
 | `getIpo` | `GET /v1/ipos/{ipo_id}` | `/ipo-calendar` (row detail) |
@@ -526,6 +559,7 @@ group appends its rows, the alerts tasklist its 36 (→ 124); an operation with 
 | `getMyUsage` | `GET /v1/me/usage` | `/account` |
 | `getNewsItem` | `GET /v1/news/{id}` | `/$ticker/news` (item panel) |
 | `getNewsText` | `GET /v1/news/{id}/text` | `/$ticker/news` (item panel) |
+| `getOffering` | `GET /v1/offerings/{offering_id}` | `/offerings/$offeringId` (O7 group 6) |
 | `getPerson` | `GET /v1/people/{person_id}` | `/people/$personId`; sidebar (person context) |
 | `getPressRelease` | `GET /v1/events/{event_id}/press-release` | call page · Press release tab |
 | `getPriceAttribution` | `GET /v1/events/{event_id}/price-attribution` | call page · Price moves tab + live player |
@@ -542,25 +576,26 @@ group appends its rows, the alerts tasklist its 36 (→ 124); an operation with 
 | `listDividends` | `GET /v1/dividends` | `/$ticker/dividends` (O7 group 7: `?from=&to=` → `ex_date.gte` / `.lte`, `?sort=` ex-date / pay date) |
 | `listEvents` | `GET /v1/events` | `/`; `/calendar`; `/live-calls`; `/$ticker` (overview); `/$ticker/earnings-calls`; `/$ticker/documents`; sidebar (live count); call page (live session); `/$ticker/news` "Filter by call" (on click); call page · Metrics & diff (`prior` picker, on open; O7 group 5) |
 | `listFactPlaces` | `GET /v1/fact-places` | "Explain this number" → Show in filing (`fact=`; O7 group 4); `/filings/$accession` Documents → Fact places (`document_version=`; O7 group 3) |
-| `listFilerHoldings` | `GET /v1/filers/{cik}/holdings` | `/sec/$cik` (13F portfolio) |
+| `listFilerHoldingChanges` | `GET /v1/filers/{cik}/holding-changes` | `/sec/$cik` (13F portfolio · Position changes, on a click; O7 group 6) |
+| `listFilerHoldings` | `GET /v1/filers/{cik}/holdings` | `/sec/$cik` (13F portfolio; `instruments=`) |
 | `listFilers` | `GET /v1/filers` | `/institutions`; top-bar search; filer lookup |
 | `listFilings` | `GET /v1/filings` | `/$ticker/filings`; `/$ticker` (overview); `/sec/$cik`; sidebar (filer context); `items` / `filed_at` filters on `/$ticker/filings` (O7 group 3) |
 | `listFiscalPeriods` | `GET /v1/fiscal-periods` | `/$ticker/filings` (period labels); `/$ticker` (stock overview, "Fiscal periods" card; O7 group 7) |
 | `listFundPositions` | `GET /v1/funds/{fund}/holdings` | `/$ticker/holdings`; `/$ticker` (fund overview) |
-| `listFundWeights` | `GET /v1/funds/{fund}/weights` | `/$ticker/holdings` |
+| `listFundWeights` | `GET /v1/funds/{fund}/weights` | `/$ticker/holdings` (`dimension=`, weight sum) |
 | `listFunds` | `GET /v1/funds` | `/funds` |
 | `listGrowth` | `GET /v1/metrics/growth` | `/$ticker/financials?view=growth` |
 | `listGuidance` | `GET /v1/guidance` | call page · Guidance tab (+ history dialog) |
-| `listHolderChanges` | `GET /v1/holder-changes` | `/$ticker/holders` |
-| `listHolders` | `GET /v1/holders` | `/$ticker/holders` |
-| `listInsiderTrades` | `GET /v1/insider-trades` | `/$ticker/insider-trades` |
+| `listHolderChanges` | `GET /v1/holder-changes` | `/$ticker/holders?tab=changes` (`type`, `filer`, `prior_period_end`) |
+| `listHolders` | `GET /v1/holders` | `/$ticker/holders` (`instruments=` on the overview / 13F) |
+| `listInsiderTrades` | `GET /v1/insider-trades` | `/$ticker/insider-trades` (filed / traded days, `is_derivative`, `sort`) |
 | `listInstruments` | `GET /v1/instruments` | `/instruments`; top-bar search |
 | `listInvestorDocuments` | `GET /v1/investor-documents` | `/$ticker/documents`; call page · Documents tab (`sort`) |
 | `listIpos` | `GET /v1/ipos` | `/ipo-calendar`; `/` |
 | `listKpis` | `GET /v1/kpis` | call page · Guidance tab (KPIs `event=`; KPI history `company=&metric=&sort=`, O7 group 5) |
 | `listMarketHolidays` | `GET /v1/market-holidays` | `/market-holidays` (O7 group 7: `?from=&to=` → `date.gte` / `.lte` inside the tab); `/` |
 | `listNews` | `GET /v1/news` | `/$ticker/news` (incl. `?event=` / `?sort=`); `/news-feed` (watchlist as one `company=<comma list>` per page) |
-| `listOfferings` | `GET /v1/offerings` | `/sec/$cik` (private offerings) |
+| `listOfferings` | `GET /v1/offerings` | `/sec/$cik` (private offerings, `company=<cik>`); `/offerings` (every issuer, filters; O7 group 6) |
 | `listParticipants` | `GET /v1/participants` | call page · Participants tab, Transcript / Q&A (images), Search this call, live transcript (`event=`); `/people/$personId` (`person=`) |
 | `listPeople` | `GET /v1/people` | `/people`; top-bar search (People group) |
 | `listQa` | `GET /v1/events/{event_id}/qa` | call page · Q&A tab |

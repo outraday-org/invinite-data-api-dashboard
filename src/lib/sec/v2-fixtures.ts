@@ -8,6 +8,7 @@
  */
 import type {
     V2DocumentVersionResponse,
+    V2FilerHoldingChangesResponse,
     V2FilerHoldingsResponse,
     V2FilersResponse,
     V2FilingDetailResponse,
@@ -18,8 +19,10 @@ import type {
     V2Holder,
     V2HolderChangesResponse,
     V2HoldersResponse,
+    V2InsiderTradeDetail,
     V2InsiderTradesResponse,
     V2IposResponse,
+    V2OfferingDetail,
     V2OfferingsResponse,
 } from "@/lib/api/types";
 
@@ -756,5 +759,87 @@ export const V2_FUND_WEIGHTS: V2FundWeightsResponse = {
     ],
     has_more: false,
     meta: { coverage: { state: "complete" } },
+    next_cursor: null,
+};
+
+// Ownership and offerings (backend tasks/data-api-dashboard O7 group 6).
+
+/** `GET /v1/insider-trades/{id}`: a Form 3/4/5 dataset line — an option exercise under a 10b5-1 plan, held indirectly. */
+export const V2_INSIDER_TRADE_DETAIL: V2InsiderTradeDetail = {
+    ...V2_INSIDER_TRADES.data[1],
+    coding_code: "M",
+    conversion_exercise_price: 112.5,
+    direct_indirect: "I",
+    exercise_date: "2024-03-01",
+    expiration_date: "2031-03-01",
+    footnotes: [{ id: "F1", text: "Exercised under a Rule 10b5-1 trading plan adopted on May 2, 2026." }],
+    is_10b5_1: true,
+    nature_of_ownership: "By Trust",
+    security_title: "Employee Stock Option (right to buy)",
+    shares_owned_before_transaction: 80_000,
+};
+
+/** `GET /v1/filers/102909/holding-changes`: one manager's positions vs the prior quarter (a new one, a sold-out one). */
+export const V2_FILER_HOLDING_CHANGES: V2FilerHoldingChangesResponse = {
+    data: [
+        { ...V2_HOLDER_CHANGES.data[0], filing_date: "2026-11-13" },
+        {
+            ...V2_HOLDER_CHANGES.data[0],
+            filing_date: "2026-11-13",
+            security: { cik: "0001045810", cusip: "67066G104", fund_key: null, isin: null, name: "NVIDIA CORP", resolution: null, symbol: "NVDA" },
+            shares: 0,
+            shares_change: -2_000_000,
+            shares_change_pct: -1,
+            shares_prior: 2_000_000,
+            type: "sold_out",
+            value_change_usd: -350_000_000,
+            value_usd: 0,
+        },
+    ],
+    has_more: true,
+    meta: { coverage: { state: "complete", through: "2026-09-30" } },
+    next_cursor: "c2",
+};
+
+/** `GET /v1/offerings/021-528681`: the list's first row with a co-issuer and two related persons. */
+export const V2_OFFERING_DETAIL: V2OfferingDetail = {
+    ...V2_OFFERINGS.data[0],
+    co_issuer_ciks: ["0001991883"],
+    related_persons: [
+        { clarification: null, name: "Jane Q. Example", relationships: ["Executive Officer"] },
+        { clarification: "Managing member of the general partner", name: "Example GP LLC", relationships: ["Promoter"] },
+    ],
+    sales_commission: 1_250_000,
+};
+
+/** `GET /v1/funds/QQQ/holdings`: N-PORT rows with ISIN, sector and country and their bases. */
+export const V2_FUND_POSITIONS_CLASSIFIED: V2FundPositionsResponse = {
+    data: [{
+        as_of: "2026-09-30",
+        asset_class: "equity",
+        country: "US",
+        country_basis: "nport",
+        fund: { fund_key: "S000006218", name: "Invesco QQQ Trust", symbol: "QQQ" },
+        market_value_usd: 30_000_000_000,
+        sector: "Information Technology",
+        sector_basis: "derived_sic",
+        security: { ...security("APPLE INC", "AAPL"), cusip: "037833100", isin: "US0378331005" },
+        shares: 120_000_000,
+        source: "nport",
+        weight_pct: 8.9,
+    }],
+    has_more: false,
+    meta: { as_of: "2026-09-30", coverage: { state: "complete" }, reason: null, source: "nport" },
+    next_cursor: null,
+};
+
+/** TQQQ's weights: the sum far from 100 (swaps at notional). */
+export const V2_FUND_WEIGHTS_LEVERAGED: V2FundWeightsResponse = {
+    data: [
+        { as_of: "2026-11-13", basis: "issuer_stated", bucket: "Derivatives", dimension: "asset_class", fund: { fund_key: "S000024908", name: "ProShares UltraPro QQQ", symbol: "TQQQ" }, positions: 12, source: "issuer_daily", weight_pct: 214.3 },
+        { as_of: "2026-11-13", basis: "issuer_stated", bucket: "Equity", dimension: "asset_class", fund: { fund_key: "S000024908", name: "ProShares UltraPro QQQ", symbol: "TQQQ" }, positions: 101, source: "issuer_daily", weight_pct: 85.9 },
+    ],
+    has_more: false,
+    meta: { as_of: "2026-11-13", coverage: { state: "complete" }, source: "issuer_daily", weight_basis: "net_assets", weight_pct_sum: 300.2 },
     next_cursor: null,
 };

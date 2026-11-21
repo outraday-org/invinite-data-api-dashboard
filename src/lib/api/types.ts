@@ -384,3 +384,15 @@ export type V2ServiceStatus = NonNullable<V2ApiStatus["services"]>[number]["stat
 /** `GET /status/licensing` (no key): rights per tier, the right and tier of every route by product family. */
 export type V2Licensing = ApiResponse<"/status/licensing", "get">;
 export type V2LicensingRight = V2Licensing["rights"][number];
+
+// Ownership and offerings (backend tasks/data-api-dashboard O7 group 6): insider trade detail, Form D offerings market
+// wide + one offering, a 13F manager's position changes, a fund's advisers.
+export type V2InsiderTradesSort = NonNullable<ApiQuery<"/v1/insider-trades">["sort"]>;
+/** One insider transaction line (`GET /v1/insider-trades/{id}`): the list row with every field. */
+export type V2InsiderTradeDetail = ApiResponse<"/v1/insider-trades/{id}", "get">;
+/** One Form D offering (`GET /v1/offerings/{offering_id}`): the list row, asked again for the detail page. */
+export type V2OfferingDetail = ApiResponse<"/v1/offerings/{offering_id}", "get">;
+export type V2OfferingRelatedPerson = V2OfferingDetail["related_persons"][number];
+/** A 13F manager's position changes vs the prior quarter (the `HolderChange` row). */
+export type V2FilerHoldingChangesResponse = ApiResponse<"/v1/filers/{cik}/holding-changes", "get">;
+export type V2FundAdviser = V2Fund["advisers"][number];

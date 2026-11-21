@@ -32,6 +32,7 @@ import type {
     V2FactPlacesResponse,
     V2FactPlaceStatus,
     V2FactResponse,
+    V2FilerHoldingChangesResponse,
     V2FilerHoldingsResponse,
     V2FilerPhase,
     V2FilerResponse,
@@ -62,7 +63,9 @@ import type {
     V2HolderSource,
     V2HoldersResponse,
     V2InsiderSide,
+    V2InsiderTradeDetail,
     V2InsiderTradesResponse,
+    V2InsiderTradesSort,
     V2Instrument,
     V2InstrumentsResponse,
     V2InstrumentsSort,
@@ -86,6 +89,7 @@ import type {
     V2NewsListResponse,
     V2NewsSearchResponse,
     V2NewsText,
+    V2OfferingDetail,
     V2OfferingsResponse,
     V2ParticipantsResponse,
     V2PeopleResponse,
@@ -124,6 +128,7 @@ import type {
 import { ASSET_GROUP_CATEGORIES } from "../earnings/documents";
 import { SEARCH_MODES } from "../earnings/labels";
 import { env } from "../env";
+import { OFFERING_ID_PATTERN } from "../sec/ownership";
 import { createApiClient } from "./client.server";
 import { throwApiError } from "./errors";
 import {
@@ -232,10 +237,10 @@ export const getFunds = createServerFn({ method: "GET" })
 
 /** One fund's profile (ticker or fund key): net assets with date and scope, expense ratio, registrant, classes. */
 export const getFund = createServerFn({ method: "GET" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, fund: fundSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, expand: z.array(z.enum(V2_COMPANY_EXPANDS)).optional(), fund: fundSchema }))
     .handler(async ({ data }): Promise<V2Fund> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/funds/{fund}", {
-            params: { path: { fund: data.fund } },
+            params: { path: { fund: data.fund }, query: v2Query({ expand: v2Expand(data.expand) }) },
         });
 
         if (error) throwApiError(error, response);
@@ -1156,21 +1161,36 @@ export const getHolders = createServerFn({ method: "GET" })
         return res;
     });
 
-/** The proven 13F position changes of one security's holders vs the prior quarter (`unchanged` only when `type` asks). */
+/**
+ * The proven 13F position changes of one security's holders vs the prior quarter (`unchanged` only when `type` asks);
+ * `filer` = only those managers (CIKs, 1–50), `priorPeriodEnd` = the quarter compared against (default the previous).
+ */
 export const getHolderChanges = createServerFn({ method: "GET" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cursor: cursorSchema,
+        filer: z.array(cikSchema).min(1).max(50).optional(),
         limit: holdersLimitSchema,
         periodEnd: z.iso.date().optional(),
+        priorPeriodEnd: z.iso.date().optional(),
         symbol: symbolSchema,
         type: z.array(holderChangeTypeSchema).optional(),
     }))
     .handler(async ({ data }): Promise<V2HolderChangesResponse> => {
-        const { apiKey, cursor, limit, periodEnd, symbol, type } = data;
+        const { apiKey, cursor, filer, limit, periodEnd, priorPeriodEnd, symbol, type } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/holder-changes", {
-            params: { query: v2Query({ cursor, limit, period_end: periodEnd, symbol, type: v2Expand(type) }) },
+            params: {
+                query: v2Query({
+                    cursor,
+                    filer: v2Expand(filer),
+                    limit,
+                    period_end: periodEnd,
+                    prior_period_end: priorPeriodEnd,
+                    symbol,
+                    type: v2Expand(type),
+                }),
+            },
         });
 
         if (error) throwApiError(error, response);
@@ -1250,20 +1270,39 @@ const v2InsiderTradesSchema = z.object({
     apiKey: apiKeySchema,
     company: z.string().trim().min(1),
     cursor: cursorSchema,
-    filedAtGte: z.string().trim().min(1).optional(),
-    filedAtLt: z.string().trim().min(1).optional(),
+    /** Days (`YYYY-MM-DD`): the spec declares every `filed_at.*` as `format: date` (an instant is a 400, [FU2994]). */
+    filedAtGte: z.iso.date().optional(),
+    filedAtLte: z.iso.date().optional(),
+    /** true = derivative-security lines only, false = non-derivative only; omitted = both. */
+    isDerivative: z.boolean().optional(),
     limit: v2LimitSchema,
     side: z.enum(["buy", "sell"] as const satisfies ReadonlyArray<V2InsiderSide>).optional(),
+    sort: z.enum(["filed_at", "-filed_at"] as const satisfies ReadonlyArray<V2InsiderTradesSort>).optional(),
+    transactionDateGte: z.iso.date().optional(),
+    transactionDateLte: z.iso.date().optional(),
 });
 
 /** A company's insider trades, newest filed first (`side` buy = acquired, sell = disposed). */
 export const getV2InsiderTrades = createServerFn({ method: "GET" })
     .inputValidator(v2InsiderTradesSchema)
     .handler(async ({ data }): Promise<V2InsiderTradesResponse> => {
-        const { apiKey, company, cursor, filedAtGte, filedAtLt, limit, side } = data;
+        const { apiKey, company, cursor, filedAtGte, filedAtLte, isDerivative, limit, side, sort, transactionDateGte, transactionDateLte } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/insider-trades", {
-            params: { query: v2Query({ company, cursor, "filed_at.gte": filedAtGte, "filed_at.lt": filedAtLt, limit, side }) },
+            params: {
+                query: v2Query({
+                    company,
+                    cursor,
+                    "filed_at.gte": filedAtGte,
+                    "filed_at.lte": filedAtLte,
+                    "is_derivative": isDerivative,
+                    limit,
+                    side,
+                    sort,
+                    "transaction_date.gte": transactionDateGte,
+                    "transaction_date.lte": transactionDateLte,
+                }),
+            },
         });
 
         if (error) throwApiError(error, response);
@@ -1313,17 +1352,41 @@ const v2OfferingsSchema = z.object({
     apiKey: apiKeySchema,
     company: z.string().trim().min(1).optional(),
     cursor: cursorSchema,
+    /** As filed: `06b`, `06c`, `04`, `3C.7`, … */
+    exemption: z.string().regex(/^[A-Za-z0-9.()]{1,12}$/).optional(),
+    filedGte: z.iso.date().optional(),
+    filedLte: z.iso.date().optional(),
+    /** Industry group as filed (case-insensitive exact match). */
+    industry: z.string().trim().min(2).max(80).optional(),
+    isAmendment: z.boolean().optional(),
     limit: v2LimitSchema,
+    totalSoldGte: z.number().min(0).optional(),
 });
 
-/** Form D private offerings, newest latest filing first; `company` = ONE issuer CIK (any Form D issuer) or a listed ticker. */
+/**
+ * Form D private offerings, newest latest filing first (`-filed_latest`, the one order); `company` = ONE issuer CIK (any
+ * Form D issuer) or a listed ticker, omitted = every offering; the filters narrow by latest filing day, exemption,
+ * industry group, amount sold and amendment.
+ */
 export const getV2Offerings = createServerFn({ method: "GET" })
     .inputValidator(v2OfferingsSchema)
     .handler(async ({ data }): Promise<V2OfferingsResponse> => {
-        const { apiKey, company, cursor, limit } = data;
+        const { apiKey, company, cursor, exemption, filedGte, filedLte, industry, isAmendment, limit, totalSoldGte } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/offerings", {
-            params: { query: v2Query({ company, cursor, limit }) },
+            params: {
+                query: v2Query({
+                    company,
+                    cursor,
+                    exemption,
+                    "filed_at.gte": filedGte,
+                    "filed_at.lte": filedLte,
+                    industry,
+                    "is_amendment": isAmendment,
+                    limit,
+                    "total_sold.gte": totalSoldGte,
+                }),
+            },
         });
 
         if (error) throwApiError(error, response);
@@ -2023,6 +2086,61 @@ export const getApiLicensing = createServerFn({ method: "GET" })
     .inputValidator(z.object({ apiKey: apiKeySchema }))
     .handler(async ({ data }): Promise<V2Licensing> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/status/licensing");
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+// Ownership and offerings (backend tasks/data-api-dashboard O7 group 6): one insider transaction, one Form D offering, a
+// 13F manager's position changes. 1 credit a request each.
+
+/** One insider transaction line (`GET /v1/insider-trades/{id}`): 10b5-1 flag, ownership nature, derivative fields, footnotes. */
+export const getInsiderTrade = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, id: z.string().trim().min(1).max(200) }))
+    .handler(async ({ data }): Promise<V2InsiderTradeDetail> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/insider-trades/{id}", {
+            params: { path: { id: data.id } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** One Form D offering (`GET /v1/offerings/{offering_id}`): amounts, commissions, investors, related persons, filings. */
+export const getOffering = createServerFn({ method: "GET" })
+    .inputValidator(z.object({ apiKey: apiKeySchema, offeringId: z.string().regex(OFFERING_ID_PATTERN) }))
+    .handler(async ({ data }): Promise<V2OfferingDetail> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/offerings/{offering_id}", {
+            params: { path: { offering_id: data.offeringId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** A 13F manager's position changes vs the prior quarter (`GET /v1/filers/{cik}/holding-changes`; `unchanged` only when `type` asks). */
+export const getFilerHoldingChanges = createServerFn({ method: "GET" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        cik: cikSchema,
+        cursor: cursorSchema,
+        limit: holdersLimitSchema,
+        periodEnd: z.iso.date().optional(),
+        priorPeriodEnd: z.iso.date().optional(),
+        type: z.array(holderChangeTypeSchema).optional(),
+    }))
+    .handler(async ({ data }): Promise<V2FilerHoldingChangesResponse> => {
+        const { apiKey, cik, cursor, limit, periodEnd, priorPeriodEnd, type } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/filers/{cik}/holding-changes", {
+            params: {
+                path: { cik },
+                query: v2Query({ cursor, limit, period_end: periodEnd, prior_period_end: priorPeriodEnd, type: v2Expand(type) }),
+            },
+        });
 
         if (error) throwApiError(error, response);
 

@@ -6,11 +6,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { FundCompositionList, FundWeightsBlock } from "@/components/sec/fund-views";
 import { ApiRequestError } from "@/lib/api/errors";
+import { weightSumText } from "@/lib/sec/fund";
 import {
     V2_FUND_POSITIONS,
+    V2_FUND_POSITIONS_CLASSIFIED,
     V2_FUND_POSITIONS_LEVERAGED,
     V2_FUND_POSITIONS_SINGLE_ASSET,
     V2_FUND_WEIGHTS,
+    V2_FUND_WEIGHTS_LEVERAGED,
 } from "@/lib/sec/v2-fixtures";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -55,6 +58,20 @@ describe("Fund holdings (`/v1/funds/{fund}/holdings`)", () => {
         expect(screen.queryByText(/%$/)).toBeNull();
     });
 
+    it("ISIN, sector and country with their basis as a short tag (the basis in words on hover)", () => {
+        render(<FundCompositionList state={{ ...list, error: null, pages: [V2_FUND_POSITIONS_CLASSIFIED] }} />);
+
+        const row = screen.getByRole("link", { name: "APPLE INC" }).closest("tr")!;
+
+        expect(within(row).getByText("US0378331005")).toBeInTheDocument();
+
+        expect(within(row).getByText("Information Technology").closest("span")).toHaveAttribute("title", "derived from SEC industry codes");
+
+        expect(within(row).getByText("SIC")).toBeInTheDocument();
+
+        expect(within(row).getByText("N-PORT")).toBeInTheDocument();
+    });
+
     it("a single-asset answer is a notice, never an empty table; a 404 refusal is a state", () => {
         render(<FundCompositionList state={{ ...list, error: null, pages: [V2_FUND_POSITIONS_SINGLE_ASSET] }} />);
 
@@ -89,6 +106,24 @@ describe("Fund weights (`/v1/funds/{fund}/weights`)", () => {
         expect(within(block).getByText("Basis: as stated by the issuer")).toBeInTheDocument();
 
         expect(within(block).getByText("Basis: partly derived, not classified")).toBeInTheDocument();
+    });
+
+    it("the weight sum with its basis; a leveraged fund's sum is said to be far from 100 %", () => {
+        render(<FundWeightsBlock state={{ ...list, error: null, pages: [V2_FUND_WEIGHTS_LEVERAGED] }} />);
+
+        expect(screen.getByTestId("fund-weight-sum")).toHaveTextContent(
+            "Each dimension sums to 300.2 % (market value over the stated net assets) — far from 100 %: derivatives count at their notional exposure.",
+        );
+
+        expect(weightSumText({ weight_basis: "issuer_stated", weight_pct_sum: 100.02 })).toBe("Each dimension sums to 100.02 % (each weight as stated in the issuer file).");
+
+        expect(weightSumText({ weight_basis: null, weight_pct_sum: null })).toBeNull();
+    });
+
+    it("no bucket by design (weights_unavailable) says why, even on a partial answer", () => {
+        render(<FundWeightsBlock state={{ ...list, error: null, pages: [{ ...V2_FUND_WEIGHTS_LEVERAGED, data: [], meta: { coverage: { state: "partial" }, reason: "weights_unavailable", weight_basis: "none", weight_pct_sum: null } }] }} />);
+
+        expect(screen.getByTestId("fund-weights-reason")).toHaveTextContent("No weights for this composition.");
     });
 
     it("503 while the backend switch is off is a state, not 'no weights'", () => {

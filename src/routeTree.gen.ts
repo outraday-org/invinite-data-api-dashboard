@@ -25,11 +25,13 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as TickerRouteRouteImport } from './routes/$ticker/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PeopleIndexRouteImport } from './routes/people/index'
+import { Route as OfferingsIndexRouteImport } from './routes/offerings/index'
 import { Route as FilingsIndexRouteImport } from './routes/filings/index'
 import { Route as TickerIndexRouteImport } from './routes/$ticker/index'
 import { Route as SecDatasetsRouteImport } from './routes/sec/datasets'
 import { Route as SecCikRouteImport } from './routes/sec/$cik'
 import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
+import { Route as OfferingsOfferingIdRouteImport } from './routes/offerings/$offeringId'
 import { Route as FilingsAccessionRouteImport } from './routes/filings/$accession'
 import { Route as TickerStockSplitsIndexRouteImport } from './routes/$ticker/stock-splits/index'
 import { Route as TickerSegmentedFinancialsIndexRouteImport } from './routes/$ticker/segmented-financials/index'
@@ -132,6 +134,11 @@ const PeopleIndexRoute = PeopleIndexRouteImport.update({
   path: '/people/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OfferingsIndexRoute = OfferingsIndexRouteImport.update({
+  id: '/offerings/',
+  path: '/offerings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FilingsIndexRoute = FilingsIndexRouteImport.update({
   id: '/filings/',
   path: '/filings/',
@@ -155,6 +162,11 @@ const SecCikRoute = SecCikRouteImport.update({
 const PeoplePersonIdRoute = PeoplePersonIdRouteImport.update({
   id: '/people/$personId',
   path: '/people/$personId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OfferingsOfferingIdRoute = OfferingsOfferingIdRouteImport.update({
+  id: '/offerings/$offeringId',
+  path: '/offerings/$offeringId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FilingsAccessionRoute = FilingsAccessionRouteImport.update({
@@ -291,11 +303,13 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/status': typeof StatusRoute
   '/filings/$accession': typeof FilingsAccessionRoute
+  '/offerings/$offeringId': typeof OfferingsOfferingIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/sec/datasets': typeof SecDatasetsRoute
   '/$ticker/': typeof TickerIndexRoute
   '/filings': typeof FilingsIndexRoute
+  '/offerings': typeof OfferingsIndexRoute
   '/people': typeof PeopleIndexRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
   '/$ticker/documents': typeof TickerDocumentsIndexRoute
@@ -334,11 +348,13 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/status': typeof StatusRoute
   '/filings/$accession': typeof FilingsAccessionRoute
+  '/offerings/$offeringId': typeof OfferingsOfferingIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/sec/datasets': typeof SecDatasetsRoute
   '/$ticker': typeof TickerIndexRoute
   '/filings': typeof FilingsIndexRoute
+  '/offerings': typeof OfferingsIndexRoute
   '/people': typeof PeopleIndexRoute
   '/$ticker/dividends': typeof TickerDividendsIndexRoute
   '/$ticker/documents': typeof TickerDocumentsIndexRoute
@@ -379,11 +395,13 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/status': typeof StatusRoute
   '/filings/$accession': typeof FilingsAccessionRoute
+  '/offerings/$offeringId': typeof OfferingsOfferingIdRoute
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/sec/datasets': typeof SecDatasetsRoute
   '/$ticker/': typeof TickerIndexRoute
   '/filings/': typeof FilingsIndexRoute
+  '/offerings/': typeof OfferingsIndexRoute
   '/people/': typeof PeopleIndexRoute
   '/$ticker/dividends/': typeof TickerDividendsIndexRoute
   '/$ticker/documents/': typeof TickerDocumentsIndexRoute
@@ -425,11 +443,13 @@ export interface FileRouteTypes {
     | '/search'
     | '/status'
     | '/filings/$accession'
+    | '/offerings/$offeringId'
     | '/people/$personId'
     | '/sec/$cik'
     | '/sec/datasets'
     | '/$ticker/'
     | '/filings'
+    | '/offerings'
     | '/people'
     | '/$ticker/dividends'
     | '/$ticker/documents'
@@ -468,11 +488,13 @@ export interface FileRouteTypes {
     | '/search'
     | '/status'
     | '/filings/$accession'
+    | '/offerings/$offeringId'
     | '/people/$personId'
     | '/sec/$cik'
     | '/sec/datasets'
     | '/$ticker'
     | '/filings'
+    | '/offerings'
     | '/people'
     | '/$ticker/dividends'
     | '/$ticker/documents'
@@ -512,11 +534,13 @@ export interface FileRouteTypes {
     | '/search'
     | '/status'
     | '/filings/$accession'
+    | '/offerings/$offeringId'
     | '/people/$personId'
     | '/sec/$cik'
     | '/sec/datasets'
     | '/$ticker/'
     | '/filings/'
+    | '/offerings/'
     | '/people/'
     | '/$ticker/dividends/'
     | '/$ticker/documents/'
@@ -557,10 +581,12 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   StatusRoute: typeof StatusRoute
   FilingsAccessionRoute: typeof FilingsAccessionRoute
+  OfferingsOfferingIdRoute: typeof OfferingsOfferingIdRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   SecCikRoute: typeof SecCikRoute
   SecDatasetsRoute: typeof SecDatasetsRoute
   FilingsIndexRoute: typeof FilingsIndexRoute
+  OfferingsIndexRoute: typeof OfferingsIndexRoute
   PeopleIndexRoute: typeof PeopleIndexRoute
 }
 
@@ -678,6 +704,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PeopleIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/offerings/': {
+      id: '/offerings/'
+      path: '/offerings'
+      fullPath: '/offerings'
+      preLoaderRoute: typeof OfferingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/filings/': {
       id: '/filings/'
       path: '/filings'
@@ -711,6 +744,13 @@ declare module '@tanstack/react-router' {
       path: '/people/$personId'
       fullPath: '/people/$personId'
       preLoaderRoute: typeof PeoplePersonIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/offerings/$offeringId': {
+      id: '/offerings/$offeringId'
+      path: '/offerings/$offeringId'
+      fullPath: '/offerings/$offeringId'
+      preLoaderRoute: typeof OfferingsOfferingIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/filings/$accession': {
@@ -933,10 +973,12 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   StatusRoute: StatusRoute,
   FilingsAccessionRoute: FilingsAccessionRoute,
+  OfferingsOfferingIdRoute: OfferingsOfferingIdRoute,
   PeoplePersonIdRoute: PeoplePersonIdRoute,
   SecCikRoute: SecCikRoute,
   SecDatasetsRoute: SecDatasetsRoute,
   FilingsIndexRoute: FilingsIndexRoute,
+  OfferingsIndexRoute: OfferingsIndexRoute,
   PeopleIndexRoute: PeopleIndexRoute,
 }
 export const routeTree = rootRouteImport

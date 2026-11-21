@@ -325,10 +325,10 @@ describe("SecPortfolioView (`/v1/filers/{cik}/holdings`)", () => {
         <SecPortfolioView error={null} hasNextPage={false} isFetchingNextPage={false} isLoading={false} onMore={() => undefined} pages={[]} {...props} />
     );
 
-    it("lists the positions with the page's provenance; 'More positions' while a cursor remains", () => {
+    it("lists the positions with the page's provenance, the quarter's 13F filing once, discretion and voting; 'Load more' while a cursor remains", () => {
         const onMore = vi.fn();
 
-        render(view({ hasNextPage: true, onMore, pages: [V2_FILER_HOLDINGS] }));
+        render(view({ exportScope: "cik-102909", hasNextPage: true, onMore, pages: [V2_FILER_HOLDINGS] }));
 
         // The held security opens its instrument page.
         expect(screen.getByRole("link", { name: "AAPL" })).toHaveAttribute("href", "/AAPL");
@@ -339,7 +339,15 @@ describe("SecPortfolioView (`/v1/filers/{cik}/holdings`)", () => {
 
         expect(screen.getByTestId("v2-meta-line")).toHaveTextContent("through Sep 30, 2026");
 
-        fireEvent.click(screen.getByRole("button", { name: "More positions" }));
+        expect(screen.getByTestId("portfolio-filing")).toHaveTextContent("13F filed Nov 13, 2026");
+
+        expect(screen.getByRole("link", { name: "EDGAR" })).toHaveAttribute("href", V2_FILER_HOLDINGS.data[0].filing_url);
+
+        expect(screen.getByText("Sole 1,390,000,000 · Shared 0 · None 0")).toBeInTheDocument();
+
+        expect(screen.getByRole("button", { name: /export/i })).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: /load more/i }));
 
         expect(onMore).toHaveBeenCalledOnce();
     });
@@ -372,6 +380,9 @@ describe("Private offerings (`/v1/filers/{cik}?expand=private_offerings` + `/v1/
 
         expect(screen.getByText("total sold:").nextSibling).toHaveTextContent("$87.50 M");
 
+        // The offering opens its detail page.
+        expect(screen.getByRole("link", { name: "021-528681" })).toHaveAttribute("href", "/offerings/021-528681");
+
         const amended = screen.getByText("021-528681").closest("tr")!;
 
         expect(amended).toHaveTextContent("1 amendment");
@@ -386,7 +397,7 @@ describe("Private offerings (`/v1/filers/{cik}?expand=private_offerings` + `/v1/
 
         expect(indefinite).toHaveTextContent("Rule 506(b)");
 
-        expect(screen.getByRole("button", { name: "More offerings" })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /load more/i })).toBeInTheDocument();
     });
 
     it("null summary (no Form D, or Form D not served) renders nothing; a zero count shows the summary only", () => {

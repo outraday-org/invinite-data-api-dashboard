@@ -222,10 +222,10 @@ describe("holders, holder changes and a manager's portfolio", () => {
 });
 
 describe("useV2InsiderTradesInfinite", () => {
-    it("sends side and the inclusive day range; nothing unset", async () => {
+    it("sends side and the filed days AS DAYS (the spec's format: date; an instant was the 400 of [FU2994]); nothing unset", async () => {
         vi.mocked(getV2InsiderTrades).mockResolvedValue(V2_INSIDER_TRADES);
 
-        const { result } = renderHook(() => useV2InsiderTradesInfinite({ company: "AAPL", from: "2026-10-01", limit: 50, side: "sell" }), { wrapper });
+        const { result } = renderHook(() => useV2InsiderTradesInfinite({ company: "AAPL", from: "2026-10-01", limit: 50, side: "sell", to: "2026-11-20" }), { wrapper });
 
         await waitFor(() => expect(result.current.data).not.toBeNull());
 
@@ -234,11 +234,30 @@ describe("useV2InsiderTradesInfinite", () => {
                 apiKey: "test-key",
                 company: "AAPL",
                 cursor: undefined,
-                filedAtGte: "2026-10-01T00:00:00.000Z",
-                filedAtLt: undefined,
+                filedAtGte: "2026-10-01",
+                filedAtLte: "2026-11-20",
+                isDerivative: undefined,
                 limit: 50,
                 side: "sell",
+                sort: undefined,
+                transactionDateGte: undefined,
+                transactionDateLte: undefined,
             },
+        });
+    });
+
+    it("sends the transaction days, the derivative filter and the order", async () => {
+        vi.mocked(getV2InsiderTrades).mockResolvedValue(V2_INSIDER_TRADES);
+
+        const { result } = renderHook(
+            () => useV2InsiderTradesInfinite({ company: "AAPL", isDerivative: false, sort: "filed_at", tradedFrom: "2026-01-01", tradedTo: "2026-03-31" }),
+            { wrapper },
+        );
+
+        await waitFor(() => expect(result.current.data).not.toBeNull());
+
+        expect(getV2InsiderTrades).toHaveBeenCalledWith({
+            data: expect.objectContaining({ isDerivative: false, sort: "filed_at", transactionDateGte: "2026-01-01", transactionDateLte: "2026-03-31" }) as unknown,
         });
     });
 

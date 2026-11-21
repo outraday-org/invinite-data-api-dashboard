@@ -4,21 +4,37 @@ import { z } from "zod";
 
 import type { V2HolderSource } from "@/lib/api/types";
 
+import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { HolderChangesList, HoldersList, HoldersOverview } from "@/components/sec/holder-views";
+import { ChangeTypeChips } from "@/components/sec/ownership-views";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useHolderChangesInfinite, useHoldersInfinite } from "@/lib/api/queries";
 import { formatDay } from "@/lib/format";
 import { tickerHead } from "@/lib/layout";
 import { HOLDER_SOURCE_LABELS } from "@/lib/sec/fund";
+import { changeTypesParam, parseChangeTypes, parseCikList } from "@/lib/sec/ownership";
 import { latest13fPeriodEnd, recentQuarterEnds } from "@/lib/sec/source";
-import { IN_PLACE, optionalDay, optionalEnum } from "@/lib/url-state";
+import { IN_PLACE, optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const TABS = ["overview", "13f", "nport", "issuer_file", "changes"] as const;
 
-/** `?tab=` (default overview) and `?period=<quarter end>` (default: the latest due quarter, nothing sent). */
-const holdersSearchSchema = z.object({ period: optionalDay(), tab: optionalEnum(TABS) });
+/**
+ * `?tab=` (default overview), `?period=<quarter end>` (default: the latest due quarter, nothing sent), `?instruments=all`
+ * (13F incl. options and principal amounts; default common shares), and the changes tab's `?types=new,added`,
+ * `?filer=<CIK list>`, `?prior=<quarter end>`.
+ */
+const holdersSearchSchema = z.object({
+    filer: optionalText(600),
+    instruments: optionalEnum(["all"]),
+    period: optionalDay(),
+    prior: optionalDay(),
+    tab: optionalEnum(TABS),
+    types: optionalText(60),
+});
+
+type HoldersSearch = z.infer<typeof holdersSearchSchema>;
 
 export const Route = createFileRoute("/$ticker/holders/")({
     component: HoldersPage,
@@ -38,6 +54,14 @@ const LATEST = "latest";
 type Tab = (typeof TABS)[number];
 
 const SOURCES: ReadonlyArray<V2HolderSource> = ["13f", "nport", "issuer_file"];
+
+/** The default prior quarter: the API's previous quarter (nothing sent). */
+const PREVIOUS = "previous";
+
+const INSTRUMENT_OPTIONS = [
+    { label: "Common shares", value: "shares" },
+    { label: "Shares, options and notes", value: "all" },
+] as const satisfies ReadonlyArray<{ label: string; value: "all" | "shares" }>;
 
 /** A list view's state from an infinite query (the pages so far, "Load more"). */
 function listState<TPage>(query: {
@@ -72,7 +96,9 @@ function HoldersPage() {
 
     const tab: Tab = search.tab ?? "overview";
 
-    const setTab = (value: Tab) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, tab: value === "overview" ? undefined : value }) });
+    const onChange = (patch: Partial<HoldersSearch>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
+
+    const setTab = (value: Tab) => onChange({ tab: value === "overview" ? undefined : value });
 
     // The picker's quarters, from the newest one whose 13F reports are due (taken once per mount).
     const [quarters] = React.useState(() => recentQuarterEnds(latest13fPeriodEnd(new Date()), PICKER_QUARTERS));
@@ -81,7 +107,29 @@ function HoldersPage() {
 
     const period = periodEnd ?? LATEST;
 
-    const setPeriod = (value: string) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, period: value === LATEST ? undefined : value }) });
+    const setPeriod = (value: string) => onChange({ period: value === LATEST ? undefined : value });
+
+    // `instruments` is a 13F filter: sent with the overview and the 13F list only.
+    const instruments = search.instruments;
+
+    const instrumentsApply = tab === "overview" || tab === "13f";
+
+    const changeTypes = parseChangeTypes(search.types) ?? [];
+
+    const filers = parseCikList(search.filer);
+
+    // The prior quarter is one of the quarters before the picked (or latest due) one.
+    const priorOptions = React.useMemo(() => {
+        const current = periodEnd ?? quarters[0];
+
+        const before = recentQuarterEnds(current, PICKER_QUARTERS + 1).slice(1);
+
+        return [
+            { label: "The previous quarter", value: PREVIOUS },
+            ...[...before, ...(search.prior && !before.includes(search.prior) ? [search.prior] : [])]
+                .map(quarter => ({ label: `Compared with ${formatDay(quarter)}`, value: quarter })),
+        ];
+    }, [periodEnd, quarters, search.prior]);
 
     // A linked quarter older than the picker's is offered too (the URL is the state).
     const periodOptions = React.useMemo(
@@ -93,16 +141,23 @@ function HoldersPage() {
         [periodEnd, quarters],
     );
 
-    const overview = useHoldersInfinite({ limit: 25, periodEnd, symbol: tab === "overview" ? ticker : "" });
+    const overview = useHoldersInfinite({ instruments, limit: 25, periodEnd, symbol: tab === "overview" ? ticker : "" });
 
-    const thirteenF = useHoldersInfinite({ limit: HOLDERS_PAGE, periodEnd, source: "13f", symbol: tab === "13f" ? ticker : "" });
+    const thirteenF = useHoldersInfinite({ instruments, limit: HOLDERS_PAGE, periodEnd, source: "13f", symbol: tab === "13f" ? ticker : "" });
 
     const nport = useHoldersInfinite({ limit: HOLDERS_PAGE, periodEnd, source: "nport", symbol: tab === "nport" ? ticker : "" });
 
     // Issuer files are read as of their newest file: the quarter picker does not apply.
     const issuerFile = useHoldersInfinite({ limit: HOLDERS_PAGE, source: "issuer_file", symbol: tab === "issuer_file" ? ticker : "" });
 
-    const changes = useHolderChangesInfinite({ limit: HOLDERS_PAGE, periodEnd, symbol: tab === "changes" ? ticker : "" });
+    const changes = useHolderChangesInfinite({
+        filer: filers,
+        limit: HOLDERS_PAGE,
+        periodEnd,
+        priorPeriodEnd: search.prior,
+        symbol: tab === "changes" ? ticker : "",
+        type: changeTypes.length > 0 ? changeTypes : undefined,
+    });
 
     const bySource = { "13f": thirteenF, "issuer_file": issuerFile, "nport": nport };
 
@@ -110,16 +165,27 @@ function HoldersPage() {
         <div className="flex flex-col gap-4">
             <PageHeader
                 actions={(
-                    // Issuer files are read as of their newest file: the quarter does not apply on that tab ([FU2870]).
-                    <FilterSelect
-                        aria-label="Quarter"
-                        className="w-[220px]"
-                        disabled={tab === "issuer_file"}
-                        onValueChange={setPeriod}
-                        options={periodOptions}
-                        title={tab === "issuer_file" ? "Issuer files are read as of their newest file" : undefined}
-                        value={period}
-                    />
+                    <>
+                        {/* Issuer files are read as of their newest file: the quarter does not apply on that tab ([FU2870]). */}
+                        <FilterSelect
+                            aria-label="Quarter"
+                            className="w-[220px]"
+                            disabled={tab === "issuer_file"}
+                            onValueChange={setPeriod}
+                            options={periodOptions}
+                            title={tab === "issuer_file" ? "Issuer files are read as of their newest file" : undefined}
+                            value={period}
+                        />
+                        <FilterSelect
+                            aria-label="13F instruments"
+                            className="w-[210px]"
+                            disabled={!instrumentsApply}
+                            onValueChange={value => onChange({ instruments: value === "all" ? "all" : undefined })}
+                            options={[...INSTRUMENT_OPTIONS]}
+                            title={instrumentsApply ? "13F positions counted" : "Applies to the overview and the 13F list"}
+                            value={instruments ?? "shares"}
+                        />
+                    </>
                 )}
                 description={(
                     <>
@@ -132,7 +198,8 @@ function HoldersPage() {
             />
 
             <Tabs onValueChange={value => setTab(value as Tab)} value={tab}>
-                <TabsList variant="line">
+                {/* Wraps at phone width: the page never scrolls sideways. */}
+                <TabsList className="flex-wrap justify-start gap-y-2 group-data-horizontal/tabs:h-auto" variant="line">
                     <TabsTrigger className="h-[34px]" value="overview">Overview</TabsTrigger>
                     {SOURCES.map(source => (
                         <TabsTrigger className="h-[34px]" key={source} value={source}>{HOLDER_SOURCE_LABELS[source]}</TabsTrigger>
@@ -150,7 +217,24 @@ function HoldersPage() {
                     </TabsContent>
                 ))}
 
-                <TabsContent className="relative mt-2" value="changes">
+                <TabsContent className="relative mt-2 flex flex-col gap-3" value="changes">
+                    <div className="flex flex-wrap items-center gap-2" data-testid="changes-filters">
+                        <ChangeTypeChips onChange={types => onChange({ types: changeTypesParam(types) })} value={changeTypes} />
+                        <FilterSelect
+                            aria-label="Prior quarter"
+                            className="w-[220px]"
+                            onValueChange={value => onChange({ prior: value === PREVIOUS ? undefined : value })}
+                            options={priorOptions}
+                            value={search.prior ?? PREVIOUS}
+                        />
+                        <DebouncedInput
+                            aria-label="Manager CIKs"
+                            className="w-[220px]"
+                            onCommit={value => onChange({ filer: value.trim() || undefined })}
+                            placeholder="Manager CIKs (comma list)"
+                            value={search.filer ?? ""}
+                        />
+                    </div>
                     <HolderChangesList exportScope={ticker} state={listState(changes)} />
                 </TabsContent>
             </Tabs>

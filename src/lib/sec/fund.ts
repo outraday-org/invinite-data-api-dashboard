@@ -5,11 +5,13 @@ import type {
     V2FundStoredDate,
     V2FundWeight,
     V2FundWeightDimension,
+    V2FundWeightsResponse,
     V2HolderSectionState,
     V2HolderSource,
 } from "@/lib/api/types";
 
 import { formatDay } from "@/lib/format";
+import { formatNumberEn } from "@/lib/utils";
 
 /**
  * View helpers of a listed fund's composition (`/v1/funds/{fund}/holdings` + `/weights`) and of the holders of a
@@ -69,13 +71,51 @@ const BASIS_LABELS: Record<string, string> = {
     registrant: "derived from the issuer's SEC registration",
 };
 
+/** One basis in plain words ("derived from SEC industry codes"); an unknown basis stays as its code. */
+export function fundBasisText(basis: string): string {
+    return BASIS_LABELS[basis] ?? basis.replaceAll("_", " ");
+}
+
+/** The short tag of a position's sector / country basis beside the value ("SIC", "ISIN"); none for `none`. */
+export const POSITION_BASIS_TAGS: Readonly<Record<string, string>> = {
+    derived_sic: "SIC",
+    isin_prefix: "ISIN",
+    issuer_stated: "issuer",
+    nport: "N-PORT",
+    registrant: "registration",
+};
+
+export const WEIGHT_BASIS_TEXT: Record<NonNullable<V2FundWeightsResponse["meta"]["weight_basis"]>, string> = {
+    issuer_stated: "each weight as stated in the issuer file",
+    net_assets: "market value over the stated net assets",
+    none: "no weight was stated or derivable",
+    nport: "the N-PORT percent of net assets",
+    sum: "market value over the sum of the non-derivative positions",
+};
+
+/**
+ * "Each dimension sums to 100.02 % (each weight as stated in the issuer file)"; a leveraged / inverse fund is far from
+ * 100 (derivatives at notional), said so. null without a sum.
+ */
+export function weightSumText(meta: Pick<V2FundWeightsResponse["meta"], "weight_basis" | "weight_pct_sum"> | undefined): null | string {
+    const sum = meta?.weight_pct_sum;
+
+    if (sum == null || !Number.isFinite(sum)) return null;
+
+    const basis = meta?.weight_basis ? ` (${WEIGHT_BASIS_TEXT[meta.weight_basis]})` : "";
+
+    const far = Math.abs(sum - 100) > 5 ? " — far from 100 %: derivatives count at their notional exposure" : "";
+
+    return `Each dimension sums to ${formatNumberEn(sum, { maximumFractionDigits: 2 })} %${basis}${far}.`;
+}
+
 /** The legend note of a dimension's buckets: their bases in plain words (several = joined). */
 export function fundBasisNote(weights: ReadonlyArray<V2FundWeight>): null | string {
     const bases = [...new Set(weights.map(weight => weight.basis))];
 
     if (bases.length === 0) return null;
 
-    return bases.map(basis => BASIS_LABELS[basis] ?? basis).join(", ");
+    return bases.map(fundBasisText).join(", ");
 }
 
 /** The buckets per dimension in the API's order (sector, country, asset class), largest first within each. */

@@ -1,5 +1,7 @@
+import type { ColumnDef } from "@tanstack/react-table";
 import type { ReactNode } from "react";
 
+import { Link } from "@tanstack/react-router";
 import { FileText } from "lucide-react";
 
 import type {
@@ -9,6 +11,7 @@ import type {
     V2FilerPrivateOfferings,
     V2FilerResponse,
     V2FilingsResponse,
+    V2Holder,
     V2Offering,
     V2OfferingsResponse,
 } from "@/lib/api/types";
@@ -16,6 +19,7 @@ import type {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copyable } from "@/components/ui/copy-button";
+import { DataTable } from "@/components/ui/data-table";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,8 +32,9 @@ import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calend
 
 import type { SecPanelTarget } from "./sec-source-panel";
 
+import { discretionText, FilingLink, votingText } from "./holder-views";
 import { SecReadinessNotice } from "./sec-readiness-notice";
-import { SecurityLink } from "./security-link";
+import { filerCikParam, SecurityLink } from "./security-link";
 import { V2MetaLine } from "./v2-meta-line";
 
 function Facts({ entries }: { entries: Array<[string, string]> }) {
@@ -259,43 +264,45 @@ export function SecFundView({ data }: { data: null | V2FilerResponse }) {
             {fund.series.length === 0
                 ? <div className="text-muted-foreground text-xs">No fund series.</div>
                 : (
-                        <table className="w-full text-xs">
-                            <thead className="text-muted-foreground text-left">
-                                <tr>
-                                    <th className="p-1 font-normal">Series</th>
-                                    <th className="p-1 font-normal">Exchange</th>
-                                    <th className="p-1 font-normal">Class tickers</th>
-                                    <th className="p-1 text-right font-normal">Expense ratio</th>
-                                    <th className="p-1 font-normal">Net assets</th>
-                                    <th className="p-1 text-right font-normal">1y</th>
-                                    <th className="p-1 text-right font-normal">5y</th>
-                                    <th className="p-1 text-right font-normal">10y</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {fund.series.map((series) => {
-                                    const returns = returnsOf(series);
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-xs">
+                                <thead className="text-muted-foreground text-left">
+                                    <tr>
+                                        <th className="p-1 font-normal">Series</th>
+                                        <th className="p-1 font-normal">Exchange</th>
+                                        <th className="p-1 font-normal">Class tickers</th>
+                                        <th className="p-1 text-right font-normal">Expense ratio</th>
+                                        <th className="p-1 font-normal">Net assets</th>
+                                        <th className="p-1 text-right font-normal">1y</th>
+                                        <th className="p-1 text-right font-normal">5y</th>
+                                        <th className="p-1 text-right font-normal">10y</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {fund.series.map((series) => {
+                                        const returns = returnsOf(series);
 
-                                    const tickers = series.share_classes.flatMap(entry => (entry.ticker ? [entry.ticker] : []));
+                                        const tickers = series.share_classes.flatMap(entry => (entry.ticker ? [entry.ticker] : []));
 
-                                    return (
-                                        <tr key={series.fund_key}>
-                                            <td className="p-1">
-                                                <span className="font-medium" title={series.fund_key}>{series.series_name ?? series.fund_key}</span>
-                                                {series.is_etf && <Badge className="ml-1" variant="outline">ETF</Badge>}
-                                            </td>
-                                            <td className="p-1">{series.exchange ?? "—"}</td>
-                                            <td className="p-1">{tickers.length > 0 ? tickers.join(", ") : "—"}</td>
-                                            <td className="p-1 text-right tabular-nums">{fraction(series.expense_ratio_net)}</td>
-                                            <td className="p-1 tabular-nums">{netAssetsText(series)}</td>
-                                            <td className="p-1 text-right tabular-nums">{fraction(returns?.one_year ?? null)}</td>
-                                            <td className="p-1 text-right tabular-nums">{fraction(returns?.five_year ?? null)}</td>
-                                            <td className="p-1 text-right tabular-nums">{fraction(returns?.ten_year ?? null)}</td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                                        return (
+                                            <tr key={series.fund_key}>
+                                                <td className="p-1">
+                                                    <span className="font-medium" title={series.fund_key}>{series.series_name ?? series.fund_key}</span>
+                                                    {series.is_etf && <Badge className="ml-1" variant="outline">ETF</Badge>}
+                                                </td>
+                                                <td className="p-1">{series.exchange ?? "—"}</td>
+                                                <td className="p-1">{tickers.length > 0 ? tickers.join(", ") : "—"}</td>
+                                                <td className="p-1 text-right tabular-nums">{fraction(series.expense_ratio_net)}</td>
+                                                <td className="p-1 tabular-nums">{netAssetsText(series)}</td>
+                                                <td className="p-1 text-right tabular-nums">{fraction(returns?.one_year ?? null)}</td>
+                                                <td className="p-1 text-right tabular-nums">{fraction(returns?.five_year ?? null)}</td>
+                                                <td className="p-1 text-right tabular-nums">{fraction(returns?.ten_year ?? null)}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
         </section>
     );
@@ -325,13 +332,80 @@ export function offeringAmountText(offering: Pick<V2Offering, "indefinite_amount
     return offering.indefinite_amount ? "Indefinite" : offeringUsd(offering.total_offering_amount);
 }
 
+/** The issuer of an offering: its filer page (any Form D issuer has one, listed or not). */
+function IssuerCell({ offering }: { offering: Pick<V2Offering, "issuer_name" | "primary_issuer_cik"> }) {
+    const cik = filerCikParam(offering.primary_issuer_cik);
+
+    const name = offering.issuer_name ?? (cik ? `CIK ${cik}` : "—");
+
+    return cik
+        ? <Link className="truncate font-medium underline-offset-4 hover:underline" params={{ cik }} title={`SEC filer · CIK ${cik}`} to="/sec/$cik">{name}</Link>
+        : <span className="truncate">{name}</span>;
+}
+
+/** The columns of an offerings list; `issuer` adds the issuer (the market-wide list; a filer's page knows it). */
+export function offeringColumns({ issuer }: { issuer: boolean }): Array<ColumnDef<V2Offering>> {
+    const columns: Array<ColumnDef<V2Offering>> = [
+        { cell: ({ row }) => <span className="tabular-nums">{formatDay(row.original.filed_latest)}</span>, header: "Latest filing", id: "filed_latest" },
+        {
+            cell: ({ row }) => (
+                <div className="flex items-center gap-1">
+                    <Link
+                        className="font-medium tabular-nums underline-offset-4 hover:underline"
+                        params={{ offeringId: row.original.offering_id }}
+                        title={`Latest accession ${row.original.latest_accession}`}
+                        to="/offerings/$offeringId"
+                    >
+                        {row.original.offering_id}
+                    </Link>
+                    {row.original.amendment_count > 0 && (
+                        <Badge variant="outline">
+                            {`${row.original.amendment_count} amendment${row.original.amendment_count === 1 ? "" : "s"}`}
+                        </Badge>
+                    )}
+                </div>
+            ),
+            header: "Offering",
+            id: "offering_id",
+        },
+    ];
+
+    if (issuer) columns.push({ cell: ({ row }) => <div className="max-w-[260px] truncate"><IssuerCell offering={row.original} /></div>, header: "Issuer", id: "issuer_name" });
+
+    columns.push(
+        { cell: ({ row }) => row.original.industry_group ?? "—", header: "Industry", id: "industry_group" },
+        {
+            cell: ({ row }) => (
+                <span title={row.original.exemptions.join(", ")}>
+                    {row.original.exemptions.length > 0 ? row.original.exemptions.map(exemptionLabel).join(", ") : "—"}
+                </span>
+            ),
+            header: "Exemptions",
+            id: "exemptions",
+        },
+        { cell: ({ row }) => <div className="text-right tabular-nums">{offeringAmountText(row.original)}</div>, header: () => <div className="text-right">Offering size</div>, id: "total_offering_amount" },
+        { cell: ({ row }) => <div className="text-right tabular-nums">{offeringUsd(row.original.total_sold)}</div>, header: () => <div className="text-right">Sold</div>, id: "total_sold" },
+        {
+            cell: ({ row }) => <div className="text-right tabular-nums">{row.original.investor_count === null ? "—" : formatNumberEn(row.original.investor_count)}</div>,
+            header: () => <div className="text-right">Investors</div>,
+            id: "investor_count",
+        },
+    );
+
+    return columns;
+}
+
+const FILER_OFFERING_COLUMNS = offeringColumns({ issuer: false });
+
 /**
  * A filer's Form D private offerings (pure): the summary of `GET /v1/filers/{cik}?expand=private_offerings` and the
- * offerings of `GET /v1/offerings?company=<cik>` (newest latest filing first, "More offerings" by cursor). Amounts are
- * USD; exemptions as filed with a short label. `summary: null` (no Form D, or Form D data not served) renders nothing.
+ * offerings of `GET /v1/offerings?company=<cik>` (newest latest filing first, "Load more" by cursor; an offering opens
+ * `/offerings/$offeringId`). Amounts are USD; exemptions as filed with a short label. `summary: null` (no Form D, or
+ * Form D data not served) renders nothing.
  */
 export function SecPrivateOfferingsView({
     error,
+    exportScope,
     hasNextPage,
     isFetchingNextPage,
     isLoading,
@@ -340,6 +414,8 @@ export function SecPrivateOfferingsView({
     summary,
 }: {
     error: unknown;
+    /** The export's file-name scope (the filer's CIK). */
+    exportScope?: string;
     hasNextPage: boolean;
     isFetchingNextPage: boolean;
     isLoading: boolean;
@@ -348,8 +424,6 @@ export function SecPrivateOfferingsView({
     summary: null | V2FilerPrivateOfferings;
 }) {
     if (!summary) return null;
-
-    const rows = pages.flatMap(page => page.data);
 
     const facts: Array<[string, string]> = [["offerings", String(summary.count)]];
 
@@ -364,51 +438,22 @@ export function SecPrivateOfferingsView({
     let body: ReactNode = null;
 
     if (summary.count > 0) {
-        if (error && pages.length === 0) body = <SecReadinessNotice error={error} title="Failed to load the private offerings" />;
-        else if (isLoading && pages.length === 0) body = <Skeleton className="h-16 w-full" />;
-        else {
-            body = (
-                <table className="w-full text-xs">
-                    <thead className="text-muted-foreground text-left">
-                        <tr>
-                            <th className="p-1 font-normal">Latest filing</th>
-                            <th className="p-1 font-normal">Offering</th>
-                            <th className="p-1 font-normal">Industry</th>
-                            <th className="p-1 font-normal">Exemptions</th>
-                            <th className="p-1 text-right font-normal">Offering size</th>
-                            <th className="p-1 text-right font-normal">Sold</th>
-                            <th className="p-1 text-right font-normal">Investors</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows.map(offering => (
-                            <tr key={offering.offering_id}>
-                                <td className="p-1 tabular-nums">{offering.filed_latest ?? "—"}</td>
-                                <td className="p-1">
-                                    <span className="font-medium tabular-nums" title={`Latest accession ${offering.latest_accession}`}>
-                                        {offering.offering_id}
-                                    </span>
-                                    {offering.amendment_count > 0 && (
-                                        <Badge className="ml-1" variant="outline">
-                                            {`${offering.amendment_count} amendment${offering.amendment_count === 1 ? "" : "s"}`}
-                                        </Badge>
-                                    )}
-                                </td>
-                                <td className="p-1">{offering.industry_group ?? "—"}</td>
-                                <td className="p-1" title={offering.exemptions.join(", ")}>
-                                    {offering.exemptions.length > 0 ? offering.exemptions.map(exemptionLabel).join(", ") : "—"}
-                                </td>
-                                <td className="p-1 text-right tabular-nums">{offeringAmountText(offering)}</td>
-                                <td className="p-1 text-right tabular-nums">{offeringUsd(offering.total_sold)}</td>
-                                <td className="p-1 text-right tabular-nums">
-                                    {offering.investor_count === null ? "—" : formatNumberEn(offering.investor_count)}
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            );
-        }
+        body = error && pages.length === 0
+            ? <SecReadinessNotice error={error} title="Failed to load the private offerings" />
+            : (
+                    <DataTable
+                        columns={FILER_OFFERING_COLUMNS}
+                        emptyIsGenuine={isV2GenuineEmpty(pages.at(0)?.meta.coverage)}
+                        emptyText="No offerings."
+                        exportConfig={exportScope ? { dataset: "offerings", scope: exportScope } : undefined}
+                        hasNextPage={hasNextPage}
+                        isFetchingNextPage={isFetchingNextPage}
+                        isLoading={isLoading}
+                        onLoadMore={onMore}
+                        operationId="listOfferings"
+                        rows={pages.flatMap(page => page.data)}
+                    />
+                );
     }
 
     return (
@@ -416,11 +461,6 @@ export function SecPrivateOfferingsView({
             <Facts entries={facts} />
             {body}
             {error && pages.length > 0 ? <SecReadinessNotice error={error} title="Failed to load more offerings" /> : null}
-            {hasNextPage && (
-                <Button className="self-center" disabled={isFetchingNextPage} onClick={onMore} size="sm" type="button" variant="outline">
-                    {isFetchingNextPage ? "Loading…" : "More offerings"}
-                </Button>
-            )}
         </section>
     );
 }
@@ -476,45 +516,47 @@ export function SecFilingsView({
             {filings.length === 0
                 ? (isV2GenuineEmpty(first.meta.coverage) && <div className="text-muted-foreground text-xs">No filings.</div>)
                 : (
-                        <table className="w-full text-xs">
-                            <thead className="text-muted-foreground text-left">
-                                <tr>
-                                    <th className="p-1 font-normal">Form</th>
-                                    <th className="p-1 font-normal">Filed</th>
-                                    <th className="p-1 font-normal">Period</th>
-                                    <th className="p-1 font-normal">Accession</th>
-                                    <th className="p-1 font-normal">Roles</th>
-                                    <th className="p-1" />
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filings.map(filing => (
-                                    <tr key={filing.accession}>
-                                        <td className="p-1 font-medium">{filing.form}</td>
-                                        <td className="p-1">{filing.filing_date}</td>
-                                        <td className="p-1">{filing.report_date ?? "—"}</td>
-                                        <td className="p-1 tabular-nums"><Copyable label="Copy accession number" value={filing.accession} /></td>
-                                        <td className="p-1">{filing.roles.join(", ") || "—"}</td>
-                                        <td className="flex items-center justify-end gap-2 p-1">
-                                            {filing.edgar_index_url.startsWith("https://www.sec.gov/") && (
-                                                <a className="underline-offset-4 hover:underline" href={filing.edgar_index_url} rel="noopener noreferrer" target="_blank">
-                                                    EDGAR
-                                                </a>
-                                            )}
-                                            <Button
-                                                onClick={() => onOpen({ accession: filing.accession, kind: "filing", title: `${filing.form} · ${filing.accession}` })}
-                                                size="xs"
-                                                type="button"
-                                                variant="outline"
-                                            >
-                                                <FileText />
-                                                Documents
-                                            </Button>
-                                        </td>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-xs">
+                                <thead className="text-muted-foreground text-left">
+                                    <tr>
+                                        <th className="p-1 font-normal">Form</th>
+                                        <th className="p-1 font-normal">Filed</th>
+                                        <th className="p-1 font-normal">Period</th>
+                                        <th className="p-1 font-normal">Accession</th>
+                                        <th className="p-1 font-normal">Roles</th>
+                                        <th className="p-1" />
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {filings.map(filing => (
+                                        <tr key={filing.accession}>
+                                            <td className="p-1 font-medium">{filing.form}</td>
+                                            <td className="p-1">{filing.filing_date}</td>
+                                            <td className="p-1">{filing.report_date ?? "—"}</td>
+                                            <td className="p-1 tabular-nums"><Copyable label="Copy accession number" value={filing.accession} /></td>
+                                            <td className="p-1">{filing.roles.join(", ") || "—"}</td>
+                                            <td className="flex items-center justify-end gap-2 p-1">
+                                                {filing.edgar_index_url.startsWith("https://www.sec.gov/") && (
+                                                    <a className="underline-offset-4 hover:underline" href={filing.edgar_index_url} rel="noopener noreferrer" target="_blank">
+                                                        EDGAR
+                                                    </a>
+                                                )}
+                                                <Button
+                                                    onClick={() => onOpen({ accession: filing.accession, kind: "filing", title: `${filing.form} · ${filing.accession}` })}
+                                                    size="xs"
+                                                    type="button"
+                                                    variant="outline"
+                                                >
+                                                    <FileText />
+                                                    Documents
+                                                </Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
             {error ? <SecReadinessNotice error={error} title="Failed to load more filings" /> : null}
             {hasNextPage && (
@@ -528,12 +570,49 @@ export function SecFilingsView({
 
 const usd = new Intl.NumberFormat("en", { currency: "USD", maximumFractionDigits: 0, style: "currency" });
 
+const PORTFOLIO_COLUMNS: Array<ColumnDef<V2Holder>> = [
+    {
+        cell: ({ row }) => (
+            <div className="max-w-[280px] truncate">
+                <SecurityLink className="font-medium" security={row.original.security}>{row.original.security.symbol ?? row.original.security.name ?? "—"}</SecurityLink>
+                {row.original.security.symbol && row.original.security.name && <span className="text-muted-foreground">{` · ${row.original.security.name}`}</span>}
+            </div>
+        ),
+        header: "Company",
+        id: "security",
+    },
+    {
+        cell: ({ row }) => (row.original.security.cusip ? <Copyable className="tabular-nums" label="Copy CUSIP" value={row.original.security.cusip} /> : "—"),
+        header: "CUSIP",
+        id: "cusip",
+    },
+    {
+        cell: ({ row }) => <div className="text-right tabular-nums">{row.original.shares == null ? "—" : formatNumberEn(row.original.shares)}</div>,
+        header: () => <div className="text-right">Shares / principal</div>,
+        id: "shares",
+    },
+    { cell: ({ row }) => [row.original.shares_type, row.original.put_call].filter(Boolean).join(" · ") || "—", header: "Unit", id: "shares_type" },
+    {
+        cell: ({ row }) => <div className="text-right tabular-nums">{row.original.value_usd == null ? "—" : usd.format(row.original.value_usd)}</div>,
+        header: () => <div className="text-right">Value</div>,
+        id: "value_usd",
+    },
+    { cell: ({ row }) => discretionText(row.original.investment_discretion), header: "Discretion", id: "investment_discretion" },
+    {
+        cell: ({ row }) => <div className="tabular-nums whitespace-nowrap">{votingText(row.original.voting_authority)}</div>,
+        header: "Voting authority",
+        id: "voting_authority",
+    },
+];
+
 /**
  * A 13F manager's portfolio for one quarter (pure, `GET /v1/filers/{cik}/holdings?period_end=`, the `Holder` row): the provenance line
- * (`meta.coverage`, `pinned_at`, `counting`, `meta.source`), the positions by dollar value, "More positions" by cursor.
+ * (`meta.coverage`, `pinned_at`, `counting`), the quarter's 13F filing (EDGAR) once, the positions by dollar value with
+ * their investment discretion and voting authority, "Load more" by cursor, export.
  */
 export function SecPortfolioView({
     error,
+    exportScope,
     hasNextPage,
     isFetchingNextPage,
     isLoading,
@@ -541,6 +620,8 @@ export function SecPortfolioView({
     pages,
 }: {
     error: unknown;
+    /** The export's file-name scope (the manager's CIK). */
+    exportScope?: string;
     hasNextPage: boolean;
     isFetchingNextPage: boolean;
     isLoading: boolean;
@@ -549,56 +630,37 @@ export function SecPortfolioView({
 }) {
     if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the 13F portfolio" />;
 
-    if (isLoading && pages.length === 0) return <Skeleton className="h-24 w-full" />;
-
     const first = pages.at(0);
 
-    if (!first) return null;
-
     const rows = pages.flatMap(page => page.data);
+
+    // One 13F report per quarter: its filing is the same on every row.
+    const filing = rows.find(row => row.filing_url);
 
     return (
         <section aria-label="13F portfolio" className="flex flex-col gap-2">
             <SecReadinessNotice coverage={pages.at(-1)?.meta.coverage} />
-            <V2MetaLine meta={first.meta} />
-            {rows.length === 0
-                ? (isV2GenuineEmpty(first.meta.coverage) && <div className="text-muted-foreground text-xs">The manager reported no positions for this quarter.</div>)
-                : (
-                        <table className="w-full text-xs">
-                            <thead className="text-muted-foreground text-left">
-                                <tr>
-                                    <th className="p-1 font-normal">Company</th>
-                                    <th className="p-1 font-normal">CUSIP</th>
-                                    <th className="p-1 text-right font-normal">Shares / principal</th>
-                                    <th className="p-1 text-right font-normal">Value</th>
-                                    <th className="p-1 font-normal">Put / call</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {rows.map((row, index) => (
-                                    // A position has no id of its own (one CUSIP can be held twice: shares and an option).
-                                    <tr key={`${row.security.cusip ?? ""}-${row.put_call ?? ""}-${index}`}>
-                                        <td className="p-1">
-                                            <SecurityLink className="font-medium" security={row.security}>{row.security.symbol ?? row.security.name ?? "—"}</SecurityLink>
-                                            {row.security.symbol && row.security.name && <span className="text-muted-foreground">{` · ${row.security.name}`}</span>}
-                                        </td>
-                                        <td className="p-1 tabular-nums">{row.security.cusip ? <Copyable label="Copy CUSIP" value={row.security.cusip} /> : "—"}</td>
-                                        <td className="p-1 text-right tabular-nums">
-                                            {row.shares == null ? "—" : formatNumberEn(row.shares)}
-                                        </td>
-                                        <td className="p-1 text-right tabular-nums">{row.value_usd == null ? "—" : usd.format(row.value_usd)}</td>
-                                        <td className="p-1">{row.put_call ?? "—"}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-            {error ? <SecReadinessNotice error={error} title="Failed to load more positions" /> : null}
-            {hasNextPage && (
-                <Button className="self-center" disabled={isFetchingNextPage} onClick={onMore} size="sm" type="button" variant="outline">
-                    {isFetchingNextPage ? "Loading…" : "More positions"}
-                </Button>
+            {first && <V2MetaLine meta={first.meta} />}
+            {filing && (
+                <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs" data-testid="portfolio-filing">
+                    <span>{`13F filed ${formatDay(filing.filing_date)}`}</span>
+                    {filing.accession_number && <Copyable className="tabular-nums" label="Copy accession number" value={filing.accession_number} />}
+                    <FilingLink url={filing.filing_url} />
+                </div>
             )}
+            <DataTable
+                columns={PORTFOLIO_COLUMNS}
+                emptyIsGenuine={isV2GenuineEmpty(first?.meta.coverage)}
+                emptyText="The manager reported no positions for this quarter."
+                exportConfig={exportScope ? { dataset: "13f-portfolio", scope: exportScope } : undefined}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                isLoading={isLoading}
+                onLoadMore={onMore}
+                operationId="listFilerHoldings"
+                rows={rows}
+            />
+            {error ? <SecReadinessNotice error={error} title="Failed to load more positions" /> : null}
         </section>
     );
 }

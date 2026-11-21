@@ -86,6 +86,7 @@ export const BROWSE_NAV: ReadonlyArray<NavPage> = [
     { description: "The SEC bulk data sets the API serves, with their newest release.", icon: DatabaseIcon, keywords: ["sec", "datasets", "data sets", "bulk", "releases", "13f", "n-port"], label: "SEC data sets", to: "/sec/datasets" },
     { description: "What was said on every company's earnings calls: passages from transcripts, Q&A and slides.", icon: SearchIcon, keywords: ["search", "transcripts", "transcript", "passages", "quotes", "calls", "full-text"], label: "Transcript search", to: "/search" },
     { description: "Metrics, mapping rules, SEC forms and sections, event types, document kinds.", icon: BookOpenIcon, keywords: ["catalog", "reference", "metrics", "definitions", "mapping", "forms", "sections", "glossary"], label: "Catalog", to: "/catalog" },
+    { description: "Form D private offerings of every issuer, with amounts, exemptions and related persons.", icon: HandCoinsIcon, keywords: ["offerings", "form d", "private", "placements", "exemptions", "raises"], label: "Offerings", to: "/offerings" },
 ];
 
 /** The account (bottom of the sidebar, with the plan badge). */
