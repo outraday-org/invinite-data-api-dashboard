@@ -459,7 +459,8 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   returns once (A3) is shown only in its dialog, never stored in the browser, never logged.
 - **No browser request to the API host**: `src/lib/api/no-direct-api-calls.test.ts` — one openapi-fetch client
   (`client.server.ts`), `fetch(` only in the reviewed public-file readers, no XHR / beacon / EventSource, `new WebSocket`
-  only in `lib/live/use-live-*.ts` through `liveWsUrl` (`/v1/stream`), the host named only by `env.ts` and the curl text.
+  only in `lib/live/use-live-*.ts` through `liveWsUrl` (`/v1/stream`) and in `lib/live/stream-socket.ts`, whose every
+  caller is a `use-live-*` hook passing `liveWsUrl(…)`, the host named only by `env.ts` and the curl text.
 - **Field map** (`src/lib/alerts/condition-fields.ts`): `FIELD_SPECS` (every `AlertConditionInput` field: editor kind,
   label, help, enum, bounds; `optionsByType` for `scope` / `kinds` / `interval` / `frequency`), `TYPE_FIELDS` (17 types),
   `CONDITION_FIELDS`, `TRIGGER_FIELDS` (`cooldown_bars` script / indicator, `rearm*` price types). `condition-fields.test.ts`

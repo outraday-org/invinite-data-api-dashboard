@@ -68,9 +68,23 @@ describe("no direct Data API traffic from the browser", () => {
         expect(sockets.length).toBeGreaterThan(0);
 
         for (const path of sockets) {
+            // `stream-socket.ts` opens the socket of the channel hooks with the URL they hand it (checked below).
+            if (path === "lib/live/stream-socket.ts") continue;
+
             expect(path).toMatch(/^lib\/live\/use-live-[\w-]+\.ts$/);
 
             expect(files.find(file => file.path === path)!.text).toContain("liveWsUrl(");
+        }
+
+        const streamCallers = files.filter(({ path, text }) => path !== "lib/live/stream-socket.ts" && /openStreamSocket\(/.test(text));
+
+        expect(streamCallers.length).toBeGreaterThan(0);
+
+        for (const { path, text } of streamCallers) {
+            expect(path).toMatch(/^lib\/live\/use-live-[\w-]+\.ts$/);
+
+            // Every call opens `liveWsUrl(…)` (the `/v1/stream` URL), never another address.
+            expect({ calls: text.match(/openStreamSocket\(/g)!.length, path }).toEqual({ calls: text.match(/openStreamSocket\(liveWsUrl\(/g)?.length ?? 0, path });
         }
 
         const wsFrames = files.find(({ path }) => path === "lib/live/ws-frames.ts")!.text;
