@@ -6,6 +6,7 @@ import type { FinancialView } from "@/components/financials-pages/views";
 import type { V2CompanyCoverage, V2CompanyResponse, V2Dataset, V2Event, V2Filing, V2Fund, V2FundPositionsResponse, V2Instrument } from "@/lib/api/types";
 import type { TickerPath } from "@/lib/navigation";
 
+import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
 import { FiscalPeriodsCard } from "@/components/reference/fiscal-periods-card";
 import { FundAdvisersView, FundSourceBadge } from "@/components/sec/fund-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
@@ -44,11 +45,19 @@ function TickerOverview() {
     // The layout renders the unknown / failed instrument states.
     if (!instrument) return null;
 
-    if (instrument.type === "stock") return <CompanyOverview datasets={instrument.datasets} ticker={ticker} />;
+    const overview = instrument.type === "stock"
+        ? <CompanyOverview datasets={instrument.datasets} ticker={ticker} />
+        : isFundType(instrument.type) ? <FundOverview instrument={instrument} ticker={ticker} /> : <InstrumentCard instrument={instrument} />;
 
-    if (isFundType(instrument.type)) return <FundOverview instrument={instrument} ticker={ticker} />;
-
-    return <InstrumentCard instrument={instrument} />;
+    return (
+        <div className="flex flex-col gap-4">
+            {/* "Create alert" (price types; a stock's metrics too) and the ticker's alerts link (alerts task 4). */}
+            <div className="flex justify-end empty:hidden">
+                <AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.overview} />
+            </div>
+            {overview}
+        </div>
+    );
 }
 
 function CompanyOverview({ datasets, ticker }: { datasets: ReadonlyArray<V2Dataset>; ticker: string }) {

@@ -1,9 +1,11 @@
 import * as React from "react";
 
+import type { AlertUserOption } from "@/components/alerts/alert-user-picker";
 import type { ActiveWindowState, AlertFormState, FieldErrors, FieldText } from "@/lib/alerts/alert-form";
 import type { ConditionFieldSpec, FieldSpec } from "@/lib/alerts/condition-fields";
 import type { AlertTemplate, AlertType } from "@/lib/api/types";
 
+import { AlertUserPicker } from "@/components/alerts/alert-user-picker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -304,10 +306,11 @@ export type TemplatesState = { data: ReadonlyArray<AlertTemplate>; error: unknow
 /**
  * The alert form (pure; `/alerts/new` and `/alerts/$id?edit=true`): 1 Type (17, in 7 groups; fixed on edit), 2 Condition
  * (the type's fields from `CONDITION_FIELDS`; the indicator's template or structured condition), 3 Trigger, 4 Delivery
- * (destination ids, end user, reference, metadata). Field errors sit under their field; `notice` above the buttons
+ * (destination ids, end user — an existing one suggested —, reference, metadata). Field errors sit under their field; `notice` above the buttons
  * (a conflict, a quota, the Check result). "Check" = `validate_only` (nothing created).
  */
 export function AlertFormView({
+    endUserOptions = [],
     errors,
     mode,
     notice,
@@ -319,6 +322,8 @@ export function AlertFormView({
     state,
     templates,
 }: {
+    /** Existing end users suggested for the end-user field (A4: `useAlertUserOptions`). */
+    endUserOptions?: ReadonlyArray<AlertUserOption>;
     errors: FieldErrors;
     mode: "create" | "edit";
     notice?: React.ReactNode;
@@ -401,8 +406,8 @@ export function AlertFormView({
                     <FieldShell error={errors.destination_ids} help="Destination ids (dst_…, at most 10), one per line or comma. None = the event feed and the live stream only." htmlFor={fieldId("destination_ids")} label="Destinations" wide>
                         <Textarea className="font-mono" id={fieldId("destination_ids")} onChange={event => set({ destinationIds: event.target.value })} rows={2} value={state.destinationIds} />
                     </FieldShell>
-                    <FieldShell error={errors.external_user_id} help="Your end user's id (filters lists and events)." htmlFor={fieldId("external_user_id")} label="End user id">
-                        <Input id={fieldId("external_user_id")} onChange={event => set({ externalUserId: event.target.value })} value={state.externalUserId} />
+                    <FieldShell error={errors.external_user_id} help="Your end user's id (filters lists and events): pick an existing one or type a new id (the alert creates it)." htmlFor={fieldId("external_user_id")} label="End user id">
+                        <AlertUserPicker id={fieldId("external_user_id")} onChange={externalUserId => set({ externalUserId })} options={endUserOptions} value={state.externalUserId} />
                     </FieldShell>
                     <FieldShell error={errors.client_reference_id} help="Your id of the alert, unique per account (a second create with it returns the live alert)." htmlFor={fieldId("client_reference_id")} label="Client reference id">
                         <Input id={fieldId("client_reference_id")} onChange={event => set({ clientReferenceId: event.target.value })} value={state.clientReferenceId} />

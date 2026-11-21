@@ -449,3 +449,30 @@ export type DestinationTestAccepted = paths["/v1/destinations/{id}:test"]["post"
 export type DestinationDeliveriesResponse = ApiResponse<"/v1/destinations/{id}/deliveries", "get">;
 export type DestinationDelivery = DestinationDeliveriesResponse["data"][number];
 export type DestinationDeliveryStatus = DestinationDelivery["status"];
+
+// Alert end users, their defaults, scripts (backend tasks/data-api-dashboard 2-alerts task 4). `metadata` / a script
+// version's `manifest` are free JSON in the spec: narrowed to `JsonValue` (`SecJson`).
+type UpdateAlertUserBody = NonNullable<paths["/v1/alert-users/{external_user_id}"]["patch"]["requestBody"]>["content"]["application/json"];
+type BatchAlertUsersBody = NonNullable<paths["/v1/alert-users:batch"]["post"]["requestBody"]>["content"]["application/json"];
+
+export type AlertUsersListResponse = SecJson<ApiResponse<"/v1/alert-users", "get">>;
+export type AlertUser = AlertUsersListResponse["data"][number];
+export type AlertUserStatus = AlertUser["status"];
+export type AlertUserLimits = AlertUser["limits"];
+export type AlertUserLimitField = keyof AlertUserLimits;
+export type AlertUserUsage = AlertUser["usage"];
+export type AlertUsersListQuery = ApiQuery<"/v1/alert-users">;
+export type UpdateAlertUserRequest = SecJson<UpdateAlertUserBody>;
+export type AlertUserBatchItem = SecJson<BatchAlertUsersBody["items"][number]>;
+export type AlertUserBatchResponse = SecJson<ApiResponse<"/v1/alert-users:batch", "post">>;
+export type AlertUserBatchResult = AlertUserBatchResponse["results"][number];
+export type AlertUserDeleteResult = ApiResponse<"/v1/alert-users/{external_user_id}", "delete">;
+export type AlertUserDefaults = ApiResponse<"/v1/me/alert-user-defaults", "get">;
+export type UpdateAlertUserDefaultsRequest = NonNullable<paths["/v1/me/alert-user-defaults"]["patch"]["requestBody"]>["content"]["application/json"];
+export type ScriptsListResponse = SecJson<ApiResponse<"/v1/scripts", "get">>;
+export type Script = ScriptsListResponse["data"][number];
+export type ScriptVersionsResponse = SecJson<ApiResponse<"/v1/scripts/{id}/versions", "get">>;
+export type ScriptVersion = ScriptVersionsResponse["data"][number];
+export type ScriptDiagnostic = ScriptVersion["diagnostics"][number];
+export type CreateScriptRequest = NonNullable<paths["/v1/scripts"]["post"]["requestBody"]>["content"]["application/json"];
+export type CreateScriptVersionRequest = NonNullable<paths["/v1/scripts/{id}/versions"]["post"]["requestBody"]>["content"]["application/json"];

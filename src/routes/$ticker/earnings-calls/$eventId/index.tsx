@@ -3,6 +3,7 @@ import * as React from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
+import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
 import { ErrorState } from "@/components/ui/error-state";
 import { NotFound } from "@/components/ui/not-found";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -134,6 +135,11 @@ function CallPage({ eventId }: { eventId: string }) {
         <CallAudioProvider eventId={event.event_id} hasAudio={event.has_audio} live={liveSession} startAtMs={linkTimeMs ?? undefined}>
             <div className="flex flex-col gap-4">
                 <CallHeader event={event} />
+
+                {/* "Create alert" for the call's company and its alerts link (alerts task 4). */}
+                <div className="flex justify-end empty:hidden">
+                    <AlertEntryPoints symbol={event.symbol} types={ENTRY_TYPES.calls} />
+                </div>
 
                 {/* The live call's notices, highlights, price and diagnostics (nothing for other calls). */}
                 <LivePlayerSlot event={event} session={liveSession} />

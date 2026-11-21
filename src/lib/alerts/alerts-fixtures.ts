@@ -7,6 +7,15 @@ import type {
     AlertTemplate,
     AlertTemplatesResponse,
     AlertType,
+    AlertUser,
+    AlertUserBatchResponse,
+    AlertUserDefaults,
+    AlertUserDeleteResult,
+    AlertUsersListResponse,
+    Script,
+    ScriptsListResponse,
+    ScriptVersion,
+    ScriptVersionsResponse,
 } from "@/lib/api/types";
 
 /**
@@ -159,3 +168,131 @@ export const BATCH_PARTIAL: AlertBatchResponse = {
         { alert: { ...ALERT_PRICE, status: "paused" }, error: null, index: 2, ok: true, op: "pause", result: "paused" },
     ],
 };
+
+// ── A4: end users, defaults, scripts (the spec's `listAlertUsers` / `getAlertUser` examples: `smoke-a`) ──────────────
+
+/** An id with a slash, a colon and a space: one path segment, URL-encoded (`team%2Fa%3Ab%20c`). */
+export const ODD_USER_ID = "team/a:b c";
+
+export function fixtureAlertUser(externalUserId: string, patch: Partial<AlertUser> = {}): AlertUser {
+    return {
+        created_at: "2026-11-19T16:59:52.948Z",
+        display_name: null,
+        effective_limits: { max_active_alerts: 3, max_fires_per_day: null, max_script_alerts: null },
+        external_user_id: externalUserId,
+        limits: { max_active_alerts: 3, max_fires_per_day: null, max_script_alerts: null },
+        metadata: {},
+        status: "active",
+        updated_at: "2026-11-19T16:59:59.916Z",
+        usage: { active_alerts: 3, fires_today: 0, last_fired_at: null, script_alerts: 0 },
+        ...patch,
+    };
+}
+
+/** The spec's example: its own limit of 3, at its limit. */
+export const USER_SMOKE = fixtureAlertUser("smoke-a");
+
+/** A paused end user whose limits come from the account defaults (own values null). */
+export const USER_PAUSED = fixtureAlertUser("user_8812", {
+    display_name: "Jane (premium)",
+    effective_limits: { max_active_alerts: 10, max_fires_per_day: 500, max_script_alerts: 1 },
+    limits: { max_active_alerts: null, max_fires_per_day: null, max_script_alerts: null },
+    metadata: { tier: "premium" },
+    status: "paused",
+    usage: { active_alerts: 4, fires_today: 12, last_fired_at: "2026-11-21T13:05:00Z", script_alerts: 1 },
+});
+
+export const USER_ODD = fixtureAlertUser(ODD_USER_ID, { limits: { max_active_alerts: null, max_fires_per_day: null, max_script_alerts: 0 }, usage: { active_alerts: 0, fires_today: 0, last_fired_at: null, script_alerts: 0 } });
+
+export const USERS_PAGE_FIXTURE: AlertUsersListResponse = { data: [USER_SMOKE, USER_ODD, USER_PAUSED], has_more: false, meta: {}, next_cursor: null };
+
+/** The spec's example of `getAlertUserDefaults`. */
+export const DEFAULTS_FIXTURE: AlertUserDefaults = { max_active_alerts: 2, max_fires_per_day: null, max_script_alerts: null, updated_at: "2026-11-19T16:59:52.616Z" };
+
+export const DELETE_DONE: AlertUserDeleteResult = { alerts_deleted: 3, deliveries_deleted: 9, events_deleted: 4, status: "deleted" };
+
+export const DELETE_RUNNING: AlertUserDeleteResult = { alerts_deleted: 3, deliveries_deleted: 1000, events_deleted: 1000, status: "deleting" };
+
+/** A bulk upsert of three: created, updated, one refused. */
+export const USER_BATCH_PARTIAL: AlertUserBatchResponse = {
+    results: [
+        { alert_user: fixtureAlertUser("user_9001"), error: null, index: 0, ok: true, result: "created" },
+        { alert_user: USER_PAUSED, error: null, index: 1, ok: true, result: "updated" },
+        { alert_user: null, error: { code: "conflict", detail: "The end user is being deleted.", param: "items[2].external_user_id", remedy: "Wait until the deletion ends." }, index: 2, ok: false, result: null },
+    ],
+};
+
+/** The spec's `createScript` example source (EMA cross). */
+export const SCRIPT_SOURCE = `import { defineIndicator, input } from "@invinite-org/chartlang-core";
+
+export default defineIndicator({
+    name: "EMA cross",
+    apiVersion: 1,
+    overlay: true,
+    inputs: { fast: input.int(9, { min: 1, max: 200 }), slow: input.int(21, { min: 2, max: 500 }) },
+    compute({ bar, ta, alert, inputs }) {
+        const fast = ta.ema(bar.close, inputs.fast);
+        const slow = ta.ema(bar.close, inputs.slow);
+        if (ta.crossover(fast, slow).current) alert("EMA cross up at " + bar.close);
+    }
+});
+`;
+
+export const FIXTURE_SCRIPT_ID = "scr_01JD2Q6A1B2C3D4E5F6G7H8J9K";
+
+/** Version 1: a compile error on line 9 (and a warning on line 6). */
+export const SCRIPT_V1_ERROR: ScriptVersion = {
+    alert_ids: [],
+    compiler_version: "1.14.0",
+    created_at: "2026-11-20T10:00:00Z",
+    diagnostics: [
+        { code: "unused-input", column: 5, line: 6, message: "Input slow is never read.", severity: "warning" },
+        { code: "type-error", column: 22, line: 9, message: "Property 'emaa' does not exist on ta.", severity: "error" },
+    ],
+    id: "scv_01JD2Q6B0000000000000000V1",
+    manifest: null,
+    script_id: FIXTURE_SCRIPT_ID,
+    source: SCRIPT_SOURCE.replace("ta.ema(bar.close, inputs.fast)", "ta.emaa(bar.close, inputs.fast)"),
+    source_sha256: "0f1e2d3c4b5a69788796a5b4c3d2e1f00f1e2d3c4b5a69788796a5b4c3d2e1f0",
+    status: "error",
+    version: 1,
+};
+
+/** Version 2: compiled; the manifest declares `fast` / `slow` (chartlang's `defaultValue`). */
+export const SCRIPT_V2_OK: ScriptVersion = {
+    alert_ids: ["main.ts:11:57#0"],
+    compiler_version: "1.14.0",
+    created_at: "2026-11-20T11:00:00Z",
+    diagnostics: [],
+    id: "scv_01JD2Q6B0000000000000000V2",
+    manifest: {
+        apiVersion: 1,
+        inputs: { fast: { defaultValue: 9, kind: "int", max: 200, min: 1 }, slow: { defaultValue: 21, kind: "int", max: 500, min: 2, title: "Slow length" } },
+        kind: "indicator",
+        name: "EMA cross",
+    },
+    script_id: FIXTURE_SCRIPT_ID,
+    source: SCRIPT_SOURCE,
+    source_sha256: "a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90",
+    status: "ok",
+    version: 2,
+};
+
+export const SCRIPT_FIXTURE: Script = {
+    created_at: "2026-11-20T10:00:00Z",
+    description: "Fast EMA crossing above the slow one",
+    id: FIXTURE_SCRIPT_ID,
+    latest_version: SCRIPT_V2_OK,
+    name: "EMA cross",
+    updated_at: "2026-11-20T11:00:00Z",
+    version_count: 2,
+};
+
+export const SCRIPTS_PAGE_FIXTURE: ScriptsListResponse = {
+    data: [SCRIPT_FIXTURE, { ...SCRIPT_FIXTURE, description: null, id: "scr_full", latest_version: { ...SCRIPT_V1_ERROR, version: 20 }, name: "At the limit", version_count: 20 }],
+    has_more: false,
+    meta: {},
+    next_cursor: null,
+};
+
+export const SCRIPT_VERSIONS_FIXTURE: ScriptVersionsResponse = { data: [SCRIPT_V1_ERROR, SCRIPT_V2_OK], has_more: false, meta: {}, next_cursor: null };

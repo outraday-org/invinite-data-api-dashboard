@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts";
 
 import type { UsageWindow } from "@/lib/account";
@@ -21,6 +21,7 @@ import { useMe, useMyUsage } from "@/lib/api/queries";
 import { dataApiDashboardUrl } from "@/lib/app-url";
 import { formatDay, formatInstant, formatMoney, formatNumber } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
+import { plansAlerts } from "@/routes/alerts/route";
 
 export const Route = createFileRoute("/account")({
     component: AccountPage,
@@ -177,6 +178,13 @@ function AccountPage() {
                         </a>
                         {" "}
                         live in the Invinite Data app.
+                        {me.data && plansAlerts(me.data) && (
+                            <>
+                                {" The limits your alert end users get by default are under "}
+                                <Link className="text-primary underline-offset-4 hover:underline" hash="defaults" to="/alerts/users">End-user defaults</Link>
+                                .
+                            </>
+                        )}
                     </>
                 )}
                 title="Account"

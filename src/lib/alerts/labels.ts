@@ -113,8 +113,11 @@ export const ALERT_EVENT_TYPE_LABELS: Record<AlertEventType, string> = {
 
 export const alertEventTypeLabel = (type: string) => (Object.hasOwn(ALERT_EVENT_TYPE_LABELS, type) ? ALERT_EVENT_TYPE_LABELS[type as AlertEventType] : type);
 
+/** One item's answer of a bulk request: `batchAlerts` (`AlertBatchResult`) or `batchAlertUsers` (A4). */
+export type BatchItemResult = Pick<AlertBatchResult, "error" | "index" | "ok"> & { result: null | string };
+
 /** A batch item's outcome in words ("Paused", "Refused: not_found — …"). */
-export function batchResultText(result: AlertBatchResult) {
+export function batchResultText<TResult extends BatchItemResult>(result: TResult) {
     if (result.ok) return result.result ? result.result.charAt(0).toUpperCase() + result.result.slice(1) : "Done";
 
     return result.error ? `Refused: ${result.error.code} — ${result.error.detail}` : "Refused";

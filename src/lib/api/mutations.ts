@@ -7,7 +7,9 @@ import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import { ApiRequestError, rethrowApiError } from "./errors";
 import { batchAlerts, createAlert, deleteAlert, pauseAlert, resumeAlert, testAlert, updateAlert } from "./server-functions-alerts";
+import { batchAlertUsers, deleteAlertUser, pauseAlertUser, resumeAlertUser, updateAlertUser, updateAlertUserDefaults } from "./server-functions-alert-users";
 import { createDestination, deleteDestination, rotateDestinationSecret, testDestination, updateDestination } from "./server-functions-destinations";
+import { createScript, createScriptVersion, deleteScript } from "./server-functions-scripts";
 
 /**
  * The write layer (backend tasks/data-api-dashboard 2-alerts task 2): one entry per write operation (A3 appends the
@@ -15,16 +17,25 @@ import { createDestination, deleteDestination, rotateDestinationSecret, testDest
  */
 const WRITES = {
     batchAlerts,
+    batchAlertUsers,
     createAlert,
     createDestination,
+    createScript,
+    createScriptVersion,
     deleteAlert,
+    deleteAlertUser,
     deleteDestination,
+    deleteScript,
     pauseAlert,
+    pauseAlertUser,
     resumeAlert,
+    resumeAlertUser,
     rotateDestinationSecret,
     testAlert,
     testDestination,
     updateAlert,
+    updateAlertUser,
+    updateAlertUserDefaults,
     updateDestination,
 };
 

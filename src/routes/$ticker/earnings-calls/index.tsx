@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import type { V2Event } from "@/lib/api/types";
 
+import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { DataTable } from "@/components/ui/data-table";
 import { ErrorState } from "@/components/ui/error-state";
@@ -183,6 +184,7 @@ function EarningsCallsPage() {
 
     const header = (
         <PageHeader
+            actions={<AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.calls} />}
             description={(
                 <>
                     The company&apos;s earnings calls and other events (investor days, conferences, shareholder meetings),

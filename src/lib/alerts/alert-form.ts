@@ -496,9 +496,16 @@ export function fromAlert(alert: Alert, { duplicate = false }: { duplicate?: boo
     return state;
 }
 
-/** The pre-filled form of `/alerts/new?type=&symbol=` (A4's entry points): the symbol in the type's company field. */
-export function prefilledForm(type: AlertType | undefined, symbol: string | undefined): AlertFormState {
-    const state = emptyAlertForm(type);
+/**
+ * The pre-filled form of `/alerts/new?type=&symbol=` (A4's entry points): the symbol in the type's company field.
+ * `version` (a script version id, "Create alert from this version") makes it a `script` alert of that version;
+ * `template` (a template key, "Use template") an `indicator` alert of that built-in template.
+ */
+export function prefilledForm(type: AlertType | undefined, symbol: string | undefined, { template, version }: { template?: string; version?: string } = {}): AlertFormState {
+    const state = emptyAlertForm(version ? "script" : template ? "indicator" : type);
+
+    if (version) state.condition.script_version_id = version;
+    else if (template) state.template = { inputs: {}, key: template };
 
     if (!symbol) return state;
 

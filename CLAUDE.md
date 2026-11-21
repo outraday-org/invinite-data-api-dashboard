@@ -545,6 +545,66 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   (+ `TestDeliveryNotice`), `WebhookReferenceView`; wiring `destination-editor.tsx`, `use-destination-actions.tsx`.
   Fixtures `src/lib/alerts/destinations-fixtures.ts` (fake secrets). Tests `src/routes/-tests/destinations-{views,secret}.test.tsx`.
 
+### Alerts (backend `tasks/data-api-dashboard` 2-alerts task 4): end users, scripts, templates, entry points
+
+- **API layer** (own pairs, beside A2's): `alert-users-requests.ts` + `server-functions-alert-users.ts` (the 7 alert-user
+  operations and `GET` / `PATCH /v1/me/alert-user-defaults`), `scripts-requests.ts` + `server-functions-scripts.ts` (the 6
+  script operations; no update-script operation exists). Inputs carry the spec's bounds (`src/lib/alerts/alert-users.ts`,
+  `scripts.ts`: id / name ≤ 200, limits 0–100 000 000 or null, metadata ≤ 50 keys / 8 KB, ≤ 500 batch items, source ≤
+  204 800 characters, name ≤ 100, description ≤ 1 000; `alert-users.test.ts` / `scripts.test.ts` read them from
+  `openapi.json`). **`external_user_id` is any text and never trimmed**: openapi-fetch puts it into the path with
+  `encodeURIComponent` (`team/a:b c` → `team%2Fa%3Ab%20c`, the `:pause` / `:resume` verbs stay verbs) and the router's
+  `$externalUserId` is one encoded segment (`alert-users-requests.test.ts`, browser check). `deleteScript`'s 204 returns
+  `AlertWriteDone`. Writes appended to `WRITES`; reads in `queries.ts` under `ALERT_USER_QUERY_KEYS` (`users`, `defaults`)
+  and `SCRIPT_QUERY_KEYS` (`scripts`); a user write also refetches the alerts and events (a pause / delete changes them).
+- **`/alerts/users`** (`?status=&q=`: `q` = the API's id PREFIX, both sent): id + display name (→ its page), status
+  (the spec has no pause source: status only), usage against the three EFFECTIVE limits (`UsageBar`, "· default" when
+  the limit is the account default; `limitRows` / `limitSource` own | default | none), last fired; row actions Pause /
+  Resume / Delete (each `ConfirmAction`: `alertUserConfirmWords` names `usage.active_alerts`), Edit. "Add end user" /
+  Edit = `AlertUserEditDialog` (PATCH upsert of every field it shows: an empty limit = null = the account default).
+  "Bulk upsert" = `AlertUserBatchDialog`: paste JSON (list or `{ items }`) or CSV with a header (`BATCH_CSV_COLUMNS`;
+  empty cell = not set, `null` = null) or read a file; `parseAlertUserBatch` checks every item with zod
+  (`alertUserBatchItemSchema`) and repeated ids; the preview shows the first 10 problems and how many ≤ 500 requests;
+  Send only when clean; per-item results through A2's `BatchResultsView` (its `BatchItemResult` type takes both batches).
+  A delete shows `AlertUserDeleteResult` (`deleteResultText`); a `deleting` end user stays listed with that status.
+  "End-user defaults" panel (`alert-user-defaults.tsx`, anchor `#defaults`, linked from `/account`): PATCH of the
+  changed fields only (`toDefaultsBody`; null = no limit).
+- **`/alerts/users/$externalUserId`**: profile + metadata (`JsonTree`), each limit's own value vs the effective one and
+  where it comes from (`limitOriginText`), usage bars, the end user's alerts (`listAlerts?external_user_id=`, the alerts
+  list with its row / bulk actions) and events (`listAlertEvents?external_user_id=`, newest first via `useEventList`).
+- **Alert form**: the end-user field is `AlertUserPicker` (free text + a `<datalist>` of existing ids by prefix:
+  `useAlertUserOptions`, one `listAlertUsers?q=&limit=20` page once typing rests 300 ms). `/alerts/new` also reads
+  `?script=&version=` (a `script` alert of that version id) and `?template=` (an `indicator` alert of that template):
+  `prefilledForm(type, symbol, { template, version })`, `newAlertDescription`.
+- **`/alerts/scripts`** (`?tab=templates`): scripts (name + description, versions of 20, the latest version's status and
+  diagnostics, updated) and "Upload script" (`ScriptUploadDialog`: name, description, source as text or file; a source
+  above 204 800 characters is refused before anything is sent, `sourceProblem`; a compile error is still an upload; a 429
+  = another compile of the account is running). Templates tab = `TemplateListView` (key, version, fidelity with
+  `FIDELITY_MEANING`, inputs with defaults and bounds, source; "Use template" → `/alerts/new?type=indicator&template=`).
+- **`/alerts/scripts/$id`** (`?version=`): versions newest first; the picked version's status, compiler, SHA-256, id,
+  declared inputs (`manifestInputs` reads the free `manifest` through guards: chartlang's `inputs` =
+  `{ name: { kind, defaultValue, title?, min?, max?, options? } }`), **"Alert condition ids" = `ScriptVersion.alert_ids`:
+  the ids `condition.alert_ids` can name (its `defineAlertCondition` ids and `alert()` call sites), NOT the alerts using
+  the version** — the contract has no way to list those (no `listAlerts` filter by script); diagnostics linking
+  `#script-L<n>`; the source as one anchored row per line (`ScriptSourceView`, marked lines with a caret under the
+  column; the box scrolls sideways, never the page). "Create alert from this version" (an `ok` version only) →
+  `/alerts/new?type=script&script=&version=`; "Upload new version" (the button says "20 of 20 versions — limit reached");
+  Delete confirmed; a 409 → `ScriptDeleteConflict`: the API's `detail` with every `alt_…` id it names linked
+  (`alertIdsInDetail`; the API names ≤ 5 and "and more").
+- **Entry points on ticker pages** (`create-alert-button.tsx`, `AlertEntryPoints`): overview (price types + a stock's
+  `fundamental_metric`, a row above the overview), calls list + call page (`earnings_call`, `earnings_call_keyword`,
+  `earnings_results`, `event_countdown`), news (`news`, `news_keyword`), filings (`filing`, `filing_keyword`), dividends
+  (`dividend`): "Create alert" (one type = a link, several = a menu) → `/alerts/new?type=&symbol=`, and "N alerts on X" →
+  `/alerts?symbol=X` (N = one `listAlerts?symbol=&limit=100` page, "100+" when `has_more`; `useSymbolAlertCount`, cached
+  5 min). `entryTypesFor`: nothing when the instrument's `datasets` lacks `alerts`; a non-stock keeps
+  `NON_STOCK_ALERT_TYPES` only (the spec: an ETF takes `dividend`, `event_countdown`, `filing*` and the instrument types,
+  and refuses `earnings_call*`, `earnings_results`, `fundamental_metric`, `news*`) — an ETF's news page has none. Hidden
+  without a key or the alerts plan (`plansAlerts`).
+- Tests: `src/lib/api/alert-users-requests.test.ts` (paths incl. the encoded id, methods, verbs, 204 / 409),
+  `src/lib/alerts/{alert-users,scripts}.test.ts`, `src/routes/-tests/{alert-users-pages,scripts-pages,alert-entry-points}.test.tsx`.
+  Fixtures appended to `src/lib/alerts/alerts-fixtures.ts` (the spec's `smoke-a` / defaults / `createScript` examples,
+  `ODD_USER_ID`).
+
 ### UI Components (`src/components/ui/`)
 
 Base UI components built on `@base-ui/react` primitives with `class-variance-authority` for variants. Uses `cn()` utility from `src/lib/utils.ts` (clsx + tailwind-merge).
@@ -720,7 +780,7 @@ states why here. Count: 89 non-alert rows + 36 = 125 operation ids in `openapi.j
 | `statusGet` | `GET /status` | `/account` (API status card); sidebar Help (status dot beside "API status"); O7 group 7 |
 | `statusLicensing` | `GET /status/licensing` | `/account` (licensing card: the plan's rights, routes per family); O7 group 7 |
 | `healthGet` | `GET /health` | No view, by design: a liveness probe (`status`, `timestamp`) that says nothing a reader can act on; `/status` (above) carries the product states and uptime the dashboard shows |
-| `listAlerts` | `GET /v1/alerts` | `/alerts` (filters incl. 7.1's `symbol` / `destination_id`; quota line); quota on a refused create (`limit=1`) (alerts task 2) |
+| `listAlerts` | `GET /v1/alerts` | `/alerts` (filters incl. 7.1's `symbol` / `destination_id`; quota line); quota on a refused create (`limit=1`) (alerts task 2); `/alerts/users/$externalUserId` (`external_user_id`), the ticker pages' "N alerts on X" (`symbol`, `limit=100`) (alerts task 4) |
 | `createAlert` | `POST /v1/alerts` | `/alerts/new` (Create with `Idempotency-Key`; Check = `validate_only`) (alerts task 2) |
 | `getAlert` | `GET /v1/alerts/{id}` | `/alerts/$id`; `/alerts/new?from=` (Duplicate) (alerts task 2) |
 | `updateAlert` | `PATCH /v1/alerts/{id}` | `/alerts/$id?edit=true` (with `version`) (alerts task 2) |
@@ -729,10 +789,10 @@ states why here. Count: 89 non-alert rows + 36 = 125 operation ids in `openapi.j
 | `resumeAlert` | `POST /v1/alerts/{id}:resume` | `/alerts` row action; `/alerts/$id` (alerts task 2) |
 | `testAlert` | `POST /v1/alerts/{id}:test` | `/alerts` row action; `/alerts/$id` "Send test event" (confirmed) (alerts task 2) |
 | `batchAlerts` | `POST /v1/alerts:batch` | `/alerts` bulk pause / resume / delete (confirmed; per-item results) (alerts task 2) |
-| `listAlertEvents` | `GET /v1/alert-events` | `/alerts/events` (alerts task 2) |
+| `listAlertEvents` | `GET /v1/alert-events` | `/alerts/events` (alerts task 2); `/alerts/users/$externalUserId` (`external_user_id`) (alerts task 4) |
 | `getAlertEvent` | `GET /v1/alert-events/{id}` | `/alerts/events?event=` (e.g. from "Send test event") (alerts task 2) |
 | `listAlertEventsForAlert` | `GET /v1/alerts/{id}/events` | `/alerts/$id` (events) (alerts task 2) |
-| `listAlertTemplates` | `GET /v1/alert-templates` | `/alerts/new`, `/alerts/$id?edit=true` (indicator template picker) (alerts task 2) |
+| `listAlertTemplates` | `GET /v1/alert-templates` | `/alerts/new`, `/alerts/$id?edit=true` (indicator template picker) (alerts task 2); `/alerts/scripts?tab=templates` (alerts task 4) |
 | `streamEvents` (channel `alerts`) | `WS /v1/stream` `alert_event` | `/alerts/events` "Live" (alerts task 2) |
 | `listDestinations` | `GET /v1/destinations` | `/alerts/destinations` (alerts task 3) |
 | `createDestination` | `POST /v1/destinations` | `/alerts/destinations?new=true` (`Idempotency-Key`; secret shown once) (alerts task 3) |
@@ -742,3 +802,18 @@ states why here. Count: 89 non-alert rows + 36 = 125 operation ids in `openapi.j
 | `rotateDestinationSecret` | `POST /v1/destinations/{id}:rotate-secret` | `/alerts/destinations/$id`, list row action (confirmed; secret shown once) (alerts task 3) |
 | `testDestination` | `POST /v1/destinations/{id}:test` | `/alerts/destinations/$id?test=` (confirmed; delivery watched ≤ 30 s) (alerts task 3) |
 | `listDestinationDeliveries` | `GET /v1/destinations/{id}/deliveries` | `/alerts/destinations/$id` (deliveries; status filter over the loaded rows) (alerts task 3) |
+| `listAlertUsers` | `GET /v1/alert-users` | `/alerts/users` (`?status=&q=`); the alert form's end-user suggestions (`q` prefix, `limit=20`) (alerts task 4) |
+| `getAlertUser` | `GET /v1/alert-users/{external_user_id}` | `/alerts/users/$externalUserId` (alerts task 4) |
+| `updateAlertUser` | `PATCH /v1/alert-users/{external_user_id}` | `/alerts/users` "Add end user" / Edit, `/alerts/users/$externalUserId` Edit (upsert) (alerts task 4) |
+| `deleteAlertUser` | `DELETE /v1/alert-users/{external_user_id}` | `/alerts/users` row action, `/alerts/users/$externalUserId` (confirmed; erasure counts shown) (alerts task 4) |
+| `batchAlertUsers` | `POST /v1/alert-users:batch` | `/alerts/users` "Bulk upsert" (JSON / CSV paste, ≤ 500 a request, per-item results) (alerts task 4) |
+| `pauseAlertUser` | `POST /v1/alert-users/{external_user_id}:pause` | `/alerts/users` row action, `/alerts/users/$externalUserId` (confirmed) (alerts task 4) |
+| `resumeAlertUser` | `POST /v1/alert-users/{external_user_id}:resume` | `/alerts/users` row action, `/alerts/users/$externalUserId` (confirmed) (alerts task 4) |
+| `getAlertUserDefaults` | `GET /v1/me/alert-user-defaults` | `/alerts/users#defaults` (linked from `/account`); the edit dialog's "account default" hints (alerts task 4) |
+| `updateAlertUserDefaults` | `PATCH /v1/me/alert-user-defaults` | `/alerts/users#defaults` "Edit defaults" (changed fields only) (alerts task 4) |
+| `listScripts` | `GET /v1/scripts` | `/alerts/scripts` (alerts task 4) |
+| `createScript` | `POST /v1/scripts` | `/alerts/scripts` "Upload script" (alerts task 4) |
+| `getScript` | `GET /v1/scripts/{id}` | `/alerts/scripts/$id` (alerts task 4) |
+| `deleteScript` | `DELETE /v1/scripts/{id}` | `/alerts/scripts/$id` Delete (confirmed; a 409 names the alerts) (alerts task 4) |
+| `createScriptVersion` | `POST /v1/scripts/{id}/versions` | `/alerts/scripts/$id` "Upload new version" (alerts task 4) |
+| `listScriptVersions` | `GET /v1/scripts/{id}/versions` | `/alerts/scripts/$id` (versions, diagnostics, source) (alerts task 4) |

@@ -22,6 +22,9 @@ vi.mock("@/lib/api/queries", () => ({
     useFund: vi.fn(),
     useFundPositionsInfinite: vi.fn(() => ({ data: null, error: null })),
     useInstrument: vi.fn(),
+    // The overview's alert entry points (alerts task 4): no key in these tests = none shown.
+    useKeyState: () => ({ me: null }),
+    useSymbolAlertCount: () => ({ data: null }),
     useV2Company: vi.fn(() => ({ data: null, error: null, isLoading: true })),
 }));
 

@@ -8,6 +8,7 @@ import type { ExportColumn } from "@/lib/export";
 import type { LiveNewsStop } from "@/lib/live/use-live-news";
 import type { NewsFilters, NewsSearch } from "@/lib/news/labels";
 
+import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
 import { ExportMenu } from "@/components/api/export-menu";
 import { TabStrip } from "@/components/navigation/tab-strip";
 import { Button } from "@/components/ui/button";
@@ -206,12 +207,15 @@ function NewsPage() {
     };
 
     const tabs = (
-        <TabStrip
-            aria-label="News view"
-            onSelect={value => onFilterChange({ view: value === "announcements" ? "announcements" : undefined })}
-            options={VIEW_OPTIONS}
-            value={search.view ?? "news"}
-        />
+        <>
+            <AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.news} />
+            <TabStrip
+                aria-label="News view"
+                onSelect={value => onFilterChange({ view: value === "announcements" ? "announcements" : undefined })}
+                options={VIEW_OPTIONS}
+                value={search.view ?? "news"}
+            />
+        </>
     );
 
     // The item panel (`?item=`); `title` = the list row's headline, shown before the item answers.

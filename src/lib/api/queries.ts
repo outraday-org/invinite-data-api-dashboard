@@ -17,12 +17,19 @@ import type {
     AlertStatus,
     AlertTemplatesResponse,
     AlertType,
+    AlertUser,
+    AlertUserDefaults,
+    AlertUsersListResponse,
+    AlertUserStatus,
     CompanyFiscalPeriod,
     Destination,
     DestinationDeliveriesResponse,
     DestinationsListResponse,
     FiscalPeriodType,
     SearchMode,
+    Script,
+    ScriptsListResponse,
+    ScriptVersionsResponse,
     SecSearchMode,
     StatementType,
     V2AnnouncementsResponse,
@@ -257,7 +264,9 @@ import {
     listAlerts,
     listAlertTemplates,
 } from "./server-functions-alerts";
+import { getAlertUser, getAlertUserDefaults, listAlertUsers } from "./server-functions-alert-users";
 import { getDestination, listDestinationDeliveries, listDestinations } from "./server-functions-destinations";
+import { getScript, listScripts, listScriptVersions } from "./server-functions-scripts";
 
 function useApiKey() {
     const apiKey = useApiKeyStore(s => s.apiKey);
@@ -2358,5 +2367,120 @@ export function useDestinationDeliveriesInfinite(id: string, poll?: (pages: Read
         queryKey: [...DESTINATION_QUERY_KEYS.deliveries, id],
         refetchInterval: query => (poll ? poll(query.state.data?.pages ?? []) : false),
         staleTime: ALERTS_STALE_MS,
+    });
+}
+
+// Alert end users, their defaults, scripts (backend tasks/data-api-dashboard 2-alerts task 4). Status-aware like the
+// alert reads (no toast: the pages render `AlertsState`); their writes refetch by these key prefixes.
+
+/** The query key prefixes of the end-user reads (beside `ALERT_QUERY_KEYS`). */
+export const ALERT_USER_QUERY_KEYS = {
+    /** The account's end-user defaults. */
+    defaults: ["v2", "alert-user-defaults"],
+    /** The end users list, its picker search and one end user. */
+    users: ["v2", "alert-users"],
+} as const;
+
+/** The query key prefixes of the script reads. */
+export const SCRIPT_QUERY_KEYS = {
+    /** The scripts list, one script and its versions. */
+    scripts: ["v2", "scripts"],
+} as const;
+
+/** End users per page of `/v1/alert-users`. */
+export const ALERT_USERS_PAGE = 100;
+
+/** The filters of `GET /v1/alert-users` (`q` = an id prefix); unset = not sent. */
+export type AlertUsersFilters = { q?: string; status?: AlertUserStatus };
+
+/** The account's end users by cursor (ordered by id), filtered on the server. */
+export function useAlertUsersInfinite(filters: AlertUsersFilters) {
+    return useEarningsInfinite<AlertUsersListResponse>({
+        enabled: true,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => listAlertUsers({ data: { ...filters, apiKey, cursor: cursor ?? undefined, limit: ALERT_USERS_PAGE } }),
+        queryKey: [...ALERT_USER_QUERY_KEYS.users, "list", filters.status ?? "", filters.q ?? ""],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** The alert form's end-user suggestions: one page of up to 20 ids starting with `prefix` ("" = the first 20). */
+export function useAlertUserSuggestions(prefix: string, enabled: boolean) {
+    return useEarningsQuery<AlertUsersListResponse>({
+        enabled,
+        errorMessage: null,
+        load: apiKey => listAlertUsers({ data: { apiKey, limit: 20, q: prefix || undefined } }),
+        placeholderData: keepPreviousData,
+        queryKey: [...ALERT_USER_QUERY_KEYS.users, "suggest", prefix],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** One end user by its id (any text); idle for "". */
+export function useAlertUser(externalUserId: string) {
+    return useEarningsQuery<AlertUser>({
+        enabled: externalUserId.length > 0,
+        errorMessage: null,
+        load: apiKey => getAlertUser({ data: { apiKey, externalUserId } }),
+        queryKey: [...ALERT_USER_QUERY_KEYS.users, "one", externalUserId],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** The account's end-user defaults (`GET /v1/me/alert-user-defaults`). */
+export function useAlertUserDefaults() {
+    return useEarningsQuery<AlertUserDefaults>({
+        enabled: true,
+        errorMessage: null,
+        load: apiKey => getAlertUserDefaults({ data: { apiKey } }),
+        queryKey: [...ALERT_USER_QUERY_KEYS.defaults],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** Scripts per page of `/v1/scripts`. */
+export const SCRIPTS_PAGE = 100;
+
+/** The account's scripts by cursor (oldest first). */
+export function useScriptsInfinite() {
+    return useEarningsInfinite<ScriptsListResponse>({
+        enabled: true,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => listScripts({ data: { apiKey, cursor: cursor ?? undefined, limit: SCRIPTS_PAGE } }),
+        queryKey: [...SCRIPT_QUERY_KEYS.scripts, "list"],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** One script with its latest version; idle for "". */
+export function useScript(id: string) {
+    return useEarningsQuery<Script>({
+        enabled: id.length > 0,
+        errorMessage: null,
+        load: apiKey => getScript({ data: { apiKey, id } }),
+        queryKey: [...SCRIPT_QUERY_KEYS.scripts, "one", id],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** Every version of a script: one page (a script has at most 20); idle for "". */
+export function useScriptVersions(id: string) {
+    return useEarningsQuery<ScriptVersionsResponse>({
+        enabled: id.length > 0,
+        errorMessage: null,
+        load: apiKey => listScriptVersions({ data: { apiKey, id, limit: 50 } }),
+        queryKey: [...SCRIPT_QUERY_KEYS.scripts, "versions", id],
+        staleTime: ALERTS_STALE_MS,
+    });
+}
+
+/** How many alerts name `symbol`: one `listAlerts?symbol=` page (`has_more` = "N+"); cached per ticker; idle for "". */
+export function useSymbolAlertCount(symbol: string, enabled: boolean) {
+    return useEarningsQuery<AlertsListResponse>({
+        enabled: enabled && symbol.length > 0,
+        errorMessage: null,
+        load: apiKey => listAlerts({ data: { apiKey, limit: ALERTS_PAGE, symbol } }),
+        queryKey: [...ALERT_QUERY_KEYS.list, "symbol-count", symbol],
+        staleTime: 5 * 60 * 1000,
     });
 }

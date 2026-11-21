@@ -7,6 +7,7 @@ import type { Alert, AlertWriteDone } from "@/lib/api/types";
 
 import { AlertFormView } from "@/components/alerts/alert-form-view";
 import { LimitNotice } from "@/components/alerts/alert-parts";
+import { useAlertUserOptions } from "@/components/alerts/alert-user-picker";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
@@ -78,6 +79,8 @@ export function CreateAlertForm({ initial }: { initial: AlertFormState }) {
 
     const templates = useAlertTemplates(state.type === "indicator");
 
+    const endUserOptions = useAlertUserOptions(state.externalUserId);
+
     const create = useApiMutation("createAlert", { invalidates: [ALERT_QUERY_KEYS.list] });
 
     const check = useApiMutation("createAlert", { invalidates: [] });
@@ -144,6 +147,7 @@ export function CreateAlertForm({ initial }: { initial: AlertFormState }) {
 
     return (
         <AlertFormView
+            endUserOptions={endUserOptions}
             errors={errors}
             mode="create"
             notice={<WriteOutcomeNotice outcome={outcome} />}
@@ -177,6 +181,8 @@ export function EditAlertForm({ alert, initial, onDone, onReload }: { alert: Ale
 
     const templates = useAlertTemplates(state.type === "indicator");
 
+    const endUserOptions = useAlertUserOptions(state.externalUserId);
+
     const update = useApiMutation("updateAlert", { invalidates: [ALERT_QUERY_KEYS.list, ALERT_QUERY_KEYS.alert] });
 
     const onSubmit = async () => {
@@ -206,6 +212,7 @@ export function EditAlertForm({ alert, initial, onDone, onReload }: { alert: Ale
 
     return (
         <AlertFormView
+            endUserOptions={endUserOptions}
             errors={errors}
             mode="edit"
             notice={<WriteOutcomeNotice onReload={onReload} outcome={outcome} />}

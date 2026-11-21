@@ -7,6 +7,7 @@ import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 import type { V2FilingsResponse } from "@/lib/api/types";
 import type { FilingListRow } from "@/lib/sec/parity";
 
+import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
 import { SecFilingSearch } from "@/components/sec/sec-filing-search";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
@@ -219,6 +220,7 @@ function FilingsPage() {
             <FilingsHeader
                 actions={(
                     <>
+                        <AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.filings} />
                         <Button aria-pressed={search.search === true} onClick={() => onChange({ search: search.search ? undefined : true })} type="button" variant={search.search ? "secondary" : "outline"}>
                             <SearchIcon />
                             Search text

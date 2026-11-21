@@ -2,7 +2,8 @@ import type * as React from "react";
 
 import { Link } from "@tanstack/react-router";
 
-import type { AlertBatchResult, AlertQuotaUsage, AlertStatus } from "@/lib/api/types";
+import type { BatchItemResult } from "@/lib/alerts/labels";
+import type { AlertQuotaUsage, AlertStatus } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -95,8 +96,8 @@ export function LimitNotice({ error, onLoadQuota, quota }: { error: unknown; onL
     );
 }
 
-/** Per-item results of a bulk change (`AlertBatchResult`): counts first, every refusal listed with its reason. */
-export function BatchResultsView({ ids, onDismiss, results }: { ids: ReadonlyArray<string>; onDismiss: () => void; results: ReadonlyArray<AlertBatchResult> }) {
+/** Per-item results of a bulk change (`AlertBatchResult`, A4: `AlertUserBatchResult`): counts first, every refusal listed with its reason. */
+export function BatchResultsView({ ids, onDismiss, results }: { ids: ReadonlyArray<string>; onDismiss: () => void; results: ReadonlyArray<BatchItemResult> }) {
     const refused = results.filter(result => !result.ok);
 
     const done = results.length - refused.length;

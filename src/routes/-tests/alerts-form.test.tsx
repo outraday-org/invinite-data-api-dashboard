@@ -28,6 +28,7 @@ vi.mock("@/lib/api/queries", () => ({
     ALERT_QUERY_KEYS: { alert: ["a"], event: ["e"], events: ["es"], list: ["l"], templates: ["t"] },
     useAlertsQuota: () => ({ data: null }),
     useAlertTemplates: () => ({ data: TEMPLATES_FIXTURE, error: null, isLoading: false }),
+    useAlertUserSuggestions: () => ({ data: null }),
 }));
 
 const navigate = vi.hoisted(() => vi.fn());
