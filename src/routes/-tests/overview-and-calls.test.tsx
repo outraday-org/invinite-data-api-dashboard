@@ -60,8 +60,6 @@ describe("overview fact tiles (O7 group 4)", () => {
         city: "CUPERTINO",
         composite_figi: "BBG000B9XRY4",
         country_code: "US",
-        fama_industry: null,
-        fama_sector: null,
         insider_own_pct: 0.07,
         insider_own_shares: 9_898_119,
         inst_own_pct: 63.65,
@@ -74,7 +72,7 @@ describe("overview fact tiles (O7 group 4)", () => {
         zip_code: "95014",
     };
 
-    it("ownership, short float, address, Fama-French and listing from the company already fetched", () => {
+    it("ownership, short float, address and listing from the company already fetched (no Fama-French: the API removed the fields)", () => {
         render(<CompanyFactTilesView company={AAPL} />);
 
         const tiles = screen.getByTestId("company-fact-tiles");
@@ -91,8 +89,10 @@ describe("overview fact tiles (O7 group 4)", () => {
 
         expect(screen.getByText("Listed")).toBeInTheDocument();
 
-        // AAPL's Fama-French fields are null (live 2026-11-21): "Not stated", never an empty tile.
-        expect(screen.getAllByText("Not stated")).toHaveLength(1);
+        // The Data API removed `fama_sector` / `fama_industry` (always null): no tile, and an answer without them renders.
+        expect(tiles).not.toHaveTextContent("Fama-French");
+
+        expect(screen.queryByText("Not stated")).toBeNull();
     });
 
     it("a delisted company says so; nothing stated reads as such", () => {

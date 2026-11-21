@@ -239,8 +239,6 @@ export type CompanyTileFields = Pick<
     | "city"
     | "composite_figi"
     | "country_code"
-    | "fama_industry"
-    | "fama_sector"
     | "homepage_url"
     | "insider_own_pct"
     | "insider_own_shares"
@@ -257,7 +255,7 @@ export type CompanyTileFields = Pick<
 
 /**
  * The overview's tiles: the next call (links to it), the latest filing, the website and IR site; then ownership
- * (institutional, insider, short float), address, Fama-French classification and the listing (FIGI, delisted).
+ * (institutional, insider, short float), address and the listing (FIGI, delisted).
  */
 export function OverviewTiles({ company, datasets, ticker }: { company: CompanyTileFields; datasets: ReadonlyArray<V2Dataset>; ticker: string }) {
     const hasEvents = datasets.includes("events");
@@ -317,7 +315,7 @@ function FactTile({ children, label }: { children: ReactNode; label: string }) {
 
 const notStated = <span className="text-muted-foreground">Not stated</span>;
 
-/** The fact tiles (pure): ownership, short float, address, Fama-French, listing. */
+/** The fact tiles (pure): ownership, short float, address, listing. */
 export function CompanyFactTilesView({ company }: { company: Omit<CompanyTileFields, "homepage_url" | "investor_relations_url"> }) {
     const institutional = ownershipText(company.inst_own_pct, company.inst_own_shares);
 
@@ -327,8 +325,6 @@ export function CompanyFactTilesView({ company }: { company: Omit<CompanyTileFie
 
     const address = addressLines(company);
 
-    const fama = [company.fama_sector, company.fama_industry].filter(Boolean).join(" · ");
-
     return (
         <div className="grid gap-3 sm:grid-cols-3 md:col-span-2" data-testid="company-fact-tiles">
             <FactTile label="Institutional ownership">{institutional ? <span className="font-medium tabular-nums">{institutional}</span> : notStated}</FactTile>
@@ -337,7 +333,6 @@ export function CompanyFactTilesView({ company }: { company: Omit<CompanyTileFie
             <FactTile label="Address">
                 {address.length > 0 ? <address className="font-medium not-italic">{address.map(line => <div key={line}>{line}</div>)}</address> : notStated}
             </FactTile>
-            <FactTile label="Fama-French sector · industry">{fama ? <span className="font-medium">{fama}</span> : notStated}</FactTile>
             <FactTile label="Listing">
                 <div className="flex flex-wrap items-center gap-2">
                     {company.composite_figi ? <span className="font-medium" title="Composite FIGI">{`FIGI ${company.composite_figi}`}</span> : <span className="text-muted-foreground">No FIGI</span>}
