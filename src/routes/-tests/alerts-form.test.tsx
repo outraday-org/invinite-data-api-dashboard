@@ -26,9 +26,14 @@ vi.mock("@/lib/api/mutations", async importOriginal => ({
 
 vi.mock("@/lib/api/queries", () => ({
     ALERT_QUERY_KEYS: { alert: ["a"], event: ["e"], events: ["es"], list: ["l"], templates: ["t"] }, ALERT_USER_QUERY_KEYS: { defaults: ["d"], users: ["u"] },
+    // A4's pickers: no destination / script on the mocked account.
+    DESTINATION_QUERY_KEYS: { deliveries: ["dd"], destination: ["d1"], list: ["dl"] },
     useAlertsQuota: () => ({ data: null }),
     useAlertTemplates: () => ({ data: TEMPLATES_FIXTURE, error: null, isLoading: false }),
     useAlertUserSuggestions: () => ({ data: null }),
+    useDestinationsInfinite: () => ({ data: null, error: null, fetchNextPage: vi.fn(), hasNextPage: false, isFetchingNextPage: false, isLoading: false }),
+    useScriptsInfinite: () => ({ data: null, error: null, isLoading: false }),
+    useScriptVersions: () => ({ data: null, error: null, isLoading: false }),
 }));
 
 const navigate = vi.hoisted(() => vi.fn());

@@ -1,10 +1,12 @@
 import * as React from "react";
 
+import type { DestinationOptions, ScriptOptions } from "@/components/alerts/alert-form-pickers";
 import type { AlertUserOption } from "@/components/alerts/alert-user-picker";
 import type { ActiveWindowState, AlertFormState, FieldErrors, FieldText } from "@/lib/alerts/alert-form";
 import type { ConditionFieldSpec, FieldSpec } from "@/lib/alerts/condition-fields";
 import type { AlertTemplate, AlertType } from "@/lib/api/types";
 
+import { declaredInputsOf, DestinationPicker, ScriptInputsFields, ScriptVersionPicker } from "@/components/alerts/alert-form-pickers";
 import { AlertUserPicker } from "@/components/alerts/alert-user-picker";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -311,6 +313,7 @@ export type TemplatesState = { data: ReadonlyArray<AlertTemplate>; error: unknow
  * (a conflict, a quota, the Check result). "Check" = `validate_only` (nothing created).
  */
 export function AlertFormView({
+    destinationOptions,
     endUserOptions = [],
     errors,
     mode,
@@ -320,9 +323,12 @@ export function AlertFormView({
     onCheck,
     onSubmit,
     pending,
+    scriptOptions,
     state,
     templates,
 }: {
+    /** The destination picker's data (A4); absent = the id text field. */
+    destinationOptions?: DestinationOptions;
     /** Existing end users suggested for the end-user field (A4: `useAlertUserOptions`). */
     endUserOptions?: ReadonlyArray<AlertUserOption>;
     errors: FieldErrors;
@@ -333,6 +339,8 @@ export function AlertFormView({
     onCheck?: () => void;
     onSubmit: () => void;
     pending: { check: boolean; submit: boolean };
+    /** The script version picker's data (A4, `script` alerts); absent = the id text field. */
+    scriptOptions?: ScriptOptions;
     state: AlertFormState;
     templates: TemplatesState;
 }) {
@@ -371,18 +379,43 @@ export function AlertFormView({
                     </div>
                 )}
                 <div className="grid gap-3 sm:grid-cols-2">
-                    {fields.map(spec => (spec.kind === "template"
-                        ? <TemplatePicker errors={errors} key={spec.name} onChange={template => set({ template })} state={state.template} templates={templates} />
-                        : (
-                                <FieldInput
-                                    error={errors[`condition.${spec.name}`]}
-                                    fieldKey={`condition.${spec.name}`}
-                                    key={spec.name}
-                                    onChange={value => set({ condition: { ...state.condition, [spec.name]: value } })}
-                                    spec={spec}
-                                    value={state.condition[spec.name]}
-                                />
-                            )))}
+                    {fields.map((spec) => {
+                        if (spec.kind === "template") return <TemplatePicker errors={errors} key={spec.name} onChange={template => set({ template })} state={state.template} templates={templates} />;
+
+                        const text = typeof state.condition[spec.name] === "string" ? state.condition[spec.name] as string : "";
+
+                        const setText = (value: string) => set({ condition: { ...state.condition, [spec.name]: value } });
+
+                        // A4: the script version from the account's scripts, its declared inputs as fields.
+                        if (spec.name === "script_version_id" && scriptOptions) {
+                            return (
+                                <FieldShell error={errors["condition.script_version_id"]} help="A compiled version of one of your scripts (Scripts tab)." htmlFor={fieldId("condition.script_version_id")} key={spec.name} label="Script version" wide>
+                                    <ScriptVersionPicker id={fieldId("condition.script_version_id")} onChange={setText} options={scriptOptions} value={text} />
+                                </FieldShell>
+                            );
+                        }
+
+                        const declared = spec.name === "inputs" ? declaredInputsOf(scriptOptions, typeof state.condition.script_version_id === "string" ? state.condition.script_version_id : "") : [];
+
+                        if (declared.length > 0) {
+                            return (
+                                <FieldShell error={errors["condition.inputs"]} help="The inputs the version declares; an empty field keeps its default." key={spec.name} label="Script inputs" wide>
+                                    <ScriptInputsFields inputs={declared} onChange={setText} text={text} />
+                                </FieldShell>
+                            );
+                        }
+
+                        return (
+                            <FieldInput
+                                error={errors[`condition.${spec.name}`]}
+                                fieldKey={`condition.${spec.name}`}
+                                key={spec.name}
+                                onChange={value => set({ condition: { ...state.condition, [spec.name]: value } })}
+                                spec={spec}
+                                value={state.condition[spec.name]}
+                            />
+                        );
+                    })}
                 </div>
                 {errors.condition && <p className="text-destructive" role="alert">{errors.condition}</p>}
             </Section>
@@ -404,9 +437,17 @@ export function AlertFormView({
             </Section>
             <Section title="4. Delivery">
                 <div className="grid gap-3 sm:grid-cols-2">
-                    <FieldShell error={errors.destination_ids} help="Destination ids (dst_…, at most 10), one per line or comma. None = the event feed and the live stream only." htmlFor={fieldId("destination_ids")} label="Destinations" wide>
-                        <Textarea className="font-mono" id={fieldId("destination_ids")} onChange={event => set({ destinationIds: event.target.value })} rows={2} value={state.destinationIds} />
-                    </FieldShell>
+                    {destinationOptions
+                        ? (
+                                <FieldShell error={errors.destination_ids} help="Where each fire is delivered (at most 10). None = the event feed and the live stream only." label="Destinations" wide>
+                                    <DestinationPicker onChange={destinationIds => set({ destinationIds })} options={destinationOptions} value={state.destinationIds} />
+                                </FieldShell>
+                            )
+                        : (
+                                <FieldShell error={errors.destination_ids} help="Destination ids (dst_…, at most 10), one per line or comma. None = the event feed and the live stream only." htmlFor={fieldId("destination_ids")} label="Destinations" wide>
+                                    <Textarea className="font-mono" id={fieldId("destination_ids")} onChange={event => set({ destinationIds: event.target.value })} rows={2} value={state.destinationIds} />
+                                </FieldShell>
+                            )}
                     <FieldShell error={errors.external_user_id} help="Your end user's id (filters lists and events): pick an existing one or type a new id (the alert creates it)." htmlFor={fieldId("external_user_id")} label="End user id">
                         <AlertUserPicker id={fieldId("external_user_id")} onChange={externalUserId => set({ externalUserId })} options={endUserOptions} value={state.externalUserId} />
                     </FieldShell>

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import type { AlertFormState, FieldErrors } from "@/lib/alerts/alert-form";
 import type { Alert, AlertWriteDone } from "@/lib/api/types";
 
+import { useAlertFormPickers } from "@/components/alerts/alert-form-pickers";
 import { AlertFormView } from "@/components/alerts/alert-form-view";
 import { LimitNotice } from "@/components/alerts/alert-parts";
 import { useAlertUserOptions } from "@/components/alerts/alert-user-picker";
@@ -68,7 +69,7 @@ function WriteOutcomeNotice({ onReload, outcome }: { onReload?: () => void; outc
  * `/alerts/new`: the form, "Check" (`validate_only`, nothing created) and Create with ONE `Idempotency-Key` per
  * submission (a double click or a retry after a lost answer creates one alert). A created alert opens its page.
  */
-export function CreateAlertForm({ initial }: { initial: AlertFormState }) {
+export function CreateAlertForm({ initial, initialScriptId }: { initial: AlertFormState; initialScriptId?: string }) {
     const navigate = useNavigate();
 
     const [state, setState] = React.useState(initial);
@@ -80,6 +81,8 @@ export function CreateAlertForm({ initial }: { initial: AlertFormState }) {
     const templates = useAlertTemplates(state.type === "indicator");
 
     const endUserOptions = useAlertUserOptions(state.externalUserId);
+
+    const pickers = useAlertFormPickers(state, setState, initialScriptId);
 
     // A create naming a new end user creates it; an end user's usage counts its alerts (A4).
     const create = useApiMutation("createAlert", { invalidates: [ALERT_QUERY_KEYS.list, ALERT_USER_QUERY_KEYS.users] });
@@ -147,22 +150,27 @@ export function CreateAlertForm({ initial }: { initial: AlertFormState }) {
     };
 
     return (
-        <AlertFormView
-            endUserOptions={endUserOptions}
-            errors={errors}
-            mode="create"
-            notice={<WriteOutcomeNotice outcome={outcome} />}
-            onChange={(next) => {
-                setState(next);
+        <>
+            <AlertFormView
+                destinationOptions={pickers.destinationOptions}
+                endUserOptions={endUserOptions}
+                errors={errors}
+                mode="create"
+                notice={<WriteOutcomeNotice outcome={outcome} />}
+                onChange={(next) => {
+                    setState(next);
 
-                setOutcome(null);
-            }}
-            onCheck={() => void onCheck()}
-            onSubmit={() => void onSubmit()}
-            pending={{ check: check.isPending, submit: create.isPending }}
-            state={state}
-            templates={{ data: templates.data?.data ?? [], error: templates.error, isLoading: templates.isLoading }}
-        />
+                    setOutcome(null);
+                }}
+                onCheck={() => void onCheck()}
+                onSubmit={() => void onSubmit()}
+                pending={{ check: check.isPending, submit: create.isPending }}
+                scriptOptions={pickers.scriptOptions}
+                state={state}
+                templates={{ data: templates.data?.data ?? [], error: templates.error, isLoading: templates.isLoading }}
+            />
+            {pickers.dialog}
+        </>
     );
 }
 
@@ -183,6 +191,8 @@ export function EditAlertForm({ alert, initial, onDone, onReload }: { alert: Ale
     const templates = useAlertTemplates(state.type === "indicator");
 
     const endUserOptions = useAlertUserOptions(state.externalUserId);
+
+    const pickers = useAlertFormPickers(state, setState);
 
     const update = useApiMutation("updateAlert", { invalidates: [ALERT_QUERY_KEYS.list, ALERT_QUERY_KEYS.alert, ALERT_USER_QUERY_KEYS.users] });
 
@@ -212,21 +222,26 @@ export function EditAlertForm({ alert, initial, onDone, onReload }: { alert: Ale
     };
 
     return (
-        <AlertFormView
-            endUserOptions={endUserOptions}
-            errors={errors}
-            mode="edit"
-            notice={<WriteOutcomeNotice onReload={onReload} outcome={outcome} />}
-            onCancel={onDone}
-            onChange={(next) => {
-                setState(next);
+        <>
+            <AlertFormView
+                destinationOptions={pickers.destinationOptions}
+                endUserOptions={endUserOptions}
+                errors={errors}
+                mode="edit"
+                notice={<WriteOutcomeNotice onReload={onReload} outcome={outcome} />}
+                onCancel={onDone}
+                onChange={(next) => {
+                    setState(next);
 
-                setOutcome(null);
-            }}
-            onSubmit={() => void onSubmit()}
-            pending={{ check: false, submit: update.isPending }}
-            state={state}
-            templates={{ data: templates.data?.data ?? [], error: templates.error, isLoading: templates.isLoading }}
-        />
+                    setOutcome(null);
+                }}
+                onSubmit={() => void onSubmit()}
+                pending={{ check: false, submit: update.isPending }}
+                scriptOptions={pickers.scriptOptions}
+                state={state}
+                templates={{ data: templates.data?.data ?? [], error: templates.error, isLoading: templates.isLoading }}
+            />
+            {pickers.dialog}
+        </>
     );
 }

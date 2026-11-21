@@ -74,7 +74,7 @@ function NewAlertPage() {
     return (
         <div className="flex flex-col gap-4">
             {header}
-            <CreateAlertForm initial={initial} key={search.from ?? [search.type, search.symbol, search.version, search.template].map(part => part ?? "").join(":")} />
+            <CreateAlertForm initial={initial} initialScriptId={search.script} key={search.from ?? [search.type, search.symbol, search.version, search.template].map(part => part ?? "").join(":")} />
         </div>
     );
 }

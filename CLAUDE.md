@@ -583,6 +583,15 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   `useAlertUserOptions`, one `listAlertUsers?q=&limit=20` page once typing rests 300 ms; idle while the field is empty). `/alerts/new` also reads
   `?script=&version=` (a `script` alert of that version id) and `?template=` (an `indicator` alert of that template):
   `prefilledForm(type, symbol, { template, version })`, `newAlertDescription`.
+- **The form's pickers** (A4 handed over second, so it owns them; `alert-form-pickers.tsx`, data from
+  `useAlertFormPickers`): **destinations** = a checklist of the account's destinations (every page; URL / description,
+  kind · preset; a disabled one can be picked and says so; at most 10; an id the account does not list stays as a
+  removable chip) with "New destination…" = A3's `DestinationEditorDialog` inline (secret shown once, then the new id is
+  picked); **script version** (`script` alerts only, so no request otherwise) = a script (`?script=`, else the one whose
+  latest version the form holds), then one of its COMPILED versions (a version id not listed is kept and named); the
+  picked version's declared inputs become fields that write `condition.inputs` JSON (`withInput`; empty = the default).
+  The form state stays text (`destinationIds`, `script_version_id`, `inputs`): `toCreateBody` / `fromAlert` unchanged;
+  without picker data `AlertFormView` shows the text fields as before.
 - **`/alerts/scripts`** (`?tab=templates`): scripts (name + description, versions of 20, the latest version's status and
   diagnostics, updated) and "Upload script" (`ScriptUploadDialog`: name, description, source as text or file; a source
   above 204 800 characters is refused before anything is sent, `sourceProblem`; a compile error is still an upload; a 429

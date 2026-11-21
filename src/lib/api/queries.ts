@@ -26,10 +26,10 @@ import type {
     DestinationDeliveriesResponse,
     DestinationsListResponse,
     FiscalPeriodType,
-    SearchMode,
     Script,
     ScriptsListResponse,
     ScriptVersionsResponse,
+    SearchMode,
     SecSearchMode,
     StatementType,
     V2AnnouncementsResponse,
@@ -256,6 +256,7 @@ import {
     getV2TranscriptText,
     getV2TranscriptVersions,
 } from "./server-functions";
+import { getAlertUser, getAlertUserDefaults, listAlertUsers } from "./server-functions-alert-users";
 import {
     getAlert,
     getAlertEvent,
@@ -264,7 +265,6 @@ import {
     listAlerts,
     listAlertTemplates,
 } from "./server-functions-alerts";
-import { getAlertUser, getAlertUserDefaults, listAlertUsers } from "./server-functions-alert-users";
 import { getDestination, listDestinationDeliveries, listDestinations } from "./server-functions-destinations";
 import { getScript, listScripts, listScriptVersions } from "./server-functions-scripts";
 
@@ -2441,10 +2441,10 @@ export function useAlertUserDefaults() {
 /** Scripts per page of `/v1/scripts`. */
 export const SCRIPTS_PAGE = 100;
 
-/** The account's scripts by cursor (oldest first). */
-export function useScriptsInfinite() {
+/** The account's scripts by cursor (oldest first); idle while `enabled` is false (the alert form's script picker). */
+export function useScriptsInfinite(enabled = true) {
     return useEarningsInfinite<ScriptsListResponse>({
-        enabled: true,
+        enabled,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => listScripts({ data: { apiKey, cursor: cursor ?? undefined, limit: SCRIPTS_PAGE } }),
         queryKey: [...SCRIPT_QUERY_KEYS.scripts, "list"],
