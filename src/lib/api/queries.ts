@@ -2134,6 +2134,9 @@ export function useApiLicensing(enabled = true) {
         load: apiKey => getApiLicensing({ data: { apiKey } }),
         queryKey: ["status", "licensing"],
         staleTime: REFERENCE_STALE_MS,
+    });
+}
+
 // Alerts (backend tasks/data-api-dashboard 2-alerts task 2): the alert rules, the event log, the indicator templates.
 // Status-aware (no toast: the pages render `AlertsState`); writes go through `useApiMutation` (`mutations.ts`), which
 // refetches by these key prefixes.

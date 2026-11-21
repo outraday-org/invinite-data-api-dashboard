@@ -419,6 +419,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   (`DocumentTextView`: page by page with the page title, else `body_text`, else the public pages JSON).
 - Tests `src/routes/-tests/earnings-o7.test.tsx`, `src/lib/earnings/kpi-history.test.ts`, the order case of
   `documents-tab.test.tsx`; fixtures `src/lib/earnings/o7-earnings-fixtures.ts` (live shapes of 2026-11-21).
+
 ### Alerts (backend `tasks/data-api-dashboard` 2-alerts task 2): write layer, alerts, event feed
 
 - **Spec**: `openapi.json` = Data API 7.1 (`data-sdk-v7.1.0`): `listAlerts` takes `symbol` / `destination_id`. The only
