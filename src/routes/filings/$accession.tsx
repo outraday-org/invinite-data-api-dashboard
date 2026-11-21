@@ -126,7 +126,7 @@ function FilingPage() {
                     <Copyable label="Copy accession number" value={accession} />
                     <span>{`Filed ${formatDay(data.filing_date)}`}</span>
                     {data.filed_at && <span>{`Accepted ${formatInstant(data.filed_at)}`}</span>}
-                    {data.report_date && <span>{`Period ${data.report_date}`}</span>}
+                    {data.report_date && <span>{`Period ${formatDay(data.report_date)}`}</span>}
                     {data.items.length > 0 && <span>{`Items ${data.items.join(", ")}`}</span>}
                     {ticker && <Link className={linkClass} params={{ ticker }} to="/$ticker/filings">{`${ticker} filings`}</Link>}
                     {cik && <Link className={linkClass} params={{ cik }} to="/sec/$cik">{`Filer ${cik}`}</Link>}

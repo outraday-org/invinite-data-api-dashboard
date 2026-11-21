@@ -145,6 +145,11 @@ export function useLiveFilings({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, onRe
             clearTimeout(reconnectTimer);
 
             socket?.close(1000);
+
+            // Switched off (or a new key / URL): the next session starts empty and connecting, never with old rows.
+            setFilings([]);
+
+            setMode("connecting");
         };
     }, [apiKey, apiKeyUpdatedAt, baseUrl, enabled]);
 

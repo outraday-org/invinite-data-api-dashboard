@@ -72,7 +72,7 @@ describe("filing page tabs", () => {
 
         expect(screen.getByText("nil")).toBeInTheDocument();
 
-        expect(screen.getByText("2026-03-29 – 2026-06-27")).toBeInTheDocument();
+        expect(screen.getByText("Mar 29, 2026 – Jun 27, 2026")).toBeInTheDocument();
 
         expect(screen.getByText("srt:ProductOrServiceAxis = us-gaap:ProductMember")).toBeInTheDocument();
 
@@ -98,7 +98,7 @@ describe("filing page tabs", () => {
     it("Notes: a long text block is cut until 'Show all'", () => {
         render(<FilingNotesView accession={ACCESSION} state={state([FILING_NOTES])} />);
 
-        expect(screen.getByText("Period end 2026-06-27")).toBeInTheDocument();
+        expect(screen.getByText("Period end Jun 27, 2026")).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole("button", { name: "Show all" }));
 
@@ -210,9 +210,9 @@ describe("filing page tabs", () => {
     });
 
     it("a fact's period: duration, instant, or end", () => {
-        expect(factPeriodText({ instant: "2026-06-30", period_end: null, period_start: null })).toBe("2026-06-30");
+        expect(factPeriodText({ instant: "2026-06-30", period_end: null, period_start: null })).toBe("Jun 30, 2026");
 
-        expect(factPeriodText({ instant: null, period_end: "2026-06-27", period_start: null })).toBe("2026-06-27");
+        expect(factPeriodText({ instant: null, period_end: "2026-06-27", period_start: null })).toBe("Jun 27, 2026");
     });
 });
 

@@ -14,7 +14,7 @@ import { filerCikParam } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { PageHeader } from "@/components/ui/page-header";
-import { DASH, formatInstant } from "@/lib/format";
+import { DASH, formatDay, formatInstant } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import { commaList, hasLiveForm } from "@/lib/live/live-filings";
 import { IN_PLACE, optionalDay, optionalFlag, optionalText } from "@/lib/url-state";
@@ -76,8 +76,8 @@ const LIVE_COLUMNS: Array<ColumnDef<ReceivedFiling>> = [
         header: "Proposed tickers",
         id: "proposed",
     },
-    { cell: ({ row }) => <span className="tabular-nums">{row.original.filing.filing_date}</span>, header: "Filed", id: "filed" },
-    { cell: ({ row }) => <span className="text-muted-foreground tabular-nums">{row.original.filing.period_end ?? DASH}</span>, header: "Period", id: "period" },
+    { cell: ({ row }) => <span className="tabular-nums whitespace-nowrap">{formatDay(row.original.filing.filing_date)}</span>, header: "Filed", id: "filed" },
+    { cell: ({ row }) => <span className="text-muted-foreground tabular-nums">{formatDay(row.original.filing.period_end)}</span>, header: "Period", id: "period" },
     {
         cell: ({ row }) => (
             <Link className="text-primary hover:underline" params={{ accession: row.original.filing.accession_number }} to="/filings/$accession">

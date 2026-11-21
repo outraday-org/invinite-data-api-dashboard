@@ -33,7 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Copyable } from "@/components/ui/copy-button";
 import { DataTable } from "@/components/ui/data-table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DASH, formatNumber } from "@/lib/format";
+import { DASH, formatDay, formatNumber } from "@/lib/format";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { boolOf, listOf, numberOf, recordOf, scalarEntries, textOf } from "@/lib/sec/source";
 
@@ -68,9 +68,9 @@ export function dimensionsText(dimensions: ReadonlyArray<{ axis: string; member:
 
 /** A fact's period: the duration `start – end`, the instant, or the end alone. */
 export function factPeriodText(fact: Pick<V2FilingFact, "instant" | "period_end" | "period_start">) {
-    if (fact.period_start && fact.period_end) return `${fact.period_start} – ${fact.period_end}`;
+    if (fact.period_start && fact.period_end) return `${formatDay(fact.period_start)} – ${formatDay(fact.period_end)}`;
 
-    return fact.instant ?? fact.period_end ?? DASH;
+    return formatDay(fact.instant ?? fact.period_end);
 }
 
 /** A fact's value as filed (unscaled), `nil` for a stated nil. */
@@ -180,7 +180,7 @@ const NOTE_COLUMNS: Array<ColumnDef<V2FilingNote>> = [
         cell: ({ row }) => (
             <div className="flex flex-col gap-0.5">
                 <span className="font-medium break-all">{row.original.tag}</span>
-                {row.original.period_end && <span className="text-muted-foreground text-xs">{`Period end ${row.original.period_end}`}</span>}
+                {row.original.period_end && <span className="text-muted-foreground text-xs">{`Period end ${formatDay(row.original.period_end)}`}</span>}
                 {row.original.dimensions.length > 0 && <span className="text-muted-foreground text-xs">{dimensionsText(row.original.dimensions)}</span>}
             </div>
         ),
@@ -448,7 +448,7 @@ export function ReviewChainView({ data, error, isLoading }: { data: null | V2Rev
                                             : <span className="font-medium">{node.accession ?? DASH}</span>}
                                     </td>
                                     <td className="p-1">{node.form ?? DASH}</td>
-                                    <td className="p-1 tabular-nums">{node.filingDate ?? DASH}</td>
+                                    <td className="p-1 tabular-nums">{formatDay(node.filingDate)}</td>
                                     <td className="p-1">{node.fileNumber ?? DASH}</td>
                                     <td className="p-1 text-right tabular-nums">{node.depth ?? DASH}</td>
                                 </tr>

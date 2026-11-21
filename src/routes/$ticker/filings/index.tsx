@@ -185,7 +185,8 @@ function FilingsPage() {
                 <SecReadinessNotice coverage={pages.at(0)?.meta.coverage} />
                 <FilingsList
                     displayFilings={displayFilings}
-                    emptyIsGenuine={isV2GenuineEmpty(pages.at(0)?.meta.coverage)}
+                    // `items` is applied to the store's pages: an empty page with `has_more` is no "No filings found".
+                    emptyIsGenuine={isV2GenuineEmpty(pages.at(0)?.meta.coverage) && !hasNextPage}
                     errorState={errorPaged ? <SecReadinessNotice error={errorPaged} title="Failed to load more filings" /> : null}
                     hasNextPage={hasNextPage}
                     isFetchingNextPage={isFetchingNextPage}

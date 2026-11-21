@@ -238,7 +238,9 @@ describe("market-wide search and filters (O7 group 3)", () => {
 
         expect(onFiltersChange).toHaveBeenCalledWith({ form: "8-K", from: "2026-11-01", item: "2.02", to: undefined });
 
-        expect(vi.mocked(useV2FilingSearchInfinite)).toHaveBeenLastCalledWith(expect.objectContaining({ marketWide: true, q: "tariff", symbol: "" }));
+        // One submit = one request with the query AND its filters (the URL's copy, still `{}` here, is not read).
+        expect(vi.mocked(useV2FilingSearchInfinite).mock.calls.filter(([input]) => input.q === "tariff").map(([input]) => input))
+            .toEqual([expect.objectContaining({ form: "8-K", from: "2026-11-01", item: "2.02", marketWide: true, q: "tariff", symbol: "" })]);
     });
 
     it("without onFiltersChange the box keeps the submitted filters itself", () => {

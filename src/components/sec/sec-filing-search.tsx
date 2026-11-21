@@ -200,8 +200,8 @@ export function SecSearchResults({
  * + "Match case"), with form, section items and a filing-date range. Over one instrument (`symbol` = a ticker, fund key
  * or CIK: stocks and funds alike) or, with `marketWide` and no symbol, over every filer (capped, `SearchMatchesNote`).
  * The query and the filters run on submit only (each request is billed); a mode chip re-runs the submitted query. A
- * hit opens its cited version / block in the source panel. `filters` + `onFiltersChange` = the page keeps the submitted
- * filters (its URL); without them the box keeps its own.
+ * hit opens its cited version / block in the source panel. `filters` = the filters the box starts with (the page's URL);
+ * `onFiltersChange` mirrors the submitted ones back (the URL), the search itself reads only what was submitted.
  */
 export function SecFilingSearch({
     filters: committedFilters,
@@ -220,17 +220,17 @@ export function SecFilingSearch({
 }) {
     const [draft, setDraft] = React.useState("");
 
-    const [query, setQuery] = React.useState("");
+    // The query and the filters as submitted, together: the hook reads only this, so one Search is one billed request
+    // (the page's URL copy of the filters arrives a render later and an outside URL change starts no search).
+    const [submitted, setSubmitted] = React.useState<{ filters: SecSearchFilters; query: string }>({ filters: {}, query: "" });
 
     const [mode, setMode] = React.useState<SecSearchMode>("lexical");
 
     const [matchCase, setMatchCase] = React.useState(true);
 
-    const [ownFilters, setOwnFilters] = React.useState<SecSearchFilters>({});
+    const [filterDraft, setFilterDraft] = React.useState<SecSearchFilters>(committedFilters ?? {});
 
-    const filters = committedFilters ?? ownFilters;
-
-    const [filterDraft, setFilterDraft] = React.useState<SecSearchFilters>(filters);
+    const { filters, query } = submitted;
 
     const result = useV2FilingSearchInfinite({
         caseSensitive: mode === "literal" ? matchCase : undefined,
@@ -257,10 +257,9 @@ export function SecFilingSearch({
 
         const next = cleanFilters(filterDraft);
 
-        if (onFiltersChange) onFiltersChange(next);
-        else setOwnFilters(next);
+        setSubmitted({ filters: next, query: draft.trim() });
 
-        setQuery(draft.trim());
+        onFiltersChange?.(next);
     };
 
     const label = scoped || !marketWide ? "Search this company's SEC filings" : "Search every filer's SEC filings";
