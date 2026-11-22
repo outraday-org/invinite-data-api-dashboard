@@ -191,6 +191,7 @@ const RIGHT_LABELS: Record<V2LicensingRight, string> = {
     display: "Display",
     rag: "AI retrieval (RAG)",
     redistribute: "Redistribute",
+    redistribute_api: "Redistribute through your API",
     resell: "Resell",
     train: "Model training",
 };
@@ -223,6 +224,9 @@ export function LicensingView({ licensing, plan }: { licensing: V2Licensing; pla
 
     const notes: Partial<Record<string, string>> = licensing.notes;
 
+    // A right the API grants per contract (`by_contract`, e.g. training on ENTERPRISE): the plan allows it, a deal grants it.
+    const rightBadge = (right: V2LicensingRight) => (!rights[right] ? "Not on your plan" : licensing.by_contract.includes(right) ? "By contract" : "Allowed");
+
     return (
         <Card size="sm">
             <CardHeader>
@@ -242,7 +246,7 @@ export function LicensingView({ licensing, plan }: { licensing: V2Licensing; pla
                     {licensing.rights.map(right => (
                         <li className="flex flex-col gap-0.5" key={right}>
                             <span className="flex items-center gap-2">
-                                <Badge variant={rights[right] ? "secondary" : "outline"}>{rights[right] ? "Allowed" : "Not on your plan"}</Badge>
+                                <Badge variant={rights[right] ? "secondary" : "outline"}>{rightBadge(right)}</Badge>
                                 <span className="font-medium">{RIGHT_LABELS[right]}</span>
                             </span>
                             {notes[right] && <span className="text-muted-foreground text-xs">{notes[right]}</span>}

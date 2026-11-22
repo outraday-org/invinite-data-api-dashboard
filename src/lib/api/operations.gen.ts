@@ -4,7 +4,8 @@ import type { WebhookEntry, WebhookSchema } from "../../../scripts/webhooks.mjs"
 
 export type OperationMethod = "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
 
-export type OperationTier = "free" | "pro" | "standard";
+/** The plan an operation needs: one of `/v1/me`'s plans (the generator refuses any other `x-tier`). */
+export type OperationTier = (typeof PLAN_ORDER)[number];
 
 export type OperationCli = { action: null | string; group: string; positional: null | string };
 
@@ -30,7 +31,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/alerts:batch",
         summary: "Change alerts in bulk",
-        tier: "free",
+        tier: "lite",
     },
     batchAlertUsers: {
         cli: {
@@ -43,7 +44,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/alert-users:batch",
         summary: "Create or update end users in bulk",
-        tier: "free",
+        tier: "lite",
     },
     createAlert: {
         cli: {
@@ -56,7 +57,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/alerts",
         summary: "Create an alert",
-        tier: "free",
+        tier: "lite",
     },
     createDestination: {
         cli: {
@@ -69,7 +70,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/destinations",
         summary: "Create a destination",
-        tier: "free",
+        tier: "lite",
     },
     createScript: {
         cli: {
@@ -82,7 +83,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/scripts",
         summary: "Upload a script",
-        tier: "free",
+        tier: "lite",
     },
     createScriptVersion: {
         cli: {
@@ -95,7 +96,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/scripts/{id}/versions",
         summary: "Upload a new script version",
-        tier: "free",
+        tier: "lite",
     },
     deleteAlert: {
         cli: {
@@ -108,7 +109,7 @@ export const OPERATIONS = {
         method: "DELETE",
         path: "/v1/alerts/{id}",
         summary: "Delete an alert",
-        tier: "free",
+        tier: "lite",
     },
     deleteAlertUser: {
         cli: {
@@ -121,7 +122,7 @@ export const OPERATIONS = {
         method: "DELETE",
         path: "/v1/alert-users/{external_user_id}",
         summary: "Delete an end user",
-        tier: "free",
+        tier: "lite",
     },
     deleteDestination: {
         cli: {
@@ -134,7 +135,7 @@ export const OPERATIONS = {
         method: "DELETE",
         path: "/v1/destinations/{id}",
         summary: "Delete a destination",
-        tier: "free",
+        tier: "lite",
     },
     deleteScript: {
         cli: {
@@ -147,7 +148,7 @@ export const OPERATIONS = {
         method: "DELETE",
         path: "/v1/scripts/{id}",
         summary: "Delete a script",
-        tier: "free",
+        tier: "lite",
     },
     getAlert: {
         cli: {
@@ -160,7 +161,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/alerts/{id}",
         summary: "Get an alert",
-        tier: "free",
+        tier: "lite",
     },
     getAlertEvent: {
         cli: {
@@ -173,7 +174,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/alert-events/{id}",
         summary: "Get an alert event",
-        tier: "free",
+        tier: "lite",
     },
     getAlertUser: {
         cli: {
@@ -186,7 +187,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/alert-users/{external_user_id}",
         summary: "Get an end user",
-        tier: "free",
+        tier: "lite",
     },
     getAlertUserDefaults: {
         cli: {
@@ -277,7 +278,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/destinations/{id}",
         summary: "Get a destination",
-        tier: "free",
+        tier: "lite",
     },
     getDocumentFigure: {
         cli: {
@@ -329,7 +330,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/events/{event_id}/comparison",
         summary: "Compare an event with a prior one",
-        tier: "standard",
+        tier: "pro",
     },
     getEventStats: {
         cli: {
@@ -394,7 +395,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/funds/{fund}",
         summary: "Get a fund",
-        tier: "free",
+        tier: "lite",
     },
     getInsiderTrade: {
         cli: {
@@ -563,7 +564,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/events/{event_id}/price-attribution",
         summary: "Get an event's price attribution",
-        tier: "standard",
+        tier: "pro",
     },
     getProsody: {
         cli: {
@@ -576,7 +577,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/events/{event_id}/prosody",
         summary: "Get an event's speech prosody",
-        tier: "standard",
+        tier: "pro",
     },
     getReviewChain: {
         cli: {
@@ -602,7 +603,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/scripts/{id}",
         summary: "Get a script",
-        tier: "free",
+        tier: "lite",
     },
     getSlides: {
         cli: {
@@ -628,7 +629,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/financials/standardized",
         summary: "Standardized statements",
-        tier: "free",
+        tier: "lite",
     },
     getStandardizedFinancialsDetailed: {
         cli: {
@@ -680,7 +681,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/events/{event_id}/transcript-diff",
         summary: "Diff two transcript versions",
-        tier: "standard",
+        tier: "pro",
     },
     getTranscriptText: {
         cli: {
@@ -719,7 +720,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/alert-events",
         summary: "List alert events",
-        tier: "free",
+        tier: "lite",
     },
     listAlertEventsForAlert: {
         cli: {
@@ -732,7 +733,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/alerts/{id}/events",
         summary: "List an alert's events",
-        tier: "free",
+        tier: "lite",
     },
     listAlerts: {
         cli: {
@@ -745,7 +746,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/alerts",
         summary: "List alerts",
-        tier: "free",
+        tier: "lite",
     },
     listAlertTemplates: {
         cli: {
@@ -758,7 +759,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/alert-templates",
         summary: "List indicator alert templates",
-        tier: "free",
+        tier: "lite",
     },
     listAlertUsers: {
         cli: {
@@ -771,7 +772,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/alert-users",
         summary: "List end users",
-        tier: "free",
+        tier: "lite",
     },
     listAnnouncements: {
         cli: {
@@ -823,7 +824,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/datasets",
         summary: "List SEC dataset releases",
-        tier: "standard",
+        tier: "enterprise",
     },
     listDestinationDeliveries: {
         cli: {
@@ -836,7 +837,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/destinations/{id}/deliveries",
         summary: "List a destination's deliveries",
-        tier: "free",
+        tier: "lite",
     },
     listDestinations: {
         cli: {
@@ -849,7 +850,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/destinations",
         summary: "List destinations",
-        tier: "free",
+        tier: "lite",
     },
     listDividends: {
         cli: {
@@ -862,7 +863,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/dividends",
         summary: "List dividends",
-        tier: "free",
+        tier: "lite",
     },
     listDocumentKindCatalog: {
         cli: {
@@ -940,7 +941,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/filers/{cik}/holding-changes",
         summary: "List a 13F manager's position changes",
-        tier: "standard",
+        tier: "pro",
     },
     listFilerHoldings: {
         cli: {
@@ -1070,7 +1071,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/funds",
         summary: "List funds",
-        tier: "free",
+        tier: "lite",
     },
     listFundWeights: {
         cli: {
@@ -1122,7 +1123,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/holder-changes",
         summary: "List 13F position changes in a stock or a fund",
-        tier: "standard",
+        tier: "pro",
     },
     listHolders: {
         cli: {
@@ -1200,7 +1201,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/kpis",
         summary: "List KPI mentions",
-        tier: "standard",
+        tier: "pro",
     },
     listMappingRules: {
         cli: {
@@ -1252,7 +1253,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/news",
         summary: "List news items",
-        tier: "free",
+        tier: "lite",
     },
     listOfferings: {
         cli: {
@@ -1330,7 +1331,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/scripts",
         summary: "List scripts",
-        tier: "free",
+        tier: "lite",
     },
     listScriptVersions: {
         cli: {
@@ -1343,7 +1344,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/scripts/{id}/versions",
         summary: "List script versions",
-        tier: "free",
+        tier: "lite",
     },
     listSectionCatalog: {
         cli: {
@@ -1395,7 +1396,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/splits",
         summary: "List stock splits",
-        tier: "free",
+        tier: "lite",
     },
     listTranscriptVersions: {
         cli: {
@@ -1408,7 +1409,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/events/{event_id}/transcript-versions",
         summary: "List an event's transcript versions",
-        tier: "standard",
+        tier: "pro",
     },
     pauseAlert: {
         cli: {
@@ -1421,7 +1422,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/alerts/{id}:pause",
         summary: "Pause an alert",
-        tier: "free",
+        tier: "lite",
     },
     pauseAlertUser: {
         cli: {
@@ -1434,7 +1435,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/alert-users/{external_user_id}:pause",
         summary: "Pause an end user",
-        tier: "free",
+        tier: "lite",
     },
     resumeAlert: {
         cli: {
@@ -1447,7 +1448,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/alerts/{id}:resume",
         summary: "Resume an alert",
-        tier: "free",
+        tier: "lite",
     },
     resumeAlertUser: {
         cli: {
@@ -1460,7 +1461,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/alert-users/{external_user_id}:resume",
         summary: "Resume an end user",
-        tier: "free",
+        tier: "lite",
     },
     rotateDestinationSecret: {
         cli: {
@@ -1473,7 +1474,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/destinations/{id}:rotate-secret",
         summary: "Rotate a destination's secret",
-        tier: "free",
+        tier: "lite",
     },
     searchFilings: {
         cli: {
@@ -1564,7 +1565,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/alerts/{id}:test",
         summary: "Send a test event",
-        tier: "free",
+        tier: "lite",
     },
     testDestination: {
         cli: {
@@ -1577,7 +1578,7 @@ export const OPERATIONS = {
         method: "POST",
         path: "/v1/destinations/{id}:test",
         summary: "Send a test delivery",
-        tier: "free",
+        tier: "lite",
     },
     updateAlert: {
         cli: {
@@ -1590,7 +1591,7 @@ export const OPERATIONS = {
         method: "PATCH",
         path: "/v1/alerts/{id}",
         summary: "Update an alert",
-        tier: "free",
+        tier: "lite",
     },
     updateAlertUser: {
         cli: {
@@ -1603,7 +1604,7 @@ export const OPERATIONS = {
         method: "PATCH",
         path: "/v1/alert-users/{external_user_id}",
         summary: "Create or update an end user",
-        tier: "free",
+        tier: "lite",
     },
     updateAlertUserDefaults: {
         cli: {
@@ -1629,7 +1630,7 @@ export const OPERATIONS = {
         method: "PATCH",
         path: "/v1/destinations/{id}",
         summary: "Update a destination",
-        tier: "free",
+        tier: "lite",
     },
 } as const satisfies Record<string, Operation>;
 
@@ -1762,6 +1763,9 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "POST /v1/scripts": "createScript",
     "POST /v1/scripts/{id}/versions": "createScriptVersion",
 };
+
+/** The plan the live stream (`ws /v1/stream`, `streamEvents`) and each of its channels need. */
+export const STREAM_TIER: OperationTier = "pro";
 
 /** `/v1/me`'s `plan` values in access order (the spec's enum order). */
 export const PLAN_ORDER = ["free", "lite", "standard", "pro", "enterprise"] as const;

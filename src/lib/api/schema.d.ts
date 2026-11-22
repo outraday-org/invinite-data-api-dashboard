@@ -24454,29 +24454,37 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "policy_version": "2026-10-draft",
+                     *       "policy_version": "2026-11-draft",
                      *       "counsel_signed_off": false,
-                     *       "resale": "Invinite data may be shown and, from PRO, redistributed inside the licensee's own product with attribution (\"Source: Invinite\" on screen or in the API response that carries it). It may never be resold, relicensed, white-labelled or offered …",
+                     *       "resale": "Invinite data may be shown from LITE and, from PRO, redistributed inside the licensee's own product (on screen, in exports and in embedded widgets) with attribution (\"Source: Invinite\"). Passing the data on through the licensee's own API is an ENTERPRISE right. It may never be resold, relicensed, white-labelled or offered as a data feed as the licensee's own data, at any tier, under any contract.",
                      *       "notes": {
-                     *         "display": "Show the data to the licensee's own users, with attribution.",
-                     *         "redistribute": "Pass the data on inside the licensee's product (exports, embedded widgets, downstream API responses) with attribution; never as a stand-alone data product.",
+                     *         "display": "Show the data to the licensee's own users, with attribution. The FREE plan is for evaluation: its data may be read and tested, not shown to the licensee's users.",
+                     *         "redistribute": "Pass the data on inside the licensee's product (on screen, exports, embedded widgets) with attribution; never through an API and never as a stand-alone data product.",
+                     *         "redistribute_api": "Return the data in the licensee's own API responses, with attribution in the response that carries it. Enterprise contract only; the resale rule applies unchanged.",
                      *         "rag": "Use the text as retrieval context in a customer-facing product.",
-                     *         "train": "Model training is contract-only.",
+                     *         "train": "Model training is an Enterprise right, granted in the contract.",
                      *         "audio": "Audio files carry a forensic watermark that identifies the recording. Audio is subject to per-company takedown and may not be re-hosted.",
                      *         "sec_data": "Figures and filings originate from SEC EDGAR; the standardisation, mapping and derived metrics are Invinite's.",
                      *         "news": "News text is Invinite's own summary of the issuer's or the SEC's publication (the publisher's text and media are never served); the licensee shows the attribution (publisher, source URL and date) next to it; the resale rule applies.",
-                     *         "pdf_documents": "Branded PDFs of transcripts and news items are permanent URLs to one shared file per version. They may be shown, downloaded and forwarded unmodified with the notice page intact; the resale rule applies unchanged. News PDFs carry Invinite's …"
+                     *         "pdf_documents": "Branded PDFs of transcripts and news items are permanent URLs to one shared file per version. They may be shown, downloaded and forwarded unmodified with the notice page intact; the resale rule applies unchanged. News PDFs carry Invinite's summary of the issuer's or the SEC's publication under the attribution stated on their notice page; a PDF disappears when the item is taken down or its source's reuse is denied."
                      *       },
                      *       "rights": [
-                     *         "display"
+                     *         "display",
+                     *         "redistribute",
+                     *         "rag",
+                     *         "train",
+                     *         "audio",
+                     *         "redistribute_api",
+                     *         "resell"
                      *       ],
                      *       "tiers": {
                      *         "free": {
-                     *           "display": true,
+                     *           "display": false,
                      *           "redistribute": false,
                      *           "rag": false,
                      *           "train": false,
                      *           "audio": false,
+                     *           "redistribute_api": false,
                      *           "resell": false
                      *         },
                      *         "lite": {
@@ -24485,6 +24493,7 @@ export interface operations {
                      *           "rag": false,
                      *           "train": false,
                      *           "audio": false,
+                     *           "redistribute_api": false,
                      *           "resell": false
                      *         },
                      *         "standard": {
@@ -24493,6 +24502,7 @@ export interface operations {
                      *           "rag": true,
                      *           "train": false,
                      *           "audio": false,
+                     *           "redistribute_api": false,
                      *           "resell": false
                      *         },
                      *         "pro": {
@@ -24501,17 +24511,22 @@ export interface operations {
                      *           "rag": true,
                      *           "train": false,
                      *           "audio": true,
+                     *           "redistribute_api": false,
                      *           "resell": false
                      *         },
                      *         "enterprise": {
                      *           "display": true,
                      *           "redistribute": true,
                      *           "rag": true,
-                     *           "train": false,
+                     *           "train": true,
                      *           "audio": true,
+                     *           "redistribute_api": true,
                      *           "resell": false
                      *         }
                      *       },
+                     *       "by_contract": [
+                     *         "train"
+                     *       ],
                      *       "families": [
                      *         {
                      *           "family": "company",
@@ -24540,6 +24555,7 @@ export interface operations {
                         notes: {
                             display: string;
                             redistribute: string;
+                            redistribute_api: string;
                             rag: string;
                             train: string;
                             audio: string;
@@ -24547,7 +24563,7 @@ export interface operations {
                             news: string;
                             pdf_documents: string;
                         };
-                        rights: Array<"audio" | "display" | "rag" | "redistribute" | "resell" | "train">;
+                        rights: Array<"audio" | "display" | "rag" | "redistribute" | "redistribute_api" | "resell" | "train">;
                         tiers: {
                             free: {
                                 display: boolean;
@@ -24555,6 +24571,7 @@ export interface operations {
                                 rag: boolean;
                                 train: boolean;
                                 audio: boolean;
+                                redistribute_api: boolean;
                                 resell: boolean;
                             };
                             lite: {
@@ -24563,6 +24580,7 @@ export interface operations {
                                 rag: boolean;
                                 train: boolean;
                                 audio: boolean;
+                                redistribute_api: boolean;
                                 resell: boolean;
                             };
                             standard: {
@@ -24571,6 +24589,7 @@ export interface operations {
                                 rag: boolean;
                                 train: boolean;
                                 audio: boolean;
+                                redistribute_api: boolean;
                                 resell: boolean;
                             };
                             pro: {
@@ -24579,6 +24598,7 @@ export interface operations {
                                 rag: boolean;
                                 train: boolean;
                                 audio: boolean;
+                                redistribute_api: boolean;
                                 resell: boolean;
                             };
                             enterprise: {
@@ -24587,9 +24607,12 @@ export interface operations {
                                 rag: boolean;
                                 train: boolean;
                                 audio: boolean;
+                                redistribute_api: boolean;
                                 resell: boolean;
                             };
                         };
+                        /** @description Rights a tier holds only where the account's contract grants them */
+                        by_contract: Array<"audio" | "display" | "rag" | "redistribute" | "redistribute_api" | "resell" | "train">;
                         families: Array<{
                             /**
                              * @description Product family

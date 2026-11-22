@@ -41,7 +41,7 @@ export function SecListFrame<TRow>({
 }) {
     const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
 
-    if (error && pages.length === 0) return <SecReadinessNotice error={error} title={errorTitle} />;
+    if (error && pages.length === 0) return <SecReadinessNotice error={error} operationId={operationId} title={errorTitle} />;
 
     const meta = pages.at(0)?.meta;
 
@@ -62,7 +62,7 @@ export function SecListFrame<TRow>({
                 operationId={operationId}
                 rows={pages.flatMap(page => page.data)}
             />
-            {error ? <SecReadinessNotice error={error} title={errorTitle} /> : null}
+            {error ? <SecReadinessNotice error={error} operationId={operationId} title={errorTitle} /> : null}
         </div>
     );
 }
