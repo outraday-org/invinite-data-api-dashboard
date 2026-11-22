@@ -19,8 +19,8 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 | End-user defaults (to restore) | Never set: active alerts, script / indicator alerts and fires per day all "No limit" |
 | Receiver URL (Task 8) | `https://webhook.site/15b38b45-5955-46f6-9b5b-e0d51cd37736` (free URL: expires after 1 week, keeps 50 requests; 6 received in Task 8) |
 | D1 / D2 ids (Task 8) | D1 `dst_01M81YNF4DP3558D13RN0KPJGP` (webhook, standard, webhook.site, 30 / min, description `walk-1122 webhook.site edited`, no headers left, secret rotated 2026-11-22 15:52 UTC) · D2 `dst_01M81YTP4DH99DFBR9AD4Z1BT7` (batch webhook, standard, `https://example.com/walk-1122-hook` → 405, digest 60 s, `walk-1122 unroutable`); both active |
-| Walk alert ids (Tasks 9–10) | price `alt_01M8203KDHBGP54WPX9BY6D8YM` · price_move `alt_01M8205R975SCSFNQ84VMRQR9H` · price_reminder `alt_01M8206YG0YFWZW5NS0N76YMZF` · volume_spike `alt_01M82083NY28W4XS583JECT3N2` · indicator `alt_01M8209ECAEWG9DM61NFPV49H7` · halt `alt_01M820A6XJP5KKY8ZBMH599MVP` · dividend `alt_01M820AQS82ZV47CT80JD22E10` · earnings_call `alt_01M820B3NGFBEGY0GGZ41QJ0X7` · earnings_call_keyword `alt_01M820BJ6FDN4YYPFCM9HB31Y9` · earnings_results `alt_01M820CMMNJY03T7MCCW338H7Y` · event_countdown `alt_01M820DP299EZ98KMANTTM9TXF` · filing `alt_01M820E7DD3CJJR447WQPKG1VS` · filing_keyword `alt_01M820EJG0VYTE5NYRQCPY0FYH` · fundamental_metric `alt_01M820FB1RQC7VQNP4EQZGG96Z` · news `alt_01M820FQZF79VJSVHZMVHFTDGX` · news_keyword `alt_01M820G3P5ASFH5A9BHM6E7TQ7` (Task 9: 16, each `client_reference_id` `walk-1122-<type>`, all deliver to D1, all active at the end of Task 9) · duplicate `alt_01M820R1YA0QF5CQP6FJVP29MP` (`walk-1122-dup`) deleted in T9.29 · script alert: Task 10 |
-| End counts (Task 10): alerts / destinations / users / scripts | |
+| Walk alert ids (Tasks 9–10) | price `alt_01M8203KDHBGP54WPX9BY6D8YM` · price_move `alt_01M8205R975SCSFNQ84VMRQR9H` · price_reminder `alt_01M8206YG0YFWZW5NS0N76YMZF` · volume_spike `alt_01M82083NY28W4XS583JECT3N2` · indicator `alt_01M8209ECAEWG9DM61NFPV49H7` · halt `alt_01M820A6XJP5KKY8ZBMH599MVP` · dividend `alt_01M820AQS82ZV47CT80JD22E10` · earnings_call `alt_01M820B3NGFBEGY0GGZ41QJ0X7` · earnings_call_keyword `alt_01M820BJ6FDN4YYPFCM9HB31Y9` · earnings_results `alt_01M820CMMNJY03T7MCCW338H7Y` · event_countdown `alt_01M820DP299EZ98KMANTTM9TXF` · filing `alt_01M820E7DD3CJJR447WQPKG1VS` · filing_keyword `alt_01M820EJG0VYTE5NYRQCPY0FYH` · fundamental_metric `alt_01M820FB1RQC7VQNP4EQZGG96Z` · news `alt_01M820FQZF79VJSVHZMVHFTDGX` · news_keyword `alt_01M820G3P5ASFH5A9BHM6E7TQ7` (Task 9: 16, each `client_reference_id` `walk-1122-<type>`, all deliver to D1, all active at the end of Task 9) · duplicate `alt_01M820R1YA0QF5CQP6FJVP29MP` (`walk-1122-dup`) deleted in T9.29 · script `alt_01M82253PRF3VASSBVQ99PHV9Y` (`walk-1122-script`, Task 10, script scr_01M821Y86MGC60D5BK539QSB6H v2) · Task 10 end users `walk-1122-a`, `-b`, `-c`, `walk-1122/odd:id x` |
+| End counts (Task 10): alerts / destinations / users / scripts | 0 / 0 / 0 / 0 (= start); end-user defaults all "No limit" again (restored in T10.10; the panel now says "Last changed Nov 22, 2026, 5:36 PM" instead of "Never set"); every walk resource deleted through the UI; receiver tab closed |
 | Credits at end (Task 11) | |
 
 ## Findings
@@ -1059,6 +1059,24 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected (task text): volume_spike mode "multiple"; earnings_results report kinds "10-Q"; a metric picker for fundamental_metric; a type list "with summaries"; a Cancel on the pre-filled form
 - Actual (app = spec): mode `relative` (multiple is its own field); report kinds `preliminary` / `final`; Rules is a JSON field (metric ids of `/v1/catalog/metrics`); the summary shows under the picked type; the form has no Cancel (leaving the page discards it)
 - Outcome: by design (the form follows `AlertConditionInput`; task text annotated)
+
+### F116 — Script upload: the source box grows without bound, pushing Upload out of reach
+- Check: T10.14 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/alerts/scripts/scr_01M821Y86MGC60D5BK539QSB6H → Upload new version
+- Steps: put a 52,000-line source into the Source box
+- Expected: the box stops growing and scrolls itself; Upload stays in reach (CLAUDE.md "Page shell": inner scroll boxes in dialogs)
+- Actual: the `field-sizing-content` textarea grew to 1,014,037 px; Upload sat at the end of the dialog's own scroll (a click there landed on a toast); any long real script made the dialog very tall
+- Evidence: textarea `getBoundingClientRect().height` 1,014,037 at 208,000 characters
+- Outcome: fixed in 7c3026a (`max-h-[50vh] overflow-y-auto` on the source box; test `scripts-pages.test.tsx`; re-checked: 467 px, Upload at y 797 of 933)
+
+### F117 — End user page: the alerts list shows the account quota and "No alert matches these filters."
+- Check: T10.7 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/alerts/users/walk-1122-a (and every end user page)
+- Steps: open an end user without alerts
+- Expected: no account-wide line under the end user's "Alerts"; an empty text that fits a page without filters
+- Actual: "16 of 2,000 alerts in use · 1 of 500 script / indicator alerts · no daily fire cap" (the account's `meta.quota`, read as the end user's) and "No alert matches these filters."
+- Evidence: page text
+- Outcome: fixed in 3fbc6dc (`AlertsListView scope="end-user"`: no quota line, "This end user has no alerts."; test `alerts-list.test.tsx`; CLAUDE.md "Alerts (task 4)" updated; re-checked on `/alerts/users/walk-1122-b`)
 
 ## Summary (filled by Task 11)
 

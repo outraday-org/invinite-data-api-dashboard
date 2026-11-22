@@ -63,7 +63,7 @@ on the right field (then correct and retry); a 404 `not_covered` → readable no
 | **T9.16** ✓ | `fundamental_metric` | AAPL, a rule on a metric (picker) crossing an unreachable value |
 | **T9.17** ✓ | `news` | AAPL, kinds earnings |
 | **T9.18** ✓ | `news_keyword` | MSFT, keywords `walk1122 acquisition` |
-| **T9.19** [~] see T10.x | `script` | **deferred to Task 10** (needs an uploaded script version) — mark `[~] see T10.x` |
+| **T9.19** ✓ (T10.15: alt_01M82253PRF3VASSBVQ99PHV9Y `walk-1122-script`) | `script` | **deferred to Task 10** (needs an uploaded script version) — mark `[~] see T10.x` |
 
 - [x] **T9.20** (400 on the Symbols field: "SPY is an ETF; news alerts exist only for companies …"; nothing created) ETF refusal: a `news` alert on `SPY` → the API's 400 naming the ETF shown on the symbol field; a
   `dividend` alert on `SPY` would be accepted — do not create it.
