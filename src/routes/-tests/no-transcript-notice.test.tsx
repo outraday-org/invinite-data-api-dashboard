@@ -162,6 +162,18 @@ describe("CallTabs without a transcript", () => {
     });
 });
 
+describe("CallTabs: the tab bar (UI walk F067)", () => {
+    it("wraps onto a second row instead of scrolling the last tabs behind the API button", () => {
+        renderTab(eventOf({ has_transcript: true }), "qa");
+
+        const list = screen.getByRole("tablist");
+
+        expect(list).toHaveClass("flex-wrap");
+
+        expect(list.parentElement?.className).not.toMatch(/overflow-x-auto/);
+    });
+});
+
 describe("CallTabs: the API button (O6-final)", () => {
     it("sits in the tab bar and lists the open tab's requests, read from its mounted queries", async () => {
         renderTab(eventOf({ has_transcript: true }), "qa");

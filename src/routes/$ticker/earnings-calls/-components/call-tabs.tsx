@@ -43,6 +43,9 @@ export type CallTab = (typeof CALL_TAB_VALUES)[number];
 
 export const DEFAULT_CALL_TAB: CallTab = "transcript";
 
+/** The call tab bar wraps (like the Holders tabs): no tab is hidden in a sideways scroll box. */
+export const CALL_TAB_LIST_CLASS = "flex-wrap justify-start gap-y-2 group-data-horizontal/tabs:h-auto";
+
 /**
  * A "Jump to transcript" request: the Transcript tab scrolls to `ms`; `nonce` repeats a jump to the same spot.
  * `fromLink` = the page's `?t=`: the URL's format is kept and nothing is announced when the spot cannot be shown.
@@ -144,16 +147,17 @@ export function CallTabs({
 
     return (
         <Tabs onValueChange={value => onTabChange(value as CallTab)} value={shownTab}>
-            <div className="flex items-center gap-2">
-                <div className="min-w-0 grow overflow-x-auto">
-                    <TabsList variant="line">
+            <div className="flex items-start gap-2">
+                {/* The tabs wrap onto a second row instead of scrolling sideways behind the API button (UI walk F067). */}
+                <div className="min-w-0 grow">
+                    <TabsList className={CALL_TAB_LIST_CLASS} variant="line">
                         {visibleTabs.map((value) => {
                             const { flag, label } = CALL_TABS[value];
 
                             const muted = flag !== undefined && !event[flag] && !(value === "transcript" && liveText);
 
                             return (
-                                <TabsTrigger className={cn(muted && "text-muted-foreground/50")} key={value} value={value}>
+                                <TabsTrigger className={cn("flex-none", muted && "text-muted-foreground/50")} key={value} value={value}>
                                     {label}
                                 </TabsTrigger>
                             );
