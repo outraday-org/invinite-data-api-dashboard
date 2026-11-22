@@ -12,7 +12,7 @@ import { CopyButton } from "@/components/ui/copy-button";
 import { fieldText } from "@/lib/alerts/alert-form";
 import { alertTarget } from "@/lib/alerts/alert-view";
 import { CONDITION_FIELDS, triggerFieldsFor, WEEKDAY_LABELS } from "@/lib/alerts/condition-fields";
-import { ALERT_TYPE_INFO, canPause, canResume } from "@/lib/alerts/labels";
+import { ALERT_TYPE_INFO, canPause, canResume, enumWords } from "@/lib/alerts/labels";
 import { formatInstant, formatNumber } from "@/lib/format";
 import { isRecord } from "@/lib/guards";
 
@@ -29,6 +29,14 @@ export function valueText(spec: FieldSpec, value: unknown): React.ReactNode {
     if (spec.kind === "weekday-list" && Array.isArray(value)) return value.map(day => WEEKDAY_LABELS[Number(day)] ?? String(day)).join(", ");
 
     if (spec.kind === "json" || spec.kind === "template") return <pre className="overflow-x-auto rounded-md bg-muted/50 p-2 font-mono text-[0.6875rem]">{JSON.stringify(value, null, 2)}</pre>;
+
+    // An enum value in the form's words ("prior_close" → "prior close"); a list one entry per comma, never the
+    // form's newline-joined text (a keyword may hold spaces: two keywords must not read as one phrase).
+    if (spec.kind === "enum" && typeof value === "string") return enumWords(value);
+
+    if (Array.isArray(value) && (spec.kind === "enum-list" || spec.kind === "string-list" || spec.kind === "int-list")) {
+        return value.map(item => (spec.kind === "enum-list" ? enumWords(String(item)) : String(item))).join(", ");
+    }
 
     const text = fieldText(spec, value);
 

@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ACTIVE_WINDOW_DAYS, ACTIVE_WINDOW_UNITS, CONDITION_FIELDS, INDICATOR_STRUCTURED_FIELDS, triggerFieldsFor, WEEKDAY_LABELS } from "@/lib/alerts/condition-fields";
-import { ALERT_TYPE_GROUPS, ALERT_TYPE_INFO } from "@/lib/alerts/labels";
+import { ALERT_TYPE_GROUPS, ALERT_TYPE_INFO, enumWords } from "@/lib/alerts/labels";
 import { cn } from "@/lib/utils";
 
 /** The select's value for "not set" (a select item needs a non-empty value). */
@@ -69,7 +69,7 @@ function CheckboxGroup({ label, onChange, options, value }: { label: string; onC
     );
 }
 
-const optionList = (values: ReadonlyArray<string> | undefined) => (values ?? []).map(value => ({ label: value.replaceAll("_", " "), value }));
+const optionList = (values: ReadonlyArray<string> | undefined) => (values ?? []).map(value => ({ label: enumWords(value), value }));
 
 const WEEKDAY_OPTIONS = WEEKDAY_LABELS.map((label, index) => ({ label, value: String(index) }));
 

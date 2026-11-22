@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AlertDetailView } from "@/components/alerts/alert-detail-view";
 import { AlertEventsView, SingleEventView } from "@/components/alerts/alert-events-view";
 import { eventsNewestFirst } from "@/lib/alerts/alert-view";
-import { ALERT_DIVIDEND, ALERT_FILING, ALERT_INDICATOR, ALERT_PRICE, EVENT_TEST, EVENTS_PAGE_FIXTURE, fixtureEvent } from "@/lib/alerts/alerts-fixtures";
+import { ALERT_DIVIDEND, ALERT_EARNINGS_CALL, ALERT_FILING, ALERT_INDICATOR, ALERT_NEWS_KEYWORD, ALERT_PRICE, EVENT_TEST, EVENTS_PAGE_FIXTURE, fixtureEvent } from "@/lib/alerts/alerts-fixtures";
 import { ApiRequestError } from "@/lib/api/errors";
 import { LiveStatus } from "@/routes/alerts/events";
 import { plansAlerts } from "@/routes/alerts/route";
@@ -92,13 +92,27 @@ describe("/alerts/$id (one alert)", () => {
     it("the stored condition and trigger by the field map's labels; delivery and references", () => {
         render(<AlertDetailView alert={ALERT_PRICE} busy={false} onAction={vi.fn()} onEdit={vi.fn()} />);
 
-        for (const [label, value] of [["Operator", "crosses_above"], ["Level", "200"], ["Cooldown (seconds)", "3600"], ["Re-arm", "cross_back"]]) {
+        for (const [label, value] of [["Operator", "crosses above"], ["Level", "200"], ["Cooldown (seconds)", "3600"], ["Re-arm", "cross back"], ["Mode", "every time"], ["Asset class", "us stock"]]) {
             expect(screen.getByText(label).nextSibling).toHaveTextContent(value);
         }
 
         expect(screen.getByText("Expires at").nextSibling?.textContent).toMatch(/2026/);
 
         expect(screen.getByText("Destinations").nextSibling).toHaveTextContent("Feed only");
+    });
+
+    it("a list reads one entry per comma, enum values in words (UI walk F109): two keywords never read as one phrase", () => {
+        render(<AlertDetailView alert={ALERT_NEWS_KEYWORD} busy={false} onAction={vi.fn()} onEdit={vi.fn()} />);
+
+        expect(screen.getByText("Keywords").nextSibling).toHaveTextContent(/^supply chain, recall$/);
+
+        expect(screen.getByText("Symbols").nextSibling).toHaveTextContent(/^AAPL, MSFT, NVDA, TSLA$/);
+
+        cleanup();
+
+        render(<AlertDetailView alert={ALERT_EARNINGS_CALL} busy={false} onAction={vi.fn()} onEdit={vi.fn()} />);
+
+        expect(screen.getByText("Events").nextSibling).toHaveTextContent(/^started, transcript ready$/);
     });
 
     it("the actions follow the status: pause an active alert, resume a triggered one; Duplicate opens the form pre-filled", () => {

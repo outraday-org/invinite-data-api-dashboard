@@ -71,6 +71,11 @@ export const ALERT_STATUS_INFO: Record<AlertStatus, { label: string; meaning: st
     triggered: { label: "Triggered", meaning: "Reached its last fire (once / max fires); resume arms it again.", tone: "outline" },
 };
 
+/** An alert enum value in words, as the form's options show it ("prior_close" → "prior close"). */
+export function enumWords(value: string) {
+    return value.replaceAll("_", " ");
+}
+
 /** `disabled_reason` in words (an unknown reason is shown as stated). */
 export function disabledReasonText(reason: null | string) {
     if (!reason) return null;
