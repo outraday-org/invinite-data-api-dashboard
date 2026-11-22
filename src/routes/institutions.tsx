@@ -14,6 +14,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { useV2FilersInfinite } from "@/lib/api/queries";
 import { titleHead } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
+import { IN_PLACE } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const institutionsSearchSchema = z.object({
@@ -115,14 +116,14 @@ function InstitutionsPage() {
                         <DebouncedInput
                             aria-label="Search institutions"
                             className="w-[260px]"
-                            onCommit={q => void navigate({ replace: true, resetScroll: false, search: prev => ({ ...prev, q: q || undefined }) })}
+                            onCommit={q => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, q: q || undefined }) })}
                             placeholder="Name"
                             value={search.q ?? ""}
                         />
                         <FilterSelect
                             aria-label="Sort"
                             className="w-[140px]"
-                            onValueChange={value => void navigate({ resetScroll: false, search: prev => ({ ...prev, sort: value === "name" ? undefined : value }) })}
+                            onValueChange={value => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, sort: value === "name" ? undefined : value }) })}
                             options={[{ label: "Name A–Z", value: "name" }, { label: "Name Z–A", value: "-name" }]}
                             value={search.sort ?? "name"}
                         />

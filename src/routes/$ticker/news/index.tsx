@@ -209,7 +209,7 @@ function NewsPage() {
     const panel = (title?: string) => (
         <NewsItemPanel
             id={search.item ?? null}
-            onClose={() => void navigate({ resetScroll: false, search: prev => ({ ...prev, item: undefined }) })}
+            onClose={() => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, item: undefined }) })}
             title={title}
         />
     );

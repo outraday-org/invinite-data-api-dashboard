@@ -48,7 +48,7 @@ function FinancialsPage() {
         <div className="flex flex-col gap-4">
             <TabStrip
                 aria-label="Financials view"
-                onSelect={(value: FinancialView) => void navigate({ resetScroll: false, search: { view: value === "standardized" ? undefined : value } })}
+                onSelect={(value: FinancialView) => void navigate({ ...IN_PLACE, search: { view: value === "standardized" ? undefined : value } })}
                 options={views.map(entry => ({ label: entry.label, value: entry.value }))}
                 value={active.value}
             />

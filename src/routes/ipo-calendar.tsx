@@ -21,6 +21,7 @@ import { zonedDate } from "@/lib/earnings/format";
 import { formatDay, formatInstant, formatShares } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
+import { IN_PLACE } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const IPO_TABS = ["upcoming", "recent"] as const;
@@ -381,7 +382,7 @@ function IposPage() {
 
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2IposInfinite(ipoRequest(search, today));
 
-    const onChange = (patch: Partial<IpoSearch>) => void navigate({ resetScroll: false, search: prev => ({ ...prev, ...patch }) });
+    const onChange = (patch: Partial<IpoSearch>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
     return (
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">

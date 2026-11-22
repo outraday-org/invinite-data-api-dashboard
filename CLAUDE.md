@@ -397,7 +397,8 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   portfolio).
 - **URL state rule**: every filter, tab, sort and open item is a search param — `validateSearch` with each field
   optional + `.catch(undefined)` (helpers `src/lib/url-state.ts`: `optionalDay`, `optionalText`, `optionalEnum`,
-  `optionalAccession`, `optionalFlag`, `optionalInt`; `optionalText` reads a bare numeric value — `?form=144` arrives as a number — as its text), written with `IN_PLACE` (`replace: true, resetScroll: false`), a default written
+  `optionalAccession`, `optionalFlag`, `optionalInt`; `optionalText` reads a bare numeric value — `?form=144` arrives as a number — as its text), written with `IN_PLACE` (`replace: true, resetScroll: false`; `src/routes/-tests/url-state.test.ts` fails on a
+  same-page search navigation without it — `/search`'s submitted query is the one history entry), a default written
   as `undefined`. Filings `?form=&sort=asc&filing=<accession>&docs=<accession>` (a `?filing=` outside the loaded pages
   opens its documents panel), insider `?side=&from=&to=`, holders `?tab=&period=`, holdings `?day=`, `/sec/$cik`
   `?form=&period=&docs=`, calls list `?tab=&search=documents&fiscalYear=`, documents `?searchIn=sec&source=<version

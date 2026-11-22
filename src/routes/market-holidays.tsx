@@ -142,7 +142,7 @@ function MarketHolidaysPage() {
                     <TabStrip
                         aria-label="Holidays"
                         // A tab change keeps the day range (it narrows either tab).
-                        onSelect={value => void navigate({ resetScroll: false, search: prev => ({ ...prev, tab: value === "past" ? "past" : undefined }) })}
+                        onSelect={value => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, tab: value === "past" ? "past" : undefined }) })}
                         options={[{ label: "Upcoming", value: "upcoming" }, { label: "Past", value: "past" }]}
                         value={past ? "past" : "upcoming"}
                     />

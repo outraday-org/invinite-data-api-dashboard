@@ -1,3 +1,5 @@
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
 import { financialsSearchSchema } from "@/components/financials-pages/financials-search";
@@ -133,5 +135,61 @@ describe("URL state (validateSearch): a reload restores what the URL says, an in
         expect(financialsSearchSchema.parse(search)).toEqual(search);
 
         expect(financialsSearchSchema.parse({ layout: "tree", period: "weekly", statement: "cash-flow-statement" })).toEqual({});
+    });
+});
+
+const SRC = join(__dirname, "..", "..");
+
+function sourceFiles(dir: string): Array<string> {
+    return readdirSync(dir).flatMap((name) => {
+        const path = join(dir, name);
+
+        if (statSync(path).isDirectory()) return name === "-tests" ? [] : sourceFiles(path);
+
+        return /\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name) && !name.endsWith(".d.ts") && name !== "routeTree.gen.ts" ? [path] : [];
+    });
+}
+
+/** The options object of every `navigate({ … })` call in `text` (braces balanced). */
+function navigateCalls(text: string): Array<string> {
+    const calls: Array<string> = [];
+
+    for (const match of text.matchAll(/\bnavigate\(\{/g)) {
+        const start = match.index + match[0].length - 1;
+
+        let depth = 0;
+
+        for (let index = start; index < text.length; index++) {
+            if (text[index] === "{") depth++;
+
+            if (text[index] === "}") depth--;
+
+            if (depth === 0) {
+                calls.push(text.slice(start, index + 1));
+
+                break;
+            }
+        }
+    }
+
+    return calls;
+}
+
+/** Search changes that add a history entry on purpose: `/search`'s submitted query (O7 group 5). */
+const PUSH_ALLOWED = new Set(["routes/search.tsx: { resetScroll: false, search: prev => ({ ...prev, q }) }"]);
+
+describe("URL state rule: a filter, tab, sort or open item changes the URL in place", () => {
+    it("every same-page search navigation replaces the history entry (F097)", () => {
+        const pushes = sourceFiles(SRC).flatMap((path) => {
+            const file = relative(SRC, path).split("\\").join("/");
+
+            return navigateCalls(readFileSync(path, "utf8"))
+                // Another page (`to` / `href` / `params`) is a real navigation: a history entry is right there.
+                .filter(call => /\bsearch:/.test(call) && !/\b(to|href|params):/.test(call))
+                .filter(call => !/\bIN_PLACE\b|\breplace: true\b/.test(call))
+                .map(call => `${file}: ${call.replace(/\s+/g, " ")}`);
+        });
+
+        expect(pushes.filter(entry => !PUSH_ALLOWED.has(entry))).toEqual([]);
     });
 });

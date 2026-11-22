@@ -22,6 +22,7 @@ import { useMe, useMyUsage } from "@/lib/api/queries";
 import { dataApiDashboardUrl } from "@/lib/app-url";
 import { formatDay, formatInstant, formatMoney, formatNumber } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
+import { IN_PLACE } from "@/lib/url-state";
 
 export const Route = createFileRoute("/account")({
     component: AccountPage,
@@ -162,7 +163,7 @@ function AccountPage() {
                 actions={(
                     <TabStrip
                         aria-label="Usage window"
-                        onSelect={value => void navigate({ resetScroll: false, search: { days: toUsageWindow(value) } })}
+                        onSelect={value => void navigate({ ...IN_PLACE, search: { days: toUsageWindow(value) } })}
                         options={USAGE_WINDOWS.map(window => ({ label: `${window} days`, value: String(window) }))}
                         value={String(days)}
                     />

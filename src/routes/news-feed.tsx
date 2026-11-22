@@ -208,7 +208,7 @@ function NewsFeedPage() {
             />
             <NewsItemPanel
                 id={search.item ?? null}
-                onClose={() => void navigate({ resetScroll: false, search: prev => ({ ...prev, item: undefined }) })}
+                onClose={() => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, item: undefined }) })}
                 title={selectedTitle}
             />
         </div>

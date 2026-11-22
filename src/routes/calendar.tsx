@@ -18,6 +18,7 @@ import { FILL_PAGES_MAX, useAutoLoadPages } from "@/lib/api/use-auto-load-pages"
 import { calendarPresetWindow, dayHeading, groupEventsByNewYorkDay, newYorkCallDay, presetOf } from "@/lib/earnings/calendar-groups";
 import { calendarWindow, eventLabel, isCallToday, SESSION_LABELS } from "@/lib/earnings/format";
 import { titleHead } from "@/lib/layout";
+import { IN_PLACE } from "@/lib/url-state";
 import { AvailabilityIcons } from "@/routes/$ticker/earnings-calls/-components/availability-icons";
 import { CalendarFilters, matchesCalendarSearch, validateCalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 import { CalendarCallCell, CalendarReportCell, CalendarRowStatus } from "@/routes/$ticker/earnings-calls/-components/calendar-semantics";
@@ -181,7 +182,7 @@ function CalendarPage() {
     );
 
     const onFilterChange = (patch: Partial<CalendarSearch>) => {
-        void navigate({ resetScroll: false, search: prev => ({ ...prev, ...patch }) });
+        void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
     };
 
     const preset = presetOf(range, now);
