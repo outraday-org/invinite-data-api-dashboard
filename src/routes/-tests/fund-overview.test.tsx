@@ -134,6 +134,9 @@ describe("fund overview (`/v1/funds/{fund}`)", () => {
 
         render(<TickerOverview />);
 
+        // The page title every page renders (F032).
+        expect(screen.getByRole("heading", { level: 2, name: "Overview" })).toBeInTheDocument();
+
         expect(screen.getByText(/An exchange-traded note/)).toBeInTheDocument();
 
         expect(screen.getByText("ETN")).toBeInTheDocument();

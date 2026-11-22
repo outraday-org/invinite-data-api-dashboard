@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
+import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useFund, useFundPositionsInfinite, useInstrument, useV2Company, useV2EventsInfinite, useV2FilingsInfinite } from "@/lib/api/queries";
@@ -30,6 +31,14 @@ export const Route = createFileRoute("/$ticker/")({
     component: TickerOverview,
     head: ({ params }) => tickerHead(params.ticker, "Overview"),
 });
+
+const OVERVIEW_DESCRIPTIONS = {
+    etn: "The listing of this exchange-traded note.",
+    fund: "The fund's profile, share classes and composition.",
+    stock: "The company's profile, the data families it holds and its fiscal periods.",
+} as const;
+
+const overviewKind = (type: V2Instrument["type"]): keyof typeof OVERVIEW_DESCRIPTIONS => (type === "stock" ? "stock" : isFundType(type) ? "fund" : "etn");
 
 /**
  * The overview of one instrument (Data API 7.0): a stock's company profile (`/v1/companies/{company}`), a fund's profile
@@ -52,9 +61,7 @@ function TickerOverview() {
     return (
         <div className="flex flex-col gap-4">
             {/* "Create alert" (price types; a stock's metrics too) and the ticker's alerts link (alerts task 4). */}
-            <div className="flex justify-end empty:hidden">
-                <AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.overview} />
-            </div>
+            <PageHeader actions={<AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.overview} />} description={OVERVIEW_DESCRIPTIONS[overviewKind(instrument.type)]} title="Overview" />
             {overview}
         </div>
     );

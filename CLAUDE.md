@@ -657,7 +657,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   Delete confirmed; a 409 → `ScriptDeleteConflict`: the API's `detail` with every `alt_…` id it names linked
   (`alertIdsInDetail`; the API names ≤ 5 and "and more").
 - **Entry points on ticker pages** (`create-alert-button.tsx`, `AlertEntryPoints`): overview (price types + a stock's
-  `fundamental_metric`, a row above the overview), calls list + call page (`earnings_call`, `earnings_call_keyword`,
+  `fundamental_metric`, in the overview's `PageHeader`), calls list + call page (`earnings_call`, `earnings_call_keyword`,
   `earnings_results`, `event_countdown`), news (`news`, `news_keyword`), filings (`filing`, `filing_keyword`), dividends
   (`dividend`): "Create alert" (one type = a link, several = a menu) → `/alerts/new?type=&symbol=`, and "N alerts on X" →
   `/alerts?symbol=X` (N = one `listAlerts?symbol=&limit=100` page, "100+" when `has_more`; `useSymbolAlertCount`, cached
