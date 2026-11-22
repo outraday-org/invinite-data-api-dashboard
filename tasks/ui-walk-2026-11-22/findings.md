@@ -297,6 +297,132 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Evidence: `NewsSearchBox` cost note
 - Outcome: fixed in 20a0d06 (`newsSearchCostText`: the window only when `from` / `to` is set; test `news-search.test.tsx`; re-checked: "10 credits per page")
 
+### F031 — `/aapl`: the alert entry points use the URL's lowercase symbol
+- Check: T3.1 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/aapl
+- Steps: open the overview with a lowercase symbol
+- Expected: the canonical `AAPL` everywhere the page names the instrument (the header's `h1` is `AAPL`)
+- Actual: "No alert on aapl" → `/alerts?symbol=aapl`; "Create alert" items → `/alerts/new?symbol=aapl&type=…`; the count asks `listAlerts?symbol=aapl`
+- Evidence: link hrefs on the page; `AlertEntryPoints` takes the route param as is
+- Outcome: fixed in 7ff817a (`AlertEntryPoints` uses the answer's `symbol`; test `alert-entry-points.test.tsx`; re-checked on `/aapl`: "No alert on AAPL" → `/alerts?symbol=AAPL`)
+
+### F032 — Stock / fund overview has no `PageHeader` and no "API" button
+- Check: T3.4 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/AAPL
+- Steps: open the overview, look for the page title and the API button
+- Expected: every page renders `PageHeader` ending in the API button (CLAUDE.md "Page shell": "Every page renders it")
+- Actual: no `h2` title, no API button; only the alert entry row above the cards
+- Evidence: `find "API"` → only the key button / "API status"; `$ticker/index.tsx` `TickerOverview` renders no `PageHeader`
+- Outcome: fixed in 691443a (`PageHeader` "Overview" with the alert entry points as actions and the API button; test `fund-overview.test.tsx`; CLAUDE.md entry points line; re-checked)
+
+### F033 — Standardized income statement: "Operating Costs And Expenses" equals R&D for AAPL
+- Check: T3.7 · Severity: minor · Class: data
+- Where: http://localhost:3001/AAPL/financials?view=standardized (presentation, quarterly)
+- Steps: read the Operating Expenses subtree
+- Expected: `is_operating_costs_and_expenses` is a total of operating costs (AAPL files no such line; it should be absent or the 19.08 B total), not one of its parts
+- Actual: Operating Expenses 19.08 B → "Operating Costs And Expenses" 11.73 B (= its only child Research And Development 11.73 B) beside SG&A 7.35 B, every quarter
+- Evidence: Q3 2026 column; the filed statement (10-Q 0000320193-26-000020, block b00040) has R&D 11,729 + SG&A 7,346 = Total operating expenses 19,075, no "operating costs" line
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F034 — Balance-sheet columns name a source filing that holds no balance sheet for that year
+- Check: T3.7 · Severity: minor · Class: api
+- Where: http://localhost:3001/AAPL/financials?view=standardized&period=annual&statement=balance-sheet
+- Steps: hover the column headers (tooltip = the period's `source`)
+- Expected: the filing the balance-sheet values come from (a 10-K states two balance-sheet dates)
+- Actual: FY2026, FY2025, FY2024 and FY2023 all "10-K filed 2026-11-03 · 0000320193-26-000026"; FY2022 the 10-K filed 2025-10-31 — the source follows the income statement's three-year span, so FY2023's / FY2024's balance sheet names a filing that does not contain it
+- Evidence: `/v1/financials/standardized/presentation?company=AAPL&statement=balance-sheet&period=annual` rows' `source.accession`
+- Outcome: open (Task 11: API → backend tasklist — `source` per statement, or say in the spec that it is the period's newest filing)
+
+### F035 — Statement column tooltips show a raw ISO day that can differ from the "From filing" picker's day
+- Check: T3.10 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/AAPL/financials?view=standardized&asOf=2024-11-22
+- Steps: hover a column header, open "From filing"
+- Expected: one formatted day per filing (CLAUDE.md "No raw ISO date")
+- Actual: tooltip "10-Q filed 2024-08-01 · 0000320193-24-000081" (UTC slice of `filed_at`), picker "10-Q · Aug 2, 2024" (`formatDay` in the viewer's zone)
+- Evidence: `filingSourceText` in `src/lib/financials/statements.ts` slices `filed_at`
+- Outcome: fixed in 9428080 (`filingSourceText` uses `formatDay`; test `financials-v2-pages.test.tsx`; re-checked: "10-K filed Nov 3, 2026 · …")
+
+### F036 — "Explain this number": a derived fact's operands read "Operand —", its source value "—", the formula raw fact ids
+- Check: T3.12 · Severity: major · Class: dashboard
+- Where: http://localhost:3001/AAPL/financials?view=standardized&layout=detailed → Total Revenue, Q4 2026
+- Steps: click the value 114.48 B
+- Expected: the four operands (FY total and Q1–Q3) with their values, the source fact's value, a readable formula
+- Actual: Operands "Operand —" ×4; Source facts Value "—"; Formula `320193|RevenueFromContractWithCustomerExcludingAssessedTax|2025-09-28T00:00:00|2026-09-26T00:00:00|-|- - 320193|…`; a reported fact's source period reads "2026-03-29 – 2026-06-27" (raw ISO)
+- Evidence: the answer's operands are `{ id, type, weighted_value, stored_value, … }` and the source fact's value sits in `derived.value`; `operandModel` / `sourceModel` in `src/lib/financials/fact-explanation.ts` read only `metric_id` / `concept` / `label` / `value`
+- Outcome: fixed in ed8a636 (`operandModel` reads `id` / `weighted_value` / `stored_value`, `sourceModel` `derived.value`, `readableFormula` / `factIdText`, periods via `formatDay`; test `financials-v2-pages.test.tsx`; CLAUDE.md financials line; re-checked: four operands with values, source 114,477,000,000, formula in words)
+
+### F037 — As-reported Presentation (quarterly) renders no rows when the newest quarter is a 10-K quarter
+- Check: T3.13 · Severity: major · Class: dashboard
+- Where: http://localhost:3001/AAPL/financials?view=as-reported
+- Steps: open As reported (default layout presentation, quarterly)
+- Expected: the filed tree (Net sales, Cost of sales, …) with a value per quarter
+- Actual: the header row Q4 2026 … Q1 2025, no body row, only "Load more"
+- Evidence: the page's answer has 8 rows; Q4 2026 and Q4 2025 carry `statements.income_statement.facts: []` (no filed Q4), the other six the full tree; `FinancialsPresentationTable` builds the tree from `typedPeriods[0]` only
+- Outcome: fixed in d10a351 (the tree of the newest period that states one; test `financials-v2-pages.test.tsx`; re-checked: 18 rows, Q4 columns "—")
+
+### F038 — Filings: raw ISO days in the facet line, the Fiscal Period fallback and the documents panel header
+- Check: T3.20 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/AAPL/filings (and `?docs=`, `/filings/$accession` Documents)
+- Steps: open the list; open a row's Documents
+- Expected: formatted days (CLAUDE.md "No raw ISO date in a cell")
+- Actual: header "Newest filing 2026-11-19" / "31 10-K filings, newest filed 2026-11-03"; Fiscal Period of a Form 4 / 8-K = "2026-11-17" (the `report_date` when no fiscal period matches); panel header "Filed 2026-11-03 · Period 2026-09-26"
+- Evidence: `facetSummary` (`src/lib/sec/parity.ts`), `filing-columns.tsx` fallback, `V2FilingDocumentsView` (`sec-source-panel.tsx`)
+- Outcome: fixed in 170d9a0 (`facetSummary`, the Fiscal Period fallback and `V2FilingDocumentsView` use `formatDay`; tests `filings-page.test.tsx`, `sec-source-panel.test.tsx`; re-checked: "1366 4 filings, newest filed Nov 19, 2026", "Filed Nov 3, 2026 · Period Sep 26, 2026")
+
+### F039 — A numeric-looking text param is dropped: `?form=144`, `?form=4`
+- Check: T3.20 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/AAPL/filings?form=144
+- Steps: open the link (a shared or typed URL)
+- Expected: the 144 filings
+- Actual: the URL is rewritten to `/AAPL/filings`, every form shown — the router reads `144` as a number and `optionalText` (`src/lib/url-state.ts`) takes strings only (the class of F027); every route with an `optionalText` param is affected (`?company=320193` on `/people`, `/search`, a numeric `?q=`)
+- Evidence: URL after load; the picker itself writes `?form=%224%22` and works
+- Outcome: fixed in e7b4cbd (`optionalText` preprocesses a finite number to its text; test `url-state.test.ts`; CLAUDE.md URL state rule; re-checked: `?form=4` lists the 1366 Form 4 filings)
+
+### F040 — "HTML" on a Form 4 frames its XML primary document as one run-on line
+- Check: T3.21 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/AAPL/filings?filing=0001140361-26-044952
+- Steps: a Form 4 row → HTML
+- Expected: an HTML view, or a plain statement that the filing has no HTML document (with the original and the documents reader)
+- Actual: "HTML preview" frames `…/form4.xml`: "X0609 4 2026-11-17 0000320193 Apple Inc. AAPL 0001780525 Newstead Jennifer false …" (the XML's text without markup)
+- Evidence: the documents list of the filing has `form4.xml` only ("No readable version"); `FilingHtmlBody` frames any primary URL
+- Outcome: fixed in 766896c (`isHtmlDocumentUrl`: a non-`.htm` primary is not framed — "No HTML document: the primary document is form4.xml." + Open the original + reader; test `filings-page.test.tsx`; CLAUDE.md parity line; re-checked)
+
+### F041 — AAPL FY2026 10-K: generic section outline and filing facts still "pending" 19 days after filing
+- Check: T3.28 / T3.29 · Severity: minor · Class: api
+- Where: http://localhost:3001/filings/0000320193-26-000026?panel=sections&version=8be0b759-1a9d-5f89-8308-bd86185f5e1f · `?tab=facts`
+- Steps: Documents → Sections (Headings); Facts tab
+- Expected: the outline and the facts of a 10-K filed Nov 3, 2026 (its standardized financials, fact places and legacy outline are served)
+- Actual: Headings "Pending · Being prepared"; Facts "Pending · Complete through Oct 31, 2026"; `?outline=legacy` answers the full outline (Items 1–16)
+- Evidence: `/v1/document-versions/8be0b759-…/sections`, `/v1/filings/0000320193-26-000026/facts` `meta.coverage`
+- Outcome: open (Task 11: API → backend tasklist; the facts data set release lag, or by design — then the spec should name the cadence)
+
+### F042 — Legacy section outline reads "Part I · Item Item 1."
+- Check: T3.28 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/filings/0000320193-26-000026?panel=sections&outline=legacy&version=…
+- Steps: open the legacy outline
+- Expected: "Part I · Item 1."
+- Actual: "Part I · Item Item 1." — the column prefixes "Item " to an `item_id` that already reads "Item 1."
+- Evidence: `DocumentSectionsView` in `src/routes/filings/-components/filing-detail-views.tsx`
+- Outcome: fixed in d1dcb13 (`itemText`; test `filing-detail.test.tsx`; re-checked: "Part I · Item 1.")
+
+### F043 — Filing facts / notes: calendar-month periods instead of the filed contexts, duplicate rows, apostrophes dropped
+- Check: T3.29 · Severity: major · Class: data
+- Where: http://localhost:3001/filings/0000320193-26-000020?tab=facts&tag=AccountsPayableCurrent,NetIncomeLoss (AAPL 10-Q for Jun 27, 2026)
+- Steps: open Facts / Notes
+- Expected: the contexts as filed (instants Sep 27, 2025 / Jun 27, 2026; durations Mar 29 – Jun 27, 2026), one row per fact
+- Actual: `instant: "2025-09-30"`, "Apr 1, 2025 – Jun 30, 2025", "Oct 1, 2024 – Jun 30, 2025"; NetIncomeLoss 23,434,000,000 for the same period and dimensions listed three times (four for 84,544,000,000); notes read "Period end Jun 30, 2026" and "the Companys condensed consolidated …" (the ’ is lost)
+- Evidence: raw answer of `/v1/filings/0000320193-26-000020/facts` (`{"tag":"AccountsPayableCurrent","value":69860000000,…,"instant":"2025-09-30"}`); the filed statement (block b00040) says "June 27, 2026" / "September 27, 2025"
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F044 — `/filings/123` shows a raw validation error instead of a not-found state
+- Check: T3.33 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/filings/123
+- Steps: open a malformed accession
+- Expected: a not-found / "not an accession number" state (a well-formed unknown one already reads "Not known to the SEC store")
+- Actual: "Error · Failed to load the filing" + the zod issue JSON (`invalid_format`, pattern …)
+- Evidence: `FilingPage` asks `useV2Filing(accession)` unchecked; the server function's `accessionSchema` refuses it (the class of F008)
+- Outcome: fixed in 40d4400 (`isAccessionParam` in `src/lib/sec/source.ts`: no request, Notice "123 is not an accession number"; test `source.test.ts`; CLAUDE.md filings line; re-checked)
+
 ## Summary (filled by Task 11)
 
 | Class | blocker | major | minor | nit | fixed | API tasklist | other |
