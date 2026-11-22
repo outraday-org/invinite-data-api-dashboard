@@ -271,6 +271,11 @@ describe("Metrics (`/v1/metrics/*`, `/v1/segments`)", () => {
         expect(screen.getByText("Leverage")).toBeInTheDocument();
 
         expect(screen.getByText("46.90%")).toBeInTheDocument();
+
+        // The chart button names the metric with its category, never the category alone ("Chart Leverage", F099).
+        expect(screen.getByRole("button", { name: "Chart To Equity · Leverage" })).toBeInTheDocument();
+
+        expect(screen.queryByRole("button", { name: "Chart Leverage" })).toBeNull();
     });
 
     it("ratios: pending coverage is the metrics-being-prepared notice", () => {

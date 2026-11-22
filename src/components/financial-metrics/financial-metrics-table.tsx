@@ -15,6 +15,11 @@ export type MetricsTableRow = {
     values: Record<string, number | undefined>;
 };
 
+/** What a row's chart is named: the first column's text too when the table has one (ratios: the metric, then its category). */
+export function chartName(row: MetricsTableRow) {
+    return row.group ? `${row.group} · ${row.label}` : row.label;
+}
+
 export function FinancialMetricsTable({
     formatValue,
     groupLabel = "Category",
@@ -79,7 +84,7 @@ export function FinancialMetricsTable({
                                         {row.label}
                                     </div>
                                     {!hasGroupColumn && <MetricCatalogLink label={row.label} metricId={row.metricId} />}
-                                    <ChartRowButton label={row.label} onOpen={() => setSelectedRow(row)} />
+                                    <ChartRowButton label={chartName(row)} onOpen={() => setSelectedRow(row)} />
                                 </div>
                             </TableCell>
                             {periodLabels.map((label) => {
@@ -109,7 +114,7 @@ export function FinancialMetricsTable({
                         }))
                     : []}
                 formatValue={selectedRow?.formatValue ?? formatValue}
-                metricLabel={selectedRow?.label ?? ""}
+                metricLabel={selectedRow ? chartName(selectedRow) : ""}
                 onOpenChange={(open) => {
                     if (!open) {
                         setSelectedRow(null);
