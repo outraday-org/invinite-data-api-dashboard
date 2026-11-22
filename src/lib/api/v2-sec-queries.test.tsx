@@ -16,6 +16,7 @@ import {
     useFilerHoldingsInfinite,
     useHolderChangesInfinite,
     useHoldersInfinite,
+    useInstrument,
     useV2DocumentVersion,
     useV2Filing,
     useV2FilingFactsInfinite,
@@ -28,6 +29,7 @@ import {
     getFilerHoldings,
     getHolderChanges,
     getHolders,
+    getInstrument,
     getV2DocumentVersion,
     getV2Filing,
     getV2FilingFacts,
@@ -41,6 +43,7 @@ vi.mock("./server-functions", () => ({
     getFilerHoldings: vi.fn(),
     getHolderChanges: vi.fn(),
     getHolders: vi.fn(),
+    getInstrument: vi.fn(),
     getV2DocumentVersion: vi.fn(),
     getV2Filing: vi.fn(),
     getV2FilingFacts: vi.fn(),
@@ -341,5 +344,31 @@ describe("filings depth hooks (O7 group 3)", () => {
                 symbol: undefined,
             },
         });
+    });
+});
+
+describe("useInstrument", () => {
+    it("a failed read is not asked again by a reader that mounts later (the layout ↔ page refetch loop, UI walk F007)", async () => {
+        vi.mocked(getInstrument).mockRejectedValue(revivedProblem(503, "unavailable", "The instrument store is down."));
+
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+        const shared = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+
+        const layout = renderHook(() => useInstrument("AAPL"), { wrapper: shared });
+
+        await waitFor(() => expect(layout.result.current.error).toBeInstanceOf(ApiRequestError));
+
+        const page = renderHook(() => useInstrument("AAPL"), { wrapper: shared });
+
+        await act(async () => {
+            await new Promise(resolve => setTimeout(resolve, 20));
+        });
+
+        expect(page.result.current.error).toBeInstanceOf(ApiRequestError);
+
+        expect(layout.result.current.isLoading).toBe(false);
+
+        expect(getInstrument).toHaveBeenCalledTimes(1);
     });
 });

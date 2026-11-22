@@ -308,7 +308,7 @@ const EARNINGS_EVENT_STALE_MS = 10 * 60 * 1000;
 
 type EarningsQueryExtras<T> = Pick<
     UseQueryOptions<T, Error, T, ReadonlyArray<unknown>>,
-    "gcTime" | "placeholderData" | "refetchInterval" | "retry"
+    "gcTime" | "placeholderData" | "refetchInterval" | "retry" | "retryOnMount"
 >;
 
 /**
@@ -637,6 +637,9 @@ export function useInstrumentSearch(query: string, type?: ReadonlyArray<V2Instru
 /**
  * One instrument (type, structure, company / fund link, `datasets`): the layout reads it once per symbol and every
  * page under it shares the answer. Status-aware: 404 `not_covered` = the symbol is not known (a page state).
+ * A failed read is never asked again by a newly mounted reader (`retryOnMount: false`): the layout renders the page
+ * under a failed (non-404) read, the page's own `useInstrument` would refetch, the refetch resets the query to
+ * pending, the layout shows its skeleton, unmounting the page, and so on — a request a second (UI walk F007).
  */
 export function useInstrument(symbol: string) {
     return useEarningsQuery<V2Instrument>({
@@ -644,6 +647,7 @@ export function useInstrument(symbol: string) {
         errorMessage: null,
         load: apiKey => getInstrument({ data: { apiKey, symbol } }),
         queryKey: ["v2", "instrument", symbol.toUpperCase()],
+        retryOnMount: false,
         staleTime: V2_STALE_MS,
     });
 }
