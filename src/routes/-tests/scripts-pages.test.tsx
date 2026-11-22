@@ -155,6 +155,12 @@ describe("upload", () => {
         expect(mutations.calls).toHaveLength(0);
     });
 
+    it("the source box stops growing at half the window and scrolls itself (F116: Upload stays in reach)", () => {
+        render(<ScriptUploadDialog onOpenChange={vi.fn()} onUploaded={vi.fn()} open />);
+
+        expect(screen.getByLabelText("Source")).toHaveClass("max-h-[50vh]", "overflow-y-auto");
+    });
+
     it("a script: name, description and source go to createScript; a version: only the source", async () => {
         const onUploaded = vi.fn();
 

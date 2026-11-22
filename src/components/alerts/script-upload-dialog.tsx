@@ -21,7 +21,8 @@ const fieldId = (key: string) => `script-field-${key}`;
 
 /**
  * The upload fields (pure): name and description only for a new script (fixed after upload: there is no update
- * operation), the source as text or from a file, with its size against the 204 800-character limit.
+ * operation), the source as text or from a file, with its size against the 204 800-character limit. The source box
+ * grows with its text up to half the window, then scrolls itself, so Upload stays in reach of a long source.
  */
 export function ScriptUploadFields({ errors, kind, onChange, onFile, state }: { errors: Record<string, string>; kind: "script" | "version"; onChange: (state: ScriptUploadState) => void; onFile: (input: HTMLInputElement) => void; state: ScriptUploadState }) {
     const over = state.source.length > SCRIPT_SOURCE_MAX;
@@ -48,7 +49,7 @@ export function ScriptUploadFields({ errors, kind, onChange, onFile, state }: { 
                 htmlFor={fieldId("source")}
                 label="Source"
             >
-                <Textarea className="min-h-48 font-mono" id={fieldId("source")} onChange={event => onChange({ ...state, source: event.target.value })} spellCheck={false} value={state.source} />
+                <Textarea className="max-h-[50vh] min-h-48 overflow-y-auto font-mono" id={fieldId("source")} onChange={event => onChange({ ...state, source: event.target.value })} spellCheck={false} value={state.source} />
                 <label className="flex flex-wrap items-center gap-2">
                     <span className="text-muted-foreground">Or read a file:</span>
                     <input accept=".ts,.js,.txt,text/plain,text/typescript,application/typescript" aria-label="Read the source from a file" className="text-xs" onChange={event => onFile(event.target)} type="file" />
