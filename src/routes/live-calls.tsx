@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isTierError } from "@/lib/api/errors";
 import { useV2EventsInfinite, useV2LiveEvents } from "@/lib/api/queries";
+import { groupEventsByNewYorkDay } from "@/lib/earnings/calendar-groups";
 import { eventLabel, formatCallTime, formatStartedAgo, zonedDate } from "@/lib/earnings/format";
 import { titleHead } from "@/lib/layout";
 import { EventLink } from "@/routes/$ticker/earnings-calls/-components/event-link";
@@ -24,6 +25,18 @@ export const Route = createFileRoute("/live-calls")({
 
 /** How many upcoming calls the empty state names. */
 const NEXT_CALLS = 6;
+
+/** One page of upcoming events to pick them from (1 credit like a page of 6). */
+const NEXT_CALLS_PAGE = 50;
+
+/**
+ * The next `count` calls in New York day order. `/v1/events` sorts by `scheduled_at`, and a date-only event's is its
+ * day's UTC midnight — the evening before in New York — so tomorrow's date-only conferences came before tonight's
+ * timed calls.
+ */
+export function nextCallsOf<T extends Pick<V2Event, "call_time_source" | "scheduled_at">>(events: ReadonlyArray<T>, count = NEXT_CALLS): Array<T> {
+    return groupEventsByNewYorkDay(events).flatMap(group => group.events).slice(0, count);
+}
 
 /** One live call: company, period, started, what it carries; opens the call page. */
 export function LiveCallCard({ asOf, event }: { asOf: Date; event: V2Event }) {
@@ -125,7 +138,7 @@ function LiveCallsPage() {
 
     const next = useV2EventsInfinite({
         enabled: !isLoading && !error && live.length === 0,
-        limit: NEXT_CALLS,
+        limit: NEXT_CALLS_PAGE,
         scheduledAtGte: today,
         sort: "scheduled_at",
         status: ["upcoming"],
@@ -144,7 +157,7 @@ function LiveCallsPage() {
                 error={error}
                 isLoading={isLoading}
                 live={live}
-                next={next.data?.pages.flatMap(page => page.data).slice(0, NEXT_CALLS) ?? []}
+                next={nextCallsOf(next.data?.pages.flatMap(page => page.data) ?? [])}
                 nextError={next.error}
                 nextLoading={next.isLoading}
             />

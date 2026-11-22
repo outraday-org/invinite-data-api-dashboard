@@ -12,7 +12,7 @@ import { AAPL_INSTRUMENT, SPY_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { V2_IPOS } from "@/lib/sec/v2-fixtures";
 import { CalendarView } from "@/routes/calendar";
 import { IpoDetail, ipoRequest, IposView } from "@/routes/ipo-calendar";
-import { LiveCallsView } from "@/routes/live-calls";
+import { LiveCallsView, nextCallsOf } from "@/routes/live-calls";
 import { holidayStatus, MarketHolidaysView } from "@/routes/market-holidays";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -99,6 +99,17 @@ describe("/live-calls", () => {
         expect(screen.getByText("No call is live right now.")).toBeInTheDocument();
 
         expect(within(screen.getByTestId("next-calls")).getByText(CALENDAR_EVENT_EXPIRED_CALL.symbol)).toBeInTheDocument();
+    });
+
+    it("the next calls are in New York day order: tonight's timed call before tomorrow's date-only event", () => {
+        // API order (`scheduled_at`): the date-only Nov 23 event's UTC midnight comes before 19:30 ET on Nov 22.
+        const dateOnly = { call_time_source: null, scheduled_at: "2026-11-23T00:00:00.000Z", symbol: "AYA" } as const;
+
+        const tonight = { call_time_source: "edgar", scheduled_at: "2026-11-23T00:30:00.000Z", symbol: "TUYA" } as const;
+
+        expect(nextCallsOf([dateOnly, tonight]).map(event => event.symbol)).toEqual(["TUYA", "AYA"]);
+
+        expect(nextCallsOf(Array.from({ length: 10 }, () => tonight))).toHaveLength(6);
     });
 });
 
