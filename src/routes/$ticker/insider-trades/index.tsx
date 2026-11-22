@@ -372,6 +372,33 @@ function InsiderTradeDialog({ id, onClose, row, ticker }: { id: null | string; o
     );
 }
 
+/** A day pair in order: a swapped range (a typed or shared URL) is turned around, never sent as an empty window. */
+function orderedDays(from: string | undefined, to: string | undefined): [string | undefined, string | undefined] {
+    return from && to && from > to ? [to, from] : [from || undefined, to || undefined];
+}
+
+/**
+ * `/v1/insider-trades?company=<ticker>` for a search state: the day filters are sent as days (`filed_at.gte` / `.lte`,
+ * `transaction_date.gte` / `.lte`), each range put in order.
+ */
+export function insiderTradesRequest(ticker: string, search: InsiderSearch) {
+    const [from, to] = orderedDays(search.from, search.to);
+
+    const [tradedFrom, tradedTo] = orderedDays(search.tfrom, search.tto);
+
+    return {
+        company: ticker,
+        from,
+        isDerivative: search.kind ? search.kind === "derivative" : undefined,
+        limit: INSIDER_PAGE,
+        side: search.side,
+        sort: search.sort === "oldest" ? ("filed_at" as const) : undefined,
+        to,
+        tradedFrom,
+        tradedTo,
+    };
+}
+
 function InsiderTradesPage() {
     const { ticker } = Route.useParams();
 
@@ -385,18 +412,7 @@ function InsiderTradesPage() {
 
     const onChange = (patch: Partial<InsiderSearch>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
-    // `/v1/insider-trades?company=<ticker>`; the day filters are sent as days (`filed_at.gte` / `.lte`, `transaction_date.gte` / `.lte`).
-    const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2InsiderTradesInfinite({
-        company: ticker,
-        from: from || undefined,
-        isDerivative: search.kind ? search.kind === "derivative" : undefined,
-        limit: INSIDER_PAGE,
-        side: side === ALL ? undefined : side,
-        sort: search.sort === "oldest" ? "filed_at" : undefined,
-        to: to || undefined,
-        tradedFrom: tfrom || undefined,
-        tradedTo: tto || undefined,
-    });
+    const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2InsiderTradesInfinite(insiderTradesRequest(ticker, search));
 
     const pages = React.useMemo(() => data?.pages ?? [], [data]);
 

@@ -18,7 +18,7 @@ import {
     V2_INSIDER_TRADES,
     V2_IPOS,
 } from "@/lib/sec/v2-fixtures";
-import { insiderRoles, InsiderTradeDetailView, InsiderTradesView } from "@/routes/$ticker/insider-trades/index";
+import { insiderRoles, InsiderTradeDetailView, insiderTradesRequest, InsiderTradesView } from "@/routes/$ticker/insider-trades/index";
 import { ipoIssuerCik, IposView, ipoSymbolText, offerPriceText } from "@/routes/ipo-calendar";
 
 // The page modules' routes need a router; the pure views do not.
@@ -337,6 +337,22 @@ describe("Insider trades (`/v1/insider-trades`)", () => {
         expect(insiderRoles({ ...trade, reporting_person_is_officer: false, reporting_person_is_other: true, reporting_person_other_text: "Trustee" })).toBe("Trustee");
 
         expect(insiderRoles({ ...trade, reporting_person_is_officer: false })).toBe("—");
+    });
+
+    it("request: a swapped filed / traded range is put in order, days stay days (F045)", () => {
+        expect(insiderTradesRequest("AAPL", { from: "2026-11-01", sort: "oldest", tfrom: "2026-11-20", to: "2026-10-01", tto: "2026-11-01" })).toEqual({
+            company: "AAPL",
+            from: "2026-10-01",
+            isDerivative: undefined,
+            limit: 50,
+            side: undefined,
+            sort: "filed_at",
+            to: "2026-11-01",
+            tradedFrom: "2026-11-01",
+            tradedTo: "2026-11-20",
+        });
+
+        expect(insiderTradesRequest("AAPL", { from: "2026-10-01", kind: "derivative", side: "sell" })).toMatchObject({ from: "2026-10-01", isDerivative: true, side: "sell", to: undefined });
     });
 
     it("404 not_covered: the not-covered state, no table", () => {
