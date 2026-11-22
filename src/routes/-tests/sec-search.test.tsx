@@ -66,7 +66,12 @@ describe("SecSearchResults", () => {
 
         render(results({ onOpen, pages: [page([HIT], COMPLETE)] }));
 
-        expect(screen.getByText("10-K · 2025-10-31 · aapl-20250927.htm")).toBeInTheDocument();
+        expect(screen.getByText("10-K · Oct 31, 2025 · aapl-20250927.htm")).toBeInTheDocument();
+
+        // The relevance is in the match badge's tooltip, never printed beside the hit.
+        expect(screen.queryByText("0.0128")).toBeNull();
+
+        expect(screen.getByTitle("How the passage matched · relevance 0.0128")).toBeInTheDocument();
 
         expect(screen.getByText("supply", { selector: "mark" })).toBeInTheDocument();
 
@@ -197,7 +202,7 @@ describe("market-wide search and filters (O7 group 3)", () => {
     it("states the cap of a search without a company: examined, at least how many, the order and the hint", () => {
         render(results({ pages: [page([HIT], CAPPED)], renderFilingLink: accession => <a href={`/filings/${accession}`}>Filing</a> }));
 
-        expect(screen.getByTestId("search-matches")).toHaveTextContent("Examined 300 of at least 301 matching passages (cap 300, newest filings first — complete since 2026-11-14). Filed 2026-09-01 to 2026-11-19.");
+        expect(screen.getByTestId("search-matches")).toHaveTextContent("Examined 300 of at least 301 matching passages (cap 300, newest filings first — complete since Nov 14, 2026). Filed Sep 1, 2026 to Nov 19, 2026.");
 
         expect(screen.getByText(CAPPED.hint ?? "")).toBeInTheDocument();
 
@@ -208,7 +213,7 @@ describe("market-wide search and filters (O7 group 3)", () => {
         if (!CAPPED.matches) throw new Error("fixture");
 
         expect(matchesText({ ...CAPPED.matches, capped: false, complete_since: null, total: 12, total_at_least: null })).toBe(
-            "Examined 300 of 12 matching passages (cap 300, newest filings first). Filed 2026-09-01 to 2026-11-19.",
+            "Examined 300 of 12 matching passages (cap 300, newest filings first). Filed Sep 1, 2026 to Nov 19, 2026.",
         );
 
         render(results({ pages: [page([HIT], COMPLETE)] }));

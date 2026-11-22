@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2FilingSearchInfinite } from "@/lib/api/queries";
 import { MATCH_TYPE_LABELS } from "@/lib/earnings/labels";
+import { formatDay } from "@/lib/format";
 import { isSearchGenuineEmpty } from "@/lib/sec/readiness";
 import { toSecHitView } from "@/lib/sec/source";
 
@@ -39,10 +40,10 @@ export function matchesText(matches: V2FilingSearchMatches): string {
         : String(matches.total ?? matches.examined);
 
     const order = matches.order === "newest_first"
-        ? (matches.complete_since ? `, newest filings first — complete since ${matches.complete_since}` : ", newest filings first")
+        ? (matches.complete_since ? `, newest filings first — complete since ${formatDay(matches.complete_since)}` : ", newest filings first")
         : "";
 
-    const range = matches.filed_from && matches.filed_to ? ` Filed ${matches.filed_from} to ${matches.filed_to}.` : "";
+    const range = matches.filed_from && matches.filed_to ? ` Filed ${formatDay(matches.filed_from)} to ${formatDay(matches.filed_to)}.` : "";
 
     return `Examined ${matches.examined} of ${total} matching passages (cap ${matches.cap}${order}).${range}`;
 }
@@ -76,18 +77,18 @@ function SecHitCard({ hit, mode, onOpen, query, renderFilingLink }: {
 
     const text = hit.text ?? "";
 
-    const source = [view.form, view.filingDate, view.filename].filter(Boolean).join(" · ");
+    const source = [view.form, view.filingDate && formatDay(view.filingDate), view.filename].filter(Boolean).join(" · ");
+
+    // The relevance goes into the badge's tooltip, as on every other search (no visible score).
+    const relevance = mode === "lexical" && typeof hit.score === "number" ? ` · relevance ${hit.score.toFixed(4)}` : "";
 
     const { blockId, versionId } = view;
 
     return (
         <li className="flex flex-col gap-1.5 rounded-md border p-3">
             <div className="flex flex-wrap items-center gap-2">
-                {hit.match && <Badge title="How the passage matched" variant="secondary">{MATCH_TYPE_LABELS[hit.match.type]}</Badge>}
+                {hit.match && <Badge title={`How the passage matched${relevance}`} variant="secondary">{MATCH_TYPE_LABELS[hit.match.type]}</Badge>}
                 <span className="font-medium">{source}</span>
-                {mode === "lexical" && typeof hit.score === "number" && (
-                    <span className="text-muted-foreground ml-auto tabular-nums" title="Relevance score">{hit.score.toFixed(4)}</span>
-                )}
             </div>
             {spans.length > 0 ? <SpanHighlightedText spans={spans} text={text} /> : <HighlightedText query={query} text={text} />}
             <div className="flex flex-wrap items-center gap-3">
