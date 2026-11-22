@@ -532,8 +532,8 @@ export function SecFilingsView({
                                     {filings.map(filing => (
                                         <tr key={filing.accession}>
                                             <td className="p-1 font-medium">{filing.form}</td>
-                                            <td className="p-1">{filing.filing_date}</td>
-                                            <td className="p-1">{filing.report_date ?? "—"}</td>
+                                            <td className="p-1 tabular-nums">{formatDay(filing.filing_date)}</td>
+                                            <td className="p-1 tabular-nums">{formatDay(filing.report_date)}</td>
                                             <td className="p-1 tabular-nums"><Copyable label="Copy accession number" value={filing.accession} /></td>
                                             <td className="p-1">{filing.roles.join(", ") || "—"}</td>
                                             <td className="flex items-center justify-end gap-2 p-1">

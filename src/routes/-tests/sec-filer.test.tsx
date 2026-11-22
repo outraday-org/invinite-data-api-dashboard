@@ -290,6 +290,13 @@ describe("SecFilingsView", () => {
 
         expect(screen.getByText("0000320193-26-000026")).toBeInTheDocument();
 
+        // Filed / period as days, never the raw ISO string (UI walk F004).
+        expect(screen.getByText("Nov 3, 2026")).toBeInTheDocument();
+
+        expect(screen.getByText("Sep 26, 2026")).toBeInTheDocument();
+
+        expect(screen.queryByText("2026-11-03")).toBeNull();
+
         expect(screen.getByRole("button", { name: "More filings" })).toBeInTheDocument();
 
         fireEvent.click(screen.getAllByRole("button", { name: /Documents/ })[1]);
