@@ -398,6 +398,11 @@ describe("Private offerings (`/v1/filers/{cik}?expand=private_offerings` + `/v1/
 
         expect(screen.getByText("total sold:").nextSibling).toHaveTextContent("$87.5M");
 
+        // Days formatted, never the raw ISO string (UI walk F085).
+        expect(screen.getByText("first filed:").nextSibling).toHaveTextContent("Jun 3, 2024");
+
+        expect(screen.getByText("latest filed:").nextSibling).toHaveTextContent("Mar 12, 2026");
+
         // The offering opens its detail page.
         expect(screen.getByRole("link", { name: "021-528681" })).toHaveAttribute("href", "/offerings/021-528681");
 

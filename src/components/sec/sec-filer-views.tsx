@@ -429,9 +429,9 @@ export function SecPrivateOfferingsView({
 
     const facts: Array<[string, string]> = [["offerings", String(summary.count)]];
 
-    if (summary.first_filed) facts.push(["first filed", summary.first_filed]);
+    if (summary.first_filed) facts.push(["first filed", formatDay(summary.first_filed)]);
 
-    if (summary.latest_filed) facts.push(["latest filed", summary.latest_filed]);
+    if (summary.latest_filed) facts.push(["latest filed", formatDay(summary.latest_filed)]);
 
     if (summary.total_sold !== null) facts.push(["total sold", offeringUsd(summary.total_sold)]);
 
