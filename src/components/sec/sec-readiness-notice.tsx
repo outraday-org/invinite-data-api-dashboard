@@ -1,6 +1,8 @@
+import type { OperationId } from "@/lib/api/operations.gen";
 import type { SecReadinessStatus, V2MetaCoverage } from "@/lib/api/types";
 import type { SecState } from "@/lib/sec/readiness";
 
+import { tierLabel } from "@/components/ui/credit-hint";
 import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
 import { READINESS_TEXT, reasonText, secErrorState, v2CoverageState } from "@/lib/sec/readiness";
@@ -8,7 +10,7 @@ import { READINESS_TEXT, reasonText, secErrorState, v2CoverageState } from "@/li
 /** Per-view words for a state (e.g. search's 503 not_ready = "SEC filing search is not switched on yet"). */
 export type SecStateTitles = Partial<Record<SecReadinessStatus, string>>;
 
-function SecStateNotice({ state, title, titles }: { state: SecState; title: string; titles?: SecStateTitles }) {
+function SecStateNotice({ operationId, state, title, titles }: { operationId?: OperationId; state: SecState; title: string; titles?: SecStateTitles }) {
     switch (state.kind) {
         case "bad_request":
             return <Notice badge="Invalid request" title={state.message} />;
@@ -27,7 +29,8 @@ function SecStateNotice({ state, title, titles }: { state: SecState; title: stri
         case "restart_required":
             return <Notice badge="Start over" title="The results changed since the first page — run it again" />;
         case "tier":
-            return <Notice badge="STANDARD" title="Your plan does not include the SEC document store" />;
+            // The request's own `x-tier` when the caller names its operation (holder changes are PRO), else the store's STANDARD.
+            return <Notice badge={(operationId && tierLabel(operationId)) || "STANDARD"} title="Your plan does not include the SEC document store" />;
         case "too_large":
             return <Notice badge="Too large" title={state.message} />;
     }
@@ -41,11 +44,14 @@ function SecStateNotice({ state, title, titles }: { state: SecState; title: stri
 export function SecReadinessNotice({
     coverage,
     error,
+    operationId,
     title = "Failed to load from the SEC store",
     titles,
 }: {
     coverage?: null | Pick<V2MetaCoverage, "state" | "through">;
     error?: unknown;
+    /** The operation asked: its `x-tier` is the plan badge of a plan refusal. */
+    operationId?: OperationId;
     title?: string;
     titles?: SecStateTitles;
 }) {
@@ -53,5 +59,5 @@ export function SecReadinessNotice({
 
     if (!state) return null;
 
-    return <SecStateNotice state={state} title={title} titles={titles} />;
+    return <SecStateNotice operationId={operationId} state={state} title={title} titles={titles} />;
 }

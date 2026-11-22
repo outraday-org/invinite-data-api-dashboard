@@ -98,16 +98,25 @@ export const V2_API_STATUS: V2ApiStatus = {
     universe: { companies: 6023, earnings_calls: { companies: 5541, scope: "all" } },
 };
 
-const rights = (display: boolean, redistribute: boolean, rag: boolean, audio: boolean) => ({ audio, display, rag, redistribute, resell: false, train: false });
+const rights = (display: boolean, redistribute: boolean, rag: boolean, audio: boolean, enterprise = false) => ({
+    audio,
+    display,
+    rag,
+    redistribute,
+    redistribute_api: enterprise,
+    resell: false,
+    train: enterprise,
+});
 
 export const V2_LICENSING: V2Licensing = {
+    by_contract: ["train"],
     counsel_signed_off: false,
     families: [
         {
             family: "company",
             routes: [
                 { license: "display", route: "/v1/companies", tier: "free" },
-                { license: "redistribute", route: "/v1/dividends", tier: "free" },
+                { license: "redistribute", route: "/v1/dividends", tier: "lite" },
             ],
         },
         {
@@ -125,15 +134,16 @@ export const V2_LICENSING: V2Licensing = {
         pdf_documents: "Branded PDFs are permanent URLs.",
         rag: "Use the text as retrieval context in a customer-facing product.",
         redistribute: "Pass the data on inside the licensee's product with attribution.",
+        redistribute_api: "Return the data in the licensee's own API responses. Enterprise contract only.",
         sec_data: "Figures and filings originate from SEC EDGAR.",
-        train: "Model training is contract-only.",
+        train: "Model training is an Enterprise right, granted in the contract.",
     },
-    policy_version: "2026-10-draft",
+    policy_version: "2026-11-draft",
     resale: "Invinite data may never be resold.",
-    rights: ["display", "redistribute", "rag", "train", "audio", "resell"],
+    rights: ["display", "redistribute", "rag", "train", "audio", "redistribute_api", "resell"],
     tiers: {
-        enterprise: rights(true, true, true, true),
-        free: rights(true, false, false, false),
+        enterprise: rights(true, true, true, true, true),
+        free: rights(false, false, false, false),
         lite: rights(true, false, false, false),
         pro: rights(true, true, true, true),
         standard: rights(true, false, true, false),

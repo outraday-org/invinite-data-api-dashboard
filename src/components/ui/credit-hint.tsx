@@ -11,7 +11,20 @@ import { planAllows } from "@/lib/api/request-meta";
 import { formatNumber } from "@/lib/format";
 
 /** The plan names a badge shows (the operation's `x-tier`). */
-export const TIER_BADGE_LABELS: Record<OperationTier, string> = { free: "FREE", pro: "PRO", standard: "STANDARD" };
+export const TIER_BADGE_LABELS: Record<OperationTier, string> = {
+    enterprise: "ENTERPRISE",
+    free: "FREE",
+    lite: "LITE",
+    pro: "PRO",
+    standard: "STANDARD",
+};
+
+/** The badge label of the plan an operation needs (its `x-tier`): "PRO", "LITE", …; null for an operation without one. */
+export function tierLabel(operationId: OperationId): null | string {
+    const tier = OPERATIONS[operationId].tier;
+
+    return tier ? TIER_BADGE_LABELS[tier] : null;
+}
 
 /**
  * The cost line of an operation from its `x-credits` (the spec's rule: + 1 credit per started 1,000 rows beyond the
@@ -70,7 +83,7 @@ function PlanBadgeForPlan({ tier }: { tier: OperationTier }) {
 }
 
 /**
- * The PRO / STANDARD badge of a control whose operation the key's plan does not include, shown BEFORE any request
+ * The plan badge (LITE / STANDARD / PRO / ENTERPRISE) of a control whose operation the key's plan does not include, shown BEFORE any request
  * (`useMe()`'s plan against the operation's `x-tier`, in the spec's plan order). Nothing when the plan includes it,
  * while the plan is unknown, or outside a query client (pure view tests).
  */

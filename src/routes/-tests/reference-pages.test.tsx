@@ -243,6 +243,18 @@ describe("status widget (`/status`, `/status/licensing`)", () => {
 
         expect(familyReach(V2_LICENSING.families, "free")[1]).toMatchObject({ reachable: 0 });
     });
+
+    it("licensing on ENTERPRISE: training is granted by contract, redistribution through the API is allowed", () => {
+        render(<LicensingView licensing={V2_LICENSING} plan="enterprise" />);
+
+        const rights = within(screen.getByTestId("licensing-rights"));
+
+        expect(rights.getByText("Model training").closest("li")).toHaveTextContent("By contract");
+
+        expect(rights.getByText("Redistribute through your API").closest("li")).toHaveTextContent("Allowed");
+
+        expect(rights.getByText("Resell").closest("li")).toHaveTextContent("Not on your plan");
+    });
 });
 
 describe("overview: fiscal periods (`/v1/fiscal-periods`)", () => {

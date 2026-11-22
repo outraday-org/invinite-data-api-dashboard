@@ -2,7 +2,9 @@ import type { StreamMode, StreamStop } from "@/lib/live/stream-socket";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TIER_BADGE_LABELS } from "@/components/ui/credit-hint";
 import { Notice } from "@/components/ui/notice";
+import { STREAM_TIER } from "@/lib/api/operations.gen";
 import { LiveDot } from "@/routes/$ticker/earnings-calls/-components/live-dot";
 
 /**
@@ -38,16 +40,19 @@ export function LiveToggle({
     );
 }
 
-export const LIVE_FILINGS_PLAN_NOTE = "The live filings feed needs the STANDARD plan; the list still works.";
+/** The badge of a plan stop: the stream's own `x-tier` (`STREAM_TIER`). */
+const STREAM_TIER_BADGE = TIER_BADGE_LABELS[STREAM_TIER];
 
-export const LIVE_NEWS_PLAN_NOTE = "The live news feed needs the STANDARD plan; the list above still works.";
+export const LIVE_FILINGS_PLAN_NOTE = `The live filings feed needs the ${STREAM_TIER_BADGE} plan; the list still works.`;
+
+export const LIVE_NEWS_PLAN_NOTE = `The live news feed needs the ${STREAM_TIER_BADGE} plan; the list above still works.`;
 
 /** Why a live feed stopped (null = it did not); `planNote` = the sentence under a plan stop. */
 export function LiveStopNotice({ planNote, stop }: { planNote: string; stop: null | StreamStop }) {
     if (!stop) return null;
 
     return (
-        <Notice badge={stop.kind === "plan" ? "STANDARD" : undefined} title={stop.message}>
+        <Notice badge={stop.kind === "plan" ? STREAM_TIER_BADGE : undefined} title={stop.message}>
             {stop.kind === "plan" ? planNote : undefined}
         </Notice>
     );
