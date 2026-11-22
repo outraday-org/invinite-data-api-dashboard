@@ -527,7 +527,10 @@ export function FundProfileView({ composition, fund }: { composition: ReactNode;
             <Card className="border-border/60">
                 <CardHeader>
                     <CardTitle>Size and costs</CardTitle>
-                    <CardDescription>N-PORT net assets, prospectus expense ratio</CardDescription>
+                    {/* An exchange-traded trust files no N-PORT report: no "N-PORT net assets" promised (UI walk F091). */}
+                    <CardDescription>
+                        {fund.structure === "exchange_traded_trust" ? "Shares and short interest; a trust files no N-PORT report" : "N-PORT net assets, prospectus expense ratio"}
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                     <Row label="Net assets">

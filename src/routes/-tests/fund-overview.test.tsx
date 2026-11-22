@@ -125,6 +125,11 @@ describe("fund overview (`/v1/funds/{fund}`)", () => {
         expect(useFundPositionsInfinite).toHaveBeenLastCalledWith({ fund: "", limit: 1 });
 
         expect(screen.getByText("Exchange-traded trust")).toBeInTheDocument();
+
+        // No "N-PORT net assets" promised for a trust (UI walk F091).
+        expect(screen.getByText("Shares and short interest; a trust files no N-PORT report")).toBeInTheDocument();
+
+        expect(screen.queryByText("N-PORT net assets, prospectus expense ratio")).toBeNull();
     });
 
     it("an ETN shows the instrument only", () => {
