@@ -535,7 +535,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   a line without a transaction date — the realtime feed's — drops out) `&kind=derivative|non_derivative`
   (`is_derivative`) `&sort=oldest` (`filed_at`; default `-filed_at`, the only two orders) `&trade=<id>`. Every day
   filter is sent as a DAY (`filed_at.gte` / `.lte` are `format: date`: an instant was the 400 of `[FU2994]`; `.lte` is
-  inclusive of the UTC day). Columns: no Owner CIK (in the detail), one "Code" column = the code (tooltip in words) +
+  inclusive of the UTC day; a swapped range is put in order, `insiderTradesRequest`). Columns: no Owner CIK (in the detail), one "Code" column = the code (tooltip in words) +
   a "Deriv." marker, with a legend of the loaded codes under the table (`src/lib/sec/ownership.ts` `INSIDER_CODE_LABELS`).
   "Details" → `InsiderTradeDetailView` in a dialog (`/v1/insider-trades/{id}`, the loaded row shown at once): 10b5-1,
   direct / indirect + nature, derivative terms, before / after, footnotes, source, "Open the filing" (`/$ticker/filings?docs=`).
