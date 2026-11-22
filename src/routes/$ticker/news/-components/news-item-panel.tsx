@@ -52,7 +52,7 @@ export function AttributionBlock({ attribution }: { attribution: NewsAttribution
             <dt className="text-muted-foreground">Notice</dt>
             <dd>
                 {attribution.statement}
-                {attribution.rights === "issuer" ? ` © ${attribution.publisher}.` : " Public record (SEC filing)."}
+                {attribution.rights === "issuer" ? ` © ${attribution.publisher.replace(/\.$/, "")}.` : " Public record (SEC filing)."}
             </dd>
         </dl>
     );

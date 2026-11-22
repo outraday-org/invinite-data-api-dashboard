@@ -10,7 +10,7 @@ import { ApiRequestError } from "@/lib/api/errors";
 import { edgarItem, newsroomItem, newsText } from "@/lib/news/news-fixtures";
 import { eventChoices } from "@/routes/$ticker/news/-components/news-event-filter";
 import { NewsFilters } from "@/routes/$ticker/news/-components/news-filters";
-import { NewsItemView } from "@/routes/$ticker/news/-components/news-item-panel";
+import { AttributionBlock, NewsItemView } from "@/routes/$ticker/news/-components/news-item-panel";
 import { NewsPageView } from "@/routes/$ticker/news/index";
 
 // The page module's route needs a router; the pure views do not.
@@ -379,6 +379,14 @@ describe("NewsItemView (v2: the item row + /text blocks + /v1/announcements?item
         expect(screen.getByText("Open at source").getAttribute("href")).toBe(item.attribution.source_url);
 
         expect(within(screen.getByLabelText("Attribution")).getByText(/© NVIDIA Corporation/)).toBeTruthy();
+    });
+
+    it("a publisher name ending in a period gets one period after the © line (F051)", () => {
+        render(<AttributionBlock attribution={{ ...newsroomItem().attribution, publisher: "Apple Inc." }} />);
+
+        const notice = within(screen.getByLabelText("Attribution")).getByText(/© Apple Inc/);
+
+        expect(notice.textContent).toMatch(/© Apple Inc\.$/);
     });
 
     it("labels a planned announcement as planned, without evidence quotes; no media section", () => {
