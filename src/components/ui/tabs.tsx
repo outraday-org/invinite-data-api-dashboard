@@ -72,7 +72,8 @@ function TabsTrigger({ className, ...props }: TabsPrimitive.Tab.Props) {
 function TabsContent({ className, ...props }: TabsPrimitive.Panel.Props) {
     return (
         <TabsPrimitive.Panel
-            className={cn("text-xs/relaxed flex-1 outline-none", className)}
+            // The panel takes focus (Tab after the tab list): a visible ring like the triggers', never none.
+            className={cn("text-xs/relaxed flex-1 rounded-md outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50", className)}
             data-slot="tabs-content"
             {...props}
         />
