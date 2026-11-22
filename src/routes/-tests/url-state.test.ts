@@ -8,6 +8,7 @@ import { Route as FilingsRoute } from "@/routes/$ticker/filings/index";
 import { Route as HoldersRoute } from "@/routes/$ticker/holders/index";
 import { Route as HoldingsRoute } from "@/routes/$ticker/holdings/index";
 import { Route as InsiderRoute } from "@/routes/$ticker/insider-trades/index";
+import { Route as OfferingsRoute } from "@/routes/offerings/index";
 import { Route as FilerRoute } from "@/routes/sec/$cik";
 
 const toasts = vi.hoisted(() => ({ error: vi.fn(), success: vi.fn() }));
@@ -21,6 +22,12 @@ const parse = (route: { options: { validateSearch?: unknown } }, search: Record<
     (route.options.validateSearch as { parse: (input: Record<string, unknown>) => Record<string, unknown> }).parse(search);
 
 describe("URL state (validateSearch): a reload restores what the URL says, an invalid value falls back", () => {
+    it("offerings: an industry under the API's 2 characters reads as none (never a 400 / a validation dump)", () => {
+        expect(parse(OfferingsRoute, { industry: "a" })).toEqual({});
+
+        expect(parse(OfferingsRoute, { industry: " Other Technology " })).toEqual({ industry: "Other Technology" });
+    });
+
     it("filings: form, sort, the open filing and the documents panel", () => {
         expect(parse(FilingsRoute, { docs: "0000320193-24-000123", filing: "0000320193-24-000081", form: "10-K", sort: "asc" }))
             .toEqual({ docs: "0000320193-24-000123", filing: "0000320193-24-000081", form: "10-K", sort: "asc" });

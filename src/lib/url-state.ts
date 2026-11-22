@@ -15,8 +15,8 @@ export const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 /** `YYYY-MM-DD`. */
 export const optionalDay = () => z.string().regex(DAY_PATTERN).optional().catch(undefined);
 
-/** A trimmed, non-empty text of at most `max` characters. */
-export const optionalText = (max = 100) => z.string().trim().min(1).max(max).optional().catch(undefined);
+/** A trimmed text of `min` (default 1) to `max` characters; anything else reads as absent. */
+export const optionalText = (max = 100, min = 1) => z.string().trim().min(min).max(max).optional().catch(undefined);
 
 /** One of `values`. */
 export const optionalEnum = <const T extends readonly [string, ...Array<string>]>(values: T) => z.enum(values).optional().catch(undefined);

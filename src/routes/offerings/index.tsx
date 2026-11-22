@@ -31,7 +31,8 @@ const offeringsSearchSchema = z.object({
     amendment: optionalEnum(["original", "amendment"]),
     exemption: optionalEnum(EXEMPTION_CODES),
     from: optionalDay(),
-    industry: optionalText(80),
+    // The API refuses an industry under 2 characters (400): a shorter `?industry=` reads as none.
+    industry: optionalText(80, 2),
     sold: z.coerce.number().int().min(0).max(1e15).optional().catch(undefined),
     to: optionalDay(),
 });
