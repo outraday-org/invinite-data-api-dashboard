@@ -15,8 +15,14 @@ export const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 /** `YYYY-MM-DD`. */
 export const optionalDay = () => z.string().regex(DAY_PATTERN).optional().catch(undefined);
 
-/** A trimmed text of `min` (default 1) to `max` characters; anything else reads as absent. */
-export const optionalText = (max = 100, min = 1) => z.string().trim().min(min).max(max).optional().catch(undefined);
+/**
+ * A trimmed text of `min` (default 1) to `max` characters; anything else reads as absent. The router reads a bare
+ * numeric value as a number (`?form=144`, `?company=320193`: JSON search values), so a finite number is read as its text.
+ */
+export const optionalText = (max = 100, min = 1) => z
+    .preprocess(value => (typeof value === "number" && Number.isFinite(value) ? String(value) : value), z.string().trim().min(min).max(max))
+    .optional()
+    .catch(undefined);
 
 /** One of `values`. */
 export const optionalEnum = <const T extends readonly [string, ...Array<string>]>(values: T) => z.enum(values).optional().catch(undefined);

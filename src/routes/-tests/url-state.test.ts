@@ -33,6 +33,11 @@ describe("URL state (validateSearch): a reload restores what the URL says, an in
             .toEqual({ docs: "0000320193-24-000123", filing: "0000320193-24-000081", form: "10-K", sort: "asc" });
 
         expect(parse(FilingsRoute, { filing: "not-an-accession", sort: "sideways" })).toEqual({});
+
+        // A bare `?form=144` / `?form=4` arrives as a number (the router's JSON search values): read as its text (F039).
+        expect(parse(FilingsRoute, { form: 144 })).toEqual({ form: "144" });
+
+        expect(parse(FilingsRoute, { form: 4 })).toEqual({ form: "4" });
     });
 
     it("insider trades: side and the filed day range", () => {
