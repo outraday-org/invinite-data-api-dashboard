@@ -160,6 +160,16 @@ describe("CallTabs without a transcript", () => {
 
         expect(screen.getByRole("tab", { name: "Price moves" })).toBeInTheDocument();
     });
+
+    it("keeps the Transcript tab of a non-earnings event without a transcript: it opens on the notice (UI walk F070)", () => {
+        renderTab(eventOf({ event_type: "conference" }), "transcript");
+
+        expect(screen.getByRole("tab", { name: "Transcript" })).toBeInTheDocument();
+
+        expect(screen.getByText(NO_TRANSCRIPT_TITLE)).toBeInTheDocument();
+
+        expect(screen.queryByTestId("tab-price-moves")).toBeNull();
+    });
 });
 
 describe("CallTabs: the tab bar (UI walk F067)", () => {

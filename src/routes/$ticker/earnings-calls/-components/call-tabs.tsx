@@ -120,11 +120,12 @@ export function CallTabs({
     const liveText = useLiveCall() !== null && !event.has_transcript;
 
     // A non-earnings event (investor day, conference, AGM) hides the flagged tabs the API says it lacks (no press
-    // release, no transcript-derived tabs without a transcript); an earnings call keeps them, muted.
+    // release, no transcript-derived tabs without a transcript); an earnings call keeps them, muted. The Transcript tab
+    // always stays (muted): an event not transcribed yet opens on "No transcript yet", never on Price moves (UI walk F070).
     const hidden = (value: CallTab) => {
         const { flag } = CALL_TABS[value];
 
-        return event.event_type !== "earnings_call" && flag !== undefined && !event[flag];
+        return event.event_type !== "earnings_call" && value !== "transcript" && flag !== undefined && !event[flag];
     };
 
     const visibleTabs = CALL_TAB_VALUES.filter(value => !hidden(value));
