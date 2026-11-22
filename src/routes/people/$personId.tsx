@@ -13,6 +13,7 @@ import { DataTable } from "@/components/ui/data-table";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { isNotFound } from "@/lib/api/errors";
 import { useV2EventsById, useV2Person, useV2PersonParticipationsInfinite } from "@/lib/api/queries";
 import { eventLabel } from "@/lib/earnings/format";
 import { percent } from "@/lib/earnings/labels";
@@ -246,6 +247,9 @@ function PersonPage() {
 
     if (!personId) return <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:px-8"><Notice badge="Not found" title="This is not a person id" /></div>;
 
+    // An unknown person (404) is the profile's notice alone: no empty calls / history blocks under it (UI walk F090).
+    const known = !isNotFound(person.error);
+
     return (
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 lg:px-8">
             <section className="flex scroll-mt-20 flex-col gap-4" id={PERSON_ANCHORS.profile}>
@@ -261,24 +265,28 @@ function PersonPage() {
                 <PersonProfileView error={person.error} isLoading={person.isLoading} person={person.data} />
             </section>
 
-            <section className="flex scroll-mt-20 flex-col gap-2" id={PERSON_ANCHORS.calls}>
-                <h3 className="text-sm font-semibold">Calls</h3>
-                <PersonCallsView
-                    calls={calls}
-                    error={participations.error}
-                    failedEventIds={failed}
-                    hasNextPage={participations.hasNextPage}
-                    isFetchingNextPage={participations.isFetchingNextPage}
-                    isLoading={participations.isLoading}
-                    onLoadMore={() => void participations.fetchNextPage()}
-                    personName={name}
-                />
-            </section>
+            {known && (
+                <>
+                    <section className="flex scroll-mt-20 flex-col gap-2" id={PERSON_ANCHORS.calls}>
+                        <h3 className="text-sm font-semibold">Calls</h3>
+                        <PersonCallsView
+                            calls={calls}
+                            error={participations.error}
+                            failedEventIds={failed}
+                            hasNextPage={participations.hasNextPage}
+                            isFetchingNextPage={participations.isFetchingNextPage}
+                            isLoading={participations.isLoading}
+                            onLoadMore={() => void participations.fetchNextPage()}
+                            personName={name}
+                        />
+                    </section>
 
-            <section className="flex scroll-mt-20 flex-col gap-2" id={PERSON_ANCHORS.history}>
-                <h3 className="text-sm font-semibold">Role & firm history</h3>
-                <PersonHistoryBlock calls={calls} failed={Boolean(participations.error)} hasMore={participations.hasNextPage} isLoading={participations.isLoading} />
-            </section>
+                    <section className="flex scroll-mt-20 flex-col gap-2" id={PERSON_ANCHORS.history}>
+                        <h3 className="text-sm font-semibold">Role & firm history</h3>
+                        <PersonHistoryBlock calls={calls} failed={Boolean(participations.error)} hasMore={participations.hasNextPage} isLoading={participations.isLoading} />
+                    </section>
+                </>
+            )}
         </div>
     );
 }
