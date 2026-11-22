@@ -212,7 +212,10 @@ function Sidebar({
                         <SheetTitle>Sidebar</SheetTitle>
                         <SheetDescription>Displays the mobile sidebar.</SheetDescription>
                     </SheetHeader>
-                    <div className="flex h-full w-full flex-col">{children}</div>
+                    {/* The sheet covers the page: a picked link (another page, a block anchor, a help site) closes it. */}
+                    <div className="flex h-full w-full flex-col" onClickCapture={event => event.target instanceof Element && event.target.closest("a") && setOpenMobile(false)}>
+                        {children}
+                    </div>
                 </SheetContent>
             </Sheet>
         );
