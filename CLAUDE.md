@@ -690,8 +690,8 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 - **`/instruments` Companies tab** (`?view=companies`): `GET /v1/companies` (`useCompaniesInfinite`, `CompaniesList`
   in `src/components/reference/companies-list.tsx`) with the page's search, exchange and sort (`symbol` → `ticker`)
   plus `?sector=` (choices = the sectors the API answered on 2026-11-21, `COMPANY_SECTORS`; the spec has no enum); logo
-  + ticker → `/$ticker`, name, exchange, sector, fiscal year end (`MM-DD` → "Sep 30"; null on every row today,
-  ledger), CIK → `/sec/$cik`. Each tab's list is its own component, so only the open tab's request runs.
+  + ticker → `/$ticker`, name, exchange, sector, fiscal year end (`MM-DD` → "Sep 30"; served on the rows since 2026-11-22 — it was null everywhere before,
+  "—" when null), CIK → `/sec/$cik`. Each tab's list is its own component, so only the open tab's request runs.
 - **Status widget** (`src/components/reference/api-status.tsx`): `/account` shows `AccountStatusCards` = the API status
   card (`GET /status`, `useApiStatus`: overall = the worst family, the families as a table with 7 / 30 / 90-day uptime,
   the coverage universe, the docs groups with uptime and p50 / p95 buckets behind a disclosure) and the licensing card
