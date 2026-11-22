@@ -52,7 +52,7 @@ export function fundReasonText(reason: null | undefined | V2FundCompositionReaso
 export function fundPickerDays(stored: null | ReadonlyArray<V2FundStoredDate> | undefined): Array<{ label: string; value: string }> {
     return (stored ?? [])
         .filter(entry => entry.status == null || entry.status === "ready")
-        .map(entry => ({ label: `${entry.as_of} · ${FUND_SOURCE_LABELS[entry.source]}`, value: entry.as_of }));
+        .map(entry => ({ label: `${formatDay(entry.as_of)} · ${FUND_SOURCE_LABELS[entry.source]}`, value: entry.as_of }));
 }
 
 export const FUND_DIMENSION_LABELS: Record<V2FundWeightDimension, string> = {

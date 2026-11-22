@@ -32,9 +32,9 @@ describe("fund composition helpers (Data API 7.0)", () => {
 
     it("the picker offers the served days only (ready issuer files, N-PORT reports), newest first", () => {
         expect(fundPickerDays(V2_FUND_POSITIONS.meta.composition?.stored_dates)).toEqual([
-            { label: "2026-11-13 · Issuer file", value: "2026-11-13" },
-            { label: "2026-11-11 · Issuer file", value: "2026-11-11" },
-            { label: "2026-09-30 · SEC N-PORT filing", value: "2026-09-30" },
+            { label: "Nov 13, 2026 · Issuer file", value: "2026-11-13" },
+            { label: "Nov 11, 2026 · Issuer file", value: "2026-11-11" },
+            { label: "Sep 30, 2026 · SEC N-PORT filing", value: "2026-09-30" },
         ]);
 
         expect(fundPickerDays(null)).toEqual([]);
