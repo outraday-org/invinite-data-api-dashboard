@@ -112,13 +112,16 @@ describe("formatSigned", () => {
 
 describe("guidance values", () => {
     it("formats a figure in its unit", () => {
-        expect(formatGuidanceValue(9_700_000_000, "usd", "USD")).toBe("$9.70 B");
+        // The compact money format of every other cell (UI walk F063).
+        expect(formatGuidanceValue(9_700_000_000, "usd", "USD")).toBe("$9.7B");
+
+        expect(formatGuidanceValue(25_000_000_000, "usd", "USD")).toBe("$25B");
 
         expect(formatGuidanceValue(2.05, "usd", null)).toBe("$2.05");
 
         expect(formatGuidanceValue(45, "pct", null)).toBe("45%");
 
-        expect(formatGuidanceValue(1_200_000_000, "usd", "EUR")).toBe("EUR 1.20 B");
+        expect(formatGuidanceValue(1_200_000_000, "usd", "EUR")).toBe("€1.2B");
 
         expect(formatGuidanceValue(null, "usd", "USD")).toBe("—");
     });

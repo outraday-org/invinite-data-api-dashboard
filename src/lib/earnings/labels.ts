@@ -1,5 +1,6 @@
 import type { HitMatch, MatchSpan, SearchMode, V2Event, V2GuidanceItem, V2KpiMention, V2TranscriptVersion } from "@/lib/api/types";
 
+import { formatMoneyCompact } from "@/lib/format";
 import { formatNumberEnCompact } from "@/lib/utils";
 
 type Direction = V2GuidanceItem["direction"];
@@ -222,7 +223,8 @@ export function formatGuidanceValue(value: null | number, unit: null | string, c
         case "shares":
             return `${compact} shares`;
         case "usd":
-            return !currency || currency === "USD" ? `$${compact}` : `${currency} ${compact}`;
+            // The money format of every other cell: "$9.7B", "$2.05", "€1.2B".
+            return formatMoneyCompact(value, currency ?? "USD");
         default:
             return currency ? `${currency} ${compact}` : compact;
     }
