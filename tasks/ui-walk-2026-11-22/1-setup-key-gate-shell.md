@@ -1,6 +1,6 @@
 # Task 1 — Setup, key gate, shell, start-state inventory
 
-> **Status: TODO**
+> **Status: DONE (walked 2026-11-22, 10 findings)**
 
 ## Goal
 
@@ -26,82 +26,82 @@ All checks below ticked or logged; the start-state table of `findings.md` filled
 
 ### 1. Bring-up
 
-- [ ] **T1.1** `git status` clean on `main`, `git pull --ff-only`, `git switch -c ui-walk-2026-11-22`. Record the base
+- [x] **T1.1** `git status` clean on `main`, `git pull --ff-only`, `git switch -c ui-walk-2026-11-22`. Record the base
   sha in `findings.md`.
-- [ ] **T1.2** `pnpm run dev` in the background; `curl -sI http://localhost:3001` answers 200. Any server error in the
+- [x] **T1.2** `pnpm run dev` in the background; `curl -sI http://localhost:3001` answers 200. Any server error in the
   dev output (not a warning) is a finding.
-- [ ] **T1.3** Load the built-in browser tools (GUIDE §1); `preview_start` `http://localhost:3001` → app tab.
+- [x] **T1.3** Load the built-in browser tools (GUIDE §1); `preview_start` `http://localhost:3001` → app tab.
 
 ### 2. Key gate
 
-- [ ] **T1.4** If a key is already stored (the page renders), ask the owner whether to clear it first so the gate can
+- [x] **T1.4** If a key is already stored (the page renders), ask the owner whether to clear it first so the gate can
   be tested; if yes, the owner removes it via the top bar's key menu (or "Clear"). Then:
   Expect: the onboarding card (key field with show / hide toggle, "Create one" link to the Invinite Data app, what the
   dashboard shows), NO page content behind it, NO error toasts, top bar still rendered.
-- [ ] **T1.5** Type an obviously invalid key `invalid-walk-key` into the field and Save (this one the walker may type:
+- [x] **T1.5** Type an obviously invalid key `invalid-walk-key` into the field and Save (this one the walker may type:
   it is not a key). Expect: inline error, nothing stored, no toast storm; console has no uncaught error.
-- [ ] **T1.6** Ask the owner to paste the ENTERPRISE key and Save (GUIDE §2). Expect: "Key valid · ENTERPRISE plan ·
+- [x] **T1.6** Ask the owner to paste the ENTERPRISE key and Save (GUIDE §2). Expect: "Key valid · ENTERPRISE plan ·
   N credits" (wording per `useKeyValidation`), the page renders, the top bar shows the plan badge linking `/account`.
   Plan other than ENTERPRISE → stop and tell the owner.
-- [ ] **T1.7** Reload the tab. Expect: no flash of the onboarding card before the page (the gate waits for `/v1/me`;
+- [x] **T1.7** Reload the tab. Expect: no flash of the onboarding card before the page (the gate waits for `/v1/me`;
   a brief skeleton is fine), key still stored.
 
 ### 3. Top bar and sidebar
 
-- [ ] **T1.8** Top bar: sidebar toggle, search, theme toggle, key / plan. Toggle the sidebar closed and open: the
+- [x] **T1.8** Top bar: sidebar toggle, search, theme toggle, key / plan. Toggle the sidebar closed and open: the
   content column moves (`--sidebar-width`), nothing sits under the sidebar, no horizontal scroll.
-- [ ] **T1.9** Sidebar groups: Market (Home, Earnings calendar, Live calls with a live count, IPOs, Market holidays),
+- [x] **T1.9** Sidebar groups: Market (Home, Earnings calendar, Live calls with a live count, IPOs, Market holidays),
   Browse (every `BROWSE_NAV` entry in `src/lib/navigation.ts` — read the file and compare: Instruments, Funds,
   Institutions, People, Offerings, Catalog, Transcript search, News feed, Alerts, …), Help (API status with the status
   dot, Licensing), Account (plan). Every link opens its page (click each once; the page title `h2` matches).
-- [ ] **T1.10** No PRO / plan badge anywhere in the sidebar suggests a missing plan (ENTERPRISE has everything).
-- [ ] **T1.11** Theme: system → light → dark cycles, persisted on reload, no flash of the wrong theme on reload
+- [x] **T1.10** No PRO / plan badge anywhere in the sidebar suggests a missing plan (ENTERPRISE has everything).
+- [x] **T1.11** Theme: system → light → dark cycles, persisted on reload, no flash of the wrong theme on reload
   (screenshot right after reload in dark).
 
 ### 4. Search (⌘K)
 
-- [ ] **T1.12** ⌘K (and Ctrl K) opens the search, also while focus is in an input. Empty state = recents (may be empty
+- [x] **T1.12** ⌘K (and Ctrl K) opens the search, also while focus is in an input. Empty state = recents (may be empty
   on a fresh profile: then an empty-state line, not a blank box).
-- [ ] **T1.13** Type `apple`: Instruments group ranks AAPL first; Enter opens `/AAPL`. Type `AAPL` exact: AAPL first.
-- [ ] **T1.14** Type `berkshire`: after ~300 ms the Institutions & filers group appears; a manager row opens
+- [x] **T1.13** Type `apple`: Instruments group ranks AAPL first; Enter opens `/AAPL`. Type `AAPL` exact: AAPL first.
+- [x] **T1.14** Type `berkshire`: after ~300 ms the Institutions & filers group appears; a manager row opens
   `/sec/$cik`. People group appears for `cook` (or any analyst name) from 3 characters.
-- [ ] **T1.15** Pills All / Stocks / ETFs / Closed-end funds / ETNs / Institutions / People: ←/→ switch, each narrows
+- [x] **T1.15** Pills All / Stocks / ETFs / Closed-end funds / ETNs / Institutions / People: ←/→ switch, each narrows
   results; the combobox announces the highlighted option (`aria-activedescendant` via `read_page`).
-- [ ] **T1.16** Pages group: type `holidays` → Market holidays page entry.
-- [ ] **T1.17** On `/AAPL/dividends`, search `SPY` → opens `/SPY/dividends` (SPY serves dividends); on
+- [x] **T1.16** Pages group: type `holidays` → Market holidays page entry.
+- [x] **T1.17** On `/AAPL/dividends`, search `SPY` → opens `/SPY/dividends` (SPY serves dividends); on
   `/AAPL/financials` search `SPY` → opens `/SPY` overview (SPY has no financials).
 
 ### 5. Landing, account, status
 
-- [ ] **T1.18** `/`: Live now, Earnings today / later this week (≤ 8), Next IPOs, next market holiday, Browse cards,
+- [x] **T1.18** `/`: Live now, Earnings today / later this week (≤ 8), Next IPOs, next market holiday, Browse cards,
   Recently opened (AAPL from T1.13 now listed), SEC filer lookup. Each block has data or an explicit empty line.
-- [ ] **T1.19** Filer lookup: `1067983` opens `/sec/1067983`; `berkshire` lists matches with phase + listing / "No
+- [x] **T1.19** Filer lookup: `1067983` opens `/sec/1067983`; `berkshire` lists matches with phase + listing / "No
   ticker".
-- [ ] **T1.20** `/account`: plan ENTERPRISE, limits, credits, families (all allowed), usage chart for 7 / 30 / 90 days
+- [x] **T1.20** `/account`: plan ENTERPRISE, limits, credits, families (all allowed), usage chart for 7 / 30 / 90 days
   (switch each), by family, by caller; links to the Invinite Data app for keys / billing (`https://data.invinite.com`).
   API status card (overall + families with uptime) and licensing card (rights of the ENTERPRISE plan; "Draft" badge
   only while `counsel_signed_off` is false). Link to `/alerts/users#defaults` present.
-- [ ] **T1.21** Sidebar status dot colour matches the account page's overall status; its accessible label says it.
-- [ ] **T1.22** `curl -sI http://localhost:3001/status?x=1` → 301 to `https://status.data.invinite.com/?x=1` (query
+- [x] **T1.21** Sidebar status dot colour matches the account page's overall status; its accessible label says it.
+- [x] **T1.22** `curl -sI http://localhost:3001/status?x=1` → 301 to `https://status.data.invinite.com/?x=1` (query
   kept); `/licensing` → 301 to `https://data.invinite.com/docs/licensing`.
-- [ ] **T1.23** A non-existent route `/this-route-does-not-exist-walk` → `/$ticker` "not known" notice (it is treated
+- [x] **T1.23** A non-existent route `/this-route-does-not-exist-walk` → `/$ticker` "not known" notice (it is treated
   as a symbol) — readable, no crash. `/ZZZZQ` → one "not known" notice, no section requests (API sheet empty except
   the instrument lookup).
 
 ### 6. Start-state inventory (for Task 10)
 
-- [ ] **T1.24** Open `/alerts`, `/alerts/destinations`, `/alerts/users`, `/alerts/scripts`: record each list's count
+- [x] **T1.24** Open `/alerts`, `/alerts/destinations`, `/alerts/users`, `/alerts/scripts`: record each list's count
   ("N loaded" / `has_more`) in `findings.md`. Record any existing `walk-1122` resources (a previous aborted walk):
   they are deleted in Task 10 too.
-- [ ] **T1.25** `/live-calls`: is a call live right now? Record yes / no and the next scheduled call time (Task 5 §5
+- [x] **T1.25** `/live-calls`: is a call live right now? Record yes / no and the next scheduled call time (Task 5 §5
   plans around it).
-- [ ] **T1.26** Confirm the subjects of GUIDE §9 exist (search each); record replacements if one is missing. Find one
+- [x] **T1.26** Confirm the subjects of GUIDE §9 exist (search each); record replacements if one is missing. Find one
   closed-end fund and one ETN via `/instruments` type tabs and record them.
-- [ ] **T1.27** Record credits from `/account` (Task 11 reports the walk's cost).
+- [x] **T1.27** Record credits from `/account` (Task 11 reports the walk's cost).
 
 ### 7. Console sweep
 
-- [ ] **T1.28** `read_console_messages` with `pattern: "error|Error|hydrat|Warning"` across the pages above: no
+- [x] **T1.28** `read_console_messages` with `pattern: "error|Error|hydrat|Warning"` across the pages above: no
   hydration mismatch (sidebar skeleton widths, `use-mobile`), no React key warning, no uncaught error.
 
 ## Files to Create / Modify
