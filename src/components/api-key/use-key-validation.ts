@@ -12,15 +12,20 @@ export type KeyCheck
         | { kind: "invalid"; message: string }
         | { kind: "valid"; message: string };
 
-/** The inline message of a refused or uncheckable key. */
-export function keyErrorText(error: unknown) {
+/**
+ * The inline message of a refused or uncheckable key; "your previous key is kept" only when one is stored (the
+ * onboarding card has none: UI walk F001).
+ */
+export function keyErrorText(error: unknown, hasStoredKey = false) {
     const apiError = fromSerialized(error);
 
-    if (isUnauthorized(apiError)) return "This key was refused. Check it in your Data API dashboard; your previous key is kept.";
+    const kept = hasStoredKey ? "; your previous key is kept" : "";
+
+    if (isUnauthorized(apiError)) return `This key was refused. Check it in your Data API dashboard${kept}.`;
 
     const message = apiError?.message ?? (error instanceof Error ? error.message : String(error));
 
-    return `The key could not be checked (${message}); your previous key is kept.`;
+    return `The key could not be checked (${message})${kept}.`;
 }
 
 /**
@@ -57,7 +62,7 @@ export function useKeyValidation() {
             return true;
         }
         catch (error) {
-            setCheck({ kind: "invalid", message: keyErrorText(error) });
+            setCheck({ kind: "invalid", message: keyErrorText(error, Boolean(useApiKeyStore.getState().apiKey)) });
 
             return false;
         }

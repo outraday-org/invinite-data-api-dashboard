@@ -137,6 +137,14 @@ describe("key messages", () => {
     it("a refusal vs a failed check", () => {
         expect(keyErrorText(unauthorized)).toMatch(/refused/);
 
-        expect(keyErrorText(new Error("fetch failed"))).toBe("The key could not be checked (fetch failed); your previous key is kept.");
+        expect(keyErrorText(new Error("fetch failed"), true)).toBe("The key could not be checked (fetch failed); your previous key is kept.");
+    });
+
+    it("mentions a previous key only when one is stored (the onboarding card has none: UI walk F001)", () => {
+        expect(keyErrorText(unauthorized)).toBe("This key was refused. Check it in your Data API dashboard.");
+
+        expect(keyErrorText(unauthorized, true)).toBe("This key was refused. Check it in your Data API dashboard; your previous key is kept.");
+
+        expect(keyErrorText(new Error("fetch failed"))).toBe("The key could not be checked (fetch failed).");
     });
 });
