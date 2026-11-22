@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import type { components } from "../api/schema";
 import type { LivePriceTick } from "./live-prices-reducer";
 import type { LiveSegment, LiveSpeakerAssignment, LiveSpeakerNames } from "./live-transcript-reducer";
 
@@ -573,8 +574,14 @@ export const ALERTS_CHANNEL = "alerts";
 /** Alert ids one subscription may name (`WebSocketSubscribeAlerts.alert_ids` `maxItems`). */
 export const ALERTS_WS_MAX_ALERT_IDS = 100;
 
-/** The codes IDA sends today (`ALERTS_WS_ERROR_CODES`); another code still parses (the hook treats it as a stop). */
-export const ALERTS_WS_ERROR_CODES = ["bad_message", "channel_unavailable", "unavailable"] as const;
+/**
+ * The codes IDA sends today (`ALERTS_WS_ERROR_CODES`), pinned to the spec's `StreamErrorEvent.code` enum (the union of
+ * every channel's codes, FU3010): a code that leaves the spec fails `tsc`. Another code still parses (the hook treats it
+ * as a stop).
+ */
+export const ALERTS_WS_ERROR_CODES = ["bad_message", "channel_unavailable", "unavailable"] as const satisfies ReadonlyArray<
+    components["schemas"]["StreamErrorEvent"]["code"]
+>;
 
 const alertsChannel = z.literal(ALERTS_CHANNEL);
 

@@ -1481,7 +1481,7 @@ export interface paths {
         };
         /**
          * List 13F position changes in a stock or a fund
-         * @description Quarter-over-quarter 13F position changes of one security between `prior_period_end` (default: the quarter before) and `period_end` (default: the newest quarter end whose 13F deadline has passed): every manager's change, or with `filer=` those managers' changes. Rows are ordered by manager CIK, then position. Only changes the store can prove are listed: a position whose prior snapshot is missing or incomplete is left out and the page reads `meta.coverage.state: partial`. `type` and the left-out positions are applied to the store's pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false.
+         * @description Quarter-over-quarter 13F position changes of one security between `prior_period_end` (default: the quarter before) and `period_end` (default: the newest quarter end whose 13F deadline has passed): every manager's change, or with `filer=` those managers' changes. Rows are ordered by manager CIK, then position. Only changes the store can prove are listed: a position whose prior snapshot is missing or incomplete is left out and the page reads `meta.coverage.state: partial`. The store applies `type` before its page limit; a page can still hold fewer than `limit` rows while `has_more` is true (one page read is time-bounded), so follow `next_cursor` until `has_more` is false.
          */
         get: operations["listHolderChanges"];
         put?: never;
@@ -2487,6 +2487,11 @@ export interface components {
             through?: null | string;
             /** @description While pending: seconds after which a retry is likely to find rows */
             retry_after_s?: null | number;
+            /**
+             * @description Why a complete scope holds no rows by design; absent otherwise. period_not_computed = the metric is not computed for the requested period type (see the operation's period parameter)
+             * @example period_not_computed
+             */
+            reason?: string;
         };
         /**
          * MetaSource
@@ -2562,10 +2567,6 @@ export interface components {
             industry: null | string;
             /** @description SIC code */
             sic: null | string;
-            /** @description Fama-French sector, from the company's SIC code */
-            fama_sector: null | string;
-            /** @description Fama-French industry, from the company's SIC code */
-            fama_industry: null | string;
             /** @description Listing exchange (null when unknown) */
             exchange: null | string;
             /** @description Reporting currency */
@@ -8604,7 +8605,7 @@ export interface components {
             destination_ids?: Array<string>;
             /** @description Your id; a second create with it returns the live alert */
             client_reference_id?: string;
-            /** @description Your end user's id (filters lists and events) */
+            /** @description Your end user's id (filters lists and events; 1–200 characters, not . or .., which no URL path can name) */
             external_user_id?: string;
             /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
             metadata?: {
@@ -8723,7 +8724,7 @@ export interface components {
          * @description One upsert: the end user's id and the fields of `AlertUserInput`
          */
         AlertUserBatchItem: {
-            /** @description Your end user's id */
+            /** @description Your end user's id (1–200 characters, not . or .., which no URL path can name) */
             external_user_id: string;
             /** @description A name for your dashboards (null clears it) */
             display_name?: null | string;
@@ -9996,7 +9997,7 @@ export interface operations {
                     destination_ids?: Array<string>;
                     /** @description Your id; a second create with it returns the live alert */
                     client_reference_id?: string;
-                    /** @description Your end user's id (filters lists and events) */
+                    /** @description Your end user's id (filters lists and events; 1–200 characters, not . or .., which no URL path can name) */
                     external_user_id?: string;
                     /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
                     metadata?: {
@@ -12297,8 +12298,6 @@ export interface operations {
                      *       "sector": "Technology",
                      *       "industry": "Electronic Computers",
                      *       "sic": "3571",
-                     *       "fama_sector": null,
-                     *       "fama_industry": null,
                      *       "exchange": "XNAS",
                      *       "currency": "USD",
                      *       "cusip": "",
@@ -17071,7 +17070,7 @@ export interface operations {
                  */
                 "company": string;
                 /**
-                 * @description Period type
+                 * @description Period type. CAGR is computed from annual periods only: quarterly, ytd and ttm answer an empty page with meta.coverage.reason period_not_computed
                  * @example annual
                  */
                 "period": "annual" | "quarterly" | "ttm" | "ytd";
@@ -24752,7 +24751,7 @@ export interface operations {
                     destination_ids?: Array<string>;
                     /** @description Your id; a second create with it returns the live alert */
                     client_reference_id?: null | string;
-                    /** @description Your end user's id (filters lists and events) */
+                    /** @description Your end user's id (filters lists and events; 1–200 characters, not . or .., which no URL path can name) */
                     external_user_id?: null | string;
                     /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
                     metadata?: {
@@ -24798,7 +24797,7 @@ export interface operations {
             header?: never;
             path: {
                 /**
-                 * @description Your end user's id (URL-encoded; any character, 1–200)
+                 * @description Your end user's id (URL-encoded; any character, 1–200; a new end user is never . or ..)
                  * @example user_8812
                  */
                 external_user_id: string;
