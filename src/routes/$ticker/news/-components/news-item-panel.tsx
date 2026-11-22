@@ -2,6 +2,7 @@ import type { NewsAttribution, NewsDevelopment, V2NewsItem, V2NewsText } from "@
 
 import { PdfDocumentSection } from "@/components/pdf/pdf-inline-viewer";
 import { Badge } from "@/components/ui/badge";
+import { tierLabel } from "@/components/ui/credit-hint";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -116,7 +117,7 @@ export function NewsItemView({
     text: null | V2NewsText;
     textError?: unknown;
 }) {
-    if (isTierError(error)) return <Notice badge="STANDARD" title="Your plan does not include news summaries" />;
+    if (isTierError(error)) return <Notice badge={tierLabel("getNewsText") ?? "Plan"} title="Your plan does not include news summaries" />;
 
     if (isNotFound(error)) return <Notice title="This news item is not available" />;
 

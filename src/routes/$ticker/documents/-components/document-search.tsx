@@ -6,6 +6,7 @@ import type { SearchMode, V2InvestorDocumentSearchHit, V2InvestorDocumentSearchR
 
 import { SearchCostNote, SearchModeChips, SearchQueryForm } from "@/components/search/search-box";
 import { Badge } from "@/components/ui/badge";
+import { tierLabel } from "@/components/ui/credit-hint";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2InvestorDocumentSearch } from "@/lib/api/queries";
 import { documentKindLabel, documentPageHref } from "@/lib/earnings/documents";
@@ -25,7 +26,7 @@ const EXACT_TOO_SHORT = "Exact search needs 3 characters or a company";
 /** The wording rule: passages, never facts; every hit names its document, year and page. */
 export const DOCUMENT_SEARCH_LEAD = "Passages from company-published documents, not verified facts.";
 
-const DOCUMENT_SEARCH_TIER = { badge: "STANDARD", title: "Your plan does not include document search" };
+const DOCUMENT_SEARCH_TIER = { badge: tierLabel("searchInvestorDocuments") ?? "Plan", title: "Your plan does not include document search" };
 
 const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
 

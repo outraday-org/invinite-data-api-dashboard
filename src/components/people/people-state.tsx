@@ -1,3 +1,4 @@
+import { tierLabel } from "@/components/ui/credit-hint";
 import { RequestErrorState } from "@/components/ui/request-error-state";
 
 /**
@@ -11,7 +12,7 @@ export function PeopleState({ error, notFound, title }: { error: unknown; notFou
             badRequest={{ badge: "Invalid request" }}
             error={error}
             notFound={{ badge: "Not found", title: notFound }}
-            tier={{ badge: "STANDARD", title: "Your plan does not include people" }}
+            tier={{ badge: tierLabel("listPeople") ?? "Plan", title: "Your plan does not include people" }}
             title={title}
         />
     );
