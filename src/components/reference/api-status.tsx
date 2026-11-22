@@ -8,7 +8,9 @@ import { DataTable } from "@/components/ui/data-table";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PLAN_LABELS } from "@/lib/account";
+import { PLAN_ORDER } from "@/lib/api/operations.gen";
 import { useApiLicensing, useApiStatus } from "@/lib/api/queries";
+import { planRank } from "@/lib/api/request-meta";
 import { DASH, formatInstant, formatNumber } from "@/lib/format";
 import { LICENSING_PAGE_URL, STATUS_PAGE_URL } from "@/lib/public-hosts";
 import { cn } from "@/lib/utils";
@@ -183,9 +185,6 @@ export function ApiStatusView({ status }: { status: V2ApiStatus }) {
     );
 }
 
-/** The plans in order of what they may do (a route's tier is reached by that plan and every later one). */
-const TIER_ORDER = ["free", "lite", "standard", "pro", "enterprise"] as const;
-
 const RIGHT_LABELS: Record<V2LicensingRight, string> = {
     audio: "Audio",
     display: "Display",
@@ -198,11 +197,11 @@ const RIGHT_LABELS: Record<V2LicensingRight, string> = {
 
 /** Per family: its routes and how many of them a plan reaches (a route's `tier` at or below the plan; pure). */
 export function familyReach(families: ReadonlyArray<Family>, plan: V2Plan) {
-    const rank = TIER_ORDER.indexOf(plan);
+    const rank = PLAN_ORDER.indexOf(planRank(plan));
 
     return families.map(family => ({
         family: family.family,
-        reachable: family.routes.filter(route => TIER_ORDER.indexOf(route.tier) <= rank).length,
+        reachable: family.routes.filter(route => PLAN_ORDER.indexOf(route.tier) <= rank).length,
         total: family.routes.length,
     }));
 }
@@ -220,7 +219,8 @@ const REACH_COLUMNS: Array<ColumnDef<ReachRow>> = [
 
 /** The licensing card of `/account` (pure): what the caller's plan may do with the data, and its routes per family. */
 export function LicensingView({ licensing, plan }: { licensing: V2Licensing; plan: V2Plan }) {
-    const rights = licensing.tiers[plan];
+    // A pay-as-you-go account (credits without a plan) holds the FREE column's rights: evaluation only.
+    const rights = licensing.tiers[plan === "payg" ? "free" : plan];
 
     const notes: Partial<Record<string, string>> = licensing.notes;
 
@@ -254,6 +254,7 @@ export function LicensingView({ licensing, plan }: { licensing: V2Licensing; pla
                     ))}
                 </ul>
                 <p className="text-muted-foreground text-xs">{licensing.resale}</p>
+                <p className="text-muted-foreground text-xs" data-testid="licensing-internal-use">{licensing.notes.internal_use}</p>
                 <DataTable columns={REACH_COLUMNS} emptyText="The policy lists no routes." exportConfig={{ dataset: "licensing-routes", scope: plan }} isLoading={false} rows={familyReach(licensing.families, plan)} />
             </CardContent>
         </Card>

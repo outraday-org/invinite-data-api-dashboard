@@ -4,7 +4,7 @@ import type { WebhookEntry, WebhookSchema } from "../../../scripts/webhooks.mjs"
 
 export type OperationMethod = "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
 
-/** The plan an operation needs: one of `/v1/me`'s plans (the generator refuses any other `x-tier`). */
+/** The plan an operation needs: one of `/v1/me`'s plans that a route requires (the generator refuses any other `x-tier`). */
 export type OperationTier = (typeof PLAN_ORDER)[number];
 
 export type OperationCli = { action: null | string; group: string; positional: null | string };
@@ -213,7 +213,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/financials/as-reported",
         summary: "As-reported statements",
-        tier: "standard",
+        tier: "lite",
     },
     getAsReportedFinancialsDetailed: {
         cli: {
@@ -291,7 +291,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/document-versions/{version_id}/figures/{block_id}",
         summary: "Get a figure",
-        tier: "standard",
+        tier: "lite",
     },
     getDocumentVersion: {
         cli: {
@@ -304,7 +304,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/document-versions/{version_id}",
         summary: "Get a document version",
-        tier: "standard",
+        tier: "lite",
     },
     getEvent: {
         cli: {
@@ -343,7 +343,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/events/{event_id}/stats",
         summary: "Get an event's call statistics",
-        tier: "standard",
+        tier: "pro",
     },
     getFact: {
         cli: {
@@ -356,7 +356,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/facts/{fact_id}",
         summary: "Explain a standardized fact",
-        tier: "standard",
+        tier: "lite",
     },
     getFiler: {
         cli: {
@@ -369,7 +369,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/filers/{cik}",
         summary: "Get a filer",
-        tier: "standard",
+        tier: "lite",
     },
     getFiling: {
         cli: {
@@ -382,7 +382,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/filings/{accession}",
         summary: "Get a filing",
-        tier: "standard",
+        tier: "lite",
     },
     getFund: {
         cli: {
@@ -434,7 +434,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/investor-documents/{document_id}",
         summary: "Get an investor document",
-        tier: "standard",
+        tier: "pro",
     },
     getIpo: {
         cli: {
@@ -447,7 +447,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/ipos/{ipo_id}",
         summary: "Get an offering",
-        tier: "standard",
+        tier: "lite",
     },
     getLiveAudio: {
         cli: {
@@ -499,7 +499,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/news/{id}",
         summary: "Get a news item",
-        tier: "standard",
+        tier: "lite",
     },
     getNewsText: {
         cli: {
@@ -512,7 +512,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/news/{id}/text",
         summary: "Get a news item's text",
-        tier: "standard",
+        tier: "lite",
     },
     getOffering: {
         cli: {
@@ -525,7 +525,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/offerings/{offering_id}",
         summary: "Get a Form D private offering",
-        tier: "standard",
+        tier: "lite",
     },
     getPerson: {
         cli: {
@@ -538,7 +538,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/people/{person_id}",
         summary: "Get a person",
-        tier: "standard",
+        tier: "lite",
     },
     getPressRelease: {
         cli: {
@@ -551,7 +551,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/events/{event_id}/press-release",
         summary: "Get an event's press release",
-        tier: "standard",
+        tier: "lite",
     },
     getPriceAttribution: {
         cli: {
@@ -590,7 +590,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/filings/{accession}/review-chain",
         summary: "Get a filing's review chain",
-        tier: "standard",
+        tier: "lite",
     },
     getScript: {
         cli: {
@@ -668,7 +668,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/events/{event_id}/transcript",
         summary: "Get an event's transcript",
-        tier: "standard",
+        tier: "pro",
     },
     getTranscriptDiff: {
         cli: {
@@ -694,7 +694,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/events/{event_id}/transcript-text",
         summary: "Get an event's transcript as text",
-        tier: "standard",
+        tier: "pro",
     },
     healthGet: {
         cli: {
@@ -785,7 +785,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/announcements",
         summary: "List announcements",
-        tier: "standard",
+        tier: "lite",
     },
     listCagr: {
         cli: {
@@ -798,7 +798,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/metrics/cagr",
         summary: "List CAGRs",
-        tier: "standard",
+        tier: "lite",
     },
     listCompanies: {
         cli: {
@@ -889,7 +889,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/document-versions/{version_id}/sections",
         summary: "List a document version's sections",
-        tier: "standard",
+        tier: "lite",
     },
     listEvents: {
         cli: {
@@ -954,7 +954,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/filers/{cik}/holdings",
         summary: "List a 13F manager's holdings",
-        tier: "standard",
+        tier: "lite",
     },
     listFilers: {
         cli: {
@@ -967,7 +967,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/filers",
         summary: "List SEC filers",
-        tier: "standard",
+        tier: "lite",
     },
     listFilingFacts: {
         cli: {
@@ -980,7 +980,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/filings/{accession}/facts",
         summary: "List a filing's numeric facts",
-        tier: "standard",
+        tier: "lite",
     },
     listFilingHoldings: {
         cli: {
@@ -993,7 +993,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/filings/{accession}/holdings",
         summary: "List a holdings filing's lines",
-        tier: "standard",
+        tier: "lite",
     },
     listFilingNotes: {
         cli: {
@@ -1006,7 +1006,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/filings/{accession}/notes",
         summary: "List a filing's text facts",
-        tier: "standard",
+        tier: "lite",
     },
     listFilings: {
         cli: {
@@ -1019,7 +1019,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/filings",
         summary: "List filings",
-        tier: "standard",
+        tier: "lite",
     },
     listFiscalPeriods: {
         cli: {
@@ -1058,7 +1058,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/funds/{fund}/holdings",
         summary: "List a fund's holdings",
-        tier: "standard",
+        tier: "lite",
     },
     listFunds: {
         cli: {
@@ -1084,7 +1084,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/funds/{fund}/weights",
         summary: "List a fund's sector, country and asset-class weights",
-        tier: "standard",
+        tier: "lite",
     },
     listGrowth: {
         cli: {
@@ -1097,7 +1097,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/metrics/growth",
         summary: "List growth rates",
-        tier: "standard",
+        tier: "lite",
     },
     listGuidance: {
         cli: {
@@ -1110,7 +1110,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/guidance",
         summary: "List guidance items",
-        tier: "standard",
+        tier: "lite",
     },
     listHolderChanges: {
         cli: {
@@ -1136,7 +1136,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/holders",
         summary: "List who holds a stock or a fund",
-        tier: "standard",
+        tier: "lite",
     },
     listInsiderTrades: {
         cli: {
@@ -1175,7 +1175,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/investor-documents",
         summary: "List investor documents",
-        tier: "standard",
+        tier: "pro",
     },
     listIpos: {
         cli: {
@@ -1188,7 +1188,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/ipos",
         summary: "List offerings",
-        tier: "standard",
+        tier: "lite",
     },
     listKpis: {
         cli: {
@@ -1266,7 +1266,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/offerings",
         summary: "List Form D private offerings",
-        tier: "standard",
+        tier: "lite",
     },
     listParticipants: {
         cli: {
@@ -1279,7 +1279,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/participants",
         summary: "List event participations",
-        tier: "standard",
+        tier: "lite",
     },
     listPeople: {
         cli: {
@@ -1292,7 +1292,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/people",
         summary: "List people",
-        tier: "standard",
+        tier: "lite",
     },
     listQa: {
         cli: {
@@ -1305,7 +1305,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/events/{event_id}/qa",
         summary: "List an event's Q&A pairs",
-        tier: "standard",
+        tier: "pro",
     },
     listRatios: {
         cli: {
@@ -1318,7 +1318,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/metrics/ratios",
         summary: "List ratios",
-        tier: "standard",
+        tier: "lite",
     },
     listScripts: {
         cli: {
@@ -1500,7 +1500,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/search/investor-documents",
         summary: "Search investor documents",
-        tier: "standard",
+        tier: "pro",
     },
     searchNews: {
         cli: {
@@ -1526,7 +1526,7 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/search/transcripts",
         summary: "Search transcripts",
-        tier: "standard",
+        tier: "pro",
     },
     statusGet: {
         cli: {
@@ -1767,7 +1767,7 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
 /** The plan the live stream (`ws /v1/stream`, `streamEvents`) and each of its channels need. */
 export const STREAM_TIER: OperationTier = "pro";
 
-/** `/v1/me`'s `plan` values in access order (the spec's enum order). */
+/** The route tiers in access order: `/v1/me`'s `plan` values (the spec's enum order) that an `x-tier` names. */
 export const PLAN_ORDER = ["free", "lite", "standard", "pro", "enterprise"] as const;
 
 /** The webhook payloads of `x-webhooks` in the spec's order (`scripts/webhooks.mjs`). */
@@ -1963,7 +1963,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
                     name: "delivery_skipped",
                     required: false,
                     schema: {
-                        description: "Why the event was not delivered — it is on the pull feed and the WebSocket (you see it here only through GET /v1/alert-events): `fire_cap` = the account's daily fire cap was reached; `alert_user_fire_cap` = the daily cap of the alert's end user (`max_fires_per_day`) was reached (such a fire does not count against the account's cap)",
+                        description: "Why the event was not delivered — it is on the pull feed and the WebSocket (you see it here only through GET /v1/alert-events): `fire_cap` = the daily fire cap of the account's Enterprise deal (`fires_per_day`) was reached; `alert_user_fire_cap` = the daily cap of the alert's end user (`max_fires_per_day`) was reached (such a fire does not count against the account's cap)",
                         enum: [
                             "fire_cap",
                             "alert_user_fire_cap",
@@ -2450,7 +2450,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
         data: {
-            description: "The account reached its daily fire cap (once per UTC day, to every active destination). Further fires of the day stay on the pull feed with `delivery_skipped: fire_cap`; deliveries resume at 00:00 UTC. An end user's own cap has its own event, `alert_user.fire_cap_reached`",
+            description: "The account reached the daily fire cap of its Enterprise deal (`fires_per_day`; no plan has a daily cap), once per UTC day, to every active destination. Further fires of the day stay on the pull feed with `delivery_skipped: fire_cap`; deliveries resume at 00:00 UTC. An end user's own cap has its own event, `alert_user.fire_cap_reached`",
             fields: [
                 {
                     name: "event_id",
@@ -2473,7 +2473,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
                     name: "cap",
                     required: true,
                     schema: {
-                        description: "Fires per UTC day of the plan",
+                        description: "Fires per UTC day of the Enterprise deal (`fires_per_day`)",
                         type: "integer",
                     },
                 },
@@ -2481,7 +2481,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
                     name: "tier",
                     required: true,
                     schema: {
-                        description: "The plan the cap belongs to",
+                        description: "The account's tier — `enterprise`: only an Enterprise deal sets a daily fire cap",
                         enum: [
                             "free",
                             "lite",
@@ -2495,7 +2495,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
             ],
             type: "object",
         },
-        description: "The account reached its daily fire cap (once per UTC day, to every active destination). Further fires of the day stay on the pull feed with `delivery_skipped: fire_cap`; deliveries resume at 00:00 UTC. An end user's own cap has its own event, `alert_user.fire_cap_reached`",
+        description: "The account reached the daily fire cap of its Enterprise deal (`fires_per_day`; no plan has a daily cap), once per UTC day, to every active destination. Further fires of the day stay on the pull feed with `delivery_skipped: fire_cap`; deliveries resume at 00:00 UTC. An end user's own cap has its own event, `alert_user.fire_cap_reached`",
         headers: [
             {
                 description: "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",

@@ -7795,7 +7795,7 @@ export interface components {
              */
             mode?: "absolute" | "relative" | "session";
             /**
-             * @description The bar evaluated at its close. volume_spike (1m, 5m, 15m, 30m, 1h, 1d, 1w, 1mo; every closed bar); script and indicator (1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w, 1mo; the plan's shortest: FREE / LITE 1h, STANDARD 5m, PRO 1m)
+             * @description The bar evaluated at its close. volume_spike (1m, 5m, 15m, 30m, 1h, 1d, 1w, 1mo; every closed bar); script and indicator (1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w, 1mo; the plan's shortest: LITE 1h, STANDARD 5m, PRO 1m)
              * @enum {string}
              */
             interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
@@ -8283,7 +8283,7 @@ export interface components {
              */
             mode?: "absolute" | "relative" | "session";
             /**
-             * @description The bar evaluated at its close. volume_spike (1m, 5m, 15m, 30m, 1h, 1d, 1w, 1mo; every closed bar); script and indicator (1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w, 1mo; the plan's shortest: FREE / LITE 1h, STANDARD 5m, PRO 1m)
+             * @description The bar evaluated at its close. volume_spike (1m, 5m, 15m, 30m, 1h, 1d, 1w, 1mo; every closed bar); script and indicator (1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w, 1mo; the plan's shortest: LITE 1h, STANDARD 5m, PRO 1m)
              * @enum {string}
              */
             interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
@@ -8983,10 +8983,10 @@ export interface components {
                 name: null | string;
             };
             /**
-             * @description Plan. A prepaid-credits account reads `lite` (its access rank; owner decision 2026-11-09)
+             * @description Plan. A pay-as-you-go (prepaid-credits) account reads `payg`, also at an empty wallet (owner decision 2026-11-22)
              * @enum {string}
              */
-            plan: "enterprise" | "free" | "lite" | "pro" | "standard";
+            plan: "enterprise" | "free" | "lite" | "payg" | "pro" | "standard";
             /** @description Rate limits */
             limits: {
                 /** @description Rate limit */
@@ -24454,13 +24454,14 @@ export interface operations {
                 content: {
                     /**
                      * @example {
-                     *       "policy_version": "2026-11-draft",
+                     *       "policy_version": "2026-11-draft-2",
                      *       "counsel_signed_off": false,
-                     *       "resale": "Invinite data may be shown from LITE and, from PRO, redistributed inside the licensee's own product (on screen, in exports and in embedded widgets) with attribution (\"Source: Invinite\"). Passing the data on through the licensee's own API is an ENTERPRISE right. It may never be resold, relicensed, white-labelled or offered as a data feed as the licensee's own data, at any tier, under any contract.",
+                     *       "resale": "Invinite data may be used inside the licensee's own organisation from LITE and, from STANDARD, shown and redistributed inside the licensee's own product (on screen, in exports and in embedded widgets) with attribution (\"Source: Invinite\"). Passing the data on through the licensee's own API is an ENTERPRISE right, granted in the contract. It may never be resold, relicensed, white-labelled or offered as a data feed as the licensee's own data, at any tier, under any contract.",
                      *       "notes": {
-                     *         "display": "Show the data to the licensee's own users, with attribution. The FREE plan is for evaluation: its data may be read and tested, not shown to the licensee's users.",
+                     *         "internal_use": "Every paid plan may use the data inside the licensee's own organisation: analysis, internal tools and dashboards for the licensee's own staff. Nothing is shown or passed to third parties below STANDARD.",
+                     *         "display": "Show the data to the licensee's own users, with attribution; from STANDARD. The FREE plan and pay-as-you-go credits are for evaluation: their data may be read and tested, not shown to the licensee's users. LITE is internal use.",
                      *         "redistribute": "Pass the data on inside the licensee's product (on screen, exports, embedded widgets) with attribution; never through an API and never as a stand-alone data product.",
-                     *         "redistribute_api": "Return the data in the licensee's own API responses, with attribution in the response that carries it. Enterprise contract only; the resale rule applies unchanged.",
+                     *         "redistribute_api": "Return the data in the licensee's own API responses, with attribution in the response that carries it. Granted in an Enterprise contract; the resale rule applies unchanged.",
                      *         "rag": "Use the text as retrieval context in a customer-facing product.",
                      *         "train": "Model training is an Enterprise right, granted in the contract.",
                      *         "audio": "Audio files carry a forensic watermark that identifies the recording. Audio is subject to per-company takedown and may not be re-hosted.",
@@ -24488,7 +24489,7 @@ export interface operations {
                      *           "resell": false
                      *         },
                      *         "lite": {
-                     *           "display": true,
+                     *           "display": false,
                      *           "redistribute": false,
                      *           "rag": false,
                      *           "train": false,
@@ -24498,7 +24499,7 @@ export interface operations {
                      *         },
                      *         "standard": {
                      *           "display": true,
-                     *           "redistribute": false,
+                     *           "redistribute": true,
                      *           "rag": true,
                      *           "train": false,
                      *           "audio": false,
@@ -24525,7 +24526,8 @@ export interface operations {
                      *         }
                      *       },
                      *       "by_contract": [
-                     *         "train"
+                     *         "train",
+                     *         "redistribute_api"
                      *       ],
                      *       "families": [
                      *         {
@@ -24553,6 +24555,7 @@ export interface operations {
                         counsel_signed_off: boolean;
                         resale: string;
                         notes: {
+                            internal_use: string;
                             display: string;
                             redistribute: string;
                             redistribute_api: string;

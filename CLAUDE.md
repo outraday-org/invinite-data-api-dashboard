@@ -19,7 +19,7 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
 
 ### API Layer (`src/lib/api/`)
 
-- **openapi.json**: the pinned data API spec, adopted from the API's versioned `reference/openapi.json` (see "Data contract ownership"). It is the Data API 9.0 contract (tag `data-sdk-v9.0.0`, `../invinite-data-api/reference/openapi.json` at `2510577`; invinite `tasks-julian/todo-0/data-api-plan-restructure` task 5): 9.0 moved 50 operations up the plan ladder (`x-tier` now free / lite / standard / pro / enterprise; the stream is PRO) and added the licensing right `redistribute_api` + `by_contract`. Copy it over, then `pnpm generate:api` (its output is committed after `pnpm run check`'s `eslint --fix`, which re-sorts it). `pnpm-workspace.yaml` holds pnpm 11's `allowBuilds` (esbuild `true`; `@parcel/watcher`, `msw`, `sharp`, `unrs-resolver` `false` — prebuilt binaries / an unused msw worker): without a decision for every dependency build script pnpm 11 stops with `ERR_PNPM_IGNORED_BUILDS`. A new dependency with a build script needs its own entry
+- **openapi.json**: the pinned data API spec, adopted from the API's versioned `reference/openapi.json` (see "Data contract ownership"). It is the Data API 10.0 contract (tag `data-sdk-v10.0.0`, `../invinite-data-api/reference/openapi.json` at `112a628`; invinite `tasks-julian/todo-0/data-api-pricing-v2` task 4): 10.0 moved 32 STANDARD operations to LITE (filings, filers, documents, guidance, holders, metrics, news items, people, IPOs, offerings) and 8 to PRO (transcript, Q&A, stats, investor documents and their two searches), added `payg` to `/v1/me.plan` (credits without a plan, reaches what PRO reaches except live data, the API's 403 says which) and made LITE internal use (no licensing right) with the note `internal_use`; 9.0 had introduced the five tiers and `by_contract`. Copy it over, then `pnpm generate:api` (its output is committed after `pnpm run check`'s `eslint --fix`, which re-sorts it). `pnpm-workspace.yaml` holds pnpm 11's `allowBuilds` (esbuild `true`; `@parcel/watcher`, `msw`, `sharp`, `unrs-resolver` `false` — prebuilt binaries / an unused msw worker): without a decision for every dependency build script pnpm 11 stops with `ERR_PNPM_IGNORED_BUILDS`. A new dependency with a build script needs its own entry
 - **schema.d.ts**: Auto-generated TypeScript types from OpenAPI spec. Regenerate with `pnpm run generate:api`
 - **types.ts**: Derived response/entity types using the `ApiResponse` helper to extract typed responses from schema
 - **client.server.ts**: Creates typed `openapi-fetch` client with Bearer auth
@@ -354,7 +354,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   `operations.test.ts` counts them): method, path template, summary, `credits` (`x-credits`, null for `/health`,
   `/status*`), `tier` (`x-tier`), `cli` (`x-cli` group / action / positional), `docsUrl`
   (`https://data.invinite.com/docs/<method>--<path, / → _>`); `OPERATION_IDS_BY_ROUTE` (`"GET /v1/funds/{fund}"` → id);
-  `PLAN_ORDER` = `/v1/me`'s `plan` enum (the access order); `OperationTier` = a member of it — the generator FAILS on an `x-tier` outside the enum, by operationId, never copies it through; `STREAM_TIER` = the `ws /v1/stream` operation's `x-tier` (the live feeds' plan notices read it); a badge reads `TIER_BADGE_LABELS` / `tierLabel(operationId)` (`credit-hint.tsx`), never a typed "(PRO)". Regenerated only by O6, A2's spec adoption and A3.
+  `PLAN_ORDER` = `/v1/me`'s `plan` enum minus the plans no `x-tier` names (the route tiers in access order — `payg` is an account plan, not a rung); `OperationTier` = a member of it — the generator FAILS on an `x-tier` outside the enum, by operationId, never copies it through; an account plan is ranked by `planRank` (`request-meta.ts`: `payg` → `pro`, the one place), never by a local route list; `STREAM_TIER` = the `ws /v1/stream` operation's `x-tier` (the live feeds' plan notices read it); a badge reads `TIER_BADGE_LABELS` / `tierLabel(operationId)` (`credit-hint.tsx`), never a typed "(PRO)". Regenerated only by O6, A2's spec adoption and A3.
 - **Request descriptors — nothing to register**: `client.server.ts` records every Data API answer of a server function
   call (openapi-fetch middleware → `AsyncLocalStorage`: method, the concrete path + query AS SENT, status,
   `X-Request-Id`, `X-Credits-Charged`; never a request header, so never the key) and the global function middleware
@@ -472,7 +472,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 
 ### Alerts (backend `tasks/data-api-dashboard` 2-alerts task 2): write layer, alerts, event feed
 
-- **Spec**: `openapi.json` = Data API 7.1 (`data-sdk-v7.1.0`) at the time (now 9.0, where every alerts route is LITE): `listAlerts` takes `symbol` / `destination_id`. The only
+- **Spec**: `openapi.json` = Data API 7.1 (`data-sdk-v7.1.0`) at the time (since 9.0 every alerts route is LITE): `listAlerts` takes `symbol` / `destination_id`. The only
   spec change of the super tasklist besides A3's operations table regeneration.
 - **Writes** (the dashboard's first): `src/lib/api/server-functions-alerts.ts` — reads `GET`, writes
   `createServerFn({ method: "POST" })`, zod input, the key from the same store as every read; the requests themselves in
@@ -701,7 +701,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   card (`GET /status`, `useApiStatus`: overall = the worst family, the families as a table with 7 / 30 / 90-day uptime,
   the coverage universe, the docs groups with uptime and p50 / p95 buckets behind a disclosure) and the licensing card
   (`GET /status/licensing`, `useApiLicensing`: the caller's plan's rights with the policy's notes, the resale rule,
-  "Draft" while `counsel_signed_off` is false, routes per family the plan reaches by tier order). The sidebar's Help
+  "Draft" while `counsel_signed_off` is false, the `internal_use` note, routes per family the plan reaches by tier order; a `payg` account reads the FREE column and ranks as PRO). The sidebar's Help
   block has `ApiStatusDot` beside "API status" (same cached `/status` query, asked once the key answered; colour = the
   overall status, the summary in its label). Both operations need no key and cost nothing. `/status` and `/licensing`
   stay 301 redirects; `/health` has no view (reason in the coverage table).

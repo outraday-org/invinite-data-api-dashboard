@@ -9,6 +9,7 @@ import type { NewsSearch } from "@/lib/news/labels";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { tierLabel } from "@/components/ui/credit-hint";
 import { DataTable } from "@/components/ui/data-table";
 import { ErrorState } from "@/components/ui/error-state";
 import { Input } from "@/components/ui/input";
@@ -110,9 +111,9 @@ const EXPORT_COLUMNS: ReadonlyArray<ExportColumn<NewsDevelopment>> = [
     { header: "item_url", value: row => row.item.url },
 ];
 
-/** The list's request state: `/v1/announcements` is STANDARD, so a plan gate is a notice. */
+/** The list's request state: `/v1/announcements` needs a plan (LITE in 10.0), so a plan gate is a notice. */
 function AnnouncementsError({ error }: { error: unknown }) {
-    if (isTierError(error)) return <Notice badge="STANDARD" title="Your plan does not include announcements" />;
+    if (isTierError(error)) return <Notice badge={tierLabel("listAnnouncements") ?? "Plan"} title="Your plan does not include announcements" />;
 
     return <ErrorState error={error} title="Failed to load the announcements" />;
 }
@@ -208,7 +209,7 @@ export function AnnouncementFilters({ onChange, search }: { onChange: (patch: Pa
 }
 
 /**
- * The Announcements tab of the News page: what the company's news announced (`/v1/announcements?company=`, STANDARD,
+ * The Announcements tab of the News page: what the company's news announced (`/v1/announcements?company=`, LITE,
  * 2 credits a page) — product launches, partnerships, contracts … with what the publication says happened and when it
  * takes effect. Title and summary are model-derived (`derived: true`), never the publisher's words.
  */

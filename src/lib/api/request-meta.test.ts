@@ -5,7 +5,7 @@ import { TIER_BADGE_LABELS } from "@/components/ui/credit-hint";
 import type { RequestMeta } from "./request-meta";
 
 import { OPERATIONS, PLAN_ORDER, STREAM_TIER } from "./operations.gen";
-import { cliOf, curlOf, fileRequests, planAllows, REDACTED, redactSecrets, requestMetaOf, requestsOf, shareWithRequests } from "./request-meta";
+import { cliOf, curlOf, fileRequests, planAllows, planRank, REDACTED, redactSecrets, requestMetaOf, requestsOf, shareWithRequests } from "./request-meta";
 
 const meta = (patch: Partial<RequestMeta> = {}): RequestMeta => ({
     credits: 1,
@@ -103,7 +103,7 @@ describe("planAllows", () => {
         expect(planAllows("free", null)).toBe(true);
     });
 
-    it("Data API 9.0: a PRO plan is refused an ENTERPRISE operation, LITE (a prepaid account's /v1/me plan) reaches a LITE one", () => {
+    it("Data API 9.0: a PRO plan is refused an ENTERPRISE operation, LITE reaches a LITE one", () => {
         expect(planAllows("pro", OPERATIONS.listDatasets.tier)).toBe(false);
 
         expect(planAllows("enterprise", OPERATIONS.listDatasets.tier)).toBe(true);
@@ -113,6 +113,26 @@ describe("planAllows", () => {
         expect(planAllows("free", OPERATIONS.getStandardizedFinancials.tier)).toBe(false);
 
         expect(planAllows("standard", OPERATIONS.listKpis.tier)).toBe(false);
+    });
+
+    it("Data API 10.0: filings are LITE, the transcript is PRO; pay as you go ranks as PRO, never ENTERPRISE", () => {
+        expect(OPERATIONS.listFilings.tier).toBe("lite");
+
+        expect(OPERATIONS.getTranscript.tier).toBe("pro");
+
+        expect(planAllows("lite", OPERATIONS.listFilings.tier)).toBe(true);
+
+        expect(planAllows("standard", OPERATIONS.getTranscript.tier)).toBe(false);
+
+        expect(planRank("payg")).toBe("pro");
+
+        expect(planAllows("payg", OPERATIONS.getTranscript.tier)).toBe(true);
+
+        expect(planAllows("payg", OPERATIONS.listKpis.tier)).toBe(true);
+
+        expect(planAllows("payg", OPERATIONS.listFilings.tier)).toBe(true);
+
+        expect(planAllows("payg", OPERATIONS.listDatasets.tier)).toBe(false);
     });
 
     it("every x-tier of the pinned spec is a plan with a badge label; the stream is PRO", () => {

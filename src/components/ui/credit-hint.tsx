@@ -10,7 +10,7 @@ import { useMe } from "@/lib/api/queries";
 import { planAllows } from "@/lib/api/request-meta";
 import { formatNumber } from "@/lib/format";
 
-/** The plan names a badge shows (the operation's `x-tier`). */
+/** The plan names a badge shows (the operation's `x-tier`; every member of the generated `PLAN_ORDER`). */
 export const TIER_BADGE_LABELS: Record<OperationTier, string> = {
     enterprise: "ENTERPRISE",
     free: "FREE",
