@@ -114,6 +114,16 @@ describe("redactSecrets (alerts task 2: write bodies and answers in the inspecto
         });
     });
 
+    it("a null secret stays null and a timestamp about a secret is shown (`previous_secret_expires_at`)", () => {
+        expect(redactSecrets({ previous_secret_expires_at: "2026-11-23T15:52:00Z", secret: "whsec_1", secret_hint: null })).toEqual({
+            previous_secret_expires_at: "2026-11-23T15:52:00Z",
+            secret: REDACTED,
+            secret_hint: null,
+        });
+
+        expect(redactSecrets({ previous_secret_expires_at: null })).toEqual({ previous_secret_expires_at: null });
+    });
+
     it("requestMetaOf records a write's body redacted, a read without one", () => {
         const write = requestMetaOf({ body: { secret: "s", type: "filing" }, method: "POST", schemaPath: "/v1/alerts", url: "https://api.test/v1/alerts" });
 

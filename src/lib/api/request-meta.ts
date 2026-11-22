@@ -44,10 +44,14 @@ export const REDACTED = "[redacted]";
 // Keys whose value is a secret wherever they appear (a destination's signing secret, an auth header, a token).
 const SECRET_KEY = /secret|authorization|password|passphrase|token|api[_-]?key|signing[_-]?key|private[_-]?key/i;
 
+// A key naming WHEN something about a secret happens (`previous_secret_expires_at`): a timestamp, never the secret.
+const TIMESTAMP_KEY = /_at$/i;
+
 /**
  * A request body or answer with every secret replaced by `REDACTED` (pure; the inspector's rule): a value under a key
  * that names a secret (`secret`, `authorization`, `password`, `token`, `api_key`, `signing_key`, …) and every value of
- * a `headers` object (a destination's custom header values) — at any depth. Nothing else changes.
+ * a `headers` object (a destination's custom header values) — at any depth. A `null` stays `null` (there is nothing to
+ * hide) and a timestamp key (`…_at`, e.g. `previous_secret_expires_at`) is shown as answered. Nothing else changes.
  */
 export function redactSecrets(value: JsonValue): JsonValue {
     if (Array.isArray(value)) return value.map(redactSecrets);
@@ -55,7 +59,7 @@ export function redactSecrets(value: JsonValue): JsonValue {
     if (value === null || typeof value !== "object") return value;
 
     return Object.fromEntries(Object.entries(value).map(([key, item]): [string, JsonValue] => {
-        if (SECRET_KEY.test(key)) return [key, REDACTED];
+        if (SECRET_KEY.test(key) && !TIMESTAMP_KEY.test(key)) return [key, item === null ? null : REDACTED];
 
         if (key.toLowerCase() === "headers" && item !== null && typeof item === "object" && !Array.isArray(item)) {
             return [key, Object.fromEntries(Object.keys(item).map(name => [name, REDACTED]))];

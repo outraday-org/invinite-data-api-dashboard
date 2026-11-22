@@ -491,7 +491,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   runs at once. Words: `confirmWords` (`components/alerts/use-alert-actions.tsx`).
 - **Secret rule**: the inspector's recorder (`client.server.ts` `onRequest`) keeps a write's JSON body and
   `requestMetaOf` redacts it before it is stored (`redactSecrets`: keys `secret`, `authorization`, `password`, `token`,
-  `api_key`, `signing_key`, `private_key`, …, and every value of a `headers` object); the sheet shows a write's ANSWER
+  `api_key`, `signing_key`, `private_key`, …, and every value of a `headers` object; a `null` stays `null`, a `…_at` timestamp such as `previous_secret_expires_at` is shown); the sheet shows a write's ANSWER
   redacted the same way (`writeRequestsOf` in `use-view-requests.ts`: settled mutations, oldest first). A secret the API
   returns once (A3) is shown only in its dialog, never stored in the browser, never logged.
 - **No browser request to the API host**: `src/lib/api/no-direct-api-calls.test.ts` — one openapi-fetch client
