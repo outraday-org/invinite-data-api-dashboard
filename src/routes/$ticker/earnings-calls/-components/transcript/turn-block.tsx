@@ -109,6 +109,7 @@ function TurnWords({ activeWord, canSeek, state, words }: { activeWord: number; 
                     canSeek && "cursor-pointer hover:underline",
                 )}
                 data-ms={word.startMs}
+                data-word-index={wordIndex}
                 // Words have no id; their order within one turn is stable.
                 key={wordIndex}
             >

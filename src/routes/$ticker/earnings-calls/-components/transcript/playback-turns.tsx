@@ -23,7 +23,7 @@ const PlaybackContext = React.createContext<Playback>(IDLE);
  * The ONE playback subscriber of a turn list (task O3; replaces `ActiveTurnBridge` and `FollowAlong`): it reads the
  * player's position every frame, works out the heard segment (`heardSegment`) and its word (`indexAt`), and publishes
  * them only when they change — so the turns (`PlaybackTurnBlock`) re-render at word rate, never at frame rate. It also
- * owns the list's Follow (`useFollowScroll`): the page keeps the heard segment in view while Follow is on.
+ * owns the list's Follow (`useFollowScroll`): the page keeps the heard segment — in a timed turn its heard word's line — in view while Follow is on.
  * `segments[i]` belongs to the block rendered with `index={i}`.
  */
 export function PlaybackTurns({
@@ -52,7 +52,7 @@ export function PlaybackTurns({
         [index, playing, segments, within, word],
     );
 
-    useFollowScroll({ activeIndex: within ? index : -1, containerRef, enabled: playing });
+    useFollowScroll({ activeIndex: within ? index : -1, activeWord: word, containerRef, enabled: playing });
 
     return (
         <PlaybackContext value={value}>

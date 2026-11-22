@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { V2QaPair } from "@/lib/api/types";
 
-import { useFollowScroll } from "@/lib/player/use-follow-scroll";
+import { followWordDelta, useFollowScroll } from "@/lib/player/use-follow-scroll";
 import { QaScoreBadges, qaSegments } from "@/routes/$ticker/earnings-calls/-components/tabs/qa-tab";
 import { TranscriptTab } from "@/routes/$ticker/earnings-calls/-components/tabs/transcript-tab";
 import { TranscriptTurns } from "@/routes/$ticker/earnings-calls/-components/tabs/transcript-turns";
@@ -334,6 +334,48 @@ describe("useFollowScroll", () => {
         expect(player.setFollow).toHaveBeenCalledWith(false);
 
         container.remove();
+    });
+
+    it("in a timed turn follows the heard word's line, not the turn's middle", () => {
+        const container = document.createElement("div");
+
+        container.innerHTML = "<div data-follow-index=\"0\"><span data-word-index=\"0\"></span><span data-word-index=\"1\"></span></div>";
+
+        document.body.append(container);
+
+        const turn = container.querySelector<HTMLElement>("[data-follow-index]")!;
+
+        const centred = vi.fn();
+
+        turn.scrollIntoView = centred;
+
+        const word = container.querySelector<HTMLElement>("[data-word-index=\"1\"]")!;
+
+        word.getBoundingClientRect = () => ({ bottom: 1520, top: 1500 }) as DOMRect;
+
+        const scrollBy = vi.spyOn(window, "scrollBy").mockImplementation(() => {});
+
+        const ref = { current: container } as React.RefObject<HTMLElement | null>;
+
+        renderHook(() => useFollowScroll({ activeIndex: 0, activeWord: 1, containerRef: ref }));
+
+        expect(centred).not.toHaveBeenCalled();
+
+        expect(scrollBy).toHaveBeenCalledWith({ behavior: "smooth", top: followWordDelta({ bottom: 1520, insetTop: 0, top: 1500, viewportHeight: window.innerHeight }) });
+
+        scrollBy.mockRestore();
+
+        container.remove();
+    });
+
+    it("followWordDelta: nothing inside the band, else the line back to 30 % below the pinned bars", () => {
+        expect(followWordDelta({ bottom: 420, insetTop: 200, top: 400, viewportHeight: 1000 })).toBe(0);
+
+        // Below the band (65 % of 800 under a 200 px inset = 720): back to 200 + 240 = 440.
+        expect(followWordDelta({ bottom: 900, insetTop: 200, top: 880, viewportHeight: 1000 })).toBe(440);
+
+        // Above the band, under the pinned bars: scrolls up.
+        expect(followWordDelta({ bottom: 120, insetTop: 200, top: 100, viewportHeight: 1000 })).toBe(-340);
     });
 
     it("ignores Space and arrow keys on a control; a PageDown counts", () => {
