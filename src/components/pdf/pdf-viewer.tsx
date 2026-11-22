@@ -39,6 +39,24 @@ function getErrorMessage(err: unknown, fallback: string) {
     return fallback;
 }
 
+/**
+ * What the viewer shows when pdf.js cannot load the file (e.g. the storage host sends no CORS header for this origin):
+ * the reason and the file itself in a new tab, never a bare error inside an empty frame.
+ */
+export function PdfViewerError({ message, url }: { message: string; url: string }) {
+    return (
+        <div className="flex flex-col gap-1 rounded-md bg-muted/20 p-3 text-xs" role="status">
+            <span>
+                The PDF cannot be shown here
+                <span className="text-muted-foreground">{` (${message}).`}</span>
+            </span>
+            <a className="w-fit underline underline-offset-4" href={url} rel="noopener noreferrer" target="_blank">
+                Open the PDF in a new tab
+            </a>
+        </div>
+    );
+}
+
 export function PdfViewer({
     className,
     url,
@@ -157,6 +175,9 @@ export function PdfViewer({
 
     const { Document, Page } = reactPdf;
 
+    // No empty full-height frame around the error: just the reason and the link.
+    if (error) return <PdfViewerError message={error} url={url} />;
+
     return (
         <div className={cn("flex flex-col min-h-0", className)}>
             <div
@@ -164,47 +185,41 @@ export function PdfViewer({
                 ref={scrollRef}
             >
                 <div className="p-3" ref={setMeasureEl}>
-                    {error
-                        ? (
-                                <div className="text-destructive text-xs">{error}</div>
-                            )
-                        : (
-                                <Document
-                                    file={url}
-                                    loading={<div className="text-muted-foreground text-xs">Loading PDF…</div>}
-                                    onLoadError={e => setError(getErrorMessage(e, "Failed to load PDF"))}
-                                    onLoadSuccess={({ numPages: n }) => setNumPages(n)}
-                                    onSourceError={e => setError(getErrorMessage(e, "Failed to load PDF source"))}
+                    <Document
+                        file={url}
+                        loading={<div className="text-muted-foreground text-xs">Loading PDF…</div>}
+                        onLoadError={e => setError(getErrorMessage(e, "Failed to load PDF"))}
+                        onLoadSuccess={({ numPages: n }) => setNumPages(n)}
+                        onSourceError={e => setError(getErrorMessage(e, "Failed to load PDF source"))}
+                    >
+                        <div
+                            className="relative w-full"
+                            style={{ height: `${virtualizer.getTotalSize()}px` }}
+                        >
+                            {virtualItems.map(virtualRow => (
+                                <div
+                                    className="absolute left-0 top-0 w-full"
+                                    data-index={virtualRow.index}
+                                    key={virtualRow.key}
+                                    ref={virtualizer.measureElement}
+                                    style={{ transform: `translateY(${virtualRow.start}px)` }}
                                 >
-                                    <div
-                                        className="relative w-full"
-                                        style={{ height: `${virtualizer.getTotalSize()}px` }}
-                                    >
-                                        {virtualItems.map(virtualRow => (
-                                            <div
-                                                className="absolute left-0 top-0 w-full"
-                                                data-index={virtualRow.index}
-                                                key={virtualRow.key}
-                                                ref={virtualizer.measureElement}
-                                                style={{ transform: `translateY(${virtualRow.start}px)` }}
-                                            >
-                                                <div className="flex justify-center">
-                                                    <div className="rounded-md bg-background shadow-sm ring-1 ring-foreground/10">
-                                                        <Page
-                                                            loading={<div className="p-6 text-muted-foreground text-xs">Loading page…</div>}
-                                                            pageNumber={virtualRow.index + 1}
-                                                            renderAnnotationLayer
-                                                            renderTextLayer
-                                                            width={Math.max(1, containerWidth)}
-                                                        />
-                                                    </div>
-                                                </div>
-                                                <div className="h-4" />
-                                            </div>
-                                        ))}
+                                    <div className="flex justify-center">
+                                        <div className="rounded-md bg-background shadow-sm ring-1 ring-foreground/10">
+                                            <Page
+                                                loading={<div className="p-6 text-muted-foreground text-xs">Loading page…</div>}
+                                                pageNumber={virtualRow.index + 1}
+                                                renderAnnotationLayer
+                                                renderTextLayer
+                                                width={Math.max(1, containerWidth)}
+                                            />
+                                        </div>
                                     </div>
-                                </Document>
-                            )}
+                                    <div className="h-4" />
+                                </div>
+                            ))}
+                        </div>
+                    </Document>
                 </div>
             </div>
         </div>

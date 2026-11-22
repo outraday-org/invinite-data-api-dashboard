@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PdfDocumentSection } from "@/components/pdf/pdf-inline-viewer";
+import { PdfViewerError } from "@/components/pdf/pdf-viewer";
 import { OBJECT_URL_REVOKE_DELAY_MS } from "@/lib/download";
 
 const pdf = (version: number) => ({ bytes: 79_457, pages: 14, url: `https://storage.example.com/transcript-v${version}.pdf` });
@@ -85,5 +86,21 @@ describe("PdfDocumentSection", () => {
         fireEvent.click(screen.getByText("Download"));
 
         await waitFor(() => expect(open).toHaveBeenCalledWith(pdf(2).url, "_blank", "noopener"));
+    });
+});
+
+describe("PdfViewerError", () => {
+    it("names the reason and links the file instead of a bare error (UI walk F061)", () => {
+        render(<PdfViewerError message="Failed to fetch" url="https://storage.example.com/deck.pdf" />);
+
+        expect(screen.getByRole("status").textContent).toContain("The PDF cannot be shown here (Failed to fetch).");
+
+        const link = screen.getByRole("link", { name: "Open the PDF in a new tab" });
+
+        expect(link.getAttribute("href")).toBe("https://storage.example.com/deck.pdf");
+
+        expect(link.getAttribute("target")).toBe("_blank");
+
+        expect(link.getAttribute("rel")).toBe("noopener noreferrer");
     });
 });
