@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiRequestError } from "@/lib/api/errors";
 import { newsroomItem, newsSearchPage } from "@/lib/news/news-fixtures";
-import { hitFieldLabel, NewsSearchResults } from "@/routes/$ticker/news/-components/news-search";
+import { hitFieldLabel, newsSearchCostText, NewsSearchResults } from "@/routes/$ticker/news/-components/news-search";
 
 vi.mock("@tanstack/react-router", () => ({
     // A hit's headline is a `?item=` link: the mock shows the search it would navigate to.
@@ -89,5 +89,13 @@ describe("NewsSearchResults", () => {
         render(<NewsSearchResults {...props} error={new ApiRequestError(400, { error: "Bad Request", message: "Exact search needs 3 characters" })} pages={[]} />);
 
         expect(screen.getByText("Exact search needs 3 characters")).toBeTruthy();
+    });
+});
+
+describe("newsSearchCostText", () => {
+    it("names the page's day window only when one is set (the market scope has none)", () => {
+        expect(newsSearchCostText(true)).toBe("10 credits per page · the page's date window applies");
+
+        expect(newsSearchCostText(false)).toBe("10 credits per page");
     });
 });

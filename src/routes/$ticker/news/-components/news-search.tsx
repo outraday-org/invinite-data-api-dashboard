@@ -110,6 +110,11 @@ export function NewsSearchResults({
     );
 }
 
+/** The search's cost line; the day window is named only when one is set (the market scope has none). */
+export function newsSearchCostText(hasWindow: boolean) {
+    return hasWindow ? "10 credits per page · the page's date window applies" : "10 credits per page";
+}
+
 /**
  * News search (`/v1/search/news`, STANDARD, 10 credits a page) over headlines, Invinite's ledes and summaries: one
  * company, a comma list (the watchlist) or — without `company` — the whole market, in the page's day window. Runs on
@@ -177,7 +182,7 @@ export function NewsSearchBox({
                     options={NEWS_SEARCH_FIELDS.map(value => ({ label: NEWS_SEARCH_FIELD_LABELS[value], value }))}
                     value={field}
                 />
-                <SearchCostNote>10 credits per page · the page&apos;s date window applies</SearchCostNote>
+                <SearchCostNote>{newsSearchCostText(Boolean(from || to))}</SearchCostNote>
             </div>
 
             {query && (
