@@ -36,6 +36,18 @@ describe("validateNewsSearch", () => {
         });
     });
 
+    it("earnings: a typed ?earnings=true (a boolean once parsed) and the select's string read the same", () => {
+        expect(validateNewsSearch({ earnings: true }).earnings).toBe("true");
+
+        expect(validateNewsSearch({ earnings: false }).earnings).toBe("false");
+
+        expect(validateNewsSearch({ earnings: "true" }).earnings).toBe("true");
+
+        expect(validateNewsFeedSearch({ earnings: true }).earnings).toBe("true");
+
+        expect(validateNewsSearch({ earnings: "maybe" }).earnings).toBeUndefined();
+    });
+
     it("drops the publisher-only filters in the market scope and without Company-published", () => {
         expect(validateNewsSearch({ category: "Press Releases", published: true, scope: "market" })).toMatchObject({
             category: undefined,

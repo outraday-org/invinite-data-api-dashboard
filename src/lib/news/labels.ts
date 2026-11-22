@@ -150,7 +150,9 @@ const newsSearchSchema = z.object({
     /** Announcements: one topic. */
     aTopic: optionalEnum(ANNOUNCEMENT_TOPICS),
     category: z.string().trim().min(1).optional().catch(undefined),
-    earnings: z.enum(["true", "false"]).optional().catch(undefined),
+    // A hand-typed / linked `?earnings=true` arrives as a boolean (the router parses JSON values); the select writes the
+    // string, which the router keeps quoted (`%22true%22`) to round-trip it. Both read the same.
+    earnings: z.preprocess(value => (typeof value === "boolean" ? String(value) : value), z.enum(["true", "false"])).optional().catch(undefined),
     /** Announcements: effective on or after this day (`effective_from.gte`). */
     effFrom: optionalDay(),
     /** Announcements: effective until on or before this day (`effective_to.lte`). */
