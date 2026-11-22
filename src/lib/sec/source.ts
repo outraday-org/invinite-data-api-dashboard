@@ -340,8 +340,11 @@ export function latest13fPeriodEnd(now: Date) {
     return end.toISOString().slice(0, 10);
 }
 
+/** Quarters a 13F quarter picker offers back from the latest due one (Holders, `/sec/$cik`). */
+export const QUARTER_PICKER_COUNT = 8;
+
 /**
- * The 13F quarter picker of a manager's portfolio (`/sec/$cik?period=`): `count` quarter ends back from `latest`, newest
+ * A 13F quarter picker (`/sec/$cik?period=`, the Holders page's `?period=`): `count` quarter ends back from `latest`, newest
  * first, each "Quarter ending Sep 30, 2026"; a linked `current` quarter older than those is offered too (the URL is
  * the state).
  */

@@ -10,7 +10,6 @@ import {
     CalendarCallCell,
     CalendarReportCell,
     CalendarStatusBadge,
-    CELL_META_CLASS,
     hasNoCall,
 } from "@/routes/$ticker/earnings-calls/-components/calendar-semantics";
 
@@ -58,7 +57,8 @@ describe("calendar semantics", () => {
         for (const text of ["Before open · from the filing's acceptance", "6-K · 0001193125-26-448358", "first-party time · via wire · America/New_York"]) {
             const line = screen.getByText(text);
 
-            for (const name of CELL_META_CLASS.split(" ")) expect(line).toHaveClass(name);
+            // Wraps at a fixed width inside a `whitespace-nowrap` cell (else the calendar outgrew its column).
+            expect(line).toHaveClass("whitespace-normal", "max-w-52");
         }
     });
 

@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PLAN_LABELS } from "@/lib/account";
-import { ApiRequestError } from "@/lib/api/errors";
+import { isNotFound } from "@/lib/api/errors";
 import { useInstrument, useKeyState, useV2Filer, useV2FilingsInfinite, useV2LiveEvents, useV2Person } from "@/lib/api/queries";
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import {
@@ -95,7 +95,7 @@ function SkeletonRows() {
 function InstrumentContext({ enabled, ticker }: { enabled: boolean; ticker: string }) {
     const { data: instrument, error, isLoading } = useInstrument(enabled ? ticker : "");
 
-    const isUnknown = error instanceof ApiRequestError && error.status === 404;
+    const isUnknown = isNotFound(error);
 
     if (isUnknown) return null;
 

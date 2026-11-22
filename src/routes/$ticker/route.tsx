@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ApiRequestError } from "@/lib/api/errors";
+import { isNotFound } from "@/lib/api/errors";
 import { useInstrument } from "@/lib/api/queries";
 import { datasetGateText, instrumentBadges, isSymbolParam, sectionDatasets, sectionOf, servesSection, SYMBOL_MAX_LENGTH } from "@/lib/instruments";
 import { TICKER_HEADER_HEIGHT_VAR, titleHead } from "@/lib/layout";
@@ -68,7 +68,7 @@ function TickerLayout() {
     // A segment no symbol can be (longer than any) is not known without a request (UI walk F008).
     const notSymbol = !isSymbolParam(ticker);
 
-    const isUnknown = notSymbol || (error instanceof ApiRequestError && error.status === 404);
+    const isUnknown = notSymbol || isNotFound(error);
 
     const gatedDatasets = instrument && !servesSection(instrument.datasets, section) ? sectionDatasets(section) : [];
 

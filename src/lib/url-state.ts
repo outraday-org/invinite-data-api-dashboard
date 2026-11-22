@@ -25,6 +25,18 @@ export const optionalText = (max = 100, min = 1) => z
     .optional()
     .catch(undefined);
 
+/**
+ * A day range from the URL in order: `from` / `to` swapped when `from > to` (a typed or shared URL), never sent as an
+ * empty window. The calendar, dividends, market holidays and insider trades read their ranges through it.
+ */
+export function orderedWindow<T extends { from?: string; to?: string }>(window: T): T {
+    if (window.from && window.to && window.from > window.to) {
+        return { ...window, from: window.to, to: window.from };
+    }
+
+    return window;
+}
+
 /** One of `values`. */
 export const optionalEnum = <const T extends readonly [string, ...Array<string>]>(values: T) => z.enum(values).optional().catch(undefined);
 

@@ -12,10 +12,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listState } from "@/lib/api/list-state";
 import { useHolderChangesInfinite, useHoldersInfinite } from "@/lib/api/queries";
 import { formatDay } from "@/lib/format";
-import { tickerHead } from "@/lib/layout";
+import { tickerHead, WRAPPING_TABS_LIST_CLASS } from "@/lib/layout";
 import { HOLDER_SOURCE_LABELS } from "@/lib/sec/fund";
 import { changeTypesParam, INSTRUMENT_OPTIONS, parseChangeTypes, parseCikList } from "@/lib/sec/ownership";
-import { latest13fPeriodEnd, recentQuarterEnds } from "@/lib/sec/source";
+import { latest13fPeriodEnd, QUARTER_PICKER_COUNT, quarterPickerOptions, recentQuarterEnds } from "@/lib/sec/source";
 import { IN_PLACE, optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
@@ -47,7 +47,7 @@ export const Route = createFileRoute("/$ticker/holders/")({
 const HOLDERS_PAGE = 100;
 
 /** Quarter ends the period picker offers (newest due quarter first). */
-const PICKER_QUARTERS = 8;
+const PICKER_QUARTERS = QUARTER_PICKER_COUNT;
 
 /** The picker's "server default" entry: no `period_end` sent (13F: the newest quarter whose deadline passed; N-PORT: today). */
 const LATEST = "latest";
@@ -108,13 +108,9 @@ function HoldersPage() {
         ];
     }, [periodEnd, quarters, search.prior]);
 
-    // A linked quarter older than the picker's is offered too (the URL is the state).
+    // A linked quarter older than the picker's is offered too (the URL is the state; as on `/sec/$cik`).
     const periodOptions = React.useMemo(
-        () => [
-            { label: "Latest due quarter", value: LATEST },
-            ...[...quarters, ...(periodEnd && !quarters.includes(periodEnd) ? [periodEnd] : [])]
-                .map(quarter => ({ label: `Quarter ending ${formatDay(quarter)}`, value: quarter })),
-        ],
+        () => [{ label: "Latest due quarter", value: LATEST }, ...quarterPickerOptions(quarters[0], PICKER_QUARTERS, periodEnd ?? null)],
         [periodEnd, quarters],
     );
 
@@ -176,7 +172,7 @@ function HoldersPage() {
 
             <Tabs onValueChange={value => setTab(value as Tab)} value={tab}>
                 {/* Wraps at phone width: the page never scrolls sideways. */}
-                <TabsList className="flex-wrap justify-start gap-y-2 group-data-horizontal/tabs:h-auto" variant="line">
+                <TabsList className={WRAPPING_TABS_LIST_CLASS} variant="line">
                     <TabsTrigger className="h-[34px]" value="overview">Overview</TabsTrigger>
                     {SOURCES.map(source => (
                         <TabsTrigger className="h-[34px]" key={source} value={source}>{HOLDER_SOURCE_LABELS[source]}</TabsTrigger>

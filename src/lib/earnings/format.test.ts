@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { orderedWindow } from "@/lib/url-state";
+
 import {
     calendarDefaultWindow,
     calendarWindow,
@@ -13,7 +15,6 @@ import {
     formatStartedAgo,
     isCallToday,
     isUpcoming,
-    orderedWindow,
 } from "./format";
 
 describe("formatCallTime", () => {

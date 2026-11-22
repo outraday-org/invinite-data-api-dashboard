@@ -91,8 +91,8 @@ export function metricLabel(normalized: null | string) {
     return METRIC_LABELS[normalized] ?? sentenceCase(normalized);
 }
 
-/** Units a KPI's stated value already shows by its symbol ("$8.2 billion", "42%"). */
-const UNIT_SYMBOLS: Record<string, string> = { pct: "%", usd: "$" };
+/** Units a KPI's stated value shows by a symbol ("$8.2 billion", "42%"), and the unit's words when it does not. */
+const UNIT_SYMBOLS: Partial<Record<string, { symbol: string; words: string }>> = { pct: { symbol: "%", words: "%" }, usd: { symbol: "$", words: "USD" } };
 
 /**
  * The unit shown after a KPI's stated value: none when the text already carries it ("$8.2 billion" + `usd`,
@@ -101,11 +101,11 @@ const UNIT_SYMBOLS: Record<string, string> = { pct: "%", usd: "$" };
 export function kpiUnitSuffix(valueText: string, unit: null | string): null | string {
     if (!unit) return null;
 
-    const symbol = UNIT_SYMBOLS[unit];
+    const known = UNIT_SYMBOLS[unit];
 
-    if (symbol && valueText.includes(symbol)) return null;
+    if (!known) return unit.replaceAll("_", " ");
 
-    return unit === "pct" ? "%" : unit === "usd" ? "USD" : unit.replaceAll("_", " ");
+    return valueText.includes(known.symbol) ? null : known.words;
 }
 
 /** Direction chip: label + colour classes (the Badge variants have no green / amber). */

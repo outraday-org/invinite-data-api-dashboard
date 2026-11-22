@@ -12,6 +12,12 @@ export const LG_STICKY_TOP_CLASS = "lg:top-[calc(var(--app-topbar-height,0px)+va
 export const STICKY_FIRST_CELL = "sticky left-0 z-10 bg-background group-hover:bg-muted";
 
 /** The CSS variable the ticker layout writes on `<html>` (the instrument header's height, `0px` without one). */
+/**
+ * A line tab list that wraps onto more rows instead of scrolling sideways (no tab hidden behind a scroll box, the page
+ * never scrolls sideways): the call page, Holders, the filing page.
+ */
+export const WRAPPING_TABS_LIST_CLASS = "flex-wrap justify-start gap-y-2 group-data-horizontal/tabs:h-auto";
+
 export const TICKER_HEADER_HEIGHT_VAR = "--ticker-header-height";
 
 /** "AAPL · Dividends — Invinite Data" (or "Funds — Invinite Data"): the document title of a route. */

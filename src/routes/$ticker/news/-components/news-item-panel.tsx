@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ApiRequestError, isTierError } from "@/lib/api/errors";
+import { isNotFound, isTierError } from "@/lib/api/errors";
 import { useNewsAnnouncements, useNewsItem, useNewsText } from "@/lib/api/queries";
 import { formatInstant } from "@/lib/earnings/format";
 import {
@@ -118,7 +118,7 @@ export function NewsItemView({
 }) {
     if (isTierError(error)) return <Notice badge="STANDARD" title="Your plan does not include news summaries" />;
 
-    if (error instanceof ApiRequestError && error.status === 404) return <Notice title="This news item is not available" />;
+    if (isNotFound(error)) return <Notice title="This news item is not available" />;
 
     if (error) return <ErrorState error={error} title="Failed to load the news item" />;
 

@@ -4,7 +4,8 @@
  * - a day ("Oct 29, 2026"): `formatDay` — a date-only string is its calendar day (never shifted by a timezone);
  * - a moment ("Oct 29, 2026, 4:30 PM EDT"): `formatInstant` — the viewer's timezone, with its label;
  * - money by magnitude ("$3.95T", "$812.4M"): `formatMoneyCompact`; exact money ("$0.2500"): `formatMoney`;
- * - share counts ("15,204,137,000"): `formatShares`; any other count: `formatNumber`.
+ * - share counts ("15,204,137,000"): `formatShares`; any other count: `formatNumber`;
+ * - a fiscal year end ("Sep 30"): `fiscalYearEndText`.
  *
  * Absent or unparsable values are "—" (an unparsable string is shown as given).
  */
@@ -36,6 +37,19 @@ export function formatDay(value: Absent | string, timeZone?: string): string {
         timeZone: DATE_ONLY.test(value) ? "UTC" : timeZone,
         year: "numeric",
     }).format(parsed);
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** A fiscal year end `MM-DD` ("09-30") → "Sep 30"; anything else as answered, none = "—". */
+export function fiscalYearEndText(value: Absent | string): string {
+    const match = value ? /^(\d{2})-(\d{2})$/.exec(value) : null;
+
+    const month = match ? MONTHS[Number(match[1]) - 1] : undefined;
+
+    if (!match || !month) return value || DASH;
+
+    return `${month} ${Number(match[2])}`;
 }
 
 /** "Oct 29, 2026, 4:30 PM EDT" in `timeZone` (default: the viewer's), with the zone's label; a date-only string → `formatDay`. */

@@ -29,10 +29,19 @@ function factPeriodText(period: FilingLink["fact_period"]) {
     return [fiscal, span].filter(Boolean).join(" · ");
 }
 
-/** A truncated text with the full text in a tooltip. */
-/** The unit after the stated value, only when the text lacks it. */
-const unitSuffix = (kpi: Pick<V2KpiMention, "unit" | "value_text">) => kpiUnitSuffix(kpi.value_text, kpi.unit);
+/** The stated value, then its unit only when the text lacks it ("$8.2 billion" never reads "$8.2 billion usd"). */
+function ValueWithUnit({ kpi }: { kpi: Pick<V2KpiMention, "unit" | "value_text"> }) {
+    const unit = kpiUnitSuffix(kpi.value_text, kpi.unit);
 
+    return (
+        <>
+            {kpi.value_text}
+            {unit && <span className="text-muted-foreground">{` ${unit}`}</span>}
+        </>
+    );
+}
+
+/** A truncated text with the full text in a tooltip. */
 function TruncatedText({ className, text }: { className?: string; text: string }) {
     return (
         <Tooltip>
@@ -147,8 +156,7 @@ export function KpiTable({ eventId, onMetricClick }: Pick<CallTabProps, "eventId
                                 </div>
                             </TableCell>
                             <TableCell className="tabular-nums">
-                                {kpi.value_text}
-                                {unitSuffix(kpi) && <span className="text-muted-foreground">{` ${unitSuffix(kpi)}`}</span>}
+                                <ValueWithUnit kpi={kpi} />
                             </TableCell>
                             <TableCell>{kpi.period_label ?? "—"}</TableCell>
                             <TableCell className="whitespace-normal">

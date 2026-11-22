@@ -26,7 +26,7 @@ import { titleHead } from "@/lib/layout";
 import { FILER_ANCHORS, FILER_FILINGS_PAGE, isManagerFiler } from "@/lib/navigation";
 import { recentFiler, useRecordRecent } from "@/lib/recents";
 import { changeTypesParam, INSTRUMENT_OPTIONS, parseChangeTypes } from "@/lib/sec/ownership";
-import { latest13fPeriodEnd, quarterPickerOptions } from "@/lib/sec/source";
+import { latest13fPeriodEnd, QUARTER_PICKER_COUNT, quarterPickerOptions } from "@/lib/sec/source";
 import { IN_PLACE, optionalAccession, optionalDay, optionalEnum, optionalFlag, optionalText } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
@@ -64,9 +64,6 @@ const PORTFOLIO_PAGE = 25;
 const OFFERINGS_PAGE = 25;
 
 const CHANGES_PAGE = 50;
-
-/** Quarters the 13F portfolio picker offers back from the latest due one (as on the Holders page). */
-const PICKER_QUARTERS = 8;
 
 function SecFilerPage() {
     const { cik: rawCik } = Route.useParams();
@@ -178,7 +175,7 @@ function SecFilerPage() {
                                 aria-label="13F quarter"
                                 className="w-[210px]"
                                 onValueChange={value => onChange({ period: value })}
-                                options={quarterPickerOptions(latestQuarter, PICKER_QUARTERS, period)}
+                                options={quarterPickerOptions(latestQuarter, QUARTER_PICKER_COUNT, period)}
                                 value={period}
                             />
                         )}

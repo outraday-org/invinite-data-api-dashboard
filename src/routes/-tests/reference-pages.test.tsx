@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
 import { FinancialsFlatTable } from "@/components/financials-presentation/financials-flat-table";
 import { ApiStatusView, familyReach, LicensingView, overallStatus, StatusDot, statusSummary, uptimeText } from "@/components/reference/api-status";
-import { CompaniesList, companiesSort, fiscalYearEndText } from "@/components/reference/companies-list";
+import { CompaniesList, companiesSort } from "@/components/reference/companies-list";
 import { FiscalPeriodsView, latestFiscalYearEnd } from "@/components/reference/fiscal-periods-card";
 import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
 import { ApiRequestError } from "@/lib/api/errors";
@@ -168,12 +168,6 @@ describe("/instruments Companies tab (`GET /v1/companies`)", () => {
         expect(companiesSort(undefined)).toBeUndefined();
 
         expect(companiesSort("name")).toBe("name");
-
-        expect(fiscalYearEndText("09-30")).toBe("Sep 30");
-
-        expect(fiscalYearEndText(null)).toBe("—");
-
-        expect(fiscalYearEndText("2026-09")).toBe("2026-09");
     });
 });
 

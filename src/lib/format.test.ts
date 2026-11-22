@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DASH, formatDay, formatInstant, formatMoney, formatMoneyCompact, formatNumber, formatShares } from "@/lib/format";
+import { DASH, fiscalYearEndText, formatDay, formatInstant, formatMoney, formatMoneyCompact, formatNumber, formatShares } from "@/lib/format";
 import { pageTitle } from "@/lib/layout";
 
 describe("formatDay", () => {
@@ -80,6 +80,20 @@ describe("formatMoney / formatShares / formatNumber", () => {
         expect(formatNumber(164_000)).toBe("164,000");
 
         expect(formatShares(undefined)).toBe(DASH);
+    });
+});
+
+describe("fiscalYearEndText", () => {
+    it("reads `MM-DD` as a day of the year; anything else as answered, none as a dash", () => {
+        expect(fiscalYearEndText("09-30")).toBe("Sep 30");
+
+        expect(fiscalYearEndText("12-31")).toBe("Dec 31");
+
+        expect(fiscalYearEndText(null)).toBe(DASH);
+
+        expect(fiscalYearEndText("2026-09")).toBe("2026-09");
+
+        expect(fiscalYearEndText("13-01")).toBe("13-01");
     });
 });
 

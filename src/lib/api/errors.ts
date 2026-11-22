@@ -188,7 +188,7 @@ export function errorDescription(error: Error) {
  * The API does not know the subject (404: a CIK not in the SEC registry, an unknown person id): the page renders that
  * one notice, not the blocks that hang off the subject.
  */
-export function isNotFound(error: unknown) {
+export function isNotFound(error: unknown): error is ApiRequestError {
     return error instanceof ApiRequestError && error.status === 404;
 }
 

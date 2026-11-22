@@ -7,7 +7,7 @@ import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-
 import { ErrorState } from "@/components/ui/error-state";
 import { NotFound } from "@/components/ui/not-found";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ApiRequestError } from "@/lib/api/errors";
+import { isNotFound } from "@/lib/api/errors";
 import { useV2Event } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
 import { IN_PLACE } from "@/lib/url-state";
@@ -109,7 +109,7 @@ function CallPage({ eventId }: { eventId: string }) {
         setTranscriptJump(previous => ({ ms: startMs, nonce: (previous?.nonce ?? 0) + 1 }));
     };
 
-    if (!validId || (error instanceof ApiRequestError && error.status === 404)) return <NotFound />;
+    if (!validId || isNotFound(error)) return <NotFound />;
 
     if (error) {
         return (

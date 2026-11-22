@@ -4,6 +4,7 @@ import type { V2Event } from "@/lib/api/types";
 
 import { ApiButton } from "@/components/api/api-sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { WRAPPING_TABS_LIST_CLASS } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 
 import type { CallSearch } from "./call-search";
@@ -42,9 +43,6 @@ export const CALL_TAB_VALUES = [
 export type CallTab = (typeof CALL_TAB_VALUES)[number];
 
 export const DEFAULT_CALL_TAB: CallTab = "transcript";
-
-/** The call tab bar wraps (like the Holders tabs): no tab is hidden in a sideways scroll box. */
-export const CALL_TAB_LIST_CLASS = "flex-wrap justify-start gap-y-2 group-data-horizontal/tabs:h-auto";
 
 /**
  * A "Jump to transcript" request: the Transcript tab scrolls to `ms`; `nonce` repeats a jump to the same spot.
@@ -151,7 +149,7 @@ export function CallTabs({
             <div className="flex items-start gap-2">
                 {/* The tabs wrap onto a second row instead of scrolling sideways behind the API button (UI walk F067). */}
                 <div className="min-w-0 grow">
-                    <TabsList className={CALL_TAB_LIST_CLASS} variant="line">
+                    <TabsList className={WRAPPING_TABS_LIST_CLASS} variant="line">
                         {visibleTabs.map((value) => {
                             const { flag, label } = CALL_TABS[value];
 

@@ -6,7 +6,7 @@ import type { V2CompaniesResponse, V2CompaniesSort, V2CompanyListItem } from "@/
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { DataTable } from "@/components/ui/data-table";
-import { DASH } from "@/lib/format";
+import { DASH, fiscalYearEndText } from "@/lib/format";
 import { EXCHANGE_LABELS } from "@/lib/instruments";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 
@@ -33,19 +33,6 @@ export const COMPANY_SECTORS = [
     "Technology",
     "Utilities",
 ] as const;
-
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** `09-30` → "Sep 30"; anything else as answered, none = "—". */
-export function fiscalYearEndText(value: null | string | undefined) {
-    const match = value ? /^(\d{2})-(\d{2})$/.exec(value) : null;
-
-    if (!match) return value || DASH;
-
-    const month = MONTHS[Number(match[1]) - 1];
-
-    return month ? `${month} ${Number(match[2])}` : value!;
-}
 
 /** The instruments page's sort (`symbol` / `name`, ±) as the companies list's (`ticker` / `name`, ±). */
 export function companiesSort(sort: string | undefined): undefined | V2CompaniesSort {

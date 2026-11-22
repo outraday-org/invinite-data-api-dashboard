@@ -22,7 +22,7 @@ import { formatDay, formatInstant, formatMoney, formatShares } from "@/lib/forma
 import { tickerHead } from "@/lib/layout";
 import { insiderCodeLegend, insiderCodeText, yesNoText as yesNo } from "@/lib/sec/ownership";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
-import { IN_PLACE, optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
+import { IN_PLACE, optionalDay, optionalEnum, optionalText, orderedWindow } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const KINDS = ["derivative", "non_derivative"] as const;
@@ -372,19 +372,14 @@ function InsiderTradeDialog({ id, onClose, row, ticker }: { id: null | string; o
     );
 }
 
-/** A day pair in order: a swapped range (a typed or shared URL) is turned around, never sent as an empty window. */
-function orderedDays(from: string | undefined, to: string | undefined): [string | undefined, string | undefined] {
-    return from && to && from > to ? [to, from] : [from || undefined, to || undefined];
-}
-
 /**
  * `/v1/insider-trades?company=<ticker>` for a search state: the day filters are sent as days (`filed_at.gte` / `.lte`,
  * `transaction_date.gte` / `.lte`), each range put in order.
  */
 export function insiderTradesRequest(ticker: string, search: InsiderSearch) {
-    const [from, to] = orderedDays(search.from, search.to);
+    const { from, to } = orderedWindow({ from: search.from, to: search.to });
 
-    const [tradedFrom, tradedTo] = orderedDays(search.tfrom, search.tto);
+    const traded = orderedWindow({ from: search.tfrom, to: search.tto });
 
     return {
         company: ticker,
@@ -394,8 +389,8 @@ export function insiderTradesRequest(ticker: string, search: InsiderSearch) {
         side: search.side,
         sort: search.sort === "oldest" ? ("filed_at" as const) : undefined,
         to,
-        tradedFrom,
-        tradedTo,
+        tradedFrom: traded.from,
+        tradedTo: traded.to,
     };
 }
 

@@ -25,7 +25,7 @@ import {
     useV2ReviewChain,
 } from "@/lib/api/queries";
 import { formatDay, formatInstant } from "@/lib/format";
-import { titleHead } from "@/lib/layout";
+import { titleHead, WRAPPING_TABS_LIST_CLASS } from "@/lib/layout";
 import { isAccessionParam, toV2FilingDocuments } from "@/lib/sec/source";
 import { IN_PLACE, optionalEnum, optionalInt, optionalText } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
@@ -127,53 +127,56 @@ function FilingPage() {
             )
         : "An SEC filing: documents, facts, notes, review chain, holdings and parties.";
 
+    if (!validAccession) {
+        return (
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+                <PageHeader description={description} title={title} />
+                <Notice badge="Not found" title={`${accession} is not an accession number`}>
+                    An accession number reads 0000320193-26-000026 (10 digits, 2, 6) or as its 18 digits.
+                </Notice>
+            </div>
+        );
+    }
+
     return (
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
             <PageHeader description={description} title={title} />
 
-            {!validAccession
-                ? (
-                        <Notice badge="Not found" title={`${accession} is not an accession number`}>
-                            An accession number reads 0000320193-26-000026 (10 digits, 2, 6) or as its 18 digits.
-                        </Notice>
-                    )
-                : filing.error
-                    ? <SecReadinessNotice error={filing.error} title="Failed to load the filing" />
-                    : (
-                            <Tabs onValueChange={value => onChange({ tab: value === "documents" ? undefined : value as FilingSearch["tab"] })} value={tab}>
-                                <div className="max-w-full overflow-x-auto">
-                                    <TabsList variant="line">
-                                        <TabsTrigger className="h-[34px]" value="documents">Documents</TabsTrigger>
-                                        <TabsTrigger className="h-[34px]" value="facts">Facts</TabsTrigger>
-                                        <TabsTrigger className="h-[34px]" value="notes">Notes</TabsTrigger>
-                                        <TabsTrigger className="h-[34px]" value="review">Review chain</TabsTrigger>
-                                        {showHoldings && <TabsTrigger className="h-[34px]" value="holdings">Holdings</TabsTrigger>}
-                                        <TabsTrigger className="h-[34px]" value="parties">Parties & relations</TabsTrigger>
-                                    </TabsList>
-                                </div>
+            {filing.error
+                ? <SecReadinessNotice error={filing.error} title="Failed to load the filing" />
+                : (
+                        <Tabs onValueChange={value => onChange({ tab: value === "documents" ? undefined : value as FilingSearch["tab"] })} value={tab}>
+                            <TabsList className={WRAPPING_TABS_LIST_CLASS} variant="line">
+                                <TabsTrigger className="h-[34px]" value="documents">Documents</TabsTrigger>
+                                <TabsTrigger className="h-[34px]" value="facts">Facts</TabsTrigger>
+                                <TabsTrigger className="h-[34px]" value="notes">Notes</TabsTrigger>
+                                <TabsTrigger className="h-[34px]" value="review">Review chain</TabsTrigger>
+                                {showHoldings && <TabsTrigger className="h-[34px]" value="holdings">Holdings</TabsTrigger>}
+                                <TabsTrigger className="h-[34px]" value="parties">Parties & relations</TabsTrigger>
+                            </TabsList>
 
-                                <TabsContent className="mt-2" value="documents">
-                                    <DocumentsTab accession={accession} onChange={onChange} search={search} />
+                            <TabsContent className="mt-2" value="documents">
+                                <DocumentsTab accession={accession} onChange={onChange} search={search} />
+                            </TabsContent>
+                            <TabsContent className="mt-2" value="facts">
+                                {tab === "facts" && <FactsTab accession={accession} onTag={tag => onChange({ tag: tag.trim() || undefined })} tag={search.tag} />}
+                            </TabsContent>
+                            <TabsContent className="mt-2" value="notes">
+                                {tab === "notes" && <NotesTab accession={accession} onTag={tag => onChange({ noteTag: tag.trim() || undefined })} tag={search.noteTag} />}
+                            </TabsContent>
+                            <TabsContent className="mt-2" value="review">
+                                {tab === "review" && <ReviewTab accession={accession} depth={search.depth ?? 1} direction={search.direction ?? "both"} onChange={onChange} />}
+                            </TabsContent>
+                            {showHoldings && (
+                                <TabsContent className="mt-2" value="holdings">
+                                    {tab === "holdings" && <HoldingsTab accession={accession} />}
                                 </TabsContent>
-                                <TabsContent className="mt-2" value="facts">
-                                    {tab === "facts" && <FactsTab accession={accession} onTag={tag => onChange({ tag: tag.trim() || undefined })} tag={search.tag} />}
-                                </TabsContent>
-                                <TabsContent className="mt-2" value="notes">
-                                    {tab === "notes" && <NotesTab accession={accession} onTag={tag => onChange({ noteTag: tag.trim() || undefined })} tag={search.noteTag} />}
-                                </TabsContent>
-                                <TabsContent className="mt-2" value="review">
-                                    {tab === "review" && <ReviewTab accession={accession} depth={search.depth ?? 1} direction={search.direction ?? "both"} onChange={onChange} />}
-                                </TabsContent>
-                                {showHoldings && (
-                                    <TabsContent className="mt-2" value="holdings">
-                                        {tab === "holdings" && <HoldingsTab accession={accession} />}
-                                    </TabsContent>
-                                )}
-                                <TabsContent className="mt-2" value="parties">
-                                    {tab === "parties" && <PartiesTab accession={accession} />}
-                                </TabsContent>
-                            </Tabs>
-                        )}
+                            )}
+                            <TabsContent className="mt-2" value="parties">
+                                {tab === "parties" && <PartiesTab accession={accession} />}
+                            </TabsContent>
+                        </Tabs>
+                    )}
         </div>
     );
 }

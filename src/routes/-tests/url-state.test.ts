@@ -159,10 +159,10 @@ function navigateCalls(text: string): Array<string> {
 
         let depth = 0;
 
-        for (let index = start; index < text.length; index++) {
-            if (text[index] === "{") depth++;
+        for (let index = start; index < text.length; index += 1) {
+            if (text[index] === "{") depth += 1;
 
-            if (text[index] === "}") depth--;
+            if (text[index] === "}") depth -= 1;
 
             if (depth === 0) {
                 calls.push(text.slice(start, index + 1));

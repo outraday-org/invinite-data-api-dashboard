@@ -6,7 +6,7 @@ import type { V2Event, V2EventComparisonResponse, V2EventStatsResponse } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ApiRequestError } from "@/lib/api/errors";
+import { isNotFound } from "@/lib/api/errors";
 import { useV2EventComparison, useV2EventsInfinite, useV2EventStats } from "@/lib/api/queries";
 import { eventLabel, formatMs } from "@/lib/earnings/format";
 import { formatDecimal, formatSigned, percent, TONE_SHIFT_LABELS } from "@/lib/earnings/labels";
@@ -207,7 +207,7 @@ export function ComparisonView({
     symbol: string;
 }) {
     // A 404 in the API's words: the first call, not derived yet, or a picked call that is not the derived prior.
-    if (error instanceof ApiRequestError && error.status === 404) {
+    if (isNotFound(error)) {
         return (
             <Notice title={prior ? "No comparison with this call" : "No comparison yet — the first call on record, or not derived yet"}>
                 {error.message}

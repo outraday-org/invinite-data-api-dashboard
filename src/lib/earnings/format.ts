@@ -3,6 +3,8 @@ import type { VariantProps } from "class-variance-authority";
 import type { badgeVariants } from "@/components/ui/badge";
 import type { V2DateStatus, V2Event } from "@/lib/api/types";
 
+import { orderedWindow } from "@/lib/url-state";
+
 type CallTimeFields = Pick<V2Event, "call_time_source" | "scheduled_at" | "tz">;
 
 type FiscalFields = Pick<V2Event, "fiscal_quarter" | "fiscal_year">;
@@ -145,15 +147,6 @@ export function calendarDefaultWindow(now: Date): CalendarWindow {
     const today = zonedDate(now, NEW_YORK);
 
     return { from: addDays(today, -1), to: addDays(today, 14) };
-}
-
-/** `from` / `to` in order (swapped when `from > to`). */
-export function orderedWindow<T extends Partial<CalendarWindow>>(window: T): T {
-    if (window.from && window.to && window.from > window.to) {
-        return { ...window, from: window.to, to: window.from };
-    }
-
-    return window;
 }
 
 /** The window a calendar request uses: the search's days over the default window, in order. */

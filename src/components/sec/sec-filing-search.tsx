@@ -196,6 +196,9 @@ export function SecSearchResults({
     );
 }
 
+/** The search box's label without a symbol: every filer's filings (`/filings`), else a box waiting for a symbol. */
+const searchLabelUnscoped = (marketWide: boolean) => (marketWide ? "Search every filer's SEC filings" : "Search SEC filings");
+
 /**
  * SEC filing search (`/v1/search/filings`, 100 credits a page): keywords (`lexical`, default) or exact text (`literal`,
  * + "Match case"), with form, section items and a filing-date range. Over one instrument (`symbol` = a ticker, fund key
@@ -258,7 +261,7 @@ export function SecFilingSearch({
     };
 
     // The page's symbol by name: a fund's page searches the fund's filings, not "this company's" (UI walk F092).
-    const label = scoped ? `Search ${symbol.trim()}'s SEC filings` : (marketWide ? "Search every filer's SEC filings" : "Search SEC filings");
+    const label = scoped ? `Search ${symbol.trim()}'s SEC filings` : searchLabelUnscoped(marketWide);
 
     const setFilter = (patch: SecSearchFilters) => setFilterDraft(prev => ({ ...prev, ...patch }));
 

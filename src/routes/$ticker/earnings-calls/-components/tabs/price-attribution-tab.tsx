@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { isEarningsEventLiveish, useV2Participants, useV2PriceAttribution } from "@/lib/api/queries";
 import { formatDecimal, formatSigned } from "@/lib/earnings/labels";
+import { speakerName } from "@/lib/earnings/transcript";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -115,8 +116,8 @@ export function speakerNamesOf(participants: null | undefined | V2ParticipantsRe
     return new Map((participants?.data ?? []).flatMap(participant => (participant.name ? [[participant.speaker_label, participant.name] as const] : [])));
 }
 
-/** The participant's name, else "Speaker <label>" (an unnamed or unknown label). */
-export const utteranceSpeaker = (label: string, names: ReadonlyMap<string, string>) => names.get(label) ?? `Speaker ${label}`;
+/** The participant's name, else "Speaker <label>" (an unnamed or unknown label): the transcript's `speakerName` rule. */
+export const utteranceSpeaker = (label: string, names: ReadonlyMap<string, string>) => speakerName({ name: names.get(label) ?? null, speaker_label: label });
 
 function UtteranceRefs({ refs }: { refs: Array<V2PriceUtteranceRef> }) {
     const names = React.useContext(SpeakerNamesContext);

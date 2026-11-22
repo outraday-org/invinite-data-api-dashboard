@@ -16,7 +16,7 @@ import { useV2MarketHolidaysInfinite } from "@/lib/api/queries";
 import { zonedDate } from "@/lib/earnings/format";
 import { DASH, formatDay, formatInstant } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
-import { IN_PLACE, optionalDay } from "@/lib/url-state";
+import { IN_PLACE, optionalDay, orderedWindow } from "@/lib/url-state";
 
 /** `?tab=past` (absent = upcoming); `?from=&to=` = a day range inside the tab (`date.gte` / `.lte`). */
 const holidaysSearchSchema = z.object({
@@ -104,8 +104,7 @@ const yesterdayOf = (today: string) => {
  * yesterday (or the earlier "to"), newest first. The range narrows the tab, never leaves it.
  */
 export function holidaysRequest(search: HolidaysSearch, today: string) {
-    // A swapped range is put in order (as on the dividends page).
-    const [from, to] = search.from && search.to && search.from > search.to ? [search.to, search.from] : [search.from, search.to];
+    const { from, to } = orderedWindow({ from: search.from, to: search.to });
 
     const later = (a: string, b: string | undefined) => (b && b > a ? b : a);
 

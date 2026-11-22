@@ -14,7 +14,7 @@ import { RequestErrorState } from "@/components/ui/request-error-state";
 import { useV2DividendsInfinite } from "@/lib/api/queries";
 import { DASH, formatDay, formatMoney } from "@/lib/format";
 import { tickerHead } from "@/lib/layout";
-import { IN_PLACE, optionalDay, optionalEnum } from "@/lib/url-state";
+import { IN_PLACE, optionalDay, optionalEnum, orderedWindow } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const SORTS = ["-ex_date", "ex_date", "-pay_date", "pay_date"] as const satisfies ReadonlyArray<V2DividendsSort>;
@@ -89,7 +89,7 @@ const COLUMNS: Array<ColumnDef<V2Dividend>> = [
 
 /** The request of a search state: the range as `ex_date.gte` / `.lte` (a swapped range is put in order), the sort. */
 export function dividendsRequest(ticker: string, search: DividendsSearch) {
-    const [from, to] = search.from && search.to && search.from > search.to ? [search.to, search.from] : [search.from, search.to];
+    const { from, to } = orderedWindow({ from: search.from, to: search.to });
 
     return { exDateGte: from, exDateLte: to, limit: 40, sort: search.sort ?? DEFAULT_SORT, symbol: ticker } as const;
 }

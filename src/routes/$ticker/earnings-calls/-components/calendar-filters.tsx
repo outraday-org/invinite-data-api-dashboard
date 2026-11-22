@@ -11,7 +11,7 @@ import type {
 import { DayRange } from "@/components/ui/day-range";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
-import { orderedWindow } from "@/lib/earnings/format";
+import { orderedWindow } from "@/lib/url-state";
 
 const SESSIONS = ["bmo", "amc", "intraday"] as const satisfies ReadonlyArray<V2Session>;
 

@@ -38,7 +38,11 @@ const OVERVIEW_DESCRIPTIONS = {
     stock: "The company's profile, the data families it holds and its fiscal periods.",
 } as const;
 
-const overviewKind = (type: V2Instrument["type"]): keyof typeof OVERVIEW_DESCRIPTIONS => (type === "stock" ? "stock" : isFundType(type) ? "fund" : "etn");
+function overviewKind(type: V2Instrument["type"]): keyof typeof OVERVIEW_DESCRIPTIONS {
+    if (type === "stock") return "stock";
+
+    return isFundType(type) ? "fund" : "etn";
+}
 
 /**
  * The overview of one instrument (Data API 7.0): a stock's company profile (`/v1/companies/{company}`), a fund's profile

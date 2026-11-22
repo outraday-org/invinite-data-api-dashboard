@@ -16,7 +16,6 @@ import type {
     V2OfferingsResponse,
 } from "@/lib/api/types";
 
-import { fiscalYearEndText } from "@/components/reference/companies-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copyable } from "@/components/ui/copy-button";
@@ -25,7 +24,7 @@ import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
-import { formatDay, formatMoneyCompact } from "@/lib/format";
+import { fiscalYearEndText, formatDay, formatMoneyCompact } from "@/lib/format";
 import { netAssetsScopeText } from "@/lib/sec/fund";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { listOf, reviewStatusOf, scalarEntries } from "@/lib/sec/source";
@@ -332,12 +331,15 @@ export function exemptionLabel(code: string) {
     return ica ? `ICA 3(c)(${ica[1]})` : code;
 }
 
-/** An offering amount in USD, compact like every other money cell ("$50M", "$2.73M"). */
-const offeringUsd = (value: null | number) => formatMoneyCompact(value);
-
-/** The offering size: "Indefinite" when stated so, else the amount (USD). */
-export function offeringAmountText(offering: Pick<V2Offering, "indefinite_amount" | "total_offering_amount">) {
-    return offering.indefinite_amount ? "Indefinite" : offeringUsd(offering.total_offering_amount);
+/**
+ * The offering size: "Indefinite" when stated so, else the amount in USD — compact in the lists ("$50M"), `format`
+ * exact on the offering's own page.
+ */
+export function offeringAmountText(
+    offering: Pick<V2Offering, "indefinite_amount" | "total_offering_amount">,
+    format: (value: null | number) => null | string = formatMoneyCompact,
+) {
+    return offering.indefinite_amount ? "Indefinite" : format(offering.total_offering_amount);
 }
 
 /** The issuer of an offering: its filer page (any Form D issuer has one, listed or not). */
@@ -392,7 +394,7 @@ export function offeringColumns({ issuer }: { issuer: boolean }): Array<ColumnDe
             id: "exemptions",
         },
         { cell: ({ row }) => <div className="text-right tabular-nums">{offeringAmountText(row.original)}</div>, header: () => <div className="text-right">Offering size</div>, id: "total_offering_amount" },
-        { cell: ({ row }) => <div className="text-right tabular-nums">{offeringUsd(row.original.total_sold)}</div>, header: () => <div className="text-right">Sold</div>, id: "total_sold" },
+        { cell: ({ row }) => <div className="text-right tabular-nums">{formatMoneyCompact(row.original.total_sold)}</div>, header: () => <div className="text-right">Sold</div>, id: "total_sold" },
         {
             cell: ({ row }) => <div className="text-right tabular-nums">{row.original.investor_count === null ? "—" : formatNumberEn(row.original.investor_count)}</div>,
             header: () => <div className="text-right">Investors</div>,
@@ -439,7 +441,7 @@ export function SecPrivateOfferingsView({
 
     if (summary.latest_filed) facts.push(["latest filed", formatDay(summary.latest_filed)]);
 
-    if (summary.total_sold !== null) facts.push(["total sold", offeringUsd(summary.total_sold)]);
+    if (summary.total_sold !== null) facts.push(["total sold", formatMoneyCompact(summary.total_sold)]);
 
     if (summary.latest_exemptions.length > 0) facts.push(["latest exemptions", summary.latest_exemptions.map(exemptionLabel).join(", ")]);
 
