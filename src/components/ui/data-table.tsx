@@ -1,6 +1,6 @@
-import type { ColumnDef, Row } from "@tanstack/react-table";
+import type { ColumnDef, ColumnDefTemplate, Row } from "@tanstack/react-table";
 
-import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
+import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import * as React from "react";
 
 import type { ExportConfig } from "@/components/api/export-menu";
@@ -12,6 +12,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { LG_STICKY_TOP_CLASS } from "@/lib/layout";
 import { cn } from "@/lib/utils";
+
+/**
+ * A column's header / cell, called inside this one stable component. `flexRender` mounts a function template as its own
+ * component type, so a page that builds its columns again on a render (a URL change: `?filing=`, a sort) remounted every
+ * cell — the focused button was replaced and focus fell to the page (F101). A template may still use hooks: they belong
+ * to this component, and a column keeps its template's shape from render to render.
+ */
+function ColumnContent<TProps extends object>({ props, template }: { props: TProps; template: ColumnDefTemplate<TProps> | undefined }) {
+    return <>{typeof template === "function" ? template(props) : template}</>;
+}
 
 /** Skeleton rows shown while the first page loads. */
 const SKELETON_ROWS = 5;
@@ -157,7 +167,7 @@ export function DataTable<TRow>({
                         <TableRow key={headerGroup.id}>
                             {headerGroup.headers.map((header, index) => (
                                 <TableHead className={cn(firstColumn(index), columnClassName?.(header.column.id))} key={header.id}>
-                                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                    {header.isPlaceholder ? null : <ColumnContent props={header.getContext()} template={header.column.columnDef.header} />}
                                 </TableHead>
                             ))}
                         </TableRow>
@@ -184,7 +194,7 @@ export function DataTable<TRow>({
                                 <TableRow className={rowClassName?.(row.original)}>
                                     {row.getVisibleCells().map((cell, index) => (
                                         <TableCell className={cn(firstColumn(index), columnClassName?.(cell.column.id))} key={cell.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                            <ColumnContent props={cell.getContext()} template={cell.column.columnDef.cell} />
                                         </TableCell>
                                     ))}
                                 </TableRow>

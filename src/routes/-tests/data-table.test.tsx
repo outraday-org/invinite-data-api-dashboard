@@ -143,6 +143,33 @@ describe("DataTable", () => {
     });
 });
 
+describe("DataTable: columns built again on a render", () => {
+    // A page builds its columns in render (`filingColumns({ onOpenHtml, … })`): new templates every time.
+    const columnsWithButton = (): Array<ColumnDef<Row>> => [
+        { cell: ({ row }) => <button type="button">{`Open ${row.original.name}`}</button>, header: () => <button type="button">Sort</button>, id: "open" },
+    ];
+
+    it("keeps the cells mounted: a focused cell or header button keeps focus (F101)", () => {
+        const { rerender } = render(<DataTable columns={columnsWithButton()} emptyText="None." isLoading={false} rows={ROWS} />);
+
+        const open = screen.getByRole("button", { name: "Open Christmas" });
+
+        open.focus();
+
+        rerender(<DataTable columns={columnsWithButton()} emptyText="None." isLoading={false} rows={ROWS} />);
+
+        expect(screen.getByRole("button", { name: "Open Christmas" })).toBe(open);
+
+        expect(document.activeElement).toBe(open);
+
+        const sort = screen.getByRole("button", { name: "Sort" });
+
+        rerender(<DataTable columns={columnsWithButton()} emptyText="None." isLoading={false} rows={ROWS} />);
+
+        expect(screen.getByRole("button", { name: "Sort" })).toBe(sort);
+    });
+});
+
 describe("PageHeader", () => {
     it("one h2 title, the description and the actions slot", () => {
         render(<PageHeader actions={<button type="button">Export</button>} description="Cash dividends." title="Dividends" />);
