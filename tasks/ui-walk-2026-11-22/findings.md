@@ -79,7 +79,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: 301 → `https://status.data.invinite.com/?x=1` / `https://data.invinite.com/docs/licensing`
 - Actual: `HTTP/1.1 200`, `content-type: text/html` (a GET answered the 301 correctly)
 - Evidence: the server routes had only a `GET` handler
-- Outcome: fixed in 46e3a95 (`HEAD` handler beside `GET`, test `redirect-routes.test.ts`; re-checked with curl: both 301 with the right Location)
+- Outcome: fixed in 46e3a95 (`HEAD` handler beside `GET`, test `redirect-routes.test.ts`; re-checked with curl: both 301 with the right Location) (quality a371c80: the GET + HEAD handlers are one helper, `movedPageHandlers` in `src/lib/public-hosts.ts`)
 
 ### F007 — A failed (non-404) instrument read loops: ~1 `getInstrument` a second, endless skeleton
 - Check: T1.23 · Severity: major · Class: dashboard
@@ -430,7 +430,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the range put in order, as dividends do (task T4.2 "a swapped range ordered")
 - Actual: `GET /v1/insider-trades?…&filed_at.gte=2026-11-01&filed_at.lte=2026-10-01&…&transaction_date.gte=2026-11-20&transaction_date.lte=2026-11-01` → "No insider trades for these filters."
 - Evidence: API sheet; the page passed `search.from` / `to` / `tfrom` / `tto` straight to the hook
-- Outcome: fixed in 380d946 (pure `insiderTradesRequest` orders each range; test `sec-v2-pages.test.tsx`; re-checked: `filed_at.gte=2026-10-01&filed_at.lte=2026-11-01`, `transaction_date.gte=2026-11-01&…lte=2026-11-20`)
+- Outcome: fixed in 380d946 (pure `insiderTradesRequest` orders each range; test `sec-v2-pages.test.tsx`; re-checked: `filed_at.gte=2026-10-01&filed_at.lte=2026-11-01`, `transaction_date.gte=2026-11-01&…lte=2026-11-20`) (quality a371c80: the swap is the shared `orderedWindow` (`src/lib/url-state.ts`), also used by dividends and market holidays)
 
 ### F046 — Insider trade footnotes keep the data set's CSV quoting (`"Each … (""RSU"") …"`)
 - Check: T4.3 · Severity: minor · Class: data
@@ -628,7 +628,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: every tab visible / reachable
 - Actual: the list (801 px) scrolls in a 703 px `overflow-x-auto` box with no visible scrollbar; "Price moves" sits under the API button, reachable only by a sideways wheel or arrow keys
 - Evidence: `call-tabs.tsx` wrapper `min-w-0 grow overflow-x-auto`
-- Outcome: fixed in 2030e93 (the list wraps like the Holders tabs, triggers keep their width; test `no-transcript-notice.test.tsx`; re-checked: Prosody / Price moves on a second row)
+- Outcome: fixed in 2030e93 (the list wraps like the Holders tabs, triggers keep their width; test `no-transcript-notice.test.tsx`; re-checked: Prosody / Price moves on a second row) (quality a371c80: the wrapping class is `WRAPPING_TABS_LIST_CLASS` (`src/lib/layout.ts`), shared with Holders and the filing page)
 
 ### F068 — Call Documents tab: the Filings table shows a raw ISO filed day
 - Check: T5.23 · Severity: minor · Class: dashboard
@@ -772,7 +772,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: `?period=` choosable (the Holders page has a quarter picker; T6.15 "quarter `?period=`")
 - Actual: a static "Period ending Sep 30, 2026"; older quarters only by editing the URL
 - Evidence: `src/routes/sec/$cik.tsx`
-- Outcome: fixed in 96d6918 (`quarterPickerOptions` in `src/lib/sec/source.ts`, 8 quarters back, a linked older one kept; test `source.test.ts`; CLAUDE.md "Ownership and offerings"; re-checked: Jun 30, 2026 picked → `?period=2026-06-30`, 13F filed Aug 14, 2026)
+- Outcome: fixed in 96d6918 (`quarterPickerOptions` in `src/lib/sec/source.ts`, 8 quarters back, a linked older one kept; test `source.test.ts`; CLAUDE.md "Ownership and offerings"; re-checked: Jun 30, 2026 picked → `?period=2026-06-30`, 13F filed Aug 14, 2026) (quality a371c80: Holders builds its picker with the same `quarterPickerOptions` / `QUARTER_PICKER_COUNT`)
 
 ### F084 — Filer header: fiscal year end as raw `MM-DD`
 - Check: T6.12 · Severity: nit · Class: dashboard
@@ -781,7 +781,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: "Sep 25" (the Companies tab's `fiscalYearEndText`)
 - Actual: "fiscal year end: 09-25"
 - Evidence: `SecFilerHeader`
-- Outcome: fixed in 252d298 (test `sec-filer.test.tsx`; re-checked: "Dec 31" on `/sec/1067983`)
+- Outcome: fixed in 252d298 (test `sec-filer.test.tsx`; re-checked: "Dec 31" on `/sec/1067983`) (quality a371c80: `fiscalYearEndText` moved to `src/lib/format.ts`)
 
 ### F085 — Private offerings summary: raw ISO first / latest filed days
 - Check: T6.20 · Severity: minor · Class: dashboard
@@ -808,7 +808,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: one format in the block
 - Actual: "Offering size $26.92M", "Sold $810,062", "Remaining $26,108,938"
 - Evidence: `OfferingDetailView` used the list's compact `offeringAmountText`
-- Outcome: fixed in ec64c34 (exact size in the detail, lists keep compact; test `offerings-pages.test.tsx`; re-checked: "$26,919,000")
+- Outcome: fixed in ec64c34 (exact size in the detail, lists keep compact; test `offerings-pages.test.tsx`; re-checked: "$26,919,000") (quality a371c80: the exact size goes through `offeringAmountText(offering, usd)`)
 
 ### F088 — Offering `year_of_inc` answers the Form D element name (`overFiveYears`)
 - Check: T6.20 · Severity: nit · Class: api
