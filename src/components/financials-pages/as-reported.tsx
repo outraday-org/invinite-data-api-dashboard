@@ -6,7 +6,7 @@ import { FinancialsStatementsView, ViewButtons } from "@/components/financials-p
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
 import { StatementSelect } from "@/components/financials-presentation/statement-select";
 import { Button } from "@/components/ui/button";
-import { usePlanAllows } from "@/components/ui/credit-hint";
+import { tierLabel, usePlanAllows } from "@/components/ui/credit-hint";
 import { PageHeader } from "@/components/ui/page-header";
 import { isTierError } from "@/lib/api/errors";
 import { useV2FinancialsInfinite } from "@/lib/api/queries";
@@ -24,17 +24,18 @@ const DISPLAY_SIGN_OPTIONS: Array<{ label: string; value: V2DisplaySign }> = [
     { label: "Cash-flow direction", value: "cash_flow_direction" },
 ];
 
-const VIEW_SUBTITLES: Record<V2FinancialsView, string> = {
-    detailed: "Line items with the company's captions, formula and source filing per value (PRO)",
-    presentation: "Financial data reported by the company (tree / presentation format, PRO)",
-    summary: "Financial data reported by the company, by XBRL concept",
-};
-
-/** The PRO operations behind the views (their badges show before a request when the plan lacks them). */
+/** The higher-tier operations behind the views (their badges show before a request when the plan lacks them). */
 const AS_REPORTED_VIEW_OPERATIONS = {
     detailed: "getAsReportedFinancialsDetailed",
     presentation: "getAsReportedFinancialsPresentation",
 } as const;
+
+/** Each view's subtitle; a view's plan is its operation's `x-tier`, never typed here. */
+const VIEW_SUBTITLES: Record<V2FinancialsView, string> = {
+    detailed: `Line items with the company's captions, formula and source filing per value (${tierLabel(AS_REPORTED_VIEW_OPERATIONS.detailed)})`,
+    presentation: `Financial data reported by the company (tree / presentation format, ${tierLabel(AS_REPORTED_VIEW_OPERATIONS.presentation)})`,
+    summary: "Financial data reported by the company, by XBRL concept",
+};
 
 /** The page body of the Financials route's tab (`/$ticker/financials?view=`). */
 export function AsReportedFinancials({ ticker }: { ticker: string }) {
@@ -44,7 +45,7 @@ export function AsReportedFinancials({ ticker }: { ticker: string }) {
 
     const periodType = search.period ?? "quarterly";
 
-    // The default view is the presentation tree (PRO); a plan without it (`useMe()`'s plan vs the operation's `x-tier`)
+    // The default view is the presentation tree (a higher tier); a plan without it (`useMe()`'s plan vs the operation's `x-tier`)
     // starts at the summary before any request, and a refusal still falls back. A view the reader picks (`?layout=`)
     // is kept (its refusal is the view's notice).
     const pickedView = search.layout ?? null;

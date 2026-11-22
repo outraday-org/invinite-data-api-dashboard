@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 
 import type { AlertEvent } from "@/lib/api/types";
 
+import { STREAM_TIER } from "@/lib/api/operations.gen";
+
 import type { StreamMode, StreamStop } from "./stream-socket";
 import type { AlertsServerFrame, AlertsSubscribeOptions } from "./ws-frames";
 
@@ -22,7 +24,7 @@ import { ALERTS_CHANNEL, alertsSubscribeFrame, liveWsUrl, parseAlertsFrame } fro
  * more were missed than the replay holds: the page says "some events were skipped, reload the list". A frame of the
  * channel with an unknown type is counted (`ignored`), never thrown on.
  *
- * STOPS (no reconnect loop): close 4001 / 4003 (the stream needs the STANDARD plan; the REST feed does not) / 4029,
+ * STOPS (no reconnect loop): close 4001 / 4003 (the stream needs `STREAM_TIER`, the PRO plan; the REST feed does not) / 4029,
  * `channel_unavailable` and an unknown error code call `onStop` and close; the page turns its switch off. `unavailable`
  * re-subscribes after 10 s; `bad_message` (e.g. an `after` the account does not hold: "live delivery continues") is a
  * note. Other closes reconnect with backoff 1 s → 30 s (≤ 10 tries). The socket lifecycle is `stream-socket.ts`'s.
@@ -35,7 +37,7 @@ export type LiveAlertsMode = StreamMode;
 /** Most events held (newest first); older ones are on the REST pages. */
 const MAX_LIVE_EVENTS = 500;
 
-const ADMISSION_CLOSE = admissionCloses("Your plan does not include the live stream (STANDARD); the list above still works");
+const ADMISSION_CLOSE = admissionCloses(`Your plan does not include the live stream (${STREAM_TIER.toUpperCase()}); the list above still works`);
 
 type UseLiveAlertsInput = {
     /** The newest event id the page holds (read when a subscription is sent; a change does not resubscribe). */

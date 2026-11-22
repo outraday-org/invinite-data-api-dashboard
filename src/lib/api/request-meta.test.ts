@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { TIER_BADGE_LABELS } from "@/components/ui/credit-hint";
+
 import type { RequestMeta } from "./request-meta";
 
+import { OPERATIONS, PLAN_ORDER, STREAM_TIER } from "./operations.gen";
 import { cliOf, curlOf, fileRequests, planAllows, REDACTED, redactSecrets, requestMetaOf, requestsOf, shareWithRequests } from "./request-meta";
 
 const meta = (patch: Partial<RequestMeta> = {}): RequestMeta => ({
@@ -92,6 +95,28 @@ describe("planAllows", () => {
         expect(planAllows("enterprise", "pro")).toBe(true);
 
         expect(planAllows("free", null)).toBe(true);
+    });
+
+    it("Data API 9.0: a PRO plan is refused an ENTERPRISE operation, LITE (a prepaid account's /v1/me plan) reaches a LITE one", () => {
+        expect(planAllows("pro", OPERATIONS.listDatasets.tier)).toBe(false);
+
+        expect(planAllows("enterprise", OPERATIONS.listDatasets.tier)).toBe(true);
+
+        expect(planAllows("lite", OPERATIONS.getStandardizedFinancials.tier)).toBe(true);
+
+        expect(planAllows("free", OPERATIONS.getStandardizedFinancials.tier)).toBe(false);
+
+        expect(planAllows("standard", OPERATIONS.listKpis.tier)).toBe(false);
+    });
+
+    it("every x-tier of the pinned spec is a plan with a badge label; the stream is PRO", () => {
+        const tiers = new Set(Object.values(OPERATIONS).map(operation => operation.tier).filter(tier => tier !== null));
+
+        expect([...tiers].sort()).toEqual(["enterprise", "free", "lite", "pro", "standard"]);
+
+        expect(PLAN_ORDER.map(tier => TIER_BADGE_LABELS[tier])).toEqual(["FREE", "LITE", "STANDARD", "PRO", "ENTERPRISE"]);
+
+        expect(STREAM_TIER).toBe("pro");
     });
 });
 

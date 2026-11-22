@@ -29,6 +29,22 @@ const resolveRef = (schema) => {
     return current;
 };
 
+const me = resolveRef(spec.paths["/v1/me"].get.responses["200"].content["application/json"].schema);
+
+/** `/v1/me`'s `plan` enum: the Data API's plans in access order, and the only values an `x-tier` may take. */
+const planOrder = me.properties.plan.enum;
+
+/** An operation's `x-tier`, refused by name when it is not one of the plans (never copied through unchecked). */
+const tierOf = (id, operation) => {
+    const tier = operation["x-tier"];
+
+    if (tier === undefined) return null;
+
+    if (!planOrder.includes(tier)) throw new Error(`${id}: x-tier "${tier}" is not a plan of /v1/me (${planOrder.join(", ")})`);
+
+    return tier;
+};
+
 const operations = {};
 
 const routes = {};
@@ -60,16 +76,21 @@ for (const [path, item] of Object.entries(spec.paths)) {
             method: method.toUpperCase(),
             path,
             summary: operation.summary ?? id,
-            tier: operation["x-tier"] ?? null,
+            tier: tierOf(id, operation),
         };
 
         routes[`${method.toUpperCase()} ${path}`] = id;
     }
 }
 
-const me = resolveRef(spec.paths["/v1/me"].get.responses["200"].content["application/json"].schema);
+/** The WebSocket (`ws` on `/v1/stream`, outside `OPERATIONS`): the plan the socket and every channel need. */
+const stream = spec.paths["/v1/stream"]?.ws;
 
-const planOrder = me.properties.plan.enum;
+if (!stream) throw new Error("openapi.json has no ws /v1/stream operation");
+
+const streamTier = tierOf(stream.operationId, stream);
+
+if (!streamTier) throw new Error(`${stream.operationId}: ws /v1/stream has no x-tier`);
 
 const sortedEntries = object => Object.fromEntries(Object.entries(object).sort(([a], [b]) => a.localeCompare(b)));
 
@@ -79,7 +100,8 @@ import type { WebhookEntry, WebhookSchema } from "../../../scripts/webhooks.mjs"
 
 export type OperationMethod = "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
 
-export type OperationTier = "free" | "pro" | "standard";
+/** The plan an operation needs: one of \`/v1/me\`'s plans (the generator refuses any other \`x-tier\`). */
+export type OperationTier = (typeof PLAN_ORDER)[number];
 
 export type OperationCli = { action: null | string; group: string; positional: null | string };
 
@@ -99,6 +121,9 @@ export type OperationId = keyof typeof OPERATIONS;
 
 /** \`"GET /v1/funds/{fund}"\` → operationId. */
 export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = ${JSON.stringify(sortedEntries(routes), null, 4)};
+
+/** The plan the live stream (\`ws /v1/stream\`, \`${stream.operationId}\`) and each of its channels need. */
+export const STREAM_TIER: OperationTier = ${JSON.stringify(streamTier)};
 
 /** \`/v1/me\`'s \`plan\` values in access order (the spec's enum order). */
 export const PLAN_ORDER = ${JSON.stringify(planOrder)} as const;
