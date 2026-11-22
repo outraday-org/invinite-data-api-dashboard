@@ -85,7 +85,8 @@ export function isV2GenuineEmpty(coverage: null | Pick<V2MetaCoverage, "state"> 
 export const READINESS_TEXT: Record<SecReadinessStatus, { badge: string; title: string }> = {
     excluded: { badge: "Excluded", title: "Outside the SEC store's coverage" },
     failed: { badge: "Failed", title: "The SEC store could not process this" },
-    not_ready: { badge: "Not switched on", title: "This SEC capability is not switched on yet" },
+    // 503 `unavailable` is both "switched off" and "down, retry": the API's `detail` (shown below the title) says which.
+    not_ready: { badge: "Unavailable", title: "Not available right now" },
     partial: { badge: "Partial", title: "Partly available — what is shown may be incomplete" },
     pending: { badge: "Pending", title: "Being prepared — asked again in 30 s" },
     ready: { badge: "Ready", title: "Ready" },

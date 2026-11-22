@@ -136,7 +136,7 @@ describe("SecReadinessNotice", () => {
     it.each([
         [403, "excluded", "Outside the SEC store's coverage"],
         [404, "not_covered", "Not known to the SEC store"],
-        [503, "unavailable", "This SEC capability is not switched on yet"],
+        [503, "unavailable", "Not available right now"],
     ])("%i %s renders its state with the problem's detail", (status, code, title) => {
         render(<SecReadinessNotice error={problem(status, code)} />);
 

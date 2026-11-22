@@ -117,7 +117,7 @@ describe("Holders, one source (`/v1/holders?source=`)", () => {
     it("503 unavailable and 404 not_covered are states", () => {
         const { unmount } = render(<HolderChangesList state={{ ...list, error: problem(503, "unavailable", "The research provider is switched off"), pages: [] }} />);
 
-        expect(screen.getByText("This SEC capability is not switched on yet")).toBeInTheDocument();
+        expect(screen.getByText("Not available right now")).toBeInTheDocument();
 
         expect(screen.getByText("The research provider is switched off")).toBeInTheDocument();
 
