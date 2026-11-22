@@ -79,7 +79,7 @@ export function CreateAlertButton({ symbol, types }: { symbol: string; types: Re
                 Create alert
                 <ChevronDownIcon />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-80 max-w-[calc(100vw-2rem)]">
                 <DropdownMenuGroup>
                     {types.map(type => (
                         <DropdownMenuItem key={type} render={<Link search={{ symbol, type }} to="/alerts/new" />}>
