@@ -71,7 +71,7 @@ export function AccountSummary({ me }: { me: V2Me }) {
                 <CardContent className="flex flex-col gap-3">
                     <div className="flex items-center gap-2">
                         <Badge data-testid="account-plan">{PLAN_LABELS[me.plan]}</Badge>
-                        <span className="text-muted-foreground">{me.account.name ?? me.account.id}</span>
+                        {me.account.name ? <span className="text-muted-foreground">{me.account.name}</span> : null}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <Stat label="Requests / second" value={formatNumber(limits.requests_per_second)} />

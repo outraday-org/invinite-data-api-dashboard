@@ -28,6 +28,14 @@ describe("/account (`/v1/me`, `/v1/me/usage`)", () => {
         expect(screen.getByText("271,017 of 4,000,000")).toBeInTheDocument();
 
         expect(screen.getByText("SEC Filings")).toBeInTheDocument();
+
+        expect(screen.getByText("Example Capital")).toBeInTheDocument();
+    });
+
+    it("never shows the account id, also when the account has no name", () => {
+        render(<AccountSummary me={{ ...ME_PRO, account: { ...ME_PRO.account, name: null } }} />);
+
+        expect(screen.queryByText(ME_PRO.account.id)).not.toBeInTheDocument();
     });
 
     it("usage: the daily chart's totals, one row per family and per caller", () => {
