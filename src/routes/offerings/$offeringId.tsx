@@ -5,7 +5,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import type { V2OfferingDetail } from "@/lib/api/types";
 
 import { FactGrid } from "@/components/sec/ownership-views";
-import { exemptionLabel, offeringAmountText } from "@/components/sec/sec-filer-views";
+import { exemptionLabel } from "@/components/sec/sec-filer-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { filerCikParam } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
@@ -61,7 +61,8 @@ function Block({ children, title }: { children: React.ReactNode; title: string }
  */
 export function OfferingDetailView({ offering }: { offering: V2OfferingDetail }) {
     const amounts: Array<readonly [string, React.ReactNode]> = [
-        ["Offering size", offeringAmountText(offering)],
+        // Exact like every other amount of the block; the lists keep the compact size (UI walk F087).
+        ["Offering size", offering.indefinite_amount ? "Indefinite" : usd(offering.total_offering_amount)],
         ["Sold", usd(offering.total_sold)],
         ["Remaining", offering.indefinite_amount && offering.total_remaining === null ? "Indefinite" : usd(offering.total_remaining)],
         ["Minimum investment", usd(offering.min_investment)],

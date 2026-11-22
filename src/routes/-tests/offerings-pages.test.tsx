@@ -55,6 +55,9 @@ describe("/offerings/$offeringId (`GET /v1/offerings/{offering_id}`)", () => {
 
         const detail = screen.getByTestId("offering-detail");
 
+        // The size is exact like sold / remaining, not "$150M" beside "$62,500,000" (UI walk F087).
+        expect(within(detail).getByText("Offering size").nextSibling).toHaveTextContent(/^\$\d{1,3}(,\d{3})+$/);
+
         expect(within(detail).getByText("Remaining").nextSibling).toHaveTextContent("$62,500,000");
 
         expect(within(detail).getByText("Minimum investment").nextSibling).toHaveTextContent("$250,000");
