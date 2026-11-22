@@ -44,6 +44,11 @@ describe("URL state (validateSearch): a reload restores what the URL says, an in
         expect(parse(InsiderRoute, { from: "2026-01-01", side: "buy", to: "2026-06-30" })).toEqual({ from: "2026-01-01", side: "buy", to: "2026-06-30" });
 
         expect(parse(InsiderRoute, { from: "yesterday", side: "short" })).toEqual({});
+
+        // The right shape but no calendar day: absent, never sent to the server function's `z.iso.date()` (F096).
+        expect(parse(InsiderRoute, { from: "2026-13-45", tfrom: "2026-02-30", to: "2026-02-28" })).toEqual({ to: "2026-02-28" });
+
+        expect(parse(FilingsRoute, { from: "2026-13-45" })).toEqual({});
     });
 
     it("holders: tab and quarter; holdings: the as-of day", () => {

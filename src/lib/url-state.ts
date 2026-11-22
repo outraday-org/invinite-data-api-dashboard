@@ -10,10 +10,11 @@ import { z } from "zod";
 /** The navigate options of a search change that filters or opens something in place. */
 export const IN_PLACE = { replace: true, resetScroll: false } as const;
 
-export const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
-/** `YYYY-MM-DD`. */
-export const optionalDay = () => z.string().regex(DAY_PATTERN).optional().catch(undefined);
+/**
+ * A calendar day `YYYY-MM-DD` that exists (`2026-13-45` / `2026-02-30` read as absent): the server functions validate
+ * with `z.iso.date()`, so a day of the right shape but no calendar date would reach them and fail there.
+ */
+export const optionalDay = () => z.iso.date().optional().catch(undefined);
 
 /**
  * A trimmed text of `min` (default 1) to `max` characters; anything else reads as absent. The router reads a bare
