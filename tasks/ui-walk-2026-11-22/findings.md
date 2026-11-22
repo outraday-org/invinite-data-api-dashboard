@@ -19,7 +19,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 | End-user defaults (to restore) | Never set: active alerts, script / indicator alerts and fires per day all "No limit" |
 | Receiver URL (Task 8) | `https://webhook.site/15b38b45-5955-46f6-9b5b-e0d51cd37736` (free URL: expires after 1 week, keeps 50 requests; 6 received in Task 8) |
 | D1 / D2 ids (Task 8) | D1 `dst_01M81YNF4DP3558D13RN0KPJGP` (webhook, standard, webhook.site, 30 / min, description `walk-1122 webhook.site edited`, no headers left, secret rotated 2026-11-22 15:52 UTC) · D2 `dst_01M81YTP4DH99DFBR9AD4Z1BT7` (batch webhook, standard, `https://example.com/walk-1122-hook` → 405, digest 60 s, `walk-1122 unroutable`); both active |
-| Walk alert ids (Tasks 9–10) | |
+| Walk alert ids (Tasks 9–10) | price `alt_01M8203KDHBGP54WPX9BY6D8YM` · price_move `alt_01M8205R975SCSFNQ84VMRQR9H` · price_reminder `alt_01M8206YG0YFWZW5NS0N76YMZF` · volume_spike `alt_01M82083NY28W4XS583JECT3N2` · indicator `alt_01M8209ECAEWG9DM61NFPV49H7` · halt `alt_01M820A6XJP5KKY8ZBMH599MVP` · dividend `alt_01M820AQS82ZV47CT80JD22E10` · earnings_call `alt_01M820B3NGFBEGY0GGZ41QJ0X7` · earnings_call_keyword `alt_01M820BJ6FDN4YYPFCM9HB31Y9` · earnings_results `alt_01M820CMMNJY03T7MCCW338H7Y` · event_countdown `alt_01M820DP299EZ98KMANTTM9TXF` · filing `alt_01M820E7DD3CJJR447WQPKG1VS` · filing_keyword `alt_01M820EJG0VYTE5NYRQCPY0FYH` · fundamental_metric `alt_01M820FB1RQC7VQNP4EQZGG96Z` · news `alt_01M820FQZF79VJSVHZMVHFTDGX` · news_keyword `alt_01M820G3P5ASFH5A9BHM6E7TQ7` (Task 9: 16, each `client_reference_id` `walk-1122-<type>`, all deliver to D1, all active at the end of Task 9) · duplicate `alt_01M820R1YA0QF5CQP6FJVP29MP` (`walk-1122-dup`) deleted in T9.29 · script alert: Task 10 |
 | End counts (Task 10): alerts / destinations / users / scripts | |
 | Credits at end (Task 11) | |
 
@@ -989,6 +989,76 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Actual: `last_error: "http_status"` beside the last answer HTTP 405
 - Evidence: delivery dlv_01M81ZDN9V0DT8FPD6KDZJW4FH (batch bat_01M81ZFPS23N0X2PMSVWF3BB6V)
 - Outcome: open (Task 11: API → backend tasklist — a sentence, or an enum in the spec the dashboard can label)
+
+### F108 — `createAlert` 400s name only the first missing field, in raw zod words
+- Check: T9.2 · Severity: minor · Class: api
+- Where: http://localhost:3001/alerts/new (type Price level, nothing filled) → Check
+- Steps: Check (`POST /v1/alerts?validate_only=true`, body `{"condition":{},"type":"price"}`)
+- Expected: one problem per missing field (`errors[]`: symbol, operator, level) in readable words, as the problem+json `errors` member allows
+- Actual: one `invalid_parameter` with detail `condition.symbol: Invalid input: expected string, received undefined.` — the dashboard puts it on the Symbol field (right), but operator / level surface only on the next tries; the same zod wording on event_countdown's time zone (F110). Other refusals are readable ("SPY is an ETF; news alerts exist only for companies …", "Unknown financial metric `revenue`. Did you mean …")
+- Evidence: request req_01M82016BEVTNFWA97Y0XH7X9A
+- Outcome: open (Task 11: API → backend tasklist — every issue of the body as `errors[]`, zod messages rewritten)
+
+### F109 — Alert summary: two keywords read as one phrase; enum values as raw codes
+- Check: T9.4, T9.11 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/alerts/alt_01M820BJ6FDN4YYPFCM9HB31Y9 (and every alert page)
+- Steps: create an earnings_call_keyword alert with keywords `walk1122, sovereign AI`; open its page
+- Expected: "walk1122, sovereign AI"; enum values in the form's words
+- Actual: "walk1122 sovereign AI" (the form's newline-joined text collapsed in HTML — the API holds 2 keywords); "prior_close", "every_time", "us_stock", "earnings_call", "transcript_ready" while the form's options read "prior close", "every time", …
+- Evidence: answer `keywords: [2]` in the API sheet
+- Outcome: fixed in 2283aba (`valueText` in `alert-detail-view.tsx`: lists joined by ", ", enums through the new `enumWords` of `labels.ts`, which the form's options use too; test `alerts-events.test.tsx`; re-checked: "walk1122, sovereign AI", "every time")
+
+### F110 — `event_countdown` refuses an alert without a time zone; spec and help name no requirement
+- Check: T9.13 · Severity: minor · Class: api
+- Where: http://localhost:3001/alerts/new?type=event_countdown&symbol=AAPL
+- Steps: event earnings call, days before 1, time 08:00, no time zone → Create
+- Expected: per spec (`timezone`: "IANA time zone (price_reminder: default America/New_York)", not required) either a default or a documented requirement
+- Actual: 400 `condition.timezone: Invalid input: expected string, received undefined.` (shown on the Time zone field); with `America/New_York` it was created
+- Evidence: inline field error; created alt_01M820DP299EZ98KMANTTM9TXF after filling it
+- Outcome: open (Task 11: API → backend tasklist — default it like price_reminder, or say "required for event_countdown" in the spec; the form's help then follows the spec)
+
+### F111 — Fundamental-metric Rules example names a metric the API refuses
+- Check: T9.16 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/alerts/new?type=fundamental_metric&symbol=AAPL
+- Steps: copy the Rules placeholder's shape with `metric_id: "revenue"` → Check
+- Expected: the example works (a catalog id)
+- Actual: 400 "Unknown financial metric `revenue`. Did you mean `is_total_revenue`, …"
+- Evidence: inline field error under Rules
+- Outcome: fixed in d5b1b1e (placeholder `is_total_revenue`; test `condition-fields.test.ts`: every JSON placeholder parses, the rules example passes `isCatalogMetricId`; re-checked)
+
+### F112 — `meta.quota` limits differ between Task 1 and Task 9 on the same ENTERPRISE account
+- Check: T9.22 · Severity: minor · Class: api
+- Where: http://localhost:3001/alerts
+- Steps: open the list (Task 1, no alerts; Task 9, 16 alerts)
+- Expected: the plan's limits stay the same
+- Actual: Task 1 "0 of 25,000 alerts in use · 0 of 500 script / indicator alerts · fire cap 500,000 a day"; now `active_alerts_limit: 2000`, `script_alerts_limit: 500`, `fires_per_day_limit: null` ("16 of 2,000 … no daily fire cap")
+- Evidence: `GET /v1/alerts?limit=100` answer `meta.quota` (Task 9, ~17:13 CET)
+- Outcome: open (Task 11: API → backend tasklist — which limits hold for ENTERPRISE; the spec calls `active_alerts_limit` "the plan's")
+
+### F113 — API sheet lists every write of the last minutes on every page
+- Check: T7.1 (`/alerts` sample, after T9.22) · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/alerts → API
+- Steps: create alerts on `/alerts/new`, open the list, open the API sheet
+- Expected: the requests of this view (CLAUDE.md "lists `useViewRequests()` = the requests of every query with a mounted observer")
+- Actual: below the list's `GET /v1/alerts` come 14 earlier `POST /v1/alerts` (incl. a `validate_only` one) made on other pages — `writeRequestsOf` reads every settled mutation of the cache until it is garbage-collected
+- Evidence: sheet text on `/alerts`
+- Outcome: deferred (needs a rule for which writes belong to a view — e.g. a create shown on the page it redirects to; owner call, Task 11)
+
+### F114 — Event list of one event reads "All 1 events, newest first."
+- Check: T9.31 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/alerts/events?alert_id=alt_01M8203KDHBGP54WPX9BY6D8YM (one event at that time)
+- Steps: filter the feed by an alert with one event
+- Expected: singular wording
+- Actual: "All 1 events, newest first."
+- Evidence: page text
+- Outcome: fixed in bd8cdee (`loadedEventsNote` says "The only event."; test `alert-view.test.ts`)
+
+### F115 — Task 9 text names fields the alert form (and the spec) do not have
+- Check: T9.1, T9.6, T9.12, T9.16, T9.21 · Severity: nit · Class: doc
+- Where: `tasks/ui-walk-2026-11-22/9-alerts-create-and-act.md`
+- Expected (task text): volume_spike mode "multiple"; earnings_results report kinds "10-Q"; a metric picker for fundamental_metric; a type list "with summaries"; a Cancel on the pre-filled form
+- Actual (app = spec): mode `relative` (multiple is its own field); report kinds `preliminary` / `final`; Rules is a JSON field (metric ids of `/v1/catalog/metrics`); the summary shows under the picked type; the form has no Cancel (leaving the page discards it)
+- Outcome: by design (the form follows `AlertConditionInput`; task text annotated)
 
 ## Summary (filled by Task 11)
 

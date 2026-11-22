@@ -27,7 +27,7 @@ Every check ticked or logged.
 ### 1. API inspector (sample: `/AAPL/filings`, `/AAPL/financials?view=standardized`, `/calendar`, a call page,
 `/alerts` after Task 9 has created one)
 
-- [x] **T7.1** (sampled filings, financials, calendar, call page; no `/v1/me`; tier badges FREE / STANDARD / PRO, no upgrade prompt; docs links well formed but their host does not resolve: F094; `/alerts` sample waits for Task 9) The API button opens a side sheet listing the page's requests (each page of a list), never `/v1/me`.
+- [x] **T7.1** (sampled filings, financials, calendar, call page; no `/v1/me`; tier badges FREE / STANDARD / PRO, no upgrade prompt; docs links well formed but their host does not resolve: F094; `/alerts` sampled after Task 9: `GET /v1/alerts?limit=100` FREE, charged 1, no `/v1/me`, but the sheet also lists the session's earlier writes: F113) The API button opens a side sheet listing the page's requests (each page of a list), never `/v1/me`.
   Per request: method + path + query AS SENT, summary, plan badge (none shown as "upgrade" on ENTERPRISE), base cost +
   charged, status, request id with copy, docs link (opens `https://data.invinite.com/docs/…`; one check).
 - [x] **T7.2** (every page sampled: each `Bearer ` is `Bearer $INVINITE_API_KEY`, no `api_key=` in the sheet; no key anywhere) curl uses `$INVINITE_API_KEY` — the real key never appears in the sheet (search the sheet's text for

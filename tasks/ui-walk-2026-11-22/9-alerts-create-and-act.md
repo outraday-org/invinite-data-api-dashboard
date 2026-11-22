@@ -1,6 +1,6 @@
 # Task 9 — Alerts II: create all 17 types, edit / conflict, actions, batch, events, entry points
 
-> **Status: TODO**
+> **Status: DONE (walked 2026-11-22, 8 findings)**
 
 ## Goal
 
@@ -29,12 +29,12 @@ least one test event.
 
 ### 1. The form
 
-- [ ] **T9.1** `/alerts/new`: type picker lists 17 types with summaries; changing type swaps the fields to
+- [x] **T9.1** (17 types in groups; the summary shows under the picked type; trigger fields incl. cooldown bars on indicator, re-arm on price types; D1 / D2 listed, no owner destination exists; "New destination…" opened and cancelled; end-user field has its `<datalist>`) `/alerts/new`: type picker lists 17 types with summaries; changing type swaps the fields to
   `TYPE_FIELDS[type]` (`src/lib/alerts/condition-fields.ts`) with labels / help / enums / bounds; trigger fields
   (cooldown, max fires, expires, active window, rearm for price types, cooldown bars for script / indicator); delivery =
   destinations checklist (D1, D2, owner's own; ≤ 10; a disabled one says so) + "New destination…" (opens A3's dialog
   inline — open and cancel it); end-user field `AlertUserPicker` (free text + suggestions).
-- [ ] **T9.2** Check (`validate_only`) on an empty form → field errors land on their fields (`condition.<field>`,
+- [x] **T9.2** (empty price form: the error lands on Symbol, but the API names only the first missing field in raw zod words: F108; valid price form → "Valid · Nothing was created", list stayed empty) Check (`validate_only`) on an empty form → field errors land on their fields (`condition.<field>`,
   `destination_ids`, …), not one generic toast. Check on a valid `price` form → "valid" result, nothing created (list
   count unchanged).
 
@@ -47,74 +47,74 @@ on the right field (then correct and retry); a 404 `not_covered` → readable no
 
 | Check | Type | Suggested condition (adapt to the form) |
 | --- | --- | --- |
-| **T9.3** | `price` | AAPL, stock, operator above, level = current × 2 |
-| **T9.4** | `price_move` | AAPL, direction either, pct 8, baseline previous close |
-| **T9.5** | `price_reminder` | AAPL, frequency weekly, weekday Mon, time 09:00, timezone America/New_York |
-| **T9.6** | `volume_spike` | NVDA, interval 1d, mode multiple, multiple 5, lookback 20 |
-| **T9.7** | `indicator` | AAPL, interval 1d, a template from the picker (e.g. RSI cross) with defaults |
-| **T9.8** | `halt` | AAPL, statuses halted |
-| **T9.9** | `dividend` | AAPL, kinds declared |
-| **T9.10** | `earnings_call` | AAPL, events started / transcript ready |
-| **T9.11** | `earnings_call_keyword` | NVDA, keywords `walk1122 sovereign AI`, scope any |
-| **T9.12** | `earnings_results` | AAPL, report kinds 10-Q, a yoy rule revenue > 50 % |
-| **T9.13** | `event_countdown` | AAPL, event next earnings call, days before 1, time 08:00 |
-| **T9.14** | `filing` | AAPL, form types 8-K, include amendments off |
-| **T9.15** | `filing_keyword` | AAPL, form 10-K, keywords `walk1122 going concern` |
-| **T9.16** | `fundamental_metric` | AAPL, a rule on a metric (picker) crossing an unreachable value |
-| **T9.17** | `news` | AAPL, kinds earnings |
-| **T9.18** | `news_keyword` | MSFT, keywords `walk1122 acquisition` |
-| **T9.19** | `script` | **deferred to Task 10** (needs an uploaded script version) — mark `[~] see T10.x` |
+| **T9.3** ✓ | `price` | AAPL, stock, operator above, level = current × 2 |
+| **T9.4** ✓ | `price_move` | AAPL, direction either, pct 8, baseline previous close |
+| **T9.5** ✓ | `price_reminder` | AAPL, frequency weekly, weekday Mon, time 09:00, timezone America/New_York |
+| **T9.6** ✓ | `volume_spike` | NVDA, interval 1d, mode multiple, multiple 5, lookback 20 |
+| **T9.7** ✓ | `indicator` | AAPL, interval 1d, a template from the picker (e.g. RSI cross) with defaults |
+| **T9.8** ✓ | `halt` | AAPL, statuses halted |
+| **T9.9** ✓ | `dividend` | AAPL, kinds declared |
+| **T9.10** ✓ | `earnings_call` | AAPL, events started / transcript ready |
+| **T9.11** ✓ | `earnings_call_keyword` | NVDA, keywords `walk1122 sovereign AI`, scope any |
+| **T9.12** ✓ | `earnings_results` | AAPL, report kinds 10-Q, a yoy rule revenue > 50 % |
+| **T9.13** ✓ | `event_countdown` | AAPL, event next earnings call, days before 1, time 08:00 |
+| **T9.14** ✓ | `filing` | AAPL, form types 8-K, include amendments off |
+| **T9.15** ✓ | `filing_keyword` | AAPL, form 10-K, keywords `walk1122 going concern` |
+| **T9.16** ✓ | `fundamental_metric` | AAPL, a rule on a metric (picker) crossing an unreachable value |
+| **T9.17** ✓ | `news` | AAPL, kinds earnings |
+| **T9.18** ✓ | `news_keyword` | MSFT, keywords `walk1122 acquisition` |
+| **T9.19** [~] see T10.x | `script` | **deferred to Task 10** (needs an uploaded script version) — mark `[~] see T10.x` |
 
-- [ ] **T9.20** ETF refusal: a `news` alert on `SPY` → the API's 400 naming the ETF shown on the symbol field; a
+- [x] **T9.20** (400 on the Symbols field: "SPY is an ETF; news alerts exist only for companies …"; nothing created) ETF refusal: a `news` alert on `SPY` → the API's 400 naming the ETF shown on the symbol field; a
   `dividend` alert on `SPY` would be accepted — do not create it.
-- [ ] **T9.21** Pre-fill: `/alerts/new?type=filing&symbol=MSFT` opens with type + symbol filled; cancel.
+- [x] **T9.21** (type SEC filing + symbols MSFT pre-filled; the form has no Cancel — left by navigating: F115) Pre-fill: `/alerts/new?type=filing&symbol=MSFT` opens with type + symbol filled; cancel.
 
 ### 3. List `/alerts`
 
-- [ ] **T9.22** 16 new rows (+ start count); quota line from `meta.quota`; filters `?status=&type=&symbol=AAPL
+- [x] **T9.22** (16 rows; quota line from `meta.quota`, but its limits differ from Task 1's: F112; each filter sent as `/v1/alerts?…` and narrowing (paused 0, price 1, AAPL 13, D1 16, walk-1122-price 1); CSV export, console clean) 16 new rows (+ start count); quota line from `meta.quota`; filters `?status=&type=&symbol=AAPL
   &destination_id=<D1>&client_reference_id=walk-1122-price` each sent to the API and narrowing; export.
-- [ ] **T9.23** Destination chips link `/alerts/destinations/$id`; D1's detail page now lists the alerts using it.
+- [x] **T9.23** (chips link `/alerts/destinations/dst_…`; D1 page "16 alerts deliver here") Destination chips link `/alerts/destinations/$id`; D1's detail page now lists the alerts using it.
 
 ### 4. One alert's page and actions (use `walk-1122-price`)
 
-- [ ] **T9.24** `/alerts/$id`: summary, condition, trigger, delivery, version, events list (empty state). Pause (runs at
+- [x] **T9.24** (pause → Paused, resume → Active, version 1 → 3; events empty state "This alert has not fired yet.") `/alerts/$id`: summary, condition, trigger, delivery, version, events list (empty state). Pause (runs at
   once) → status paused; Resume → active.
-- [ ] **T9.25** "Send test event" → confirm (REAL delivery) → success notice linking `/alerts/events?event=`; receiver
+- [x] **T9.25** (confirm named the 1 destination; toast "Test event queued · View event" → `/alerts/events?event=evt_01M820M3HE5GJ8KQGXSK8MBMBW`; webhook.site got the `alert.fired` POST with webhook-id / -timestamp / -signature; SingleEventView shows the payload) "Send test event" → confirm (REAL delivery) → success notice linking `/alerts/events?event=`; receiver
   tab shows the alert event POST with signature headers; the event page `SingleEventView` renders it.
-- [ ] **T9.26** Edit `?edit=true`: change level, save → version + 1. Conflict: open the same alert in a second tab
+- [x] **T9.26** (level 1000 → 1100, v4; tab B opened at v4, tab A saved 1200 (v5), tab B save → "Conflict · This alert changed elsewhere" + "Reload the alert" → 1200 loaded; tab B closed) Edit `?edit=true`: change level, save → version + 1. Conflict: open the same alert in a second tab
   (`preview_start`) in edit, save a change in tab A, then save in tab B → 409 → "changed elsewhere" + Reload, which
   loads the new version; nothing overwritten silently. Close tab B.
-- [ ] **T9.27** Edit: empty a reference field (`client_reference_id`) → sent as null; then set it back to
+- [x] **T9.27** (PATCH body `client_reference_id: null`, then set back to `walk-1122-price`, v7) Edit: empty a reference field (`client_reference_id`) → sent as null; then set it back to
   `walk-1122-price` (Task 10 finds alerts by the marker).
-- [ ] **T9.28** Duplicate (`/alerts/new?from=<id>`) → form filled without the client reference id; set
+- [x] **T9.28** (form filled, client reference id empty; created alt_01M820R1YA0QF5CQP6FJVP29MP `walk-1122-dup`) Duplicate (`/alerts/new?from=<id>`) → form filled without the client reference id; set
   `walk-1122-dup`, create.
-- [ ] **T9.29** Delete the duplicate from its page → confirm → back to the list, row gone. Unknown id
+- [x] **T9.29** (confirm → back on `/alerts`, row gone; `/alerts/alt_doesnotexist` = "No alert alt_doesnotexist on this account.") Delete the duplicate from its page → confirm → back to the list, row gone. Unknown id
   `/alerts/alt_doesnotexist` → 404 state.
 
 ### 5. Bulk
 
-- [ ] **T9.30** Select 3 walk alerts → bulk Pause → confirm (count + ids) → per-item results (`BatchResultsView`);
+- [x] **T9.30** (3 → Pause → "3 of 3 done", each Paused; Resume → each Resumed; 4 paused; then the 4 + active halt resumed → "5 of 5 done", halt "Unchanged") Select 3 walk alerts → bulk Pause → confirm (count + ids) → per-item results (`BatchResultsView`);
   bulk Resume → results. Select one already-active + the 3 → bulk Pause again → results show each item's outcome.
   Bulk Delete is exercised in Task 10.
 
 ### 6. Events
 
-- [ ] **T9.31** `/alerts/events`: loaded newest first with "how far they reach" line; filters `?alert_id=&type=
+- [x] **T9.31** (newest first with "All N events" (one event read "All 1 events": F114); `alert_id`, `type`, `external_user_id` filters narrow; `?event=` opens the event) `/alerts/events`: loaded newest first with "how far they reach" line; filters `?alert_id=&type=
   &external_user_id=`; the test event from T9.25 listed; `?event=` opens the single event.
-- [ ] **T9.32** Live on (`?live=true`): connected; send another test event from the price alert (confirm) → it arrives
+- [x] **T9.32** (Live: on; a test sent from a second tab arrived on top marked "New" without reload; Live off; console clean) Live on (`?live=true`): connected; send another test event from the price alert (confirm) → it arrives
   on top with "New" + 4-s highlight without reload. Live off.
 
 ### 7. Entry points on ticker pages
 
-- [ ] **T9.33** `/AAPL`: "N alerts on AAPL" shows the walk count (cached 5 min — reload after a minute if stale; a stale
+- [x] **T9.33** ("13 alerts on AAPL" → `/alerts?symbol=AAPL`; menu Price level / Price move / Volume spike / Price reminder / Fundamental metric → `/alerts/new?symbol=AAPL&type=…`) `/AAPL`: "N alerts on AAPL" shows the walk count (cached 5 min — reload after a minute if stale; a stale
   count within 5 min is by design); link → `/alerts?symbol=AAPL`. Create alert menu item → `/alerts/new?type=…
   &symbol=AAPL`.
-- [ ] **T9.34** Menus on calls list, call page, news, filings, dividends offer exactly the types in `CLAUDE.md`
+- [x] **T9.34** (calls list + call page: earnings_call, earnings_call_keyword, earnings_results, event_countdown; news: news, news_keyword; filings: filing, filing_keyword; dividends: a single "Create dividend alert" link; `/SPY` price types only, `/SPY/filings` filing types, `/SPY/dividends` dividend, `/SPY/news` none) Menus on calls list, call page, news, filings, dividends offer exactly the types in `CLAUDE.md`
   (Alerts task 4 "Entry points"); `/SPY` offers only `NON_STOCK_ALERT_TYPES`.
 
 ### 8. Deliveries side effects
 
-- [ ] **T9.35** D1 deliveries list now has the alert test events (`succeeded`); D2 has its failing test with retries
+- [x] **T9.35** (D1: both alert test events Succeeded, HTTP 200; D2: still active, "Failing · 3 failed deliveries in a row", HTTP 405 `http_status`, next attempt 5:31 PM — not disabled) D1 deliveries list now has the alert test events (`succeeded`); D2 has its failing test with retries
   (`consecutive_failures` > 0, maybe `disabled` after enough failures — record what the API did).
 
 ## Files to Create / Modify
