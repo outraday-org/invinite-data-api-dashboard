@@ -39,7 +39,7 @@ export function SegmentSelect({
             onValueChange={v => onValueChange(v as "all" | SegmentedFinancialsSegmentId)}
             value={value}
         >
-            <SelectTrigger className="w-[260px]">
+            <SelectTrigger aria-label="Segment" className="w-[260px]">
                 {segmentOptions.find(opt => opt.value === value)?.label ?? "Select segment"}
             </SelectTrigger>
             <SelectContent>

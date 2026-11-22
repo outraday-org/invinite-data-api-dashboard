@@ -150,6 +150,8 @@ export function FinancialsPresentationTable({
                                                     row.hasChildren
                                                         ? (
                                                                 <button
+                                                                    aria-expanded={expanded.has(row.metricId)}
+                                                                    aria-label={`${expanded.has(row.metricId) ? "Collapse" : "Expand"} ${row.label}`}
                                                                     className={cn(
                                                                         "text-muted-foreground hover:text-foreground inline-flex h-6 w-6 items-center justify-center rounded",
                                                                         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",

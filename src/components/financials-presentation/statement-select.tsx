@@ -20,7 +20,7 @@ export function StatementSelect({
             onValueChange={v => onValueChange(v as StatementType)}
             value={value}
         >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger aria-label="Statement" className="w-[180px]">
                 {statementOptions.find(opt => opt.value === value)?.label ?? "Select statement"}
             </SelectTrigger>
             <SelectContent>

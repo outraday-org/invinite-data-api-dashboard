@@ -126,6 +126,20 @@ describe("Statements (`/v1/financials/*`)", () => {
         expect(screen.getByText("Services")).toBeInTheDocument();
     });
 
+    it("presentation (standardized, collapsible): the tree toggle is named after its row and states its state (F102)", () => {
+        render(<FinancialsStatementsView {...list} basis="standardized" pages={[V2_AS_REPORTED_PRESENTATION as never]} statement="income-statement" view="presentation" />);
+
+        const toggle = screen.getByRole("button", { name: /^(Expand|Collapse) Total net sales$/ });
+
+        const expanded = toggle.getAttribute("aria-expanded");
+
+        expect(expanded === "true" || expanded === "false").toBe(true);
+
+        fireEvent.click(toggle);
+
+        expect(toggle).toHaveAttribute("aria-expanded", expanded === "true" ? "false" : "true");
+    });
+
     it("presentation: a newest period without a filed tree (an as-reported Q4) still shows the older periods' tree (F037)", () => {
         const filed = V2_AS_REPORTED_PRESENTATION.data[0];
 

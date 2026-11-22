@@ -107,7 +107,7 @@ export function CagrFinancials({ ticker }: { ticker: string }) {
             <PageHeader
                 actions={(
                     <>
-                        <FilterSelect className="w-[200px]" onValueChange={value => update({ horizon: value === "all" ? undefined : value })} options={cagrPeriodOptions} value={horizon} />
+                        <FilterSelect aria-label="Horizon" className="w-[200px]" onValueChange={value => update({ horizon: value === "all" ? undefined : value })} options={cagrPeriodOptions} value={horizon} />
                         <PeriodTypeButtons onValueChange={value => update({ period: value === "annual" ? undefined : value })} value={periodType} />
                         <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
                     </>

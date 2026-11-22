@@ -116,7 +116,7 @@ export function RatiosFinancials({ ticker }: { ticker: string }) {
             <PageHeader
                 actions={(
                     <>
-                        <FilterSelect className="w-[220px]" onValueChange={value => update({ category: value === ALL ? undefined : value })} options={ratioCategoryOptions} value={category} />
+                        <FilterSelect aria-label="Ratio category" className="w-[220px]" onValueChange={value => update({ category: value === ALL ? undefined : value })} options={ratioCategoryOptions} value={category} />
                         <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
                         <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
                     </>

@@ -102,7 +102,7 @@ export function GrowthFinancials({ ticker }: { ticker: string }) {
             <PageHeader
                 actions={(
                     <>
-                        <FilterSelect className="w-[220px]" onValueChange={value => update({ basis: value === ALL ? undefined : value })} options={basisOptions} value={basis} />
+                        <FilterSelect aria-label="Growth basis" className="w-[220px]" onValueChange={value => update({ basis: value === ALL ? undefined : value })} options={basisOptions} value={basis} />
                         <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
                         <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
                     </>

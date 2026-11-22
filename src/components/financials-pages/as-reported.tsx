@@ -102,7 +102,7 @@ export function AsReportedFinancials({ ticker }: { ticker: string }) {
                         >
                             Reported only
                         </Button>
-                        <FilterSelect className="w-[190px]" onValueChange={value => update({ sign: value === "as_filed" ? undefined : value })} options={DISPLAY_SIGN_OPTIONS} value={displaySign} />
+                        <FilterSelect aria-label="Display sign" className="w-[190px]" onValueChange={value => update({ sign: value === "as_filed" ? undefined : value })} options={DISPLAY_SIGN_OPTIONS} value={displaySign} />
                     </>
                 )}
                 description={VIEW_SUBTITLES[view]}

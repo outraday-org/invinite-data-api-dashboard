@@ -123,7 +123,8 @@ export function FilterSelect<T extends string>({
     title,
     value,
 }: {
-    "aria-label"?: string;
+    /** Required: a select's trigger shows its value, not what it filters (F102). */
+    "aria-label": string;
     "className": string;
     "disabled"?: boolean;
     "onValueChange": (value: T) => void;
@@ -188,18 +189,21 @@ export function CalendarFilters({
             />
             <DayRange from={from} labels={{ from: "From", to: "To" }} onChange={onChange} separatorClassName="text-muted-foreground text-xs" to={to} />
             <FilterSelect
+                aria-label="Session"
                 className="w-[140px]"
                 onValueChange={value => onChange({ session: value === "all" ? undefined : value })}
                 options={SESSION_OPTIONS}
                 value={search.session ?? "all"}
             />
             <FilterSelect
+                aria-label="Event type"
                 className="w-[150px]"
                 onValueChange={value => onChange({ eventType: value === "earnings_call" ? undefined : value })}
                 options={EVENT_TYPE_OPTIONS}
                 value={search.eventType ?? "earnings_call"}
             />
             <FilterSelect
+                aria-label="Date certainty"
                 className="w-[150px]"
                 onValueChange={value => onChange({ dateKind: value === "any" ? undefined : value })}
                 options={DATE_KIND_OPTIONS}
@@ -213,6 +217,7 @@ export function CalendarFilters({
                 value={search.status ?? "all"}
             />
             <FilterSelect
+                aria-label="Event status"
                 className="w-[170px]"
                 onValueChange={value => onChange({ calendarStatus: value === "all" ? undefined : value })}
                 options={CALENDAR_STATUS_OPTIONS}

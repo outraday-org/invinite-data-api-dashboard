@@ -532,7 +532,7 @@ export function SecFilingsView({
     return (
         <section aria-label="Filings" className="flex flex-col gap-2">
             <div className="flex flex-wrap items-center gap-2">
-                <FilterSelect className="w-[200px]" onValueChange={value => onFormChange(value === "all" ? null : value)} options={options} value={form ?? "all"} />
+                <FilterSelect aria-label="Form type" className="w-[200px]" onValueChange={value => onFormChange(value === "all" ? null : value)} options={options} value={form ?? "all"} />
             </div>
             <SecReadinessNotice coverage={pages.at(-1)?.meta.coverage} />
             {filings.length === 0

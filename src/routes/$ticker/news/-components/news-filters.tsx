@@ -88,24 +88,28 @@ export function NewsFilters({
             </div>
             <div className="flex flex-wrap items-center gap-2">
                 <FilterSelect
+                    aria-label="Source"
                     className="w-[170px]"
                     onValueChange={value => onChange({ source: orNone(value) })}
                     options={options("All sources", NEWS_SOURCES, value => NEWS_SOURCE_LABELS[value])}
                     value={search.source ?? ALL}
                 />
                 <FilterSelect
+                    aria-label="Kind"
                     className="w-[180px]"
                     onValueChange={value => onChange({ kind: orNone(value) })}
                     options={options("All kinds", NEWS_KINDS, value => NEWS_KIND_LABELS[value])}
                     value={search.kind ?? ALL}
                 />
                 <FilterSelect
+                    aria-label="Topic"
                     className="w-[180px]"
                     onValueChange={value => onChange({ topic: orNone(value) })}
                     options={options("All topics", NEWS_TOPICS, value => NEWS_TOPIC_LABELS[value])}
                     value={search.topic ?? ALL}
                 />
                 <FilterSelect
+                    aria-label="Earnings news"
                     className="w-[170px]"
                     onValueChange={value => onChange({ earnings: orNone(value) })}
                     options={[
@@ -118,6 +122,7 @@ export function NewsFilters({
                 {companyScope && search.published && (
                     <>
                         <FilterSelect
+                            aria-label="Publication type"
                             className="w-[170px]"
                             onValueChange={value => onChange({ pubType: orNone(value) })}
                             options={options("All publication types", NEWS_PUBLICATION_TYPES, publicationTypeLabel)}
@@ -125,6 +130,7 @@ export function NewsFilters({
                         />
                         {(categories.length > 0 || search.category) && (
                             <FilterSelect
+                                aria-label="Newsroom category"
                                 className="w-[180px]"
                                 onValueChange={value => onChange({ category: orNone(value) })}
                                 options={options("All newsroom categories", withCurrent(categories, search.category), value => value)}
@@ -133,6 +139,7 @@ export function NewsFilters({
                         )}
                         {(tags.length > 0 || search.tag) && (
                             <FilterSelect
+                                aria-label="Newsroom tag"
                                 className="w-[160px]"
                                 onValueChange={value => onChange({ tag: orNone(value) })}
                                 options={options("All newsroom tags", withCurrent(tags, search.tag), value => value)}
