@@ -9,7 +9,7 @@ import { ApiRequestError } from "@/lib/api/errors";
 import { facetSummary } from "@/lib/sec/parity";
 import { V2_FILING_10K } from "@/lib/sec/v2-fixtures";
 import { FilingsList } from "@/routes/$ticker/filings/-components/filings-list";
-import { FilingHtmlBody, primaryDocumentUrl } from "@/routes/$ticker/filings/-components/html-dialog";
+import { FilingHtmlBody, isHtmlDocumentUrl, primaryDocumentUrl } from "@/routes/$ticker/filings/-components/html-dialog";
 
 // Pure views: keep the server functions (TanStack Start) and the HTML fetcher unloaded.
 vi.mock("@/lib/api/queries", () => ({
@@ -168,6 +168,33 @@ describe("HTML view (lazy /v1/filings/{accession}?expand=documents)", () => {
         expect(screen.getByText("No public copy yet")).toBeInTheDocument();
 
         expect(screen.queryByTestId("html-viewer")).toBeNull();
+
+        fireEvent.click(screen.getByRole("button", { name: /Read in the SEC document store/ }));
+
+        expect(onOpenDocuments).toHaveBeenCalledOnce();
+    });
+
+    it("an XML primary document (a Form 4) is not framed as HTML: the statement, the original and the reader (F040)", () => {
+        const onOpenDocuments = vi.fn();
+
+        const form4 = "https://storage.invinite.com/sec/9de89155bf38c665fcd7ca8648e9c62f/form4.xml";
+
+        const xmlOnly: V2FilingDetailResponse = {
+            ...V2_FILING_10K,
+            documents: (V2_FILING_10K.documents ?? []).map(doc => (doc.filename === ROW.primaryDocument ? { ...doc, source_url: form4 } : doc)),
+        };
+
+        expect(isHtmlDocumentUrl(form4)).toBe(false);
+
+        expect(isHtmlDocumentUrl(PUBLIC_URL)).toBe(true);
+
+        render(<FilingHtmlBody data={xmlOnly} error={null} isLoading={false} onOpenDocuments={onOpenDocuments} primaryFilename={ROW.primaryDocument} title="AAPL 4" />);
+
+        expect(screen.queryByTestId("html-viewer")).toBeNull();
+
+        expect(screen.getByTestId("no-html-document")).toHaveTextContent("No HTML document: the primary document is form4.xml.");
+
+        expect(screen.getByRole("link", { name: /Open the original/ })).toHaveAttribute("href", form4);
 
         fireEvent.click(screen.getByRole("button", { name: /Read in the SEC document store/ }));
 

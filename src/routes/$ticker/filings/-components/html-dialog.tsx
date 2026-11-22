@@ -32,6 +32,25 @@ export function primaryDocumentUrl(data: null | V2FilingDetailResponse, primaryF
     return primaryDocumentOf(toV2FilingDocuments(data.documents), primaryFilename, data.form)?.publicUrl ?? null;
 }
 
+/** Whether a public document URL is an HTML page (`.htm` / `.html`); an XML or text primary document is not framed. */
+export function isHtmlDocumentUrl(url: string) {
+    try {
+        return /\.html?$/iu.test(new URL(url).pathname);
+    }
+    catch {
+        return false;
+    }
+}
+
+const fileNameOf = (url: string) => {
+    try {
+        return decodeURIComponent(new URL(url).pathname.split("/").at(-1) ?? url);
+    }
+    catch {
+        return url;
+    }
+};
+
 /**
  * The HTML view's body (pure): the primary document of `/v1/filings/{accession}?expand=documents` at its permanent
  * public URL, the filing's honest state while it loads / failed, or "No public copy yet" with the documents reader.
@@ -59,11 +78,22 @@ export function FilingHtmlBody({
 
     const url = primaryDocumentUrl(data, primaryFilename);
 
-    if (url) return <HtmlViewer className="h-full" title={title} url={url} />;
+    if (url && isHtmlDocumentUrl(url)) return <HtmlViewer className="h-full" title={title} url={url} />;
 
     return (
         <div className="flex flex-col items-start gap-3">
-            <div className="text-muted-foreground text-sm">{NO_PUBLIC_COPY}</div>
+            {url
+                ? (
+                        // An XML / text primary document (a Form 3 / 4 / 5 is XML only) framed as HTML is one run-on line (F040).
+                        <div className="text-muted-foreground flex flex-col gap-1 text-sm" data-testid="no-html-document">
+                            <span>{`No HTML document: the primary document is ${fileNameOf(url)}.`}</span>
+                            <a className="text-primary inline-flex items-center gap-1 underline-offset-4 hover:underline" href={url} rel="noopener noreferrer" target="_blank">
+                                Open the original
+                                <ExternalLink className="size-3" />
+                            </a>
+                        </div>
+                    )
+                : <div className="text-muted-foreground text-sm">{NO_PUBLIC_COPY}</div>}
             <Button onClick={onOpenDocuments} size="sm" type="button" variant="outline">
                 <FileText />
                 Read in the SEC document store
