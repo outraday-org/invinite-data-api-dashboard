@@ -30,6 +30,7 @@ import {
     FilingNotesView,
     FilingPartiesView,
     hasFiledHoldings,
+    itemText,
     ReviewChainView,
     sectionStartBlock,
 } from "@/routes/filings/-components/filing-detail-views";
@@ -145,6 +146,13 @@ describe("filing page tabs", () => {
         expect(screen.getByText("Part II · Item 1A")).toBeInTheDocument();
 
         expect(sectionStartBlock({ blocks: [] })).toBeNull();
+
+        // The legacy outline's ids already read "Item 1." (F042).
+        expect(itemText("Item 1.")).toBe("Item 1.");
+
+        expect(itemText("1A")).toBe("Item 1A");
+
+        expect(itemText(null)).toBeNull();
     });
 
     it("Fact places: a place opens its block in the reader and links the annotated rendition", () => {

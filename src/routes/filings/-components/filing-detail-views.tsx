@@ -215,11 +215,18 @@ export function FilingHoldingsView({ accession, state }: { accession: string; st
 
 // ── Sections and fact places of a document version ───────────────────────────────────────────────────────────────
 
+/** "Item 1A" from an item id: the generic outline states `1A`, the legacy one `Item 1A.` already (F042). */
+export function itemText(itemId: null | string | undefined): null | string {
+    if (!itemId) return null;
+
+    return /^item\b/iu.test(itemId.trim()) ? itemId.trim() : `Item ${itemId}`;
+}
+
 /** A document version's section outline (`generic` headings or the `legacy` section ids); a row opens its first block. */
 export function DocumentSectionsView({ onOpenBlock, state }: { onOpenBlock: (blockId: string) => void; state: ListState<V2DocumentSectionsResponse> }) {
     const columns: Array<ColumnDef<V2DocumentSection>> = [
         { cell: ({ row }) => right(String(row.original.ordinal)), header: () => <div className="text-right">#</div>, id: "ordinal" },
-        { cell: ({ row }) => [row.original.part, row.original.item_id ? `Item ${row.original.item_id}` : null].filter(Boolean).join(" · ") || DASH, header: "Part · item", id: "item" },
+        { cell: ({ row }) => [row.original.part, itemText(row.original.item_id)].filter(Boolean).join(" · ") || DASH, header: "Part · item", id: "item" },
         {
             cell: ({ row }) => {
                 const block = sectionStartBlock(row.original);
