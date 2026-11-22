@@ -684,6 +684,186 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Evidence: `GET /v1/events/22056489-…/transcript-versions?limit=200` `change_note`
 - Outcome: open (Task 11: data → backend tasklist)
 
+### F074 — Fund holdings: the as-of picker lists raw ISO days
+- Check: T6.3 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/SPY/holdings
+- Steps: open the "As of" picker
+- Expected: formatted days ("Nov 19, 2026 · Issuer file"; CLAUDE.md "No raw ISO date")
+- Actual: "2026-11-19 · Issuer file", "2026-06-30 · SEC N-PORT filing"
+- Evidence: `fundPickerDays` in `src/lib/sec/fund.ts` used `entry.as_of` as is
+- Outcome: fixed in 28c460f (`formatDay`; test `fund.test.ts`; re-checked: "Nov 19, 2026 · Issuer file … Sep 30, 2025 · SEC N-PORT filing")
+
+### F075 — Filing search on a fund symbol indexes none of the fund's forms but answers "complete"
+- Check: T6.6 · Severity: major · Class: api
+- Where: http://localhost:3001/SPY/filings?search=true
+- Steps: "Search text" → `expense ratio` → Search (1 search, 100 credits)
+- Expected: passages from SPY's prospectus / reports (485BPOS, N-30D, 497 are in its filings list; CLAUDE.md `[FU2870]`: a fund page searches its SEC filings), or a coverage note saying the fund's forms are not indexed
+- Actual: "No passages found". `meta.index` = `completeness: "complete"`, `lexical: { state: ready, indexed: 0, pending: 0, failed: 0, not_indexed_by_policy: 0 }`, `forms_indexed` = 10-K*, 10-Q*, 8-K*, 20-F*, 40-F*, 6-K*, S-1*, F-1*, S-4*, F-4*, 424B4, 425, DEF 14A, DEFA14A — no fund form (N-CSR, N-30D, 485BPOS, 497, N-PORT), so a fund page's search can never find anything, yet coverage says complete and the search is billed
+- Evidence: `GET /v1/search/filings?limit=10&mode=lexical&q=expense+ratio&symbol=SPY` req_01M81VCPFHDHZNW6BGYVM6BVA9 (charged 100)
+- Outcome: open (Task 11: API → backend tasklist — index the fund forms, or answer `completeness: partial` / `not_indexed_by_policy` > 0 for a symbol whose filings are outside `forms_indexed`)
+
+### F076 — SPY (a unit trust) has almost no fund metadata
+- Check: T6.2, T6.18 · Severity: minor · Class: data
+- Where: http://localhost:3001/SPY, http://localhost:3001/sec/884394
+- Steps: open the overview and the trust's filer page → API sheet
+- Expected: SPY's expense ratio (0.0945 %), index fund = yes; the filer's fund series with its name, ETF flag, exchange and class ticker
+- Actual: `/v1/funds/SPY`: `is_index: null`, `expense_ratio_net` / `_gross` / `_as_of` null, `advisers: []`, `share_classes: []`, `homepage_url: null`; `/v1/filers/884394?expand=fund` series `cik:884394`: `series_name`, `is_etf`, `exchange` null, `share_classes: []` — the Fund series row reads "— · — · —" beside the ETF that `/v1/instruments/SPY` knows on ARCX
+- Evidence: `GET /v1/funds/SPY?expand=coverage` req_01M81V7D9ZZFDHNWKR8GFEYHJR; `GET /v1/filers/884394?expand=…,fund`
+- Outcome: open (Task 11: data → backend tasklist — the UIT path (S-6, no series id) gets no N-CEN / prospectus enrichment)
+
+### F077 — VOO shows the series' cheapest class's expense ratio (0.01 %), not VOO's (0.03 %)
+- Check: T6.7 · Severity: major · Class: data
+- Where: http://localhost:3001/VOO (and `/sec/36405` Vanguard 500 row)
+- Steps: open the overview → Size and costs
+- Expected: the ETF class's net expense ratio (VOO 0.03 %); `/v1/funds/VOO` is the class `C000092055`
+- Actual: "Expense ratio (net) 0.01% · as of Dec 31, 2025", gross 0.01 % — the Institutional Select class's figure (`expense_ratio_net: 0.0001`); the filer page's series row the same
+- Evidence: `GET /v1/funds/VOO?expand=coverage` req_01M81VDV5P57KH34EX4MD0JE3H (`class_id: "C000092055"`, `expense_ratio_net: 0.0001`)
+- Outcome: open (Task 11: data → backend tasklist — a class's `/v1/funds/{symbol}` must carry its own class's ratio, or name the class the ratio belongs to)
+
+### F078 — VOO: `datasets` lists dividends but `/v1/dividends` answers 404 `not_covered`; coverage empty
+- Check: T6.7 · Severity: minor · Class: data
+- Where: http://localhost:3001/VOO, http://localhost:3001/VOO/dividends
+- Steps: open the overview's "Data available" card; open Dividends (sidebar offers it from `datasets`)
+- Expected: VOO's quarterly dividends (as SPY's "dividends through Sep 18, 2026"), and the coverage card naming them
+- Actual: overview "No data family holds rows for this fund yet." (`coverage.families: []`, though its holdings are served); Dividends: 404 "No dividend data is available for VOO."
+- Evidence: `GET /v1/dividends?limit=40&sort=-ex_date&symbol=VOO` req_01M81WBDNBE5AF0V8XH42YT2XF; `/v1/funds/VOO?expand=coverage` req_01M81VDV5P57KH34EX4MD0JE3H
+- Outcome: open (Task 11: data → backend tasklist; the page's rendering of the 404 is F093)
+
+### F079 — ADX's N-PORT composition has no weights
+- Check: T6.9 · Severity: minor · Class: data
+- Where: http://localhost:3001/ADX/holdings
+- Steps: open the page
+- Expected: sector / country / asset-class weights, as SPY's N-PORT compositions have ("the N-PORT percent of net assets")
+- Actual: "Partial · No weights for this composition." (`meta.reason: weights_unavailable`) for "SEC N-PORT filing · as of Jun 30, 2026", whose positions all carry a weight %
+- Evidence: page text; `/v1/funds/ADX/weights` (API sheet)
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F080 — `/sec/$cik` filings: Roles column shows snake_case codes
+- Check: T6.14 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/sec/1067983
+- Steps: read the Roles column
+- Expected: words ("subject company", "filed by", "reporting owner")
+- Actual: "filed_by, listed, subject_company", "listed, reporting_owner"
+- Evidence: `SecFilingsView` joined `filing.roles` as answered (the spec's list is open: "filer, subject, …")
+- Outcome: fixed in 404acfb (`filingRoleLabel`, unknown codes with `_` → space; test `sec-filer.test.tsx`; re-checked: "filed by, listed")
+
+### F081 — Filing roles inconsistent: a filer's own older filings carry only "listed"
+- Check: T6.14 · Severity: minor · Class: data
+- Where: http://localhost:3001/sec/1067983?form=13F-HR
+- Steps: filter 13F-HR
+- Expected: Berkshire is the `filer` of every one of its 13F-HR filings
+- Actual: the newest (Nov 16, 2026) reads "filer, listed"; every older one (Aug 14, 2026 back to 2017) only "listed"; most Form 4 rows likewise "listed" while the newest read "issuer, listed"
+- Evidence: `GET /v1/filings?limit=40&symbol=1067983&form=13F-HR`
+- Outcome: open (Task 11: data → backend tasklist — roles only derived for recently ingested filings?)
+
+### F082 — 13F portfolio: Alphabet Class C (CUSIP 02079K107) labelled GOOGL
+- Check: T6.15 · Severity: minor · Class: data
+- Where: http://localhost:3001/sec/1067983?period=2026-09-30
+- Steps: load the portfolio
+- Expected: 02079K305 → GOOGL, 02079K107 → GOOG
+- Actual: both rows "GOOGL · ALPHABET INC" (and link `/GOOGL`); SPY's issuer file maps them correctly (GOOGL / GOOG)
+- Evidence: `GET /v1/filers/1067983/holdings?period_end=2026-09-30` row `security.cusip 02079K107`, `symbol GOOGL`
+- Outcome: open (Task 11: data → backend tasklist — CUSIP → symbol resolution for share classes)
+
+### F083 — `/sec/$cik` 13F portfolio: no way to pick another quarter
+- Check: T6.15 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/sec/1067983
+- Steps: "Load the latest quarter"
+- Expected: `?period=` choosable (the Holders page has a quarter picker; T6.15 "quarter `?period=`")
+- Actual: a static "Period ending Sep 30, 2026"; older quarters only by editing the URL
+- Evidence: `src/routes/sec/$cik.tsx`
+- Outcome: fixed in 96d6918 (`quarterPickerOptions` in `src/lib/sec/source.ts`, 8 quarters back, a linked older one kept; test `source.test.ts`; CLAUDE.md "Ownership and offerings"; re-checked: Jun 30, 2026 picked → `?period=2026-06-30`, 13F filed Aug 14, 2026)
+
+### F084 — Filer header: fiscal year end as raw `MM-DD`
+- Check: T6.12 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/sec/320193
+- Steps: read the header facts
+- Expected: "Sep 25" (the Companies tab's `fiscalYearEndText`)
+- Actual: "fiscal year end: 09-25"
+- Evidence: `SecFilerHeader`
+- Outcome: fixed in 252d298 (test `sec-filer.test.tsx`; re-checked: "Dec 31" on `/sec/1067983`)
+
+### F085 — Private offerings summary: raw ISO first / latest filed days
+- Check: T6.20 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/sec/2122354
+- Steps: read the "Private offerings (Form D)" facts
+- Expected: "Sep 30, 2026"
+- Actual: "first filed: 2026-09-30", "latest filed: 2026-09-30"
+- Evidence: `SecPrivateOfferingsView`
+- Outcome: fixed in 792510c (test `sec-filer.test.tsx`; re-checked)
+
+### F086 — Fund series row of a unit trust reads its raw fund key; scope "fund"
+- Check: T6.18 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/sec/884394
+- Steps: read the Fund series table
+- Expected: the trust's name; the scope in words as on the overview ("this fund")
+- Actual: "cik:884394" as the series name; "$781.19B · fund · as of Jun 30, 2026"
+- Evidence: `SecFundView` (`series_name ?? fund_key`, own scope map)
+- Outcome: fixed in 4ac420a (a `cik:` fund key reads as the filer's name, scope via `netAssetsScopeText` — "series total, all share classes" / "this fund" on both pages; test `sec-filer.test.tsx`; CLAUDE.md "SEC document store"; re-checked: "SPDR S&P 500 ETF TRUST … $781.19B · this fund")
+
+### F087 — Offering detail: size compact beside exact amounts
+- Check: T6.20 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/offerings/021-599189
+- Steps: read Amounts
+- Expected: one format in the block
+- Actual: "Offering size $26.92M", "Sold $810,062", "Remaining $26,108,938"
+- Evidence: `OfferingDetailView` used the list's compact `offeringAmountText`
+- Outcome: fixed in ec64c34 (exact size in the detail, lists keep compact; test `offerings-pages.test.tsx`; re-checked: "$26,919,000")
+
+### F088 — Offering `year_of_inc` answers the Form D element name (`overFiveYears`)
+- Check: T6.20 · Severity: nit · Class: api
+- Where: http://localhost:3001/offerings/021-599189
+- Steps: read Issuer → Incorporated
+- Expected: per the spec, "a year, or Over Five Years / Within Last Five Years"
+- Actual: "overFiveYears"
+- Evidence: `GET /v1/offerings/021-599189` `year_of_inc: "overFiveYears"`
+- Outcome: open (Task 11: API → backend tasklist — answer the words the spec describes; no client relabel)
+
+### F089 — Unknown CIK: the not-covered notice three times
+- Check: T6.19 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/sec/9999999999
+- Steps: open the URL
+- Expected: one not-covered state (as `ZZZZQ` for instruments)
+- Actual: header notice, the same notice again under Lifecycle, and a Filings block "Unknown · Not known to the SEC store · No instrument is known for 9999999999"
+- Evidence: page text
+- Outcome: fixed in 69632ac (`isNotFound` in `src/lib/api/errors.ts`; the page renders the header notice alone; test `errors.test.ts`; re-checked: one notice)
+
+### F090 — Unknown person: empty calls / history blocks under the not-found notice
+- Check: T6.23 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/people/00000000-0000-4000-8000-000000000000
+- Steps: open the URL
+- Expected: the `PeopleState` not-found alone
+- Actual: "Not found · No person with this id", then "Calls … No call of this person is stored yet." and "Role & firm history · No role or firm stated on the loaded calls" (`/v1/participants?person=` answers 200 empty)
+- Evidence: `GET /v1/people/00000000-…` 404 req_01M81VWD09Y5VFV2RRA00Q6KHS
+- Outcome: fixed in a771081 (blocks hidden on `isNotFound(person.error)`; re-checked: notice alone)
+
+### F091 — Exchange-traded trust: "Size and costs" promises N-PORT net assets
+- Check: T6.8 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/GLD
+- Steps: read the Size and costs card
+- Expected: no N-PORT promise for a trust that files none (the composition card says so)
+- Actual: "N-PORT net assets, prospectus expense ratio" over "Net assets —"
+- Evidence: `FundProfileView`
+- Outcome: fixed in 650171a ("Shares and short interest; a trust files no N-PORT report"; test `fund-overview.test.tsx`; re-checked)
+
+### F092 — SEC filing search on a fund page says "Search this company's SEC filings"
+- Check: T6.6 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/SPY/filings?search=true
+- Steps: open "Search text"
+- Expected: wording that fits a fund
+- Actual: label / placeholder "Search this company's SEC filings"
+- Evidence: `sec-filing-search.tsx`
+- Outcome: fixed in 318127f ("Search SPY's SEC filings"; test `sec-search.test.tsx`; re-checked without running a search)
+
+### F093 — Dividends: a 404 `not_covered` renders as "Error · Failed to load dividends"
+- Check: T6.7 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/VOO/dividends
+- Steps: open the page
+- Expected: a state notice in the API's words (CLAUDE.md "a hook whose page renders the error"; the not-covered pattern of the other pages)
+- Actual: "Error · Failed to load dividends · No dividend data is available for VOO."
+- Evidence: req_01M81WBDNBE5AF0V8XH42YT2XF (404 `not_covered`); `DividendsView` used `ErrorState`
+- Outcome: fixed in 5ac5b83 (`RequestErrorState` with `notFound`; test `reference-pages.test.tsx`; re-checked: "Not covered · No dividend data is available for VOO.")
+
 ## Summary (filled by Task 11)
 
 | Class | blocker | major | minor | nit | fixed | API tasklist | other |
