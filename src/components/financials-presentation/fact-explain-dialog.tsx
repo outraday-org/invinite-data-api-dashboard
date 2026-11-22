@@ -14,7 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2Fact, useV2FactPlaces } from "@/lib/api/queries";
 import { edgarFolderUrl } from "@/lib/earnings/edgar";
-import { factExplanationModel, factPlaceTargets } from "@/lib/financials/fact-explanation";
+import { factExplanationModel, factPlaceTargets, readableFormula } from "@/lib/financials/fact-explanation";
 import { formatNumberEn } from "@/lib/utils";
 
 /** The value cell a reader clicked: its fact id and the formula the detailed view already carries. */
@@ -95,7 +95,10 @@ export function FactExplanationView({ fact, formula, onOpenFiling, onOpenPlace, 
 
     const cik = fact.data.company.cik;
 
-    const shownFormula = formula ?? model.rule.formula;
+    const stated = formula ?? model.rule.formula;
+
+    // Raw fact ids in a derived value's formula read as concept + period (F036).
+    const shownFormula = stated ? readableFormula(stated) : null;
 
     return (
         <div className="flex min-w-0 flex-col gap-5 [overflow-wrap:anywhere]" data-testid="fact-explanation">

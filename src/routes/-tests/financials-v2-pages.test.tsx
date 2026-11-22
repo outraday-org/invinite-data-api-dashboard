@@ -14,7 +14,7 @@ import { FactExplanationView } from "@/components/financials-presentation/fact-e
 import { FinancialsStatementsView } from "@/components/financials-presentation/financials-statements-view";
 import { addFactTypes, buildTreeRows } from "@/components/financials-presentation/utils";
 import { ApiRequestError } from "@/lib/api/errors";
-import { factExplanationModel, factPlaceTargets } from "@/lib/financials/fact-explanation";
+import { factExplanationModel, factIdText, factPlaceTargets, readableFormula } from "@/lib/financials/fact-explanation";
 import { completePeriodsOnly, periodLabel, segmentLines, statementLines } from "@/lib/financials/statements";
 import {
     V2_AS_REPORTED_DETAILED,
@@ -434,12 +434,57 @@ describe("Explain this number (`/v1/facts/{fact_id}`, `/v1/fact-places`)", () =>
             anchor: "f-76",
             basis: "receipt",
             concept: "RevenueFromContractWithCustomerExcludingAssessedTax",
-            period: "2026-03-29 – 2026-06-27",
+            period: "Mar 29, 2026 – Jun 27, 2026",
             segment: null,
             value: 94_036_000_000,
         }]);
 
         expect(factExplanationModel({ ...V2_FACT, rule: "unexpected", source_facts: [42] } as never).sources[0]).toMatchObject({ concept: "—", value: null });
+    });
+
+    it("a derived fact (F036, live shape 2026-11-22): operands by raw fact id with their weighted values, the source value under `derived`, the formula in words", () => {
+        const fy = "320193|RevenueFromContractWithCustomerExcludingAssessedTax|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-";
+
+        const q1 = "320193|RevenueFromContractWithCustomerExcludingAssessedTax|2025-09-28T00:00:00|2025-12-27T00:00:00|-|-";
+
+        const derived = {
+            ...V2_FACT,
+            operands: [
+                { depth: 1, id: fy, status: "resolved", stored_value: "478834000000", tier: "raw", type: "reported", weighted_value: "478834000000" },
+                { depth: 1, id: q1, status: "resolved", stored_value: "143756000000", tier: "raw", type: "reported", weighted_value: "-143756000000" },
+            ],
+            source_facts: [{
+                accession: "0000320193-26-000026",
+                annotated_anchor: null,
+                basis: "receipt",
+                concept: "RevenueFromContractWithCustomerExcludingAssessedTax",
+                derived: { accession: "0000320193-26-000026", formula_str: `${fy} - ${q1}`, tier: "enriched", value: "114477000000" },
+                segment: null,
+            }],
+        } as never;
+
+        const model = factExplanationModel(derived);
+
+        expect(model.operands).toEqual([
+            { label: "RevenueFromContractWithCustomerExcludingAssessedTax · Sep 28, 2025 – Sep 26, 2026", nested: 0, value: 478_834_000_000 },
+            { label: "RevenueFromContractWithCustomerExcludingAssessedTax · Sep 28, 2025 – Dec 27, 2025", nested: 0, value: -143_756_000_000 },
+        ]);
+
+        expect(model.sources[0]?.value).toBe(114_477_000_000);
+
+        expect(readableFormula(`${fy} - ${q1}`)).toBe("RevenueFromContractWithCustomerExcludingAssessedTax · Sep 28, 2025 – Sep 26, 2026 - RevenueFromContractWithCustomerExcludingAssessedTax · Sep 28, 2025 – Dec 27, 2025");
+
+        expect(factIdText("not|a fact id")).toBeNull();
+
+        render(<FactExplanationView fact={loaded(derived)} formula={`${fy} - ${q1}`} onOpenFiling={() => undefined} onOpenPlace={() => undefined} places={loaded(V2_FACT_PLACES)} />);
+
+        const view = screen.getByTestId("fact-explanation");
+
+        expect(view).not.toHaveTextContent("2025-09-28T00:00:00");
+
+        expect(view).toHaveTextContent("478,834,000,000");
+
+        expect(view).toHaveTextContent("114,477,000,000");
     });
 
     it("places: placed spots only, one per version × block, the table cell 1-based", () => {

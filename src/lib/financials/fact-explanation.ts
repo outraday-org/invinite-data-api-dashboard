@@ -5,6 +5,7 @@
  */
 import type { JsonValue, V2FactPlace, V2FactResponse } from "@/lib/api/types";
 
+import { formatDay } from "@/lib/format";
 import { formatMetricId } from "@/lib/utils";
 
 type JsonObject = { [key: string]: JsonValue };
@@ -25,9 +26,16 @@ const numeric = (value: JsonValue | undefined): null | number => {
     return null;
 };
 
-const day = (value: JsonValue | undefined) => text(value)?.slice(0, 10) ?? null;
+const DAY = /^\d{4}-\d{2}-\d{2}/u;
 
-/** A fact's period in words: "2025-09-28 – 2026-09-26" (duration) or "2026-09-26" (instant). */
+/** A stated day ("2026-09-26T00:00:00" → "Sep 26, 2026"); anything else (`-`, absent) = null. */
+const day = (value: JsonValue | undefined) => {
+    const stated = text(value)?.slice(0, 10) ?? null;
+
+    return stated && DAY.test(stated) ? formatDay(stated) : null;
+};
+
+/** A fact's period in words: "Sep 28, 2025 – Sep 26, 2026" (duration) or "Sep 26, 2026" (instant). */
 function periodText(fact: JsonObject): null | string {
     const start = day(fact.start_date);
 
@@ -36,6 +44,33 @@ function periodText(fact: JsonObject): null | string {
     if (start && end) return `${start} – ${end}`;
 
     return day(fact.instant_date) ?? end;
+}
+
+/**
+ * A raw fact id in words: `320193|RevenueFromContractWithCustomerExcludingAssessedTax|2025-09-28T00:00:00|2026-09-26T00:00:00|-|-`
+ * (cik | concept | start | end | …) → "RevenueFromContractWithCustomerExcludingAssessedTax · Sep 28, 2025 – Sep 26, 2026";
+ * null for anything of another shape.
+ */
+export function factIdText(id: string): null | string {
+    const parts = id.split("|");
+
+    if (parts.length < 4) return null;
+
+    const [cik, concept, start, end] = parts;
+
+    if (!/^\d+$/u.test(cik) || !concept) return null;
+
+    const period = periodText({ end_date: end, start_date: start });
+
+    return period ? `${concept} · ${period}` : concept;
+}
+
+/** A raw fact id inside a formula (no spaces; `|`-separated, led by the CIK). */
+const FACT_ID_IN_FORMULA = /\b\d+\|[A-Za-z][\w.:-]*\|[^\s|]*\|[^\s|]*(?:\|[^\s|]*)*/gu;
+
+/** A formula with each raw fact id in words ("… · Sep 28, 2025 – Sep 26, 2026"); other text kept as stated. */
+export function readableFormula(formula: string): string {
+    return formula.replace(FACT_ID_IN_FORMULA, id => factIdText(id) ?? id);
 }
 
 /** A segment / dimension object in words ("srt:ProductOrServiceAxis = aapl:IPhoneMember"); none = null. */
@@ -106,11 +141,21 @@ function operandModel(operand: JsonValue): FactOperandModel {
 
     const metricId = text(object.metric_id);
 
-    const label = metricId ? formatMetricId(metricId) || metricId : (text(object.concept) ?? text(object.label) ?? "Operand");
+    // A derived fact's operands name a raw fact by `id` (cik | concept | start | end | …) and carry
+    // `weighted_value` / `stored_value` (live answer 2026-11-22, F036).
+    const id = text(object.id);
+
+    const label = metricId
+        ? formatMetricId(metricId) || metricId
+        : (text(object.concept) ?? text(object.label) ?? (id ? factIdText(id) ?? id : null) ?? "Operand");
 
     const nested = Object.values(object).find(Array.isArray);
 
-    return { label, nested: Array.isArray(nested) ? nested.length : 0, value: numeric(object.value) };
+    return {
+        label,
+        nested: Array.isArray(nested) ? nested.length : 0,
+        value: numeric(object.value) ?? numeric(object.weighted_value) ?? numeric(object.stored_value),
+    };
 }
 
 function sourceModel(source: JsonValue): FactSourceModel {
@@ -125,7 +170,8 @@ function sourceModel(source: JsonValue): FactSourceModel {
         concept: text(object.concept) ?? text(raw.concept) ?? "—",
         period: periodText(raw),
         segment: segmentText(object.segment),
-        value: numeric(raw.value) ?? numeric(object.value),
+        // A derived source fact states its value under `derived` (the enriched fact it rests on).
+        value: numeric(raw.value) ?? numeric(object.value) ?? (isObject(object.derived) ? numeric(object.derived.value) : null),
     };
 }
 
