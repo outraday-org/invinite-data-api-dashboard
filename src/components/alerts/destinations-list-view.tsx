@@ -79,6 +79,13 @@ function columnsOf({ busy, onAction }: Actions): Array<ColumnDef<Destination>> {
         },
         { cell: ({ row }) => <span className="tabular-nums">{rateText(row.original.max_events_per_minute)}</span>, header: "Rate limit", id: "rate" },
         { cell: ({ row }) => digestText(row.original.digest_seconds), header: "Digest", id: "digest" },
+        {
+            cell: ({ row }) => (row.original.header_names.length > 0
+                ? <span className="font-mono">{row.original.header_names.join(", ")}</span>
+                : <span className="text-muted-foreground">None</span>),
+            header: "Headers",
+            id: "headers",
+        },
         { cell: ({ row }) => <span className="font-mono">{secretHintText(row.original.secret_hint)}</span>, header: "Secret", id: "secret" },
         { cell: ({ row }) => formatInstant(row.original.created_at), header: "Created", id: "created_at" },
         { cell: ({ row }) => <RowActions busy={busy.has(row.original.id)} destination={row.original} onAction={onAction} />, header: () => <span className="sr-only">Actions</span>, id: "actions" },
@@ -87,8 +94,8 @@ function columnsOf({ busy, onAction }: Actions): Array<ColumnDef<Destination>> {
 
 /**
  * The account's destinations (pure): URL with description, kind and preset, status with the disabled reason in its
- * tooltip and the failures in a row, rate limit, digest window, the secret's last four characters, created, row
- * actions; "Load more" by cursor.
+ * tooltip and the failures in a row, rate limit, digest window, the custom header NAMES (values are write-only), the
+ * secret's last four characters, created, row actions; "Load more" by cursor.
  */
 export function DestinationsListView({ actions, state }: { actions: Actions; state: DestinationsListState }) {
     const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;

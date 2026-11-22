@@ -71,6 +71,8 @@ describe("DestinationsListView (`GET /v1/destinations`)", () => {
 
         expect(row).toHaveTextContent("whsec_…abcd");
 
+        expect(within(row).getByRole("cell", { name: "X-Receiver-Token" })).toBeInTheDocument();
+
         const failing = screen.getByRole("link", { name: DESTINATION_DISABLED.url }).closest("tr")!;
 
         expect(failing).toHaveTextContent("14 failed in a row");
@@ -78,6 +80,8 @@ describe("DestinationsListView (`GET /v1/destinations`)", () => {
         expect(failing).toHaveTextContent("Batch webhook · Standard");
 
         expect(failing).toHaveTextContent("60 s");
+
+        expect(within(failing).getByRole("cell", { name: "None" })).toBeInTheDocument();
 
         expect(within(failing).getByLabelText(/Status Disabled: Disabled after only failures for 72 hours/)).toBeInTheDocument();
     });
