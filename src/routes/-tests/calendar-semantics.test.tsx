@@ -10,6 +10,7 @@ import {
     CalendarCallCell,
     CalendarReportCell,
     CalendarStatusBadge,
+    CELL_META_CLASS,
     hasNoCall,
 } from "@/routes/$ticker/earnings-calls/-components/calendar-semantics";
 
@@ -44,6 +45,21 @@ describe("calendar semantics", () => {
         expect(screen.getByText("first-party time · via wire · America/New_York")).toBeInTheDocument();
 
         expect(screen.getByText("Reported")).toBeInTheDocument();
+    });
+
+    it("the meta lines wrap at a fixed width (a nowrap table cell made the calendar wider than its column: no sticky day headings)", () => {
+        render(
+            <>
+                <CalendarReportCell calendar={CALENDAR_EVENT.calendar} />
+                <CalendarCallCell event={CALENDAR_EVENT} />
+            </>,
+        );
+
+        for (const text of ["Before open · from the filing's acceptance", "6-K · 0001193125-26-448358", "first-party time · via wire · America/New_York"]) {
+            const line = screen.getByText(text);
+
+            for (const name of CELL_META_CLASS.split(" ")) expect(line).toHaveClass(name);
+        }
     });
 
     it("a report without a call renders 'No call' (no time taken from the release) and its report", () => {

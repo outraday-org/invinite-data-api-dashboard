@@ -3,6 +3,7 @@ import type { V2CalendarStatus, V2Event, V2EventCalendar } from "@/lib/api/types
 import { Badge } from "@/components/ui/badge";
 import { dateStatusVariant } from "@/lib/earnings/format";
 import { formatDay } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 import { DATE_STATUS_LABELS } from "./call-status-badge";
 import { CallTime } from "./call-time";
@@ -42,6 +43,13 @@ export const CALL_TIME_QUALITY_LABELS: Record<CallTimeQuality, string> = {
     provisional: "provisional time",
     vendor: "vendor time",
 };
+
+/**
+ * The small meta lines under a call time / report day (quality · source · zone, the filing): they wrap at a fixed
+ * width, since a table cell does not (`whitespace-nowrap`) — unwrapped they made the calendar wider than its column at
+ * every screen width, so its day headings never stuck.
+ */
+export const CELL_META_CLASS = "text-muted-foreground block max-w-52 text-[0.625rem] whitespace-normal";
 
 const NO_CALL_STATUSES = new Set(["no_call", "not_expected"]);
 
@@ -97,14 +105,14 @@ export function CalendarReportCell({ calendar }: { calendar: null | undefined | 
     return (
         <div className="flex flex-col">
             <span className="tabular-nums whitespace-nowrap">{formatDay(report.date)}</span>
-            <span className="text-muted-foreground text-[0.625rem]">
+            <span className={CELL_META_CLASS}>
                 {[
                     report.time_kind ? REPORT_TIME_LABELS[report.time_kind] : null,
                     report.quality === "filing_acceptance" ? "from the filing's acceptance" : null,
                 ].filter(Boolean).join(" · ")}
             </span>
             {source?.accession && (
-                <span className="text-muted-foreground text-[0.625rem] tabular-nums">{`${source.form ?? "Filing"} · ${source.accession}`}</span>
+                <span className={cn(CELL_META_CLASS, "tabular-nums")}>{`${source.form ?? "Filing"} · ${source.accession}`}</span>
             )}
         </div>
     );
@@ -136,7 +144,7 @@ export function CalendarCallCell({ event }: { event: V2Event }) {
         <div className="flex flex-col">
             <CallTime event={event} />
             {(quality || source?.type) && (
-                <span className="text-muted-foreground text-[0.625rem]">
+                <span className={CELL_META_CLASS}>
                     {[
                         quality,
                         source?.type ? `via ${source.type}` : null,

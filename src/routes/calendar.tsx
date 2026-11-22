@@ -54,7 +54,7 @@ const COLUMNS: Array<ColumnDef<V2Event>> = [
         header: "Symbol",
         id: "symbol",
     },
-    { cell: ({ row }) => <div className="max-w-[220px] truncate">{row.original.company_name}</div>, header: "Company", id: "company_name" },
+    { cell: ({ row }) => <div className="max-w-[180px] truncate">{row.original.company_name}</div>, header: "Company", id: "company_name" },
     {
         cell: ({ row }) => (
             <div className="flex items-center gap-2">
