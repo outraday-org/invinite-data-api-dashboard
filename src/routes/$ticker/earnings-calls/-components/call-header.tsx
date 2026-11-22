@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Copyable } from "@/components/ui/copy-button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { eventLabel, formatInstant, SESSION_LABELS } from "@/lib/earnings/format";
-import { EXPIRED_REASON_LABELS } from "@/lib/earnings/labels";
+import { callTimeSourceLabel, EXPIRED_REASON_LABELS } from "@/lib/earnings/labels";
 import { formatDay } from "@/lib/format";
 
 import { AvailabilityIcons } from "./availability-icons";
@@ -63,9 +63,9 @@ function FilingFact({
 
 /** Where the start time came from and how sure it is ("edgar · high confidence"); nothing for a date-only call. */
 function callTimeProvenance(event: Pick<V2Event, "call_time_confidence" | "call_time_source">) {
-    if (event.call_time_source === null) return null;
+    if (!event.call_time_source) return null;
 
-    return [event.call_time_source, event.call_time_confidence ? `${event.call_time_confidence} confidence` : null].filter(Boolean).join(" · ");
+    return [callTimeSourceLabel(event.call_time_source), event.call_time_confidence ? `${event.call_time_confidence} confidence` : null].filter(Boolean).join(" · ");
 }
 
 /**

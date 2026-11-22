@@ -31,6 +31,45 @@ function sentenceCase(value: string) {
     return words.length === 0 ? words : words[0].toUpperCase() + words.slice(1);
 }
 
+/** How far a document / deck / press release is trusted (`trust_tier`, the contract's enum). */
+const TRUST_TIER_LABELS: Record<string, string> = {
+    confirmed_domain: "Company domain",
+    internal: "Internal",
+    sec: "SEC filing",
+    unconfirmed: "Unconfirmed (AI-approved)",
+    wire: "Newswire",
+};
+
+/** Where a call's start time came from (`call_time_source`, as the contract's description lists them). */
+const CALL_TIME_SOURCE_LABELS: Record<string, string> = {
+    edgar: "SEC filing",
+    estimate: "Estimate",
+    human: "Set by a person",
+    ir_feed: "Company IR feed",
+    provisional: "Provisional",
+    vendor: "Data vendor",
+    wire: "Newswire",
+};
+
+/** Where a press release was found (`PressRelease.origin`). */
+const PRESS_RELEASE_ORIGIN_LABELS: Record<string, string> = {
+    edgar: "8-K exhibit",
+    ir_page: "Company IR site",
+    wire: "Newswire",
+};
+
+/** "Company domain" for `confirmed_domain`; an unknown tier is sentence-cased, never shown as a code. */
+export const trustTierLabel = (tier: string) => TRUST_TIER_LABELS[tier] ?? sentenceCase(tier);
+
+/** "Company IR feed" for `ir_feed`; an unknown source is sentence-cased. */
+export const callTimeSourceLabel = (source: string) => CALL_TIME_SOURCE_LABELS[source] ?? sentenceCase(source);
+
+/** "8-K exhibit" for `edgar`; an unknown origin is sentence-cased. */
+export const pressReleaseOriginLabel = (origin: string) => PRESS_RELEASE_ORIGIN_LABELS[origin] ?? sentenceCase(origin);
+
+/** A free-text origin code (the deck's `origin`, "q4_reports") in words: "Q4 reports". */
+export const originCodeLabel = (origin: string) => sentenceCase(origin);
+
 /** "Revenue", "EPS (non-GAAP)", "Segment: qtl" for `segment:<slug>`; unknown values sentence-cased. */
 export function metricLabel(normalized: null | string) {
     if (!normalized) return "—";

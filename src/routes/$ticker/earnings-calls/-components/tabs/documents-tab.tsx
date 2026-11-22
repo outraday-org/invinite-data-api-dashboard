@@ -14,6 +14,7 @@ import { useV2InvestorDocument, useV2InvestorDocumentsInfinite } from "@/lib/api
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { DOCUMENT_SORT_VALUES, pagesOf } from "@/lib/earnings/documents";
 import { formatBytes } from "@/lib/earnings/format";
+import { originCodeLabel, trustTierLabel } from "@/lib/earnings/labels";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -265,10 +266,10 @@ export function DocumentsTab({ event, eventId, onSearchChange, onTabChange, sear
                                             </TableCell>
                                             <TableCell className="max-w-xs truncate">{doc.title ?? "Untitled"}</TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {[doc.producer, doc.source_label].filter(Boolean).join(" · ") || doc.origin}
+                                                {[doc.producer, doc.source_label].filter(Boolean).join(" · ") || originCodeLabel(doc.origin)}
                                             </TableCell>
                                             <TableCell>
-                                                {doc.trust_tier ? <Badge variant="secondary">{doc.trust_tier}</Badge> : "—"}
+                                                {doc.trust_tier ? <Badge variant="secondary">{trustTierLabel(doc.trust_tier)}</Badge> : "—"}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">{doc.content_type ?? "—"}</TableCell>
                                             <TableCell className="text-right tabular-nums">{formatBytes(doc.bytes)}</TableCell>

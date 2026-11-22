@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2PressRelease } from "@/lib/api/queries";
 import { edgarFolderUrl } from "@/lib/earnings/edgar";
+import { pressReleaseOriginLabel, trustTierLabel } from "@/lib/earnings/labels";
 import { formatInstant } from "@/lib/format";
 import { paragraphs } from "@/lib/utils";
 
@@ -31,8 +32,8 @@ export function PressReleaseTab({ event, eventId }: CallTabProps) {
                 <div className="text-sm font-medium">{data.title ?? "Press release"}</div>
                 <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
                     {data.published_at && <span>{formatInstant(data.published_at)}</span>}
-                    <Badge variant="outline">{data.origin}</Badge>
-                    {data.trust_tier && <Badge variant="secondary">{data.trust_tier}</Badge>}
+                    <Badge variant="outline">{pressReleaseOriginLabel(data.origin)}</Badge>
+                    {data.trust_tier && <Badge variant="secondary">{trustTierLabel(data.trust_tier)}</Badge>}
                     {edgarUrl && (
                         <a className="underline underline-offset-4" href={edgarUrl} rel="noopener noreferrer" target="_blank">
                             EDGAR filing

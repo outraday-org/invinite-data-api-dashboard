@@ -1,16 +1,20 @@
 import { describe, expect, it } from "vitest";
 
 import {
+    callTimeSourceLabel,
     formatGuidanceRange,
     formatGuidanceValue,
     formatSigned,
     highlightSpans,
     highlightTerms,
     metricLabel,
+    originCodeLabel,
     participationDetailText,
     participationKindLabel,
     percent,
+    pressReleaseOriginLabel,
     roleGroup,
+    trustTierLabel,
 } from "./labels";
 
 describe("highlightTerms", () => {
@@ -166,5 +170,23 @@ describe("labels", () => {
         expect(participationDetailText({ personIds: ["a"], role: "analyst" })).toBe("Analyst");
 
         expect(participationDetailText(null)).toBe("");
+    });
+});
+
+describe("source codes in words (UI walk F062)", () => {
+    it("labels trust tiers, call-time sources and press release origins; an unknown code is sentence-cased", () => {
+        expect(trustTierLabel("confirmed_domain")).toBe("Company domain");
+
+        expect(trustTierLabel("sec")).toBe("SEC filing");
+
+        expect(trustTierLabel("new_tier")).toBe("New tier");
+
+        expect(callTimeSourceLabel("ir_feed")).toBe("Company IR feed");
+
+        expect(callTimeSourceLabel("edgar")).toBe("SEC filing");
+
+        expect(pressReleaseOriginLabel("edgar")).toBe("8-K exhibit");
+
+        expect(originCodeLabel("q4_reports")).toBe("Q4 reports");
     });
 });

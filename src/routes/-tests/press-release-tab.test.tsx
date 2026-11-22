@@ -44,6 +44,18 @@ describe("PressReleaseTab", () => {
         expect(screen.getByRole("link", { name: "News item" })).toHaveAttribute("href", `/NVDA/news?item=${RELEASE.news_id}`);
     });
 
+    it("names the origin and trust tier in words, not codes (UI walk F062)", () => {
+        vi.mocked(useV2PressRelease).mockReturnValue({ data: RELEASE, error: null } as never);
+
+        render(<PressReleaseTab {...props} />);
+
+        expect(screen.getByText("Company IR site")).toBeInTheDocument();
+
+        expect(screen.getByText("Company domain")).toBeInTheDocument();
+
+        expect(screen.queryByText("confirmed_domain")).toBeNull();
+    });
+
     it("shows no news link without a news item", () => {
         vi.mocked(useV2PressRelease).mockReturnValue({ data: { ...RELEASE, news_id: null }, error: null } as never);
 

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2Slides } from "@/lib/api/queries";
+import { originCodeLabel, trustTierLabel } from "@/lib/earnings/labels";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -83,8 +84,8 @@ export function SlidesTab({ eventId }: CallTabProps) {
                         <span className="text-muted-foreground">
                             {deck.pages === null ? "Pages —" : `${deck.pages} pages`}
                         </span>
-                        <Badge variant="outline">{deck.origin}</Badge>
-                        {deck.trust_tier && <Badge variant="secondary">{deck.trust_tier}</Badge>}
+                        <Badge variant="outline">{originCodeLabel(deck.origin)}</Badge>
+                        {deck.trust_tier && <Badge variant="secondary">{trustTierLabel(deck.trust_tier)}</Badge>}
                     </div>
                     {deck.origin !== "player" && <DeckViewer url={deck.url} />}
                 </div>

@@ -168,7 +168,7 @@ describe("CallHeader (O7 group 5 facts)", () => {
     it("links the results filing and the periodic report", () => {
         render(<CallHeader event={AAPL_Q4_EVENT} />);
 
-        expect(screen.getByText("edgar · high confidence")).toBeInTheDocument();
+        expect(screen.getByText("SEC filing · high confidence")).toBeInTheDocument();
 
         expect(screen.getByText("Results filing")).toBeInTheDocument();
 
@@ -184,7 +184,7 @@ describe("CallHeader (O7 group 5 facts)", () => {
     it("marks a low-confidence time and names why the row expired", () => {
         render(<CallHeader event={EXPIRED_ESTIMATE_EVENT} />);
 
-        expect(screen.getByText("estimate · low confidence")).toHaveAttribute("title", "The start time may still change");
+        expect(screen.getByText("Estimate · low confidence")).toHaveAttribute("title", "The start time may still change");
 
         expect(screen.getByText("Estimate replaced by the confirmed date")).toBeInTheDocument();
 
