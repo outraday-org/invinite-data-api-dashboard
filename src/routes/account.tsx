@@ -74,8 +74,8 @@ export function AccountSummary({ me }: { me: V2Me }) {
                         {me.account.name ? <span className="text-muted-foreground">{me.account.name}</span> : null}
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                        <Stat label="Requests / second" value={formatNumber(limits.requests_per_second)} />
-                        <Stat label="Requests / minute" value={formatNumber(limits.requests_per_minute)} />
+                        <Stat label="Requests / sec" value={formatNumber(limits.requests_per_second)} />
+                        <Stat label="Requests / min" value={formatNumber(limits.requests_per_minute)} />
                     </div>
                 </CardContent>
             </Card>
