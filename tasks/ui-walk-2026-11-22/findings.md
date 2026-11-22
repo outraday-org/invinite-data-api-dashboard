@@ -864,6 +864,87 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Evidence: req_01M81WBDNBE5AF0V8XH42YT2XF (404 `not_covered`); `DividendsView` used `ErrorState`
 - Outcome: fixed in 5ac5b83 (`RequestErrorState` with `notFound`; test `reference-pages.test.tsx`; re-checked: "Not covered · No dividend data is available for VOO.")
 
+### F094 — Every docs link (and `/licensing`, "Create one") points to `data.invinite.com`, which has no DNS record
+- Check: T7.1 · Severity: major · Class: api
+- Where: http://localhost:3001/AAPL/filings → API → "Docs: listFilings" (`https://data.invinite.com/docs/get--_v1_filings`); also the sidebar's Licensing, `/licensing` 301, the key card's "Create one" / account links (`src/lib/app-url.ts`)
+- Steps: open the API sheet, follow a docs link; `dig data.invinite.com` (local resolver, 1.1.1.1 and 8.8.8.8)
+- Expected: the docs page of the operation opens (CLAUDE.md O6 `docsUrl`; the spec's own `docs_url`s name the same host)
+- Actual: the browser pane refuses the navigation; `curl` "Could not resolve host"; no A / CNAME record on public resolvers (`status.data.invinite.com` and `api.data.invinite.com` resolve). The dashboard builds the links as documented — the Data app origin is not live
+- Evidence: link `href`s / `rel="noopener noreferrer"` / `target="_blank"` correct in the sheet; DNS answers empty
+- Outcome: API → backend tasklist (Task 11: publish the Data app / docs at `data.invinite.com`, or change the documented origin in the spec and `app-url.ts` together)
+
+### F095 — API sheet JSON tree: the last chunk's button reads "Show 26 more of 26"
+- Check: T7.3 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/AAPL/filings → API → fiscal periods → Show answer (JSON) (76 rows)
+- Steps: open the answer; read the button under the 50 rows
+- Expected: a count that says what is shown of all
+- Actual: "Show 26 more of 26" (it meant 26 of the 26 remaining; reads as a tautology)
+- Evidence: `json-tree.tsx` label
+- Outcome: fixed in ffad973 ("Show 26 more (50 of 76 shown)"; test `api-inspector.test.tsx`; re-checked)
+
+### F096 — A URL day that is no calendar day (`?from=2026-13-45`) renders a raw zod validation dump
+- Check: T7.9 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/AAPL/insider-trades?from=2026-13-45 (also `/AAPL/filings?from=…`, every route using `optionalDay`)
+- Steps: open the URL
+- Expected: an invalid value falls back to the default without an error (URL state rule)
+- Actual: `optionalDay` only checked the shape `\d{4}-\d{2}-\d{2}`, so the day reached the server function's `z.iso.date()`: "Error · Failed to load insider trades" + the JSON issue list (`invalid_format`, the date regex, `filedAtGte`)
+- Evidence: page text; no Data API request in the sheet (refused before it)
+- Outcome: fixed in 48a50a4 (`optionalDay` = `z.iso.date()`; test `url-state.test.ts`; re-checked: the param is dropped, 40 filings / 50 trades listed)
+
+### F097 — Several filters and tabs add a history entry per change (Back steps through them)
+- Check: T7.8 · Severity: minor · Class: dashboard
+- Where: `/AAPL/financials` view tabs, `/calendar` filters, `/ipo-calendar` filters, `/market-holidays` tab, `/account` window, `/institutions` sort, `/AAPL/documents` category / section / kind / year, the news / news-feed item close
+- Steps: switch a tab / filter (pushState counted in the page)
+- Expected: written `IN_PLACE` (`replace: true, resetScroll: false`), except `/search`'s submitted query (CLAUDE.md URL state rule)
+- Actual: `navigate({ resetScroll: false, … })` without `replace`: one history entry each (Ratios → Standardized pushed `/AAPL/financials`); closing a news item pushed too, so Back reopened it. Holders, insider trades, news tabs, call page were already in place
+- Evidence: `history.pushState` counter; grep of `navigate({` calls
+- Outcome: fixed in a04bfb3 (9 routes use `IN_PLACE`; a source-scan test in `url-state.test.ts` fails on a same-page search navigation without it; CLAUDE.md URL state rule; re-checked: no push on financials / holidays / documents)
+
+### F098 — Phone width: the sidebar sheet stays open after picking a page
+- Check: T7.12 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/account at 390 × 844 → Toggle sidebar → Funds
+- Steps: open the sheet, pick a link
+- Expected: the sheet closes after navigation
+- Actual: `/funds` loaded under a still-open sheet covering the page
+- Evidence: `[role=dialog]` "Sidebar" present after the navigation
+- Outcome: fixed in 2772c86 (the mobile sheet closes on a link click, `ui/sidebar.tsx`; test `src/components/ui/sidebar.test.tsx`; re-checked)
+
+### F099 — Ratios: every chart button and chart title name the category ("Chart Liquidity"), not the metric
+- Check: T7.17 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/AAPL/financials?view=ratios
+- Steps: read the chart buttons' names; open a chart
+- Expected: the charted metric named (CLAUDE.md "the series named by the metric")
+- Actual: ratios put the metric in the first (group) column and the category in `label`; the button / dialog used `label` → "Chart Liquidity" for Current Ratio and Quick Ratio alike
+- Evidence: `aria-label` of the row buttons
+- Outcome: fixed in 590c65b (`chartName` = "Current Ratio · Liquidity"; test `financials-v2-pages.test.tsx`; re-checked: dialog title "Current Ratio · Liquidity")
+
+### F100 — A focused tab panel shows no focus ring
+- Check: T7.15 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/AAPL/holders (Tab past the tab list)
+- Steps: Tab from "Overview" into the panel
+- Expected: a visible focus indicator everywhere
+- Actual: the Base UI panel takes focus (`tabindex=0`) but `TabsContent` was `outline-none` with no ring
+- Evidence: computed style of the focused `[role=tabpanel]`
+- Outcome: fixed in 5bc30f6 (`focus-visible:ring-[3px]`; test `src/components/ui/tabs.test.tsx`; re-checked)
+
+### F101 — Closing a URL-driven dialog drops focus to the page: the DataTable remounted every cell on a rebuilt column set
+- Check: T7.15 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/AAPL/filings → focus a row's "HTML" → Enter → Escape
+- Steps: open and close the HTML viewer from the keyboard
+- Expected: focus returns to the trigger
+- Actual: focus on `<body>`: the `?filing=` change rebuilt `filingColumns(…)`, and `flexRender` mounts a function template as its own component type, so every cell (and the sort header) remounted — the focused button was a detached node. Same for any `DataTable` page whose columns are built in render (sort toggles, row actions)
+- Evidence: the focused node `document.contains` false after opening
+- Outcome: fixed in fad704e (`DataTable` calls templates inside one stable `ColumnContent`; test `data-table.test.tsx`; re-checked: focus back on "HTML", rows / calendar / holders render)
+
+### F102 — Icon-only tree toggles and many filter selects have no accessible name
+- Check: T7.17 · Severity: minor · Class: dashboard
+- Where: `/AAPL/financials` (statement tree chevrons, statement / segment / category / basis / horizon / sign selects), `/calendar` (session, event type, date certainty, event status), `/AAPL/news` filters, `/sec/1067983` form select
+- Steps: list buttons / comboboxes without a name (`read_page`, accessible-name check)
+- Expected: every icon-only button and form field named
+- Actual: the chevron buttons had no name or state; `FilterSelect`'s `aria-label` was optional and 17 uses left it out (a select trigger shows its value, not what it filters)
+- Evidence: page scan (the TanStack devtools' own buttons excluded — dev only)
+- Outcome: fixed in 12b1c8a ("Expand / Collapse <row>" + `aria-expanded`; `FilterSelect` requires `aria-label`, every use named; test `financials-v2-pages.test.tsx`; re-checked: no unnamed combobox on financials / calendar)
+
 ## Summary (filled by Task 11)
 
 | Class | blocker | major | minor | nit | fixed | API tasklist | other |
