@@ -50,7 +50,15 @@ export const loadedCount = (count: number, hasMore: boolean) => `${count}${hasMo
  * past call is loaded ("3", not "3+"); the past count is "40+" while a next page exists.
  */
 export function callTabCounts(upcoming: number, past: number, hasNextPage: boolean) {
-    return { past: loadedCount(past, hasNextPage), upcoming: loadedCount(upcoming, hasNextPage && past === 0) };
+    return { past: loadedCount(past, hasNextPage), upcoming: loadedCount(upcoming, tabHasMore("upcoming", past, hasNextPage)) };
+}
+
+/**
+ * Whether a tab can still grow by "Load more": further pages of the newest-first list hold only older calls, so the
+ * Upcoming tab is complete (no button) once a past call is loaded.
+ */
+export function tabHasMore(tab: "past" | "upcoming", past: number, hasNextPage: boolean) {
+    return tab === "upcoming" ? hasNextPage && past === 0 : hasNextPage;
 }
 
 /** The columns of a tab: an upcoming call has not started or ended, so the Upcoming tab has no such columns. */
@@ -260,7 +268,7 @@ function EarningsCallsPage() {
                                 columns={shownColumns}
                                 emptyText={tab === "upcoming" ? "No upcoming calls." : "No past calls."}
                                 exportConfig={{ dataset: `calls-${tab}`, scope: ticker }}
-                                hasNextPage={hasNextPage}
+                                hasNextPage={tabHasMore(tab, past.length, hasNextPage)}
                                 isFetchingNextPage={isFetchingNextPage}
                                 isLoading={isLoading}
                                 onLoadMore={() => void fetchNextPage()}

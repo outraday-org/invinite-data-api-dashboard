@@ -5,7 +5,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CALENDAR_EVENT } from "@/lib/earnings/calendar-fixtures";
-import { callTabCounts, columnsForTab, loadedCount } from "@/routes/$ticker/earnings-calls/index";
+import { callTabCounts, columnsForTab, loadedCount, tabHasMore } from "@/routes/$ticker/earnings-calls/index";
 import { addressLines, CompanyFactTilesView, CoverageCard, OverviewTilesView, ownershipText } from "@/routes/$ticker/index";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -118,6 +118,16 @@ describe("calls list", () => {
         expect(callTabCounts(3, 37, true)).toEqual({ past: "37+", upcoming: "3" });
 
         expect(callTabCounts(40, 0, true)).toEqual({ past: "0+", upcoming: "40+" });
+    });
+
+    it("the Upcoming tab offers no \"Load more\" once a past call is loaded (UI walk F060)", () => {
+        expect(tabHasMore("upcoming", 39, true)).toBe(false);
+
+        expect(tabHasMore("upcoming", 0, true)).toBe(true);
+
+        expect(tabHasMore("past", 39, true)).toBe(true);
+
+        expect(tabHasMore("past", 39, false)).toBe(false);
     });
 
     it("the Upcoming tab has no Started / Ended columns", () => {
