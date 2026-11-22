@@ -87,7 +87,7 @@ export function shouldAutoLoad(state: { hasNextPage: boolean; isFetching: boolea
 export function loadedEventsNote(count: number, hasNextPage: boolean): null | string {
     if (count === 0) return null;
 
-    if (!hasNextPage) return `All ${count} events, newest first.`;
+    if (!hasNextPage) return count === 1 ? "The only event." : `All ${count} events, newest first.`;
 
     return `${count} events loaded, newest of them first. The API lists events oldest first and more recent ones exist: Load more.`;
 }

@@ -55,6 +55,8 @@ describe("events", () => {
 
         expect(loadedEventsNote(3, false)).toBe("All 3 events, newest first.");
 
+        expect(loadedEventsNote(1, false)).toBe("The only event.");
+
         expect(loadedEventsNote(2000, true)).toContain("more recent ones exist");
 
         expect(loadedEventsNote(0, false)).toBeNull();
