@@ -70,7 +70,8 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
   `meta.index.matches` — examined / total or "at least", order, `complete_since`, filed range — and `hint` /
   `narrow_with`; a hit links `/filings/$accession`, since a hit names no company).
 - **`/filings/$accession`** (`src/routes/filings/$accession.tsx`, pure views `-components/filing-detail-views.tsx`):
-  header from `useV2Filing(accession, ["documents"])` (the cache the HTML dialog and source panel share); tabs
+  header from `useV2Filing(accession, ["documents"])` (the cache the HTML dialog and source panel share; a malformed
+  `$accession` — `isAccessionParam` — asks nothing and says "… is not an accession number"); tabs
   `?tab=` Documents (default) · Facts (`/facts`, `?tag=` concepts) · Notes (`/notes`, `?noteTag=`) · Review chain
   (`/review-chain`, `?depth=` 1–6, `?direction=up|down`; nodes / edges / twins / completeness are free JSON read through
   guards) · Holdings (`/holdings`, only for `hasFiledHoldings` = 13F-HR* / NPORT-P*; `meta.family`) · Parties &

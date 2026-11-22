@@ -5,6 +5,7 @@ import {
     blocksFrom,
     blocksLeadingTo,
     citationText,
+    isAccessionParam,
     latest13fPeriodEnd,
     metaSourceParts,
     pageLabel,
@@ -121,6 +122,16 @@ describe("helpers", () => {
         expect(latest13fPeriodEnd(new Date("2026-11-20T12:00:00Z"))).toBe("2026-09-30");
 
         expect(latest13fPeriodEnd(new Date("2026-02-20T12:00:00Z"))).toBe("2025-12-31");
+    });
+
+    it("isAccessionParam: dashed or 18 digits; `/filings/123` asks nothing (F044)", () => {
+        expect(isAccessionParam("0000320193-26-000026")).toBe(true);
+
+        expect(isAccessionParam("000032019326000026")).toBe(true);
+
+        expect(isAccessionParam("123")).toBe(false);
+
+        expect(isAccessionParam("0000320193-26-00002")).toBe(false);
     });
 
     it("scalarEntries keeps scalars only, readable keys", () => {

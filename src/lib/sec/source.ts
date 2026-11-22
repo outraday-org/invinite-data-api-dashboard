@@ -234,6 +234,14 @@ export function metaSourceParts(source: null | V2MetaSourceView): Array<string> 
     ].filter(part => typeof part === "string");
 }
 
+/** An SEC accession number as the API takes it: `0000320193-26-000026` or its 18 digits. */
+const ACCESSION = /^(\d{10}-\d{2}-\d{6}|\d{18})$/u;
+
+/** Whether a route's `$accession` is one the API takes (else the page says so and asks nothing, F044). */
+export function isAccessionParam(value: string) {
+    return ACCESSION.test(value.trim());
+}
+
 const BLOCK_ID = /^b(\d+)$/;
 
 /** An open-ended block range from `blockId` (the store clamps the end to the version's last block). */
