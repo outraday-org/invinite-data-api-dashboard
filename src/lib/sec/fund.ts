@@ -167,12 +167,15 @@ export const HOLDER_SECTION_STATE_LABELS: Record<V2HolderSectionState, string> =
 
 /** The store's reasons of an empty / partial holder source; another reason is shown as its code in words. */
 const HOLDER_REASON_TEXT: Record<string, string> = {
+    coverage_partial: "Not every report of this source is loaded yet, so the list may be incomplete.",
     etn_cusip_unknown: "The note's own CUSIP is not known yet, so its holders cannot be told apart from its issuing bank's other notes.",
     fund_cusip_unknown: "The fund's own CUSIP is not known yet, so its holders cannot be told apart from its trust's other funds.",
     fund_not_linked: "The fund is not linked to its SEC series yet.",
     no_etf_holders: "No ETF with an issuer holdings file holds this security.",
+    upstream_unavailable: "This source is temporarily unavailable; try again later.",
 };
 
+/** A holders reason (`meta.reason`, `meta.sections[].reason`; the spec types it as text) in words, else the code with spaces. */
 export function holderReasonText(reason: null | string | undefined): null | string {
     if (!reason) return null;
 

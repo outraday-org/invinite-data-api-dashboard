@@ -14,6 +14,7 @@ import {
     fundWeightsByDimension,
     HOLDER_SECTION_STATE_LABELS,
     HOLDER_SOURCE_LABELS,
+    holderReasonText,
     netAssetsScopeText,
 } from "@/lib/sec/fund";
 import { V2_FUND_POSITIONS, V2_FUND_WEIGHTS } from "@/lib/sec/v2-fixtures";
@@ -75,6 +76,18 @@ const enumOf = (node: Schema | undefined): Array<string> => {
 
     return values;
 };
+
+describe("holder reasons", () => {
+    it("the overview's live reasons read as sentences, an unknown code as words (F047)", () => {
+        expect(holderReasonText("coverage_partial")).toBe("Not every report of this source is loaded yet, so the list may be incomplete.");
+
+        expect(holderReasonText("upstream_unavailable")).toBe("This source is temporarily unavailable; try again later.");
+
+        expect(holderReasonText("some_new_reason")).toBe("some new reason");
+
+        expect(holderReasonText(null)).toBeNull();
+    });
+});
 
 describe("every contract enum value has its label", () => {
     it("instrument types and fund structures", () => {
