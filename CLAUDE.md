@@ -366,7 +366,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   answer that is not an object (none today) or a `queryFn` that returns a transformed copy is not.
 - **Inspector**: `PageHeader` always ends in `ApiButton` (`src/components/api/api-sheet.tsx`; nothing outside a
   `QueryClientProvider`, so pure view tests are unchanged): a side sheet listing `useViewRequests()` = the requests of
-  every query with a mounted observer (each page of a list), minus `/v1/me`; per request method + path + query, summary,
+  every query with an enabled observer (each page of a list; a hook mounted with `enabled: false`, e.g. a closed catalog tab, is not listed), minus `/v1/me`; per request method + path + query, summary,
   plan badge, base cost + charged, HTTP status, request id (copy), `curlOf` (ALWAYS `$INVINITE_API_KEY`), `cliOf`
   (`invd <group> <action> <positional> --<flag>`, flags = the CLI's `flagName`), the docs link and the answer as a
   `JsonTree` (`json-tree.tsx`: open to depth 2, children mounted only when open and 50 at a time) with copy / download.

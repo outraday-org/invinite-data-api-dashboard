@@ -29,8 +29,8 @@ const meta = (patch: Partial<RequestMeta> = {}): RequestMeta => ({
     ...patch,
 });
 
-function Observed({ answer, queryKey }: { answer: unknown; queryKey: string }) {
-    useQuery({ initialData: answer, queryFn: () => answer, queryKey: [queryKey], staleTime: Number.POSITIVE_INFINITY });
+function Observed({ answer, enabled = true, queryKey }: { answer: unknown; enabled?: boolean; queryKey: string }) {
+    useQuery({ enabled, initialData: answer, queryFn: () => answer, queryKey: [queryKey], staleTime: Number.POSITIVE_INFINITY });
 
     return null;
 }
@@ -84,6 +84,34 @@ describe("API inspector", () => {
         expect(document.body.innerHTML).not.toContain(STORED_KEY);
 
         expect(document.body.innerHTML).toContain("$INVINITE_API_KEY");
+    });
+
+    it("a hook switched off (a closed tab) keeps its cached answer but is not listed", async () => {
+        const client = new QueryClient({ defaultOptions: { queries: { structuralSharing: shareWithRequests } } });
+
+        const open = { data: [], has_more: false, next_cursor: null };
+
+        const closed = { data: [], has_more: false, next_cursor: null };
+
+        fileRequests(open, [meta({ operationId: "listFormCatalog", path: "/v1/catalog/forms", query: {} })]);
+
+        fileRequests(closed, [meta({ operationId: "listMetricCatalog", path: "/v1/catalog/metrics", query: {} })]);
+
+        render(
+            <QueryClientProvider client={client}>
+                <Observed answer={open} queryKey="forms" />
+                <Observed answer={closed} enabled={false} queryKey="metrics" />
+                <ApiButton />
+            </QueryClientProvider>,
+        );
+
+        fireEvent.click(screen.getByRole("button", { name: "API" }));
+
+        expect(await screen.findByText("/v1/catalog/forms")).toBeInTheDocument();
+
+        expect(screen.getAllByTestId("api-request")).toHaveLength(1);
+
+        expect(screen.queryByText("/v1/catalog/metrics")).toBeNull();
     });
 
     it("says so when the page made no request", () => {

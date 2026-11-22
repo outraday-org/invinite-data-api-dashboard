@@ -27,15 +27,16 @@ const answersOf = (data: unknown): ReadonlyArray<unknown> => {
 };
 
 /**
- * The requests of every query the page shows right now (a query with a mounted observer), in cache order, each page
- * of a list in order. `/v1/me` (the key gate's, on every page) is left out. A query whose answer carries no filed
+ * The requests of every query the page shows right now (a query with an enabled observer: a mounted hook switched off
+ * by `enabled: false` — the closed tabs of the catalog — is not this view's), in cache order, each page of a list in
+ * order. `/v1/me` (the key gate's, on every page) is left out. A query whose answer carries no filed
  * requests (fixtures, an array answer) adds nothing.
  */
 export function viewRequestsOf(queries: ReadonlyArray<Query>): Array<ViewRequest> {
     const out: Array<ViewRequest> = [];
 
     for (const query of queries) {
-        if (query.getObserversCount() === 0 || isMeQueryKey(query.queryKey)) continue;
+        if (!query.isActive() || isMeQueryKey(query.queryKey)) continue;
 
         answersOf(query.state.data).forEach((answer, pageIndex) => {
             requestsOf(answer).forEach((meta, index) => {
