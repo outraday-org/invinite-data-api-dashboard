@@ -126,6 +126,18 @@ describe("Statements (`/v1/financials/*`)", () => {
         expect(screen.getByText("Services")).toBeInTheDocument();
     });
 
+    it("presentation: a newest period without a filed tree (an as-reported Q4) still shows the older periods' tree (F037)", () => {
+        const filed = V2_AS_REPORTED_PRESENTATION.data[0];
+
+        const q4 = { ...filed, fiscal_quarter: 4, statements: { income_statement: { facts: [] } } };
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[{ ...V2_AS_REPORTED_PRESENTATION, data: [q4, filed] }]} statement="income-statement" view="presentation" />);
+
+        expect(screen.getByText("Total net sales")).toBeInTheDocument();
+
+        expect(screen.getByText("Products")).toBeInTheDocument();
+    });
+
     it("pending coverage: the statements-are-being-prepared notice, never 'No financial data'", () => {
         render(<FinancialsStatementsView {...list} basis="standardized" pages={[V2_STANDARDIZED_PENDING]} statement="income-statement" view="summary" />);
 

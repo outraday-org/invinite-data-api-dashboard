@@ -32,7 +32,8 @@ export function FinancialsPresentationTable({
     const canonicalTree = React.useMemo(() => {
         const out: Array<Omit<TreeRow, "values">> = [];
 
-        buildTreeRows(typedPeriods[0]?.facts ?? [], 0, null, out);
+        // The tree of the newest period that states one: an as-reported Q4 (filed only inside the 10-K) is empty (F037).
+        buildTreeRows(typedPeriods.find(period => period.facts.length > 0)?.facts ?? [], 0, null, out);
 
         return out;
     }, [typedPeriods]);
