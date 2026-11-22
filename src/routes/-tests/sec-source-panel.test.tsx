@@ -7,6 +7,7 @@ import type { V2DocumentFigureResponse, V2DocumentVersionResponse } from "@/lib/
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { NO_PUBLIC_COPY, SecBlocksView, SecFigureView, V2FilingDocumentsView } from "@/components/sec/sec-source-panel";
 import { ApiRequestError } from "@/lib/api/errors";
+import { formatDay } from "@/lib/format";
 import { V2_DOCUMENT_VERSION, V2_FILING_10K } from "@/lib/sec/v2-fixtures";
 
 // The views are rendered with their data directly: keep the server functions (TanStack Start) unloaded.
@@ -169,6 +170,11 @@ describe("filing documents (`/v1/filings/{accession}?expand=documents`)", () => 
         const onRead = vi.fn();
 
         render(<V2FilingDocumentsView data={V2_FILING_10K} error={null} isLoading={false} onRead={onRead} selectedFilename={null} />);
+
+        // Days formatted, never the raw ISO string (F038).
+        expect(screen.getByText(`Filed ${formatDay(V2_FILING_10K.filing_date)}`)).toBeInTheDocument();
+
+        expect(screen.queryByText(`Filed ${V2_FILING_10K.filing_date}`)).toBeNull();
 
         const primary = screen.getByText("aapl-20260926.htm").closest("tr")!;
 

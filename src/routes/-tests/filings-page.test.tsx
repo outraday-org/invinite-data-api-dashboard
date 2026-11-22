@@ -83,7 +83,7 @@ describe("filings row", () => {
     it("an unmatched period shows its period end; no period at all shows a dash", () => {
         const { rerender } = render(list({ ...ROW, fiscalQuarter: null, fiscalYear: null }));
 
-        expect(screen.getByText("2026-09-26")).toBeInTheDocument();
+        expect(screen.getByText("Sep 26, 2026")).toBeInTheDocument();
 
         rerender(list({ ...ROW, fiscalQuarter: null, fiscalYear: null, periodEnd: null }));
 
@@ -133,11 +133,11 @@ describe("filings row: items, EDGAR, details, live (O7 group 3)", () => {
             { count: 1, form: "8-K", newest_filing_date: "2026-11-19" },
         ];
 
-        expect(facetSummary(facet, "10-K")).toBe("31 10-K filings, newest filed 2026-11-03");
+        expect(facetSummary(facet, "10-K")).toBe("31 10-K filings, newest filed Nov 3, 2026");
 
-        expect(facetSummary(facet, "8-K")).toBe("1 8-K filing, newest filed 2026-11-19");
+        expect(facetSummary(facet, "8-K")).toBe("1 8-K filing, newest filed Nov 19, 2026");
 
-        expect(facetSummary(facet, null)).toBe("Newest filing 2026-11-19");
+        expect(facetSummary(facet, null)).toBe("Newest filing Nov 19, 2026");
 
         expect(facetSummary(facet, "S-1")).toBeNull();
 

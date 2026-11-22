@@ -11,6 +11,7 @@ import { Notice } from "@/components/ui/notice";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2DocumentFigure, useV2DocumentVersion, useV2Filing } from "@/lib/api/queries";
+import { formatDay } from "@/lib/format";
 import { READINESS_TEXT, reasonText } from "@/lib/sec/readiness";
 import {
     blocksBefore,
@@ -265,8 +266,8 @@ export function V2FilingDocumentsView({
         <section aria-label="Filing documents" className="flex flex-col gap-2">
             <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
                 <Badge variant="outline">{data.form}</Badge>
-                <span>{`Filed ${data.filing_date}`}</span>
-                {data.report_date && <span>{`Period ${data.report_date}`}</span>}
+                <span>{`Filed ${formatDay(data.filing_date)}`}</span>
+                {data.report_date && <span>{`Period ${formatDay(data.report_date)}`}</span>}
                 {data.edgar_index_url.startsWith("https://www.sec.gov/") && (
                     // An outbound link to EDGAR; this app never fetches sec.gov.
                     <a className={linkClass} href={data.edgar_index_url} rel="noopener noreferrer" target="_blank">

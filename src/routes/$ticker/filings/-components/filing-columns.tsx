@@ -55,7 +55,7 @@ export function filingColumns({
             id: "accession",
         },
         {
-            cell: ({ row }) => <span className="text-muted-foreground">{fiscalPeriodLabel(row.original) ?? row.original.periodEnd ?? DASH}</span>,
+            cell: ({ row }) => <span className="text-muted-foreground">{fiscalPeriodLabel(row.original) ?? (row.original.periodEnd ? formatDay(row.original.periodEnd) : DASH)}</span>,
             header: "Fiscal Period",
             id: "period",
         },

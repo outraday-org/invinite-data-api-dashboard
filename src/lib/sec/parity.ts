@@ -9,6 +9,8 @@
 import type { CompanyFiscalPeriod, V2Filing, V2FormFacet } from "@/lib/api/types";
 import type { V2FilingDocumentView } from "@/lib/sec/source";
 
+import { formatDay } from "@/lib/format";
+
 export type FilingListRow = {
     accessionNumber: string;
     calendarQuarter: null | number;
@@ -57,7 +59,7 @@ export function toFilingListRow(row: V2Filing, periods: ReadonlyMap<string, Comp
     };
 }
 
-/** "31 10-K filings, newest filed 2026-11-03" (one form) or "Newest filing 2026-11-19" (the whole facet); null = unknown. */
+/** "31 10-K filings, newest filed Nov 3, 2026" (one form) or "Newest filing Nov 19, 2026" (the whole facet); null = unknown. */
 export function facetSummary(facet: ReadonlyArray<V2FormFacet> | undefined, form: null | string): null | string {
     const entries = facet ?? [];
 
@@ -68,12 +70,12 @@ export function facetSummary(facet: ReadonlyArray<V2FormFacet> | undefined, form
 
         const count = `${entry.count} ${entry.form} filing${entry.count === 1 ? "" : "s"}`;
 
-        return entry.newest_filing_date ? `${count}, newest filed ${entry.newest_filing_date}` : count;
+        return entry.newest_filing_date ? `${count}, newest filed ${formatDay(entry.newest_filing_date)}` : count;
     }
 
     const newest = entries.map(entry => entry.newest_filing_date ?? "").filter(Boolean).sort().at(-1);
 
-    return newest ? `Newest filing ${newest}` : null;
+    return newest ? `Newest filing ${formatDay(newest)}` : null;
 }
 
 /** The form-type picker's options: `meta.form_facet[].form`, in the facet's order. */
