@@ -1055,7 +1055,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 
 ### F115 — Task 9 text names fields the alert form (and the spec) do not have
 - Check: T9.1, T9.6, T9.12, T9.16, T9.21 · Severity: nit · Class: doc
-- Where: `tasks/ui-walk-2026-11-22/9-alerts-create-and-act.md`
+- Where: `tasks/ui-walk-2026-11-22/X-9-alerts-create-and-act.md`
 - Expected (task text): volume_spike mode "multiple"; earnings_results report kinds "10-Q"; a metric picker for fundamental_metric; a type list "with summaries"; a Cancel on the pre-filled form
 - Actual (app = spec): mode `relative` (multiple is its own field); report kinds `preliminary` / `final`; Rules is a JSON field (metric ids of `/v1/catalog/metrics`); the summary shows under the picked type; the form has no Cancel (leaving the page discards it)
 - Outcome: by design (the form follows `AlertConditionInput`; task text annotated)

@@ -100,17 +100,17 @@ Task 11 close-out: findings review, backend tasklist, CLAUDE.md, final checks
 
 | # | Title | Type | Dependencies | Est. Complexity |
 | --- | --- | --- | --- | --- |
-| 1 | [Setup, key gate, shell](./1-setup-key-gate-shell.md) | Walk | GUIDE | Medium |
-| 2 | [Market and browse pages](./2-market-and-browse-pages.md) | Walk | 1 | High |
-| 3 | [Stock pages I: overview, financials, filings](./3-stock-pages-financials-filings.md) | Walk | 1 | High |
-| 4 | [Stock pages II: ownership, actions, news, documents](./4-stock-pages-ownership-news-documents.md) | Walk | 1 | High |
-| 5 | [Earnings calls and the call page](./5-earnings-call-page.md) | Walk | 1 | High |
-| 6 | [Funds, filers, offerings, people](./6-funds-filers-offerings-people.md) | Walk | 1 | Medium |
-| 7 | [Cross-cutting: inspector, export, URL, layout](./7-cross-cutting.md) | Walk | 2–6 | Medium |
-| 8 | [Alerts I: destinations and webhooks](./8-alerts-destinations.md) | Walk + writes | 1 | High |
-| 9 | [Alerts II: alerts, actions, events](./9-alerts-create-and-act.md) | Walk + writes | 8 | High |
-| 10 | [Alerts III: end users, scripts, cleanup](./10-alerts-users-scripts-cleanup.md) | Walk + writes | 9 | High |
-| 11 | [Close-out](./11-close-out.md) | Docs | 1–10 | Medium |
+| 1 | [Setup, key gate, shell](./X-1-setup-key-gate-shell.md) | Walk | GUIDE | Medium |
+| 2 | [Market and browse pages](./X-2-market-and-browse-pages.md) | Walk | 1 | High |
+| 3 | [Stock pages I: overview, financials, filings](./X-3-stock-pages-financials-filings.md) | Walk | 1 | High |
+| 4 | [Stock pages II: ownership, actions, news, documents](./X-4-stock-pages-ownership-news-documents.md) | Walk | 1 | High |
+| 5 | [Earnings calls and the call page](./X-5-earnings-call-page.md) | Walk | 1 | High |
+| 6 | [Funds, filers, offerings, people](./X-6-funds-filers-offerings-people.md) | Walk | 1 | Medium |
+| 7 | [Cross-cutting: inspector, export, URL, layout](./X-7-cross-cutting.md) | Walk | 2–6 | Medium |
+| 8 | [Alerts I: destinations and webhooks](./X-8-alerts-destinations.md) | Walk + writes | 1 | High |
+| 9 | [Alerts II: alerts, actions, events](./X-9-alerts-create-and-act.md) | Walk + writes | 8 | High |
+| 10 | [Alerts III: end users, scripts, cleanup](./X-10-alerts-users-scripts-cleanup.md) | Walk + writes | 9 | High |
+| 11 | [Close-out](./X-11-close-out.md) | Docs | 1–10 | Medium |
 
 ## Code Reuse (where a fix goes)
 
