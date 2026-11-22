@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ApiRequestError, errorDescription, fromSerialized, isTierError, rethrowApiError, throwApiError } from "./errors";
+import { ApiRequestError, errorDescription, fromSerialized, isNotFound, isTierError, rethrowApiError, throwApiError } from "./errors";
 
 describe("ApiRequestError", () => {
     it("survives a JSON round trip through fromSerialized", () => {
@@ -150,5 +150,17 @@ describe("problem+json (v2)", () => {
 
     it("errorDescription is the plain message without a request id", () => {
         expect(errorDescription(new Error("fetch failed"))).toBe("fetch failed");
+    });
+});
+
+describe("isNotFound", () => {
+    it("a 404 API answer only; a plain error or another status is not", () => {
+        expect(isNotFound(new ApiRequestError(404, { error: "not_covered", message: "CIK 9999999999 is not in the SEC registry." }))).toBe(true);
+
+        expect(isNotFound(new ApiRequestError(503, { error: "unavailable", message: "x" }))).toBe(false);
+
+        expect(isNotFound(new Error("404"))).toBe(false);
+
+        expect(isNotFound(null)).toBe(false);
     });
 });

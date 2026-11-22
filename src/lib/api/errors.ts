@@ -184,6 +184,14 @@ export function errorDescription(error: Error) {
     return `${error.message} (${error.code}, request ${error.requestId})`;
 }
 
+/**
+ * The API does not know the subject (404: a CIK not in the SEC registry, an unknown person id): the page renders that
+ * one notice, not the blocks that hang off the subject.
+ */
+export function isNotFound(error: unknown) {
+    return error instanceof ApiRequestError && error.status === 404;
+}
+
 /** No key, or a key the API refused (401): the key gate shows the onboarding card. */
 export function isUnauthorized(error: unknown) {
     return error instanceof ApiRequestError && error.status === 401;

@@ -16,6 +16,7 @@ import {
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
 import { NotFound } from "@/components/ui/not-found";
+import { isNotFound } from "@/lib/api/errors";
 import { listState } from "@/lib/api/list-state";
 import { useFilerHoldingChangesInfinite, useFilerHoldingsInfinite, useV2Filer, useV2FilingsInfinite, useV2OfferingsInfinite } from "@/lib/api/queries";
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
@@ -114,6 +115,16 @@ function SecFilerPage() {
     const facet = filings.data?.pages[0]?.meta.form_facet ?? [];
 
     const isManager = isManagerFiler(filer.data?.phase, facet.map(entry => entry.form));
+
+    // A CIK the registry does not know (404 not_covered) is that one notice, not repeated by the lifecycle and filings
+    // blocks (UI walk F089).
+    if (isNotFound(filer.error)) {
+        return (
+            <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 lg:px-8">
+                <SecFilerHeader cik={cik} data={null} error={filer.error} isLoading={false} />
+            </div>
+        );
+    }
 
     return (
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 lg:px-8">
