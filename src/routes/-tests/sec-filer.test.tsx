@@ -9,6 +9,7 @@ import type { V2FilerResponse } from "@/lib/api/types";
 import { cikOf, SecFilerMatches } from "@/components/sec/sec-filer-lookup";
 import {
     exemptionLabel,
+    filingRoleLabel,
     offeringAmountText,
     SecFilerHeader,
     SecFilingsView,
@@ -298,6 +299,13 @@ describe("SecFilingsView", () => {
         expect(screen.queryByText("2026-11-03")).toBeNull();
 
         expect(screen.getByRole("button", { name: "More filings" })).toBeInTheDocument();
+
+        // Roles in words, never snake_case codes (UI walk F080).
+        expect(filingRoleLabel("subject_company")).toBe("subject company");
+
+        expect(filingRoleLabel("filed_by")).toBe("filed by");
+
+        expect(filingRoleLabel("new_role")).toBe("new role");
 
         fireEvent.click(screen.getAllByRole("button", { name: /Documents/ })[1]);
 

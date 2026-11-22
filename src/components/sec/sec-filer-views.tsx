@@ -466,6 +466,20 @@ export function SecPrivateOfferingsView({
     );
 }
 
+const FILING_ROLE_LABELS: Readonly<Record<string, string>> = {
+    filed_by: "filed by",
+    filer: "filer",
+    issuer: "issuer",
+    listed: "listed",
+    reporting_owner: "reporting owner",
+    subject_company: "subject company",
+};
+
+/** A company's role on a filing in words (`subject_company` → "subject company"); the spec's list is open. */
+export function filingRoleLabel(role: string) {
+    return FILING_ROLE_LABELS[role] ?? role.replaceAll("_", " ");
+}
+
 /**
  * A filer's filings (pure, `GET /v1/filings?symbol=<cik>`): every loaded cursor page, the `meta.form_facet` filter, a
  * row opens the accession's documents in the source panel; "No filings" only for a complete answer.
@@ -536,7 +550,7 @@ export function SecFilingsView({
                                             <td className="p-1 tabular-nums">{formatDay(filing.filing_date)}</td>
                                             <td className="p-1 tabular-nums">{formatDay(filing.report_date)}</td>
                                             <td className="p-1 tabular-nums"><Copyable label="Copy accession number" value={filing.accession} /></td>
-                                            <td className="p-1">{filing.roles.join(", ") || "—"}</td>
+                                            <td className="p-1">{filing.roles.map(filingRoleLabel).join(", ") || "—"}</td>
                                             <td className="flex items-center justify-end gap-2 p-1">
                                                 {filing.edgar_index_url.startsWith("https://www.sec.gov/") && (
                                                     <a className="underline-offset-4 hover:underline" href={filing.edgar_index_url} rel="noopener noreferrer" target="_blank">
