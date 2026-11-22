@@ -79,7 +79,33 @@ export function metricLabel(normalized: null | string) {
         return `Segment: ${normalized.slice(SEGMENT_PREFIX.length).replaceAll("-", " ")}`;
     }
 
+    // Any other `<metric>:<slug>` ("segment_growth:edge_computing"): the metric in words, then the slug.
+    const colon = normalized.indexOf(":");
+
+    if (colon > 0) {
+        const head = normalized.slice(0, colon);
+
+        return `${METRIC_LABELS[head] ?? sentenceCase(head)}: ${normalized.slice(colon + 1).replaceAll(/[-_]/g, " ")}`;
+    }
+
     return METRIC_LABELS[normalized] ?? sentenceCase(normalized);
+}
+
+/** Units a KPI's stated value already shows by its symbol ("$8.2 billion", "42%"). */
+const UNIT_SYMBOLS: Record<string, string> = { pct: "%", usd: "$" };
+
+/**
+ * The unit shown after a KPI's stated value: none when the text already carries it ("$8.2 billion" + `usd`,
+ * "42%" + `pct`), else the unit in words ("shares").
+ */
+export function kpiUnitSuffix(valueText: string, unit: null | string): null | string {
+    if (!unit) return null;
+
+    const symbol = UNIT_SYMBOLS[unit];
+
+    if (symbol && valueText.includes(symbol)) return null;
+
+    return unit === "pct" ? "%" : unit === "usd" ? "USD" : unit.replaceAll("_", " ");
 }
 
 /** Direction chip: label + colour classes (the Badge variants have no green / amber). */

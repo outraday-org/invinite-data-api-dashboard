@@ -7,6 +7,7 @@ import {
     formatSigned,
     highlightSpans,
     highlightTerms,
+    kpiUnitSuffix,
     metricLabel,
     originCodeLabel,
     participationDetailText,
@@ -191,5 +192,25 @@ describe("source codes in words (UI walk F062)", () => {
         expect(pressReleaseOriginLabel("edgar")).toBe("8-K exhibit");
 
         expect(originCodeLabel("q4_reports")).toBe("Q4 reports");
+    });
+});
+
+describe("KPI labels (UI walk F064)", () => {
+    it("names a <metric>:<slug> metric in words", () => {
+        expect(metricLabel("segment_growth:edge_computing")).toBe("Segment growth: edge computing");
+
+        expect(metricLabel("segment:data-center")).toBe("Segment: data center");
+    });
+
+    it("adds no unit code the stated value already shows", () => {
+        expect(kpiUnitSuffix("$8.2 billion", "usd")).toBeNull();
+
+        expect(kpiUnitSuffix("42%", "pct")).toBeNull();
+
+        expect(kpiUnitSuffix("89 billion", "usd")).toBe("USD");
+
+        expect(kpiUnitSuffix("1.2 million", "shares")).toBe("shares");
+
+        expect(kpiUnitSuffix("12", null)).toBeNull();
     });
 });

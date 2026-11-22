@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useV2KpisInfinite } from "@/lib/api/queries";
-import { formatDecimal, metricLabel, ORIGIN_LABELS } from "@/lib/earnings/labels";
+import { formatDecimal, kpiUnitSuffix, metricLabel, ORIGIN_LABELS } from "@/lib/earnings/labels";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -30,6 +30,9 @@ function factPeriodText(period: FilingLink["fact_period"]) {
 }
 
 /** A truncated text with the full text in a tooltip. */
+/** The unit after the stated value, only when the text lacks it. */
+const unitSuffix = (kpi: Pick<V2KpiMention, "unit" | "value_text">) => kpiUnitSuffix(kpi.value_text, kpi.unit);
+
 function TruncatedText({ className, text }: { className?: string; text: string }) {
     return (
         <Tooltip>
@@ -145,7 +148,7 @@ export function KpiTable({ eventId, onMetricClick }: Pick<CallTabProps, "eventId
                             </TableCell>
                             <TableCell className="tabular-nums">
                                 {kpi.value_text}
-                                {kpi.unit && <span className="text-muted-foreground">{` ${kpi.unit}`}</span>}
+                                {unitSuffix(kpi) && <span className="text-muted-foreground">{` ${unitSuffix(kpi)}`}</span>}
                             </TableCell>
                             <TableCell>{kpi.period_label ?? "—"}</TableCell>
                             <TableCell className="whitespace-normal">
