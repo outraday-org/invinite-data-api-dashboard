@@ -176,7 +176,7 @@ describe("DocumentTree", () => {
 
         expect(within(row).getByText("replay expired")).toBeInTheDocument();
 
-        expect(within(row).getByText("2026-03-12")).toBeInTheDocument();
+        expect(within(row).getByText("Mar 12, 2026")).toBeInTheDocument();
 
         const event = within(row).getByText("Event");
 
@@ -290,7 +290,7 @@ describe("Documents page", () => {
 
         expect(within(callRow).getByText("Q2 FY2027 call")).toHaveAttribute("href", callHref);
 
-        expect(within(callRow).getByText("2026-08-26")).toBeInTheDocument();
+        expect(within(callRow).getByText("Aug 26, 2026")).toBeInTheDocument();
 
         expect(within(callRow).getByText("Press release")).toHaveAttribute("data-search", JSON.stringify({ tab: "press-release" }));
 
@@ -347,10 +347,10 @@ describe("Documents page", () => {
 
         const row = document.querySelector<HTMLElement>(`li[data-document-id="${filing.document_id}"]`)!;
 
-        expect(within(row).getByText("2026-09-03")).toHaveAttribute("title", "Filed on EDGAR");
+        expect(within(row).getByText("Sep 3, 2026")).toHaveAttribute("title", "Filed on EDGAR");
 
         // Never the call's day (2026-08-26).
-        expect(within(row).queryByText("2026-08-26")).toBeNull();
+        expect(within(row).queryByText("Aug 26, 2026")).toBeNull();
 
         const call = within(row).getByText("Call");
 

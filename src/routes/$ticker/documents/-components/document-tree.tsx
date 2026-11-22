@@ -9,6 +9,7 @@ import type { CallTab } from "@/routes/$ticker/earnings-calls/-components/call-t
 import { Badge } from "@/components/ui/badge";
 import { allKeys, defaultOpenKeys, documentHref, documentKindLabel } from "@/lib/earnings/documents";
 import { formatBytes } from "@/lib/earnings/format";
+import { formatDay } from "@/lib/format";
 import { AvailabilityIcons } from "@/routes/$ticker/earnings-calls/-components/availability-icons";
 
 const actionClass = "text-muted-foreground hover:text-foreground inline-flex items-center gap-1 whitespace-nowrap transition-colors";
@@ -34,12 +35,13 @@ function periodLabel(doc: V2InvestorDocument) {
 
 /**
  * The row's date: an SEC filing link is dated by its EDGAR filing (`filing_date`), else its fiscal period — never the
- * call's day (a 10-K is filed days after the call); every other row by its own day, else its period.
+ * call's day (a 10-K is filed days after the call); every other row by its own day, else its period. A day reads
+ * "Nov 3, 2026" (`formatDay`), never the raw ISO string.
  */
 export function documentDate(doc: V2InvestorDocument) {
-    if (doc.kind === "sec_filing") return doc.filing_date ?? periodLabel(doc);
+    const day = doc.kind === "sec_filing" ? doc.filing_date : doc.event_date;
 
-    return doc.event_date ?? periodLabel(doc);
+    return day ? formatDay(day) : periodLabel(doc);
 }
 
 const ChevronSpacer = () => <span aria-hidden className="size-3.5 shrink-0" />;
@@ -70,7 +72,7 @@ function DocumentRow({
             <Badge className="font-normal" variant="outline">{documentKindLabel(doc.kind)}</Badge>
             {doc.link_status === "expired" && <Badge variant="secondary">replay expired</Badge>}
             <div className={rowMetaClass}>
-                <span className="w-20" title={filing && doc.filing_date ? "Filed on EDGAR" : undefined}>
+                <span className="w-24" title={filing && doc.filing_date ? "Filed on EDGAR" : undefined}>
                     {documentDate(doc)}
                 </span>
                 <span className="hidden w-16 text-right sm:inline">{doc.bytes !== null ? formatBytes(doc.bytes) : ""}</span>
@@ -143,7 +145,7 @@ function CallRow({ call }: { call: CallEntry }) {
                 <AvailabilityIcons event={event} />
             </span>
             <div className={rowMetaClass}>
-                <span className="w-20">{call.date}</span>
+                <span className="w-24">{formatDay(call.date)}</span>
                 <div className="flex items-center justify-end gap-2.5">
                     {event.has_press_release && (
                         <CallLink className={actionClass} eventId={event.event_id} tab="press-release" ticker={ticker}>Press release</CallLink>
