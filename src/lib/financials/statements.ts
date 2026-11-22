@@ -15,6 +15,7 @@ import type {
 } from "@/lib/api/types";
 
 import { V2_STATEMENT_KEYS } from "@/lib/api/v2";
+import { formatDay } from "@/lib/format";
 import { formatMetricId } from "@/lib/utils";
 
 /** The fiscal coordinates every v2 period row carries. */
@@ -50,7 +51,8 @@ export function completePeriodsOnly<TRow extends PeriodCoordinates>(rows: Readon
 
 /** The filing a period was rendered from, in words (the column header's tooltip). */
 export function filingSourceText(source: V2FilingSource) {
-    const filed = source.filed_at.slice(0, 10);
+    // The day as the "From filing" picker names it (`formatDay`: the viewer's day of the instant), never its UTC slice.
+    const filed = formatDay(source.filed_at);
 
     return `${source.form} filed ${filed} · ${source.accession}${source.restated ? " · restated by a later filing" : ""}`;
 }

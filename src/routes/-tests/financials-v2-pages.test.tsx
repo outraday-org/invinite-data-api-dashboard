@@ -81,7 +81,7 @@ describe("Statements (`/v1/financials/*`)", () => {
             />,
         );
 
-        expect(screen.getByText("Q3 2026").closest("th")).toHaveAttribute("title", "10-Q filed 2026-08-01 · 0000320193-26-000073");
+        expect(screen.getByText("Q3 2026").closest("th")).toHaveAttribute("title", "10-Q filed Aug 1, 2026 · 0000320193-26-000073");
 
         expect(screen.getByText("Q2 2026").closest("th")?.getAttribute("title")).toContain("restated by a later filing");
 
