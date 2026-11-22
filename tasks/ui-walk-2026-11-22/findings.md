@@ -17,8 +17,8 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 | Live call during walk? | No (2026-11-22 ~11:45 UTC, a Sunday). Next scheduled: date-only conferences on Nov 23 (AYA, SCZM, ULS, CGAU, VIST, SKE); next timed earnings calls TUYA Nov 22 19:30 ET and ZEPP 20:30 ET (Q3 FY2026) |
 | Closed-end fund / ETN used | ADX (Adams Diversified Equity Fund, registered fund) / DJP (Barclays ETN, ARCX) |
 | End-user defaults (to restore) | Never set: active alerts, script / indicator alerts and fires per day all "No limit" |
-| Receiver URL (Task 8) | |
-| D1 / D2 ids (Task 8) | |
+| Receiver URL (Task 8) | `https://webhook.site/15b38b45-5955-46f6-9b5b-e0d51cd37736` (free URL: expires after 1 week, keeps 50 requests; 6 received in Task 8) |
+| D1 / D2 ids (Task 8) | D1 `dst_01M81YNF4DP3558D13RN0KPJGP` (webhook, standard, webhook.site, 30 / min, description `walk-1122 webhook.site edited`, no headers left, secret rotated 2026-11-22 15:52 UTC) · D2 `dst_01M81YTP4DH99DFBR9AD4Z1BT7` (batch webhook, standard, `https://example.com/walk-1122-hook` → 405, digest 60 s, `walk-1122 unroutable`); both active |
 | Walk alert ids (Tasks 9–10) | |
 | End counts (Task 10): alerts / destinations / users / scripts | |
 | Credits at end (Task 11) | |
@@ -944,6 +944,51 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Actual: the chevron buttons had no name or state; `FilterSelect`'s `aria-label` was optional and 17 uses left it out (a select trigger shows its value, not what it filters)
 - Evidence: page scan (the TanStack devtools' own buttons excluded — dev only)
 - Outcome: fixed in 12b1c8a ("Expand / Collapse <row>" + `aria-expanded`; `FilterSelect` requires `aria-label`, every use named; test `financials-v2-pages.test.tsx`; re-checked: no unnamed combobox on financials / calendar)
+
+### F103 — API sheet: a null or timestamp field about a secret reads "[redacted]"
+- Check: T8.5, T8.14 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/alerts/destinations/dst_01M81YNF4DP3558D13RN0KPJGP → API → the create / rotate / update answers
+- Steps: create a destination, rotate its secret, open the API sheet, show the write answers
+- Expected: only secrets hidden; `previous_secret_expires_at` shown (null, or the rotation's end)
+- Actual: `previous_secret_expires_at: "[redacted]"` (also when the API answered `null`); the rotate answer's only field was hidden, so the sheet never showed when the old secret stops signing. `redactSecrets` redacted every key matching `/secret/`
+- Evidence: create req_01M81YNEZ32E8RN0FCYMRKANGJ, rotate req_01M81ZAFATQVEVH7QAKZQ7YHHB; no full secret anywhere (sheet, DOM, URL, storage keys)
+- Outcome: fixed in 3109b8d (a `null` stays `null`, a `…_at` key is shown; the secret and `secret_hint` stay redacted; test `request-meta.test.ts`; CLAUDE.md alerts secret rule; re-checked: `previous_secret_expires_at: "2026-11-23T15:52:13.405Z"`)
+
+### F104 — API sheet: the CLI line of a colon-verb write drops its id (`invd destinations rotate-secret`)
+- Check: T8.14 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/alerts/destinations/dst_01M81YNF4DP3558D13RN0KPJGP → API
+- Steps: rotate the secret / send a test, open the API sheet
+- Expected: `invd destinations rotate-secret dst_…` (`x-cli` positional `id`)
+- Actual: `invd destinations rotate-secret` — `pathParamsOf` matched only whole `{param}` segments, so `{id}:rotate-secret` gave no parameter (every `:pause` / `:resume` / `:test` / `:rotate-secret` operation)
+- Evidence: the sheet's CLI lines
+- Outcome: fixed in d8259e4 (the colon verb is cut off the value; test `request-meta.test.ts` incl. an encoded alert-user id; re-checked: `invd destinations test dst_01M81YNF4DP3558D13RN0KPJGP`)
+
+### F105 — Destinations list: no custom header names
+- Check: T8.7 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/alerts/destinations
+- Steps: open the list with D1 (header `X-Walk`)
+- Expected: the header names per row (never values)
+- Actual: columns Destination, Kind · preset, Status, Rate limit, Digest, Secret, Created — the names only on the detail page
+- Evidence: page text
+- Outcome: fixed in 9622fb2 ("Headers" column: the names, else "None"; test `destinations-views.test.tsx`; re-checked)
+
+### F106 — Task 8's unroutable URL `https://walk-1122.invalid/hook` is refused by the API
+- Check: T8.6 · Severity: nit · Class: doc
+- Where: http://localhost:3001/alerts/destinations?new=true
+- Steps: create D2 with the task's URL
+- Expected (task text): a destination whose deliveries fail
+- Actual: 400 on the URL field "url: host name does not resolve." (the API checks the host resolves to a public address, as the form's help says); nothing created
+- Evidence: inline field error, no destination listed
+- Outcome: by design (the API refuses unresolvable hosts); D2 uses `https://example.com/walk-1122-hook` (resolves, answers 405 to a POST) — task text annotated in T8.6
+
+### F107 — Delivery `last_error` is a code (`http_status`), not a readable error
+- Check: T8.16 · Severity: nit · Class: api
+- Where: http://localhost:3001/alerts/destinations/dst_01M81YTP4DH99DFBR9AD4Z1BT7 (Deliveries)
+- Steps: send a test to D2, wait for the attempts
+- Expected: a readable last error (the spec types it as a free string; e.g. "HTTP 405 Method Not Allowed" / "timeout after 10 s")
+- Actual: `last_error: "http_status"` beside the last answer HTTP 405
+- Evidence: delivery dlv_01M81ZDN9V0DT8FPD6KDZJW4FH (batch bat_01M81ZFPS23N0X2PMSVWF3BB6V)
+- Outcome: open (Task 11: API → backend tasklist — a sentence, or an enum in the spec the dashboard can label)
 
 ## Summary (filled by Task 11)
 

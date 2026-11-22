@@ -60,7 +60,7 @@ Every check ticked or logged.
 Resize the pane (`resize_window` if offered; else ask the owner to narrow the pane) and, on each page below, run
 `javascript_tool`: `document.documentElement.scrollWidth > window.innerWidth` → must be `false`.
 
-- [x] **T7.11** (all twelve pages `scrollWidth` = 390; `/alerts/destinations/$id` waits for Task 8) `/`, `/calendar`, `/AAPL`, `/AAPL/financials`, `/AAPL/insider-trades`, `/AAPL/holders`, `/AAPL/news`,
+- [x] **T7.11** (all thirteen pages `scrollWidth` = 390; `/alerts/destinations/$id` checked in Task 8 on D1) `/`, `/calendar`, `/AAPL`, `/AAPL/financials`, `/AAPL/insider-trades`, `/AAPL/holders`, `/AAPL/news`,
   `/AAPL/documents`, call page (player + transcript), `/sec/1067983`, `/alerts/new`, `/alerts/destinations/$id`
   (after Task 8), `/account`.
 - [x] **T7.12** (insider trades scroll in their wrapper; top bar search reachable; the sheet stayed open after navigation: F098) Wide tables scroll inside their wrapper (header scrolls with the page there); the sidebar is a sheet
