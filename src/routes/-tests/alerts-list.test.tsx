@@ -112,6 +112,18 @@ describe("/alerts list (`GET /v1/alerts`)", () => {
         expect(screen.queryByText("No alert matches these filters.")).not.toBeInTheDocument();
     });
 
+    it("the account list: an empty text by whether a filter is set (F118)", () => {
+        const empty = state({ pages: [{ ...ALERTS_PAGE_FIXTURE, data: [], has_more: false, next_cursor: null }] });
+
+        const { rerender } = render(<AlertsListView selection={selection()} state={empty} />);
+
+        expect(screen.getByText("No alert yet: create one with New alert.")).toBeInTheDocument();
+
+        rerender(<AlertsListView filtered selection={selection()} state={empty} />);
+
+        expect(screen.getByText("No alert matches these filters.")).toBeInTheDocument();
+    });
+
     it("bulk results: per item, a partial failure visible with its reason", () => {
         render(<BatchResultsView ids={[ALERT_FILING.id, "alt_gone", ALERT_PRICE.id]} onDismiss={vi.fn()} results={BATCH_PARTIAL.results} />);
 

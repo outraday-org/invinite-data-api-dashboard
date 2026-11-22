@@ -508,8 +508,9 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   `fieldKeyOf` (a 400's `param` / `errors[]` → `condition.<field>`, `trigger.<field>`, `destination_ids`, …, else `form`).
 - **Routes** (`src/routes/alerts/`, Browse entry "Alerts"; tabs `src/lib/alerts/tabs.ts` — A3 / A4 append theirs):
   `route.tsx` (tabs + plan gate: `me.allowed_families` holds "Alerts"), `/alerts` (`?status=&type=&external_user_id=
-  &client_reference_id=&symbol=&destination_id=`, all sent to the API; quota line from `meta.quota`; row actions; selection
-  → bulk pause / resume / delete via `batchAlerts`, ≤ 500 items a request, per-item results `BatchResultsView`),
+  &client_reference_id=&symbol=&destination_id=`, all sent to the API; quota line from `meta.quota`; the empty text
+  "matches these filters" only with a filter set (`filtered`); row actions; selection → bulk pause / resume / delete
+  via `batchAlerts`, ≤ 500 items a request, per-item results `BatchResultsView`),
   `/alerts/new` (`?type=&symbol=` pre-fill, `?from=<id>` duplicate; "Check" = `validate_only`), `/alerts/$id`
   (summary, actions, the alert's events; `?edit=true` = the form; 409 `conflict` → "changed elsewhere" + Reload),
   `/alerts/events` (`?alert_id=&type=&external_user_id=&event=&live=true`). Views in `src/components/alerts/` (pure:

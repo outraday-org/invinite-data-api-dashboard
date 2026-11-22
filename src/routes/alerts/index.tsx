@@ -94,6 +94,7 @@ function AlertsPage() {
             </div>
             {actions.batch && <BatchResultsView ids={actions.batch.ids} onDismiss={actions.dismissBatch} results={actions.batch.results} />}
             <AlertsListView
+                filtered={Object.values(search).some(Boolean)}
                 selection={{ busy: actions.busy, onAction: actions.request, onSelect: setSelected, selected }}
                 state={listState(alerts)}
             />

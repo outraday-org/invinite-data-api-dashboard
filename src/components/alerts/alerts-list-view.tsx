@@ -115,13 +115,20 @@ function BulkBar({ onAction, onSelect, rows, selected }: Pick<Selection, "onActi
     );
 }
 
+function emptyTextOf(scope: "account" | "end-user", filtered: boolean) {
+    if (scope === "end-user") return "This end user has no alerts.";
+
+    return filtered ? "No alert matches these filters." : "No alert yet: create one with New alert.";
+}
+
 /**
  * The alerts list (pure): quota line, bulk bar, one row per alert (type + reference, what it watches, status with the
  * disabled reason in its tooltip, destinations as chips, end user, fire count, last fired, row actions), "Load more".
  * `scope` "end-user" (an end user's page): no account quota line (`meta.quota` is the account's, never the end user's)
- * and an empty text without filters.
+ * and an empty text without filters. `filtered` (the account list with a filter set) picks the empty text: "matches these
+ * filters" only when a filter narrowed the list.
  */
-export function AlertsListView({ scope = "account", selection, state }: { scope?: "account" | "end-user"; selection: Selection; state: AlertsListState }) {
+export function AlertsListView({ filtered = false, scope = "account", selection, state }: { filtered?: boolean; scope?: "account" | "end-user"; selection: Selection; state: AlertsListState }) {
     const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
 
     if (error && pages.length === 0) return <AlertsState error={error} title="Failed to load the alerts" />;
@@ -138,7 +145,7 @@ export function AlertsListView({ scope = "account", selection, state }: { scope?
                 columnClassName={id => (id === "select" ? "w-8" : id === "actions" ? "w-10" : undefined)}
                 columns={columnsOf(selection, rows)}
                 emptyIsGenuine={isV2GenuineEmpty(pages.at(0)?.meta.coverage)}
-                emptyText={scope === "account" ? "No alert matches these filters." : "This end user has no alerts."}
+                emptyText={emptyTextOf(scope, filtered)}
                 exportConfig={{ dataset: "alerts", scope: "account" }}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
