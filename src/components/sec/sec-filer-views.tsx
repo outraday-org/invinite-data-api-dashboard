@@ -26,6 +26,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
 import { formatDay, formatMoneyCompact } from "@/lib/format";
+import { netAssetsScopeText } from "@/lib/sec/fund";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { listOf, reviewStatusOf, scalarEntries } from "@/lib/sec/source";
 import { formatFractionPercentCompact, formatNumberEn } from "@/lib/utils";
@@ -223,20 +224,25 @@ export function SecLifecycleView({ data, error, isLoading }: { data: null | V2Fi
 
 const fraction = (value: null | number) => (value === null ? "—" : formatFractionPercentCompact(value));
 
-const NET_ASSETS_SCOPE_LABELS: Record<NonNullable<V2FilerFundSeries["net_assets_scope"]>, string> = {
-    fund: "fund",
-    series: "series total, all classes",
-};
-
 /** Net assets with their scope and report date (`series` = a multi-class fund's total, never one class's assets). */
 function netAssetsText(series: V2FilerFundSeries) {
     if (series.net_assets_usd === null) return "—";
 
-    const scope = series.net_assets_scope ? NET_ASSETS_SCOPE_LABELS[series.net_assets_scope] : null;
+    const scope = netAssetsScopeText(series.net_assets_scope);
 
     return [formatMoneyCompact(series.net_assets_usd), scope, series.net_assets_as_of && `as of ${formatDay(series.net_assets_as_of)}`]
         .filter(Boolean)
         .join(" · ");
+}
+
+/**
+ * A series' name; a fund that is its own registrant (fund key `cik:<cik>`, no series id: SPY's trust) has none, so it
+ * reads as the filer's name, never as the raw fund key.
+ */
+function seriesName(series: V2FilerFundSeries, filer: null | V2FilerResponse) {
+    if (series.series_name) return series.series_name;
+
+    return series.fund_key.startsWith("cik:") && filer?.name ? filer.name : series.fund_key;
 }
 
 /** The class whose returns a row shows: the expense ratio's class, else the first class with returns. */
@@ -288,7 +294,7 @@ export function SecFundView({ data }: { data: null | V2FilerResponse }) {
                                         return (
                                             <tr key={series.fund_key}>
                                                 <td className="p-1">
-                                                    <span className="font-medium" title={series.fund_key}>{series.series_name ?? series.fund_key}</span>
+                                                    <span className="font-medium" title={series.fund_key}>{seriesName(series, data)}</span>
                                                     {series.is_etf && <Badge className="ml-1" variant="outline">ETF</Badge>}
                                                 </td>
                                                 <td className="p-1">{series.exchange ?? "—"}</td>

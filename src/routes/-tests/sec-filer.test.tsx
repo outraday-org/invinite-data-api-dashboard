@@ -248,17 +248,20 @@ describe("SecFundView (`expand=fund`)", () => {
 
         expect(screen.getByText("0.03%")).toBeInTheDocument();
 
-        expect(screen.getByText("$1.54T · series total, all classes · as of Sep 30, 2026")).toBeInTheDocument();
+        expect(screen.getByText("$1.54T · series total, all share classes · as of Sep 30, 2026")).toBeInTheDocument();
 
         // The expense ratio's class (VOO) supplies the returns, not the first class listed.
         expect(screen.getByText("24.99%")).toBeInTheDocument();
 
         expect(screen.getByText("13.08%")).toBeInTheDocument();
 
-        // A unit trust without a series name reads its fund key; no fees = a dash.
-        expect(screen.getByText("cik:884394")).toBeInTheDocument();
+        // A unit trust without a series name (fund key `cik:…`) reads as the filer, never as the raw key; its scope in
+        // words as on the fund overview (UI walk F086); no fees = a dash.
+        expect(screen.getByText("Acme SPAC Corp")).toHaveAttribute("title", "cik:884394");
 
-        expect(screen.getByText("$712.35B · fund")).toBeInTheDocument();
+        expect(screen.queryByText("cik:884394")).toBeNull();
+
+        expect(screen.getByText("$712.35B · this fund")).toBeInTheDocument();
 
         expect(screen.getByText("N-1A")).toBeInTheDocument();
     });
