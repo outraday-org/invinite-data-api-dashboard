@@ -142,7 +142,7 @@ describe("SecFilingSearch", () => {
 
         render(<SecFilingSearch onOpen={() => undefined} symbol="AAPL" />);
 
-        fireEvent.change(screen.getByLabelText("Search this company's SEC filings"), { target: { value: "going concern" } });
+        fireEvent.change(screen.getByLabelText("Search AAPL's SEC filings"), { target: { value: "going concern" } });
 
         fireEvent.click(screen.getByRole("button", { name: /Search/ }));
 
@@ -167,7 +167,7 @@ describe("SecFilingSearch", () => {
 
         render(<SecFilingSearch onOpen={() => undefined} symbol="" />);
 
-        fireEvent.change(screen.getByLabelText("Search this company's SEC filings"), { target: { value: "going concern" } });
+        fireEvent.change(screen.getByLabelText("Search SEC filings"), { target: { value: "going concern" } });
 
         expect(screen.getByRole("button", { name: /Search/ })).toBeDisabled();
 
@@ -253,7 +253,7 @@ describe("market-wide search and filters (O7 group 3)", () => {
 
         render(<SecFilingSearch onOpen={() => undefined} symbol="SPY" />);
 
-        fireEvent.change(screen.getByLabelText("Search this company's SEC filings"), { target: { value: "securities lending" } });
+        fireEvent.change(screen.getByLabelText("Search SPY's SEC filings"), { target: { value: "securities lending" } });
 
         fireEvent.change(screen.getByLabelText("Form"), { target: { value: "N-CSR" } });
 

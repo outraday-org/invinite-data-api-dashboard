@@ -257,7 +257,8 @@ export function SecFilingSearch({
         onFiltersChange?.(next);
     };
 
-    const label = scoped || !marketWide ? "Search this company's SEC filings" : "Search every filer's SEC filings";
+    // The page's symbol by name: a fund's page searches the fund's filings, not "this company's" (UI walk F092).
+    const label = scoped ? `Search ${symbol.trim()}'s SEC filings` : (marketWide ? "Search every filer's SEC filings" : "Search SEC filings");
 
     const setFilter = (patch: SecSearchFilters) => setFilterDraft(prev => ({ ...prev, ...patch }));
 
