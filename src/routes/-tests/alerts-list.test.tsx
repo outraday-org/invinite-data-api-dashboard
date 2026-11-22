@@ -102,6 +102,16 @@ describe("/alerts list (`GET /v1/alerts`)", () => {
         expect(screen.getByText("Alerts are switched off on the API right now")).toBeInTheDocument();
     });
 
+    it("an end user's page: no account quota line, an empty text without filters (F117)", () => {
+        render(<AlertsListView scope="end-user" selection={selection()} state={state({ pages: [{ ...ALERTS_PAGE_FIXTURE, data: [], has_more: false, next_cursor: null }] })} />);
+
+        expect(screen.queryByTestId("alerts-quota")).not.toBeInTheDocument();
+
+        expect(screen.getByText("This end user has no alerts.")).toBeInTheDocument();
+
+        expect(screen.queryByText("No alert matches these filters.")).not.toBeInTheDocument();
+    });
+
     it("bulk results: per item, a partial failure visible with its reason", () => {
         render(<BatchResultsView ids={[ALERT_FILING.id, "alt_gone", ALERT_PRICE.id]} onDismiss={vi.fn()} results={BATCH_PARTIAL.results} />);
 

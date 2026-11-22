@@ -36,6 +36,7 @@ function AlertUserAlerts({ externalUserId }: { externalUserId: string }) {
             <h3 className="text-sm font-semibold">Alerts</h3>
             {actions.batch && <BatchResultsView ids={actions.batch.ids} onDismiss={actions.dismissBatch} results={actions.batch.results} />}
             <AlertsListView
+                scope="end-user"
                 selection={{ busy: actions.busy, onAction: actions.request, onSelect: setSelected, selected }}
                 state={listState(alerts)}
             />

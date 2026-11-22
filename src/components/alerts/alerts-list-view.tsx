@@ -118,15 +118,17 @@ function BulkBar({ onAction, onSelect, rows, selected }: Pick<Selection, "onActi
 /**
  * The alerts list (pure): quota line, bulk bar, one row per alert (type + reference, what it watches, status with the
  * disabled reason in its tooltip, destinations as chips, end user, fire count, last fired, row actions), "Load more".
+ * `scope` "end-user" (an end user's page): no account quota line (`meta.quota` is the account's, never the end user's)
+ * and an empty text without filters.
  */
-export function AlertsListView({ selection, state }: { selection: Selection; state: AlertsListState }) {
+export function AlertsListView({ scope = "account", selection, state }: { scope?: "account" | "end-user"; selection: Selection; state: AlertsListState }) {
     const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
 
     if (error && pages.length === 0) return <AlertsState error={error} title="Failed to load the alerts" />;
 
     const rows = pages.flatMap(page => page.data);
 
-    const quota = pages.at(0)?.meta.quota;
+    const quota = scope === "account" ? pages.at(0)?.meta.quota : undefined;
 
     return (
         <div className="flex flex-col gap-2">
@@ -136,7 +138,7 @@ export function AlertsListView({ selection, state }: { selection: Selection; sta
                 columnClassName={id => (id === "select" ? "w-8" : id === "actions" ? "w-10" : undefined)}
                 columns={columnsOf(selection, rows)}
                 emptyIsGenuine={isV2GenuineEmpty(pages.at(0)?.meta.coverage)}
-                emptyText="No alert matches these filters."
+                emptyText={scope === "account" ? "No alert matches these filters." : "This end user has no alerts."}
                 exportConfig={{ dataset: "alerts", scope: "account" }}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}

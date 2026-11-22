@@ -629,7 +629,8 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   changed fields only (`toDefaultsBody`; null = no limit).
 - **`/alerts/users/$externalUserId`**: profile + metadata (`JsonTree`), each limit's own value vs the effective one and
   where it comes from (`limitOriginText`), usage bars, the end user's alerts (`listAlerts?external_user_id=`, the alerts
-  list with its row / bulk actions) and events (`listAlertEvents?external_user_id=`, newest first via `useEventList`).
+  list with its row / bulk actions; `AlertsListView scope="end-user"`: no account quota line, "This end user has no
+  alerts.") and events (`listAlertEvents?external_user_id=`, newest first via `useEventList`).
 - **Alert form**: the end-user field is `AlertUserPicker` (free text + a `<datalist>` of existing ids by prefix:
   `useAlertUserOptions`, one `listAlertUsers?q=&limit=20` page once typing rests 300 ms; idle while the field is empty). `/alerts/new` also reads
   `?script=&version=` (a `script` alert of that version id) and `?template=` (an `indicator` alert of that template):
