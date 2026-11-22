@@ -139,7 +139,7 @@ export function NewsPageView({
                     description={description ?? (
                         <>
                             {`${scopeLabel}: SEC filings and the companies' own newsroom publications. `}
-                            Texts are the publishers&apos; own words, shown with their source and date; wire services are never a source.
+                            Each item is Invinite&apos;s summary of the publication, shown with its source and date; wire services are never a source.
                         </>
                     )}
                     title={title}

@@ -62,6 +62,11 @@ describe("NewsPageView", () => {
 
         expect(rows).toHaveLength(2);
 
+        // The API serves Invinite's summary, never the publisher's text (F050).
+        expect(screen.getByText(/Each item is Invinite's summary of the publication/)).toBeTruthy();
+
+        expect(screen.queryByText(/publishers' own words/)).toBeNull();
+
         expect(within(rows[0]).getByText("Published by NVIDIA Corporation")).toBeTruthy();
 
         expect(within(rows[0]).getByText("Company newsroom (nvidianews.nvidia.com)")).toBeTruthy();
