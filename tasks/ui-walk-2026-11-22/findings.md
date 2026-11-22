@@ -423,6 +423,132 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Evidence: `FilingPage` asks `useV2Filing(accession)` unchecked; the server function's `accessionSchema` refuses it (the class of F008)
 - Outcome: fixed in 40d4400 (`isAccessionParam` in `src/lib/sec/source.ts`: no request, Notice "123 is not an accession number"; test `source.test.ts`; CLAUDE.md filings line; re-checked)
 
+### F045 — Insider trades: a swapped filed / traded day range is sent as is (empty answer)
+- Check: T4.2 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/AAPL/insider-trades?side=sell&from=2026-11-01&to=2026-10-01&tfrom=2026-11-20&tto=2026-11-01&sort=oldest
+- Steps: open a URL whose `from` > `to` (typed or shared)
+- Expected: the range put in order, as dividends do (task T4.2 "a swapped range ordered")
+- Actual: `GET /v1/insider-trades?…&filed_at.gte=2026-11-01&filed_at.lte=2026-10-01&…&transaction_date.gte=2026-11-20&transaction_date.lte=2026-11-01` → "No insider trades for these filters."
+- Evidence: API sheet; the page passed `search.from` / `to` / `tfrom` / `tto` straight to the hook
+- Outcome: fixed in 380d946 (pure `insiderTradesRequest` orders each range; test `sec-v2-pages.test.tsx`; re-checked: `filed_at.gte=2026-10-01&filed_at.lte=2026-11-01`, `transaction_date.gte=2026-11-01&…lte=2026-11-20`)
+
+### F046 — Insider trade footnotes keep the data set's CSV quoting (`"Each … (""RSU"") …"`)
+- Check: T4.3 · Severity: minor · Class: data
+- Where: http://localhost:3001/AAPL/insider-trades?trade=<id of Khan Sabih's RSU line, accession 0001140361-26-038028>
+- Steps: Details on a Form 3/4/5 data set line with footnotes
+- Expected: the footnote text as filed: `Each restricted stock unit ("RSU") represents …`
+- Actual: `F1 "Each restricted stock unit (""RSU"") represents the right to receive, at settlement, one share of common stock."` — wrapping quotes and doubled inner quotes (F3 the same: `The ""target"" number …`); unquoted footnotes (F2) are fine
+- Evidence: `/v1/insider-trades/{id}` `footnotes[].text` (source "SEC Form 3/4/5 data set")
+- Outcome: open (Task 11: data → backend tasklist — unescape the data set's TSV/CSV quoting at ingest)
+
+### F047 — Holders: section reasons read as codes ("coverage partial", "upstream unavailable")
+- Check: T4.4 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/AAPL/holders (overview; also the 13F tab's reason line)
+- Steps: open the overview
+- Expected: each source's reason in words (CLAUDE.md "every contract enum labelled")
+- Actual: 13F block "coverage partial", N-PORT block "upstream unavailable" — the codes with spaces (`holderReasonText` knew four other reasons only; the spec types the reason as text)
+- Evidence: `meta.sections[]` `{source: "13f", state: "partial", reason: "coverage_partial"}`, `{source: "nport", state: "unavailable", reason: "upstream_unavailable"}` (req_01M81QFHJV6N4K2TCMKX56BD4G)
+- Outcome: fixed in adbf1bc (`HOLDER_REASON_TEXT` adds both; test `fund.test.ts`; re-checked: "Not every report of this source is loaded yet, so the list may be incomplete.")
+
+### F048 — 13F holder rows: `investment_discretion` is null on every row
+- Check: T4.5 · Severity: minor · Class: data
+- Where: http://localhost:3001/AAPL/holders?tab=13f (98 rows; also `?period=2026-06-30&instruments=all`, 100 rows)
+- Steps: read the Discretion column
+- Expected: SOLE / DFND / OTR from each 13F information table (a required field of the form)
+- Actual: "—" on every row; the answer's `investment_discretion: null` (voting authority is filled); the spec's own example row is null too
+- Evidence: `/v1/holders?limit=25&symbol=AAPL` data[0] (BlackRock, accession 0002012383-26-003985) `investment_discretion: null`
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F049 — 13F values of some managers are 1,000× too small (reported in thousands)
+- Check: T4.5 / T4.7 · Severity: major · Class: data
+- Where: http://localhost:3001/AAPL/holders?tab=13f · `?tab=changes`
+- Steps: compare Shares × the ~$333 AAPL price with Value
+- Expected: value in USD (BlackRock 1,157,077,341 sh = $385,329,896,040 is right)
+- Actual: SUN LIFE FINANCIAL 91,362 sh = $30,425; COHEN & STEERS 11,500 sh = $3,830; PEAPACK GLADSTONE 1,274,764 sh = $424,523 (changes tab, value change $41,381) — the filer's thousands are stored as dollars, so totals, ranks and changes mix units
+- Evidence: rows of `/v1/holders?source=13f&symbol=AAPL` and `/v1/holder-changes?symbol=AAPL` (Sep 30, 2026 quarter)
+- Outcome: open (Task 11: data → backend tasklist — normalise pre-/mis-reported thousands at ingest)
+
+### F050 — News page description says "Texts are the publishers' own words"
+- Check: T4.12 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/AAPL/news (and `/news-feed`, same view)
+- Steps: read the page description
+- Expected: the item text is Invinite's summary, never the publisher's text (CLAUDE.md "News page": API 2.0.0; the panel's own notice says so)
+- Actual: "Texts are the publishers' own words, shown with their source and date; …"
+- Evidence: `NewsPageView` default description in `src/routes/$ticker/news/index.tsx`
+- Outcome: fixed in 42bc8eb ("Each item is Invinite's summary of the publication, shown with its source and date; …"; test `news-page.test.tsx`; re-checked)
+
+### F051 — News attribution: "© Apple Inc.." (double period)
+- Check: T4.15 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/AAPL/news?item=0436683c-9294-4be0-954c-6c9df2c50c73
+- Steps: open an Apple newsroom item, read the Notice line
+- Expected: "© Apple Inc."
+- Actual: "© Apple Inc.." — `AttributionBlock` appends "." to a publisher name that ends in one
+- Evidence: `news-item-panel.tsx` notice line
+- Outcome: fixed in 34322fe (one trailing period; test `news-page.test.tsx`; re-checked "© Apple Inc.")
+
+### F052 — `/v1/holders?source=nport` answered 503 `unavailable` for several minutes
+- Check: T4.6 · Severity: minor · Class: api
+- Where: http://localhost:3001/AAPL/holders?tab=nport (and NVDA), overview N-PORT block "Unavailable · upstream unavailable"
+- Steps: open the N-PORT tab at ~14:36 CET
+- Expected: the N-PORT holders (they came back ~20 min later: "Complete · as of Jul 31, 2026 · 25 shown of 2,343")
+- Actual: "503 unavailable: The SEC document store is unavailable; retry." for AAPL and NVDA
+- Evidence: `GET /v1/holders?limit=100&source=nport&symbol=AAPL` req_01M81QK5JV3M61VR2ASANW873A; the page rendered the notice correctly
+- Outcome: open (Task 11: API → backend tasklist — an outage of the N-PORT source; cf. F019)
+
+### F053 — A news item without a summary still carries "Summary written by Invinite from the publication above"
+- Check: T4.15 · Severity: nit · Class: api
+- Where: http://localhost:3001/AAPL/news?item=a6e35ab3-d589-4404-8801-fa7b059c6751 ("Apple reports fourth quarter results", 8-K 0000320193-26-000024)
+- Steps: open the item
+- Expected: a statement that fits a headline-and-link item
+- Actual: Notice "Summary written by Invinite from the publication above; not the publisher's text…" right above "Headline and link only · No summary is served for this item" (the dashboard renders the API's `attribution.statement` as sent)
+- Evidence: `/v1/news/{id}` `attribution.statement` with `/text` `content_status: no_text`; also: the company's Q4 earnings release has no summary
+- Outcome: open (Task 11: API → backend tasklist)
+
+### F054 — `/v1/announcements?company=` answers no row for AAPL, NVDA and MSFT
+- Check: T4.19 · Severity: minor · Class: data
+- Where: http://localhost:3001/AAPL/news?view=announcements (NVDA, MSFT the same)
+- Steps: open the Announcements tab
+- Expected: developments read from the companies' news (the tab's purpose; NVDA / MSFT publish many)
+- Actual: "No announcements read from this company's news yet." (complete answer, `data: []`); the item panels show no "AI-extracted developments" either
+- Evidence: `GET /v1/announcements?company=NVDA&limit=50` req_01M81R2R6W9ZX1AA7VGN0NRFQK; the filters are sent correctly (`announced_at.gte=…T00:00:00.000Z`, `effective_from.gte`, `effective_to.lte`, `sort=announced_at`)
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F055 — Documents tree: document and call rows show raw ISO dates
+- Check: T4.23 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/AAPL/documents
+- Steps: read a row's date
+- Expected: "Nov 3, 2026" (CLAUDE.md "No raw ISO date in a cell")
+- Actual: "Q4 FY2026 call 2026-11-02", "FY2026 Form 10-K · sec filing · 2026-11-03", "2026 Annual Report · 2026-11-06"
+- Evidence: `documentDate` / the call row in `document-tree.tsx` printed `event_date` / `filing_date` / `call.date` as is
+- Outcome: fixed in da651e6 (`formatDay`; test `documents-page.test.tsx`; CLAUDE.md documents line; re-checked: "Q4 FY2026 call Nov 2, 2026", "… Nov 3, 2026")
+
+### F056 — Documents: `?kind=sec_filing` is dropped and the Kind filter cannot pick it
+- Check: T4.24 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/AAPL/documents?kind=sec_filing
+- Steps: open the URL / look for "sec filing" in the Kind select
+- Expected: the 87 SEC filing links of the tree ("sec filing" badges), as `/v1/catalog/document-kinds` lists `sec_filing`
+- Actual: the URL is rewritten to `/AAPL/documents`, every document shown; the select has no such kind (`COMPANY_DOCUMENT_KINDS` lacked it)
+- Evidence: `/catalog?tab=document-kinds` row "Sec filing · sec_filing"
+- Outcome: fixed in d76f6af (`sec_filing` added; test `documents.test.ts`; CLAUDE.md documents.ts line; re-checked: 87 documents, no call rows)
+
+### F057 — AAPL "2026 Annual Report" listed three times, one is a prospectus supplement
+- Check: T4.23 / T4.27 · Severity: nit · Class: data
+- Where: http://localhost:3001/AAPL/documents (Reports · 2026)
+- Steps: read the folder; Exact search `iP`
+- Expected: one annual report per year, kinds as published
+- Actual: three "2026 Annual Report" rows (Nov 6, 2026 151 KB; Nov 5, 2026 628 KB; Jan 22, 2026 276 KB); a hit on "2026 Annual Report · p. 8" reads "…in this prospectus supplement and the accompanying prospectus…"; ESG 2025 "Annual green bond impact report" (21.9 MB) is the Environmental Progress Report covering FY2024
+- Evidence: tree rows and the document search hit
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F058 — N-PORT holder rows: no filing date; SPY's series named "N/A"
+- Check: T4.6 · Severity: minor · Class: data
+- Where: http://localhost:3001/AAPL/holders?tab=nport
+- Steps: read Filed and Holder
+- Expected: the N-PORT filing date (the row has the accession and EDGAR link) and the fund's name
+- Actual: Filed "—" on all 100 rows; the SPY row's holder name is "N/A" (tickers SPY, Issuer file Nov 19, 2026)
+- Evidence: `/v1/holders?limit=100&source=nport&symbol=AAPL` rows `filing_date: null`
+- Outcome: open (Task 11: data → backend tasklist)
+
 ## Summary (filled by Task 11)
 
 | Class | blocker | major | minor | nit | fixed | API tasklist | other |
