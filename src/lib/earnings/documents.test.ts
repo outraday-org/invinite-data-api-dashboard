@@ -371,6 +371,9 @@ describe("validateDocumentsSearch", () => {
     it("keeps valid filters and coerces the year", () => {
         expect(validateDocumentsSearch({ category: "esg", kind: "annual_report", q: "  proxy ", section: "esg", year: "2025" }))
             .toEqual({ category: "esg", kind: "annual_report", q: "proxy", section: "esg", year: 2025 });
+
+        // A call's SEC filing link is a kind of the tree and the catalog: `?kind=sec_filing` is kept (F056).
+        expect(validateDocumentsSearch({ kind: "sec_filing" }).kind).toBe("sec_filing");
     });
 
     it("drops invalid values instead of failing the route", () => {

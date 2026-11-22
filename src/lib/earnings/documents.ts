@@ -6,7 +6,8 @@ import { callCalendarDate, eventLabel } from "@/lib/earnings/format";
 
 /**
  * Company document kinds (IDA `COMPANY_DOCUMENT_KINDS` in `src/lib/earnings/constants.ts`; the spec types `kind` as a
- * free string list). Change with IDA. Filter-chip order.
+ * free string list), plus `sec_filing` — a call's SEC filing link, listed by `/v1/catalog/document-kinds` and in the
+ * tree. Change with IDA. Filter-chip order.
  */
 export const COMPANY_DOCUMENT_KINDS = [
     "annual_report",
@@ -28,6 +29,7 @@ export const COMPANY_DOCUMENT_KINDS = [
     "webcast",
     "other",
     "prepared_remarks",
+    "sec_filing",
 ] as const;
 
 export type CompanyDocumentKind = (typeof COMPANY_DOCUMENT_KINDS)[number];
