@@ -1,6 +1,7 @@
+import * as React from "react";
 import { CartesianGrid, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis } from "recharts";
 
-import type { V2PriceAttributionResponse, V2PriceUtteranceRef } from "@/lib/api/types";
+import type { V2ParticipantsResponse, V2PriceAttributionResponse, V2PriceUtteranceRef } from "@/lib/api/types";
 
 import {
     AXIS_TICK,
@@ -12,7 +13,7 @@ import {
 } from "@/components/charts/chart-parts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { isEarningsEventLiveish, useV2PriceAttribution } from "@/lib/api/queries";
+import { isEarningsEventLiveish, useV2Participants, useV2PriceAttribution } from "@/lib/api/queries";
 import { formatDecimal, formatSigned } from "@/lib/earnings/labels";
 
 import type { CallTabProps } from "../call-tabs";
@@ -106,7 +107,20 @@ function AnchorFacts({ data }: { data: V2PriceAttributionResponse }) {
     );
 }
 
+/** The call's speakers by transcript label (`/v1/participants?event=`): an utterance names its speaker, not "spk00". */
+const SpeakerNamesContext = React.createContext<ReadonlyMap<string, string>>(new Map());
+
+/** `speaker_label` → name of the event's participants (unnamed ones left out). */
+export function speakerNamesOf(participants: null | undefined | V2ParticipantsResponse): ReadonlyMap<string, string> {
+    return new Map((participants?.data ?? []).flatMap(participant => (participant.name ? [[participant.speaker_label, participant.name] as const] : [])));
+}
+
+/** The participant's name, else "Speaker <label>" (an unnamed or unknown label). */
+export const utteranceSpeaker = (label: string, names: ReadonlyMap<string, string>) => names.get(label) ?? `Speaker ${label}`;
+
 function UtteranceRefs({ refs }: { refs: Array<V2PriceUtteranceRef> }) {
+    const names = React.useContext(SpeakerNamesContext);
+
     if (refs.length === 0) return <span className="text-muted-foreground">—</span>;
 
     return (
@@ -114,7 +128,7 @@ function UtteranceRefs({ refs }: { refs: Array<V2PriceUtteranceRef> }) {
             {refs.map((ref, index) => (
                 <li className="flex flex-wrap items-baseline gap-x-2" key={`${index}:${ref.start_ms}:${ref.speaker_label}`}>
                     <SeekButton startMs={ref.start_ms} />
-                    <span className="text-muted-foreground">{`Speaker ${ref.speaker_label}`}</span>
+                    <span className="text-muted-foreground">{utteranceSpeaker(ref.speaker_label, names)}</span>
                     <span>{ref.text}</span>
                 </li>
             ))}
@@ -202,10 +216,14 @@ function BucketTable({ data }: { data: V2PriceAttributionResponse }) {
     );
 }
 
+const NO_NAMES: ReadonlyMap<string, string> = new Map();
+
 export type PriceAttributionViewProps = {
     data: null | V2PriceAttributionResponse;
     error: unknown;
     isLoading: boolean;
+    /** `speaker_label` → name (`speakerNamesOf`); without it an utterance reads "Speaker <label>". */
+    speakerNames?: ReadonlyMap<string, string>;
 };
 
 /**
@@ -214,31 +232,33 @@ export type PriceAttributionViewProps = {
  * price or volume, so none is shown. While the call is live (`live`) a banner says the rows
  * are not settled, and the anchor facts / top minutes wait for the post-call summary.
  */
-export function PriceAttributionView({ data, error, isLoading }: PriceAttributionViewProps) {
+export function PriceAttributionView({ data, error, isLoading, speakerNames = NO_NAMES }: PriceAttributionViewProps) {
     return (
-        <div className="flex flex-col gap-4">
-            <p className="text-muted-foreground">{PRICE_ATTRIBUTION_CAVEAT}</p>
+        <SpeakerNamesContext value={speakerNames}>
+            <div className="flex flex-col gap-4">
+                <p className="text-muted-foreground">{PRICE_ATTRIBUTION_CAVEAT}</p>
 
-            {error
-                ? <MediaState error={error} notFound={PRICE_ATTRIBUTION_UNAVAILABLE} title="Failed to load price moves" />
-                : isLoading || !data
-                    ? <Skeleton className="h-40 w-full" />
-                    : (
-                            <>
-                                {data.live && <Notice badge="Live" title={PRICE_ATTRIBUTION_LIVE_BANNER} />}
-                                {hasSummary(data) && <AnchorFacts data={data} />}
-                                {data.buckets.length === 0
-                                    ? <Notice title="No minute bars in the call window" />
-                                    : (
-                                            <>
-                                                <TopMinutes data={data} />
-                                                <CumulativeChart data={data} />
-                                                <BucketTable data={data} />
-                                            </>
-                                        )}
-                            </>
-                        )}
-        </div>
+                {error
+                    ? <MediaState error={error} notFound={PRICE_ATTRIBUTION_UNAVAILABLE} title="Failed to load price moves" />
+                    : isLoading || !data
+                        ? <Skeleton className="h-40 w-full" />
+                        : (
+                                <>
+                                    {data.live && <Notice badge="Live" title={PRICE_ATTRIBUTION_LIVE_BANNER} />}
+                                    {hasSummary(data) && <AnchorFacts data={data} />}
+                                    {data.buckets.length === 0
+                                        ? <Notice title="No minute bars in the call window" />
+                                        : (
+                                                <>
+                                                    <TopMinutes data={data} />
+                                                    <CumulativeChart data={data} />
+                                                    <BucketTable data={data} />
+                                                </>
+                                            )}
+                                </>
+                            )}
+            </div>
+        </SpeakerNamesContext>
     );
 }
 
@@ -249,5 +269,10 @@ export function PriceAttributionView({ data, error, isLoading }: PriceAttributio
 export function PriceAttributionTab({ event, eventId }: CallTabProps) {
     const { data, error, isLoading } = useV2PriceAttribution(eventId, { live: isEarningsEventLiveish(event) });
 
-    return <PriceAttributionView data={data} error={error} isLoading={isLoading} />;
+    // The Transcript tab's cached query (same key): asked only once there are utterances to name.
+    const participants = useV2Participants(data && data.buckets.length > 0 ? eventId : "");
+
+    const speakerNames = React.useMemo(() => speakerNamesOf(participants.data), [participants.data]);
+
+    return <PriceAttributionView data={data} error={error} isLoading={isLoading} speakerNames={speakerNames} />;
 }

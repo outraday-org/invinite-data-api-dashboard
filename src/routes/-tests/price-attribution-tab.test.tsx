@@ -13,6 +13,7 @@ import {
     PRICE_ATTRIBUTION_LIVE_BANNER,
     PRICE_ATTRIBUTION_UNAVAILABLE,
     PriceAttributionView,
+    speakerNamesOf,
 } from "@/routes/$ticker/earnings-calls/-components/tabs/price-attribution-tab";
 
 // jsdom has no layout: give recharts a fixed-size box instead of a ResponsiveContainer.
@@ -114,6 +115,18 @@ describe("PriceAttributionView", () => {
         expect(screen.getByRole("status")).toHaveTextContent(PRICE_ATTRIBUTION_UNAVAILABLE);
 
         expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    });
+
+    it("names an utterance's speaker from the call's participants, else \"Speaker <label>\" (UI walk F066)", () => {
+        const names = speakerNamesOf({ data: [{ name: "Colette Kress", speaker_label: "B" }, { name: null, speaker_label: "A" }] } as never);
+
+        render(<PriceAttributionView data={ATTRIBUTION} error={null} isLoading={false} speakerNames={names} />);
+
+        expect(screen.getAllByText("Colette Kress").length).toBeGreaterThan(0);
+
+        expect(screen.getAllByText("Speaker A").length).toBeGreaterThan(0);
+
+        expect(screen.queryByText("Speaker B")).toBeNull();
     });
 
     it("renders the anchor facts, the top minute and the bucket table without a price column", () => {
