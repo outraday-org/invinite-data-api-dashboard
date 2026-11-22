@@ -15,6 +15,7 @@ import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { DOCUMENT_SORT_VALUES, pagesOf } from "@/lib/earnings/documents";
 import { formatBytes } from "@/lib/earnings/format";
 import { originCodeLabel, trustTierLabel } from "@/lib/earnings/labels";
+import { formatDay } from "@/lib/format";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -59,7 +60,7 @@ function FilingsTable({ filings }: { filings: Array<V2InvestorDocument> }) {
                     {filings.map(doc => (
                         <TableRow key={doc.document_id}>
                             <TableCell className="max-w-xs truncate">{doc.title ?? "Untitled"}</TableCell>
-                            <TableCell className="tabular-nums">{doc.filing_date ?? "—"}</TableCell>
+                            <TableCell className="tabular-nums whitespace-nowrap">{formatDay(doc.filing_date)}</TableCell>
                             <TableCell className="text-muted-foreground tabular-nums">{doc.accession_number ?? "—"}</TableCell>
                             <TableCell>
                                 <div className="flex items-center justify-end">

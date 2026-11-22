@@ -116,7 +116,8 @@ describe("DocumentsTab", () => {
 
         expect(within(filings).getByText("FY2026 Form 10-K")).toBeInTheDocument();
 
-        expect(within(filings).getByText("2026-11-03")).toBeInTheDocument();
+        // A formatted day, never the raw ISO date (UI walk F068).
+        expect(within(filings).getByText("Nov 3, 2026")).toBeInTheDocument();
 
         expect(within(filings).getByText("EDGAR").closest("a")).toHaveAttribute("href", tenK.source_url);
 
