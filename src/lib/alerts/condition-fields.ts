@@ -150,7 +150,7 @@ export const FIELD_SPECS: Record<AlertConditionField, FieldSpec> = {
         kind: "json",
         label: "Rules",
         maxItems: 5,
-        placeholder: "[{\"metric_id\": \"revenue\", \"period_type\": \"quarterly\", \"operator\": \"gt\", \"value\": \"1000000000\"}]",
+        placeholder: "[{\"metric_id\": \"is_total_revenue\", \"period_type\": \"quarterly\", \"operator\": \"gt\", \"value\": \"1000000000\"}]",
     },
     scope: {
         help: "Where keywords are searched.",

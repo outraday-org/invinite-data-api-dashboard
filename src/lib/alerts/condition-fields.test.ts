@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { isCatalogMetricId } from "../reference/catalog";
 import { CONDITION_FIELDS, FIELD_SPECS, TRIGGER_FIELDS, TYPE_FIELDS } from "./condition-fields";
 import { PRICE_ALERT_TYPES } from "./labels";
 
@@ -166,6 +167,18 @@ describe("CONDITION_FIELDS against openapi.json", () => {
 
             expect({ field, ok: kindsOf[shape]?.includes(FIELD_SPECS[field as keyof typeof FIELD_SPECS].kind) }).toEqual({ field, ok: true });
         }
+    });
+});
+
+describe("JSON placeholders", () => {
+    it("every placeholder parses, and the rules example names a catalog metric id the API takes (UI walk F111)", () => {
+        for (const field of Object.values(FIELD_SPECS)) {
+            if (field.kind === "json" && field.placeholder) expect(() => JSON.parse(field.placeholder!)).not.toThrow();
+        }
+
+        const [rule] = JSON.parse(FIELD_SPECS.rules.placeholder!) as Array<{ metric_id: string }>;
+
+        expect(isCatalogMetricId(rule.metric_id)).toBe(true);
     });
 });
 
