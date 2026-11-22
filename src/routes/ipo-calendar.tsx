@@ -315,8 +315,22 @@ export function IpoDetail({ ipo }: { ipo: V2Ipo }) {
         ["Registration", registration ? `${registration.form_family} · ${registration.track_key}` : null],
     ];
 
+    const cik = ipoIssuerCik(ipo);
+
+    const listed = ipoListedTicker(ipo);
+
+    const linkClass = "underline-offset-4 hover:underline";
+
     return (
         <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5" data-testid="ipo-detail">
+            <dt className="text-muted-foreground">Issuer</dt>
+            <dd>
+                {cik
+                    ? <Link className={linkClass} params={{ cik }} title="SEC filer: identity, lifecycle, filings and Form D private offerings" to="/sec/$cik">{ipo.issuer_name || `CIK ${cik}`}</Link>
+                    : ipo.issuer_name || "—"}
+            </dd>
+            <dt className="text-muted-foreground">Symbol</dt>
+            <dd>{listed ? <Link className={linkClass} params={{ ticker: listed }} to="/$ticker">{listed}</Link> : ipoSymbolText(ipo)}</dd>
             {facts.filter((fact): fact is [string, string] => Boolean(fact[1])).map(([label, value]) => (
                 <React.Fragment key={label}>
                     <dt className="text-muted-foreground">{label}</dt>

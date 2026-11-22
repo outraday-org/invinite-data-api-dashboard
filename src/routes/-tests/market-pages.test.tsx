@@ -150,6 +150,11 @@ describe("/ipo-calendar (`/v1/ipos`, `/v1/ipos/{ipo_id}`)", () => {
         expect(within(detail).getByText("$16.00 – $18.00")).toBeInTheDocument();
 
         expect(within(detail).queryByText("Priced")).toBeNull();
+
+        // The issuer opens its SEC filer page; a not-yet-listed offering names its proposed symbol.
+        expect(within(detail).getByText("Rezera Inc").closest("a")).toHaveAttribute("href", "/sec/2156369");
+
+        expect(within(detail).getByText("RZRA (proposed)")).toBeInTheDocument();
     });
 });
 
