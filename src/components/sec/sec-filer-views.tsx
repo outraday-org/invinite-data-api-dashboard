@@ -27,7 +27,7 @@ import { ApiRequestError, isTierError } from "@/lib/api/errors";
 import { formatDay, formatMoneyCompact } from "@/lib/format";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { listOf, reviewStatusOf, scalarEntries } from "@/lib/sec/source";
-import { formatFractionPercentCompact, formatNumberEn, formatNumberEnCompact } from "@/lib/utils";
+import { formatFractionPercentCompact, formatNumberEn } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 import type { SecPanelTarget } from "./sec-source-panel";
@@ -325,7 +325,8 @@ export function exemptionLabel(code: string) {
     return ica ? `ICA 3(c)(${ica[1]})` : code;
 }
 
-const offeringUsd = (value: null | number) => (value === null ? "—" : `$${formatNumberEnCompact(value)}`);
+/** An offering amount in USD, compact like every other money cell ("$50M", "$2.73M"). */
+const offeringUsd = (value: null | number) => formatMoneyCompact(value);
 
 /** The offering size: "Indefinite" when stated so, else the amount (USD). */
 export function offeringAmountText(offering: Pick<V2Offering, "indefinite_amount" | "total_offering_amount">) {

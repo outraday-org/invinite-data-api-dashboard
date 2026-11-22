@@ -385,7 +385,7 @@ describe("Private offerings (`/v1/filers/{cik}?expand=private_offerings` + `/v1/
 
         expect(screen.getByText("latest exemptions:").nextSibling).toHaveTextContent("Rule 506(c), ICA 3(c)(7)");
 
-        expect(screen.getByText("total sold:").nextSibling).toHaveTextContent("$87.50 M");
+        expect(screen.getByText("total sold:").nextSibling).toHaveTextContent("$87.5M");
 
         // The offering opens its detail page.
         expect(screen.getByRole("link", { name: "021-528681" })).toHaveAttribute("href", "/offerings/021-528681");
@@ -394,7 +394,7 @@ describe("Private offerings (`/v1/filers/{cik}?expand=private_offerings` + `/v1/
 
         expect(amended).toHaveTextContent("1 amendment");
 
-        expect(amended).toHaveTextContent("$150.00 M");
+        expect(amended).toHaveTextContent("$150M");
 
         expect(amended).toHaveTextContent("42");
 
