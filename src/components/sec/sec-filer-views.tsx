@@ -16,6 +16,7 @@ import type {
     V2OfferingsResponse,
 } from "@/lib/api/types";
 
+import { fiscalYearEndText } from "@/components/reference/companies-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copyable } from "@/components/ui/copy-button";
@@ -95,7 +96,7 @@ export function SecFilerHeader({ cik, data, error, isLoading }: { cik: string; d
         ["entity type", data?.entity_type],
         ["SIC", data?.sic],
         ["state of incorporation", data?.state_of_incorporation],
-        ["fiscal year end", data?.fiscal_year_end],
+        ["fiscal year end", data?.fiscal_year_end ? fiscalYearEndText(data.fiscal_year_end) : null],
     ];
 
     const facts = stated.flatMap(([key, value]): Array<[string, string]> => (value ? [[key, value]] : []));

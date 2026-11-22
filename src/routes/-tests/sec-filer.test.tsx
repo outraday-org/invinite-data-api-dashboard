@@ -71,7 +71,10 @@ describe("tickerless filer selection", () => {
 
         expect(screen.getByText("Pre-IPO")).toBeInTheDocument();
 
-        expect(screen.getByText("12-31")).toBeInTheDocument();
+        // The fiscal year end in words, never the raw `MM-DD` (UI walk F084).
+        expect(screen.getByText("Dec 31")).toBeInTheDocument();
+
+        expect(screen.queryByText("12-31")).toBeNull();
     });
 
     it("a listed filer shows its verified listing", () => {
