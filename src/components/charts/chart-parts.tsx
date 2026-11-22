@@ -33,7 +33,8 @@ export function ChartFrame({ children, description, height = 240, title }: Chart
                 {description && <div className="text-muted-foreground text-xs">{description}</div>}
             </figcaption>
             <div style={{ height }}>
-                <ResponsiveContainer height="100%" width="100%">
+                {/* A non-zero first size: recharts' default (-1 × -1) warns on every mount before it measures (UI walk F010). */}
+                <ResponsiveContainer height="100%" initialDimension={{ height, width: 1 }} width="100%">
                     {children}
                 </ResponsiveContainer>
             </div>

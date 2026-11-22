@@ -47,6 +47,16 @@ describe("/account (`/v1/me`, `/v1/me/usage`)", () => {
         expect(within(oauth).getByText("—")).toBeInTheDocument();
     });
 
+    it("the usage chart mounts without recharts' -1 × -1 size warning (UI walk F010)", () => {
+        const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+        render(<UsageView usage={USAGE_7D} />);
+
+        expect(warn.mock.calls.filter(call => String(call[0]).includes("of chart should be greater than 0"))).toEqual([]);
+
+        warn.mockRestore();
+    });
+
     it("the window is 7, 30 or 90 days (else the API's default 30)", () => {
         expect(toUsageWindow("7")).toBe(7);
 
