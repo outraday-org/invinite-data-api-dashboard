@@ -549,6 +549,141 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Evidence: `/v1/holders?limit=100&source=nport&symbol=AAPL` rows `filing_date: null`
 - Outcome: open (Task 11: data → backend tasklist)
 
+### F059 — Events: `started_at` / `ended_at` null on every captured, published call
+- Check: T5.1 · Severity: minor · Class: data
+- Where: http://localhost:3001/NVDA/earnings-calls?tab=past (and the call page's Metrics "Press release → call")
+- Steps: open the Past tab; read Started / Ended
+- Expected: the capture's start / end instants for a call with `capture_status: published`, `has_audio: true`
+- Actual: "—" / "—" on all 39 past rows; Metrics & diff "Press release → call —"
+- Evidence: `GET /v1/events/22056489-ca4b-4e8e-9d6b-03678d13d178?expand=calendar,observations` req_01M81RW4NYYXTP0HCQTP5ZP11C (`started_at: null`, `ended_at: null`, `capture_status: "published"`); same on `cce56779-…` (Q4 FY2026) in `/v1/events?company=NVDA&fiscal_year=2026` req_01M81RT7XNGKE2J9DWYKBNK72W
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F060 — Calls list: the Upcoming tab offers "Load more" that can only add past calls
+- Check: T5.1 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/NVDA/earnings-calls (Upcoming, 1 row)
+- Steps: open the list; look under the Upcoming table
+- Expected: no "Load more" once a past call is loaded (the newest-first list's next pages hold only older calls; the tab count already reads "1", not "1+")
+- Actual: "Load more · 1 loaded" under the one upcoming row
+- Evidence: `DataTable hasNextPage={hasNextPage}` for both tabs in `$ticker/earnings-calls/index.tsx`
+- Outcome: fixed in 7a0643f (`tabHasMore`; test `overview-and-calls.test.tsx`; re-checked: no button on Upcoming, Past keeps it)
+
+### F061 — Slides: a deck the PDF viewer cannot load shows a bare "Failed to fetch" in an empty 75vh frame
+- Check: T5.21 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/NVDA/earnings-calls/22056489-ca4b-4e8e-9d6b-03678d13d178?tab=slides
+- Steps: open the Slides tab
+- Expected: the deck, or a reason and a way to the file
+- Actual: red "Failed to fetch" at the top of an empty 75vh box. Cause here: `storage.invinite.com` sends `Access-Control-Allow-Origin` only for listed origins (`https://data.invinite.com`, `https://dashboard.data.invinite.com` — checked with curl), not `http://localhost:3001`, so pdf.js's fetch fails on localhost (environment, not prod); the viewer had no fallback for any load error
+- Evidence: console "Access to fetch at 'https://storage.invinite.com/…/q3-fy2027-earnings-presentation.pdf' from origin 'http://localhost:3001' has been blocked by CORS policy"
+- Outcome: fixed in 7f6e9b0 (`PdfViewerError`: "The PDF cannot be shown here (Failed to fetch)." + "Open the PDF in a new tab"; test `pdf-document-section.test.tsx`; re-checked)
+
+### F062 — Call page: source codes shown raw (edgar, ir_feed, confirmed_domain, sec, q4_reports)
+- Check: T5.4 / T5.21 / T5.23 / T5.24 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/NVDA/earnings-calls/cce56779-a8d5-43d5-9287-39d79b1e3d42 (header, Press release, Slides, Documents)
+- Steps: read the call-time provenance, the press release badges, the deck badges, the documents' Trust column
+- Expected: words (the contract describes each code)
+- Actual: "ir_feed · low confidence", "edgar · high confidence", badges "edgar" / "sec", "q4_reports" / "confirmed_domain", Trust "confirmed_domain"
+- Evidence: `call-header.tsx` `callTimeProvenance`, `press-release-tab.tsx`, `slides-tab.tsx`, `documents-tab.tsx` printed the fields as is
+- Outcome: fixed in e9be3bb (`trustTierLabel`, `callTimeSourceLabel`, `pressReleaseOriginLabel`, `originCodeLabel` in `labels.ts`; tests `labels.test.ts`, `press-release-tab.test.tsx`, `earnings-o7.test.tsx`; CLAUDE.md labels line; re-checked: "Company IR feed · low confidence", "8-K exhibit", "SEC filing", "Company domain")
+
+### F063 — Guidance / KPI history money reads "$25.00 B", axis "$50.00 B"
+- Check: T5.18 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/NVDA/earnings-calls/22056489-ca4b-4e8e-9d6b-03678d13d178?tab=guidance (Physical AI revenue; KPI history of "Segment: data center")
+- Steps: read the range column and the history chart's y axis
+- Expected: "$25B" like every other money cell (`formatMoneyCompact`, cf. F022)
+- Actual: "$25.00 B / mid $25.00 B", axis "$0 · $50.00 B · $100.00 B …"
+- Evidence: `formatGuidanceValue` built `$` + `formatNumberEnCompact`
+- Outcome: fixed in 48ebf88 (`usd` → `formatMoneyCompact`; test `labels.test.ts`; re-checked: "$25B / mid $25B")
+
+### F064 — KPI table: raw unit code after the stated value; "Segment growth:edge computing"
+- Check: T5.18 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/NVDA/earnings-calls/22056489-ca4b-4e8e-9d6b-03678d13d178?tab=guidance → KPIs
+- Steps: read Value and Metric
+- Expected: "$8.2 billion", "42%"; "Segment growth: edge computing"
+- Actual: "$8.2 billion usd", "42% pct"; badge "Segment growth:edge computing"
+- Evidence: `kpi-table.tsx` appended `kpi.unit`; `metricLabel` only knew the `segment:` prefix
+- Outcome: fixed in ee77550 (`kpiUnitSuffix`, `<metric>:<slug>` in `metricLabel`; test `labels.test.ts`; re-checked)
+
+### F065 — KPIs: press-release mentions carry a fiscal period one year ahead; filing links on the wrong origin
+- Check: T5.18 · Severity: major · Class: data
+- Where: http://localhost:3001/NVDA/earnings-calls/22056489-ca4b-4e8e-9d6b-03678d13d178?tab=guidance → KPIs → "Segment: data center" history
+- Steps: read Period of the press-release rows; read Filing
+- Expected: the Q3 FY2027 call's press release states Q3 FY2027 figures
+- Actual: every press-release mention is one fiscal year ahead: Nov 17, 2026 call "Q3 FY2028 $107.6 billion", Aug 26 "Q2 FY2028", May 20 "Q1 FY2028", Feb 25 "Q4 FY2027", Nov 19, 2025 "Q3 FY2027" (the transcript mentions of the same calls are right). Press-release rows have Filing "—" while transcript rows link the 8-K press release (`q3fy26pr.htm`). Only 6 KPIs on the Q3 FY2027 call, all from the press release
+- Evidence: `GET /v1/kpis?event=22056489-…` and the KPI history `GET /v1/kpis?company=NVDA&metric=…` (13 mentions on 5 calls)
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F066 — Price moves: utterances read "Speaker spk00" instead of the speaker's name
+- Check: T5.22 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/AAPL/earnings-calls/2463cda2-9968-411d-886c-e638d71f34b3?tab=price-moves
+- Steps: read "Largest minute moves" and the bucket table
+- Expected: the speaker named as everywhere else on the call page (the contract's `utterance_refs` carry only `speaker_label`; `/v1/participants?event=` maps labels to names)
+- Actual: "Speaker spk00", "Speaker spk02", "Speaker spk05"
+- Evidence: `UtteranceRefs` printed `Speaker ${speaker_label}`
+- Outcome: fixed in 7a15b24 (`speakerNamesOf` / `utteranceSpeaker`; participants asked only once there are buckets, the Transcript tab's cached query; test `price-attribution-tab.test.tsx`; CLAUDE.md price-moves line; re-checked: "John Ternus", "Erik Woodring")
+
+### F067 — Call page: the tab bar scrolls sideways inside its box; "Price moves" hidden behind the API button
+- Check: T5.6 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/NVDA/earnings-calls/22056489-ca4b-4e8e-9d6b-03678d13d178 (1084 px viewport)
+- Steps: look at the tab bar's right end
+- Expected: every tab visible / reachable
+- Actual: the list (801 px) scrolls in a 703 px `overflow-x-auto` box with no visible scrollbar; "Price moves" sits under the API button, reachable only by a sideways wheel or arrow keys
+- Evidence: `call-tabs.tsx` wrapper `min-w-0 grow overflow-x-auto`
+- Outcome: fixed in 2030e93 (the list wraps like the Holders tabs, triggers keep their width; test `no-transcript-notice.test.tsx`; re-checked: Prosody / Price moves on a second row)
+
+### F068 — Call Documents tab: the Filings table shows a raw ISO filed day
+- Check: T5.23 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/NVDA/earnings-calls/cce56779-a8d5-43d5-9287-39d79b1e3d42?tab=documents
+- Steps: read Filings → Filed
+- Expected: "Feb 25, 2026" (CLAUDE.md "No raw ISO date in a cell"; cf. F055)
+- Actual: "2026-02-25"
+- Evidence: `FilingsTable` printed `doc.filing_date`
+- Outcome: fixed in ca69d0d (`formatDay`; test `documents-tab.test.tsx`; re-checked)
+
+### F069 — Published NVDA transcripts: CEO / IR unnamed ("Unknown speaker 1/2"), analyst names misspelled
+- Check: T5.3 / T5.13 · Severity: minor · Class: data
+- Where: http://localhost:3001/NVDA/earnings-calls/cce56779-a8d5-43d5-9287-39d79b1e3d42 (Q4 FY2026); calls-list search hits on Q3 FY2026, Q2 FY2027
+- Steps: read the Speakers transcript / the company transcript search hits
+- Expected: Jensen Huang and the IR host named (they are named on the Q4 press release and other calls)
+- Actual: 15 turns "Unknown speaker 1" / "Unknown speaker 2" on Q4 FY2026 (Jensen's Q&A answers), "Unknown speaker 3" in Q3 FY2026 / Q2 FY2027 hits; "Harlan Suhr", "Stacy Raskin", "Mark Lipakis", "Erin Rakers", "Antoine Chequepin" (Q4 FY2026), "Jen Huang" (GTC Taipei 2026 keynote, "Speaker uncertain"); AAPL Q4 FY2026 participants list "Unknown speaker 1". Related to F024
+- Evidence: `GET /v1/events/cce56779-…/transcript?include=words`; `/v1/search/transcripts?company=NVDA&q=data+center…`
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F070 — An upcoming non-earnings event opens on "Price moves" (its only tab) instead of "No transcript yet"
+- Check: T5.27 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/NVDA/earnings-calls/77d3d72c-3129-43e5-ac83-a9fef6511afc (UBS conference, Dec 1, 2026)
+- Steps: open the event
+- Expected: "No transcript yet" + why, as for an earnings call (T5.27)
+- Actual: the tab bar held only "Price moves" (every flagged tab hidden for a non-earnings event) and the page asked `/v1/events/{id}/price-attribution` for an event that has not happened: "Price moves are not available for this call yet"
+- Evidence: `call-tabs.tsx` `hidden()` hid the Transcript tab too
+- Outcome: fixed in 218fabd (the Transcript tab stays, muted; test `no-transcript-notice.test.tsx`; CLAUDE.md non-earnings line; re-checked: "Transcript | Price moves", "No transcript yet")
+
+### F071 — Press releases carry no `news_id` though News holds the item; that item's time is wrong
+- Check: T5.24 · Severity: minor · Class: data
+- Where: http://localhost:3001/NVDA/earnings-calls/22056489-ca4b-4e8e-9d6b-03678d13d178?tab=press-release, http://localhost:3001/NVDA/news?from=2026-11-17&to=2026-11-18
+- Steps: look for the press release's news link; find the item in News
+- Expected: `news_id` set → "News item" link (CLAUDE.md press-release tab)
+- Actual: `news_id: null` on the Q3 FY2027 and Q4 FY2026 press releases; `/NVDA/news` lists "NVIDIA Announces Financial Results for Third Quarter Fiscal 2027" (SEC EDGAR, Earnings results) at "Nov 17, 2026, 1:00 PM GMT+1" = 12:00 UTC, nine hours before the 8-K's acceptance (21:20:51 UTC)
+- Evidence: `GET /v1/events/22056489-…/press-release` (`news_id: null`, `published_at: 2026-11-17T21:20:51Z`)
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F072 — Price attribution not derived for NVDA's last two calls
+- Check: T5.22 · Severity: minor · Class: data
+- Where: http://localhost:3001/NVDA/earnings-calls/22056489-ca4b-4e8e-9d6b-03678d13d178?tab=price-moves (and `b1dfd0fb-…`, Q2 FY2027)
+- Steps: open Price moves
+- Expected: minute rows for a recorded after-hours call (AAPL Q4 FY2026 has 89 minute bars)
+- Actual: 404 `price_attribution_unavailable` → "Price moves are not available for this call yet" on Q3 FY2027 (5 days old) and Q2 FY2027 (3 months old); the notice renders correctly, no toast
+- Evidence: `GET /v1/events/{id}/price-attribution` 404 on both
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F073 — Transcript versions: `change_note` is a pipeline code ("company_text d1777505", "naming")
+- Check: T5.12 · Severity: nit · Class: data
+- Where: http://localhost:3001/NVDA/earnings-calls/22056489-ca4b-4e8e-9d6b-03678d13d178 (version select)
+- Steps: open the version select
+- Expected: a note a reader understands (free text the UI shows as is)
+- Actual: "Version 3 · corrected by the system (company text) · Nov 19, 2026, 11:21 PM GMT+1 · company_text d1777505", "Version 2 · final · … · naming"
+- Evidence: `GET /v1/events/22056489-…/transcript-versions?limit=200` `change_note`
+- Outcome: open (Task 11: data → backend tasklist)
+
 ## Summary (filled by Task 11)
 
 | Class | blocker | major | minor | nit | fixed | API tasklist | other |
