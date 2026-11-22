@@ -22,12 +22,14 @@ const state = vi.hoisted(() => ({
     count: null as null | { data: Array<unknown>; has_more: boolean },
     countArgs: [] as Array<[string, boolean]>,
     families: ["Alerts"] as Array<string> | null,
+    /** The answer's canonical symbol (unset = the mock names none). */
+    symbol: undefined as string | undefined,
     type: "stock" as string,
 }));
 
 vi.mock("@/lib/api/queries", () => ({
     useAlert: () => ({ data: null }),
-    useInstrument: () => ({ data: { datasets: ["profile", "alerts"], type: state.type } }),
+    useInstrument: () => ({ data: { datasets: ["profile", "alerts"], symbol: state.symbol, type: state.type } }),
     useKeyState: () => ({ me: state.families ? { allowed_families: state.families } : null }),
     useSymbolAlertCount: (symbol: string, enabled: boolean) => {
         state.countArgs.push([symbol, enabled]);
@@ -42,6 +44,8 @@ beforeEach(() => {
     state.countArgs = [];
 
     state.families = ["Alerts"];
+
+    state.symbol = undefined;
 
     state.type = "stock";
 });
@@ -95,6 +99,18 @@ describe("Create alert on ticker pages", () => {
 
     it("the entry points: the count links /alerts?symbol= (the API's filter) beside the button", () => {
         render(<AlertEntryPoints symbol="AAPL" types={ENTRY_TYPES.news} />);
+
+        expect(screen.getByTestId("symbol-alerts-link")).toHaveAttribute("href", "/alerts?symbol=AAPL");
+
+        expect(screen.getByTestId("symbol-alerts-link")).toHaveTextContent("2 alerts on AAPL");
+
+        expect(state.countArgs.at(-1)).toEqual(["AAPL", true]);
+    });
+
+    it("a lowercase URL (`/aapl`) names the instrument's canonical symbol, in the count, the link and the form (F031)", () => {
+        state.symbol = "AAPL";
+
+        render(<AlertEntryPoints symbol="aapl" types={ENTRY_TYPES.overview} />);
 
         expect(screen.getByTestId("symbol-alerts-link")).toHaveAttribute("href", "/alerts?symbol=AAPL");
 

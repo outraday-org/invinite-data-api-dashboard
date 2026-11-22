@@ -109,14 +109,17 @@ export function AlertEntryPoints({ symbol, types }: { symbol: string; types: Rea
 
     const allowed = me !== null && plansAlerts(me) && offered.length > 0;
 
-    const count = useSymbolAlertCount(symbol, allowed);
+    // The answer's canonical symbol, never the URL's spelling (`/aapl` names AAPL).
+    const canonical = instrument.data?.symbol ?? symbol;
+
+    const count = useSymbolAlertCount(canonical, allowed);
 
     if (!allowed) return null;
 
     return (
         <div className="flex flex-wrap items-center gap-2" data-testid="alert-entry-points">
-            {count.data && <SymbolAlertsLink page={count.data} symbol={symbol} />}
-            <CreateAlertButton symbol={symbol} types={offered} />
+            {count.data && <SymbolAlertsLink page={count.data} symbol={canonical} />}
+            <CreateAlertButton symbol={canonical} types={offered} />
         </div>
     );
 }
