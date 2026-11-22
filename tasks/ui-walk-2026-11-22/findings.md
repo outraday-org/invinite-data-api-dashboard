@@ -117,6 +117,186 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Evidence: console sweep with markers around the page visits
 - Outcome: fixed in 3c43903 (`ChartFrame` passes `initialDimension`, the shared frame of the account chart and both price charts; test `account-page.test.tsx`; re-checked: no warning between the markers)
 
+### F011 — `/calendar`: the day headings (and header) never stick — the table is wider than its column
+- Check: T2.1 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/calendar (viewport 1700 px)
+- Steps: open the page, scroll into a day group
+- Expected: sticky day headings with counts (CLAUDE.md "Global pages")
+- Actual: table 1279 px in a 1088 px column (`max-w-6xl`): `DataTable` sticks headings only when the table fits, so they scrolled away at every width; the Call column's meta line ("first-party time (low confidence) · via ir_feed · Asia/Hong_Kong (inferred)") and the Report meta did not wrap (table cells are `whitespace-nowrap`)
+- Evidence: column widths Call 356 / Report 215 / Company 236; after the fix the table is 1088 px and every heading sits at `top: 56px`
+- Outcome: fixed in f62befd (`CELL_META_CLASS` in `calendar-semantics.tsx`, company cell 180 px; test `calendar-semantics.test.tsx`; re-checked in the browser)
+
+### F012 — `/live-calls`: "Next scheduled calls" puts tomorrow's date-only events before tonight's calls
+- Check: T2.5 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/live-calls (no call live, Sun Nov 22)
+- Steps: open the page
+- Expected: the next calls first (TUYA Nov 22 19:30 ET, ZEPP 20:30 ET)
+- Actual: six date-only Nov 23 conferences (AYA, SCZM, ULS, CGAU, VIST, SKE); TUYA / ZEPP missing. `/v1/events?sort=scheduled_at` orders a date-only event by its day's UTC midnight (= 19:00 ET the evening before), and the page took the first 6
+- Evidence: page text; `limit: 6` + `sort: scheduled_at` in `live-calls.tsx`
+- Outcome: fixed in 6d6c544 (`nextCallsOf`: one 50-row page in New York day order, `groupEventsByNewYorkDay`; test `market-pages.test.tsx`; re-checked: TUYA, ZEPP, then the Nov 23 events)
+
+### F013 — `GET /v1/ipos?sort=listing_date` puts offerings without a listing date first
+- Check: T2.6 · Severity: major · Class: api
+- Where: http://localhost:3001/ipo-calendar (Upcoming)
+- Steps: open Upcoming; then `?from=2026-11-01`
+- Expected: by listing date ascending, offerings without one last (the page's description; Postgres' own ASC default is NULLS LAST)
+- Actual: the first 50 rows all have `listing_date: null`, A–Z by id (AAGO, AAS, ABDC, …); TRCX (listing Nov 23, 2026) only shows with `?from=` — so the Upcoming tab never shows the next listings on page 1. The spec's `sort` description does not state the null order
+- Evidence: `GET /v1/ipos?limit=50&sort=listing_date&stage=…`; with `listing_date.gte=2026-11-01` one row, TRCX Nov 23
+- Outcome: open (Task 11: API → backend tasklist — nulls last for `listing_date` ascending, or state the order in the spec; no client re-sort per GUIDE §7)
+
+### F014 — `/v1/ipos`: duplicate rows for one IPO and inconsistent SPAC / share fields
+- Check: T2.6 · Severity: minor · Class: data
+- Where: http://localhost:3001/ipo-calendar?tab=recent
+- Steps: open Recent, open the ANT rows' Details
+- Expected: one row per offering
+- Actual: Anthropic, PBC (ANT, Nov 19) has 5 rows: one priced XNAS offering (S-1 333-299633, $83.00, 980,000,000 shares) and 4 "Trading" rows with no price / shares / exchange (e.g. S-1 333-300148, first public Nov 19). Also HYAC "Haymaker Acquisition Corp V" shares offered 0 with a $250M size; KACQU "Kartoon Studios Acquisition Corp." ($10.00 units, 30,000,000) carries no SPAC badge (`is_spac` false)
+- Evidence: Recent tab rows 1–6, Details dialogs
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F015 — IPO Details dialog: the issuer is not linked
+- Check: T2.6 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/ipo-calendar?tab=recent → a row's "Details"
+- Steps: open Details
+- Expected: the issuer links `/sec/$cik` (T2.6)
+- Actual: title and facts only, no link (the table row had one)
+- Evidence: dialog links `[]`
+- Outcome: fixed in 965ce55 (Issuer → `/sec/$cik` and Symbol → `/$ticker` rows in `IpoDetail`; test `market-pages.test.tsx`; re-checked: "Anthropic, PBC → /sec/2130357", "ANT → /ANT")
+
+### F016 — Market holidays: the same holiday named differently across years
+- Check: T2.7 · Severity: nit · Class: data
+- Where: http://localhost:3001/market-holidays
+- Steps: open Upcoming / Past
+- Expected: one name per holiday
+- Actual: "New Years Day" (2027) vs "New Year's Day" (2026); "Thanksgiving" (2026) vs "Thanksgiving Day" (2027)
+- Evidence: page rows
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F017 — `/v1/instruments?is_active=false&type=stock` answers no row
+- Check: T2.8 · Severity: minor · Class: data
+- Where: http://localhost:3001/instruments?active=delisted&type=stock
+- Steps: open the Stocks tab with "Delisted"
+- Expected: delisted stocks with the "Delisted" badge
+- Actual: "No instrument matches these filters."; without `type` the delisted rows are all ETFs (ADBU, ADDS, ADFI, …)
+- Evidence: request id req_01M81JF5TW9YJCA1EEH11Q96W4 (`GET /v1/instruments?is_active=false&limit=50`)
+- Outcome: open (Task 11: data → backend tasklist, or by design if the universe keeps no delisted stock — then the spec should say so)
+
+### F018 — CLAUDE.md: the Companies tab's fiscal year end is "null on every row today"
+- Check: T2.9 · Severity: nit · Class: doc
+- Where: http://localhost:3001/instruments?view=companies
+- Steps: open the tab
+- Expected: CLAUDE.md matches the app
+- Actual: the column shows days ("Oct 31", "Dec 31", "Jun 30"): Data API 8.0 serves `fiscal_year_end`
+- Evidence: page rows (A, AA, MSFT, MU)
+- Outcome: fixed in 4552bb6 (CLAUDE.md "Reference (O7 group 7)")
+
+### F019 — `GET /v1/filers?phase=manager` answered 503 `unavailable` after ~30 s
+- Check: T2.11 · Severity: minor · Class: api
+- Where: http://localhost:3001/institutions
+- Steps: open the page (once); reload
+- Expected: the list
+- Actual: skeleton for ~30 s, then 503 "The SEC document store is unavailable; retry."; the reload answered in ~4 s
+- Evidence: request id req_01M81JJ6MRGVKWX8Q40X3NJNT6
+- Outcome: open (Task 11: API → backend tasklist — transient SEC store outage / slow answer)
+
+### F020 — A 503 `unavailable` on an SEC view says "This SEC capability is not switched on yet"
+- Check: T2.11 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/institutions (during F019)
+- Steps: as F019
+- Expected: a state that fits an outage as well as a switched-off capability
+- Actual: "Not switched on · This SEC capability is not switched on yet" above the API's "The SEC document store is unavailable; retry."
+- Evidence: `READINESS_TEXT.not_ready` in `src/lib/sec/readiness.ts`
+- Outcome: fixed in 6f48eef ("Unavailable · Not available right now", the API's detail below says which; tests `sec-source-panel.test.tsx`, `sec-v2-pages.test.tsx`; views with their own words — SEC search's "not switched on yet" — unchanged)
+
+### F021 — `GET /v1/filers?phase=manager` stops after 50 rows (`has_more: false`)
+- Check: T2.11 · Severity: major · Class: api
+- Where: http://localhost:3001/institutions
+- Steps: open the page, look for "Load more"
+- Expected: the 13F managers by cursor (CLAUDE.md "`/institutions` (`/v1/filers?phase=manager` by cursor, 1 credit a page)"; the spec: "`phase=pre_ipo|public|former|other` lists the issuer lifecycle and pages by `cursor`; `phase=manager` lists 13F-HR filers")
+- Actual: 50 rows (033 ASSET MANAGEMENT … 26North Partners LP), `has_more: false`, `next_cursor: null` — no way past "2…"
+- Evidence: `GET /v1/filers?limit=50&phase=manager` answer (API sheet)
+- Outcome: open (Task 11: API → backend tasklist — page `phase=manager` by cursor, or state the cap in the spec)
+
+### F022 — Offering amounts read "$50.00 M" instead of the compact money format
+- Check: T2.12 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/offerings (and `/sec/$cik` private offerings)
+- Steps: open the page
+- Expected: "$50M" like every other money cell (`formatMoneyCompact`)
+- Actual: "$50.00 M", "$2.73 M" (`formatNumberEnCompact` with a `$`)
+- Evidence: `offeringUsd` in `sec-filer-views.tsx`
+- Outcome: fixed in 78e9512 (test `sec-filer.test.tsx`; re-checked: "$50M", "$2.73M", "$0")
+
+### F023 — `/offerings?industry=a` shows a raw validation error
+- Check: T2.12 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/offerings?industry=a
+- Steps: open the URL
+- Expected: a 1-character industry reads as none (the field already ignores < 2 characters)
+- Actual: "Failed to load the offerings" with the server function's zod issue JSON (`too_small`, minimum 2)
+- Evidence: page text; no API request sent
+- Outcome: fixed in bc9f425 (`optionalText(80, 2)`; test `url-state.test.ts`; re-checked: the list loads, `?industry` dropped)
+
+### F024 — `/v1/people`: one analyst split into four people by transcription variants
+- Check: T2.13 · Severity: minor · Class: data
+- Where: http://localhost:3001/people?q=chatterjee&role=analyst&sort=name
+- Steps: open the URL
+- Expected: one person for the JP Morgan analyst
+- Actual: "Samak Chatterjee" (JPMorgan Chase, 2 calls), "Sameek Chatterjee" (JP Morgan, 5), "Samik Chatterjee" (JP Morgan, 22), "Somig Chatterjee" (JP Morgan, 1 — the AAPL Q4 FY2026 call)
+- Evidence: `GET /v1/people?limit=50&q=chatterjee&role=analyst&sort=name`
+- Outcome: open (Task 11: data → backend tasklist — person resolution across spelling variants)
+
+### F025 — `/v1/catalog/metrics`: 307 of 342 metrics have no description
+- Check: T2.14 · Severity: minor · Class: data
+- Where: http://localhost:3001/catalog
+- Steps: open Metrics, count the Description column
+- Expected: a description per metric ("what each standardized metric means")
+- Actual: 35 of 342 rows have one; the rest show "—"
+- Evidence: page rows
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F026 — API sheet lists the closed catalog tabs' requests
+- Check: T2.14 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/catalog → switch tabs → API
+- Steps: open Metrics, then Sections … Mapping rules, open the API sheet
+- Expected: the open tab's requests ("only the open tab requests (API sheet)")
+- Actual: every tab visited so far listed (the hooks stay mounted with `enabled: false`; the sheet took any mounted observer). No extra request was sent — a fresh `?tab=forms` load listed only forms
+- Evidence: sheet text after five tab switches
+- Outcome: fixed in 7e5f2cd (`viewRequestsOf` uses `query.isActive()`; test `api-inspector.test.tsx`; CLAUDE.md O6 updated; re-checked: Metrics → Forms lists only forms)
+
+### F027 — News: `?earnings=true` is dropped; the select writes `?earnings=%22true%22`
+- Check: T2.18 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/news-feed?earnings=true (and `/$ticker/news`)
+- Steps: open the URL; pick "Earnings news only"
+- Expected: the filter applies from a typed / linked URL
+- Actual: the router parses `true` as a boolean, the schema `z.enum(["true","false"])` refused it → filter off and the param removed; the select's string is written JSON-quoted to round-trip
+- Evidence: URL after picking; `validateNewsSearch`
+- Outcome: fixed in 6ede6b4 (the schema accepts the boolean; test `labels.test.ts`; re-checked: `?earnings=true` → "Earnings news only", 49 of 50 hidden; the written form stays `%22true%22` — the router's round-trip rule)
+
+### F028 — SEC filing search: raw ISO days in hits and the matches note; a visible relevance score
+- Check: T2.23 · Severity: minor · Class: dashboard
+- Where: http://localhost:3001/filings?paused=true&filedFrom=2026-01-01&searchForm=10-K ("Search every filer")
+- Steps: search `going concern`
+- Expected: days formatted ("No raw ISO date in a cell"); no visible score (O7 group 5: relevance in the match badge's tooltip)
+- Actual: "10-K · 2026-09-17 · feam-20260630.htm" with "0.4787" beside it; "Filed 2026-02-25 to 2026-11-20."
+- Evidence: page text
+- Outcome: fixed in a3bb4d1 (`formatDay` in `SecHitCard` / `matchesText`, relevance in the badge title; test `sec-search.test.tsx`; re-checked: "10-Q · Nov 16, 2026 · …", "Filed Nov 16, 2026 to Nov 18, 2026.", tooltip "How the passage matched · relevance 0.4257")
+
+### F029 — `/v1/datasets`: no forms for six data sets
+- Check: T2.24 · Severity: minor · Class: data
+- Where: http://localhost:3001/sec/datasets
+- Steps: open the page
+- Expected: the forms each data set covers
+- Actual: "—" for f345 (Forms 3/4/5), formd (Form D), icsc, ncen (N-CEN), nport (N-PORT), rr; only f13 and fsn list forms
+- Evidence: page rows
+- Outcome: open (Task 11: data → backend tasklist)
+
+### F030 — News search cost line names "the page's date window" in the market scope (which has none)
+- Check: T2.20 · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/news-feed?scope=market
+- Steps: open the market scope
+- Expected: no day-window wording without day inputs
+- Actual: "10 credits per page · the page's date window applies"
+- Evidence: `NewsSearchBox` cost note
+- Outcome: fixed in 20a0d06 (`newsSearchCostText`: the window only when `from` / `to` is set; test `news-search.test.tsx`; re-checked: "10 credits per page")
+
 ## Summary (filled by Task 11)
 
 | Class | blocker | major | minor | nit | fixed | API tasklist | other |
