@@ -5,6 +5,19 @@ import type { V2Dataset, V2FundStructure, V2Instrument, V2InstrumentType } from 
  * The API's `datasets` is the ONLY source of that answer; no per-type list lives here, only the section → dataset map.
  */
 
+/** The longest symbol the dashboard sends (`symbolSchema` of the server functions). */
+export const SYMBOL_MAX_LENGTH = 15;
+
+/**
+ * Whether a `$ticker` URL segment can be a symbol at all: a longer one (`/this-route-does-not-exist`) is answered
+ * "not known" without a request, never a validation error (UI walk F008).
+ */
+export function isSymbolParam(symbol: string) {
+    const trimmed = symbol.trim();
+
+    return trimmed.length > 0 && trimmed.length <= SYMBOL_MAX_LENGTH;
+}
+
 export const INSTRUMENT_TYPE_LABELS: Record<V2InstrumentType, string> = {
     closed_end_fund: "Closed-end fund",
     etf: "ETF",

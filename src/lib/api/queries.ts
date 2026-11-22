@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import type { AssetGroupCategory } from "@/lib/earnings/documents";
 
+import { isSymbolParam } from "@/lib/instruments";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import type {
@@ -643,7 +644,7 @@ export function useInstrumentSearch(query: string, type?: ReadonlyArray<V2Instru
  */
 export function useInstrument(symbol: string) {
     return useEarningsQuery<V2Instrument>({
-        enabled: symbol.trim().length > 0,
+        enabled: isSymbolParam(symbol),
         errorMessage: null,
         load: apiKey => getInstrument({ data: { apiKey, symbol } }),
         queryKey: ["v2", "instrument", symbol.toUpperCase()],

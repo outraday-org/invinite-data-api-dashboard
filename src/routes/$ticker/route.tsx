@@ -7,7 +7,7 @@ import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useInstrument } from "@/lib/api/queries";
-import { datasetGateText, instrumentBadges, sectionDatasets, sectionOf, servesSection } from "@/lib/instruments";
+import { datasetGateText, instrumentBadges, isSymbolParam, sectionDatasets, sectionOf, servesSection, SYMBOL_MAX_LENGTH } from "@/lib/instruments";
 import { TICKER_HEADER_HEIGHT_VAR, titleHead } from "@/lib/layout";
 import { recentInstrument, useRecordRecent } from "@/lib/recents";
 
@@ -65,7 +65,10 @@ function TickerLayout() {
 
     const { data: instrument, error, isLoading } = useInstrument(ticker);
 
-    const isUnknown = error instanceof ApiRequestError && error.status === 404;
+    // A segment no symbol can be (longer than any) is not known without a request (UI walk F008).
+    const notSymbol = !isSymbolParam(ticker);
+
+    const isUnknown = notSymbol || (error instanceof ApiRequestError && error.status === 404);
 
     const gatedDatasets = instrument && !servesSection(instrument.datasets, section) ? sectionDatasets(section) : [];
 
@@ -88,7 +91,7 @@ function TickerLayout() {
     if (isUnknown) {
         body = (
             <Notice badge="Not known" title={`${ticker.toUpperCase()} is not a known instrument`}>
-                {error.message}
+                {notSymbol ? `A symbol has at most ${SYMBOL_MAX_LENGTH} characters.` : error?.message}
             </Notice>
         );
     }

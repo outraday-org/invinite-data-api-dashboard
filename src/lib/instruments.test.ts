@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { AAPL_INSTRUMENT, GLD_INSTRUMENT, PDI_INSTRUMENT, SPY_INSTRUMENT, TQQQ_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
 
-import { datasetGateText, instrumentBadges, sectionOf, servesSection } from "./instruments";
+import { datasetGateText, instrumentBadges, isSymbolParam, sectionOf, servesSection } from "./instruments";
 
 describe("instrument badges", () => {
     it("one type badge; an exchange-traded trust adds Trust; a delisted symbol says so", () => {
@@ -62,5 +62,17 @@ describe("sections from datasets", () => {
         expect(datasetGateText(VXX_INSTRUMENT, "filings")).toBe("VXX is an ETN: filings are not served for it.");
 
         expect(datasetGateText(GLD_INSTRUMENT, "fund_holdings")).toMatch(/^GLD is an ETF structured as an exchange-traded trust: it files no holdings report/);
+    });
+});
+
+describe("isSymbolParam", () => {
+    it("a symbol-sized segment can be asked; an empty or longer one never is (UI walk F008)", () => {
+        expect(isSymbolParam("BRK.B")).toBe(true);
+
+        expect(isSymbolParam("ABCDEFGHIJKLMNO")).toBe(true);
+
+        expect(isSymbolParam("ABCDEFGHIJKLMNOP")).toBe(false);
+
+        expect(isSymbolParam("  ")).toBe(false);
     });
 });

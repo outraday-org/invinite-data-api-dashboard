@@ -114,4 +114,21 @@ describe("$ticker layout (the sidebar's sections: app-sidebar.test.tsx)", () => 
 
         expect(screen.queryByTestId("outlet")).toBeNull();
     });
+
+    it("a segment longer than any symbol is not known at once: no validation error, no page (UI walk F008)", () => {
+        route.ticker = "this-route-does-not-exist-walk";
+
+        route.pathname = "/this-route-does-not-exist-walk";
+
+        // The hook is idle for it (`isSymbolParam`): no answer, no error, not loading.
+        vi.mocked(useInstrument).mockReturnValue({ data: null, error: null, isLoading: false } as never);
+
+        render(<TickerLayout />);
+
+        expect(screen.getByText("THIS-ROUTE-DOES-NOT-EXIST-WALK is not a known instrument")).toBeInTheDocument();
+
+        expect(screen.getByText("A symbol has at most 15 characters.")).toBeInTheDocument();
+
+        expect(screen.queryByTestId("outlet")).toBeNull();
+    });
 });

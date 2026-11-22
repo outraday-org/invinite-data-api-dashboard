@@ -128,6 +128,7 @@ import type {
 import { ASSET_GROUP_CATEGORIES } from "../earnings/documents";
 import { SEARCH_MODES } from "../earnings/labels";
 import { env } from "../env";
+import { SYMBOL_MAX_LENGTH } from "../instruments";
 import { OFFERING_ID_PATTERN } from "../sec/ownership";
 import { createApiClient } from "./client.server";
 import { throwApiError } from "./errors";
@@ -152,7 +153,7 @@ const fundTypeSchema = z.enum(["etf", "closed_end_fund"] as const satisfies Read
 const fundStructureSchema = z.enum(["registered_fund", "exchange_traded_trust"] as const satisfies ReadonlyArray<V2FundStructure>);
 
 /** A bare US ticker (`BRK.B`, `BF-B`); `TICKER.<MIC>` is refused by the API. */
-const symbolSchema = z.string().trim().min(1).max(15);
+const symbolSchema = z.string().trim().min(1).max(SYMBOL_MAX_LENGTH);
 
 /** A fund's ticker or fund key (`S000024908`, `cik:884394`). */
 const fundSchema = z.string().trim().min(1).max(20);
