@@ -21,7 +21,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 | D1 / D2 ids (Task 8) | D1 `dst_01M81YNF4DP3558D13RN0KPJGP` (webhook, standard, webhook.site, 30 / min, description `walk-1122 webhook.site edited`, no headers left, secret rotated 2026-11-22 15:52 UTC) · D2 `dst_01M81YTP4DH99DFBR9AD4Z1BT7` (batch webhook, standard, `https://example.com/walk-1122-hook` → 405, digest 60 s, `walk-1122 unroutable`); both active |
 | Walk alert ids (Tasks 9–10) | price `alt_01M8203KDHBGP54WPX9BY6D8YM` · price_move `alt_01M8205R975SCSFNQ84VMRQR9H` · price_reminder `alt_01M8206YG0YFWZW5NS0N76YMZF` · volume_spike `alt_01M82083NY28W4XS583JECT3N2` · indicator `alt_01M8209ECAEWG9DM61NFPV49H7` · halt `alt_01M820A6XJP5KKY8ZBMH599MVP` · dividend `alt_01M820AQS82ZV47CT80JD22E10` · earnings_call `alt_01M820B3NGFBEGY0GGZ41QJ0X7` · earnings_call_keyword `alt_01M820BJ6FDN4YYPFCM9HB31Y9` · earnings_results `alt_01M820CMMNJY03T7MCCW338H7Y` · event_countdown `alt_01M820DP299EZ98KMANTTM9TXF` · filing `alt_01M820E7DD3CJJR447WQPKG1VS` · filing_keyword `alt_01M820EJG0VYTE5NYRQCPY0FYH` · fundamental_metric `alt_01M820FB1RQC7VQNP4EQZGG96Z` · news `alt_01M820FQZF79VJSVHZMVHFTDGX` · news_keyword `alt_01M820G3P5ASFH5A9BHM6E7TQ7` (Task 9: 16, each `client_reference_id` `walk-1122-<type>`, all deliver to D1, all active at the end of Task 9) · duplicate `alt_01M820R1YA0QF5CQP6FJVP29MP` (`walk-1122-dup`) deleted in T9.29 · script `alt_01M82253PRF3VASSBVQ99PHV9Y` (`walk-1122-script`, Task 10, script scr_01M821Y86MGC60D5BK539QSB6H v2) · Task 10 end users `walk-1122-a`, `-b`, `-c`, `walk-1122/odd:id x` |
 | End counts (Task 10): alerts / destinations / users / scripts | 0 / 0 / 0 / 0 (= start); end-user defaults all "No limit" again (restored in T10.10; the panel now says "Last changed Nov 22, 2026, 5:36 PM" instead of "Never set"); every walk resource deleted through the UI; receiver tab closed |
-| Credits at end (Task 11) | |
+| Credits at end (Task 11) | 3,995,334 remaining (4,666 of 4,000,000 used this period) → **4,605 credits used by the walk** since the key was saved (3,999,939) |
 
 ## Findings
 
@@ -43,7 +43,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: every row of a `phase=manager` list has `phase: "manager"` (the parameter and the field are both "Lifecycle phase" in the spec)
 - Actual: row 3 = `cik 0001067983` BERKSHIRE HATHAWAY INC, `phase: "public"`; the search badges it "Filer" inside the managers block
 - Evidence: request `GET /v1/filers?limit=50&phase=manager&q=berkshire`, request id req_01M81GV001NZDDBHSSJ824P0RR
-- Outcome: open (Task 11: API → backend tasklist, or by design if `phase=manager` means "files 13F" — then the spec description should say so)
+- Outcome: API → backend tasklist (task 1, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D1 in that README)
 
 ### F003 — A 13F manager without a ticker (`/sec/949012`) gets no 13F portfolio block
 - Check: T1.19 · Severity: major · Class: api
@@ -52,7 +52,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the 13F portfolio ("Load the latest quarter"), as on `/sec/1067983`; `/institutions` says "Each opens its filer page with its quarterly 13F portfolio"
 - Actual: no phase badge, no 13F portfolio block; Filings = "Unknown · Not known to the SEC store · No instrument is known for 949012 (GET /v1/instruments?q=)". The page shows the portfolio only for `phase === "manager"` or a 13F form in the filings facet (`isManagerFiler`): `/v1/filers/949012` answers `phase: null` (while the `phase=manager` list badges the same CIK "Institution") and `/v1/filings?symbol=949012` answers 404 for an unlisted filer, so neither signal reaches the page
 - Evidence: page text; `FilerDetail` has no `forms` field (spec), `listFilers` rows do
-- Outcome: open (Task 11: API → backend tasklist — `FilerDetail.phase` should be `manager` for a 13F filer, and / or `/v1/filings` should take an unlisted filer's CIK; no client workaround per GUIDE §7)
+- Outcome: API → backend tasklist (task 1, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D1, D2 in that README)
 
 ### F004 — `/sec/$cik` filings table shows raw ISO dates
 - Check: T1.19 · Severity: minor · Class: dashboard
@@ -70,7 +70,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the windows' credits include today's billed requests (`used_credits` is "live"; the daily rows are "credits billed (2xx responses only)")
 - Actual: every window says "88 credits · 91 requests" and the walk key 27 credits / 33 requests, while "Used this period" was 190 (later 275) since the period began today 09:42 CET; the family labels are the old v1 names ("Earnings Calls", "Company", "SEC Filings", "Metadata") while `allowed_families` lists the 7.x families (Instruments, Companies, Events, …)
 - Evidence: `/account` page text at ~12:40 CET
-- Outcome: open (Task 11: API → backend tasklist; if the rollup lag is by design, the spec should state it)
+- Outcome: API → backend tasklist (task 4, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D12 in that README)
 
 ### F006 — `HEAD /status` and `HEAD /licensing` answer 200 with the app shell instead of the 301
 - Check: T1.22 · Severity: minor · Class: dashboard
@@ -106,7 +106,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the note's name (e.g. "iPath Bloomberg Commodity Index Total Return ETN" for DJP)
 - Actual: `name` = the issuer ("BARCLAYS BANK PLC", "BANK OF MONTREAL /CAN/", "UBS AG") on every ETN row and in the `/DJP` header, so dozens of rows read the same
 - Evidence: `/v1/instruments?type=etn` page 1
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 10, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F010 — `/account`: recharts warns "width(-1) and height(-1) of chart" on every mount
 - Check: T1.28 · Severity: minor · Class: dashboard
@@ -142,7 +142,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: by listing date ascending, offerings without one last (the page's description; Postgres' own ASC default is NULLS LAST)
 - Actual: the first 50 rows all have `listing_date: null`, A–Z by id (AAGO, AAS, ABDC, …); TRCX (listing Nov 23, 2026) only shows with `?from=` — so the Upcoming tab never shows the next listings on page 1. The spec's `sort` description does not state the null order
 - Evidence: `GET /v1/ipos?limit=50&sort=listing_date&stage=…`; with `listing_date.gte=2026-11-01` one row, TRCX Nov 23
-- Outcome: open (Task 11: API → backend tasklist — nulls last for `listing_date` ascending, or state the order in the spec; no client re-sort per GUIDE §7)
+- Outcome: API → backend tasklist (task 3, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D4 in that README)
 
 ### F014 — `/v1/ipos`: duplicate rows for one IPO and inconsistent SPAC / share fields
 - Check: T2.6 · Severity: minor · Class: data
@@ -151,7 +151,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: one row per offering
 - Actual: Anthropic, PBC (ANT, Nov 19) has 5 rows: one priced XNAS offering (S-1 333-299633, $83.00, 980,000,000 shares) and 4 "Trading" rows with no price / shares / exchange (e.g. S-1 333-300148, first public Nov 19). Also HYAC "Haymaker Acquisition Corp V" shares offered 0 with a $250M size; KACQU "Kartoon Studios Acquisition Corp." ($10.00 units, 30,000,000) carries no SPAC badge (`is_spac` false)
 - Evidence: Recent tab rows 1–6, Details dialogs
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 3, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F015 — IPO Details dialog: the issuer is not linked
 - Check: T2.6 · Severity: minor · Class: dashboard
@@ -169,7 +169,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: one name per holiday
 - Actual: "New Years Day" (2027) vs "New Year's Day" (2026); "Thanksgiving" (2026) vs "Thanksgiving Day" (2027)
 - Evidence: page rows
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 10, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F017 — `/v1/instruments?is_active=false&type=stock` answers no row
 - Check: T2.8 · Severity: minor · Class: data
@@ -178,7 +178,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: delisted stocks with the "Delisted" badge
 - Actual: "No instrument matches these filters."; without `type` the delisted rows are all ETFs (ADBU, ADDS, ADFI, …)
 - Evidence: request id req_01M81JF5TW9YJCA1EEH11Q96W4 (`GET /v1/instruments?is_active=false&limit=50`)
-- Outcome: open (Task 11: data → backend tasklist, or by design if the universe keeps no delisted stock — then the spec should say so)
+- Outcome: API → backend tasklist (task 10, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D5 in that README)
 
 ### F018 — CLAUDE.md: the Companies tab's fiscal year end is "null on every row today"
 - Check: T2.9 · Severity: nit · Class: doc
@@ -196,7 +196,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the list
 - Actual: skeleton for ~30 s, then 503 "The SEC document store is unavailable; retry."; the reload answered in ~4 s
 - Evidence: request id req_01M81JJ6MRGVKWX8Q40X3NJNT6
-- Outcome: open (Task 11: API → backend tasklist — transient SEC store outage / slow answer)
+- Outcome: API → backend tasklist (task 2, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F020 — A 503 `unavailable` on an SEC view says "This SEC capability is not switched on yet"
 - Check: T2.11 · Severity: minor · Class: dashboard
@@ -214,7 +214,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the 13F managers by cursor (CLAUDE.md "`/institutions` (`/v1/filers?phase=manager` by cursor, 1 credit a page)"; the spec: "`phase=pre_ipo|public|former|other` lists the issuer lifecycle and pages by `cursor`; `phase=manager` lists 13F-HR filers")
 - Actual: 50 rows (033 ASSET MANAGEMENT … 26North Partners LP), `has_more: false`, `next_cursor: null` — no way past "2…"
 - Evidence: `GET /v1/filers?limit=50&phase=manager` answer (API sheet)
-- Outcome: open (Task 11: API → backend tasklist — page `phase=manager` by cursor, or state the cap in the spec)
+- Outcome: API → backend tasklist (task 1, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D3 in that README)
 
 ### F022 — Offering amounts read "$50.00 M" instead of the compact money format
 - Check: T2.12 · Severity: nit · Class: dashboard
@@ -241,7 +241,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: one person for the JP Morgan analyst
 - Actual: "Samak Chatterjee" (JPMorgan Chase, 2 calls), "Sameek Chatterjee" (JP Morgan, 5), "Samik Chatterjee" (JP Morgan, 22), "Somig Chatterjee" (JP Morgan, 1 — the AAPL Q4 FY2026 call)
 - Evidence: `GET /v1/people?limit=50&q=chatterjee&role=analyst&sort=name`
-- Outcome: open (Task 11: data → backend tasklist — person resolution across spelling variants)
+- Outcome: API → backend tasklist (task 13, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision D14: keep there or move under `earnings/tasks/`
 
 ### F025 — `/v1/catalog/metrics`: 307 of 342 metrics have no description
 - Check: T2.14 · Severity: minor · Class: data
@@ -250,7 +250,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: a description per metric ("what each standardized metric means")
 - Actual: 35 of 342 rows have one; the rest show "—"
 - Evidence: page rows
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 10, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F026 — API sheet lists the closed catalog tabs' requests
 - Check: T2.14 · Severity: nit · Class: dashboard
@@ -286,7 +286,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the forms each data set covers
 - Actual: "—" for f345 (Forms 3/4/5), formd (Form D), icsc, ncen (N-CEN), nport (N-PORT), rr; only f13 and fsn list forms
 - Evidence: page rows
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 10, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F030 — News search cost line names "the page's date window" in the market scope (which has none)
 - Check: T2.20 · Severity: nit · Class: dashboard
@@ -322,7 +322,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: `is_operating_costs_and_expenses` is a total of operating costs (AAPL files no such line; it should be absent or the 19.08 B total), not one of its parts
 - Actual: Operating Expenses 19.08 B → "Operating Costs And Expenses" 11.73 B (= its only child Research And Development 11.73 B) beside SG&A 7.35 B, every quarter
 - Evidence: Q3 2026 column; the filed statement (10-Q 0000320193-26-000020, block b00040) has R&D 11,729 + SG&A 7,346 = Total operating expenses 19,075, no "operating costs" line
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 7, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F034 — Balance-sheet columns name a source filing that holds no balance sheet for that year
 - Check: T3.7 · Severity: minor · Class: api
@@ -331,7 +331,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the filing the balance-sheet values come from (a 10-K states two balance-sheet dates)
 - Actual: FY2026, FY2025, FY2024 and FY2023 all "10-K filed 2026-11-03 · 0000320193-26-000026"; FY2022 the 10-K filed 2025-10-31 — the source follows the income statement's three-year span, so FY2023's / FY2024's balance sheet names a filing that does not contain it
 - Evidence: `/v1/financials/standardized/presentation?company=AAPL&statement=balance-sheet&period=annual` rows' `source.accession`
-- Outcome: open (Task 11: API → backend tasklist — `source` per statement, or say in the spec that it is the period's newest filing)
+- Outcome: API → backend tasklist (task 7, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D6 in that README)
 
 ### F035 — Statement column tooltips show a raw ISO day that can differ from the "From filing" picker's day
 - Check: T3.10 · Severity: nit · Class: dashboard
@@ -394,7 +394,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the outline and the facts of a 10-K filed Nov 3, 2026 (its standardized financials, fact places and legacy outline are served)
 - Actual: Headings "Pending · Being prepared"; Facts "Pending · Complete through Oct 31, 2026"; `?outline=legacy` answers the full outline (Items 1–16)
 - Evidence: `/v1/document-versions/8be0b759-…/sections`, `/v1/filings/0000320193-26-000026/facts` `meta.coverage`
-- Outcome: open (Task 11: API → backend tasklist; the facts data set release lag, or by design — then the spec should name the cadence)
+- Outcome: API → backend tasklist (task 6, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D7 in that README)
 
 ### F042 — Legacy section outline reads "Part I · Item Item 1."
 - Check: T3.28 · Severity: nit · Class: dashboard
@@ -412,7 +412,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the contexts as filed (instants Sep 27, 2025 / Jun 27, 2026; durations Mar 29 – Jun 27, 2026), one row per fact
 - Actual: `instant: "2025-09-30"`, "Apr 1, 2025 – Jun 30, 2025", "Oct 1, 2024 – Jun 30, 2025"; NetIncomeLoss 23,434,000,000 for the same period and dimensions listed three times (four for 84,544,000,000); notes read "Period end Jun 30, 2026" and "the Companys condensed consolidated …" (the ’ is lost)
 - Evidence: raw answer of `/v1/filings/0000320193-26-000020/facts` (`{"tag":"AccountsPayableCurrent","value":69860000000,…,"instant":"2025-09-30"}`); the filed statement (block b00040) says "June 27, 2026" / "September 27, 2025"
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 6, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F044 — `/filings/123` shows a raw validation error instead of a not-found state
 - Check: T3.33 · Severity: minor · Class: dashboard
@@ -439,7 +439,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the footnote text as filed: `Each restricted stock unit ("RSU") represents …`
 - Actual: `F1 "Each restricted stock unit (""RSU"") represents the right to receive, at settlement, one share of common stock."` — wrapping quotes and doubled inner quotes (F3 the same: `The ""target"" number …`); unquoted footnotes (F2) are fine
 - Evidence: `/v1/insider-trades/{id}` `footnotes[].text` (source "SEC Form 3/4/5 data set")
-- Outcome: open (Task 11: data → backend tasklist — unescape the data set's TSV/CSV quoting at ingest)
+- Outcome: API → backend tasklist (task 11, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F047 — Holders: section reasons read as codes ("coverage partial", "upstream unavailable")
 - Check: T4.4 · Severity: nit · Class: dashboard
@@ -457,7 +457,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: SOLE / DFND / OTR from each 13F information table (a required field of the form)
 - Actual: "—" on every row; the answer's `investment_discretion: null` (voting authority is filled); the spec's own example row is null too
 - Evidence: `/v1/holders?limit=25&symbol=AAPL` data[0] (BlackRock, accession 0002012383-26-003985) `investment_discretion: null`
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 11, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F049 — 13F values of some managers are 1,000× too small (reported in thousands)
 - Check: T4.5 / T4.7 · Severity: major · Class: data
@@ -466,7 +466,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: value in USD (BlackRock 1,157,077,341 sh = $385,329,896,040 is right)
 - Actual: SUN LIFE FINANCIAL 91,362 sh = $30,425; COHEN & STEERS 11,500 sh = $3,830; PEAPACK GLADSTONE 1,274,764 sh = $424,523 (changes tab, value change $41,381) — the filer's thousands are stored as dollars, so totals, ranks and changes mix units
 - Evidence: rows of `/v1/holders?source=13f&symbol=AAPL` and `/v1/holder-changes?symbol=AAPL` (Sep 30, 2026 quarter)
-- Outcome: open (Task 11: data → backend tasklist — normalise pre-/mis-reported thousands at ingest)
+- Outcome: API → backend tasklist (task 11, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F050 — News page description says "Texts are the publishers' own words"
 - Check: T4.12 · Severity: minor · Class: dashboard
@@ -493,7 +493,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the N-PORT holders (they came back ~20 min later: "Complete · as of Jul 31, 2026 · 25 shown of 2,343")
 - Actual: "503 unavailable: The SEC document store is unavailable; retry." for AAPL and NVDA
 - Evidence: `GET /v1/holders?limit=100&source=nport&symbol=AAPL` req_01M81QK5JV3M61VR2ASANW873A; the page rendered the notice correctly
-- Outcome: open (Task 11: API → backend tasklist — an outage of the N-PORT source; cf. F019)
+- Outcome: API → backend tasklist (task 2, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F053 — A news item without a summary still carries "Summary written by Invinite from the publication above"
 - Check: T4.15 · Severity: nit · Class: api
@@ -502,7 +502,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: a statement that fits a headline-and-link item
 - Actual: Notice "Summary written by Invinite from the publication above; not the publisher's text…" right above "Headline and link only · No summary is served for this item" (the dashboard renders the API's `attribution.statement` as sent)
 - Evidence: `/v1/news/{id}` `attribution.statement` with `/text` `content_status: no_text`; also: the company's Q4 earnings release has no summary
-- Outcome: open (Task 11: API → backend tasklist)
+- Outcome: API → backend tasklist (task 8, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F054 — `/v1/announcements?company=` answers no row for AAPL, NVDA and MSFT
 - Check: T4.19 · Severity: minor · Class: data
@@ -511,7 +511,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: developments read from the companies' news (the tab's purpose; NVDA / MSFT publish many)
 - Actual: "No announcements read from this company's news yet." (complete answer, `data: []`); the item panels show no "AI-extracted developments" either
 - Evidence: `GET /v1/announcements?company=NVDA&limit=50` req_01M81R2R6W9ZX1AA7VGN0NRFQK; the filters are sent correctly (`announced_at.gte=…T00:00:00.000Z`, `effective_from.gte`, `effective_to.lte`, `sort=announced_at`)
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 8, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F055 — Documents tree: document and call rows show raw ISO dates
 - Check: T4.23 · Severity: minor · Class: dashboard
@@ -538,7 +538,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: one annual report per year, kinds as published
 - Actual: three "2026 Annual Report" rows (Nov 6, 2026 151 KB; Nov 5, 2026 628 KB; Jan 22, 2026 276 KB); a hit on "2026 Annual Report · p. 8" reads "…in this prospectus supplement and the accompanying prospectus…"; ESG 2025 "Annual green bond impact report" (21.9 MB) is the Environmental Progress Report covering FY2024
 - Evidence: tree rows and the document search hit
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 13, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision D14: keep there or move under `earnings/tasks/`
 
 ### F058 — N-PORT holder rows: no filing date; SPY's series named "N/A"
 - Check: T4.6 · Severity: minor · Class: data
@@ -547,7 +547,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the N-PORT filing date (the row has the accession and EDGAR link) and the fund's name
 - Actual: Filed "—" on all 100 rows; the SPY row's holder name is "N/A" (tickers SPY, Issuer file Nov 19, 2026)
 - Evidence: `/v1/holders?limit=100&source=nport&symbol=AAPL` rows `filing_date: null`
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 11, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F059 — Events: `started_at` / `ended_at` null on every captured, published call
 - Check: T5.1 · Severity: minor · Class: data
@@ -556,7 +556,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the capture's start / end instants for a call with `capture_status: published`, `has_audio: true`
 - Actual: "—" / "—" on all 39 past rows; Metrics & diff "Press release → call —"
 - Evidence: `GET /v1/events/22056489-ca4b-4e8e-9d6b-03678d13d178?expand=calendar,observations` req_01M81RW4NYYXTP0HCQTP5ZP11C (`started_at: null`, `ended_at: null`, `capture_status: "published"`); same on `cce56779-…` (Q4 FY2026) in `/v1/events?company=NVDA&fiscal_year=2026` req_01M81RT7XNGKE2J9DWYKBNK72W
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 13, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision D14: keep there or move under `earnings/tasks/`
 
 ### F060 — Calls list: the Upcoming tab offers "Load more" that can only add past calls
 - Check: T5.1 · Severity: nit · Class: dashboard
@@ -610,7 +610,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the Q3 FY2027 call's press release states Q3 FY2027 figures
 - Actual: every press-release mention is one fiscal year ahead: Nov 17, 2026 call "Q3 FY2028 $107.6 billion", Aug 26 "Q2 FY2028", May 20 "Q1 FY2028", Feb 25 "Q4 FY2027", Nov 19, 2025 "Q3 FY2027" (the transcript mentions of the same calls are right). Press-release rows have Filing "—" while transcript rows link the 8-K press release (`q3fy26pr.htm`). Only 6 KPIs on the Q3 FY2027 call, all from the press release
 - Evidence: `GET /v1/kpis?event=22056489-…` and the KPI history `GET /v1/kpis?company=NVDA&metric=…` (13 mentions on 5 calls)
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 13, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision D14: keep there or move under `earnings/tasks/`
 
 ### F066 — Price moves: utterances read "Speaker spk00" instead of the speaker's name
 - Check: T5.22 · Severity: minor · Class: dashboard
@@ -646,7 +646,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: Jensen Huang and the IR host named (they are named on the Q4 press release and other calls)
 - Actual: 15 turns "Unknown speaker 1" / "Unknown speaker 2" on Q4 FY2026 (Jensen's Q&A answers), "Unknown speaker 3" in Q3 FY2026 / Q2 FY2027 hits; "Harlan Suhr", "Stacy Raskin", "Mark Lipakis", "Erin Rakers", "Antoine Chequepin" (Q4 FY2026), "Jen Huang" (GTC Taipei 2026 keynote, "Speaker uncertain"); AAPL Q4 FY2026 participants list "Unknown speaker 1". Related to F024
 - Evidence: `GET /v1/events/cce56779-…/transcript?include=words`; `/v1/search/transcripts?company=NVDA&q=data+center…`
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 13, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision D14: keep there or move under `earnings/tasks/`
 
 ### F070 — An upcoming non-earnings event opens on "Price moves" (its only tab) instead of "No transcript yet"
 - Check: T5.27 · Severity: minor · Class: dashboard
@@ -664,7 +664,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: `news_id` set → "News item" link (CLAUDE.md press-release tab)
 - Actual: `news_id: null` on the Q3 FY2027 and Q4 FY2026 press releases; `/NVDA/news` lists "NVIDIA Announces Financial Results for Third Quarter Fiscal 2027" (SEC EDGAR, Earnings results) at "Nov 17, 2026, 1:00 PM GMT+1" = 12:00 UTC, nine hours before the 8-K's acceptance (21:20:51 UTC)
 - Evidence: `GET /v1/events/22056489-…/press-release` (`news_id: null`, `published_at: 2026-11-17T21:20:51Z`)
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 8, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F072 — Price attribution not derived for NVDA's last two calls
 - Check: T5.22 · Severity: minor · Class: data
@@ -673,7 +673,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: minute rows for a recorded after-hours call (AAPL Q4 FY2026 has 89 minute bars)
 - Actual: 404 `price_attribution_unavailable` → "Price moves are not available for this call yet" on Q3 FY2027 (5 days old) and Q2 FY2027 (3 months old); the notice renders correctly, no toast
 - Evidence: `GET /v1/events/{id}/price-attribution` 404 on both
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 13, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision D14: keep there or move under `earnings/tasks/`
 
 ### F073 — Transcript versions: `change_note` is a pipeline code ("company_text d1777505", "naming")
 - Check: T5.12 · Severity: nit · Class: data
@@ -682,7 +682,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: a note a reader understands (free text the UI shows as is)
 - Actual: "Version 3 · corrected by the system (company text) · Nov 19, 2026, 11:21 PM GMT+1 · company_text d1777505", "Version 2 · final · … · naming"
 - Evidence: `GET /v1/events/22056489-…/transcript-versions?limit=200` `change_note`
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 13, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision D14: keep there or move under `earnings/tasks/`
 
 ### F074 — Fund holdings: the as-of picker lists raw ISO days
 - Check: T6.3 · Severity: nit · Class: dashboard
@@ -700,7 +700,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: passages from SPY's prospectus / reports (485BPOS, N-30D, 497 are in its filings list; CLAUDE.md `[FU2870]`: a fund page searches its SEC filings), or a coverage note saying the fund's forms are not indexed
 - Actual: "No passages found". `meta.index` = `completeness: "complete"`, `lexical: { state: ready, indexed: 0, pending: 0, failed: 0, not_indexed_by_policy: 0 }`, `forms_indexed` = 10-K*, 10-Q*, 8-K*, 20-F*, 40-F*, 6-K*, S-1*, F-1*, S-4*, F-4*, 424B4, 425, DEF 14A, DEFA14A — no fund form (N-CSR, N-30D, 485BPOS, 497, N-PORT), so a fund page's search can never find anything, yet coverage says complete and the search is billed
 - Evidence: `GET /v1/search/filings?limit=10&mode=lexical&q=expense+ratio&symbol=SPY` req_01M81VCPFHDHZNW6BGYVM6BVA9 (charged 100)
-- Outcome: open (Task 11: API → backend tasklist — index the fund forms, or answer `completeness: partial` / `not_indexed_by_policy` > 0 for a symbol whose filings are outside `forms_indexed`)
+- Outcome: API → backend tasklist (task 6, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D8 in that README)
 
 ### F076 — SPY (a unit trust) has almost no fund metadata
 - Check: T6.2, T6.18 · Severity: minor · Class: data
@@ -709,7 +709,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: SPY's expense ratio (0.0945 %), index fund = yes; the filer's fund series with its name, ETF flag, exchange and class ticker
 - Actual: `/v1/funds/SPY`: `is_index: null`, `expense_ratio_net` / `_gross` / `_as_of` null, `advisers: []`, `share_classes: []`, `homepage_url: null`; `/v1/filers/884394?expand=fund` series `cik:884394`: `series_name`, `is_etf`, `exchange` null, `share_classes: []` — the Fund series row reads "— · — · —" beside the ETF that `/v1/instruments/SPY` knows on ARCX
 - Evidence: `GET /v1/funds/SPY?expand=coverage` req_01M81V7D9ZZFDHNWKR8GFEYHJR; `GET /v1/filers/884394?expand=…,fund`
-- Outcome: open (Task 11: data → backend tasklist — the UIT path (S-6, no series id) gets no N-CEN / prospectus enrichment)
+- Outcome: API → backend tasklist (task 12, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F077 — VOO shows the series' cheapest class's expense ratio (0.01 %), not VOO's (0.03 %)
 - Check: T6.7 · Severity: major · Class: data
@@ -718,7 +718,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the ETF class's net expense ratio (VOO 0.03 %); `/v1/funds/VOO` is the class `C000092055`
 - Actual: "Expense ratio (net) 0.01% · as of Dec 31, 2025", gross 0.01 % — the Institutional Select class's figure (`expense_ratio_net: 0.0001`); the filer page's series row the same
 - Evidence: `GET /v1/funds/VOO?expand=coverage` req_01M81VDV5P57KH34EX4MD0JE3H (`class_id: "C000092055"`, `expense_ratio_net: 0.0001`)
-- Outcome: open (Task 11: data → backend tasklist — a class's `/v1/funds/{symbol}` must carry its own class's ratio, or name the class the ratio belongs to)
+- Outcome: API → backend tasklist (task 12, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F078 — VOO: `datasets` lists dividends but `/v1/dividends` answers 404 `not_covered`; coverage empty
 - Check: T6.7 · Severity: minor · Class: data
@@ -727,7 +727,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: VOO's quarterly dividends (as SPY's "dividends through Sep 18, 2026"), and the coverage card naming them
 - Actual: overview "No data family holds rows for this fund yet." (`coverage.families: []`, though its holdings are served); Dividends: 404 "No dividend data is available for VOO."
 - Evidence: `GET /v1/dividends?limit=40&sort=-ex_date&symbol=VOO` req_01M81WBDNBE5AF0V8XH42YT2XF; `/v1/funds/VOO?expand=coverage` req_01M81VDV5P57KH34EX4MD0JE3H
-- Outcome: open (Task 11: data → backend tasklist; the page's rendering of the 404 is F093)
+- Outcome: API → backend tasklist (task 12, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F079 — ADX's N-PORT composition has no weights
 - Check: T6.9 · Severity: minor · Class: data
@@ -736,7 +736,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: sector / country / asset-class weights, as SPY's N-PORT compositions have ("the N-PORT percent of net assets")
 - Actual: "Partial · No weights for this composition." (`meta.reason: weights_unavailable`) for "SEC N-PORT filing · as of Jun 30, 2026", whose positions all carry a weight %
 - Evidence: page text; `/v1/funds/ADX/weights` (API sheet)
-- Outcome: open (Task 11: data → backend tasklist)
+- Outcome: API → backend tasklist (task 12, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F080 — `/sec/$cik` filings: Roles column shows snake_case codes
 - Check: T6.14 · Severity: nit · Class: dashboard
@@ -754,7 +754,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: Berkshire is the `filer` of every one of its 13F-HR filings
 - Actual: the newest (Nov 16, 2026) reads "filer, listed"; every older one (Aug 14, 2026 back to 2017) only "listed"; most Form 4 rows likewise "listed" while the newest read "issuer, listed"
 - Evidence: `GET /v1/filings?limit=40&symbol=1067983&form=13F-HR`
-- Outcome: open (Task 11: data → backend tasklist — roles only derived for recently ingested filings?)
+- Outcome: API → backend tasklist (task 6, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F082 — 13F portfolio: Alphabet Class C (CUSIP 02079K107) labelled GOOGL
 - Check: T6.15 · Severity: minor · Class: data
@@ -763,7 +763,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: 02079K305 → GOOGL, 02079K107 → GOOG
 - Actual: both rows "GOOGL · ALPHABET INC" (and link `/GOOGL`); SPY's issuer file maps them correctly (GOOGL / GOOG)
 - Evidence: `GET /v1/filers/1067983/holdings?period_end=2026-09-30` row `security.cusip 02079K107`, `symbol GOOGL`
-- Outcome: open (Task 11: data → backend tasklist — CUSIP → symbol resolution for share classes)
+- Outcome: API → backend tasklist (task 11, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F083 — `/sec/$cik` 13F portfolio: no way to pick another quarter
 - Check: T6.15 · Severity: minor · Class: dashboard
@@ -817,7 +817,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: per the spec, "a year, or Over Five Years / Within Last Five Years"
 - Actual: "overFiveYears"
 - Evidence: `GET /v1/offerings/021-599189` `year_of_inc: "overFiveYears"`
-- Outcome: open (Task 11: API → backend tasklist — answer the words the spec describes; no client relabel)
+- Outcome: API → backend tasklist (task 10, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F089 — Unknown CIK: the not-covered notice three times
 - Check: T6.19 · Severity: minor · Class: dashboard
@@ -871,7 +871,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the docs page of the operation opens (CLAUDE.md O6 `docsUrl`; the spec's own `docs_url`s name the same host)
 - Actual: the browser pane refuses the navigation; `curl` "Could not resolve host"; no A / CNAME record on public resolvers (`status.data.invinite.com` and `api.data.invinite.com` resolve). The dashboard builds the links as documented — the Data app origin is not live
 - Evidence: link `href`s / `rel="noopener noreferrer"` / `target="_blank"` correct in the sheet; DNS answers empty
-- Outcome: API → backend tasklist (Task 11: publish the Data app / docs at `data.invinite.com`, or change the documented origin in the spec and `app-url.ts` together)
+- Outcome: API → backend tasklist (task 9, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D9 in that README)
 
 ### F095 — API sheet JSON tree: the last chunk's button reads "Show 26 more of 26"
 - Check: T7.3 · Severity: nit · Class: dashboard
@@ -988,7 +988,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: a readable last error (the spec types it as a free string; e.g. "HTTP 405 Method Not Allowed" / "timeout after 10 s")
 - Actual: `last_error: "http_status"` beside the last answer HTTP 405
 - Evidence: delivery dlv_01M81ZDN9V0DT8FPD6KDZJW4FH (batch bat_01M81ZFPS23N0X2PMSVWF3BB6V)
-- Outcome: open (Task 11: API → backend tasklist — a sentence, or an enum in the spec the dashboard can label)
+- Outcome: API → backend tasklist (task 5, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D13 in that README)
 
 ### F108 — `createAlert` 400s name only the first missing field, in raw zod words
 - Check: T9.2 · Severity: minor · Class: api
@@ -997,7 +997,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: one problem per missing field (`errors[]`: symbol, operator, level) in readable words, as the problem+json `errors` member allows
 - Actual: one `invalid_parameter` with detail `condition.symbol: Invalid input: expected string, received undefined.` — the dashboard puts it on the Symbol field (right), but operator / level surface only on the next tries; the same zod wording on event_countdown's time zone (F110). Other refusals are readable ("SPY is an ETF; news alerts exist only for companies …", "Unknown financial metric `revenue`. Did you mean …")
 - Evidence: request req_01M82016BEVTNFWA97Y0XH7X9A
-- Outcome: open (Task 11: API → backend tasklist — every issue of the body as `errors[]`, zod messages rewritten)
+- Outcome: API → backend tasklist (task 5, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`)
 
 ### F109 — Alert summary: two keywords read as one phrase; enum values as raw codes
 - Check: T9.4, T9.11 · Severity: minor · Class: dashboard
@@ -1015,7 +1015,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: per spec (`timezone`: "IANA time zone (price_reminder: default America/New_York)", not required) either a default or a documented requirement
 - Actual: 400 `condition.timezone: Invalid input: expected string, received undefined.` (shown on the Time zone field); with `America/New_York` it was created
 - Evidence: inline field error; created alt_01M820DP299EZ98KMANTTM9TXF after filling it
-- Outcome: open (Task 11: API → backend tasklist — default it like price_reminder, or say "required for event_countdown" in the spec; the form's help then follows the spec)
+- Outcome: API → backend tasklist (task 5, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D10 in that README)
 
 ### F111 — Fundamental-metric Rules example names a metric the API refuses
 - Check: T9.16 · Severity: nit · Class: dashboard
@@ -1033,7 +1033,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the plan's limits stay the same
 - Actual: Task 1 "0 of 25,000 alerts in use · 0 of 500 script / indicator alerts · fire cap 500,000 a day"; now `active_alerts_limit: 2000`, `script_alerts_limit: 500`, `fires_per_day_limit: null` ("16 of 2,000 … no daily fire cap")
 - Evidence: `GET /v1/alerts?limit=100` answer `meta.quota` (Task 9, ~17:13 CET)
-- Outcome: open (Task 11: API → backend tasklist — which limits hold for ENTERPRISE; the spec calls `active_alerts_limit` "the plan's")
+- Outcome: API → backend tasklist (task 5, `../backend/tasks/data-api-ui-walk-findings-2026-11-22/`); owner decision needed (D11 in that README)
 
 ### F113 — API sheet lists every write of the last minutes on every page
 - Check: T7.1 (`/alerts` sample, after T9.22) · Severity: nit · Class: dashboard
@@ -1042,7 +1042,7 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Expected: the requests of this view (CLAUDE.md "lists `useViewRequests()` = the requests of every query with a mounted observer")
 - Actual: below the list's `GET /v1/alerts` come 14 earlier `POST /v1/alerts` (incl. a `validate_only` one) made on other pages — `writeRequestsOf` reads every settled mutation of the cache until it is garbage-collected
 - Evidence: sheet text on `/alerts`
-- Outcome: deferred (needs a rule for which writes belong to a view — e.g. a create shown on the page it redirects to; owner call, Task 11)
+- Outcome: deferred (needs an owner rule for which writes belong to a view — e.g. a create shown on the page it redirects to; ~1–2 h once decided: `writeRequestsOf` in `src/components/api/use-view-requests.ts` + a test; no API change)
 
 ### F114 — Event list of one event reads "All 1 events, newest first."
 - Check: T9.31 · Severity: nit · Class: dashboard
@@ -1078,11 +1078,31 @@ Format and rules: [`GUIDE.md`](./GUIDE.md) §5–§7. Append in order of discove
 - Evidence: page text
 - Outcome: fixed in 3fbc6dc (`AlertsListView scope="end-user"`: no quota line, "This end user has no alerts."; test `alerts-list.test.tsx`; CLAUDE.md "Alerts (task 4)" updated; re-checked on `/alerts/users/walk-1122-b`)
 
+### F118 — Alerts list: an unfiltered empty list says "No alert matches these filters."
+- Check: T11.3 (re-check of `/alerts` after the cleanup) · Severity: nit · Class: dashboard
+- Where: http://localhost:3001/alerts (no alert, no filter)
+- Steps: open the list with no filter set
+- Expected: an empty text that fits a list without filters (the filtered wording only when a filter narrowed it; cf. F117)
+- Actual: "No alert matches these filters."
+- Evidence: page text; `AlertsListView` picked the text by `scope` only
+- Outcome: fixed in c08ad7b (`filtered` prop: "No alert yet: create one with New alert." vs "No alert matches these filters."; test `alerts-list.test.tsx`; CLAUDE.md alerts routes line; re-checked: `/alerts` and `/alerts?status=paused`)
+
 ## Summary (filled by Task 11)
+
+118 findings (F001–F118). No blocker; no key or secret leaked.
 
 | Class | blocker | major | minor | nit | fixed | API tasklist | other |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| dashboard | | | | | | | |
-| api | | | | | | | |
-| data | | | | | | | |
-| doc | | | | | | | |
+| dashboard | 0 | 3 | 42 | 26 | 70 | 0 | 1 deferred (F113) |
+| api | 0 | 5 | 9 | 3 | 0 | 17 | 0 |
+| data | 0 | 4 | 19 | 4 | 0 | 27 | 0 |
+| doc | 0 | 0 | 0 | 3 | 1 (F018) | 0 | 2 by design (F106, F115) |
+| **total** | 0 | 12 | 70 | 36 | 71 | 44 | 3 |
+
+Backend tasklist: `../backend/tasks/data-api-ui-walk-findings-2026-11-22/` (README + 13 tasks; owner decisions
+D1–D14 listed in its README).
+
+T11.3 re-check on the branch tip (2026-11-22 ~18:00 CET): every `fixed` finding re-opened in the browser passed,
+except those whose state can no longer be reached without new resources or a forced failure — F001 (needs a session
+without a stored key), F020 (needs a 503), F028 (a 100-credit search), F103 / F104 / F105 / F109 / F114 / F117 (the
+walk's destinations, alerts and end users are deleted); these rest on their tests and their check at fix time.
