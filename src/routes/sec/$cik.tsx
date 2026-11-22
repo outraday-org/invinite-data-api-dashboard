@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import * as React from "react";
 import { z } from "zod";
 
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
@@ -25,7 +26,7 @@ import { titleHead } from "@/lib/layout";
 import { FILER_ANCHORS, FILER_FILINGS_PAGE, isManagerFiler } from "@/lib/navigation";
 import { recentFiler, useRecordRecent } from "@/lib/recents";
 import { changeTypesParam, INSTRUMENT_OPTIONS, parseChangeTypes } from "@/lib/sec/ownership";
-import { latest13fPeriodEnd } from "@/lib/sec/source";
+import { latest13fPeriodEnd, quarterPickerOptions } from "@/lib/sec/source";
 import { IN_PLACE, optionalAccession, optionalDay, optionalEnum, optionalFlag, optionalText } from "@/lib/url-state";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
@@ -64,6 +65,9 @@ const OFFERINGS_PAGE = 25;
 
 const CHANGES_PAGE = 50;
 
+/** Quarters the 13F portfolio picker offers back from the latest due one (as on the Holders page). */
+const PICKER_QUARTERS = 8;
+
 function SecFilerPage() {
     const { cik: rawCik } = Route.useParams();
 
@@ -81,6 +85,9 @@ function SecFilerPage() {
 
     // The 13F portfolio costs a request: asked on a click, for the newest quarter whose reports are due.
     const period = search.period ?? null;
+
+    // The newest quarter whose 13F reports are due, taken once per mount (the picker's first entry).
+    const [latestQuarter] = React.useState(() => latest13fPeriodEnd(new Date()));
 
     const filer = useV2Filer(cik, V2_FILER_EXPANDS);
 
@@ -162,11 +169,19 @@ function SecFilerPage() {
                     <div className="flex flex-wrap items-center gap-2">
                         <h3 className="text-sm font-semibold">13F portfolio</h3>
                         {!period && (
-                            <Button onClick={() => onChange({ period: latest13fPeriodEnd(new Date()) })} size="xs" type="button" variant="outline">
+                            <Button onClick={() => onChange({ period: latestQuarter })} size="xs" type="button" variant="outline">
                                 Load the latest quarter
                             </Button>
                         )}
-                        {period && <span className="text-muted-foreground text-xs">{`Period ending ${formatDay(period)}`}</span>}
+                        {period && (
+                            <FilterSelect
+                                aria-label="13F quarter"
+                                className="w-[210px]"
+                                onValueChange={value => onChange({ period: value })}
+                                options={quarterPickerOptions(latestQuarter, PICKER_QUARTERS, period)}
+                                value={period}
+                            />
+                        )}
                         <FilterSelect
                             aria-label="13F instruments"
                             className="w-[210px]"

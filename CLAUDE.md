@@ -543,7 +543,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   tab only); 13F columns Discretion (`SOLE` / `DFND` / `OTR` in words), Voting authority, Filing (EDGAR index page; also
   N-PORT). Changes tab: type chips `?types=new,added` (none = the API's default, every change but unchanged), prior
   quarter `?prior=`, manager CIKs `?filer=` (DebouncedInput, comma list → `filer=`). The tab list wraps at phone width.
-- **`/sec/$cik`** (13F manager): the portfolio is a `DataTable` (export, `?instruments=all`, discretion / voting, the
+- **`/sec/$cik`** (13F manager): once "Load the latest quarter" set `?period=`, a quarter picker (`quarterPickerOptions`, 8 quarters back from the latest due one, a linked older one kept); the portfolio is a `DataTable` (export, `?instruments=all`, discretion / voting, the
   quarter's 13F filing once above the table); "Position changes" under it, asked on a click (`?changes=true`, chips
   `?ctypes=`), the portfolio's quarter (`?period=`) else the latest due one; `HolderChangesList subject="security"`.
   Private offerings are a `DataTable` (export); an offering opens `/offerings/$offeringId`.

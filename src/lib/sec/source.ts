@@ -8,6 +8,8 @@
  */
 import type { JsonValue } from "@/lib/api/types";
 
+import { formatDay } from "@/lib/format";
+
 type JsonRecord = { [key: string]: JsonValue };
 
 export function isRecord(value: JsonValue | undefined): value is JsonRecord {
@@ -336,6 +338,18 @@ export function latest13fPeriodEnd(now: Date) {
     const end = new Date(Date.UTC(due.getUTCFullYear(), quarterStartMonth, 1) - DAY_MS);
 
     return end.toISOString().slice(0, 10);
+}
+
+/**
+ * The 13F quarter picker of a manager's portfolio (`/sec/$cik?period=`): `count` quarter ends back from `latest`, newest
+ * first, each "Quarter ending Sep 30, 2026"; a linked `current` quarter older than those is offered too (the URL is
+ * the state).
+ */
+export function quarterPickerOptions(latest: string, count: number, current: null | string): Array<{ label: string; value: string }> {
+    const quarters = recentQuarterEnds(latest, count);
+
+    return [...quarters, ...(current && !quarters.includes(current) ? [current] : [])]
+        .map(quarter => ({ label: `Quarter ending ${formatDay(quarter)}`, value: quarter }));
 }
 
 /** `count` quarter ends back from `latest` (`YYYY-MM-DD`, a quarter end), newest first: the 13F period picker. */

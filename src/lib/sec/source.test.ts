@@ -10,6 +10,7 @@ import {
     metaSourceParts,
     pageLabel,
     printedLabelsTrusted,
+    quarterPickerOptions,
     recentQuarterEnds,
     scalarEntries,
     secUrlOf,
@@ -202,5 +203,15 @@ describe("meta.source", () => {
 describe("13F period picker", () => {
     it("quarter ends back from the newest due one", () => {
         expect(recentQuarterEnds("2026-09-30", 5)).toEqual(["2026-09-30", "2026-06-30", "2026-03-31", "2025-12-31", "2025-09-30"]);
+
+        // The manager portfolio's picker (UI walk F083): older quarters by choice, a linked older one kept.
+        expect(quarterPickerOptions("2026-09-30", 2, null)).toEqual([
+            { label: "Quarter ending Sep 30, 2026", value: "2026-09-30" },
+            { label: "Quarter ending Jun 30, 2026", value: "2026-06-30" },
+        ]);
+
+        expect(quarterPickerOptions("2026-09-30", 2, "2020-12-31").at(-1)).toEqual({ label: "Quarter ending Dec 31, 2020", value: "2020-12-31" });
+
+        expect(quarterPickerOptions("2026-09-30", 2, "2026-06-30")).toHaveLength(2);
     });
 });
