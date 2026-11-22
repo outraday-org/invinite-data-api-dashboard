@@ -10,6 +10,7 @@ import { ApiStatusView, familyReach, LicensingView, overallStatus, StatusDot, st
 import { CompaniesList, companiesSort, fiscalYearEndText } from "@/components/reference/companies-list";
 import { FiscalPeriodsView, latestFiscalYearEnd } from "@/components/reference/fiscal-periods-card";
 import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
+import { ApiRequestError } from "@/lib/api/errors";
 import {
     AAPL_FISCAL_PERIODS,
     V2_API_STATUS,
@@ -294,6 +295,18 @@ describe("dividends and holidays filters", () => {
         render(<DividendsView {...list} filtered pages={[{ ...V2_DIVIDENDS, data: [] }]} ticker="AAPL" />);
 
         expect(screen.getByText("No dividends with an ex-date in this range.")).toBeInTheDocument();
+    });
+
+    it("dividends: a 404 not_covered is a notice in the API's words, not 'Failed to load' (UI walk F093)", () => {
+        const error = new ApiRequestError(404, { error: "not_covered", message: "No dividend data is available for VOO." });
+
+        render(<DividendsView {...list} error={error} filtered={false} pages={[]} ticker="VOO" />);
+
+        expect(screen.getByText("No dividend data is available for VOO.")).toBeInTheDocument();
+
+        expect(screen.getByText("Not covered")).toBeInTheDocument();
+
+        expect(screen.queryByText("Failed to load dividends")).toBeNull();
     });
 
     it("holidays: the range narrows the tab, never leaves it", () => {

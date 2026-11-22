@@ -9,8 +9,8 @@ import type { V2Dividend, V2DividendsResponse, V2DividendsSort } from "@/lib/api
 import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
 import { DataTable } from "@/components/ui/data-table";
 import { DayRange } from "@/components/ui/day-range";
-import { ErrorState } from "@/components/ui/error-state";
 import { PageHeader } from "@/components/ui/page-header";
+import { RequestErrorState } from "@/components/ui/request-error-state";
 import { useV2DividendsInfinite } from "@/lib/api/queries";
 import { DASH, formatDay, formatMoney } from "@/lib/format";
 import { tickerHead } from "@/lib/layout";
@@ -112,7 +112,17 @@ export function DividendsView({ error, filtered, hasNextPage, isFetchingNextPage
         <DataTable
             columns={COLUMNS}
             emptyText={filtered ? "No dividends with an ex-date in this range." : "No dividends available."}
-            errorState={error ? <ErrorState error={error} title="Failed to load dividends" /> : null}
+            // A 404 `not_covered` ("No dividend data is available for VOO") is a state, not "Failed to load" (UI walk F093).
+            errorState={error
+                ? (
+                        <RequestErrorState
+                            error={error}
+                            notFound={{ badge: "Not covered" }}
+                            tier={{ badge: "FREE", title: "Your plan does not include dividends" }}
+                            title="Failed to load dividends"
+                        />
+                    )
+                : null}
             exportConfig={{ dataset: "dividends", scope: ticker }}
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
