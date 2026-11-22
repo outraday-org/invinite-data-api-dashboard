@@ -57,6 +57,12 @@ describe("curlOf / cliOf", () => {
 
         expect(cliOf(meta({ operationId: "unknown" }))).toBeNull();
     });
+
+    it("a colon-verb operation keeps its positional id (`/v1/destinations/{id}:rotate-secret`)", () => {
+        expect(cliOf(meta({ method: "POST", operationId: "rotateDestinationSecret", path: "/v1/destinations/dst_1:rotate-secret", query: {} }))).toBe("invd destinations rotate-secret dst_1");
+
+        expect(cliOf(meta({ method: "POST", operationId: "pauseAlertUser", path: "/v1/alert-users/team%2Fa%3Ab%20c:pause", query: {} }))).toBe("invd alert-users pause 'team/a:b c'");
+    });
 });
 
 describe("the browser registry", () => {

@@ -212,7 +212,10 @@ export function curlOf(baseUrl: string, meta: RequestMeta): string {
     return parts.join(" ");
 }
 
-/** The path parameters of a concrete path under its template (`/v1/funds/{fund}` + `/v1/funds/SPY` → `{ fund: "SPY" }`). */
+/**
+ * The path parameters of a concrete path under its template (`/v1/funds/{fund}` + `/v1/funds/SPY` → `{ fund: "SPY" }`).
+ * A colon verb after a parameter (`/v1/destinations/{id}:rotate-secret`) is cut off its value.
+ */
 export function pathParamsOf(template: string, path: string): Record<string, string> {
     const names = template.split("/");
 
@@ -223,9 +226,17 @@ export function pathParamsOf(template: string, path: string): Record<string, str
     if (names.length !== values.length) return params;
 
     names.forEach((name, index) => {
-        const match = /^\{(.+)\}$/.exec(name);
+        const match = /^\{([^}]+)\}(.*)$/.exec(name);
 
-        if (match) params[match[1]] = decodeURIComponent(values[index]);
+        if (!match) return;
+
+        const [, param, suffix] = match;
+
+        const value = values[index];
+
+        if (suffix && !value.endsWith(suffix)) return;
+
+        params[param] = decodeURIComponent(suffix ? value.slice(0, -suffix.length) : value);
     });
 
     return params;
