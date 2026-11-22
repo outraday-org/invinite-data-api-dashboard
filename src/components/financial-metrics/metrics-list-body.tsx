@@ -30,7 +30,8 @@ export function FinancialsStateNotice({
 }) {
     if (error && isTierError(error)) {
         return (
-            <Notice badge="PRO" title="Your plan does not include this view">
+            // Shared by STANDARD and PRO operations: the API's own message below names the plan, the badge does not.
+            <Notice badge="Plan" title="Your plan does not include this view">
                 {error instanceof Error && error.message ? error.message : undefined}
             </Notice>
         );
