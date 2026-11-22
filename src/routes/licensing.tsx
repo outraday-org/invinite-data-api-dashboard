@@ -7,10 +7,11 @@ import { LICENSING_PAGE_URL } from "@/lib/public-hosts";
  * A server route, not a `netlify.toml` redirect: Netlify evaluates the SSR function (`path: "/*"`)
  * BEFORE redirect rules, so a toml rule for `/licensing` never fires (see `status.tsx`).
  */
+const redirect = () => new Response(null, { headers: { Location: LICENSING_PAGE_URL }, status: 301 });
+
+// HEAD answers the same 301 (UI walk F006, see `status.tsx`).
 export const Route = createFileRoute("/licensing")({
     server: {
-        handlers: {
-            GET: () => new Response(null, { headers: { Location: LICENSING_PAGE_URL }, status: 301 }),
-        },
+        handlers: { GET: redirect, HEAD: redirect },
     },
 });
