@@ -132,9 +132,12 @@ describe("JsonTree", () => {
 
         expect(screen.getAllByRole("button", { expanded: false })).toHaveLength(JSON_TREE_CHUNK);
 
-        fireEvent.click(screen.getByRole("button", { name: "Show 50 more of 150" }));
+        // The count says how many are shown of all (F095: "Show 26 more of 26" read as a tautology on the last chunk).
+        fireEvent.click(screen.getByRole("button", { name: "Show 50 more (50 of 200 shown)" }));
 
         expect(screen.getAllByRole("button", { expanded: false })).toHaveLength(JSON_TREE_CHUNK * 2);
+
+        expect(screen.getByRole("button", { name: "Show 50 more (100 of 200 shown)" })).toBeInTheDocument();
     });
 });
 

@@ -74,7 +74,7 @@ function Node({ depth, label, value }: { depth: number; label: null | string; va
                             onClick={() => setShown(current => current + JSON_TREE_CHUNK)}
                             type="button"
                         >
-                            {`Show ${Math.min(JSON_TREE_CHUNK, entries.length - shown)} more of ${entries.length - shown}`}
+                            {`Show ${Math.min(JSON_TREE_CHUNK, entries.length - shown)} more (${shown} of ${entries.length} shown)`}
                         </button>
                     )}
                 </div>
