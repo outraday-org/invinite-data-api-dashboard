@@ -1399,10 +1399,11 @@ export type V2IposInput = {
     stage?: Array<V2IpoStage>;
 };
 
-/** Offerings by cursor (one row per offering: registration track + listing-calendar row). */
-export function useV2IposInfinite(input: V2IposInput) {
+/** Offerings by cursor (one row per offering: registration track + listing-calendar row). `enabled: false` holds the
+ * first request (the Upcoming tab's undated tail waits for the dated list). */
+export function useV2IposInfinite(input: V2IposInput, { enabled = true }: { enabled?: boolean } = {}) {
     return useEarningsInfinite<V2IposResponse>({
-        enabled: true,
+        enabled,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2Ipos({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
         queryKey: [

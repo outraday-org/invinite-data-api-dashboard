@@ -1,10 +1,12 @@
 import * as React from "react";
 
 import type { V2FilerMatch, V2FilerResponse, V2Instrument } from "@/lib/api/types";
+import type { ManagerSignal } from "@/lib/navigation";
 import type { RecentSubject } from "@/lib/stores/ticker-store";
 
 import { filerCikParam } from "@/components/sec/security-link";
 import { INSTRUMENT_TYPE_LABELS } from "@/lib/instruments";
+import { filesThirteenF } from "@/lib/navigation";
 import { useTickerStore } from "@/lib/stores/ticker-store";
 
 /** An instrument as a recent subject ("AAPL", "Apple Inc.", "Stock"). */
@@ -21,10 +23,10 @@ export function recentInstrument(instrument: Pick<V2Instrument, "name" | "struct
 }
 
 /** A filer as a recent subject (its name; "Institution" for a 13F manager). */
-export function recentFiler(filer: Pick<V2FilerMatch | V2FilerResponse, "cik" | "name" | "phase">): RecentSubject {
+export function recentFiler(filer: ManagerSignal & Pick<V2FilerMatch | V2FilerResponse, "cik" | "name" | "phase">): RecentSubject {
     const cik = filerCikParam(filer.cik) ?? filer.cik;
 
-    return { badge: filer.phase === "manager" ? "Institution" : "SEC filer", kind: "filer", label: filer.name || `CIK ${cik}`, name: `CIK ${cik}`, ref: cik };
+    return { badge: filesThirteenF(filer) ? "Institution" : "SEC filer", kind: "filer", label: filer.name || `CIK ${cik}`, name: `CIK ${cik}`, ref: cik };
 }
 
 /** Puts the open page's subject on top of the recents once it has loaded (null = nothing yet). */

@@ -8,7 +8,9 @@ import {
     alertsUsingText,
     BODY_TEMPLATE_MAX_BYTES,
     deliveriesWithStatus,
+    DELIVERY_ERROR_INFO,
     DELIVERY_STATUSES,
+    deliveryErrorInfo,
     DESCRIPTION_MAX,
     DESTINATION_KINDS,
     DESTINATION_PRESETS,
@@ -66,6 +68,26 @@ describe("the model's bounds and enums are the spec's (7.1)", () => {
         expect(BODY_TEMPLATE_MAX_BYTES).toBe(16 * 1024);
 
         expect(spec.components.schemas.DestinationDelivery.properties!.status.enum).toEqual([...DELIVERY_STATUSES]);
+    });
+
+    it("every last_error code of the spec has a label and a sentence (D13, F107)", () => {
+        const codes = spec.components.schemas.DestinationDelivery.properties!.last_error.enum;
+
+        expect(codes, "openapi.json types last_error as an enum (Data API task 5 release)").toBeDefined();
+
+        expect(Object.keys(DELIVERY_ERROR_INFO).sort()).toEqual([...codes!].sort());
+
+        for (const info of Object.values(DELIVERY_ERROR_INFO)) {
+            expect(info.label).not.toBe("");
+
+            expect(info.meaning).toMatch(/\.$/);
+        }
+
+        expect(deliveryErrorInfo(null)).toBeNull();
+
+        expect(deliveryErrorInfo("timeout")?.label).toBe("Timed out");
+
+        expect(deliveryErrorInfo("brand_new_code")).toEqual({ label: "brand_new_code", meaning: "brand_new_code" });
     });
 });
 

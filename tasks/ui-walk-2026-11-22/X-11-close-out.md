@@ -31,7 +31,7 @@ Tasks 1–10.
 
 Only when at least one finding has class `api` or `data`.
 
-- [x] **T11.6** (`../backend/tasks/data-api-ui-walk-findings-2026-11-22/`: README + 13 tasks, owner decisions D1–D14) Create `../backend/tasks/data-api-ui-walk-findings-2026-11-22/` following the backend task format
+- [x] **T11.6** (`../backend/tasks/old/X-data-api-ui-walk-findings-2026-11-22/`: README + 13 tasks, owner decisions D1–D14) Create `../backend/tasks/old/X-data-api-ui-walk-findings-2026-11-22/` following the backend task format
   (model: `../backend/tasks/old/X-data-api-live-test-findings/README.md`): README (overview naming this walk and its
   findings file, Current State per finding with the observed request — method, path, query, status, request id; never
   the key —, Target State, decisions, dependency graph, summary table) and one numbered task file per coherent fix
@@ -74,7 +74,7 @@ Only when at least one finding has class `api` or `data`.
 | --- | --- | --- |
 | `tasks/ui-walk-2026-11-22/findings.md` | Modify | Outcomes, summary |
 | `tasks/ui-walk-2026-11-22/*.md` | Modify | Final ticks, statuses |
-| `../backend/tasks/data-api-ui-walk-findings-2026-11-22/README.md` + `1-…md` … | Create | API / data findings tasklist |
+| `../backend/tasks/old/X-data-api-ui-walk-findings-2026-11-22/README.md` + `1-…md` … | Create | API / data findings tasklist |
 | `CLAUDE.md` | Modify | Doc findings, behaviour changed by fixes |
 
 ## Acceptance Criteria

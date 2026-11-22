@@ -118,7 +118,7 @@ function SecFilerPage() {
 
     const facet = filings.data?.pages[0]?.meta.form_facet ?? [];
 
-    const isManager = isManagerFiler(filer.data?.phase, facet.map(entry => entry.form));
+    const isManager = isManagerFiler(filer.data, facet.map(entry => entry.form));
 
     // A CIK the registry does not know (404 not_covered) is that one notice, not repeated by the lifecycle and filings
     // blocks (UI walk F089).

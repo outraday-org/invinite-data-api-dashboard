@@ -92,7 +92,7 @@ export const DELIVERY_FAILED = fixtureDelivery("failed", {
     attempts: 3,
     delivered_at: null,
     duration_ms: 10_000,
-    last_error: "timeout after 10 s",
+    last_error: "timeout",
     last_status: null,
     next_attempt_at: "2026-11-21T14:05:00Z",
     status: "failed",
@@ -102,7 +102,7 @@ export const DELIVERY_DEAD = fixtureDelivery("dead", {
     attempts: 10,
     batch_id: "bat_01",
     delivered_at: null,
-    last_error: "HTTP 500",
+    last_error: "http_status",
     last_status: 500,
     status: "dead",
 });

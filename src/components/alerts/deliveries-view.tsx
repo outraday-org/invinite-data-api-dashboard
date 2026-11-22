@@ -10,7 +10,7 @@ import { DeliveryStatusBadge } from "@/components/alerts/destination-parts";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Notice } from "@/components/ui/notice";
-import { deliveriesWithStatus, DELIVERY_STATUS_INFO, DELIVERY_STATUSES, TEST_POLL_MS, TEST_WATCH_MS } from "@/lib/alerts/destinations";
+import { deliveriesWithStatus, DELIVERY_STATUS_INFO, DELIVERY_STATUSES, deliveryErrorInfo, TEST_POLL_MS, TEST_WATCH_MS } from "@/lib/alerts/destinations";
 import { formatInstant, formatNumber } from "@/lib/format";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
@@ -70,20 +70,30 @@ const columnsOf = (sizes: ReadonlyMap<string, number>): Array<ColumnDef<Destinat
     },
     { cell: ({ row }) => <div className="text-right tabular-nums">{formatNumber(row.original.attempts)}</div>, header: () => <div className="text-right">Attempts</div>, id: "attempts" },
     { cell: ({ row }) => (row.original.last_status === null ? muted("—") : <span className="tabular-nums">{`HTTP ${row.original.last_status}`}</span>), header: "Last answer", id: "last_status" },
-    { cell: ({ row }) => (row.original.last_error ? <span className="break-words text-destructive">{row.original.last_error}</span> : muted("—")), header: "Last error", id: "last_error" },
+    {
+        cell: ({ row }) => {
+            const info = deliveryErrorInfo(row.original.last_error);
+
+            return info ? <span className="break-words text-destructive" title={info.meaning}>{info.label}</span> : muted("—");
+        },
+        header: "Last error",
+        id: "last_error",
+    },
     { cell: ({ row }) => (row.original.duration_ms === null ? muted("—") : <span className="tabular-nums">{`${formatNumber(row.original.duration_ms)} ms`}</span>), header: "Duration", id: "duration" },
     { cell: ({ row }) => (row.original.next_attempt_at ? formatInstant(row.original.next_attempt_at) : muted("—")), header: "Next attempt", id: "next_attempt_at" },
     { cell: ({ row }) => formatInstant(row.original.created_at), header: "Created", id: "created_at" },
     { cell: ({ row }) => (row.original.delivered_at ? formatInstant(row.original.delivered_at) : muted("—")), header: "Delivered", id: "delivered_at" },
 ];
 
-/** A delivery's outcome in one line: "Succeeded · HTTP 200 · 182 ms" / "Failed · timeout after 10 s · next attempt …". */
+/** A delivery's outcome in one line: "Succeeded · HTTP 200 · 182 ms" / "Failed · Timed out · 10,000 ms · next attempt …". */
 export function deliveryOutcomeText(delivery: DestinationDelivery) {
     const parts = [DELIVERY_STATUS_INFO[delivery.status].label];
 
     if (delivery.last_status !== null) parts.push(`HTTP ${delivery.last_status}`);
 
-    if (delivery.last_error) parts.push(delivery.last_error);
+    const error = deliveryErrorInfo(delivery.last_error);
+
+    if (error) parts.push(error.label);
 
     if (delivery.duration_ms !== null) parts.push(`${formatNumber(delivery.duration_ms)} ms`);
 

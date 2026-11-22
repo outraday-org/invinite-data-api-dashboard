@@ -286,6 +286,14 @@ describe("top-bar search: groups, pills, keyboard, recents", () => {
     it("institutions first, then the other filers, one row per CIK", () => {
         expect(mergeFilers([VANGUARD.data[1]], VANGUARD.data).map(filer => filer.name)).toEqual(["VANGUARD GROUP INC", "VANGUARD INDEX FUNDS"]);
     });
+
+    it("ranks a listed 13F filer (phase public, files_13f) with the managers (UI walk F002)", () => {
+        const company = { ...VANGUARD.data[0], cik: "0000000001", files_13f: false, name: "A COMPANY", phase: "public" as const };
+
+        const listedManager = { ...VANGUARD.data[0], cik: "0001067983", files_13f: true, name: "BERKSHIRE HATHAWAY INC", phase: "public" as const };
+
+        expect(mergeFilers([], [company, listedManager]).map(filer => filer.cik)).toEqual(["0001067983", "0000000001"]);
+    });
 });
 
 describe("rankInstruments", () => {

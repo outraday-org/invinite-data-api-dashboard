@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useInstrumentSearch, useKeyReady, useV2Filers, useV2PeopleSearch } from "@/lib/api/queries";
 import { INSTRUMENT_TYPE_PLURALS, instrumentBadges, servesSection } from "@/lib/instruments";
-import { searchPages } from "@/lib/navigation";
+import { filesThirteenF, searchPages } from "@/lib/navigation";
 import { personDetail, personRoleLabel } from "@/lib/people";
 import { selectRecents, useTickerStore } from "@/lib/stores/ticker-store";
 import { cn } from "@/lib/utils";
@@ -55,11 +55,11 @@ type SearchOption = {
     sub: null | string;
 };
 
-/** The institutions (`phase=manager`) first, then the other filers of the name (managers first), one row per CIK. */
+/** The institutions (`phase=manager`: every 13F-HR filer) first, then the other filers of the name (managers first), one row per CIK. */
 export function mergeFilers(managers: ReadonlyArray<V2FilerMatch>, others: ReadonlyArray<V2FilerMatch>) {
     const seen = new Set(managers.map(filer => filer.cik));
 
-    const rest = others.filter(filer => !seen.has(filer.cik)).sort((a, b) => Number(b.phase === "manager") - Number(a.phase === "manager"));
+    const rest = others.filter(filer => !seen.has(filer.cik)).sort((a, b) => Number(filesThirteenF(b)) - Number(filesThirteenF(a)));
 
     return [...managers, ...rest];
 }
@@ -263,7 +263,7 @@ export function TickerSearch() {
                 if (!cik) continue;
 
                 list.push({
-                    badges: [filer.phase === "manager" ? "Institution" : "Filer", ...(filer.listing ? [filer.listing.ticker] : [])],
+                    badges: [filesThirteenF(filer) ? "Institution" : "Filer", ...(filer.listing ? [filer.listing.ticker] : [])],
                     group: "Institutions & filers",
                     icon: LandmarkIcon,
                     id: `filer-${cik}`,

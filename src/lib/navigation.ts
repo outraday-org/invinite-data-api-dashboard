@@ -203,9 +203,20 @@ export const MANAGER_FORMS: ReadonlySet<string> = new Set(["13F-HR", "13F-HR/A",
 /** Filings per page of a filer page's list (the sidebar asks the same first page: one cached request). */
 export const FILER_FILINGS_PAGE = 40;
 
-/** A 13F manager: phase `manager` or a 13F form in the filings facet. */
-export function isManagerFiler(phase: null | string | undefined, facetForms: ReadonlyArray<string>) {
-    return phase === "manager" || facetForms.some(form => MANAGER_FORMS.has(form));
+/** The manager signal of a filer answer: `files_13f` (Data API, backend ui-walk task 1 D1) and the lifecycle `phase`. */
+export type ManagerSignal = { files_13f?: boolean | null; phase?: null | string };
+
+/**
+ * The filer files 13F-HR: `files_13f`, else (an answer without the field) `phase === "manager"`. A listed company that
+ * files 13F (Berkshire Hathaway) keeps `phase: "public"` and is still a manager.
+ */
+export function filesThirteenF(filer: ManagerSignal | null | undefined) {
+    return filer?.files_13f === true || filer?.phase === "manager";
+}
+
+/** A 13F manager: `files_13f` (or phase `manager`) or a 13F form in the filings facet. */
+export function isManagerFiler(filer: ManagerSignal | null | undefined, facetForms: ReadonlyArray<string>) {
+    return filesThirteenF(filer) || facetForms.some(form => MANAGER_FORMS.has(form));
 }
 
 /** "Vanguard Group · Institution" (a 13F manager), else "<name> · SEC filer". */

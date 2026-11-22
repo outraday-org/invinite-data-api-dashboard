@@ -570,7 +570,11 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   of `CreateDestinationRequest` / `UpdateDestinationRequest`; `:rotate-secret` / `:test` sent as written,
   `destinations-requests.test.ts`). Reads: `useDestinationsInfinite`, `useDestination`, `useDestinationDeliveriesInfinite`
   (`DESTINATION_QUERY_KEYS`; deliveries poll while a test delivery is watched). Writes in `WRITES`. Model (pure):
-  `src/lib/alerts/destinations.ts` (form ↔ bodies, bounds checked against `openapi.json` in `destinations.test.ts`).
+  `src/lib/alerts/destinations.ts` (form ↔ bodies, bounds checked against `openapi.json` in `destinations.test.ts`;
+  `DELIVERY_ERROR_INFO` / `deliveryErrorInfo` = every `last_error` code of the contract's enum as a label + the API's
+  sentence, used by the delivery log and `deliveryOutcomeText`; an unknown code shows as sent — backend
+  `tasks/data-api-ui-walk-findings-2026-11-22` task 5, D13; its spec check is red until `openapi.json` is re-pinned to
+  the release that carries the enum).
 - **Secret rules (hard)**: the signing secret exists in two answers only (`DestinationCreated`, `DestinationSecret`).
   `takeSecret` reads it and DELETES it from the answer object in place, so the mutation state / mutation cache / the
   inspector's view of the write never hold it; the string lives only in `SecretOnceDialog`'s caller state and is dropped

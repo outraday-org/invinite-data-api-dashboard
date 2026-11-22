@@ -167,7 +167,7 @@ describe("DeliveriesView (`listDestinationDeliveries`, newest first)", () => {
 
         const failed = event.closest("tr")!;
 
-        expect(failed).toHaveTextContent("timeout after 10 s");
+        expect(failed).toHaveTextContent("Timed out");
 
         expect(failed).toHaveTextContent("10,000 ms");
 
@@ -219,7 +219,7 @@ describe("DeliveriesView (`listDestinationDeliveries`, newest first)", () => {
 
         expect(onRefresh).toHaveBeenCalled();
 
-        expect(deliveryOutcomeText(DELIVERY_FAILED)).toMatch(/^Failed · timeout after 10 s · 10,000 ms · next attempt/);
+        expect(deliveryOutcomeText(DELIVERY_FAILED)).toMatch(/^Failed · Timed out · 10,000 ms · next attempt/);
     });
 });
 

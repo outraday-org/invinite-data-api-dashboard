@@ -141,7 +141,7 @@ function FilerContext({ cik, enabled }: { cik: string; enabled: boolean }) {
 
     const facet = (filings.data?.pages[0]?.meta.form_facet ?? []).map(entry => entry.form);
 
-    const isManager = isManagerFiler(filer.data?.phase, facet);
+    const isManager = isManagerFiler(filer.data, facet);
 
     const anchors = filerContextAnchors(filer.data, isManager);
 

@@ -46,6 +46,37 @@ export const DELIVERY_STATUS_INFO: Record<DestinationDeliveryStatus, { label: st
     succeeded: { label: "Succeeded", meaning: "Your endpoint acknowledged it with a 2xx.", tone: "default" },
 };
 
+/** A delivery's `last_error` code (the contract's nullable enum, owner decision D13 of backend task 5). */
+export type DeliveryErrorCode = NonNullable<DestinationDelivery["last_error"]>;
+
+/**
+ * Every `last_error` code in words (backend `tasks/data-api-ui-walk-findings-2026-11-22` task 5, F107): a short label
+ * for the log and the API's sentence as its title. `destinations.test.ts` checks the keys against the spec's enum.
+ */
+export const DELIVERY_ERROR_INFO: Record<DeliveryErrorCode, { label: string; meaning: string }> = {
+    account_deleted: { label: "Account deleted", meaning: "The account was deleted before the delivery was sent." },
+    alert_user_deleted: { label: "End user deleted", meaning: "The alert's end user was deleted before the delivery was sent." },
+    blocked_address: { label: "Address blocked", meaning: "The URL is not https on port 443, or its host did not resolve to public addresses only." },
+    body_too_large: { label: "Body too large", meaning: "The request body exceeded the size limit; the delivery is not retried." },
+    destination_deleted: { label: "Destination deleted", meaning: "The destination was deleted before the delivery was sent." },
+    destination_disabled: { label: "Destination disabled", meaning: "The destination was disabled before the delivery was sent." },
+    event_missing: { label: "Event missing", meaning: "The event was no longer stored when the delivery was due." },
+    gone: { label: "Gone (410)", meaning: "Your endpoint answered 410 Gone; the destination was disabled." },
+    http_status: { label: "Error status", meaning: "Your endpoint answered with a status other than 2xx (see the last answer)." },
+    lease_expired: { label: "Worker stopped", meaning: "The delivery worker stopped during the attempt; the attempt counts, and the delivery is retried unless it was the last." },
+    network: { label: "Network error", meaning: "The connection failed or broke before an answer." },
+    redirect: { label: "Redirect", meaning: "Your endpoint answered with a redirect, which is never followed." },
+    sealed_unreadable: { label: "Secret unreadable", meaning: "The destination's stored secret or headers could not be read; the delivery is not retried." },
+    timeout: { label: "Timed out", meaning: "No answer within 10 seconds, or the host name did not resolve in time." },
+};
+
+/** `last_error` in words (null = no failure; a code this build does not know is shown as sent). */
+export function deliveryErrorInfo(code: null | string): null | { label: string; meaning: string } {
+    if (!code) return null;
+
+    return Object.hasOwn(DELIVERY_ERROR_INFO, code) ? DELIVERY_ERROR_INFO[code] : { label: code, meaning: code };
+}
+
 /** Why a destination is disabled, in words (`manual` / `gone` / `failing` of the contract; anything else as sent). */
 export function destinationDisabledText(reason: null | string): null | string {
     if (!reason) return null;
