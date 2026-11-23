@@ -1,7 +1,7 @@
 import { replaceEqualDeep } from "@tanstack/react-query";
 
 import type { Operation, OperationTier } from "./operations.gen";
-import type { JsonValue } from "./types";
+import type { JsonValue, V2Plan } from "./types";
 
 import { OPERATION_IDS_BY_ROUTE, OPERATIONS, PLAN_ORDER } from "./operations.gen";
 
@@ -276,11 +276,20 @@ export function cliOf(meta: RequestMeta): null | string {
     return words.join(" ");
 }
 
-export type Plan = (typeof PLAN_ORDER)[number];
+/** An account's plan as `/v1/me` names it: a route tier, or `payg` (credits without a plan). */
+export type Plan = V2Plan;
+
+/**
+ * The route tier an account plan ranks as. `payg` reaches what PRO reaches (Data API 10.0); the few PRO routes it is
+ * refused (live data) are the API's 403 to say, never a local list.
+ */
+export function planRank(plan: Plan): OperationTier {
+    return plan === "payg" ? "pro" : plan;
+}
 
 /** Whether a plan may call an operation of `tier` (the spec's plan order; null tier = every plan). */
 export function planAllows(plan: Plan, tier: null | OperationTier): boolean {
     if (!tier) return true;
 
-    return PLAN_ORDER.indexOf(plan) >= PLAN_ORDER.indexOf(tier);
+    return PLAN_ORDER.indexOf(planRank(plan)) >= PLAN_ORDER.indexOf(tier);
 }

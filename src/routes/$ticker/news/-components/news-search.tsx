@@ -7,6 +7,7 @@ import type { SearchMode, V2NewsSearchField, V2NewsSearchHit, V2NewsSearchRespon
 import { SearchCostNote, SearchModeChips, SearchQueryForm } from "@/components/search/search-box";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { tierLabel } from "@/components/ui/credit-hint";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2NewsSearchInfinite } from "@/lib/api/queries";
 import { formatInstant } from "@/lib/earnings/format";
@@ -16,7 +17,7 @@ import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calend
 /** Hits per page (10 credits a page whatever the size). */
 const NEWS_SEARCH_LIMIT = 20;
 
-const NEWS_SEARCH_TIER = { badge: "STANDARD", title: "Your plan does not include news search" };
+const NEWS_SEARCH_TIER = { badge: tierLabel("searchNews") ?? "Plan", title: "Your plan does not include news search" };
 
 /** The `field` choices (`any` = the API's default, never sent). */
 export const NEWS_SEARCH_FIELD_LABELS: Record<V2NewsSearchField, string> = {

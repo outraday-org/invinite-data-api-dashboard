@@ -2,11 +2,15 @@ import type { V2Me, V2Plan, V2Usage } from "@/lib/api/types";
 
 import { formatNumber } from "@/lib/format";
 
-/** The plan names of `/v1/me` (`lite` = a prepaid-credits account) and `/v1/me/usage` (`prepaid`). */
+/**
+ * The plan names of `/v1/me` (`payg` = a prepaid-credits account without a plan) and `/v1/me/usage` (which still names
+ * that account's period `prepaid`).
+ */
 export const PLAN_LABELS: Record<V2Plan | V2Usage["period"]["tier"], string> = {
     enterprise: "Enterprise",
     free: "Free",
     lite: "Lite",
+    payg: "Pay as you go",
     prepaid: "Prepaid",
     pro: "PRO",
     standard: "Standard",

@@ -109,7 +109,7 @@ const rights = (display: boolean, redistribute: boolean, rag: boolean, audio: bo
 });
 
 export const V2_LICENSING: V2Licensing = {
-    by_contract: ["train"],
+    by_contract: ["train", "redistribute_api"],
     counsel_signed_off: false,
     families: [
         {
@@ -129,24 +129,25 @@ export const V2_LICENSING: V2Licensing = {
     ],
     notes: {
         audio: "Audio files carry a forensic watermark that identifies the recording.",
-        display: "Show the data to the licensee's own users, with attribution.",
+        display: "Show the data to the licensee's own users, with attribution; from STANDARD. LITE is internal use.",
+        internal_use: "Every paid plan may use the data inside the licensee's own organisation. Nothing is shown or passed to third parties below STANDARD.",
         news: "News text is Invinite's own summary.",
         pdf_documents: "Branded PDFs are permanent URLs.",
         rag: "Use the text as retrieval context in a customer-facing product.",
         redistribute: "Pass the data on inside the licensee's product with attribution.",
-        redistribute_api: "Return the data in the licensee's own API responses. Enterprise contract only.",
+        redistribute_api: "Return the data in the licensee's own API responses. Granted in an Enterprise contract.",
         sec_data: "Figures and filings originate from SEC EDGAR.",
         train: "Model training is an Enterprise right, granted in the contract.",
     },
-    policy_version: "2026-11-draft",
+    policy_version: "2026-11-draft-2",
     resale: "Invinite data may never be resold.",
     rights: ["display", "redistribute", "rag", "train", "audio", "redistribute_api", "resell"],
     tiers: {
         enterprise: rights(true, true, true, true, true),
         free: rights(false, false, false, false),
-        lite: rights(true, false, false, false),
+        lite: rights(false, false, false, false),
         pro: rights(true, true, true, true),
-        standard: rights(true, false, true, false),
+        standard: rights(true, true, true, false),
     },
     universe: { companies: 6023, earnings_calls: { companies: 5541, scope: "all" } },
 };

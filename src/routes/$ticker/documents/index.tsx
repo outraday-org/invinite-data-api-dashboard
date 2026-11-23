@@ -8,6 +8,7 @@ import type { DocumentsSearch } from "@/lib/earnings/documents";
 import { SecFilingSearch } from "@/components/sec/sec-filing-search";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
+import { tierLabel } from "@/components/ui/credit-hint";
 import { PageHeader } from "@/components/ui/page-header";
 import { RequestErrorState } from "@/components/ui/request-error-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -35,14 +36,14 @@ const PAGE_SIZE = 200;
 // The events list feeds the call rows: every event type, newest first, the API's largest page.
 const EVENTS_PAGE_SIZE = 200;
 
-/** The library's request state: `MediaState`'s options, but the plan gate names STANDARD (`MediaState` says PRO). */
+/** The library's request state: `MediaState`'s options, the plan gate naming `/v1/investor-documents`' own tier. */
 function LibraryError({ error }: { error: unknown }) {
     return (
         <RequestErrorState
             codes={MEDIA_CODES}
             error={error}
             notFound={{ title: "No earnings-call coverage for this company" }}
-            tier={{ badge: "STANDARD", title: "Your plan does not include company documents" }}
+            tier={{ badge: tierLabel("listInvestorDocuments") ?? "Plan", title: "Your plan does not include company documents" }}
             title="Failed to load the documents"
         />
     );

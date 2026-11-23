@@ -227,9 +227,13 @@ describe("status widget (`/status`, `/status/licensing`)", () => {
 
         expect(rights.getByText("AI retrieval (RAG)").closest("li")).toHaveTextContent("Allowed");
 
-        expect(rights.getByText("Redistribute").closest("li")).toHaveTextContent("Not on your plan");
+        expect(rights.getByText("Redistribute").closest("li")).toHaveTextContent("Allowed");
+
+        expect(rights.getByText("Audio").closest("li")).toHaveTextContent("Not on your plan");
 
         expect(screen.getByText("Draft")).toBeInTheDocument();
+
+        expect(screen.getByTestId("licensing-internal-use")).toHaveTextContent(V2_LICENSING.notes.internal_use);
 
         expect(familyReach(V2_LICENSING.families, "standard")).toEqual([
             { family: "company", reachable: 2, total: 2 },
@@ -239,16 +243,42 @@ describe("status widget (`/status`, `/status/licensing`)", () => {
         expect(familyReach(V2_LICENSING.families, "free")[1]).toMatchObject({ reachable: 0 });
     });
 
-    it("licensing on ENTERPRISE: training is granted by contract, redistribution through the API is allowed", () => {
+    it("licensing on ENTERPRISE: training and redistribution through the API are granted by contract", () => {
         render(<LicensingView licensing={V2_LICENSING} plan="enterprise" />);
 
         const rights = within(screen.getByTestId("licensing-rights"));
 
         expect(rights.getByText("Model training").closest("li")).toHaveTextContent("By contract");
 
-        expect(rights.getByText("Redistribute through your API").closest("li")).toHaveTextContent("Allowed");
+        expect(rights.getByText("Redistribute through your API").closest("li")).toHaveTextContent("By contract");
+
+        expect(rights.getByText("Redistribute").closest("li")).toHaveTextContent("Allowed");
 
         expect(rights.getByText("Resell").closest("li")).toHaveTextContent("Not on your plan");
+    });
+});
+
+describe("licensing below STANDARD (Data API 10.0)", () => {
+    it("LITE is internal use: no right of the matrix", () => {
+        render(<LicensingView licensing={V2_LICENSING} plan="lite" />);
+
+        const rights = within(screen.getByTestId("licensing-rights"));
+
+        expect(rights.getByText("Display").closest("li")).toHaveTextContent("Not on your plan");
+    });
+
+    it("pay as you go reads the FREE column (evaluation) and reaches the routes PRO reaches", () => {
+        render(<LicensingView licensing={V2_LICENSING} plan="payg" />);
+
+        const rights = within(screen.getByTestId("licensing-rights"));
+
+        expect(rights.getByText("Display").closest("li")).toHaveTextContent("Not on your plan");
+
+        expect(screen.getByText("Pay as you go plan")).toBeInTheDocument();
+
+        expect(familyReach(V2_LICENSING.families, "payg")).toEqual(familyReach(V2_LICENSING.families, "pro"));
+
+        expect(familyReach(V2_LICENSING.families, "payg")[1]).toMatchObject({ reachable: 2, total: 2 });
     });
 });
 

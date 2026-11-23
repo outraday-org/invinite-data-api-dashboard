@@ -465,7 +465,7 @@ export function useNewsPage(input: NewsListInput & { cursor: null | string }) {
     });
 }
 
-/** One news item, the list row (STANDARD); a null id keeps it idle. Status-aware: 404 / plan are panel states. */
+/** One news item, the list row (LITE); a null id keeps it idle. Status-aware: 404 / plan are panel states. */
 export function useNewsItem(id: null | string) {
     return useEarningsQuery<V2NewsItem>({
         enabled: Boolean(id),
@@ -476,7 +476,7 @@ export function useNewsItem(id: null | string) {
     });
 }
 
-/** Invinite's summary of an item in blocks, every page joined (STANDARD); a null id keeps it idle. */
+/** Invinite's summary of an item in blocks, every page joined (LITE); a null id keeps it idle. */
 export function useNewsText(id: null | string) {
     return useEarningsQuery<V2NewsText>({
         enabled: Boolean(id),
@@ -487,7 +487,7 @@ export function useNewsText(id: null | string) {
     });
 }
 
-/** The announcements (v1 "developments") read from one item (STANDARD); a null id keeps it idle. */
+/** The announcements (v1 "developments") read from one item (LITE); a null id keeps it idle. */
 export function useNewsAnnouncements(id: null | string) {
     return useEarningsQuery<V2AnnouncementsResponse>({
         enabled: Boolean(id),

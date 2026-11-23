@@ -124,11 +124,11 @@ describe("DocumentSearchResults", () => {
 
         expect(screen.getByText("No passages found")).toBeInTheDocument();
 
-        rerender(<DocumentSearchResults data={null} error={new ApiRequestError(403, { error: "Forbidden", message: "This endpoint requires STANDARD plan." })} isLoading={false} mode="lexical" />);
+        rerender(<DocumentSearchResults data={null} error={new ApiRequestError(403, { error: "Forbidden", message: "This endpoint requires pro plan." })} isLoading={false} mode="lexical" />);
 
         expect(screen.getByText("Your plan does not include document search")).toBeInTheDocument();
 
-        expect(screen.getByText("STANDARD")).toBeInTheDocument();
+        expect(screen.getByText("PRO")).toBeInTheDocument();
     });
 
     it("falls back to term highlighting for a hit without spans and notes failed passages", () => {

@@ -38,9 +38,21 @@ describe("operations.gen.ts (pnpm generate:api)", () => {
         }
     });
 
-    it("links each operation's docs page and orders the plans as /v1/me does", () => {
+    it("links each operation's docs page and orders the route tiers as /v1/me orders its plans", () => {
         expect(OPERATIONS.getFund.docsUrl).toBe("https://data.invinite.com/docs/get--_v1_funds_{fund}");
 
         expect(PLAN_ORDER).toEqual(["free", "lite", "standard", "pro", "enterprise"]);
+    });
+
+    it("PLAN_ORDER is /v1/me's plan enum minus the plans no x-tier names (payg is an account plan, not a rung)", () => {
+        const contract = JSON.parse(readFileSync(resolve(__dirname, "../../../openapi.json"), "utf8")) as {
+            components: { schemas: { Me: { properties: { plan: { enum: Array<string> } } } } };
+        };
+
+        const plans = contract.components.schemas.Me.properties.plan.enum;
+
+        expect(plans).toContain("payg");
+
+        expect(PLAN_ORDER).toEqual(plans.filter(plan => plan !== "payg"));
     });
 });
