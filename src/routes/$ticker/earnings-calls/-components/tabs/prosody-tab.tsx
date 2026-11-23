@@ -109,7 +109,7 @@ export function ProsodyTab({ eventId }: CallTabProps) {
             </div>
 
             {error
-                ? <MediaState error={error} notFound="Prosody is not derived for this call yet" title="Failed to load prosody" />
+                ? <MediaState error={error} notFound="Prosody is not derived for this call yet" operationId="getProsody" title="Failed to load prosody" />
                 : isLoading || !data
                     ? <Skeleton className="h-40 w-full" />
                     : rows.length === 0

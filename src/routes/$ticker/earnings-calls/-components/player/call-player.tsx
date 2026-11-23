@@ -197,7 +197,7 @@ export function CallPlayer({
         body = <div className="text-muted-foreground grow" role="status">{notice}</div>;
     }
     else if (engine.state === "error") {
-        body = <div className="grow"><MediaState error={engine.error} title={live ? "Live audio unavailable" : "Failed to load the recording"} /></div>;
+        body = <div className="grow"><MediaState error={engine.error} operationId={live ? "getLiveAudio" : "getAudio"} title={live ? "Live audio unavailable" : "Failed to load the recording"} /></div>;
     }
     else if (engine.state === "idle" && engine.jumpToLive) {
         const { jumpToLive } = engine;

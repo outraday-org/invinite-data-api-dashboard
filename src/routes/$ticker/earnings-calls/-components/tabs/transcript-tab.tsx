@@ -1,6 +1,7 @@
 import * as React from "react";
 import { toast } from "sonner";
 
+import type { OperationId } from "@/lib/api/operations.gen";
 import type { TimedWord } from "@/lib/earnings/follow-along";
 import type { TranscriptFormat, TranscriptView } from "@/lib/earnings/transcript";
 
@@ -81,6 +82,7 @@ function TranscriptDiff({ eventId, from, to }: { eventId: string; from: number; 
 function TranscriptBody({
     error,
     format,
+    operationId,
     qaStartMs,
     speakerImages,
     view,
@@ -88,6 +90,8 @@ function TranscriptBody({
 }: {
     error: Error | null;
     format: RenderedFormat;
+    /** The request whose error `error` is (turns or text): its plan names the plan-gate notice. */
+    operationId: OperationId;
     qaStartMs: null | number;
     speakerImages: SpeakerImages;
     view: null | TranscriptView;
@@ -100,6 +104,7 @@ function TranscriptBody({
                 notFound={format === "cleaned"
                     ? "No cleaned layer for this version — pick another format"
                     : "Transcript is being prepared"}
+                operationId={operationId}
                 title="Failed to load the transcript"
             />
         );
@@ -175,6 +180,8 @@ export function TranscriptTab({ event, eventId, onSearchChange, onTranscriptJump
     const text = useV2TranscriptText({ eventId: turnFormat ? "" : askId, split: format === "sections" ? "sections" : "none", version: requestedVersion });
 
     const transcript = turnFormat ? turns : text;
+
+    const transcriptOperationId: OperationId = turnFormat ? "getTranscript" : "getTranscriptText";
 
     // The speakers' round images (only the turn formats show speakers); while unanswered every named turn has initials.
     const participants = useV2Participants(turnFormat ? eventId : "");
@@ -318,7 +325,7 @@ export function TranscriptTab({ event, eventId, onSearchChange, onTranscriptJump
                 <div className="text-muted-foreground">Company-published transcript (no audio timings)</div>
             )}
 
-            <TranscriptBody error={transcript.error} format={format} qaStartMs={qaStartMs} speakerImages={speakerImages} view={view} words={words} />
+            <TranscriptBody error={transcript.error} format={format} operationId={transcriptOperationId} qaStartMs={qaStartMs} speakerImages={speakerImages} view={view} words={words} />
 
             {compare && (
                 <Dialog onOpenChange={setCompareOpen} open={compareOpen}>

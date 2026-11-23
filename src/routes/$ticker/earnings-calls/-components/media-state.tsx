@@ -1,5 +1,7 @@
 import type { NoticeText } from "@/components/ui/request-error-state";
+import type { OperationId } from "@/lib/api/operations.gen";
 
+import { tierLabel } from "@/components/ui/credit-hint";
 import { Notice } from "@/components/ui/notice";
 import { RequestErrorState } from "@/components/ui/request-error-state";
 
@@ -31,17 +33,30 @@ export const MEDIA_CODES: Partial<Record<string, NoticeText>> = {
     unavailable: { badge: "Unavailable", title: "Media temporarily unavailable" },
 };
 
+/** The plan-gate notice of an operation: the plan its `x-tier` names (the generated operations table), never a typed one. */
+export function mediaTierText(operationId: OperationId): NoticeText {
+    const label = tierLabel(operationId) ?? "Plan";
+
+    return { badge: label, title: `${label} plan required` };
+}
+
 /**
  * The state of a status-aware earnings request (`ApiRequestError`): a known media code or the REST plan gate as a
  * `Notice`, a 404 as `notFound` when given, anything else as `ErrorState` (`RequestErrorState` with the media options).
+ * `operationId` is the request whose error this is: its plan names the plan-gate notice.
  */
-export function MediaState({ error, notFound, title }: { error: unknown; notFound?: string; title: string }) {
+export function MediaState({ error, notFound, operationId, title }: {
+    error: unknown;
+    notFound?: string;
+    operationId: OperationId;
+    title: string;
+}) {
     return (
         <RequestErrorState
             codes={MEDIA_CODES}
             error={error}
             notFound={notFound ? { title: notFound } : undefined}
-            tier={{ badge: "PRO", title: "PRO plan required" }}
+            tier={mediaTierText(operationId)}
             title={title}
         />
     );

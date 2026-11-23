@@ -114,7 +114,7 @@ export function KpiTable({ eventId, onMetricClick }: Pick<CallTabProps, "eventId
 
     const kpis = data?.pages.flatMap(page => page.data) ?? [];
 
-    if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} title="Failed to load KPIs" />;
+    if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} operationId="listKpis" title="Failed to load KPIs" />;
 
     if (isLoading) return <Skeleton className="h-40 w-full" />;
 

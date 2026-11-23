@@ -11,7 +11,7 @@ import { MediaState, Notice } from "@/routes/$ticker/earnings-calls/-components/
 function DocumentPages({ documentId }: { documentId: string }) {
     const { data, error, isLoading } = useV2InvestorDocument(documentId, { pages: true });
 
-    if (error) return <MediaState error={error} notFound="This document is no longer available" title="Failed to load the document text" />;
+    if (error) return <MediaState error={error} notFound="This document is no longer available" operationId="getInvestorDocument" title="Failed to load the document text" />;
 
     if (isLoading || !data) return <Skeleton className="h-40 w-full" />;
 

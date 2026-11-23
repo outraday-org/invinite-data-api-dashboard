@@ -195,7 +195,7 @@ export function QaTab({ eventId }: CallTabProps) {
 
     const segments = React.useMemo(() => qaSegments(pairs, words), [pairs, words]);
 
-    if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} title="Failed to load Q&A" />;
+    if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} operationId="listQa" title="Failed to load Q&A" />;
 
     if (isLoading) return <Skeleton className="h-40 w-full" />;
 

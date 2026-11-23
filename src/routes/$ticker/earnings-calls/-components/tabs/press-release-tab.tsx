@@ -18,7 +18,7 @@ export function PressReleaseTab({ event, eventId }: CallTabProps) {
 
     const notFound = "No press release stored for this call";
 
-    if (error) return <MediaState error={error} notFound={notFound} title="Failed to load the press release" />;
+    if (error) return <MediaState error={error} notFound={notFound} operationId="getPressRelease" title="Failed to load the press release" />;
 
     if (!data) return <Skeleton className="h-40 w-full" />;
 
