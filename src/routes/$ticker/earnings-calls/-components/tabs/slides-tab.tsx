@@ -51,7 +51,7 @@ export function SlidesTab({ eventId }: CallTabProps) {
         }
     }, [setSlideMarkers, timelineAnswer]);
 
-    if (error) return <MediaState error={error} notFound="No slides stored for this call" title="Failed to load the slides" />;
+    if (error) return <MediaState error={error} notFound="No slides stored for this call" operationId="getSlides" title="Failed to load the slides" />;
 
     if (!data) return <Skeleton className="h-40 w-full" />;
 

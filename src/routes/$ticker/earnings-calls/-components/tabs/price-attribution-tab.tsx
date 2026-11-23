@@ -241,7 +241,7 @@ export function PriceAttributionView({ data, error, isLoading, speakerNames = NO
                 <p className="text-muted-foreground">{PRICE_ATTRIBUTION_CAVEAT}</p>
 
                 {error
-                    ? <MediaState error={error} notFound={PRICE_ATTRIBUTION_UNAVAILABLE} title="Failed to load price moves" />
+                    ? <MediaState error={error} notFound={PRICE_ATTRIBUTION_UNAVAILABLE} operationId="getPriceAttribution" title="Failed to load price moves" />
                     : isLoading || !data
                         ? <Skeleton className="h-40 w-full" />
                         : (

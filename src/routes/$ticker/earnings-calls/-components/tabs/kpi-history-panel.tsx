@@ -101,7 +101,7 @@ export function KpiHistoryView({
     onSortChange: (sort: KpiHistorySort) => void;
     sort: KpiHistorySort;
 }) {
-    if (error) return <MediaState error={error} title="Failed to load the KPI history" />;
+    if (error) return <MediaState error={error} operationId="listKpis" title="Failed to load the KPI history" />;
 
     if (isLoading) return <Skeleton className="h-64 w-full" />;
 

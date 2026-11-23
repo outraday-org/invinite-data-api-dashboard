@@ -190,7 +190,7 @@ export function GuidanceTable({
 
     const items = review === "needs_review" ? all.filter(item => item.review_status === "needs_review") : all;
 
-    if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} title="Failed to load guidance" />;
+    if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} operationId="listGuidance" title="Failed to load guidance" />;
 
     return (
         <div className="flex flex-col gap-2">

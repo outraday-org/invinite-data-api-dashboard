@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { V2Event } from "@/lib/api/types";
 
+import { tierLabel } from "@/components/ui/credit-hint";
 import { ApiRequestError } from "@/lib/api/errors";
 import { shareWithRequests } from "@/lib/api/request-meta";
 import { CallTabs } from "@/routes/$ticker/earnings-calls/-components/call-tabs";
@@ -207,24 +208,46 @@ describe("CallTabs: the API button (O6-final)", () => {
 describe("MediaState (v2 problems)", () => {
     it("reads 403 forbidden as the audio refusal, 503 unavailable as the outage, 404 not_found as the empty state", () => {
         const { rerender } = render(
-            <MediaState error={new ApiRequestError(403, { error: "forbidden", message: "Audio is not available for this event" })} title="Failed" />,
+            <MediaState error={new ApiRequestError(403, { error: "forbidden", message: "Audio is not available for this event" })} operationId="getAudio" title="Failed" />,
         );
 
         expect(screen.getByText(/Audio for this call is not available/)).toBeInTheDocument();
 
-        rerender(<MediaState error={new ApiRequestError(503, { error: "unavailable", message: "Media is temporarily unavailable" })} title="Failed" />);
+        rerender(<MediaState error={new ApiRequestError(503, { error: "unavailable", message: "Media is temporarily unavailable" })} operationId="getAudio" title="Failed" />);
 
         expect(screen.getByText("Media temporarily unavailable")).toBeInTheDocument();
 
         rerender(
-            <MediaState error={new ApiRequestError(404, { error: "not_found", message: "No slide deck for this event" })} notFound="No slides stored for this call" title="Failed" />,
+            <MediaState
+                error={new ApiRequestError(404, { error: "not_found", message: "No slide deck for this event" })}
+                notFound="No slides stored for this call"
+                operationId="getSlides"
+                title="Failed"
+            />,
         );
 
         expect(screen.getByText("No slides stored for this call")).toBeInTheDocument();
 
-        rerender(<MediaState error={new ApiRequestError(403, { error: "plan_required", message: "PRO" })} title="Failed" />);
+        rerender(<MediaState error={new ApiRequestError(403, { error: "plan_required", message: "PRO" })} operationId="getTranscript" title="Failed" />);
 
         expect(screen.getByText("PRO plan required")).toBeInTheDocument();
+    });
+
+    // A plan refusal names the plan of the route that refused (its `x-tier`), never one typed for every media view:
+    // guidance is LITE since Data API 10.0, the transcript PRO.
+    it.each([
+        ["listGuidance", "LITE"],
+        ["getTranscript", "PRO"],
+    ] as const)("badges %s's plan refusal with its own tier (%s)", (operationId, expected) => {
+        const label = tierLabel(operationId);
+
+        expect(label).toBe(expected);
+
+        render(<MediaState error={new ApiRequestError(403, { error: "plan_required", message: "Upgrade" })} operationId={operationId} title="Failed" />);
+
+        expect(screen.getByText(`${label} plan required`)).toBeInTheDocument();
+
+        expect(screen.getByText(label ?? "")).toBeInTheDocument();
     });
 });
 

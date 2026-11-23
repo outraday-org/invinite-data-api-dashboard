@@ -88,7 +88,7 @@ function FilingsTable({ filings }: { filings: Array<V2InvestorDocument> }) {
  * whole `body_text`, else the public per-page JSON of a file too large to inline (`pages_url`), else a notice.
  */
 export function DocumentTextView({ data, error, isLoading }: { data: null | undefined | V2InvestorDocumentResponse; error: unknown; isLoading: boolean }) {
-    if (error) return <MediaState error={error} notFound="This document is no longer available" title="Failed to load the document text" />;
+    if (error) return <MediaState error={error} notFound="This document is no longer available" operationId="getInvestorDocument" title="Failed to load the document text" />;
 
     if (isLoading || !data) return <Skeleton className="h-40 w-full" />;
 
@@ -237,7 +237,7 @@ export function DocumentsTab({ event, eventId, onSearchChange, onTabChange, sear
             </div>
 
             {error
-                ? <MediaState error={error} title="Failed to load the documents" />
+                ? <MediaState error={error} operationId="listInvestorDocuments" title="Failed to load the documents" />
                 : (
                         <>
                             <Table>

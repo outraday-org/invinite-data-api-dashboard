@@ -98,7 +98,7 @@ export function PeopleSearchLinks({ eventId, symbol }: { eventId: string; symbol
 export function ParticipantsTab({ event, eventId }: CallTabProps) {
     const { data, error, isLoading } = useV2Participants(eventId);
 
-    if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} title="Failed to load participants" />;
+    if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} operationId="listParticipants" title="Failed to load participants" />;
 
     if (isLoading || !data) return <Skeleton className="h-40 w-full" />;
 
