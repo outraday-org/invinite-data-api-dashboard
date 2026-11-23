@@ -74,7 +74,9 @@ export const DELIVERY_ERROR_INFO: Record<DeliveryErrorCode, { label: string; mea
 export function deliveryErrorInfo(code: null | string): null | { label: string; meaning: string } {
     if (!code) return null;
 
-    return Object.hasOwn(DELIVERY_ERROR_INFO, code) ? DELIVERY_ERROR_INFO[code] : { label: code, meaning: code };
+    return Object.hasOwn(DELIVERY_ERROR_INFO, code)
+        ? DELIVERY_ERROR_INFO[code as DeliveryErrorCode]
+        : { label: code, meaning: code };
 }
 
 /** Why a destination is disabled, in words (`manual` / `gone` / `failing` of the contract; anything else as sent). */

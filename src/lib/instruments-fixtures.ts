@@ -126,6 +126,7 @@ export const VOO_FUND: V2Fund = {
     currency: "USD",
     exchange: "ARCX",
     expense_ratio_as_of: "2026-04-29",
+    expense_ratio_class_id: "C000092055",
     expense_ratio_gross: 0.0003,
     expense_ratio_net: 0.0003,
     fund_key: "S000002277",

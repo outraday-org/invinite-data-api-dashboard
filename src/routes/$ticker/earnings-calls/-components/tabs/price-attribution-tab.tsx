@@ -36,6 +36,7 @@ type LagKind = NonNullable<V2PriceAttributionResponse["lag_kind"]>;
 type MarketSession = NonNullable<V2PriceAttributionResponse["session"]>;
 
 const ANCHOR_KIND_LABELS: Record<AnchorKind, string> = {
+    scheduled: "Scheduled start",
     started_at: "First spoken word",
     t0_wallclock: "Capture clock",
 };
