@@ -385,6 +385,7 @@ export const EXPIRED_REASON_LABELS: Record<NonNullable<V2Event["expired_reason"]
     agent_different_date: "Checked: the call is on another date",
     agent_no_call: "Checked: no call scheduled",
     agent_no_webcast: "Checked: no public webcast",
+    agent_notice_pending: "Being checked: a notice is pending",
     date_passed: "The date passed without a call",
     duplicate: "Duplicate of another event",
     early_results_filing: "Results filed before the estimated date",
