@@ -13,7 +13,9 @@ export interface paths {
         };
         /**
          * Health check
-         * @description Health check endpoint.
+         * @description Check whether the Data API responds to requests.
+         *
+         *     No API key is required. A healthy process returns `ok` with the current UTC time. For service availability and latency, use `GET /status`.
          */
         get: operations["healthGet"];
         put?: never;
@@ -33,7 +35,11 @@ export interface paths {
         };
         /**
          * Service status
-         * @description Whether each product works: a status and its uptime per product family, the same plus the 7-day p50 / p95 latency per v2 docs group (`groups`), and the coverage universe. Uptime is the share of requests answered without a server error, measured by the API per product family; a window with too little traffic to judge shows no figure. Status reflects the last 24 hours.
+         * @description Check service health and latency across the Data API.
+         *
+         *     No API key is required. The response groups uptime by product family and reports seven-day latency by documentation group. Coverage counts can still be available when request statistics are missing.
+         *
+         *     Uptime is the share of requests answered without a server error, measured by the API per product family; a window with too little traffic to judge shows no figure. Status reflects the last 24 hours.
          */
         get: operations["statusGet"];
         put?: never;
@@ -53,7 +59,9 @@ export interface paths {
         };
         /**
          * Licensing policy
-         * @description The licensing policy: rights per tier, the right and tier of every route by product family, and the coverage universe.
+         * @description Get the public licensing policy for Data API routes.
+         *
+         *     No API key is required. Use the rights matrix to compare permitted uses by subscription tier, then look up individual routes under their product families.
          */
         get: operations["statusLicensing"];
         put?: never;
@@ -73,7 +81,9 @@ export interface paths {
         };
         /**
          * List alert events
-         * @description The account's event log, oldest first: the cursor pull feed of every alert. `after` continues after an event id you already processed.
+         * @description List events from your account’s alert feed.
+         *
+         *     Events arrive oldest first in commit order. To resume after an event you processed, pass its ID in `after`. Narrow the feed to a specific alert or end user when needed. Returns `503` when the alerts platform is switched off.
          */
         get: operations["listAlertEvents"];
         put?: never;
@@ -91,7 +101,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get an alert event */
+        /**
+         * Get an alert event
+         * @description Get the recorded payload of one alert event.
+         *
+         *     Use the event ID from the account feed. An event outside your account or an unknown ID returns `404`. Returns `503` when the alerts platform is switched off.
+         */
         get: operations["getAlertEvent"];
         put?: never;
         post?: never;
@@ -110,7 +125,9 @@ export interface paths {
         };
         /**
          * List indicator alert templates
-         * @description The built-in templates of the `indicator` alert type: key, version, inputs with their defaults, snapshot fidelity and chartlang source. Answers 503 `unavailable` while hosted scripts are switched off.
+         * @description List built-in templates for indicator alerts.
+         *
+         *     Use the template key and its input defaults to configure an `indicator` condition. The template also includes its chartlang source. Returns `503` when the alerts platform is switched off. Returns `503` when hosted scripts are switched off.
          */
         get: operations["listAlertTemplates"];
         put?: never;
@@ -130,7 +147,9 @@ export interface paths {
         };
         /**
          * List end users
-         * @description The account's end users, ordered by `external_user_id`, each with its limits, effective limits (after the account defaults) and usage. Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description List the end users associated with your alerts.
+         *
+         *     Users appear in order by `external_user_id`, the ID from your own system. Use `q` to match an ID prefix or `status` to find users in the same state. Returns `503` when the alerts platform is switched off.
          */
         get: operations["listAlertUsers"];
         put?: never;
@@ -150,21 +169,29 @@ export interface paths {
         };
         /**
          * Get an end user
-         * @description One end user with its limits and usage; 404 when the account has no end user of this id. Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description Get one end user’s alert usage and effective limits.
+         *
+         *     Address the user by your `external_user_id`. Each effective limit uses the user’s override, then the account default. An unknown ID returns `404`. Returns `503` when the alerts platform is switched off.
          */
         get: operations["getAlertUser"];
         put?: never;
         post?: never;
         /**
          * Delete an end user
-         * @description Erases an end user: its live alerts are deleted (without its id, client_reference_id and metadata), its open deliveries are cancelled, and its events, deliveries, fire counters and the end user itself are permanently removed. Answers 200 with `status: deleted`, or `deleting` when the rest is finished in the background (creates for the id answer 409 until then). A pull-feed or WebSocket cursor on a removed event answers like any unknown `after`. 404 when the account knows nothing of the id. Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description Delete an end user and erase their alert history.
+         *
+         *     Erasure removes the user’s live alerts from service, clears their identifying references and metadata, and cancels open deliveries. It also removes the user’s events, delivery history and fire counters.
+         *
+         *     The response reports what this call removed. If it returns `deleting`, cleanup continues in the background and new alerts for this ID receive `409` until it finishes. Returns `503` when the alerts platform is switched off.
          */
         delete: operations["deleteAlertUser"];
         options?: never;
         head?: never;
         /**
          * Create or update an end user
-         * @description Sets the display name, metadata or limits of an end user, and creates it when absent (an upsert). A limit lowered below the current count keeps the existing alerts and refuses new ones (403 `alert_user_limit_reached`). Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description Update an end user’s alert settings or create the user.
+         *
+         *     Supply your `external_user_id` in the path. A `null` limit clears the user’s override. Lowering a limit preserves existing alerts and restricts new ones. Returns `503` when the alerts platform is switched off.
          */
         patch: operations["updateAlertUser"];
         trace?: never;
@@ -180,7 +207,9 @@ export interface paths {
         put?: never;
         /**
          * Pause an end user
-         * @description Pauses every active or scheduled alert of the end user (and a paused one whose `pause_until` would end its pause) and refuses new alerts and per-alert resumes (403 `alert_user_paused`) until the end user is resumed; the pause never ends by itself. Creates the end user paused when absent. A paused end user answers unchanged; 409 `conflict` while it is being deleted. Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description Pause an end user and suspend their alert rules.
+         *
+         *     The pause covers active and scheduled alerts and holds alerts whose `pause_until` would otherwise rearm them. Creating or resuming an alert for this user returns `403` while the user is paused. An unknown ID creates a paused user. Returns `503` when the alerts platform is switched off.
          */
         post: operations["pauseAlertUser"];
         delete?: never;
@@ -200,7 +229,9 @@ export interface paths {
         put?: never;
         /**
          * Resume an end user
-         * @description The end user is active again and exactly the alerts its pause paused are armed again (scheduled while `trigger.activate_at` lies ahead; a `pause_until` still ahead keeps them quiet until then); an alert paused on its own stays paused. An active end user answers unchanged; 404 for an unknown id, 409 `conflict` while it is being deleted. Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description Resume an end user and the alerts their pause suspended.
+         *
+         *     Alerts that the user’s pause suspended resume according to their schedules. A separate manual pause stays in effect. Resuming an unknown ID returns `404`. Returns `503` when the alerts platform is switched off.
          */
         post: operations["resumeAlertUser"];
         delete?: never;
@@ -220,7 +251,9 @@ export interface paths {
         put?: never;
         /**
          * Create or update end users in bulk
-         * @description Up to 500 upserts, each an `external_user_id` with the fields of `updateAlertUser`. One result per item, in order; a refused item never undoes another. Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description Update or create several alert users in one request.
+         *
+         *     Supply your `external_user_id` for each of up to 500 users. Each result identifies its input item and reports its own outcome. Successful updates survive another item’s failure. Returns `503` when the alerts platform is switched off.
          */
         post: operations["batchAlertUsers"];
         delete?: never;
@@ -238,13 +271,17 @@ export interface paths {
         };
         /**
          * List alerts
-         * @description The account's alerts, oldest first. Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description List your account’s alert rules, oldest first.
+         *
+         *     Use `symbol` to find rules for an instrument or `destination_id` to find rules that send to a particular webhook. Each page includes the account’s alert quota usage in `meta.quota`. Returns `503` when the alerts platform is switched off.
          */
         get: operations["listAlerts"];
         put?: never;
         /**
          * Create an alert
-         * @description Creates an alert rule (201). With a `client_reference_id` the create is idempotent: a live alert with the same id is returned as it is (200). Counts against the plan's active-alert quota (403 `plan_required` when full). With `validate_only=true` nothing is written and a valid alert answers 204. Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description Create an alert that fires when its condition is met.
+         *
+         *     Retry the same request with the same `Idempotency-Key` to replay its response. A live alert with the same `client_reference_id` returns unchanged with `200`. Set `validate_only=true` to check the rule and receive `204` without saving it. Returns `503` when the alerts platform is switched off.
          */
         post: operations["createAlert"];
         delete?: never;
@@ -260,20 +297,29 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get an alert */
+        /**
+         * Get an alert
+         * @description Get the current rule and state of one alert.
+         *
+         *     Read the alert’s `version` before editing it. The fire count and most recent fire time show whether the rule has fired. Returns `503` when the alerts platform is switched off.
+         */
         get: operations["getAlert"];
         put?: never;
         post?: never;
         /**
          * Delete an alert
-         * @description Deletes the alert (204); its events stay readable.
+         * @description Delete an alert and stop future evaluations.
+         *
+         *     Its recorded events remain available through `GET /v1/alerts/{id}/events` after deletion. Returns `503` when the alerts platform is switched off.
          */
         delete: operations["deleteAlert"];
         options?: never;
         head?: never;
         /**
          * Update an alert
-         * @description Changes the condition, trigger, destinations or references. With `version` the update applies only to that version (409 `conflict` otherwise). The type never changes.
+         * @description Update the rule or delivery settings of one alert.
+         *
+         *     A supplied `condition`, `trigger` or `destination_ids` replaces that part of the rule. The alert keeps its type. Send the `version` from your last read to reject a concurrent edit with `409`. Returns `503` when the alerts platform is switched off.
          */
         patch: operations["updateAlert"];
         trace?: never;
@@ -287,7 +333,9 @@ export interface paths {
         };
         /**
          * List an alert's events
-         * @description The alert's events, oldest first (the pull feed of one alert).
+         * @description List the recorded events for one alert rule.
+         *
+         *     Events appear oldest first and remain readable after the alert is deleted. Use `after` to continue from an event you already processed. Returns `503` when the alerts platform is switched off.
          */
         get: operations["listAlertEventsForAlert"];
         put?: never;
@@ -309,7 +357,9 @@ export interface paths {
         put?: never;
         /**
          * Pause an alert
-         * @description An active or scheduled alert stops firing until it is resumed; a paused one is unchanged.
+         * @description Pause an active or scheduled alert in your account.
+         *
+         *     Pausing stops new fires and leaves queued deliveries in place. A manual pause can end at the trigger’s `pause_until` time. Returns `503` when the alerts platform is switched off.
          */
         post: operations["pauseAlert"];
         delete?: never;
@@ -329,7 +379,9 @@ export interface paths {
         put?: never;
         /**
          * Resume an alert
-         * @description A paused or triggered alert is armed again (scheduled while `trigger.activate_at` lies ahead); an active one is unchanged.
+         * @description Resume evaluation of a paused or triggered alert.
+         *
+         *     The alert becomes active, or scheduled if `activate_at` is in the future. Resuming leaves queued deliveries in place. An alert that is already active or scheduled keeps its state. Returns `503` when the alerts platform is switched off.
          */
         post: operations["resumeAlert"];
         delete?: never;
@@ -349,7 +401,9 @@ export interface paths {
         put?: never;
         /**
          * Send a test event
-         * @description Queues one test `alert.fired` event to the alert's destinations (202).
+         * @description Send a test event through an alert’s destinations.
+         *
+         *     The test appears in the feed as `alert.fired` with `data.test` set to `true`. It queues delivery to active destinations and leaves the alert’s fire count unchanged. The `202` response identifies the event. Returns `503` when the alerts platform is switched off.
          */
         post: operations["testAlert"];
         delete?: never;
@@ -369,7 +423,9 @@ export interface paths {
         put?: never;
         /**
          * Change alerts in bulk
-         * @description Up to 500 items, each `create`, `upsert` (by `client_reference_id`), `delete`, `pause` or `resume` (by `id` or `client_reference_id`). One result per item, in order; a refused item never undoes another.
+         * @description Change multiple alerts in a single request.
+         *
+         *     Submit up to 500 items. Use `upsert` with `client_reference_id` to create or update a rule. Results follow input order, and each successful change survives a failure in another item. Returns `503` when the alerts platform is switched off.
          */
         post: operations["batchAlerts"];
         delete?: never;
@@ -385,7 +441,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List announcements */
+        /**
+         * List announcements
+         * @description List company developments extracted from published news.
+         *
+         *     Supply `company` for the publishing company or `item` for a single news item. Each row describes a development identified in the publication. The newest announcements appear first.
+         *
+         *     Filter by announcement time to find when news appeared, or by effective date to find when the development takes effect. A missing end date uses the start date for the end-date filter.
+         */
         get: operations["listAnnouncements"];
         put?: never;
         post?: never;
@@ -402,7 +465,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List investor-document kinds */
+        /**
+         * List investor-document kinds
+         * @description List the document kinds used in investor relations.
+         *
+         *     Use a `kind` from this catalog in the `kind` filter on `GET /v1/investor-documents`. Each kind is grouped under its usual category.
+         */
         get: operations["listDocumentKindCatalog"];
         put?: never;
         post?: never;
@@ -419,7 +487,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List event types */
+        /**
+         * List event types
+         * @description List the event types used by the corporate calendar.
+         *
+         *     Pass an `event_type` in the `type` filter on `GET /v1/events` to narrow the calendar to that kind of event.
+         */
         get: operations["listEventTypeCatalog"];
         put?: never;
         post?: never;
@@ -436,7 +509,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List SEC forms */
+        /**
+         * List SEC forms
+         * @description List SEC filing forms with their names and families.
+         *
+         *     Use a form code in the `form` filter on `GET /v1/filings`. For example, `10-K` selects annual reports.
+         */
         get: operations["listFormCatalog"];
         put?: never;
         post?: never;
@@ -453,7 +531,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List standardized mapping rules */
+        /**
+         * List standardized mapping rules
+         * @description List the rules used to standardize financial metrics.
+         *
+         *     Look up a rule by `metric_id` or narrow the catalog by `statement` to see how reported figures map to standardized values. The call returns `503 unavailable` when the financial statements catalog is unavailable.
+         */
         get: operations["listMappingRules"];
         put?: never;
         post?: never;
@@ -470,7 +553,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List standardized metrics */
+        /**
+         * List standardized metrics
+         * @description List metric IDs and their financial definitions.
+         *
+         *     Use `statement` to narrow the catalog to a financial statement. Without that filter the catalog also includes ratios, growth rates and segment metrics. Use a segment metric's ID in the `metric` filter on `GET /v1/segments`.
+         */
         get: operations["listMetricCatalog"];
         put?: never;
         post?: never;
@@ -487,7 +575,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List filing section ids */
+        /**
+         * List filing section ids
+         * @description List the section IDs and titles for SEC filing forms.
+         *
+         *     Use `form` to see the sections of one form. Pass a section ID in the `item` filter on `GET /v1/search/filings` to search within that part of a filing.
+         */
         get: operations["listSectionCatalog"];
         put?: never;
         post?: never;
@@ -506,7 +599,9 @@ export interface paths {
         };
         /**
          * List listed companies
-         * @description Operating companies with a US listing (an instrument of type `stock`); funds are GET /v1/funds, everything exchange-traded GET /v1/instruments.
+         * @description List operating companies with a US stock listing.
+         *
+         *     Use `q` to find a ticker or part of a company name, and narrow by exchange or sector. Results appear in ticker order. For ETFs and closed-end funds, use `GET /v1/funds`.
          */
         get: operations["listCompanies"];
         put?: never;
@@ -524,7 +619,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a company */
+        /**
+         * Get a company
+         * @description Get an operating company profile by ticker or CIK.
+         *
+         *     Use the ticker of any listed share class. Request `expand=coverage` to see which datasets hold company records and the latest date where available.
+         *
+         *     For a fund, a `404 not_covered` response points to `GET /v1/funds/{fund}`. For an ETN it points to `GET /v1/instruments/{symbol}`.
+         */
         get: operations["getCompany"];
         put?: never;
         post?: never;
@@ -541,7 +643,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List SEC dataset releases */
+        /**
+         * List SEC dataset releases
+         * @description List the latest available release of each SEC bulk dataset.
+         *
+         *     One row represents the active release with the latest coverage end date for that dataset. The row names the release and applicable filing forms. A dataset appears once it has an active release.
+         */
         get: operations["listDatasets"];
         put?: never;
         post?: never;
@@ -560,13 +667,17 @@ export interface paths {
         };
         /**
          * List destinations
-         * @description The account's webhook destinations, oldest first (secrets are never returned). Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description List your account’s webhook endpoints, oldest first.
+         *
+         *     Use the destination IDs to filter alerts by `destination_id`. The list includes each endpoint’s status and a hint for its signing secret. Returns `503` when the alerts platform is switched off.
          */
         get: operations["listDestinations"];
         put?: never;
         /**
          * Create a destination
-         * @description A webhook endpoint (https, port 443, public addresses only). The signing secret (`whsec_…`, Standard Webhooks) is in this answer only. Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description Create a webhook endpoint for alert deliveries.
+         *
+         *     Supply a public HTTPS endpoint on port 443. Save the Standard Webhooks signing secret from the creation response. A later read returns only its hint. Use `Idempotency-Key` when retrying the same request. Returns `503` when the alerts platform is switched off.
          */
         post: operations["createDestination"];
         delete?: never;
@@ -582,20 +693,29 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a destination */
+        /**
+         * Get a destination
+         * @description Get the delivery settings for one webhook endpoint.
+         *
+         *     Use the destination ID to check its status and consecutive failures. Custom headers appear by name, and the signing secret is represented by a hint. Returns `503` when the alerts platform is switched off.
+         */
         get: operations["getDestination"];
         put?: never;
         post?: never;
         /**
          * Delete a destination
-         * @description Deletes the destination (204); alerts that named it stop sending to it.
+         * @description Delete a webhook endpoint from your account.
+         *
+         *     The destination is removed from each alert that used it. Those alerts keep their other destinations. Returns `503` when the alerts platform is switched off.
          */
         delete: operations["deleteDestination"];
         options?: never;
         head?: never;
         /**
          * Update a destination
-         * @description `status: active` re-enables a disabled destination (its failure counter resets).
+         * @description Update how a webhook endpoint receives alerts.
+         *
+         *     Set `status` to `active` to re-enable a disabled destination and reset its consecutive failure count. Returns `503` when the alerts platform is switched off.
          */
         patch: operations["updateDestination"];
         trace?: never;
@@ -609,7 +729,9 @@ export interface paths {
         };
         /**
          * List a destination's deliveries
-         * @description The delivery log, newest first.
+         * @description List webhook deliveries for one destination, newest first.
+         *
+         *     Use the event ID to find the related payload. Failed attempts include their outcome and a next attempt time when a retry is scheduled. Returns `503` when the alerts platform is switched off.
          */
         get: operations["listDestinationDeliveries"];
         put?: never;
@@ -631,7 +753,9 @@ export interface paths {
         put?: never;
         /**
          * Rotate a destination's secret
-         * @description A new signing secret, in this answer only; deliveries carry a signature with each secret for 24 h.
+         * @description Rotate the signing secret for a webhook endpoint.
+         *
+         *     Save the new secret from this response. Deliveries carry signatures from both secrets for 24 hours. Use `previous_secret_expires_at` to see when the overlap ends. Returns `503` when the alerts platform is switched off.
          */
         post: operations["rotateDestinationSecret"];
         delete?: never;
@@ -651,7 +775,9 @@ export interface paths {
         put?: never;
         /**
          * Send a test delivery
-         * @description Queues one signed `destination.test` event to the destination (202).
+         * @description Send a signed test event to one webhook endpoint.
+         *
+         *     The `202` response identifies the queued event and delivery. Check the delivery log for its outcome. A disabled destination returns `409`. If a test is rate limited, follow `Retry-After`. Returns `503` when the alerts platform is switched off.
          */
         post: operations["testDestination"];
         delete?: never;
@@ -669,7 +795,11 @@ export interface paths {
         };
         /**
          * List dividends
-         * @description Keyed by ticker: every instrument type answers (`symbol=`); a row names its `company` (a stock) or its `fund` (an ETF or closed-end fund); an ETN row carries neither. A fund's dividend history is loaded for the funds in the current coverage scope only: a symbol without rows answers 404 `not_covered` saying so, and its `datasets` (GET /v1/instruments/{symbol}) omit dividends.
+         * @description List cash dividends for one or more instruments.
+         *
+         *     Use `symbol` for stocks, ETFs, closed-end funds or ETNs. Dividends appear newest ex-dividend date first, with record and payment dates when available.
+         *
+         *     Dividend history covers selected funds. If none of the requested symbols has dividend history, the call can return `404 not_covered`. Check `datasets` on `GET /v1/instruments/{symbol}` for coverage.
          */
         get: operations["listDividends"];
         put?: never;
@@ -687,7 +817,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a document version */
+        /**
+         * Get a document version
+         * @description Get the content of one immutable SEC filing document.
+         *
+         *     Take `current_version_id` from `GET /v1/filings/{accession}` with `expand=documents`. Select content by block ID, page number or printed page label. Add `neighbors` or `footnotes` for context around the selected blocks.
+         *
+         *     If the selection is truncated, `selection.next_block` identifies the next block.
+         */
         get: operations["getDocumentVersion"];
         put?: never;
         post?: never;
@@ -704,7 +841,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a figure */
+        /**
+         * Get a figure
+         * @description Get a figure from a specific SEC filing document version.
+         *
+         *     Take `current_version_id` from `GET /v1/filings/{accession}` with `expand=documents` and the figure's `block_id` from that document version. The figure comes with its citation and an image when available.
+         */
         get: operations["getDocumentFigure"];
         put?: never;
         post?: never;
@@ -721,7 +863,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List a document version's sections */
+        /**
+         * List a document version's sections
+         * @description List the section outline of an SEC filing document.
+         *
+         *     Use a `current_version_id` from `GET /v1/filings/{accession}` with `expand=documents`. The default uses generic headings when available and otherwise uses the filing's item outline. Each section identifies the blocks to read in the same version.
+         */
         get: operations["listDocumentSections"];
         put?: never;
         post?: never;
@@ -740,7 +887,11 @@ export interface paths {
         };
         /**
          * List events
-         * @description Events (earnings calls by default; `type=all` or a list opts into investor days, conferences, AGMs and other events), keyset-paged by `scheduled_at` with the event id as tiebreaker. With `company=` every date of that company is listed; without `company=` the list is a calendar: the `scheduled_at` window defaults to today through today + 14 days (New York calendar days) and may span at most 92 days (a wider window is a 400 `invalid_parameter`); `status=live` alone needs no window. Expired calendar rows (an estimate that never became a call, a duplicate, a non-call issuer) are omitted, except one whose `expired_reason` is `results_without_call` (a reported quarter whose call never came); `GET /v1/events/{event_id}` still serves them. A reported quarter (`results_released_at` set) is listed even when its call date is only an estimate.
+         * @description List earnings calls and other scheduled company events.
+         *
+         *     The default is earnings calls. Pass `type` from `GET /v1/catalog/event-types` to include other events. With `company`, you can request the company's full history. Without it, the calendar defaults to today through 14 days ahead and allows a window of up to 92 days. A `status=live` query alone needs no date window.
+         *
+         *     Events appear in scheduled order by default. A reported quarter can appear with an estimated call date. Expired events are omitted unless `expired_reason` is `results_without_call`, meaning the company reported results and the expected call never took place.
          */
         get: operations["listEvents"];
         put?: never;
@@ -760,7 +911,11 @@ export interface paths {
         };
         /**
          * Get an event
-         * @description The event (FREE: never a paid sub-object). `expand=calendar` adds the calendar object, `expand=observations` the date / time observations. Served whatever its status, expired calendar rows included. 404 `not_found` for an unknown or not served event id; 400 `invalid_parameter` for a value that is no event id.
+         * @description Get one company event and its scheduling history.
+         *
+         *     Use the event ID from `GET /v1/events`. Request `expand=calendar` for the calendar entry or `expand=observations` for the dated observations behind its schedule.
+         *
+         *     Expired events remain available by ID. An unknown or unavailable event returns `404 not_found`.
          */
         get: operations["getEvent"];
         put?: never;
@@ -780,7 +935,9 @@ export interface paths {
         };
         /**
          * Get an event's recording
-         * @description The recording's permanent public URL. 403 `forbidden` whenever no recording can be served (opted out, not recorded, not released yet) — one answer for every reason; 404 `not_found` for an unknown event.
+         * @description Get a permanent link to a company's recorded call.
+         *
+         *     Use the URL to play the recording. A missing or unreleased recording and a company audio opt-out all return the same `403 forbidden` response. An unknown event returns `404 not_found`.
          */
         get: operations["getAudio"];
         put?: never;
@@ -800,7 +957,11 @@ export interface paths {
         };
         /**
          * Compare an event with a prior one
-         * @description The comparison of this event with the company’s previous call, as derived by the pipeline (one comparison per event). `prior` may name that previous call; any other event id answers 404 `not_found`, because no other pair is derived. An event without a derived comparison (its company’s first call, or not derived yet) answers 404 `not_found` with the reason in `detail`.
+         * @description Compare a call with the company's previous call.
+         *
+         *     The comparison draws on the transcripts to show changes in topics and tone. Omit `prior` to use the preceding call, or pass that call's event ID to check the pair.
+         *
+         *     A different prior ID returns `404 not_found`. When no comparison is ready, the error detail distinguishes a company with no earlier call from a comparison still awaiting processing.
          */
         get: operations["getEventComparison"];
         put?: never;
@@ -820,7 +981,11 @@ export interface paths {
         };
         /**
          * Get an event's live audio URL
-         * @description A temporary playlist URL of the event's live audio (HLS). `status` says whether the stream is `available`, `not_started` (ask again), `ended` (still playable for a while) or `disabled`; `url` and `expires_at` are null unless a URL was issued. The URL is a short-lived credential (`Cache-Control: private`). 403 `forbidden` when the company opted out of audio; 503 `unavailable` while live audio is not configured.
+         * @description Get an expiring HLS playlist for a company's live call.
+         *
+         *     The playlist can be issued while the stream is `available` and after it has `ended`. Use `expires_at` to see when to request a fresh link. When the status is `not_started` or `disabled`, both `url` and `expires_at` are null.
+         *
+         *     An audio opt-out returns `403 forbidden`. An unknown event or missing stream record returns `404 not_found`. If playlist signing is unavailable, the request returns `503 unavailable`.
          */
         get: operations["getLiveAudio"];
         put?: never;
@@ -840,7 +1005,11 @@ export interface paths {
         };
         /**
          * Get an event's press release
-         * @description The event's results press release with its body text. `news_id` is null until press releases are linked to news items. 404 `not_found` when the event has no press release.
+         * @description Get the text of the results release for a company event.
+         *
+         *     When a news item shares the release's SEC accession, `news_id` identifies it for `GET /v1/news/{id}`. Releases from an issuer page can have no accession and no matching news item.
+         *
+         *     An event without a results release returns `404 not_found`.
          */
         get: operations["getPressRelease"];
         put?: never;
@@ -860,7 +1029,11 @@ export interface paths {
         };
         /**
          * Get an event's price attribution
-         * @description Minute price returns of the call with the utterances spoken in each minute; while the call is live the rows grow once a minute (`live`), the post-call run replaces them (`settled`). 404 `not_found` until the first minute is derived.
+         * @description Get minute-by-minute returns alongside the call dialogue.
+         *
+         *     Each minute pairs the price move with utterances from that part of the call. Rows can appear during the call, before a transcript is published. After processing, `settled` rows replace the `live` figures.
+         *
+         *     The request returns `404 not_found` until the first minute is available.
          */
         get: operations["getPriceAttribution"];
         put?: never;
@@ -880,7 +1053,9 @@ export interface paths {
         };
         /**
          * Get an event's speech prosody
-         * @description Per-speaker delivery features of one section (`section`, default `all`). 404 `not_found` when the event has no transcript or its features are not derived yet.
+         * @description Get measures of how each speaker delivered a call.
+         *
+         *     The measures use the audio to describe delivery, including speaking pace and pitch. Read the whole call by default or restrict `section` to `prepared` or `qa`. A missing transcript or a section with no processed measures returns `404 not_found`.
          */
         get: operations["getProsody"];
         put?: never;
@@ -900,7 +1075,11 @@ export interface paths {
         };
         /**
          * List an event's Q&A pairs
-         * @description Analyst questions and management answers in call order (keyset on the pair's sequence); `include=scores` adds the answer scores. 404 `not_found` when the event has no transcript. An empty first page reads `meta.coverage.state` `pending` until the call's statistics are derived (they follow the Q&A), else `complete` (a call without questions).
+         * @description List a call's questions and answers in speaking order.
+         *
+         *     Each row pairs a question with its answer. Request `include=scores` to include the answer scores.
+         *
+         *     An event without a transcript returns `404 not_found`. On an empty first page, `meta.coverage.state` is `pending` until the call statistics are ready. An empty first page with `complete` means the call had no question pairs.
          */
         get: operations["listQa"];
         put?: never;
@@ -920,7 +1099,11 @@ export interface paths {
         };
         /**
          * Get an event's slides
-         * @description The event's slide deck: `pages` (one page or a range, e.g. `3` or `1-5`) narrows the slides, `include=markdown` adds each page's text, `include=timeline` the player's slide changes (opt-in). Image URLs are permanent public URLs. 404 `not_found` when the event has no deck; 503 `unavailable` while media is unavailable.
+         * @description Get the presentation slides for a company event.
+         *
+         *     Use `pages` to select a page or range. The response links to each slide image. Request `include=markdown` for page text or `include=timeline` to see when slides changed during the call.
+         *
+         *     An event without a deck returns `404 not_found`. If slide media is unavailable, the request returns `503 unavailable`.
          */
         get: operations["getSlides"];
         put?: never;
@@ -940,7 +1123,9 @@ export interface paths {
         };
         /**
          * Get an event's call statistics
-         * @description Call statistics derived from the transcript. 404 `not_found` when the event has no transcript or its statistics are not derived yet; `detail` says which.
+         * @description Get call statistics derived from an event's transcript.
+         *
+         *     Use the statistics to compare time spent on prepared remarks and questions, or see how many analysts took part. An event without a transcript or without calculated statistics returns `404 not_found`. The error detail identifies which is missing.
          */
         get: operations["getEventStats"];
         put?: never;
@@ -960,7 +1145,13 @@ export interface paths {
         };
         /**
          * Get an event's transcript
-         * @description Speaker turns of the current transcript version (or `version`). `layer=cleaned` serves the cleaned text in the same row (`end_ms` and `speaker_confidence` null); `include=words` adds `words[]` per turn (null on the cleaned layer) and is billed by turn count. 404 `not_found` when the event has no transcript, for an unknown or unpublished version, or a version without a cleaned layer; `detail` says which.
+         * @description Get a call transcript as a sequence of speaker turns.
+         *
+         *     Read the current version or select a published `version`. The raw layer supports `include=words`. With `layer=cleaned`, word timings, turn end times and speaker confidence are unavailable.
+         *
+         *     The call-relative `qa_start_ms` can begin when a host opens submitted questions. An invitation to submit questions during the introduction stays in prepared remarks. The boundary is null for a live version, an Q&A opening turn without a timestamp or a call with no detected Q&A.
+         *
+         *     A missing transcript, unavailable version or missing cleaned layer returns `404 not_found`.
          */
         get: operations["getTranscript"];
         put?: never;
@@ -980,7 +1171,11 @@ export interface paths {
         };
         /**
          * Diff two transcript versions
-         * @description Word-level changes from version `from` to version `to` (the cleaned layer when both versions have one). 404 `not_found` for an unknown or unpublished version; 400 `invalid_parameter` (`param: from`) when the versions differ too much to diff.
+         * @description Compare two published transcript versions word by word.
+         *
+         *     Pass version numbers from `GET /v1/events/{event_id}/transcript-versions` in `from` and `to`. The comparison uses cleaned text when both versions have it.
+         *
+         *     An unknown or unpublished version returns `404 not_found`. A `400 invalid_parameter` for `from` means the changes exceed the comparison limit. Choose closer versions.
          */
         get: operations["getTranscriptDiff"];
         put?: never;
@@ -1000,7 +1195,11 @@ export interface paths {
         };
         /**
          * Get an event's transcript as text
-         * @description The transcript as text blocks: `split=none` one `full` block, `split=sections` the prepared remarks and the Q&A (a version without stored sections: one `full` block). 404 `not_found` as for the transcript.
+         * @description Get the text of a call in one block or by section.
+         *
+         *     Use `split=sections` for prepared remarks and questions and answers in the selected `version`. If neither section is available, the response supplies one `full` block.
+         *
+         *     The call-relative `qa_start_ms` is null for a live version or when there is no timed Q&A boundary.
          */
         get: operations["getTranscriptText"];
         put?: never;
@@ -1020,7 +1219,11 @@ export interface paths {
         };
         /**
          * List an event's transcript versions
-         * @description The event's published transcript versions, oldest first, each with its PDF. An event without a transcript answers an empty list.
+         * @description List the published versions of an event's transcript.
+         *
+         *     Versions appear oldest first. A later version can incorporate corrections after the call. Use its number to retrieve that text or compare it with another version. A PDF link is included when available.
+         *
+         *     An event without a published transcript returns an empty list.
          */
         get: operations["listTranscriptVersions"];
         put?: never;
@@ -1040,7 +1243,11 @@ export interface paths {
         };
         /**
          * List where facts appear in a document
-         * @description Where facts sit in a document version: the inline-XBRL element id (`html_tag_id`), XPath, block, table cell, page box and the annotated-rendition link, with a typed `status`. Filter from either end: `document_version=` (every fact place of that version, in the store’s order) or `fact=` (the places of one standardized fact’s source facts); one of the two is required. A `fact=` whose source places are not resolved yet reads `meta.coverage.state: partial`. A `status` list the store cannot answer in one read is applied to its pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false.
+         * @description List the locations of financial facts in filing documents.
+         *
+         *     Use `document_version` to find facts in a filing document, or `fact` to locate the source facts behind a standardized value. Supply both to restrict that fact's locations to one version. Unresolved source locations can give a fact partial coverage.
+         *
+         *     Use `status` to narrow the locations. A filtered page can hold fewer rows than `limit` while `has_more` is true. Continue with `next_cursor`.
          */
         get: operations["listFactPlaces"];
         put?: never;
@@ -1058,7 +1265,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Explain a standardized fact */
+        /**
+         * Explain a standardized fact
+         * @description Explain how one standardized financial value was calculated.
+         *
+         *     Pass a `fact_id` from `GET /v1/financials/standardized/detailed` to trace the mapping rule, inputs and source facts behind that value. Use `max_depth` and `max_members` to bound the calculation detail.
+         */
         get: operations["getFact"];
         put?: never;
         post?: never;
@@ -1077,7 +1289,11 @@ export interface paths {
         };
         /**
          * List SEC filers
-         * @description Every SEC filer: a registry search by `q` (name), `form` or `phase` (one of them is required). Without `phase` the registry search answers in name order and pages by `cursor`. `phase=pre_ipo|public|former|other` lists the issuer lifecycle and pages by `cursor`; `phase=manager` lists every filer of 13F-HR, whatever its lifecycle phase (a listed company that files 13F keeps `phase: public`), in name order, paged by `cursor`. Every row says whether the filer files 13F-HR (`files_13f`). A page can be shorter than `limit` while `has_more` is true (`listed` filters the page the registry returned).
+         * @description Search the SEC registry for listed and unlisted filers.
+         *
+         *     Supply a name in `q`, a filing `form` or a registration `phase`. Use `phase=manager` to find filers of Form 13F-HR across registration phases. A listed manager can still have `phase` set to `public`.
+         *
+         *     The `listed` filter applies to each page after retrieval. Follow `next_cursor` when `has_more` is true, even if the current page has fewer rows than requested.
          */
         get: operations["listFilers"];
         put?: never;
@@ -1095,7 +1311,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a filer */
+        /**
+         * Get a filer
+         * @description Get an SEC registrant profile by its CIK.
+         *
+         *     Use the CIK from `GET /v1/filers`, with or without leading zeros. Request `expand=lifecycle` for registration history, or select `former_names` and `successors` to trace changes in identity.
+         *
+         *     Use `expand=fund` for fund series or `expand=private_offerings` for Form D activity. These expansions can be null even when the registrant is known.
+         */
         get: operations["getFiler"];
         put?: never;
         post?: never;
@@ -1114,7 +1337,11 @@ export interface paths {
         };
         /**
          * List a 13F manager's position changes
-         * @description Every quarter-over-quarter position change of one 13F manager between its two effective snapshots (`prior_period_end`, default the quarter before, and `period_end`). Rows are ordered by position. Only proven changes are listed (see GET /v1/holder-changes); a manager without one of the two snapshots answers an empty page with `meta.coverage.state: partial`.
+         * @description List changes between a 13F manager's quarterly portfolios.
+         *
+         *     Pass the manager's CIK and select `period_end`. By default the comparison uses the preceding quarter. Use `prior_period_end` to compare another snapshot.
+         *
+         *     A change requires evidence from both snapshots. If a snapshot is missing, the page can be empty with `meta.coverage.state` set to `partial`.
          */
         get: operations["listFilerHoldingChanges"];
         put?: never;
@@ -1134,7 +1361,11 @@ export interface paths {
         };
         /**
          * List a 13F manager's holdings
-         * @description One 13F manager's portfolio: its effective snapshot of the quarter (amendments applied), one row per position, order value in USD, descending. A fund registrant that files N-PORT, not 13F, answers 404 naming its funds' GET /v1/funds/{fund}/holdings (listed funds only).
+         * @description List the quarterly portfolio of a single 13F manager.
+         *
+         *     Use the manager's CIK and optionally select `period_end`. Each position reflects amendments to that quarter's filings, and positions are ordered by value in US dollars, largest first.
+         *
+         *     For the holdings of a listed fund that reports on N-PORT, use `GET /v1/funds/{fund}/holdings`.
          */
         get: operations["listFilerHoldings"];
         put?: never;
@@ -1154,7 +1385,11 @@ export interface paths {
         };
         /**
          * List filings
-         * @description An instrument’s SEC filings by filing date (newest first by default). Several symbols are read one after another: all filings of the first in the request’s order, then the next; `meta.form_facet` sums the forms of the filers read on the page. `items` is applied to the store’s pages, so a page can hold fewer than `limit` rows while `has_more` is true; follow `next_cursor` until `has_more` is false. A stock lists its company's filings; a fund that is its own SEC registrant (SPY, QQQ, PDI, GLD) its registrant's; a series of a multi-series trust (TQQQ) only the trust's accessions naming its series (`series_id`), never the whole trust.
+         * @description List an instrument's SEC filings by filing date.
+         *
+         *     Use `symbol` for a stock or fund and narrow by form, filing date or reported `items`. With several symbols, results follow the requested symbol order, newest filings first within each symbol. A fund series lists the trust filings that name that series.
+         *
+         *     `meta.form_facet` counts forms for the filers read on the page. Filtering on `items` can produce a short page while `has_more` is true. Continue with `next_cursor`.
          */
         get: operations["listFilings"];
         put?: never;
@@ -1172,7 +1407,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a filing */
+        /**
+         * Get a filing
+         * @description Get one SEC filing and its available document versions.
+         *
+         *     Use the accession from `GET /v1/filings`. With `expand=documents`, each document's `current_version_id` identifies the immutable version to read at `GET /v1/document-versions/{version_id}`. Add `parties` or `relations` to the expansion when needed.
+         */
         get: operations["getFiling"];
         put?: never;
         post?: never;
@@ -1191,7 +1431,11 @@ export interface paths {
         };
         /**
          * List a filing's numeric facts
-         * @description The numeric XBRL facts of one filing from the SEC Financial Statement and Notes data set. Source and cadence: the SEC publishes that data set once a month (usually in the first days of the month, covering the filings of the month before), so a filing appears here only after the release that covers its filing date: until then `meta.coverage` is `pending` and `meta.coverage.through` names the last filing date the newest published release covers (a 10-K filed Nov 3 is served after the SEC's early-December release). Dates are the filed contexts (`date_precision: day`): the data set rounds every end date to a month end and every duration to whole quarters, and its stored offsets restore the dates the filing states; a row whose offsets name no whole day keeps the rounded dates with `date_precision: month`. A fact the filing tags more than once (same concept, context, dimensions, unit and value) is listed once.
+         * @description List the numeric XBRL facts reported in one SEC filing.
+         *
+         *     Pass the accession and optionally narrow by `tag`. Repeated tags for the same fact are collapsed. The SEC Financial Statement and Notes dataset is published monthly. Until a release covers the filing date, coverage is `pending` and `meta.coverage.through` gives the latest covered date.
+         *
+         *     `date_precision=day` means the dataset's offsets recover the filed dates. If the offsets cannot resolve whole days, the dates retain the dataset's month-end rounding and `date_precision` is `month`.
          */
         get: operations["listFilingFacts"];
         put?: never;
@@ -1211,7 +1455,9 @@ export interface paths {
         };
         /**
          * List a holdings filing's lines
-         * @description The reported lines of one 13F-HR or NPORT-P filing as filed, in the filing's line order (`meta.family`: 13f or nport). An NPORT-P is served only for a listed fund (an ETF or a closed-end fund); any other fund's report answers 404 (an unlisted fund is a holder row, never a portfolio).
+         * @description List holdings in the order reported in one SEC filing.
+         *
+         *     Pass the accession of a manager's Form 13F-HR or a listed fund's NPORT-P. Each row represents an as-filed line, and `meta.family` identifies the reporting source. An NPORT-P from an unlisted fund returns `404 not_covered`.
          */
         get: operations["listFilingHoldings"];
         put?: never;
@@ -1231,7 +1477,11 @@ export interface paths {
         };
         /**
          * List a filing's text facts
-         * @description The text facts (text blocks, policies, cover-page strings) of one filing from the SEC Financial Statement and Notes data set, on the same monthly cadence as `GET /v1/filings/{accession}/facts` (`meta.coverage.through`). `text` is the data set's plain text: the SEC removes the markup, and some typography of the original (for example typographic apostrophes such as `Company’s`) can be missing from it; the filing's own documents (its document versions) carry the original text.
+         * @description List the text facts and disclosures tagged in one SEC filing.
+         *
+         *     Filter the accession's notes by `tag`. The SEC Financial Statement and Notes dataset publishes monthly. Coverage is `pending` until the filing falls within a release, and `meta.coverage.through` gives the cutoff.
+         *
+         *     Notes contain the dataset's plain text. For original formatting and typography, request `GET /v1/filings/{accession}` with `expand=documents` and read the document version.
          */
         get: operations["listFilingNotes"];
         put?: never;
@@ -1251,7 +1501,11 @@ export interface paths {
         };
         /**
          * Get a filing's review chain
-         * @description The comment-letter graph around a filing (UPLOAD / CORRESP and the filings they review). `max_depth=1` lists the filing’s direct relations (`direction`: `down` = relations the filing makes, `up` = relations pointing at it); deeper reads follow confirmed relations up to `max_depth` hops and at most 100 nodes. `completeness` names what was cut or is still unresolved; a filing whose letters are not resolved yet answers its own node only. 503 `unavailable` only while the review store is switched off.
+         * @description Get the SEC comment letters and filings linked to a filing.
+         *
+         *     Use `max_depth=1` for direct links. Increase the depth to follow confirmed links between letters, replies and filings. Use `direction` or `kind` to narrow the graph.
+         *
+         *     Check `completeness` for unresolved or truncated links. A filing whose links have yet to be resolved can return only its own node.
          */
         get: operations["getReviewChain"];
         put?: never;
@@ -1269,7 +1523,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** As-reported statements */
+        /**
+         * As-reported statements
+         * @description Get statement values under the filer's own concept names.
+         *
+         *     Choose an annual, quarterly, year-to-date or trailing twelve-month `period`. Each concept carries its value and indicates whether it was derived. Set `reported_only=true` to omit derived values.
+         *
+         *     Use `as_of` to see the figures available on a date, or `filing` to select one filing.
+         */
         get: operations["getAsReportedFinancials"];
         put?: never;
         post?: never;
@@ -1286,7 +1547,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** As-reported statements with labels */
+        /**
+         * As-reported statements with labels
+         * @description Get the filing sources for the filer's own statement values.
+         *
+         *     Choose an annual, quarterly, year-to-date or trailing twelve-month `period`. Use `as_of` to read the figures available on a date or `filing` to pin one accession.
+         *
+         *     Where available, `accession` and `html_tag_id` locate the value in the filing. A changed value or caption can also carry the original figure or label and the filing that first reported it.
+         */
         get: operations["getAsReportedFinancialsDetailed"];
         put?: never;
         post?: never;
@@ -1303,7 +1571,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** As-reported statements as the filer's tree */
+        /**
+         * As-reported statements as the filer's tree
+         * @description Get a statement tree in the filer's own presentation order.
+         *
+         *     Select `annual`, `quarterly`, `ytd` or `ttm` with `period`. The tree follows the filer's grouping and labels, with child concepts nested beneath their headings.
+         *
+         *     Set `as_of` for the presentation available on a date, or `filing` to render the statements from one accession.
+         */
         get: operations["getAsReportedFinancialsPresentation"];
         put?: never;
         post?: never;
@@ -1320,7 +1595,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Standardized statements */
+        /**
+         * Standardized statements
+         * @description Get financial statements keyed by standardized metric IDs.
+         *
+         *     Choose `annual`, `quarterly`, `ytd` or `ttm` with `period`. Each row groups one company's statements for one fiscal period, newest period first. Use the same metric ID to compare values across companies.
+         *
+         *     By default each period shows its latest figures. Set `as_of` to read the figures available on a date, or `filing` to select one accession.
+         */
         get: operations["getStandardizedFinancials"];
         put?: never;
         post?: never;
@@ -1337,7 +1619,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Standardized statements with lineage */
+        /**
+         * Standardized statements with lineage
+         * @description Get the sources behind standardized statement values.
+         *
+         *     Choose a company and set `period` to annual, quarterly, year-to-date or trailing twelve months. Use `as_of` for figures available by a particular day or `filing` for one accession.
+         *
+         *     Follow a value's `fact_id` to `GET /v1/facts/{fact_id}` for its calculation and source facts. When available, `accession` identifies the filing and `html_tag_id` locates the value in its HTML.
+         */
         get: operations["getStandardizedFinancialsDetailed"];
         put?: never;
         post?: never;
@@ -1354,7 +1643,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Standardized statements as a tree */
+        /**
+         * Standardized statements as a tree
+         * @description Get standardized statements as a tree of metrics.
+         *
+         *     Set `period` to `annual`, `quarterly`, `ytd` or `ttm` and narrow by `statement` or `fiscal_year`. Use `as_of` to view the tree as of a date, or `filing` for a single accession.
+         *
+         *     Each statement nests its child metrics under their parents in standard display order. Use this view to render a comparable statement layout across companies.
+         */
         get: operations["getStandardizedFinancialsPresentation"];
         put?: never;
         post?: never;
@@ -1371,7 +1667,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List fiscal periods */
+        /**
+         * List fiscal periods
+         * @description List fiscal quarter ends for one or more companies.
+         *
+         *     Pass operating company tickers or CIKs in `company`. Each period end pairs its fiscal year and quarter with the corresponding calendar year and quarter. The most recent periods appear first.
+         */
         get: operations["listFiscalPeriods"];
         put?: never;
         post?: never;
@@ -1390,7 +1691,9 @@ export interface paths {
         };
         /**
          * List funds
-         * @description Listed funds: ETFs (`type=etf`; GLD, IBIT and other exchange-traded trusts included, `structure=exchange_traded_trust`) and closed-end funds (`type=closed_end_fund`) with a ticker. A mutual fund without a listing is no resource (it appears only as a holder); an ETN is an instrument only (GET /v1/instruments/{symbol}).
+         * @description List ETFs and closed-end funds with active listings.
+         *
+         *     Search by ticker prefix or part of a fund name in `q`. Use `structure=exchange_traded_trust` for exchange-traded trusts. Use the ticker or `fund_key` from a result to retrieve its profile.
          */
         get: operations["listFunds"];
         put?: never;
@@ -1410,7 +1713,11 @@ export interface paths {
         };
         /**
          * Get a fund
-         * @description A listed fund's profile: listing, fund key, registrant, net assets (N-PORT), expense ratio (prospectus; this listing's own class when stated, else the series' representative class, named by `expense_ratio_class_id`), advisers and share classes (N-CEN). A stock answers 404 naming its GET /v1/companies/{company}, an ETN naming GET /v1/instruments/{symbol}.
+         * @description Get a listed fund profile by ticker or fund key.
+         *
+         *     Use a ticker from any listed share class. Check `net_assets_scope` to see whether the reported assets cover this listing or the entire series.
+         *
+         *     The expense ratio comes from the requested share class when available. Otherwise the profile uses the series' representative class and identifies it in `expense_ratio_class_id`.
          */
         get: operations["getFund"];
         put?: never;
@@ -1430,7 +1737,13 @@ export interface paths {
         };
         /**
          * List a fund's holdings
-         * @description A listed fund's composition from the freshest source, always named: the issuer's own daily (or monthly) holdings file where the store reads one, else the fund's latest public N-PORT report (quarter end, about 60 days later) — `meta.source`, `meta.as_of`, and on every row. `as_of=` reads a stored earlier date (`meta.composition.stored_dates` lists them). Order: weight, descending, then line. Listed funds only (owner decision 2026-11-19): an ETF or closed-end fund by ticker or fund key; a stock answers 404 naming GET /v1/companies/{company}, an ETN GET /v1/instruments/{symbol}, an ETF structured as an exchange-traded trust (GLD, IBIT: a 10-K filer without a holdings report) a 404 naming what is served for it, an unlisted fund a 404 (it appears only as a holder row).
+         * @description List a fund's holdings, largest portfolio weight first.
+         *
+         *     Address an ETF or closed-end fund by ticker or fund key. The latest composition uses the issuer's daily or monthly holdings file if it is newer than the available SEC N-PORT report, or if no report exists. Otherwise it uses N-PORT.
+         *
+         *     Every position carries its source and reporting date, also given in `meta.source` and `meta.as_of`. Choose an earlier snapshot from `meta.composition.stored_dates` and pass its date in `as_of`.
+         *
+         *     Exchange-traded trusts return `404 not_covered` for holdings.
          */
         get: operations["listFundPositions"];
         put?: never;
@@ -1450,7 +1763,13 @@ export interface paths {
         };
         /**
          * List a fund's sector, country and asset-class weights
-         * @description Sector, country and asset-class weights of one listed fund, from the same composition GET /v1/funds/{fund}/holdings answers from (`meta.source`, `meta.as_of`): sector = the issuer's stated sector, else the SEC SIC sector of the holding's issuer; country = the stated location, else the N-PORT country / ISIN prefix / registrant country (each bucket names its `basis`, `mixed` when its positions differ); weights in percent of the fund. `dimension=` one or several of sector, country, asset_class (default all). A fund outside the ETF holdings coverage scope answered from its N-PORT report is bucketed when read, from the same served positions by the same rule. No buckets for the chosen source answers `data: []` with `meta.reason: weights_unavailable`. Listed funds only (owner decision 2026-11-19): an ETF or closed-end fund by ticker or fund key; a stock answers 404 naming GET /v1/companies/{company}, an ETN GET /v1/instruments/{symbol}, an ETF structured as an exchange-traded trust (GLD, IBIT: a 10-K filer without a holdings report) a 404 naming what is served for it, an unlisted fund a 404 (it appears only as a holder row).
+         * @description List a fund's weights by sector, country and asset class.
+         *
+         *     Use `dimension` to select a breakdown. The weights use the same issuer file or SEC N-PORT report as `GET /v1/funds/{fund}/holdings`. Each bucket carries the source and reporting date.
+         *
+         *     The bucket's `basis` identifies how its positions were classified, such as an issuer's stated sector or one derived from SIC. A `mixed` basis means the positions used different classifications. Leveraged exposure can make the weights sum to more than 100 percent.
+         *
+         *     When the selected composition has no weights, the response has an empty `data` list and `meta.reason` is `weights_unavailable`.
          */
         get: operations["listFundWeights"];
         put?: never;
@@ -1468,7 +1787,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List guidance items */
+        /**
+         * List guidance items
+         * @description List forecasts a company gave for its future performance.
+         *
+         *     Select a `company` or `event`. Guidance comes from call transcripts and results releases. Where available, citations point to the source and `change_vs_prior` compares the figures with the earlier forecast.
+         *
+         *     The newest calls appear first. Use `review=approved` to limit the result to reviewed and approved guidance.
+         */
         get: operations["listGuidance"];
         put?: never;
         post?: never;
@@ -1487,7 +1813,11 @@ export interface paths {
         };
         /**
          * List 13F position changes in a stock or a fund
-         * @description Quarter-over-quarter 13F position changes of one security between `prior_period_end` (default: the quarter before) and `period_end` (default: the newest quarter end whose 13F deadline has passed): every manager's change, or with `filer=` those managers' changes. Rows are ordered by manager CIK, then position. Only changes the store can prove are listed: a position whose prior snapshot is missing or incomplete is left out and the page reads `meta.coverage.state: partial`. The store applies `type` before its page limit; a page can still hold fewer than `limit` rows while `has_more` is true (one page read is time-bounded), so follow `next_cursor` until `has_more` is false.
+         * @description List quarterly changes in who holds a security on Form 13F.
+         *
+         *     Select the security with `symbol` and optionally narrow to a manager with `filer`. By default the comparison uses the latest quarter whose filing deadline has passed and the quarter before it.
+         *
+         *     Only changes supported by both snapshots appear. Missing evidence can leave coverage `partial`. Follow `next_cursor` when `has_more` is true, even on a short page.
          */
         get: operations["listHolderChanges"];
         put?: never;
@@ -1507,7 +1837,11 @@ export interface paths {
         };
         /**
          * List who holds a stock or a fund
-         * @description Who holds one stock or one fund, from three sources with different dates: `13f` = the 13F managers (quarter end, `period_end`), `nport` = the funds' public N-PORT reports (each fund's latest report on or before `period_end`; listed and unlisted funds), `issuer_file` = the ETFs whose own daily / monthly holdings file holds it (the newest file). The sources overlap (a manager's 13F includes its funds' positions; an ETF with an issuer file also files N-PORT, and its N-PORT row names `holder.issuer_file_as_of`), so rows are never merged or summed across sources. Without `source`: the overview — up to `limit` rows (at most 200) of each source, one source after another (13f, nport, issuer_file), each source's `as_of`, `total` and `has_more` in `meta.sections`; no cursor. With `source`: that source's full list, paged. Order: value in USD, descending.
+         * @description List the managers and funds that hold a security.
+         *
+         *     Look up a stock, fund or ETN with `symbol`. The overview gives each source its own section ordered by position value. Check `meta.sections` for each section's date and whether more rows are available. Choose one `source` to page through it.
+         *
+         *     `13f` shows managers at quarter end. `nport` uses each fund's latest public report on or before `period_end`. `issuer_file` uses the newest ETF holdings file. The same underlying position can appear in more than one source, so adding their totals can double-count it.
          */
         get: operations["listHolders"];
         put?: never;
@@ -1527,7 +1861,11 @@ export interface paths {
         };
         /**
          * List insider trades
-         * @description Insider transaction lines (Form 4; Forms 3 and 5 where the SEC insider data set supplies them), newest filing first. Since release 5.7 the default result includes derivative-security lines (options, RSUs, warrants; `is_derivative: true` on the row) beside the non-derivative ones. `is_derivative=false` restores the non-derivative-only result of the releases before 5.7, which is what a buy / sell aggregate wants.
+         * @description List insider transactions reported in SEC ownership filings.
+         *
+         *     Use `company` and a filing or transaction date range. Results run from newest filing to oldest and include Form 4 transactions and any transaction lines supplied for Forms 3 and 5.
+         *
+         *     Both derivative and non-derivative transactions appear. Use `is_derivative=false` for non-derivative transactions alone.
          */
         get: operations["listInsiderTrades"];
         put?: never;
@@ -1545,7 +1883,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get an insider trade */
+        /**
+         * Get an insider trade
+         * @description Get one insider transaction and its reported ownership details.
+         *
+         *     Pass the transaction line's `id` from `GET /v1/insider-trades`. The accession identifies the underlying filing. A derivative transaction can include exercise terms and the underlying security.
+         */
         get: operations["getInsiderTrade"];
         put?: never;
         post?: never;
@@ -1564,7 +1907,11 @@ export interface paths {
         };
         /**
          * List instruments
-         * @description Everything exchange-traded in one list: stocks, ETFs, closed-end funds and ETNs, each with its `type`, its company or fund link and `datasets` (the families that exist for its type). Crypto and commodities are not instruments.
+         * @description List US stocks, ETFs, closed-end funds and ETNs.
+         *
+         *     Search by ticker prefix or part of a name with `q`. Results include active and delisted symbols in ticker order. Use `is_active=true` for current listings.
+         *
+         *     Each instrument identifies the datasets its type supports. A stock points to its company and a fund to its fund profile.
          */
         get: operations["listInstruments"];
         put?: never;
@@ -1584,7 +1931,9 @@ export interface paths {
         };
         /**
          * Get an instrument
-         * @description One instrument by ticker, active or delisted: its `type`, its company (`stock`) or fund (`etf`, `closed_end_fund`, with its `structure`; an `etn` has neither) and `datasets`, the families served for it.
+         * @description Get the instrument type and available datasets for a ticker.
+         *
+         *     A known delisted ticker still has a profile with `is_active=false`. For a stock, use its company CIK to look up the issuer. For an ETF or closed-end fund, use its fund key when available. An ETN has neither link.
          */
         get: operations["getInstrument"];
         put?: never;
@@ -1602,7 +1951,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List investor documents */
+        /**
+         * List investor documents
+         * @description List documents a company published for investors.
+         *
+         *     Select a `company` or `event` for materials from its investor relations library and calls, including presentations. Use kinds from `GET /v1/catalog/document-kinds` to narrow the list.
+         *
+         *     This collection covers company publications. SEC filing documents are available under Filings at `GET /v1/document-versions/{version_id}`.
+         */
         get: operations["listInvestorDocuments"];
         put?: never;
         post?: never;
@@ -1621,7 +1977,11 @@ export interface paths {
         };
         /**
          * Get an investor document
-         * @description One investor document from either source (`company` = the IR library, `call` = an event's documents); `expand=pages` inlines the per-page text (`pages`, otherwise null). 404 `not_found` for an unknown or not served document id.
+         * @description Get an investor document from a company or call.
+         *
+         *     Use the document ID from `GET /v1/investor-documents`. Request `expand=pages` to include available page text. Without the expansion, `pages` is null.
+         *
+         *     An unknown or unavailable document returns `404 not_found`.
          */
         get: operations["getInvestorDocument"];
         put?: never;
@@ -1639,7 +1999,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List offerings */
+        /**
+         * List offerings
+         * @description List initial public offerings from registration to listing.
+         *
+         *     Use `stage` to follow a phase of the offering, or `is_spac` to narrow the list to SPACs or other issuers. The default order is newest listing date first. Sort on `first_public_at` to follow registrations instead.
+         */
         get: operations["listIpos"];
         put?: never;
         post?: never;
@@ -1656,7 +2021,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get an offering */
+        /**
+         * Get an offering
+         * @description Get the registration and listing details for one IPO.
+         *
+         *     Pass the `ipo_id` from `GET /v1/ipos`. The registration and listing records appear together when both are available, so you can follow proposed terms through to the final offer price and listing date.
+         */
         get: operations["getIpo"];
         put?: never;
         post?: never;
@@ -1673,7 +2043,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List KPI mentions */
+        /**
+         * List KPI mentions
+         * @description List performance measures from calls and results releases.
+         *
+         *     Select a `company` or `event`, then use `metric` to follow a measure across calls. Each mention includes its source sentence. A figure from a transcript can also link to a matching filing.
+         */
         get: operations["listKpis"];
         put?: never;
         post?: never;
@@ -1690,7 +2065,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List market holidays */
+        /**
+         * List market holidays
+         * @description List US equity market holidays and early closes.
+         *
+         *     Use `date.gte` and `date.lte` to select a window. Each date appears once, earliest first. Both trading times are null for a full closure. A shortened session includes a `start_time` or `end_time` in UTC.
+         */
         get: operations["listMarketHolidays"];
         put?: never;
         post?: never;
@@ -1707,7 +2087,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Who am I */
+        /**
+         * Who am I
+         * @description Get the account and access limits for your API key.
+         *
+         *     Check your plan, request limits and remaining credits. The names in `allowed_families` are documentation groups containing at least one operation your plan can call.
+         */
         get: operations["getMe"];
         put?: never;
         post?: never;
@@ -1726,7 +2111,9 @@ export interface paths {
         };
         /**
          * Get the end-user defaults
-         * @description The account's default end-user limits (every value null until set). Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description Get the account’s default limits for alert users.
+         *
+         *     Each default applies when the end user has no override for that limit. All defaults are `null` until you set them. Returns `503` when the alerts platform is switched off.
          */
         get: operations["getAlertUserDefaults"];
         put?: never;
@@ -1736,7 +2123,9 @@ export interface paths {
         head?: never;
         /**
          * Update the end-user defaults
-         * @description Sets the account's default end-user limits; null clears one. A default lowered below an end user's count keeps its alerts and refuses new ones. Answers 503 `unavailable` while the alerts platform is switched off.
+         * @description Update default alert limits across your account.
+         *
+         *     Send `null` to clear one default and omit values you want to keep. Lowering a default preserves existing alerts. Users with their own override keep that limit. Returns `503` when the alerts platform is switched off.
          */
         patch: operations["updateAlertUserDefaults"];
         trace?: never;
@@ -1750,7 +2139,11 @@ export interface paths {
         };
         /**
          * Get my usage
-         * @description Your requests and credits per UTC day, per product family and per key over the last 7, 30 or 90 days. `period.used_credits` is live; `daily`, `by_family` and `by_key` are rolled up every 5 minutes, so they trail it by up to about 7 minutes. `by_family` groups by product family (the families of `/status`), not by the docs tags `/v1/me` lists in `allowed_families`.
+         * @description Get your account’s API requests and credit usage.
+         *
+         *     Use `days` for a 7-, 30- or 90-day reporting window. The default is 30 days. The current period total reflects live credit usage. The daily, product-family and key breakdowns can lag behind it.
+         *
+         *     The `by_family` breakdown uses the product families shown by `GET /status`. To look up accessible documentation groups, use `GET /v1/me`.
          */
         get: operations["getMyUsage"];
         put?: never;
@@ -1768,7 +2161,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List CAGRs */
+        /**
+         * List CAGRs
+         * @description List compound annual growth rates for company metrics.
+         *
+         *     Use `period=annual` and choose a `horizon` of three, five or ten years. Without a horizon, each available period and horizon has its own row. Values are fractions.
+         *
+         *     For a covered company a nonannual period returns an empty page with the coverage reason `period_not_computed`.
+         */
         get: operations["listCagr"];
         put?: never;
         post?: never;
@@ -1785,7 +2185,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List growth rates */
+        /**
+         * List growth rates
+         * @description List changes in a company's metrics between fiscal periods.
+         *
+         *     Choose a `period` and fiscal year range. Growth compares with the same period a year earlier by default. Use `basis=qoq` for a quarter-over-quarter comparison. Rates are fractions, so `0.1` means ten percent.
+         */
         get: operations["listGrowth"];
         put?: never;
         post?: never;
@@ -1802,7 +2207,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List ratios */
+        /**
+         * List ratios
+         * @description List a company's financial ratios by fiscal period.
+         *
+         *     Select an annual, quarterly, year-to-date or trailing twelve-month `period`. Use `category` to request groups such as profitability or liquidity, and a `fiscal_year` range to narrow the history. The newest periods appear first.
+         */
         get: operations["listRatios"];
         put?: never;
         post?: never;
@@ -1819,7 +2229,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List news items */
+        /**
+         * List news items
+         * @description List news items for a company or an earnings event.
+         *
+         *     Supply `company` for mentions or `event` for earnings news matched to that call's company and fiscal period or conference time. Supply both to intersect the results. Items appear newest first.
+         *
+         *     The list covers issuer publications and public records. Follow an item's ID to `GET /v1/news/{id}/text` for the available Invinite summary.
+         */
         get: operations["listNews"];
         put?: never;
         post?: never;
@@ -1836,7 +2253,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a news item */
+        /**
+         * Get a news item
+         * @description Get a news item with its headline and source attribution.
+         *
+         *     Use the item's ID from `GET /v1/news`. A PDF link is included when a PDF is available for this revision. Read the summary at `GET /v1/news/{id}/text`. An unknown or unavailable item returns `404 not_found`.
+         */
         get: operations["getNewsItem"];
         put?: never;
         post?: never;
@@ -1853,7 +2275,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a news item's text */
+        /**
+         * Get a news item's text
+         * @description Get the Invinite summary of a news item in text blocks.
+         *
+         *     Follow `next_cursor` to read the remaining blocks. A page keeps each block intact, so even the first block can exceed `max_chars`. If the current revision has no summary, `content_status` is `no_text`.
+         *
+         *     A revision or summary change invalidates an earlier cursor. On `400 cursor_mismatch`, repeat the request without `cursor` to read the current summary.
+         */
         get: operations["getNewsText"];
         put?: never;
         post?: never;
@@ -1872,7 +2301,11 @@ export interface paths {
         };
         /**
          * List Form D private offerings
-         * @description Form D private offerings (Regulation D and Section 4(a)(5) exempt offerings) from the SEC's quarterly Form D data sets, five years held: one row per offering (SEC's Form D file number; every amendment folds into it) with the latest filing's facts — issuer and co-issuers, exemptions as filed, industry group, security types, offering / sold / remaining amounts (USD), investors, related persons — and the held filing history. Filters: `company=` (one issuer CIK or listed ticker), `filed_at.gte|lte` (latest filing date), `exemption=`, `industry=`, `total_sold.gte`, `is_amendment`. Order: latest filing date descending, then offering id. An issuer CIK the SEC registry and the data set do not know answers 404; a known issuer without offerings an empty page. Form D is research data, not limited to listed companies: `company=` answers any Form D issuer CIK (funds, private companies; a ticker resolves only for a listed company), and the list is not gated by the coverage of the financial families.
+         * @description List private offerings disclosed in SEC Form D filings.
+         *
+         *     The SEC's quarterly Form D dataset groups an offering and its amendments under one ID. Each row includes the latest filing's terms and the available filing history. Results run from the most recent filing date to the oldest.
+         *
+         *     Filter by an issuer's CIK, including an unlisted issuer, or use a listed company's ticker. The `filed_at` range applies to the offering's latest filing. A known issuer with no matching offerings returns an empty page.
          */
         get: operations["listOfferings"];
         put?: never;
@@ -1892,7 +2325,9 @@ export interface paths {
         };
         /**
          * Get a Form D private offering
-         * @description One Form D private offering by its id (the Form D file number, e.g. `021-528681`), with the latest filing's facts and the held filing history; an unknown id answers 404. Form D is research data, not limited to listed companies: `company=` answers any Form D issuer CIK (funds, private companies; a ticker resolves only for a listed company), and the list is not gated by the coverage of the financial families.
+         * @description Get the latest terms and filing history of a private offering.
+         *
+         *     Pass the `offering_id` from `GET /v1/offerings`. It is the SEC Form D file number or, when no file number was reported, the first accession. Amendments belong to the same offering.
          */
         get: operations["getOffering"];
         put?: never;
@@ -1910,7 +2345,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List event participations */
+        /**
+         * List event participations
+         * @description List speakers at an event or calls featuring one person.
+         *
+         *     Use `event` to see who took part and in what role. Use `person` for that person's appearances across calls. Supply both to narrow the result to one person at one event, or add `role` to select a particular role.
+         */
         get: operations["listParticipants"];
         put?: never;
         post?: never;
@@ -1927,7 +2367,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List people */
+        /**
+         * List people
+         * @description Search for people who appeared on earnings calls.
+         *
+         *     Supply a `company`, an `event` or at least two characters of a name in `q`. Narrow by `role` to find executives or analysts. People with the most recent matching appearances come first.
+         */
         get: operations["listPeople"];
         put?: never;
         post?: never;
@@ -1944,7 +2389,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get a person */
+        /**
+         * Get a person
+         * @description Get a speaker profile across covered earnings calls.
+         *
+         *     Use a `person_id` from `GET /v1/people` to see the speaker's appearances and questions across calls. If two profiles have merged, the old ID redirects to the surviving profile.
+         */
         get: operations["getPerson"];
         put?: never;
         post?: never;
@@ -1963,13 +2413,17 @@ export interface paths {
         };
         /**
          * List scripts
-         * @description The account's scripts, oldest first, each with its latest version. Answers 503 `unavailable` while hosted scripts are switched off.
+         * @description List the hosted chartlang scripts in your account.
+         *
+         *     Scripts appear oldest first. Each entry includes its latest version so you can inspect the most recent compile result. Returns `503` when the alerts platform is switched off. Returns `503` when hosted scripts are switched off.
          */
         get: operations["listScripts"];
         put?: never;
         /**
          * Upload a script
-         * @description Creates the script and its version 1, compiled server-side (≤ 10 s, one compile per account at a time — a second concurrent upload answers 429 with Retry-After; a busy compiler 503 with Retry-After). A compile error is still a 201: the version has `status: error` and `diagnostics` (line, column, message). Answers 503 `unavailable` while hosted scripts are switched off.
+         * @description Upload a hosted chartlang script and compile its first version.
+         *
+         *     Compilation errors still create version 1. Check `latest_version.status` and its diagnostics before using the version in a script alert. A busy compiler can return `429` or `503` with `Retry-After`. Returns `503` when the alerts platform is switched off. Returns `503` when hosted scripts are switched off.
          */
         post: operations["createScript"];
         delete?: never;
@@ -1987,14 +2441,18 @@ export interface paths {
         };
         /**
          * Get a script
-         * @description One script with its latest version. Answers 503 `unavailable` while hosted scripts are switched off.
+         * @description Get a hosted script and its latest version.
+         *
+         *     Use the latest version to inspect its source and compilation diagnostics. An alert binds to a specific `script_version_id`. Returns `503` when the alerts platform is switched off. Returns `503` when hosted scripts are switched off.
          */
         get: operations["getScript"];
         put?: never;
         post?: never;
         /**
          * Delete a script
-         * @description Deletes the script and its versions (204). 409 `conflict` while an alert uses one of its versions (delete those alerts first). Answers 503 `unavailable` while hosted scripts are switched off.
+         * @description Delete a hosted script that alerts no longer use.
+         *
+         *     Deletion returns `409` if a live alert uses any version directly or as an input to another script. Remove those references before deleting the script. Returns `503` when the alerts platform is switched off. Returns `503` when hosted scripts are switched off.
          */
         delete: operations["deleteScript"];
         options?: never;
@@ -2011,13 +2469,17 @@ export interface paths {
         };
         /**
          * List script versions
-         * @description The script's versions, oldest first. Answers 503 `unavailable` while hosted scripts are switched off.
+         * @description List the versions of a hosted script in upload order.
+         *
+         *     Compare the source and compile results across versions. Use the ID of a successfully compiled version when configuring a script alert. Returns `503` when the alerts platform is switched off. Returns `503` when hosted scripts are switched off.
          */
         get: operations["listScriptVersions"];
         put?: never;
         /**
          * Upload a new script version
-         * @description Adds the next version of the script (at most 20 per script), compiled like the first. Existing alerts keep their version. Answers 503 `unavailable` while hosted scripts are switched off.
+         * @description Upload and compile a new version of a hosted script.
+         *
+         *     Existing alerts keep their selected versions. Inspect `status` and the diagnostics on the new version before pointing an alert to it. Returns `503` when the alerts platform is switched off. Returns `503` when hosted scripts are switched off.
          */
         post: operations["createScriptVersion"];
         delete?: never;
@@ -2035,7 +2497,13 @@ export interface paths {
         };
         /**
          * Search filings
-         * @description Ranked passages from SEC documents with citations (`mode=lexical` by default: keywords and quoted phrases, English stemming; `literal` for the exact characters). Each request reads one page of the index: `limit` above 50 answers 50 hits and a `next_cursor`; `match.lexical_rank` counts on across pages. `meta.index` says how complete the answer is: empty `data` with `completeness: complete` is a genuine no-result, anything else is not. A search without `symbol=` reads at most `meta.index.matches.cap` matching passages, newest filings first; `meta.index.hint` says how to narrow it. Only the forms of `meta.index.forms_indexed` are indexed: a subject whose filings are all of other forms (a fund trust's 485BPOS, N-CSR, N-30D, 497, N-PORT) answers `completeness: partial`, reason `form_not_indexed`, with `lexical.not_indexed_by_policy` counting those filings. A request that searched no document (`meta.index.lexical.indexed` 0, or `lexical` null) and returned no passage cannot match and is charged 0 credits (`X-Credits-Charged: 0`).
+         * @description Search SEC filing passages and get citations for matches.
+         *
+         *     Use `mode=lexical` for ranked keywords and quoted phrases or `mode=literal` for exact characters. Narrow the search with `symbol`, `form`, `item` or a filing date range. Company and market-wide searches return up to 50 hits per page.
+         *
+         *     Each hit cites a document version and source. For a search across issuers, check `meta.index.matches.cap` and the narrowing hint if the match set was capped.
+         *
+         *     An empty result with complete index coverage means no match. Check `meta.index` for partial coverage or forms outside the index. If `lexical` is null or `lexical.indexed` is zero and the page is empty, no document was searched.
          */
         get: operations["searchFilings"];
         put?: never;
@@ -2055,7 +2523,11 @@ export interface paths {
         };
         /**
          * Search investor documents
-         * @description Ranked passages from company-published investor documents (IR library and call documents) with page numbers (`mode=lexical` by default, `literal` for exact text). Answers ONE page: `limit` is capped at 20, `has_more` is false and `next_cursor` null (the ranking is a top-N, not a stable cursor order); narrow `company` or `kind` to find more.
+         * @description Search investor documents for passages with page numbers.
+         *
+         *     Search investor relations and call materials by keyword, or use `mode=literal` for exact text. Narrow the search to one company or selected document kinds.
+         *
+         *     The response returns a single page of up to 20 hits. Search returns `503 unavailable` when it is switched off.
          */
         get: operations["searchInvestorDocuments"];
         put?: never;
@@ -2073,7 +2545,14 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search news */
+        /**
+         * Search news
+         * @description Search news headlines, ledes and summary text.
+         *
+         *     Use keywords to rank by relevance or `mode=literal` for an exact, case-sensitive match. Narrow by company, field or publication date. The default window covers the last 365 days.
+         *
+         *     The response returns a single page of up to eight hits. Summary hits can identify the matching block. Search returns `503 unavailable` when it is switched off.
+         */
         get: operations["searchNews"];
         put?: never;
         post?: never;
@@ -2092,7 +2571,11 @@ export interface paths {
         };
         /**
          * Search transcripts
-         * @description Ranked passages from earnings-call transcripts and slides (`mode=lexical` by default, `literal` for exact text). Answers ONE page: `limit` is capped at 8, `has_more` is false and `next_cursor` null (the ranking is a top-N, not a stable cursor order); narrow `company`, `event`, `type` or the `conference_date` window to find more. Without `company` and `event` the window defaults to the last 365 days.
+         * @description Search call transcripts and slides for cited passages.
+         *
+         *     Search by keyword or use `mode=literal` for exact text. Filter by company, event, passage type or conference date. A search with neither company nor event defaults to the last 365 days.
+         *
+         *     The response returns a single page of up to eight hits. Narrow the search to find other passages. Search returns `503 unavailable` when it is switched off.
          */
         get: operations["searchTranscripts"];
         put?: never;
@@ -2110,7 +2593,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List segment values */
+        /**
+         * List segment values
+         * @description List financial values by business or geographic segment.
+         *
+         *     Choose a company and `period`. Narrow by `metric` or `axis`, such as a geographic breakdown. Each row pairs a value with the dimension members that identify its segment.
+         */
         get: operations["listSegments"];
         put?: never;
         post?: never;
@@ -2127,7 +2615,12 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List segment values with lineage */
+        /**
+         * List segment values with lineage
+         * @description List segment values with their source filing and XBRL tag.
+         *
+         *     Select a company and `period`, then use `metric` or `axis` to narrow the segment rows. Where available, `accession` and `html_tag_id` locate the reported value in the filing.
+         */
         get: operations["listSegmentsDetailed"];
         put?: never;
         post?: never;
@@ -2146,7 +2639,9 @@ export interface paths {
         };
         /**
          * List stock splits
-         * @description Keyed by ticker: every instrument type answers (`symbol=`); a row names its `company` (a stock) or its `fund` (an ETF or closed-end fund); an ETN row carries neither.
+         * @description List share splits and their ratios for one or more instruments.
+         *
+         *     Pass stock, fund or ETN symbols in `symbol`. Splits appear newest execution date first. For a two-for-one split, `split_from` is 1 and `split_to` is 2.
          */
         get: operations["listSplits"];
         put?: never;
@@ -20823,7 +21318,7 @@ export interface operations {
                  */
                 exchange?: string;
                 /**
-                 * @description true = listed today, false = delisted; both when absent. Until delisted stocks are kept, `false` lists delisted funds only (ETFs whose listing retired); delisted stocks follow
+                 * @description true = listed today, false = delisted; both when absent
                  * @example true
                  */
                 is_active?: boolean;
@@ -24458,7 +24953,7 @@ export interface operations {
                              * @description Docs group of the v2 API
                              * @enum {string}
                              */
-                            group: "alert_events" | "alert_users" | "alerts" | "call_analytics" | "catalog" | "companies" | "destinations" | "documents" | "events" | "filings" | "financials" | "funds" | "guidance" | "holdings" | "insider_trades" | "instruments" | "investor_documents" | "ipos" | "metrics" | "news" | "reference" | "scripts" | "transcripts";
+                            group: "alert_events" | "alert_users" | "alerts" | "calendar" | "call_analytics" | "catalog" | "companies" | "corporate_actions" | "destinations" | "events" | "filings" | "financials" | "funds" | "guidance" | "holdings" | "insider_trades" | "instruments" | "investor_documents" | "metrics" | "news" | "offerings" | "scripts" | "transcripts";
                             /** @description Docs group title (e.g. Insider trades) */
                             name: string;
                             /**
