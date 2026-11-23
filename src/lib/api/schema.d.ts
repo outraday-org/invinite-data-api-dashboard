@@ -5729,7 +5729,7 @@ export interface components {
              * @description Why the calendar row expired, set only while `capture_status` is `expired` (a final status: an estimate that never became a call, a duplicate, a non-call issuer, …); null otherwise. Appended 2026-11
              * @enum {string|null}
              */
-            expired_reason?: "agent_different_date" | "agent_no_call" | "agent_no_webcast" | "date_passed" | "duplicate" | "early_results_filing" | "inactive_company" | "never_planned" | "non_call_issuer" | "release_names_no_call" | "results_without_call" | "superseded_by_reschedule" | "superseded_estimate" | null;
+            expired_reason?: "agent_different_date" | "agent_no_call" | "agent_no_webcast" | "agent_notice_pending" | "date_passed" | "duplicate" | "early_results_filing" | "inactive_company" | "never_planned" | "non_call_issuer" | "release_names_no_call" | "results_without_call" | "superseded_by_reschedule" | "superseded_estimate" | null;
             /** @description How often the call was rescheduled */
             reschedule_count: number;
             /** @description A transcript is available */
@@ -7747,7 +7747,7 @@ export interface components {
             kinds?: Array<"call_announcement" | "capital_markets" | "declared" | "dividend" | "earnings_results" | "event_announcement" | "ex_date" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "payment" | "promo" | "results_date">;
             /** @description Only earnings news. news, news_keyword */
             earnings_only?: boolean;
-            /** @description Call lifecycle events. earnings_call (transcript_provisional, transcript_corrected, documents_updated need STANDARD; guidance_flash, keyword_hit PRO) */
+            /** @description Call lifecycle events. earnings_call (transcript_provisional, transcript_corrected, documents_updated, guidance_flash, keyword_hit need PRO) */
             events?: Array<"assets_ready" | "documents_updated" | "ended" | "guidance_flash" | "keyword_hit" | "rescheduled" | "scheduled" | "started" | "transcript_corrected" | "transcript_provisional" | "transcript_ready">;
             /** @description Only these speakers. earnings_call_keyword */
             speaker_roles?: Array<"analyst" | "management">;
@@ -8235,7 +8235,7 @@ export interface components {
             kinds?: Array<"call_announcement" | "capital_markets" | "declared" | "dividend" | "earnings_results" | "event_announcement" | "ex_date" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "payment" | "promo" | "results_date">;
             /** @description Only earnings news. news, news_keyword */
             earnings_only?: boolean;
-            /** @description Call lifecycle events. earnings_call (transcript_provisional, transcript_corrected, documents_updated need STANDARD; guidance_flash, keyword_hit PRO) */
+            /** @description Call lifecycle events. earnings_call (transcript_provisional, transcript_corrected, documents_updated, guidance_flash, keyword_hit need PRO) */
             events?: Array<"assets_ready" | "documents_updated" | "ended" | "guidance_flash" | "keyword_hit" | "rescheduled" | "scheduled" | "started" | "transcript_corrected" | "transcript_provisional" | "transcript_ready">;
             /** @description Only these speakers. earnings_call_keyword */
             speaker_roles?: Array<"analyst" | "management">;
@@ -9079,10 +9079,10 @@ export interface components {
             /** @description The current billing period */
             period: {
                 /**
-                 * @description The account's Data API plan
+                 * @description The account's Data API plan, spelled as `/v1/me` `plan` spells it: a pay-as-you-go (prepaid-credits) account reads `payg` (owner decision 2026-11-23)
                  * @enum {string}
                  */
-                tier: "enterprise" | "free" | "lite" | "prepaid" | "pro" | "standard";
+                tier: "enterprise" | "free" | "lite" | "payg" | "pro" | "standard";
                 /** @description Credits the plan includes per period */
                 included_credits: number;
                 /** @description Credits used this period, counted as the quota gate counts them (live) */
