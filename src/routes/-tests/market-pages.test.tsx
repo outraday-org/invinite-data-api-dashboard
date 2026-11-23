@@ -11,7 +11,7 @@ import { CALENDAR_EVENT, CALENDAR_EVENT_EXPIRED_CALL } from "@/lib/earnings/cale
 import { AAPL_INSTRUMENT, SPY_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { V2_IPOS } from "@/lib/sec/v2-fixtures";
 import { CalendarView } from "@/routes/calendar";
-import { IpoDetail, ipoRequest, IposView } from "@/routes/ipo-calendar";
+import { IpoDetail, ipoRequest, IposView, undatedPages, upcomingUndatedRequest } from "@/routes/ipo-calendar";
 import { LiveCallsView, nextCallsOf } from "@/routes/live-calls";
 import { holidayStatus, MarketHolidaysView } from "@/routes/market-holidays";
 
@@ -122,6 +122,19 @@ describe("/ipo-calendar (`/v1/ipos`, `/v1/ipos/{ipo_id}`)", () => {
         expect(upcoming.stage).not.toContain("trading");
 
         expect(upcoming.listingDateLte).toBeUndefined();
+
+        // F013: page 1 starts at the next listing (today, New York); the undated offerings follow from the tail.
+        expect(upcoming.listingDateGte).toBe("2026-11-21");
+
+        expect(upcomingUndatedRequest({}, "2026-11-21")).toMatchObject({ listingDateGte: undefined, sort: "listing_date" });
+
+        expect(upcomingUndatedRequest({ tab: "recent" }, "2026-11-21")).toBeNull();
+
+        expect(upcomingUndatedRequest({ from: "2026-12-01" }, "2026-11-21")).toBeNull();
+
+        expect(ipoRequest({ to: "2026-12-31" }, "2026-11-21").listingDateGte).toBeUndefined();
+
+        expect(undatedPages([{ ...V2_IPOS, data: [{ ...V2_IPOS.data[0], listing_date: "2026-11-23" }, { ...V2_IPOS.data[0], listing_date: null }] }])[0].data).toHaveLength(1);
 
         expect(ipoRequest({ spac: "yes", tab: "recent" }, "2026-11-21")).toMatchObject({ isSpac: true, listingDateLte: "2026-11-21", sort: "-listing_date", stage: undefined });
 

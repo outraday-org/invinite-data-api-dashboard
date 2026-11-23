@@ -669,7 +669,7 @@ export interface paths {
         };
         /**
          * List dividends
-         * @description Keyed by ticker: every instrument type answers (`symbol=`); a row names its `company` (a stock) or its `fund` (an ETF or closed-end fund); an ETN row carries neither.
+         * @description Keyed by ticker: every instrument type answers (`symbol=`); a row names its `company` (a stock) or its `fund` (an ETF or closed-end fund); an ETN row carries neither. A fund's dividend history is loaded for the funds in the current coverage scope only: a symbol without rows answers 404 `not_covered` saying so, and its `datasets` (GET /v1/instruments/{symbol}) omit dividends.
          */
         get: operations["listDividends"];
         put?: never;
@@ -1077,7 +1077,7 @@ export interface paths {
         };
         /**
          * List SEC filers
-         * @description Every SEC filer: a registry search by `q` (name), `form` or `phase` (one of them is required). Without `phase` the registry search answers ONE page of at most 50 filers (`limit` is capped at 50, `has_more` is false): narrow `q` / `form` to find more. `phase=pre_ipo|public|former|other` lists the issuer lifecycle and pages by `cursor`; `phase=manager` lists 13F-HR filers.
+         * @description Every SEC filer: a registry search by `q` (name), `form` or `phase` (one of them is required). Without `phase` the registry search answers in name order and pages by `cursor`. `phase=pre_ipo|public|former|other` lists the issuer lifecycle and pages by `cursor`; `phase=manager` lists every filer of 13F-HR, whatever its lifecycle phase (a listed company that files 13F keeps `phase: public`), in name order, paged by `cursor`. Every row says whether the filer files 13F-HR (`files_13f`). A page can be shorter than `limit` while `has_more` is true (`listed` filters the page the registry returned).
          */
         get: operations["listFilers"];
         put?: never;
@@ -1189,7 +1189,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List a filing's numeric facts */
+        /**
+         * List a filing's numeric facts
+         * @description The numeric XBRL facts of one filing from the SEC Financial Statement and Notes data set. Source and cadence: the SEC publishes that data set once a month (usually in the first days of the month, covering the filings of the month before), so a filing appears here only after the release that covers its filing date: until then `meta.coverage` is `pending` and `meta.coverage.through` names the last filing date the newest published release covers (a 10-K filed Nov 3 is served after the SEC's early-December release). Dates are the filed contexts (`date_precision: day`): the data set rounds every end date to a month end and every duration to whole quarters, and its stored offsets restore the dates the filing states; a row whose offsets name no whole day keeps the rounded dates with `date_precision: month`. A fact the filing tags more than once (same concept, context, dimensions, unit and value) is listed once.
+         */
         get: operations["listFilingFacts"];
         put?: never;
         post?: never;
@@ -1226,7 +1229,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List a filing's text facts */
+        /**
+         * List a filing's text facts
+         * @description The text facts (text blocks, policies, cover-page strings) of one filing from the SEC Financial Statement and Notes data set, on the same monthly cadence as `GET /v1/filings/{accession}/facts` (`meta.coverage.through`). `text` is the data set's plain text: the SEC removes the markup, and some typography of the original (for example typographic apostrophes such as `Company’s`) can be missing from it; the filing's own documents (its document versions) carry the original text.
+         */
         get: operations["listFilingNotes"];
         put?: never;
         post?: never;
@@ -1404,7 +1410,7 @@ export interface paths {
         };
         /**
          * Get a fund
-         * @description A listed fund's profile: listing, fund key, registrant, net assets (N-PORT), expense ratio (prospectus), advisers and share classes (N-CEN). A stock answers 404 naming its GET /v1/companies/{company}, an ETN naming GET /v1/instruments/{symbol}.
+         * @description A listed fund's profile: listing, fund key, registrant, net assets (N-PORT), expense ratio (prospectus; this listing's own class when stated, else the series' representative class, named by `expense_ratio_class_id`), advisers and share classes (N-CEN). A stock answers 404 naming its GET /v1/companies/{company}, an ETN naming GET /v1/instruments/{symbol}.
          */
         get: operations["getFund"];
         put?: never;
@@ -1444,7 +1450,7 @@ export interface paths {
         };
         /**
          * List a fund's sector, country and asset-class weights
-         * @description Sector, country and asset-class weights of one listed fund, from the same composition GET /v1/funds/{fund}/holdings answers from (`meta.source`, `meta.as_of`): sector = the issuer's stated sector, else the SEC SIC sector of the holding's issuer; country = the stated location, else the N-PORT country / ISIN prefix / registrant country (each bucket names its `basis`, `mixed` when its positions differ); weights in percent of the fund. `dimension=` one or several of sector, country, asset_class (default all). No buckets for the chosen source answers `data: []` with `meta.reason: weights_unavailable`. Listed funds only (owner decision 2026-11-19): an ETF or closed-end fund by ticker or fund key; a stock answers 404 naming GET /v1/companies/{company}, an ETN GET /v1/instruments/{symbol}, an ETF structured as an exchange-traded trust (GLD, IBIT: a 10-K filer without a holdings report) a 404 naming what is served for it, an unlisted fund a 404 (it appears only as a holder row).
+         * @description Sector, country and asset-class weights of one listed fund, from the same composition GET /v1/funds/{fund}/holdings answers from (`meta.source`, `meta.as_of`): sector = the issuer's stated sector, else the SEC SIC sector of the holding's issuer; country = the stated location, else the N-PORT country / ISIN prefix / registrant country (each bucket names its `basis`, `mixed` when its positions differ); weights in percent of the fund. `dimension=` one or several of sector, country, asset_class (default all). A fund outside the ETF holdings coverage scope answered from its N-PORT report is bucketed when read, from the same served positions by the same rule. No buckets for the chosen source answers `data: []` with `meta.reason: weights_unavailable`. Listed funds only (owner decision 2026-11-19): an ETF or closed-end fund by ticker or fund key; a stock answers 404 naming GET /v1/companies/{company}, an ETN GET /v1/instruments/{symbol}, an ETF structured as an exchange-traded trust (GLD, IBIT: a 10-K filer without a holdings report) a 404 naming what is served for it, an unlisted fund a 404 (it appears only as a holder row).
          */
         get: operations["listFundWeights"];
         put?: never;
@@ -1742,7 +1748,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get my usage */
+        /**
+         * Get my usage
+         * @description Your requests and credits per UTC day, per product family and per key over the last 7, 30 or 90 days. `period.used_credits` is live; `daily`, `by_family` and `by_key` are rolled up every 5 minutes, so they trail it by up to about 7 minutes. `by_family` groups by product family (the families of `/status`), not by the docs tags `/v1/me` lists in `allowed_families`.
+         */
         get: operations["getMyUsage"];
         put?: never;
         post?: never;
@@ -2026,7 +2035,7 @@ export interface paths {
         };
         /**
          * Search filings
-         * @description Ranked passages from SEC documents with citations (`mode=lexical` by default: keywords and quoted phrases, English stemming; `literal` for the exact characters). Each request reads one page of the index: `limit` above 50 answers 50 hits and a `next_cursor`; `match.lexical_rank` counts on across pages. `meta.index` says how complete the answer is: empty `data` with `completeness: complete` is a genuine no-result, anything else is not. A search without `symbol=` reads at most `meta.index.matches.cap` matching passages, newest filings first; `meta.index.hint` says how to narrow it.
+         * @description Ranked passages from SEC documents with citations (`mode=lexical` by default: keywords and quoted phrases, English stemming; `literal` for the exact characters). Each request reads one page of the index: `limit` above 50 answers 50 hits and a `next_cursor`; `match.lexical_rank` counts on across pages. `meta.index` says how complete the answer is: empty `data` with `completeness: complete` is a genuine no-result, anything else is not. A search without `symbol=` reads at most `meta.index.matches.cap` matching passages, newest filings first; `meta.index.hint` says how to narrow it. Only the forms of `meta.index.forms_indexed` are indexed: a subject whose filings are all of other forms (a fund trust's 485BPOS, N-CSR, N-30D, 497, N-PORT) answers `completeness: partial`, reason `form_not_indexed`, with `lexical.not_indexed_by_policy` counting those filings. A request that searched no document (`meta.index.lexical.indexed` 0, or `lexical` null) and returned no passage cannot match and is charged 0 credits (`X-Credits-Charged: 0`).
          */
         get: operations["searchFilings"];
         put?: never;
@@ -2466,7 +2475,7 @@ export interface components {
                  */
                 registrant_cik: null | string;
             };
-            /** @description The data families that exist for this instrument's type (the same table every `company=` / `symbol=` refusal names); actual depth: `expand=coverage` on the company or fund */
+            /** @description The data families served for this instrument: its type's table (the same table every `company=` / `symbol=` refusal names), without `dividends` when no dividend row is stored for the symbol (an ETF or closed-end fund outside the dividend coverage scope, a stock that never paid); actual depth: `expand=coverage` on the company or fund */
             datasets: Array<"alerts" | "dividends" | "events" | "filings" | "financials" | "fiscal_periods" | "fund_holdings" | "fund_weights" | "guidance" | "holders" | "insider_trades" | "investor_documents" | "ipos" | "metrics" | "news" | "offerings" | "people" | "profile" | "segments" | "splits" | "transcripts">;
         };
         /**
@@ -2764,7 +2773,7 @@ export interface components {
             investment_company_type: null | string;
             /** @description An index fund (N-CEN) */
             is_index: boolean | null;
-            /** @description Net expense ratio as a fraction (0.0084 = 0.84 %), prospectus XBRL */
+            /** @description Net expense ratio as a fraction (0.0084 = 0.84 %), prospectus XBRL: this listing's own class (`class_id`) when its prospectus states one, else the series' representative class named by `expense_ratio_class_id` */
             expense_ratio_net: null | number;
             /** @description Gross expense ratio as a fraction */
             expense_ratio_gross: null | number;
@@ -2773,6 +2782,11 @@ export interface components {
              * @description Prospectus date
              */
             expense_ratio_as_of: null | string;
+            /**
+             * @description SEC class id the expense ratio belongs to: equal to `class_id` when the figure is this listing's own, another class of the series otherwise (the representative, lowest-ratio class); null with no ratio
+             * @example C000092055
+             */
+            expense_ratio_class_id: null | string;
             /** @description Advisers and sub-advisers (N-CEN) */
             advisers: Array<components["schemas"]["FilerFundAdviser"]>;
             /** @description Every share class of the series, listed or not */
@@ -2792,13 +2806,13 @@ export interface components {
             logo_url: null | string;
             /** @description Brand colors (hex) */
             brand_colors: Array<string> | null;
-            /** @description With `expand=coverage`: which data families hold rows and through which date */
+            /** @description With `expand=coverage`: which data families hold rows for the fund and through which date: `dividends` (the ticker's dividend rows) and `fund_holdings` (a stored composition, through its newest date). Weights follow the holdings' composition; whether buckets exist for it is `meta.reason` of GET /v1/funds/{fund}/weights */
             coverage?: null | {
-                /** @description Families that hold rows for the fund */
+                /** @description Families that hold rows for the fund: `dividends`, `fund_holdings` */
                 families: Array<{
                     /**
                      * @description Data family
-                     * @example financials
+                     * @example fund_holdings
                      */
                     family: string;
                     /**
@@ -2954,11 +2968,13 @@ export interface components {
             /** @description SIC code */
             sic: null | string;
             /**
-             * @description Lifecycle phase
+             * @description Lifecycle phase: the issuer lifecycle's phase; else `public` for a listed filer; else `manager` for a filer of 13F-HR; else null. A listed company that files 13F stays `public` (see `files_13f`)
              * @enum {string|null}
              */
             phase: "former" | "manager" | "other" | "pre_ipo" | "public" | null;
-            /** @description Forms the filer files (e.g. `13F-HR`) */
+            /** @description The filer files 13F-HR (an institutional investment manager): its portfolio is `GET /v1/filers/{cik}/holdings`. Independent of `phase` (optional: answers captured before this field lack it) */
+            files_13f?: boolean;
+            /** @description The forms of the request's `form` filter (`13F-HR` for `phase=manager`); empty without one. Not the filer's own form list: `files_13f` says whether it files 13F-HR */
             forms: Array<string>;
             /** @description Tickers the filer states */
             stated_tickers: Array<string>;
@@ -2993,10 +3009,12 @@ export interface components {
             /** @description Fiscal year end as MM-DD */
             fiscal_year_end: null | string;
             /**
-             * @description Lifecycle phase
+             * @description Lifecycle phase: the issuer lifecycle's phase; else `public` for a listed filer; else `manager` for a filer of 13F-HR; else null. A listed company that files 13F stays `public` (see `files_13f`)
              * @enum {string|null}
              */
             phase: "former" | "manager" | "other" | "pre_ipo" | "public" | null;
+            /** @description The filer files 13F-HR (an institutional investment manager): its portfolio is `GET /v1/filers/{cik}/holdings`. Independent of `phase` (optional: answers captured before this field lack it) */
+            files_13f?: boolean;
             /** @description Listing */
             listing: null | {
                 /** @description Ticker */
@@ -3112,7 +3130,7 @@ export interface components {
              * @description Date the expense ratio is stated as of
              */
             expense_ratio_as_of: null | string;
-            /** @description SEC class id the expense ratio belongs to */
+            /** @description SEC class id the series' expense ratio belongs to: the representative class (the lowest net ratio of the series); each class's own ratio is on its `share_classes` entry */
             expense_ratio_class_id: null | string;
             /** @description Average annual total returns per share class (prospectus) */
             returns: Array<components["schemas"]["FilerFundReturn"]>;
@@ -3172,6 +3190,15 @@ export interface components {
             ticker: null | string;
             /** @description Class name as reported */
             class_name: null | string;
+            /** @description This class's own net expense ratio as a fraction (prospectus XBRL, the newest prospectus; gross when no net figure is filed); null when the prospectus states none for the class */
+            expense_ratio_net: null | number;
+            /** @description This class's own gross expense ratio as a fraction */
+            expense_ratio_gross: null | number;
+            /**
+             * Format: date
+             * @description Prospectus date of this class's ratio
+             */
+            expense_ratio_as_of: null | string;
         };
         /**
          * FilerFundReturn
@@ -3624,11 +3651,11 @@ export interface components {
         };
         /**
          * FilingSource
-         * @description The filing a statement period was rendered from
+         * @description The filing that carries the statement for the period: the filing most of the statement's facts come from (ties: the earliest filing), not a later filing that only repeats or restates a few of its lines. Where a period's statements carry different filings, the newest of them
          */
         FilingSource: {
             /**
-             * @description Accession of the filing this rendering comes from
+             * @description Accession of the filing that carries the statement for the period
              * @example 0000320193-26-000026
              */
             accession: string;
@@ -4627,19 +4654,24 @@ export interface components {
             decimals: null | number;
             /**
              * Format: date
-             * @description Start of a duration
+             * @description Start of a duration as filed (`date_precision: month`: the first day of the rounded quarter span)
              */
             period_start: null | string;
             /**
              * Format: date
-             * @description End of a duration
+             * @description End of a duration as filed (`date_precision: month`: the month end the data set rounded it to)
              */
             period_end: null | string;
             /**
              * Format: date
-             * @description Instant
+             * @description Instant as filed (`date_precision: month`: the month end the data set rounded it to)
              */
             instant: null | string;
+            /**
+             * @description `day` = the dates are the filed context; `month` = the data set's offsets named no whole day, so the dates are its month-end rounding
+             * @enum {string}
+             */
+            date_precision?: "day" | "month";
             /** @description Axis / member pairs; empty = consolidated */
             dimensions: Array<components["schemas"]["Dimension"]>;
         };
@@ -4650,13 +4682,18 @@ export interface components {
         FilingNote: {
             /** @description XBRL text-block concept */
             tag: string;
-            /** @description Text */
+            /** @description The data set's plain text (markup removed by the SEC; some typography of the original can be missing) */
             text: string;
             /**
              * Format: date
-             * @description Period end
+             * @description Period end (or instant) as filed; with `date_precision: month` the data set's month-end rounding
              */
             period_end: null | string;
+            /**
+             * @description `day` = `period_end` is the filed date; `month` = the data set's month-end rounding
+             * @enum {string}
+             */
+            date_precision?: "day" | "month";
             /** @description Axis / member pairs */
             dimensions: Array<components["schemas"]["Dimension"]>;
         };
@@ -4740,7 +4777,7 @@ export interface components {
         };
         /**
          * FilingSearchCoverage
-         * @description How much of the searched SEC scope the text index covers (the earnings search vocabulary). `forms_indexed` / `years_indexed` / `indexed_since` state the index policy; documents of other forms are counted in `lexical.not_indexed_by_policy` (by design, not a gap). For exactly one `cik`, `held` / `mirror` say how much of the filer's history is held (`held_through`).
+         * @description How much of the searched SEC scope the text index covers (the earnings search vocabulary). `forms_indexed` / `years_indexed` / `indexed_since` state the index policy; documents of other forms are counted in `lexical.not_indexed_by_policy` (by design, not a gap). With a `symbol=` the count is the subject's filings of other forms, held or not; when they are ALL its filings (nothing searched), `completeness` is `partial` with reason `form_not_indexed`. For exactly one `cik`, `held` / `mirror` say how much of the filer's history is held (`held_through`).
          */
         FilingSearchCoverage: {
             /**
@@ -4748,7 +4785,7 @@ export interface components {
              * @enum {string}
              */
             completeness: "complete" | "partial" | "unknown";
-            /** @description The text index over the scope; null when nothing was searched (excluded / not indexed by policy) */
+            /** @description The text index over the scope; null when nothing was searched and nothing could be counted (excluded, a `form` filter naming only forms outside `forms_indexed`, indexing off) */
             lexical: null | ({
                 /** @description ready / partial / not_ready */
                 state?: string;
@@ -4834,7 +4871,7 @@ export interface components {
              * @description Release date
              */
             released_at: null | string;
-            /** @description Forms it covers */
+            /** @description Forms it covers (SEC form types); empty for `icsc`, the yearly series / class list, which is a registry extract rather than a filing form */
             forms: Array<string>;
         };
         /**
@@ -4972,7 +5009,7 @@ export interface components {
                  * @enum {string}
                  */
                 type: "fund" | "institution";
-                /** @description The manager's name, or the fund's (series) name */
+                /** @description The manager's name, or the fund's (series) name; a fund that files no series name (a unit investment trust such as SPY states "N/A") carries its registrant's name */
                 name: null | string;
                 /** @description The manager's CIK, or the fund's registrant (trust) CIK, 10 digits */
                 cik: null | string;
@@ -4997,7 +5034,7 @@ export interface components {
             };
             /** @description The security held */
             security: {
-                /** @description Ticker (a listed instrument; null when none is known) */
+                /** @description Ticker (a listed instrument; null when none is known). 13F: the position's own CUSIP's ticker when it is an open listing of the issuer (02079K107 = GOOG, 02079K305 = GOOGL), else the issuer's primary listing */
                 symbol: null | string;
                 /** @description Name */
                 name: null | string;
@@ -5024,7 +5061,7 @@ export interface components {
             as_of: string;
             /**
              * Format: date
-             * @description Filing date of the report (13F, N-PORT); null for an issuer file
+             * @description Filing date of the report: 13F the base filing of the effective snapshot, N-PORT the NPORT-P's SEC filing date; null for an issuer file
              */
             filing_date?: null | string;
             /** @description The SEC filing (13F, NPORT-P); null for an issuer file */
@@ -5035,7 +5072,7 @@ export interface components {
             shares: null | number;
             /** @description Unit of shares: SH shares / PRN principal (13F); NS shares, PA principal, NC contracts, OU other (N-PORT); SH (issuer file) */
             shares_type?: null | string;
-            /** @description Value in USD as reported */
+            /** @description Value in USD as reported. 13F: a filing that still states thousands after the 2023-01-03 switch to whole dollars is read x1000 for the whole filing (per-filing check against quarter-end closes) */
             value_usd: null | number;
             /** @description Percent of the holding fund (nport: percent of net assets; issuer_file: weight); null for 13F */
             weight_pct: null | number;
@@ -5043,7 +5080,7 @@ export interface components {
             asset_cat?: null | string;
             /** @description 13F: Put or Call for an option position; null otherwise */
             put_call?: null | string;
-            /** @description 13F: SOLE, DFND or OTR (filed rows); null otherwise */
+            /** @description 13F: SOLE, DFND or OTR as filed. A holder / portfolio position carries the value every information-table line of the position states; null when its lines differ (a mixed position has no single discretion) or state none, and on N-PORT and issuer-file rows */
             investment_discretion?: null | string;
             /** @description 13F voting authority (shares); null on N-PORT and issuer-file rows */
             voting_authority?: null | {
@@ -5092,7 +5129,7 @@ export interface components {
             };
             /** @description The security held */
             security: {
-                /** @description Ticker (a listed instrument; null when none is known) */
+                /** @description Ticker (a listed instrument; null when none is known). A manager's changes: the position's own CUSIP's ticker when it is an open listing of the issuer, else the issuer's primary listing */
                 symbol: null | string;
                 /** @description Name */
                 name: null | string;
@@ -5286,7 +5323,7 @@ export interface components {
              * @enum {string}
              */
             stage: "announced" | "effective" | "exchange_approved" | "postponed" | "price_range" | "priced" | "registered" | "trading" | "withdrawn";
-            /** @description Blank-check company */
+            /** @description Blank-check company (SPAC): the registration track's flag (SIC 6770 or a blank-check prospectus cover), the registrant's, or for a calendar-only offering Massive's SPAC unit (a unit of a share and a warrant / right) */
             is_spac: boolean;
             /**
              * @description Exchange (MIC)
@@ -5591,7 +5628,7 @@ export interface components {
             jurisdiction: null | string;
             /** @description Entity type as filed (Corporation, Limited Partnership, …) */
             entity_type: null | string;
-            /** @description Year of incorporation as filed (a year, or Over Five Years / Within Last Five Years) */
+            /** @description Year of incorporation as filed: a year, or Over Five Years / Within Last Five Years / Yet to Be Formed */
             year_of_inc: null | string;
         };
         /**
@@ -5663,14 +5700,24 @@ export interface components {
             session: "amc" | "bmo" | "intraday" | null;
             /**
              * Format: date-time
-             * @description When the live call started (first spoken words)
+             * @description When the call started: the first spoken words of a live capture, or the announced start of a call not captured live (see started_at_source); null when neither is known
              */
             started_at: null | string;
             /**
+             * @description Where started_at comes from: `measured` = the live capture's first spoken words; `scheduled` = the announced start and the recording's length (a call not captured live; approximate). Null when started_at is null
+             * @enum {string|null}
+             */
+            started_at_source?: "measured" | "scheduled" | null;
+            /**
              * Format: date-time
-             * @description When the call ended
+             * @description When the call ended: the last spoken words of a live capture, or the announced start plus the recording's length (see ended_at_source)
              */
             ended_at: null | string;
+            /**
+             * @description Where ended_at comes from: `measured` = the live capture; `scheduled` = the announced start and the recording's length. Null when ended_at is null
+             * @enum {string|null}
+             */
+            ended_at_source?: "measured" | "scheduled" | null;
             /**
              * Format: date-time
              * @description When the results press release was filed
@@ -6008,7 +6055,7 @@ export interface components {
          * @description The results press release of an event (decision 4)
          */
         PressRelease: {
-            /** @description The archival news item */
+            /** @description The archival news item (`/v1/news/{news_id}`): the served item holding the EDGAR sighting of `accession_number`; null for a release without an accession (an issuer page) or while no news item of the filing is served */
             news_id: null | string;
             /**
              * Format: uuid
@@ -6332,10 +6379,10 @@ export interface components {
             /** @description true = the post-call run read the bars after the market settled; false while live or before the bars settled */
             settled: boolean;
             /**
-             * @description How the recording was anchored to wall-clock time; null until the summary is written
+             * @description How the recording was anchored to wall-clock time: `t0_wallclock` = the live capture's clock, `started_at` = the measured speech start, `scheduled` = a call not captured live whose recording opens with the call, placed at its announced start (approximate, see anchor_uncertainty_s); null until the summary is written
              * @enum {string|null}
              */
-            anchor_kind: "started_at" | "t0_wallclock" | null;
+            anchor_kind: "scheduled" | "started_at" | "t0_wallclock" | null;
             /** @description Lag applied to the anchor, ms */
             anchor_lag_ms: null | number;
             /**
@@ -6548,8 +6595,13 @@ export interface components {
             published_at: string;
             /** @description Words in the version */
             word_count: number;
-            /** @description Why the version was published (e.g. replay_upgrade, company_transcript <sha8>) */
+            /** @description Why the version exists, as a sentence for readers (e.g. "Speaker names assigned", "Company transcript text applied", "Transcript updated"); one sentence per change_kind */
             change_note: null | string;
+            /**
+             * @description Stable code of the change: live = live transcript, final_pass = final transcription pass, naming = speaker names assigned, company_text = company transcript text applied, company_transcript = built from the company's published transcript, rebase = earlier corrections re-applied, qa_split = question-and-answer split corrected, same_call = copied from the same call's other listing, upgrade_rollback = previous version restored, reshape = transcript structure rebuilt, manual_replay / replay_upgrade = re-processed from the recording, correction = transcript corrected, other = any other update. New kinds may be added
+             * @enum {string}
+             */
+            change_kind: "company_text" | "company_transcript" | "correction" | "final_pass" | "live" | "manual_replay" | "naming" | "other" | "qa_split" | "rebase" | "replay_upgrade" | "reshape" | "same_call" | "upgrade_rollback";
             /** @description `human` or `system:<stage>` for a corrected version, else null */
             corrected_by: null | string;
             /**
@@ -6923,7 +6975,7 @@ export interface components {
              * @description Document kind
              * @enum {string}
              */
-            kind: "annual_report" | "ceo_letter" | "cfo_commentary" | "company_transcript" | "conference_presentation" | "earnings_deck" | "esg_report" | "fact_sheet" | "financial_data" | "governance" | "infographic" | "investor_day_deck" | "other" | "prepared_remarks" | "press_release" | "proxy_statement" | "proxy_supplement" | "sec_filing" | "shareholder_letter" | "webcast";
+            kind: "annual_report" | "ceo_letter" | "cfo_commentary" | "company_transcript" | "conference_presentation" | "earnings_deck" | "esg_report" | "fact_sheet" | "financial_data" | "governance" | "infographic" | "investor_day_deck" | "other" | "prepared_remarks" | "press_release" | "prospectus" | "proxy_statement" | "proxy_supplement" | "sec_filing" | "shareholder_letter" | "webcast";
             /** @description Year the document belongs to; null = undated */
             year: null | number;
             /**
@@ -7211,10 +7263,10 @@ export interface components {
                     accession: string;
                 };
                 /**
-                 * @description The attribution sentence to carry with the text
+                 * @description The attribution sentence to carry with the item: the summary wording when the response serves Invinite's summary (`content_status: available`), the headline-and-link wording otherwise (`no_text`: a metadata-only item, one outside the summary window, a text denial)
                  * @enum {string}
                  */
-                statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
+                statement: "Headline and link to the publication above; Invinite serves none of its text. Source and date above." | "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
             };
             /**
              * PdfDocument
@@ -7285,10 +7337,10 @@ export interface components {
                     accession: string;
                 };
                 /**
-                 * @description The attribution sentence to carry with the text
+                 * @description The attribution sentence to carry with the item: the summary wording when the response serves Invinite's summary (`content_status: available`), the headline-and-link wording otherwise (`no_text`: a metadata-only item, one outside the summary window, a text denial)
                  * @enum {string}
                  */
-                statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
+                statement: "Headline and link to the publication above; Invinite serves none of its text. Source and date above." | "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
             };
             /** @description Blocks of this page, in order */
             blocks: Array<{
@@ -7464,10 +7516,10 @@ export interface components {
                         accession: string;
                     };
                     /**
-                     * @description The attribution sentence to carry with the text
+                     * @description The attribution sentence to carry with the item: the summary wording when the response serves Invinite's summary (`content_status: available`), the headline-and-link wording otherwise (`no_text`: a metadata-only item, one outside the summary window, a text denial)
                      * @enum {string}
                      */
-                    statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
+                    statement: "Headline and link to the publication above; Invinite serves none of its text. Source and date above." | "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
                 };
             };
             /**
@@ -7606,10 +7658,10 @@ export interface components {
                         accession: string;
                     };
                     /**
-                     * @description The attribution sentence to carry with the text
+                     * @description The attribution sentence to carry with the item: the summary wording when the response serves Invinite's summary (`content_status: available`), the headline-and-link wording otherwise (`no_text`: a metadata-only item, one outside the summary window, a text denial)
                      * @enum {string}
                      */
-                    statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
+                    statement: "Headline and link to the publication above; Invinite serves none of its text. Source and date above." | "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
                 };
             };
         };
@@ -7759,7 +7811,7 @@ export interface components {
             minutes_before?: number;
             /** @description Local minute of the day the reminder fires (event_countdown: default 540 = 09:00). event_countdown, price_reminder */
             time_of_day_minutes?: number;
-            /** @description IANA time zone (price_reminder: default America/New_York). event_countdown, price_reminder */
+            /** @description IANA time zone (default America/New_York). event_countdown, price_reminder */
             timezone?: string;
             /** @description Tell when the event date moves (default true). event_countdown */
             notify_on_date_change?: boolean;
@@ -8127,18 +8179,18 @@ export interface components {
         };
         /**
          * AlertQuotaUsage
-         * @description The account's alert quota and its use (every page of GET /v1/alerts carries it, whatever the filters): alerts with status active, paused or scheduled count; script and indicator alerts are a subset with their own limit. Fires are included; fires_per_day_limit is the account's fair-use cap per UTC day (null = no cap)
+         * @description The account's CURRENT alert limits and their use (every page of GET /v1/alerts carries it, whatever the filters): the plan's defaults, or the limits an ENTERPRISE contract sets instead. Alerts with status active, paused or scheduled count; script and indicator alerts are a subset with their own limit. Plan defaults (active / script): FREE 0 / 0, LITE 50 / 5, STANDARD 500 / 50, PRO 2,000 / 500, ENTERPRISE 2,000 / 500. No plan has a daily fire cap: fires_per_day_limit is null unless an ENTERPRISE contract sets one
          */
         AlertQuotaUsage: {
             /** @description Alerts that count against the quota (active, paused, scheduled) */
             active_alerts: number;
-            /** @description The plan's active-alert quota */
+            /** @description The account's active-alert limit now: the plan's default, or the ENTERPRISE contract's */
             active_alerts_limit: number;
             /** @description Script and indicator alerts among them */
             script_alerts: number;
-            /** @description The plan's script / indicator alert quota */
+            /** @description The account's script / indicator alert limit now: the plan's default, or the ENTERPRISE contract's */
             script_alerts_limit: number;
-            /** @description Fires per UTC day before webhook deliveries pause (events are still logged); null = no cap */
+            /** @description Fires per UTC day before webhook deliveries pause (events are still logged); null = no cap (every plan; only an ENTERPRISE contract sets one) */
             fires_per_day_limit: null | number;
         };
         /**
@@ -8247,7 +8299,7 @@ export interface components {
             minutes_before?: number;
             /** @description Local minute of the day the reminder fires (event_countdown: default 540 = 09:00). event_countdown, price_reminder */
             time_of_day_minutes?: number;
-            /** @description IANA time zone (price_reminder: default America/New_York). event_countdown, price_reminder */
+            /** @description IANA time zone (default America/New_York). event_countdown, price_reminder */
             timezone?: string;
             /** @description Tell when the event date moves (default true). event_countdown */
             notify_on_date_change?: boolean;
@@ -8856,7 +8908,11 @@ export interface components {
             attempts: number;
             /** @description HTTP status your endpoint answered last */
             last_status: null | number;
-            last_error: null | string;
+            /**
+             * @description Why the last attempt failed, or why the delivery ended without being sent; null = no failure. blocked_address = the URL is not https on port 443, or its host did not resolve to public addresses only (a private or reserved address, or a name that does not resolve); http_status = your endpoint answered with a status other than 2xx (see last_status); network = the connection failed or broke before an answer; redirect = your endpoint answered with a redirect, which is never followed; timeout = no answer within 10 seconds, or the host name did not resolve in time; gone = your endpoint answered 410 Gone; the destination was disabled; body_too_large = the request body exceeded the size limit; the delivery is not retried; sealed_unreadable = the destination's stored secret or headers could not be read; the delivery is not retried; destination_disabled = the destination was disabled before the delivery was sent; destination_deleted = the destination was deleted before the delivery was sent; event_missing = the event was no longer stored when the delivery was due; lease_expired = the delivery worker stopped during the attempt; the attempt counts, and the delivery is retried unless it was the last; alert_user_deleted = the alert's end user was deleted before the delivery was sent; account_deleted = the account was deleted before the delivery was sent
+             * @enum {string|null}
+             */
+            last_error: "account_deleted" | "alert_user_deleted" | "blocked_address" | "body_too_large" | "destination_deleted" | "destination_disabled" | "event_missing" | "gone" | "http_status" | "lease_expired" | "network" | "redirect" | "sealed_unreadable" | "timeout" | null;
             duration_ms: null | number;
             /** Format: date-time */
             next_attempt_at: null | string;
@@ -9010,7 +9066,7 @@ export interface components {
                 /** @description Prepaid balance */
                 prepaid_balance_usd: null | number;
             };
-            /** @description Docs groups the plan can call */
+            /** @description Docs tags (the groups of the API reference) the plan can call; not the product families of `/v1/me/usage` */
             allowed_families: Array<string>;
         };
         /** Usage */
@@ -9039,7 +9095,7 @@ export interface components {
                 /** @description Prepaid credit balance in USD */
                 prepaid_balance_usd: number;
             };
-            /** @description One row per UTC day of the window, ascending, zero-filled */
+            /** @description One row per UTC day of the window, ascending, zero-filled; rolled up every 5 minutes */
             daily: Array<{
                 /**
                  * Format: date
@@ -9064,11 +9120,11 @@ export interface components {
                     "5xx": number;
                 };
             }>;
-            /** @description Usage per endpoint family over the window, most credits first */
+            /** @description Usage per product family (the families of `/status`) over the window, most credits first; rolled up every 5 minutes */
             by_family: Array<{
-                /** @description Endpoint family id */
+                /** @description Product family id, as on `/status` */
                 family: string;
-                /** @description Endpoint family name */
+                /** @description Product family name, as on `/status` */
                 label: string;
                 /** @description Requests answered (every status) */
                 requests: number;
@@ -9715,10 +9771,10 @@ export interface components {
                         accession: string;
                     };
                     /**
-                     * @description The attribution sentence to carry with the text
+                     * @description The attribution sentence to carry with the item: the summary wording when Invinite's summary is served, the headline-and-link wording otherwise
                      * @enum {string}
                      */
-                    statement: "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
+                    statement: "Headline and link to the publication above; Invinite serves none of its text. Source and date above." | "Summary written by Invinite from the publication above; not the publisher's text. Source and date above.";
                 };
             };
         };
@@ -13377,6 +13433,7 @@ export interface operations {
                      *       "expense_ratio_net": 0.0078,
                      *       "expense_ratio_gross": 0.0094,
                      *       "expense_ratio_as_of": "2026-05-31",
+                     *       "expense_ratio_class_id": "C000074098",
                      *       "advisers": [
                      *         {
                      *           "name": "PROSHARE ADVISORS LLC",
@@ -17810,7 +17867,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Outline
+                 * @description Which outline: `legacy` = the 10-K / 10-Q / 8-K Items (`item_id`), `generic` = every other heading. Without it: the generic outline, or the legacy one when the version has no generic heading (a filing whose headings all map to Items). An explicit value is served as asked: an empty list means the version has no section of that outline.
                  * @example generic
                  */
                 outline?: "generic" | "legacy";
@@ -18630,7 +18687,7 @@ export interface operations {
                  */
                 form?: string;
                 /**
-                 * @description Lifecycle phase
+                 * @description Lifecycle phase. `manager` lists every filer of 13F-HR, whatever its lifecycle phase (each row keeps its own `phase`; `files_13f` is true on every row)
                  * @example manager
                  */
                 phase?: "former" | "manager" | "other" | "pre_ipo" | "public";
@@ -20535,7 +20592,7 @@ export interface operations {
                                  * @enum {string}
                                  */
                                 state: "complete" | "not_covered" | "partial" | "pending" | "unavailable";
-                                /** @description Why the section is empty or partial (the store's reason, such as fund_cusip_unknown, no_etf_holders) */
+                                /** @description Why the section is empty, partial or unavailable (the store's reason, such as fund_cusip_unknown, no_etf_holders). With state unavailable: upstream_timeout / upstream_unavailable = the SEC document store did not answer this one source in time (for example a first, cold read of a very large N-PORT holder list); the other sections are unaffected and a retry a few seconds later normally answers */
                                 reason?: null | string;
                                 /**
                                  * Format: date
@@ -20766,7 +20823,7 @@ export interface operations {
                  */
                 exchange?: string;
                 /**
-                 * @description true = listed today, false = delisted; both when absent
+                 * @description true = listed today, false = delisted; both when absent. Until delisted stocks are kept, `false` lists delisted funds only (ETFs whose listing retired); delisted stocks follow
                  * @example true
                  */
                 is_active?: boolean;
@@ -21076,7 +21133,7 @@ export interface operations {
                  */
                 "company"?: string;
                 /**
-                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-listing_date`
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-listing_date`. Offerings without a value of the sort field (no listing date yet) come last in both directions; `listing_date.gte=<today>` starts an ascending list at the next listing
                  * @example -listing_date
                  */
                 "sort"?: "-first_public_at" | "-listing_date" | "first_public_at" | "listing_date";
@@ -23409,7 +23466,8 @@ export interface operations {
                      *           "version_kind": "final",
                      *           "published_at": "2026-10-08T17:34:32.507Z",
                      *           "word_count": 9372,
-                     *           "change_note": "naming",
+                     *           "change_note": "Speaker names assigned",
+                     *           "change_kind": "naming",
                      *           "corrected_by": null,
                      *           "pdf": {
                      *             "url": "https://storage.invinite.com/earnings_events/us/789019/earnings/fy2026/q4/transcript-v3.pdf",

@@ -67,9 +67,21 @@ describe("navigation table", () => {
     it("a filer's blocks: profile and filings always; fund, offerings and the 13F portfolio when it has them", () => {
         expect(filerContextAnchors(null, false).map(anchor => anchor.label)).toEqual(["Profile", "Filings"]);
 
-        expect(isManagerFiler("public", ["10-K", "13F-HR"])).toBe(true);
+        expect(isManagerFiler({ phase: "public" }, ["10-K", "13F-HR"])).toBe(true);
 
-        expect(isManagerFiler("public", ["10-K"])).toBe(false);
+        expect(isManagerFiler({ phase: "public" }, ["10-K"])).toBe(false);
+
+        // UI walk F002 / F003 (Data API `files_13f`): a listed 13F filer keeps `phase: public`; an unlisted manager
+        // without a facet; an answer without the field falls back to `phase: manager`.
+        expect(isManagerFiler({ files_13f: true, phase: "public" }, [])).toBe(true);
+
+        expect(isManagerFiler({ files_13f: true, phase: null }, [])).toBe(true);
+
+        expect(isManagerFiler({ phase: "manager" }, [])).toBe(true);
+
+        expect(isManagerFiler({ files_13f: false, phase: null }, ["10-K"])).toBe(false);
+
+        expect(isManagerFiler(undefined, [])).toBe(false);
 
         const anchors = filerContextAnchors({ fund: { series: [] } as never, private_offerings: { count: 2 } as never }, true);
 

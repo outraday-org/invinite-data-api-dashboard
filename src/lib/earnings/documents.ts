@@ -29,6 +29,7 @@ export const COMPANY_DOCUMENT_KINDS = [
     "webcast",
     "other",
     "prepared_remarks",
+    "prospectus",
     "sec_filing",
 ] as const;
 

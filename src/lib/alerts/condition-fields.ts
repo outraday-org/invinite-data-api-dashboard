@@ -174,7 +174,7 @@ export const FIELD_SPECS: Record<AlertConditionField, FieldSpec> = {
     template: { help: "A built-in indicator template and its inputs (GET /v1/alert-templates).", kind: "template", label: "Template" },
     threshold: { help: "Bar volume threshold, > 0 (absolute mode).", kind: "number", label: "Threshold", min: 0 },
     time_of_day_minutes: { help: "Local time the reminder fires (countdown default 09:00).", kind: "time-of-day", label: "Time of day", max: 1439, min: 0 },
-    timezone: { help: "IANA time zone (reminder default America/New_York).", kind: "string", label: "Time zone" },
+    timezone: { help: "IANA time zone (default America/New_York).", kind: "string", label: "Time zone" },
     weekday: { help: "Day of a weekly reminder.", kind: "weekday", label: "Weekday", max: 6, min: 0 },
     window_minutes: { help: "Measure the move against the price this many minutes ago instead of the baseline.", kind: "integer", label: "Window (minutes)", max: 1440, min: 1 },
     yield_rule: { help: "Only when the yield (percent) is above / below.", kind: "json", label: "Yield rule", placeholder: "{\"comparator\": \"above\", \"pct\": 4}" },

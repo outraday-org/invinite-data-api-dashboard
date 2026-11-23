@@ -10,7 +10,7 @@ The walk has two outputs:
 1. **Dashboard bugs are fixed during the walk** (code + co-located test + `pnpm run check` + `pnpm run test` +
    re-check in the browser + one commit per fix on the walk branch).
 2. **Findings that need an API change are not fixed here.** They are logged and, in the last task, turned into a new
-   tasklist in `../backend/tasks/data-api-ui-walk-findings-2026-11-22/` (where the earlier Data API test findings
+   tasklist in `../backend/tasks/old/X-data-api-ui-walk-findings-2026-11-22/` (where the earlier Data API test findings
    lived: `../backend/tasks/old/X-data-api-live-test-findings/`).
 
 **How to run it:** read [`GUIDE.md`](./GUIDE.md) first (setup, the browser tools, the per-check procedure, the fix
@@ -41,7 +41,7 @@ rules, the findings format), then execute the tasks in number order. Log everyth
   API → backend tasklist / not reproducible / by design).
 - The walk branch `ui-walk-2026-11-22` holds one commit per dashboard fix, `pnpm run check` and `pnpm run test` green
   at its tip; `CLAUDE.md` updated where a fix changed documented behaviour.
-- `../backend/tasks/data-api-ui-walk-findings-2026-11-22/` exists when there is at least one API finding.
+- `../backend/tasks/old/X-data-api-ui-walk-findings-2026-11-22/` exists when there is at least one API finding.
 
 ## Architecture Decisions
 

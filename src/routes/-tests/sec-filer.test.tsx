@@ -225,9 +225,9 @@ describe("SecFundView (`expand=fund`)", () => {
                         series_id: "S000002277",
                         series_name: "Vanguard 500 Index Fund",
                         share_classes: [
-                            { class_id: "C000007773", class_name: "Admiral Shares", ticker: "VFIAX" },
-                            { class_id: "C000092055", class_name: "ETF Shares", ticker: "VOO" },
-                            { class_id: "C000007774", class_name: "Institutional", ticker: null },
+                            { class_id: "C000007773", class_name: "Admiral Shares", expense_ratio_as_of: null, expense_ratio_gross: null, expense_ratio_net: null, ticker: "VFIAX" },
+                            { class_id: "C000092055", class_name: "ETF Shares", expense_ratio_as_of: null, expense_ratio_gross: null, expense_ratio_net: null, ticker: "VOO" },
+                            { class_id: "C000007774", class_name: "Institutional", expense_ratio_as_of: null, expense_ratio_gross: null, expense_ratio_net: null, ticker: null },
                         ],
                     },
                     { ...FUND_SERIES, fund_key: "cik:884394", net_assets_scope: "fund", net_assets_usd: 712_345_678_901.23, series_name: null },
