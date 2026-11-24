@@ -202,7 +202,7 @@ describe("TranscriptTab", () => {
 
         expect(requests.transcript.at(-1)).toEqual({ eventId: "e1", layer: "cleaned", version: 2, words: undefined });
 
-        expect(screen.getByRole("tab", { name: "Cleaned", selected: true })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: "Cleaned", pressed: true })).toBeInTheDocument();
     });
 
     it("a ?version= the published list does not name reads as the current version", () => {
@@ -267,13 +267,13 @@ describe("TranscriptTab", () => {
 
         const { rerender } = render(<TranscriptTab {...tabProps({}, onSearchChange)} />);
 
-        fireEvent.click(screen.getByRole("tab", { name: "Plain text" }));
+        fireEvent.click(screen.getByRole("button", { name: "Plain text" }));
 
         expect(onSearchChange).toHaveBeenLastCalledWith({ format: "text" });
 
         rerender(<TranscriptTab {...tabProps({ format: "text" }, onSearchChange)} />);
 
-        fireEvent.click(screen.getByRole("tab", { name: "Speakers" }));
+        fireEvent.click(screen.getByRole("button", { name: "Speakers" }));
 
         expect(onSearchChange).toHaveBeenLastCalledWith({ format: undefined });
     });
@@ -286,8 +286,8 @@ describe("TranscriptTab", () => {
         // `useV2Transcript`'s key = id, layer, version, words: the provider asks `{ eventId, words: true }` → same key.
         expect(new Set(asked.map(input => JSON.stringify(input)))).toEqual(new Set([JSON.stringify({ eventId: "e1", words: true })]));
 
-        // One toolbar row: format switch, Download, Copy.
-        expect(screen.getByRole("tab", { name: "Speakers" })).toBeInTheDocument();
+        // One toolbar row: format switch (a segmented control: `aria-pressed` buttons), Download, Copy.
+        expect(screen.getByRole("button", { name: "Speakers", pressed: true })).toBeInTheDocument();
 
         expect(screen.getByRole("button", { name: "Download" })).toBeInTheDocument();
 

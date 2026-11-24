@@ -50,7 +50,7 @@ function YearInput({ label, onCommit, placeholder, value }: {
     return (
         <Input
             aria-label={label}
-            className="w-[96px]"
+            className="min-w-0 flex-1"
             inputMode="numeric"
             maxLength={4}
             onChange={event => setDraft(event.target.value)}
@@ -62,7 +62,7 @@ function YearInput({ label, onCommit, placeholder, value }: {
 
 /**
  * The fiscal-year window of a Financials tab (`fiscal_year.gte` / `fiscal_year.lte`, URL `?fyFrom=&fyTo=`): two year
- * fields; an empty field is no bound.
+ * fields filling their `FilterField` ("Fiscal years", the group's label); an empty field is no bound.
  */
 export function FiscalYearRange({ from, onChange, to }: {
     from: number | undefined;
@@ -74,10 +74,9 @@ export function FiscalYearRange({ from, onChange, to }: {
     const commitTo = React.useCallback((year: number | undefined) => onChange({ fyFrom: from, fyTo: year }), [from, onChange]);
 
     return (
-        <div aria-label="Fiscal years" className="flex items-center gap-1" role="group">
-            <span className="text-muted-foreground text-sm">FY</span>
+        <div className="flex w-full items-center gap-1.5">
             <YearInput label="Fiscal year from" onCommit={commitFrom} placeholder="from" value={from} />
-            <span className="text-muted-foreground text-sm">–</span>
+            <span aria-hidden className="text-muted-foreground">–</span>
             <YearInput label="Fiscal year to" onCommit={commitTo} placeholder="to" value={to} />
         </div>
     );

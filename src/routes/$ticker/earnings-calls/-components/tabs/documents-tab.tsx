@@ -6,8 +6,9 @@ import type { V2InvestorDocument, V2InvestorDocumentResponse } from "@/lib/api/t
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useV2InvestorDocument, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
@@ -45,8 +46,7 @@ function documentHref(doc: V2InvestorDocument) {
 /** The call's SEC filing links (10-Q / 10-K), shown apart under "Filings": they are no call material. */
 function FilingsTable({ filings }: { filings: Array<V2InvestorDocument> }) {
     return (
-        <section aria-label="Filings" className="flex flex-col gap-1">
-            <h3 className="text-sm font-medium">Filings</h3>
+        <Section aria-label="Filings" title="Filings">
             <Table>
                 <TableHeader>
                     <TableRow>
@@ -79,7 +79,7 @@ function FilingsTable({ filings }: { filings: Array<V2InvestorDocument> }) {
                     ))}
                 </TableBody>
             </Table>
-        </section>
+        </Section>
     );
 }
 
@@ -221,19 +221,14 @@ export function DocumentsTab({ event, eventId, onSearchChange, onTabChange, sear
                         Clear
                     </Button>
                 )}
-                <Select
-                    onValueChange={value => onSearchChange({ docSort: value === DOCUMENT_SORT_VALUES[0] ? undefined : value ?? undefined })}
+                <DropdownSelect
+                    aria-label="Order"
+                    className="ml-auto"
+                    onValueChange={value => onSearchChange({ docSort: value === DOCUMENT_SORT_VALUES[0] ? undefined : value })}
+                    options={DOCUMENT_SORT_VALUES.map(value => ({ label: SORT_LABELS[value], value }))}
+                    size="sm"
                     value={sort}
-                >
-                    <SelectTrigger aria-label="Order" className="ml-auto" size="sm">
-                        <span>{SORT_LABELS[sort]}</span>
-                    </SelectTrigger>
-                    <SelectContent>
-                        {DOCUMENT_SORT_VALUES.map(value => (
-                            <SelectItem key={value} value={value}>{SORT_LABELS[value]}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                />
             </div>
 
             {error

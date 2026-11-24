@@ -1,6 +1,7 @@
 import type { AlertFormState, FieldErrors } from "@/lib/alerts/alert-form";
 
 import { Button } from "@/components/ui/button";
+import { DropdownMultiSelect, DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { familyLabels, isMacroSeries, MACRO_EVENTS, MACRO_FAMILIES, MACRO_METRIC_LABELS, MACRO_OPERATOR_LABELS, readMacroThreshold, thresholdFields } from "@/lib/alerts/macro-condition";
 import { MACRO_ALERT_SERIES } from "@/lib/api/operations.gen";
@@ -11,9 +12,9 @@ const ids = Object.keys(MACRO_ALERT_SERIES).filter(isMacroSeries);
 
 const choices = (value: unknown): Array<string> => Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
 
-const toggle = (items: Array<string>, id: string) => items.includes(id) ? items.filter(v => v !== id) : [...items, id];
+const seriesLabel = (id: keyof typeof MACRO_ALERT_SERIES) => `${MACRO_ALERT_SERIES[id].label} (${id})`;
 
-const selectStyle = "rounded-md border border-input bg-background px-2 py-1 text-sm";
+const toggle = (items: Array<string>, id: string) => items.includes(id) ? items.filter(v => v !== id) : [...items, id];
 
 export function MacroConditionFields({ condition, errors, onChange}: { condition: Condition; onChange: (value: Condition) => void; errors: FieldErrors }) {
     const events = choices(condition.macro_events), families = choices(condition.macro_families), selected = choices(condition.macro_series_ids);
@@ -60,59 +61,52 @@ export function MacroConditionFields({ condition, errors, onChange}: { condition
                     </label>
                 ))}
             </fieldset>
-            <label className="flex flex-col gap-1 sm:col-span-2">
+            <div className="flex flex-col gap-1 sm:col-span-2">
                 <span className="font-medium">Series and tenors</span>
-                <select className={selectStyle} multiple onChange={e => changeScope(families, Array.from(e.currentTarget.selectedOptions, opt => opt.value))} size={5} value={selected}>
-                    {admitted.map(id => (
-                        <option key={id} value={id}>
-                            {MACRO_ALERT_SERIES[id].label}
-                            {" "}
-                            (
-                            {id}
-                            )
-                        </option>
-                    ))}
-                </select>
+                <DropdownMultiSelect
+                    aria-label="Series and tenors"
+                    className="w-full"
+                    onValueChange={next => changeScope(families, next)}
+                    options={admitted.map(id => ({ label: seriesLabel(id), value: id }))}
+                    placeholder="All series in the chosen families"
+                    value={selected}
+                />
                 <span className="text-muted-foreground">Leave the selection empty to include all series in the chosen families.</span>
-            </label>
+            </div>
             {threshold
                 ? (
                         <fieldset className="col-span-full grid gap-2 sm:grid-cols-2">
                             <legend className="font-medium">Numeric threshold</legend>
-                            <label className="grid gap-1">
-                                Threshold series
-                                <select className={selectStyle} onChange={(e) => { if (isMacroSeries(e.target.value))setThreshold({ ...threshold, field: "value", series_id: e.target.value, value: "" }); }} value={threshold.series_id}>
-                                    {candidates.map(id => (
-                                        <option key={id} value={id}>
-                                            {MACRO_ALERT_SERIES[id].label}
-                                            {" "}
-                                            (
-                                            {id}
-                                            )
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                            <label className="grid gap-1">
-                                Threshold field
-                                <select className={selectStyle} onChange={e => setThreshold({ ...threshold, field: e.target.value, value: "" })} value={threshold.field}>
-                                    {Object.entries(thresholdFields(threshold.series_id)).map(([field, unit]) => (
-                                        <option key={field} value={field}>
-                                            {MACRO_METRIC_LABELS[field]}
-                                            {" "}
-                                            (
-                                            {unit}
-                                            )
-                                        </option>
-                                    ))}
-                                </select>
-                            </label>
-                            <label className="grid gap-1">
-                                Comparison
-                                <select className={selectStyle} onChange={e => setThreshold({ ...threshold, operator: e.target.value })} value={threshold.operator}>
-                                    {Object.entries(MACRO_OPERATOR_LABELS).map(([operator, label]) => <option key={operator} value={operator}>{label}</option>)}
-                                </select>
-                            </label>
+                            <div className="grid gap-1">
+                                <span>Threshold series</span>
+                                <DropdownSelect
+                                    aria-label="Threshold series"
+                                    className="w-full"
+                                    onValueChange={(value) => { if (isMacroSeries(value))setThreshold({ ...threshold, field: "value", series_id: value, value: "" }); }}
+                                    options={candidates.map(id => ({ label: seriesLabel(id), value: id }))}
+                                    value={threshold.series_id}
+                                />
+                            </div>
+                            <div className="grid gap-1">
+                                <span>Threshold field</span>
+                                <DropdownSelect
+                                    aria-label="Threshold field"
+                                    className="w-full"
+                                    onValueChange={value => setThreshold({ ...threshold, field: value, value: "" })}
+                                    options={Object.entries(thresholdFields(threshold.series_id)).map(([field, unit]) => ({ label: `${MACRO_METRIC_LABELS[field]} (${unit})`, value: field }))}
+                                    value={threshold.field}
+                                />
+                            </div>
+                            <div className="grid gap-1">
+                                <span>Comparison</span>
+                                <DropdownSelect
+                                    aria-label="Comparison"
+                                    className="w-full"
+                                    onValueChange={value => setThreshold({ ...threshold, operator: value })}
+                                    options={Object.entries(MACRO_OPERATOR_LABELS).map(([operator, label]) => ({ label, value: operator }))}
+                                    value={threshold.operator}
+                                />
+                            </div>
                             <label className="grid gap-1">
                                 Threshold value (
                                 {thresholdFields(threshold.series_id)[threshold.field]}

@@ -46,17 +46,17 @@ export function filingColumns({
                     {row.original.live && <Badge title="Arrived over the live feed since this page opened" variant="secondary">New</Badge>}
                 </span>
             ),
-            header: "Form Type",
+            header: "Form type",
             id: "form",
         },
         {
             cell: ({ row }) => <Copyable className="text-muted-foreground" label="Copy accession number" value={row.original.accessionNumber} />,
-            header: "Accession Number",
+            header: "Accession number",
             id: "accession",
         },
         {
             cell: ({ row }) => <span className="text-muted-foreground">{fiscalPeriodLabel(row.original) ?? (row.original.periodEnd ? formatDay(row.original.periodEnd) : DASH)}</span>,
-            header: "Fiscal Period",
+            header: "Fiscal period",
             id: "period",
         },
         {

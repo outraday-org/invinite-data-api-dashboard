@@ -384,7 +384,7 @@ export function TickerSearch() {
                 render={(
                     <button
                         aria-label="Search"
-                        className="bg-input/20 cursor-text dark:bg-input/30 border-input hover:bg-input/30 dark:hover:bg-input/40 focus-visible:border-ring focus-visible:ring-ring/30 flex h-9 w-full min-w-0 items-center justify-between gap-3 rounded-md border px-3 text-left text-sm outline-none transition-colors focus-visible:ring-2 md:w-[520px]"
+                        className="bg-input/20 cursor-text dark:bg-input/30 border-input hover:bg-input/30 dark:hover:bg-input/40 focus-visible:border-ring focus-visible:ring-ring/30 flex h-9 w-full min-w-0 items-center justify-between gap-3 rounded-md border px-3 text-left text-sm outline-none transition-colors focus-visible:ring-2 lg:w-[520px]"
                         type="button"
                     />
                 )}

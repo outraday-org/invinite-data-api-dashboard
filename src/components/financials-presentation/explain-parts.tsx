@@ -14,15 +14,18 @@ import { cn, formatNumberEn } from "@/lib/utils";
 /** A value at full magnitude ("—" when absent). */
 export const fullNumber = (value: null | number) => (value === null ? "—" : formatNumberEn(value, { maximumFractionDigits: 6 }));
 
-/** One block of an explanation: a small heading (with an optional note beside it) over a bordered card. */
+/**
+ * One block of an explanation (ui-redesign task 9: a section, no card in the dialog): a hairline above, the 14 px title
+ * (with an optional note beside it), the content at data size.
+ */
 export function ExplainSection({ aside, children, title }: { aside?: React.ReactNode; children: React.ReactNode; title: string }) {
     return (
-        <section className="flex flex-col gap-1.5">
+        <section className="flex flex-col gap-2 border-t pt-3">
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <h3 className="text-muted-foreground text-[0.6875rem] font-semibold tracking-wider uppercase">{title}</h3>
+                <h3 className="text-sm font-semibold">{title}</h3>
                 {aside}
             </div>
-            <div className="bg-muted/20 flex flex-col gap-2 rounded-lg border p-3 text-sm">{children}</div>
+            <div className="flex flex-col gap-2">{children}</div>
         </section>
     );
 }

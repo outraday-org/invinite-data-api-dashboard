@@ -1,6 +1,6 @@
 import type { FiscalPeriodType } from "@/lib/api/types";
 
-import { Button } from "@/components/ui/button";
+import { SegmentedButtons } from "@/components/ui/segmented-buttons";
 
 const periodOptions: Array<{ label: string; value: FiscalPeriodType }> = [
     { label: "Quarterly", value: "quarterly" },
@@ -9,6 +9,7 @@ const periodOptions: Array<{ label: string; value: FiscalPeriodType }> = [
     { label: "TTM", value: "ttm" },
 ];
 
+/** The period switch of every Financials tab (`?period=`): a segmented control. */
 export function PeriodTypeButtons({
     onValueChange,
     value,
@@ -16,18 +17,5 @@ export function PeriodTypeButtons({
     value: FiscalPeriodType;
     onValueChange: (value: FiscalPeriodType) => void;
 }) {
-    return (
-        <div aria-label="Period" className="flex gap-1" role="group">
-            {periodOptions.map(opt => (
-                <Button
-                    aria-pressed={value === opt.value}
-                    key={opt.value}
-                    onClick={() => onValueChange(opt.value)}
-                    variant={value === opt.value ? "default" : "outline"}
-                >
-                    {opt.label}
-                </Button>
-            ))}
-        </div>
-    );
+    return <SegmentedButtons aria-label="Period" onChange={onValueChange} options={periodOptions} value={value} />;
 }

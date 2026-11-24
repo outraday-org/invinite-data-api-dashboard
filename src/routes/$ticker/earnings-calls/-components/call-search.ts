@@ -7,7 +7,26 @@ import { DOCUMENT_SORT_VALUES } from "@/lib/earnings/documents";
 import { formatMs } from "@/lib/earnings/format";
 import { optionalEnum, optionalInt } from "@/lib/url-state";
 
-import { CALL_TAB_VALUES } from "./call-tabs";
+/**
+ * Every tab of the call page, in bar order (`?tab=`; the route's `validateSearch` reads this list). No Audio tab since
+ * O2: the player sits above every tab, and an old `?tab=audio` falls back to the transcript.
+ */
+export const CALL_TAB_VALUES = [
+    "transcript",
+    "slides",
+    "press-release",
+    "documents",
+    "guidance",
+    "qa",
+    "participants",
+    "metrics",
+    "prosody",
+    "price-moves",
+] as const;
+
+export type CallTab = (typeof CALL_TAB_VALUES)[number];
+
+export const DEFAULT_CALL_TAB: CallTab = "transcript";
 
 /** The Transcript tab's formats in the URL (`?format=`); Speakers is the default and never written. */
 export const TRANSCRIPT_FORMAT_VALUES = ["speakers", "sections", "cleaned", "text"] as const satisfies ReadonlyArray<TranscriptFormat>;

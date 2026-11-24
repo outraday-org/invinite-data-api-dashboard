@@ -6,10 +6,13 @@ import { FinancialsStatementsView, ViewButtons } from "@/components/financials-p
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
 import { StatementSelect } from "@/components/financials-presentation/statement-select";
 import { tierLabel, usePlanAllows } from "@/components/ui/credit-hint";
-import { PageHeader } from "@/components/ui/page-header";
+import { FilterField } from "@/components/ui/filter-bar";
 import { isTierError } from "@/lib/api/errors";
 import { useV2FinancialsInfinite } from "@/lib/api/queries";
 
+import type { FinancialsTabProps } from "./financials-frame";
+
+import { financialsFilterCount, FinancialsFrame, STATEMENT_FILTERS } from "./financials-frame";
 import { useFinancialsSearch } from "./financials-search";
 import { FiscalYearRange } from "./fiscal-year-range";
 import { filingChoices, PointInTimeBanner, PointInTimeControls } from "./point-in-time";
@@ -31,7 +34,7 @@ const VIEW_SUBTITLES: Record<V2FinancialsView, string> = {
 };
 
 /** The page body of the Financials route's tab (`/$ticker/financials?view=`). */
-export function StandardizedFinancials({ ticker }: { ticker: string }) {
+export function StandardizedFinancials({ tabs, ticker }: FinancialsTabProps) {
     const [search, update] = useFinancialsSearch();
 
     const statement = search.statement ?? "income-statement";
@@ -72,20 +75,27 @@ export function StandardizedFinancials({ ticker }: { ticker: string }) {
     }, [error, pickedView, view]);
 
     return (
-        <div className="flex flex-col gap-4">
-            <PageHeader
-                actions={(
-                    <>
-                        <StatementSelect onValueChange={value => update({ chart: undefined, statement: value === "income-statement" ? undefined : value })} value={statement} />
-                        <ViewButtons badges={STANDARDIZED_VIEW_OPERATIONS} onValueChange={value => update({ chart: undefined, layout: value })} value={view} />
-                        <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+        <FinancialsFrame
+            activeCount={financialsFilterCount(search, STATEMENT_FILTERS)}
+            description={VIEW_SUBTITLES[view]}
+            filters={(
+                <>
+                    <FilterField label="Fiscal years">
                         <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
-                        <PointInTimeControls asOf={search.asOf} choices={choices} filing={search.filing} onChange={update} />
-                    </>
-                )}
-                description={VIEW_SUBTITLES[view]}
-                title="Standardized Financials"
-            />
+                    </FilterField>
+                    <PointInTimeControls asOf={search.asOf} choices={choices} filing={search.filing} onChange={update} />
+                </>
+            )}
+            onReset={() => update({ asOf: undefined, filing: undefined, fyFrom: undefined, fyTo: undefined })}
+            tabs={tabs}
+            what={(
+                <>
+                    <StatementSelect onValueChange={value => update({ chart: undefined, statement: value === "income-statement" ? undefined : value })} value={statement} />
+                    <ViewButtons badges={STANDARDIZED_VIEW_OPERATIONS} onValueChange={value => update({ chart: undefined, layout: value })} value={view} />
+                    <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+                </>
+            )}
+        >
             <PointInTimeBanner onClear={() => update({ asOf: undefined, filing: undefined })} pointInTime={pages.at(0)?.meta.point_in_time} />
             <FinancialsStatementsView
                 basis="standardized"
@@ -98,6 +108,6 @@ export function StandardizedFinancials({ ticker }: { ticker: string }) {
                 statement={statement}
                 view={view}
             />
-        </div>
+        </FinancialsFrame>
     );
 }

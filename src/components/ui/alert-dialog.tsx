@@ -67,7 +67,7 @@ function AlertDialogDescription({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Description>) {
     return (
         <AlertDialogPrimitive.Description
-            className={cn("text-muted-foreground *:[a]:hover:text-foreground text-xs/relaxed text-balance md:text-pretty *:[a]:underline *:[a]:underline-offset-3", className)}
+            className={cn("text-muted-foreground *:[a]:hover:text-foreground text-sm text-balance md:text-pretty *:[a]:underline *:[a]:underline-offset-3", className)}
             data-slot="alert-dialog-description"
             {...props}
         />

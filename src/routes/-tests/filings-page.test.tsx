@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type * as React from "react";
+
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { V2FilingDetailResponse } from "@/lib/api/types";
@@ -8,6 +10,7 @@ import type { FilingListRow } from "@/lib/sec/parity";
 import { ApiRequestError } from "@/lib/api/errors";
 import { facetSummary } from "@/lib/sec/parity";
 import { V2_FILING_10K } from "@/lib/sec/v2-fixtures";
+import { FilingsHeader } from "@/routes/$ticker/filings/-components/filings-header";
 import { FilingsList } from "@/routes/$ticker/filings/-components/filings-list";
 import { FilingHtmlBody, isHtmlDocumentUrl, primaryDocumentUrl } from "@/routes/$ticker/filings/-components/html-dialog";
 
@@ -215,5 +218,56 @@ describe("HTML view (lazy /v1/filings/{accession}?expand=documents)", () => {
         expect(screen.queryByTestId("html-viewer")).toBeNull();
 
         expect(screen.queryByText("No public copy yet")).toBeNull();
+    });
+});
+
+describe("filings header (ui-redesign task 6)", () => {
+    const header = (props: Partial<React.ComponentProps<typeof FilingsHeader>> = {}) => (
+        <FilingsHeader
+            actions={<button type="button">Live</button>}
+            availableFormTypes={["10-K", "8-K"]}
+            facetLine="31 10-K filings, newest filed Nov 3, 2026"
+            formTypeFilter={null}
+            loadingFormTypes={false}
+            onFormTypeChange={noop}
+            onItemsChange={noop}
+            onRangeChange={noop}
+            sortDirection="desc"
+            trailing={<button type="button">Search text</button>}
+            {...props}
+        />
+    );
+
+    it("the primary actions beside the title, every filter labelled in one filter bar, the facet line as meta", () => {
+        render(header());
+
+        const bar = screen.getByRole("group", { name: "Filters" });
+
+        expect(within(bar).getByLabelText("8-K items").tagName).toBe("INPUT");
+
+        expect(within(bar).getByRole("button", { name: "Form type" })).toBeInTheDocument();
+
+        expect(within(bar).getByRole("group", { name: "Filed" })).toBeInTheDocument();
+
+        expect(within(bar).getByRole("button", { name: "Search text" })).toBeInTheDocument();
+
+        // Live is a page action, not a filter.
+        expect(within(bar).queryByRole("button", { name: "Live" })).toBeNull();
+
+        expect(screen.getByText("31 10-K filings, newest filed Nov 3, 2026")).toHaveAttribute("data-slot", "page-header-meta");
+    });
+
+    it("\"Reset filters\" only with an active filter; it calls the page's reset", () => {
+        const onReset = vi.fn();
+
+        const { rerender } = render(header({ activeCount: 0, onReset }));
+
+        expect(screen.queryByRole("button", { name: /Reset filters/ })).toBeNull();
+
+        rerender(header({ activeCount: 2, onReset }));
+
+        fireEvent.click(screen.getByRole("button", { name: /Reset filters/ }));
+
+        expect(onReset).toHaveBeenCalledOnce();
     });
 });

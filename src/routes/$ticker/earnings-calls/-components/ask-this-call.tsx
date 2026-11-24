@@ -422,25 +422,33 @@ export function AskThisCall({ scope }: { scope: Exclude<AskScope, { kind: "marke
         setDraft("");
     };
 
+    // The type chips wait until the box is in use (focus inside it, a draft, a search or a picked type): one quiet line
+    // before. Focus is CSS's `focus-within`; `tabIndex={-1}` keeps it inside the section where a click does not focus
+    // the clicked chip (Safari), so a chip never vanishes under the pointer.
+    const inUse = draft !== "" || query !== "" || type !== undefined;
+
+    const costNote = <SearchCostNote>10 credits per search</SearchCostNote>;
+
     return (
-        <section className="flex flex-col gap-2 rounded-md border p-3 text-xs/relaxed">
+        <section className="group/ask flex flex-col gap-2 outline-none" tabIndex={-1}>
             <SearchQueryForm
                 busy={isFetching}
                 label={scope.kind === "event" ? "Search this call" : "Search this company's calls"}
                 onSubmit={submit}
                 onValueChange={setDraft}
                 placeholder={scope.kind === "event" ? "e.g. gross margin, data center revenue, \"free cash flow\"" : "Search this company's calls"}
+                trailing={<span className="shrink-0 whitespace-nowrap max-sm:hidden">{costNote}</span>}
                 value={draft}
             />
 
-            <div className="flex flex-wrap items-center gap-1">
+            <div className={cn("flex flex-wrap items-center gap-1", !inUse && "hidden group-focus-within/ask:flex")}>
                 <SearchChip onClick={() => pickType(undefined)} pressed={type === undefined}>All</SearchChip>
                 {TYPES.map(value => (
                     <SearchChip key={value} onClick={() => pickType(value)} pressed={type === value}>
                         {TYPE_LABELS[value]}
                     </SearchChip>
                 ))}
-                <SearchCostNote>10 credits per search</SearchCostNote>
+                <span className="ml-auto sm:hidden">{costNote}</span>
             </div>
 
             {query && (

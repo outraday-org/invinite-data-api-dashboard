@@ -9,6 +9,7 @@ import { DestinationEditorDialog } from "@/components/alerts/destination-editor"
 import { DestinationAlertsView } from "@/components/alerts/destination-parts";
 import { useDestinationActions, useDestinationAlerts } from "@/components/alerts/use-destination-actions";
 import { PageHeader } from "@/components/ui/page-header";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DELIVERY_STATUSES, TEST_POLL_MS, TEST_WATCH_MS, testTracking } from "@/lib/alerts/destinations";
 import { useDestination, useDestinationDeliveriesInfinite } from "@/lib/api/queries";
@@ -64,8 +65,7 @@ function Deliveries({ id, onChange, search }: { id: string; onChange: (patch: Pa
     const tracking = testId ? testTracking(testId, pages.flatMap(page => page.data), elapsed) : null;
 
     return (
-        <section className="flex flex-col gap-2">
-            <h3 className="text-sm font-semibold">Deliveries</h3>
+        <Section title="Deliveries">
             {testId && tracking && (
                 <TestDeliveryNotice deliveryId={testId} onDismiss={() => onChange({ test: undefined })} onRefresh={() => void deliveries.refetch()} tracking={tracking} />
             )}
@@ -82,16 +82,15 @@ function Deliveries({ id, onChange, search }: { id: string; onChange: (patch: Pa
                 }}
                 status={search.status ?? null}
             />
-        </section>
+        </Section>
     );
 }
 
 function DestinationAlerts({ id }: { id: string }) {
     return (
-        <section className="flex flex-col gap-2">
-            <h3 className="text-sm font-semibold">Alerts delivering here</h3>
+        <Section title="Alerts delivering here">
             <DestinationAlertsView state={useDestinationAlerts(id)} />
-        </section>
+        </Section>
     );
 }
 
@@ -130,7 +129,6 @@ function DestinationPage() {
 
     return (
         <div className="flex flex-col gap-4">
-            <PageHeader description={loaded.description ?? undefined} title="Destination" />
             <DestinationDetailView busy={actions.busy.has(loaded.id)} destination={loaded} onAction={action => actions.request(action, loaded)} onEdit={() => onChange({ edit: true })}>
                 <DestinationAlerts id={loaded.id} />
                 <Deliveries id={loaded.id} key={search.test ?? ""} onChange={onChange} search={search} />

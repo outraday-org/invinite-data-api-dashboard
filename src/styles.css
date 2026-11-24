@@ -1,31 +1,40 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-@import "@fontsource-variable/inter";
+@import "@fontsource-variable/ibm-plex-sans";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/500.css";
 
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
+/* Identity (ui-redesign task 1): one leaf-green accent (the brand mark's #218635) on green-tinted neutrals. Hex values
+   in the comments are the design values; contrast (WCAG): foreground 17.1 / 16.3, muted-foreground 5.8 / 7.4 on the
+   background (light / dark), primary-foreground on primary 5.9 / 7.6. */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.141 0.005 285.823);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.141 0.005 285.823);
+    --background: oklch(0.990 0.003 128.5); /* #FBFCFA */
+    --foreground: oklch(0.211 0.010 173.2); /* #141A18 */
+    --card: oklch(1 0 0); /* #FFFFFF */
+    --card-foreground: oklch(0.211 0.010 173.2);
     --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.141 0.005 285.823);
-    --primary: oklch(0.21 0.006 285.885);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.967 0.001 286.375);
-    --secondary-foreground: oklch(0.21 0.006 285.885);
-    --muted: oklch(0.967 0.001 286.375);
-    --muted-foreground: oklch(0.552 0.016 285.938);
-    --accent: oklch(0.967 0.001 286.375);
-    --accent-foreground: oklch(0.21 0.006 285.885);
+    --popover-foreground: oklch(0.211 0.010 173.2);
+    --primary: oklch(0.492 0.131 147.0); /* #1C7430 */
+    --primary-foreground: oklch(1 0 0); /* #FFFFFF */
+    --secondary: oklch(0.955 0.006 137.8); /* #EEF1ED */
+    --secondary-foreground: oklch(0.211 0.010 173.2);
+    --muted: oklch(0.955 0.006 137.8); /* #EEF1ED */
+    --muted-foreground: oklch(0.498 0.017 168.7); /* #5A6661 */
+    --accent: oklch(0.955 0.006 137.8); /* #EEF1ED */
+    --accent-foreground: oklch(0.211 0.010 173.2);
     --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.92 0.004 286.32);
-    --input: oklch(0.92 0.004 286.32);
-    --ring: oklch(0.705 0.015 286.067);
+    --border: oklch(0.913 0.010 140.5); /* #DFE4DE */
+    --input: oklch(0.913 0.010 140.5);
+    --ring: oklch(0.492 0.131 147.0 / 45%); /* #1C7430 at 45 % */
+    /* The mark, the active tab underline, the GET chip. */
+    --brand: oklch(0.545 0.149 146.3); /* #218635 */
+    /* Credits charged, partial coverage. */
+    --warn: oklch(0.531 0.119 65.1); /* #9A5B00 */
     --chart-1: oklch(0.646 0.222 41.116);
     --chart-2: oklch(0.6 0.118 184.704);
     --chart-3: oklch(0.398 0.07 227.392);
@@ -42,36 +51,39 @@
     --series-6: #008300;
     --series-7: #4a3aa7;
     --series-8: #e34948;
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.141 0.005 285.823);
-    --sidebar-primary: oklch(0.21 0.006 285.885);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.967 0.001 286.375);
-    --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-    --sidebar-border: oklch(0.92 0.004 286.32);
-    --sidebar-ring: oklch(0.705 0.015 286.067);
+    --radius: 0.5rem;
+    --sidebar: oklch(0.974 0.004 134.8); /* #F5F7F4 */
+    --sidebar-foreground: oklch(0.211 0.010 173.2);
+    --sidebar-primary: oklch(0.492 0.131 147.0);
+    --sidebar-primary-foreground: oklch(1 0 0);
+    /* A step darker than --accent: #EEF1ED would barely show on the #F5F7F4 sidebar. */
+    --sidebar-accent: oklch(0.938 0.010 140.5); /* #E7ECE6 */
+    --sidebar-accent-foreground: oklch(0.211 0.010 173.2);
+    --sidebar-border: oklch(0.913 0.010 140.5);
+    --sidebar-ring: oklch(0.492 0.131 147.0 / 45%);
 }
 
 .dark {
-    --background: oklch(0.141 0.005 285.823);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.21 0.006 285.885);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.21 0.006 285.885);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.92 0.004 286.32);
-    --primary-foreground: oklch(0.21 0.006 285.885);
-    --secondary: oklch(0.274 0.006 286.033);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.274 0.006 286.033);
-    --muted-foreground: oklch(0.705 0.015 286.067);
-    --accent: oklch(0.274 0.006 286.033);
-    --accent-foreground: oklch(0.985 0 0);
+    --background: oklch(0.182 0.007 178.8); /* #0F1312 */
+    --foreground: oklch(0.951 0.006 153.8); /* #ECF0ED */
+    --card: oklch(0.216 0.008 169.5); /* #161B19 */
+    --card-foreground: oklch(0.951 0.006 153.8);
+    --popover: oklch(0.216 0.008 169.5);
+    --popover-foreground: oklch(0.951 0.006 153.8);
+    --primary: oklch(0.700 0.154 148.7); /* #4DB866 */
+    --primary-foreground: oklch(0.173 0.014 159.5); /* #0B120E */
+    --secondary: oklch(0.261 0.011 167.7); /* #1F2623 */
+    --secondary-foreground: oklch(0.951 0.006 153.8);
+    --muted: oklch(0.261 0.011 167.7); /* #1F2623 */
+    --muted-foreground: oklch(0.714 0.017 160.4); /* #9AA69F */
+    --accent: oklch(0.261 0.011 167.7); /* #1F2623 */
+    --accent-foreground: oklch(0.951 0.006 153.8);
     --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.552 0.016 285.938);
+    --border: oklch(0.300 0.013 163.9); /* #28302C */
+    --input: oklch(0.300 0.013 163.9);
+    --ring: oklch(0.700 0.154 148.7 / 50%); /* #4DB866 at 50 % */
+    --brand: oklch(0.700 0.154 148.7); /* #4DB866 */
+    --warn: oklch(0.754 0.137 76.3); /* #E0A23A */
     --chart-1: oklch(0.488 0.243 264.376);
     --chart-2: oklch(0.696 0.17 162.48);
     --chart-3: oklch(0.769 0.188 70.08);
@@ -85,18 +97,34 @@
     --series-6: #008300;
     --series-7: #9085e9;
     --series-8: #e66767;
-    --sidebar: oklch(0.21 0.006 285.885);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.274 0.006 286.033);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.552 0.016 285.938);
+    --sidebar: oklch(0.199 0.008 182.1); /* #121716 */
+    --sidebar-foreground: oklch(0.951 0.006 153.8);
+    --sidebar-primary: oklch(0.700 0.154 148.7);
+    --sidebar-primary-foreground: oklch(0.173 0.014 159.5);
+    --sidebar-accent: oklch(0.261 0.011 167.7);
+    --sidebar-accent-foreground: oklch(0.951 0.006 153.8);
+    --sidebar-border: oklch(0.300 0.013 163.9);
+    --sidebar-ring: oklch(0.700 0.154 148.7 / 50%);
+}
+
+/* Type scale (the only sizes pages use): page title text-xl (20 / 28), instrument symbol text-2xl (24 / 32), section
+   title text-section (15 / 22, 600), prose / descriptions / form labels text-sm (14 / 22), data text-data (13 / 20,
+   the body default), small text-xs (12 / 16: meta lines, table headers, badges). */
+@theme {
+    --text-data: 0.8125rem;
+    --text-data--line-height: 1.25rem;
+    --text-section: 0.9375rem;
+    --text-section--line-height: 1.375rem;
+    --text-section--font-weight: 600;
+    --text-sm--line-height: 1.375rem;
 }
 
 @theme inline {
-    --font-sans: 'Inter Variable', sans-serif;
+    --font-sans: 'IBM Plex Sans Variable', ui-sans-serif, system-ui, sans-serif;
+    /* Only for request paths, ids, accession numbers and code: never labels or table figures. */
+    --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+    --color-brand: var(--brand);
+    --color-warn: var(--warn);
     --color-sidebar-ring: var(--sidebar-ring);
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -149,13 +177,13 @@
   * {
     @apply border-border outline-ring/50;
     }
-  /* The document scrolls (the browser's scrollbar); no page body is a scroll box. One base text size: the size the
-     tables, tabs and cards already use; headings size themselves. */
+  /* The document scrolls (the browser's scrollbar); no page body is a scroll box. One base text size: the data role
+     (13 / 20) of the type scale; headings, prose and small text size themselves. */
   body {
     width: 100%;
     min-height: 100svh;
     position: relative;
-    @apply font-sans bg-background text-foreground text-xs/relaxed;
+    @apply font-sans bg-background text-foreground text-data;
     }
   html {
     position: relative;
@@ -166,6 +194,18 @@
   table, thead, tbody, tfoot, tr, th, td {
     @apply border-border
   }
+  /* Figures line up digit under digit. */
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* The one visible focus style. Unlayered on purpose: it must beat the primitives' `outline-none` utility. Solid
+   --primary (5.7:1 light, 7.5:1 dark): --ring at 45 % measured 1.9:1, too faint for a 2 px outline. Menu items and
+   options show their highlight fill instead; an input-group's control leaves the ring to its group. */
+:is(a[href], button, input, select, textarea, summary, [role="tab"], [role="tabpanel"], [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="switch"], [role="slider"]):not([data-slot="input-group-control"]):focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
 }
 
 :is(a[href], button, summary, select, [role="button"], [role="link"], .cursor-pointer, .clickable-financial-row) {
@@ -173,8 +213,19 @@
 }
 
 @media (hover: hover) {
-    :where(a[href], button, summary, select, [role="button"], [role="link"]):hover:not(:disabled, [aria-disabled="true"], [data-disabled]),
+    :where(a[href], button, summary, select, [role="button"], [role="link"]):hover:not(:disabled, [aria-disabled="true"], [data-disabled], [role="tab"]),
     .clickable-financial-row > td:hover:not(:has(:is(button, a):hover)) {
         opacity: 0.85;
+    }
+}
+
+/* Animations and transitions off for a reader who asks for less motion (tw-animate-css included). Near-zero rather
+   than none, so Base UI's exit animations still end. */
+@media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
     }
 }

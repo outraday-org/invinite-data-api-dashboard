@@ -19,8 +19,9 @@ const textOf = (value: unknown) => (typeof value === "string" ? value : null);
 /**
  * One v2 SEC cursor list (pure), shared by the filing page's tabs (`filing-detail-views.tsx`) and the holder lists
  * (`holder-views.tsx`): the request's honest state (403 `excluded`, 404 `not_covered`, 503 `unavailable`, plan gate),
- * the answer's coverage (`pending` = still being filled, `partial`), its provenance (`pinned_at`, `counting`), an
- * optional note, the rows with "Load more" / export, and a failed next page under the table.
+ * the answer's coverage (`pending` = still being filled, `partial`), an optional note, the rows with "Load more" /
+ * export — the provenance line (`V2MetaLine`: coverage, `pinned_at`, `counting`) in the table's toolbar beside the count
+ * (ui-redesign task 9) — and a failed next page under the table.
  */
 export function SecListFrame<TRow>({
     columns,
@@ -48,7 +49,6 @@ export function SecListFrame<TRow>({
     return (
         <div className="flex flex-col gap-2">
             <SecReadinessNotice coverage={meta?.coverage} />
-            <V2MetaLine meta={meta && { counting: textOf(meta.counting), coverage: meta.coverage, pinned_at: textOf(meta.pinned_at) }} />
             {note}
             <DataTable
                 columns={columns}
@@ -61,6 +61,7 @@ export function SecListFrame<TRow>({
                 onLoadMore={onLoadMore}
                 operationId={operationId}
                 rows={pages.flatMap(page => page.data)}
+                toolbarMeta={<V2MetaLine meta={meta && { counting: textOf(meta.counting), coverage: meta.coverage, pinned_at: textOf(meta.pinned_at) }} />}
             />
             {error ? <SecReadinessNotice error={error} operationId={operationId} title={errorTitle} /> : null}
         </div>

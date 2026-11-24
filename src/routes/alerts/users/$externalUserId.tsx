@@ -2,9 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 
 import { AlertEventsView } from "@/components/alerts/alert-events-view";
-import { AlertsState, BatchResultsView } from "@/components/alerts/alert-parts";
+import { AlertsState, BatchResultsView, MoreActionsMenu } from "@/components/alerts/alert-parts";
 import { AlertUserDeleteResultNotice, AlertUserProfileView } from "@/components/alerts/alert-user-detail-view";
 import { AlertUserEditDialog } from "@/components/alerts/alert-user-dialogs";
+import { AlertUserStatusBadge } from "@/components/alerts/alert-user-list-view";
 import { AlertsListView } from "@/components/alerts/alerts-list-view";
 import { useAlertActions } from "@/components/alerts/use-alert-actions";
 import { useAlertUserActions } from "@/components/alerts/use-alert-user-actions";
@@ -12,6 +13,7 @@ import { useEventList } from "@/components/alerts/use-event-list";
 import { useIdSelection } from "@/components/alerts/use-id-selection";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fromAlertUser } from "@/lib/alerts/alert-users";
 import { listState } from "@/lib/api/list-state";
@@ -32,8 +34,7 @@ function AlertUserAlerts({ externalUserId }: { externalUserId: string }) {
     const actions = useAlertActions({ onBulkDone: ids => setSelected(ids, false), onDeleted: ids => setSelected(ids, false) });
 
     return (
-        <section className="flex flex-col gap-2">
-            <h3 className="text-sm font-semibold">Alerts</h3>
+        <Section title="Alerts">
             {actions.batch && <BatchResultsView ids={actions.batch.ids} onDismiss={actions.dismissBatch} results={actions.batch.results} />}
             <AlertsListView
                 scope="end-user"
@@ -41,7 +42,7 @@ function AlertUserAlerts({ externalUserId }: { externalUserId: string }) {
                 state={listState(alerts)}
             />
             {actions.dialog}
-        </section>
+        </Section>
     );
 }
 
@@ -52,10 +53,9 @@ function AlertUserEvents({ externalUserId }: { externalUserId: string }) {
     const list = useEventList(query);
 
     return (
-        <section className="flex flex-col gap-2">
-            <h3 className="text-sm font-semibold">Events</h3>
+        <Section title="Events">
             <AlertEventsView emptyText="No alert of this end user has fired yet." events={list.events} liveIds={new Set()} loadedNote={list.note} operationId="listAlertEvents" state={list.state} />
-        </section>
+        </Section>
     );
 }
 
@@ -95,17 +95,22 @@ function AlertUserPage() {
     const busy = actions.busy.has(loaded.external_user_id);
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-8">
             <PageHeader
                 actions={(
-                    <div className="flex flex-wrap gap-2" data-testid="alert-user-actions">
-                        {loaded.status === "active" && <Button disabled={busy} onClick={() => actions.request("pause", loaded)} size="sm" type="button" variant="outline">Pause…</Button>}
-                        {loaded.status === "paused" && <Button disabled={busy} onClick={() => actions.request("resume", loaded)} size="sm" type="button" variant="outline">Resume…</Button>}
-                        {loaded.status !== "deleting" && <Button disabled={busy} onClick={() => setEditing(true)} size="sm" type="button" variant="outline">Edit</Button>}
-                        <Button disabled={busy} onClick={() => actions.request("delete", loaded)} size="sm" type="button" variant="destructive">{loaded.status === "deleting" ? "Continue deleting…" : "Delete…"}</Button>
+                    <div className="flex flex-wrap items-center gap-2" data-testid="alert-user-actions">
+                        {loaded.status === "active" && <Button disabled={busy} onClick={() => actions.request("pause", loaded)} type="button" variant="outline">Pause…</Button>}
+                        {loaded.status === "paused" && <Button disabled={busy} onClick={() => actions.request("resume", loaded)} type="button" variant="outline">Resume…</Button>}
+                        {loaded.status !== "deleting" && <Button disabled={busy} onClick={() => setEditing(true)} type="button" variant="outline">Edit</Button>}
+                        <MoreActionsMenu
+                            actions={[{ destructive: true, disabled: busy, label: loaded.status === "deleting" ? "Continue deleting…" : "Delete…", onSelect: () => actions.request("delete", loaded) }]}
+                            disabled={busy}
+                            label={`More actions for ${loaded.external_user_id}`}
+                        />
                     </div>
                 )}
                 description={loaded.display_name ? <span className="font-mono break-all">{loaded.external_user_id}</span> : "End user"}
+                meta={<AlertUserStatusBadge status={loaded.status} />}
                 title={loaded.display_name ?? <span className="font-mono break-all">{loaded.external_user_id}</span>}
             />
             {actions.deleted && <AlertUserDeleteResultNotice onDismiss={actions.dismissDeleted} outcome={actions.deleted} />}

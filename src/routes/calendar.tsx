@@ -10,8 +10,10 @@ import type { CalendarSearch } from "@/routes/$ticker/earnings-calls/-components
 import { TabStrip } from "@/components/navigation/tab-strip";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { DayRange } from "@/components/ui/day-range";
 import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2EventsInfinite } from "@/lib/api/queries";
 import { FILL_PAGES_MAX, useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
@@ -118,9 +120,9 @@ export function CalendarView({ capped, error, events, filtering, hasNextPage, is
                 emptyText="No calls in this window."
                 errorState={error ? <ErrorState error={error} title="Failed to load the earnings calendar" /> : null}
                 groupHeading={(day, rows) => (
-                    <span className="flex items-baseline gap-2">
+                    <span className="flex items-baseline gap-2 text-sm font-semibold">
                         {dayHeading(day)}
-                        <span className="text-muted-foreground font-normal tabular-nums">{`${rows.length} ${rows.length === 1 ? "call" : "calls"}${hasNextPage ? " loaded" : ""}`}</span>
+                        <span className="text-muted-foreground text-xs font-normal tabular-nums">{`${rows.length} ${rows.length === 1 ? "call" : "calls"}${hasNextPage ? " loaded" : ""}`}</span>
                     </span>
                 )}
                 groupOf={newYorkCallDay}
@@ -188,23 +190,8 @@ function CalendarPage() {
     const preset = presetOf(range, now);
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer>
             <PageHeader
-                actions={(
-                    <div className="flex items-center gap-2">
-                        <TabStrip
-                            aria-label="Window"
-                            onSelect={value => onFilterChange(value === "custom" ? {} : calendarPresetWindow(value, now))}
-                            options={preset ? PRESET_OPTIONS : [...PRESET_OPTIONS, { label: "Custom", value: "custom" }]}
-                            value={preset ?? "custom"}
-                        />
-                        {(search.from || search.to) && (
-                            <Button onClick={() => onFilterChange({ from: undefined, to: undefined })} size="sm" type="button" variant="ghost">
-                                Reset
-                            </Button>
-                        )}
-                    </div>
-                )}
                 description={(
                     <>
                         Calls of all covered US companies by New York call day (at most 92 days at once). Estimated = a vendor or
@@ -215,7 +202,22 @@ function CalendarPage() {
                 )}
                 title="Earnings calendar"
             />
-            <CalendarFilters from={range.from} onChange={onFilterChange} search={search} to={range.to} />
+            {/* The window: presets beside the day inputs (not a filter: "Reset filters" keeps it). */}
+            <div aria-label="Window" className="flex flex-wrap items-center gap-x-3 gap-y-2" role="group">
+                <TabStrip
+                    aria-label="Window preset"
+                    onSelect={value => onFilterChange(value === "custom" ? {} : calendarPresetWindow(value, now))}
+                    options={preset ? PRESET_OPTIONS : [...PRESET_OPTIONS, { label: "Custom", value: "custom" }]}
+                    value={preset ?? "custom"}
+                />
+                <DayRange from={range.from} labels={{ from: "From", to: "To" }} onChange={onFilterChange} to={range.to} />
+                {(search.from || search.to) && (
+                    <Button onClick={() => onFilterChange({ from: undefined, to: undefined })} size="sm" type="button" variant="ghost">
+                        Default window
+                    </Button>
+                )}
+            </div>
+            <CalendarFilters onChange={onFilterChange} search={search} />
             <LiveNowStrip />
             <CalendarView
                 capped={capped}
@@ -228,6 +230,6 @@ function CalendarPage() {
                 now={now}
                 onLoadMore={() => void fetchNextPage()}
             />
-        </div>
+        </PageContainer>
     );
 }

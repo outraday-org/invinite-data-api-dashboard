@@ -10,12 +10,14 @@ import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { filerCikParam } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2FilersInfinite } from "@/lib/api/queries";
 import { titleHead } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { IN_PLACE } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const institutionsSearchSchema = z.object({
     q: z.string().trim().min(1).max(200).optional().catch(undefined),
@@ -109,29 +111,40 @@ function InstitutionsPage() {
     const list = useV2FilersInfinite({ limit: 50, phase: "manager", q: search.q, sort: search.sort });
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer>
             <PageHeader
-                actions={(
-                    <>
+                description="Investment managers that file 13F reports with the SEC. Each opens its filer page with its quarterly 13F portfolio."
+                title="Institutions"
+            />
+            <FilterBar
+                activeCount={[search.q, search.sort].filter(value => value !== undefined).length}
+                onReset={() => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, q: undefined, sort: undefined }) })}
+            >
+                <FilterField label="Name" span={2}>
+                    {id => (
                         <DebouncedInput
                             aria-label="Search institutions"
-                            className="w-[260px]"
+                            className="w-full"
+                            id={id}
                             onCommit={q => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, q: q || undefined }) })}
-                            placeholder="Name"
+                            placeholder="Any name"
                             value={search.q ?? ""}
                         />
+                    )}
+                </FilterField>
+                <FilterField label="Sort">
+                    {id => (
                         <FilterSelect
                             aria-label="Sort"
-                            className="w-[140px]"
+                            className="w-full"
+                            id={id}
                             onValueChange={value => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, sort: value === "name" ? undefined : value }) })}
                             options={[{ label: "Name A–Z", value: "name" }, { label: "Name Z–A", value: "-name" }]}
                             value={search.sort ?? "name"}
                         />
-                    </>
-                )}
-                description="Investment managers that file 13F reports with the SEC. Each opens its filer page with its quarterly 13F portfolio."
-                title="Institutions"
-            />
+                    )}
+                </FilterField>
+            </FilterBar>
             <InstitutionsList
                 error={list.error}
                 hasNextPage={list.hasNextPage}
@@ -140,6 +153,6 @@ function InstitutionsPage() {
                 onLoadMore={() => void list.fetchNextPage()}
                 pages={list.data?.pages ?? []}
             />
-        </div>
+        </PageContainer>
     );
 }

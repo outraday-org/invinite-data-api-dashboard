@@ -7,8 +7,8 @@ import type { Destination, JsonValue, Script, ScriptVersion } from "@/lib/api/ty
 import { DestinationEditorDialog } from "@/components/alerts/destination-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { kindLabel, presetLabel } from "@/lib/alerts/destinations";
 import { defaultText, inputRangeText, manifestInputs, versionsNewestFirst } from "@/lib/alerts/scripts";
 import { useDestinationsInfinite, useScriptsInfinite, useScriptVersions } from "@/lib/api/queries";
@@ -66,13 +66,13 @@ export function DestinationPicker({ onChange, options, value }: { onChange: (tex
             {Boolean(options.error) && <p className="text-destructive">The destinations could not be loaded; the ids below stay as they are.</p>}
             {!options.isLoading && !options.error && options.data.length === 0 && <p className="text-muted-foreground">The account has no destination yet.</p>}
             {options.data.length > 0 && (
-                <ul aria-label="Destinations" className="flex flex-col gap-1" role="group">
+                <ul aria-label="Destinations" className="flex flex-col divide-y rounded-md border" role="group">
                     {options.data.map((destination) => {
                         const checked = picked.includes(destination.id);
 
                         return (
                             <li key={destination.id}>
-                                <div className="flex min-w-0 items-start gap-2">
+                                <div className="flex min-w-0 items-start gap-2 px-3 py-2">
                                     <input
                                         checked={checked}
                                         className="mt-0.5 size-3.5 shrink-0 accent-primary"
@@ -83,7 +83,7 @@ export function DestinationPicker({ onChange, options, value }: { onChange: (tex
                                     />
                                     <span className="flex min-w-0 flex-col">
                                         <label className="truncate font-medium" htmlFor={`destination-pick-${destination.id}`}>{destination.description ?? destination.url}</label>
-                                        <span className="flex flex-wrap items-center gap-1 text-muted-foreground">
+                                        <span className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
                                             <span className="truncate font-mono">{destination.id}</span>
                                             <span>{`· ${kindLabel(destination.kind)} · ${presetLabel(destination.preset)}`}</span>
                                             {destination.description && <span className="truncate">{`· ${destination.url}`}</span>}
@@ -109,7 +109,7 @@ export function DestinationPicker({ onChange, options, value }: { onChange: (tex
             )}
             <div className="flex flex-wrap items-center gap-2">
                 {options.onNew && <Button disabled={full} onClick={options.onNew} size="sm" type="button" variant="outline">New destination…</Button>}
-                <span className="text-muted-foreground">{`${picked.length} of ${DESTINATIONS_MAX} picked.`}</span>
+                <span className="text-xs text-muted-foreground">{`${picked.length} of ${DESTINATIONS_MAX} picked.`}</span>
             </div>
         </div>
     );
@@ -166,32 +166,29 @@ export function ScriptVersionPicker({ id, onChange, options, value }: { id: stri
 
     return (
         <div className="flex flex-col gap-2" data-testid="script-version-picker">
-            <Select
+            <DropdownSelect
+                aria-label="Script"
+                className="w-full"
+                id={`${id}-script`}
+                label={script ? script.name : options.isLoading ? "Loading scripts…" : options.scripts.length === 0 ? "No script uploaded yet" : "Pick a script"}
                 onValueChange={(next) => {
-                    options.onScript(next === null || next === UNSET ? "" : String(next));
+                    options.onScript(next === UNSET ? "" : next);
 
                     onChange("");
                 }}
+                options={[{ label: "Pick a script", value: UNSET }, ...options.scripts.map(item => ({ label: item.name, value: item.id }))]}
                 value={options.scriptId || UNSET}
-            >
-                <SelectTrigger aria-label="Script" className="w-full" id={`${id}-script`}>
-                    {script ? script.name : options.isLoading ? "Loading scripts…" : options.scripts.length === 0 ? "No script uploaded yet" : "Pick a script"}
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value={UNSET}>Pick a script</SelectItem>
-                    {options.scripts.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
-                </SelectContent>
-            </Select>
+            />
             {options.scriptId && (
-                <Select onValueChange={next => onChange(next === null || next === UNSET ? "" : String(next))} value={value || UNSET}>
-                    <SelectTrigger aria-label="Script version" className="w-full" id={id}>
-                        {listed ? `Version ${options.versions.find(version => version.id === value)?.version}` : value ? value : usable.length === 0 && !options.isLoading ? "No compiled version" : "Pick a version"}
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value={UNSET}>Pick a version</SelectItem>
-                        {usable.map(version => <SelectItem key={version.id} value={version.id}>{`Version ${version.version} · ${version.id}`}</SelectItem>)}
-                    </SelectContent>
-                </Select>
+                <DropdownSelect
+                    aria-label="Script version"
+                    className="w-full"
+                    id={id}
+                    label={listed ? `Version ${options.versions.find(version => version.id === value)?.version}` : value ? value : usable.length === 0 && !options.isLoading ? "No compiled version" : "Pick a version"}
+                    onValueChange={next => onChange(next === UNSET ? "" : next)}
+                    options={[{ label: "Pick a version", value: UNSET }, ...usable.map(version => ({ label: `Version ${version.version} · ${version.id}`, value: version.id }))]}
+                    value={value || UNSET}
+                />
             )}
             {value && !listed && <p className="text-muted-foreground">{`Version ${value} is kept: it is not among the compiled versions of the picked script.`}</p>}
             {Boolean(options.error) && <p className="text-destructive">The scripts could not be loaded; the version id stays as it is.</p>}
@@ -240,7 +237,7 @@ export function ScriptInputsFields({ inputs, onChange, text }: { inputs: Readonl
     const values = inputsObjectOf(text);
 
     return (
-        <div className="grid gap-3 sm:col-span-2 sm:grid-cols-2" data-testid="script-input-fields">
+        <div className="col-span-full grid gap-4 md:grid-cols-2" data-testid="script-input-fields">
             {inputs.map((input) => {
                 const fieldId = `alert-field-condition-inputs-${input.name}`;
 
@@ -250,14 +247,14 @@ export function ScriptInputsFields({ inputs, onChange, text }: { inputs: Readonl
 
                 return (
                     <div className="flex min-w-0 flex-col gap-1" key={input.name}>
-                        <label className="font-medium" htmlFor={fieldId}>{input.title}</label>
+                        <label className="text-sm font-medium" htmlFor={fieldId}>{input.title}</label>
                         <Input
                             id={fieldId}
                             onChange={event => onChange(withInput(text, input, event.target.value))}
                             placeholder={defaultText(input.default)}
                             value={!Object.hasOwn(values, input.name) ? "" : typeof value === "string" ? value : JSON.stringify(value)}
                         />
-                        <p className="text-muted-foreground">{`${input.kind}${range ? ` · ${range}` : ""} · default ${defaultText(input.default)} (empty = the default)`}</p>
+                        <p className="text-xs text-muted-foreground">{`${input.kind}${range ? ` · ${range}` : ""} · default ${defaultText(input.default)} (empty = the default)`}</p>
                     </div>
                 );
             })}

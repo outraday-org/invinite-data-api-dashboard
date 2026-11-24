@@ -20,6 +20,8 @@ export function PlayPauseButton({ engine }: { engine: PlayerEngine }) {
     return (
         <Button
             aria-label={playing ? "Pause" : "Play"}
+            // One thumb on a phone: 40 px below 640 px.
+            className="max-sm:size-10"
             onClick={() => (playing ? engine.pause() : engine.play())}
             size="icon"
             type="button"

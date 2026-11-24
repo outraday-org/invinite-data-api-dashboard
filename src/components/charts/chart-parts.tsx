@@ -4,7 +4,7 @@ import { ResponsiveContainer } from "recharts";
 // Shared recharts styling (earnings-call price charts): recessive grid, muted ticks, theme-aware tooltip.
 export const CHART_MARGIN = { bottom: 4, left: 4, right: 16, top: 8 };
 
-export const AXIS_TICK = { fill: "var(--muted-foreground)", fontSize: 11 };
+export const AXIS_TICK = { fill: "var(--muted-foreground)", fontSize: 12 };
 
 export const GRID_STROKE = "var(--border)";
 

@@ -7,12 +7,15 @@ import type { V2CagrHorizon, V2CagrPeriod, V2CagrResponse } from "@/lib/api/type
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
-import { PageHeader } from "@/components/ui/page-header";
+import { FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useV2CagrInfinite } from "@/lib/api/queries";
 import { completePeriodsOnly, periodLabel, periodLabels } from "@/lib/financials/statements";
 import { formatFractionPercentCompact, formatMetricId } from "@/lib/utils";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
+import type { FinancialsTabProps } from "./financials-frame";
+
+import { financialsFilterCount, FinancialsFrame, FISCAL_YEAR_FILTER } from "./financials-frame";
 import { defaultPeriodOf, useFinancialsSearch } from "./financials-search";
 import { FiscalYearRange } from "./fiscal-year-range";
 
@@ -84,7 +87,7 @@ export function CagrView({ pages, ...state }: MetricsListState & { pages: Readon
 }
 
 /** The page body of the Financials route's tab (`/$ticker/financials?view=`). */
-export function CagrFinancials({ ticker }: { ticker: string }) {
+export function CagrFinancials({ tabs, ticker }: FinancialsTabProps) {
     const [search, update] = useFinancialsSearch();
 
     const horizon: HorizonFilter = search.horizon ?? "all";
@@ -103,18 +106,23 @@ export function CagrFinancials({ ticker }: { ticker: string }) {
     });
 
     return (
-        <div className="flex flex-col gap-4">
-            <PageHeader
-                actions={(
-                    <>
-                        <FilterSelect aria-label="Horizon" className="w-[200px]" onValueChange={value => update({ horizon: value === "all" ? undefined : value })} options={cagrPeriodOptions} value={horizon} />
-                        <PeriodTypeButtons onValueChange={value => update({ period: value === defaultPeriodOf("cagr") ? undefined : value })} value={periodType} />
-                        <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
-                    </>
-                )}
-                description="Compound annual growth rates by metric."
-                title="CAGR Financials"
-            />
+        <FinancialsFrame
+            activeCount={financialsFilterCount(search, [FISCAL_YEAR_FILTER])}
+            description="Compound annual growth rates by metric."
+            filters={(
+                <FilterField label="Fiscal years">
+                    <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
+                </FilterField>
+            )}
+            onReset={() => update({ fyFrom: undefined, fyTo: undefined })}
+            tabs={tabs}
+            what={(
+                <>
+                    <FilterSelect aria-label="Horizon" className="w-[160px]" onValueChange={value => update({ horizon: value === "all" ? undefined : value })} options={cagrPeriodOptions} value={horizon} />
+                    <PeriodTypeButtons onValueChange={value => update({ period: value === defaultPeriodOf("cagr") ? undefined : value })} value={periodType} />
+                </>
+            )}
+        >
             <CagrView
                 error={error}
                 hasNextPage={hasNextPage}
@@ -123,6 +131,6 @@ export function CagrFinancials({ ticker }: { ticker: string }) {
                 onLoadMore={() => fetchNextPage()}
                 pages={data?.pages ?? []}
             />
-        </div>
+        </FinancialsFrame>
     );
 }

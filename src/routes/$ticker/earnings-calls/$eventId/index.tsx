@@ -37,17 +37,17 @@ export const Route = createFileRoute("/$ticker/earnings-calls/$eventId/")({
 });
 
 function EarningsCallPage() {
-    const { eventId } = Route.useParams();
+    const { eventId, ticker } = Route.useParams();
 
     // Keyed: another call gets a fresh page (audio host, tab state, players).
-    return <CallPage eventId={eventId} key={eventId} />;
+    return <CallPage eventId={eventId} key={eventId} ticker={ticker} />;
 }
 
 /**
  * The call page. `$ticker` is informational: the event id is authoritative, and a call whose
  * symbol differs from the URL's ticker still renders (no redirect).
  */
-function CallPage({ eventId }: { eventId: string }) {
+function CallPage({ eventId, ticker }: { eventId: string; ticker: string }) {
     const search = Route.useSearch();
 
     const { tab = DEFAULT_CALL_TAB } = search;
@@ -122,8 +122,9 @@ function CallPage({ eventId }: { eventId: string }) {
     if (isLoading || !event) {
         return (
             <div className="flex flex-col gap-4">
-                <Skeleton className="h-6 w-72" />
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-7 w-72" />
+                <Skeleton className="h-4 w-96 max-w-full" />
+                <Skeleton className="h-12 w-full" />
                 <Skeleton className="h-64 w-full" />
             </div>
         );
@@ -134,18 +135,19 @@ function CallPage({ eventId }: { eventId: string }) {
         // link included), then stays loaded so timestamps on any tab can play it.
         <CallAudioProvider eventId={event.event_id} hasAudio={event.has_audio} live={liveSession} startAtMs={linkTimeMs ?? undefined}>
             <div className="flex flex-col gap-4">
-                <CallHeader event={event} />
-
-                {/* "Create alert" for the call's company and its alerts link (alerts task 4). */}
-                <div className="flex justify-end empty:hidden">
-                    <AlertEntryPoints symbol={event.symbol} types={ENTRY_TYPES.calls} />
-                </div>
+                {/* "Create alert" for the call's company and its alerts link (alerts task 4) as the header's action. */}
+                <CallHeader actions={<AlertEntryPoints symbol={event.symbol} types={ENTRY_TYPES.calls} />} event={event} pageSymbol={ticker} />
 
                 {/* The live call's notices, highlights, price and diagnostics (nothing for other calls). */}
                 <LivePlayerSlot event={event} session={liveSession} />
 
                 {/* The company's public broadcast (click-to-load), collapsed while the call is captured live. */}
                 <EventVideoSlot event={event} />
+
+                {/* The one player bar, sticky below the ticker header on every tab: the live stream while the call is */}
+                {/* followed live, the recording once it is published (nothing without either). Above the search since */}
+                {/* ui-redesign task 10. */}
+                <CallPlayerBar event={event} onCopyLinkAt={onCopyLinkAt} />
 
                 <AskThisCall
                     scope={{
@@ -154,10 +156,6 @@ function CallPage({ eventId }: { eventId: string }) {
                         onJumpToTranscript,
                     }}
                 />
-
-                {/* The one player bar, sticky below the ticker header on every tab: the live stream while the call is */}
-                {/* followed live, the recording once it is published (nothing without either). */}
-                <CallPlayerBar event={event} onCopyLinkAt={onCopyLinkAt} />
 
                 <CallTabs
                     event={event}

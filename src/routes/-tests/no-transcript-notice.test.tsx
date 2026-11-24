@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { V2Event } from "@/lib/api/types";
@@ -119,13 +119,13 @@ describe("NoTranscriptNotice", () => {
 
 describe("Notice card edge", () => {
     // A ring paints outside the box, so the call page's scroll viewport clipped the card's left edge; a real border
-    // stays inside it, flush with the audio player's.
+    // stays inside it. Since ui-redesign task 6 a notice's edge is its left accent bar.
     it("draws its edge as a border, not an outside ring", () => {
         render(<NoTranscriptNotice captureStatus="pending" />);
 
         const card = screen.getByRole("status");
 
-        expect(card).toHaveClass("border");
+        expect(card).toHaveClass("border-l-2");
 
         expect(card.className).not.toMatch(/(^|\s)ring-1(\s|$)/);
     });
@@ -174,34 +174,18 @@ describe("CallTabs without a transcript", () => {
 });
 
 describe("CallTabs: the tab bar (UI walk F067)", () => {
-    it("wraps onto a second row instead of scrolling the last tabs behind the API button", () => {
+    it("keeps the tabs on one row that scrolls inside itself (never wraps, never the page)", () => {
         renderTab(eventOf({ has_transcript: true }), "qa");
 
         const list = screen.getByRole("tablist");
 
-        expect(list).toHaveClass("flex-wrap");
+        expect(list).toHaveClass("flex-nowrap");
 
-        expect(list.parentElement?.className).not.toMatch(/overflow-x-auto/);
-    });
-});
+        expect(list).not.toHaveClass("flex-wrap");
 
-describe("CallTabs: the API button (O6-final)", () => {
-    it("sits in the tab bar and lists the open tab's requests, read from its mounted queries", async () => {
-        renderTab(eventOf({ has_transcript: true }), "qa");
+        expect(list.parentElement?.className).toMatch(/overflow-x-auto/);
 
-        fireEvent.click(screen.getByRole("button", { name: "API" }));
-
-        expect(await screen.findByText("/v1/events/e1/qa?include=scores")).toBeInTheDocument();
-
-        expect(screen.getByText("req_qa")).toBeInTheDocument();
-    });
-
-    it("a tab without a request on screen lists none", async () => {
-        renderTab(eventOf({ has_transcript: true }), "price-moves");
-
-        fireEvent.click(screen.getByRole("button", { name: "API" }));
-
-        expect(await screen.findByText("No Data API request on this page yet.")).toBeInTheDocument();
+        expect(screen.getByRole("tab", { name: "Q&A", selected: true })).toHaveAttribute("data-active");
     });
 });
 

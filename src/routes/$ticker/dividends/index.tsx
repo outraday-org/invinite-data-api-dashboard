@@ -9,13 +9,14 @@ import type { V2Dividend, V2DividendsResponse, V2DividendsSort } from "@/lib/api
 import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
 import { DataTable } from "@/components/ui/data-table";
 import { DayRange } from "@/components/ui/day-range";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { PageHeader } from "@/components/ui/page-header";
 import { RequestErrorState } from "@/components/ui/request-error-state";
 import { useV2DividendsInfinite } from "@/lib/api/queries";
 import { DASH, formatDay, formatMoney } from "@/lib/format";
 import { tickerHead } from "@/lib/layout";
 import { IN_PLACE, optionalDay, optionalEnum, orderedWindow } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const SORTS = ["-ex_date", "ex_date", "-pay_date", "pay_date"] as const satisfies ReadonlyArray<V2DividendsSort>;
 
@@ -73,7 +74,7 @@ const SORT_OPTIONS = [
 ] satisfies Array<{ label: string; value: (typeof SORTS)[number] }>;
 
 const COLUMNS: Array<ColumnDef<V2Dividend>> = [
-    { cell: ({ row }) => formatDay(row.original.ex_dividend_date), header: "Ex-Date", id: "ex_dividend_date" },
+    { cell: ({ row }) => formatDay(row.original.ex_dividend_date), header: "Ex-date", id: "ex_dividend_date" },
     { cell: ({ row }) => formatDay(row.original.declaration_date), header: "Declared", id: "declaration_date" },
     { cell: ({ row }) => formatDay(row.original.record_date), header: "Record", id: "record_date" },
     { cell: ({ row }) => formatDay(row.original.pay_date), header: "Payable", id: "pay_date" },
@@ -145,13 +146,20 @@ function DividendsPage() {
 
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2DividendsInfinite(dividendsRequest(ticker, search));
 
+    // The day range counts once; a sort other than the default counts too.
+    const activeCount = Number(Boolean(search.from || search.to)) + Number(Boolean(search.sort));
+
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
             <PageHeader actions={<AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.dividends} />} description="Cash dividends; filter by ex-dividend date and sort by ex-date or pay date." title="Dividends" />
-            <div className="flex flex-wrap items-center gap-2">
-                <DayRange from={search.from} labels={{ from: "Ex-date from", to: "Ex-date to" }} lead="Ex-date" onChange={onChange} to={search.to} />
-                <FilterSelect aria-label="Sort" className="w-[200px]" onValueChange={value => onChange({ sort: value === DEFAULT_SORT ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? DEFAULT_SORT} />
-            </div>
+            <FilterBar activeCount={activeCount} onReset={() => onChange({ from: undefined, sort: undefined, to: undefined })}>
+                <FilterField label="Ex-date" span={2}>
+                    <DayRange from={search.from} labels={{ from: "Ex-date from", to: "Ex-date to" }} onChange={onChange} to={search.to} />
+                </FilterField>
+                <FilterField label="Sort">
+                    {id => <FilterSelect aria-label="Sort" className="w-full" id={id} onValueChange={value => onChange({ sort: value === DEFAULT_SORT ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? DEFAULT_SORT} />}
+                </FilterField>
+            </FilterBar>
             <DividendsView
                 error={error}
                 filtered={Boolean(search.from || search.to)}

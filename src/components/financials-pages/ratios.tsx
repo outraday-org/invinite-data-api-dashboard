@@ -7,12 +7,15 @@ import type { V2RatioCategory, V2RatioPeriod, V2RatiosResponse } from "@/lib/api
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
-import { PageHeader } from "@/components/ui/page-header";
+import { FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useV2RatiosInfinite } from "@/lib/api/queries";
 import { periodLabel, periodLabels } from "@/lib/financials/statements";
 import { formatMetricId, formatNumberEnCompact } from "@/lib/utils";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
+import type { FinancialsTabProps } from "./financials-frame";
+
+import { financialsFilterCount, FinancialsFrame, FISCAL_YEAR_FILTER } from "./financials-frame";
 import { useFinancialsSearch } from "./financials-search";
 import { FiscalYearRange } from "./fiscal-year-range";
 
@@ -94,7 +97,7 @@ export function RatiosView({ pages, ...state }: MetricsListState & { pages: Read
 }
 
 /** The page body of the Financials route's tab (`/$ticker/financials?view=`). */
-export function RatiosFinancials({ ticker }: { ticker: string }) {
+export function RatiosFinancials({ tabs, ticker }: FinancialsTabProps) {
     const [search, update] = useFinancialsSearch();
 
     const periodType = search.period ?? "quarterly";
@@ -112,18 +115,23 @@ export function RatiosFinancials({ ticker }: { ticker: string }) {
     });
 
     return (
-        <div className="flex flex-col gap-4">
-            <PageHeader
-                actions={(
-                    <>
-                        <FilterSelect aria-label="Ratio category" className="w-[220px]" onValueChange={value => update({ category: value === ALL ? undefined : value })} options={ratioCategoryOptions} value={category} />
-                        <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
-                        <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
-                    </>
-                )}
-                description="Financial ratios grouped by category."
-                title="Ratio Financials"
-            />
+        <FinancialsFrame
+            activeCount={financialsFilterCount(search, [FISCAL_YEAR_FILTER])}
+            description="Financial ratios grouped by category."
+            filters={(
+                <FilterField label="Fiscal years">
+                    <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
+                </FilterField>
+            )}
+            onReset={() => update({ fyFrom: undefined, fyTo: undefined })}
+            tabs={tabs}
+            what={(
+                <>
+                    <FilterSelect aria-label="Ratio category" className="w-[180px]" onValueChange={value => update({ category: value === ALL ? undefined : value })} options={ratioCategoryOptions} value={category} />
+                    <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+                </>
+            )}
+        >
             <RatiosView
                 error={error}
                 hasNextPage={hasNextPage}
@@ -132,6 +140,6 @@ export function RatiosFinancials({ ticker }: { ticker: string }) {
                 onLoadMore={() => fetchNextPage()}
                 pages={data?.pages ?? []}
             />
-        </div>
+        </FinancialsFrame>
     );
 }

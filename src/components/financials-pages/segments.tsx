@@ -4,16 +4,19 @@ import type { MetricsListState } from "@/components/financial-metrics/metrics-li
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 import type { SegmentedFinancialsSegmentId, V2SegmentsResponse } from "@/lib/api/types";
 
-import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
+import { MetricsListBody, PeriodTableFrame } from "@/components/financial-metrics/metrics-list-body";
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
-import { Button } from "@/components/ui/button";
-import { PlanBadge } from "@/components/ui/credit-hint";
-import { PageHeader } from "@/components/ui/page-header";
+import { PlanBadge, tierLabel } from "@/components/ui/credit-hint";
+import { FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
+import { SegmentedButtons } from "@/components/ui/segmented-buttons";
 import { useV2SegmentsDetailedInfinite, useV2SegmentsInfinite } from "@/lib/api/queries";
 import { completePeriodsOnly, periodLabels, segmentLines } from "@/lib/financials/statements";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
+import type { FinancialsTabProps } from "./financials-frame";
+
+import { financialsFilterCount, FinancialsFrame, FISCAL_YEAR_FILTER } from "./financials-frame";
 import { useFinancialsSearch } from "./financials-search";
 import { FiscalYearRange } from "./fiscal-year-range";
 import { SegmentSelect, toSegmentId } from "./segment-select";
@@ -59,11 +62,13 @@ export function SegmentsView({
         >
             {hiddenAll
                 ? (
-                        <div className="text-muted-foreground text-sm">
-                            {state.hasNextPage
-                                ? "None of the loaded segment rows match this segment; load more periods to look further."
-                                : "No rows for this segment."}
-                        </div>
+                        <PeriodTableFrame>
+                            <div className="text-muted-foreground text-sm">
+                                {state.hasNextPage
+                                    ? "None of the loaded segment rows match this segment; load more periods to look further."
+                                    : "No rows for this segment."}
+                            </div>
+                        </PeriodTableFrame>
                     )
                 : <SegmentedFinancialsTable periodLabels={labels} rows={rows} />}
         </MetricsListBody>
@@ -82,7 +87,7 @@ type SegmentsLayout = "detailed" | "summary";
 const SEGMENTS_DETAILED_PAGE = 100;
 
 /** The page body of the Financials route's tab (`/$ticker/financials?view=`). */
-export function SegmentsFinancials({ ticker }: { ticker: string }) {
+export function SegmentsFinancials({ tabs, ticker }: FinancialsTabProps) {
     const [search, update] = useFinancialsSearch();
 
     const periodType = search.period ?? "quarterly";
@@ -120,47 +125,59 @@ export function SegmentsFinancials({ ticker }: { ticker: string }) {
     const options = React.useMemo(() => segmentFilterOptions(loadedRows, { axis: search.axis, metric: search.metric }), [loadedRows, search.axis, search.metric]);
 
     return (
-        <div className="flex flex-col gap-4">
-            <PageHeader
-                actions={(
-                    <>
-                        <div aria-label="View" className="flex gap-1" role="group">
-                            {SEGMENT_VIEWS.map(option => (
-                                <Button
-                                    aria-pressed={layout === option.value}
-                                    key={option.value}
-                                    onClick={() => update({ chart: undefined, layout: option.value === "summary" ? undefined : option.value })}
-                                    variant={layout === option.value ? "default" : "outline"}
-                                >
-                                    {option.label}
-                                    {option.value === "detailed" && <PlanBadge operationId="listSegmentsDetailed" />}
-                                </Button>
-                            ))}
-                        </div>
+        <FinancialsFrame
+            activeCount={financialsFilterCount(search, [["segment"], ["metric"], ["axis"], FISCAL_YEAR_FILTER])}
+            description={layout === "detailed"
+                ? `Each segment fact with its reported concept, the filing's caption and the filing (${tierLabel("listSegmentsDetailed")}).`
+                : "Financial data broken out by business segment in tabular format."}
+            filters={(
+                <>
+                    <FilterField label="Segment">
                         <SegmentSelect onValueChange={value => update({ chart: undefined, segment: value === "all" ? undefined : value })} value={segmentId} />
-                        <FilterSelect
-                            aria-label="Metric"
-                            className="w-[220px]"
-                            onValueChange={value => update({ chart: undefined, metric: value === "all" ? undefined : value })}
-                            options={withAll(options.metrics, "All metrics")}
-                            value={search.metric ?? "all"}
-                        />
-                        <FilterSelect
-                            aria-label="Axis"
-                            className="w-[220px]"
-                            onValueChange={value => update({ axis: value === "all" ? undefined : value, chart: undefined })}
-                            options={withAll(options.axes, "All axes")}
-                            value={search.axis ?? "all"}
-                        />
-                        <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+                    </FilterField>
+                    <FilterField label="Metric">
+                        {id => (
+                            <FilterSelect
+                                aria-label="Metric"
+                                className="w-full"
+                                id={id}
+                                onValueChange={value => update({ chart: undefined, metric: value === "all" ? undefined : value })}
+                                options={withAll(options.metrics, "All metrics")}
+                                value={search.metric ?? "all"}
+                            />
+                        )}
+                    </FilterField>
+                    <FilterField label="Axis">
+                        {id => (
+                            <FilterSelect
+                                aria-label="Axis"
+                                className="w-full"
+                                id={id}
+                                onValueChange={value => update({ axis: value === "all" ? undefined : value, chart: undefined })}
+                                options={withAll(options.axes, "All axes")}
+                                value={search.axis ?? "all"}
+                            />
+                        )}
+                    </FilterField>
+                    <FilterField label="Fiscal years">
                         <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
-                    </>
-                )}
-                description={layout === "detailed"
-                    ? "Each segment fact with its reported concept, the filing's caption and the filing (PRO)."
-                    : "Financial data broken out by business segment in tabular format."}
-                title="Segmented Financials"
-            />
+                    </FilterField>
+                </>
+            )}
+            onReset={() => update({ axis: undefined, chart: undefined, fyFrom: undefined, fyTo: undefined, metric: undefined, segment: undefined })}
+            tabs={tabs}
+            what={(
+                <>
+                    <SegmentedButtons
+                        aria-label="View"
+                        onChange={value => update({ chart: undefined, layout: value === "summary" ? undefined : value })}
+                        options={SEGMENT_VIEWS.map(option => ({ ...option, badge: option.value === "detailed" ? <PlanBadge operationId="listSegmentsDetailed" /> : undefined }))}
+                        value={layout}
+                    />
+                    <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+                </>
+            )}
+        >
             {layout === "detailed"
                 ? (
                         <SegmentsDetailedView
@@ -187,6 +204,6 @@ export function SegmentsFinancials({ ticker }: { ticker: string }) {
                         />
                     )}
             <SecSourceDialog onClose={() => setSource(null)} target={source} />
-        </div>
+        </FinancialsFrame>
     );
 }

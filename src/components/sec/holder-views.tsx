@@ -23,6 +23,8 @@ import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, right } from "@/components/ui/data-table";
+import { Section } from "@/components/ui/section";
+import { Skeleton } from "@/components/ui/skeleton";
 import { formatDay } from "@/lib/format";
 import {
     HOLDER_SECTION_STATE_LABELS,
@@ -83,8 +85,9 @@ export function HolderCell({ holder }: { holder: V2Holder["holder"] }) {
         );
     }
 
+    // A max width: a long fund name truncates instead of widening the (pinned) first column.
     return (
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex max-w-40 min-w-0 items-center gap-2 sm:max-w-56">
             {cell}
             {holder.issuer_file_as_of && (
                 <Badge title="This fund also has an issuer holdings file, a fresher source than its N-PORT report" variant="outline">
@@ -128,7 +131,7 @@ const VALUE: ColumnDef<V2Holder> = {
 
 const WEIGHT: ColumnDef<V2Holder> = {
     cell: ({ row }) => right(weightText(row.original.weight_pct)),
-    header: () => <div className="text-right">% of Fund</div>,
+    header: () => <div className="text-right">% of fund</div>,
     id: "weight_pct",
 };
 
@@ -137,7 +140,7 @@ const DISCRETION_LABELS: Record<string, string> = { DFND: "Shared (defined)", OT
 /** 13F investment discretion as filed (`SOLE`, `DFND`, `OTR`) in words; an unknown code stays as filed. */
 export const discretionText = (code: null | string | undefined) => (code ? (DISCRETION_LABELS[code] ?? code) : "—");
 
-/** 13F voting authority (shares): "Sole 1,200 · Shared 0 · None 300"; null on N-PORT and issuer-file rows. */
+/** 13F voting authority (shares): "Sole 1,200 · Shared 0 · None 300"; null on N-PORT and issuer-file rows (exact: a title, `/sec/$cik`). */
 export function votingText(voting: V2Holder["voting_authority"]): string {
     if (!voting) return "—";
 
@@ -148,9 +151,43 @@ export function votingText(voting: V2Holder["voting_authority"]): string {
 
 const DISCRETION: ColumnDef<V2Holder> = { cell: ({ row }) => discretionText(row.original.investment_discretion), header: "Discretion", id: "investment_discretion" };
 
+const compactShares = new Intl.NumberFormat("en-US", { maximumSignificantDigits: 3, notation: "compact" });
+
+/** One share count of the voting cell, compact to 3 digits ("1.39B", "542M"); none stated = "—". */
+const compactCount = (value: null | number) => (value == null || !Number.isFinite(value) ? "—" : compactShares.format(value));
+
+const VOTING_ORDER = "Voting authority in shares: sole · shared · none";
+
+/**
+ * The three voting authorities in one cell (ui-redesign task 8: the spelled-out "Sole … · Shared … · None …" was the
+ * widest cell of the 13F table): three right-aligned compact numbers on a fixed grid, so they align from row to row; the
+ * exact counts in the cell's title and as its screen-reader text (the header names the order the same way).
+ */
+export function VotingCell({ voting }: { voting: V2Holder["voting_authority"] }) {
+    if (!voting) return <span>—</span>;
+
+    const exact = votingText(voting);
+
+    return (
+        <div className="grid grid-cols-[repeat(3,3rem)] justify-end gap-x-1 text-right tabular-nums" title={exact}>
+            <span className="sr-only">{exact}</span>
+            <span aria-hidden>{compactCount(voting.sole)}</span>
+            <span aria-hidden>{compactCount(voting.shared)}</span>
+            <span aria-hidden>{compactCount(voting.none)}</span>
+        </div>
+    );
+}
+
 const VOTING: ColumnDef<V2Holder> = {
-    cell: ({ row }) => <div className="tabular-nums whitespace-nowrap">{votingText(row.original.voting_authority)}</div>,
-    header: "Voting authority",
+    cell: ({ row }) => <VotingCell voting={row.original.voting_authority} />,
+    header: () => (
+        <div className="grid grid-cols-[repeat(3,3rem)] justify-end gap-x-1 text-right" title={VOTING_ORDER}>
+            <span className="sr-only">Voting authority (sole, shared, none)</span>
+            <span aria-hidden>Sole</span>
+            <span aria-hidden>Shared</span>
+            <span aria-hidden>None</span>
+        </div>
+    ),
     id: "voting_authority",
 };
 
@@ -168,11 +205,14 @@ export function FilingLink({ url }: { url: null | string | undefined }) {
 
 const FILING: ColumnDef<V2Holder> = { cell: ({ row }) => <FilingLink url={row.original.filing_url} />, header: "Filing", id: "filing_url" };
 
-/** The columns of one source: 13F has no fund weight or tickers; an issuer file has no filing. */
+/**
+ * The columns of one source, the holder first (pinned while the table is cut): 13F has no fund weight or tickers; an
+ * issuer file has no filing.
+ */
 export const HOLDER_COLUMNS: Record<V2HolderSource, Array<ColumnDef<V2Holder>>> = {
-    "13f": [AS_OF, FILED, HOLDER, SHARES, SHARES_TYPE, VALUE, DISCRETION, VOTING, FILING],
-    "issuer_file": [AS_OF, HOLDER, TICKERS, SHARES, VALUE, WEIGHT],
-    "nport": [AS_OF, FILED, HOLDER, TICKERS, SHARES, SHARES_TYPE, VALUE, WEIGHT, FILING],
+    "13f": [HOLDER, AS_OF, FILED, SHARES, SHARES_TYPE, VALUE, DISCRETION, VOTING, FILING],
+    "issuer_file": [HOLDER, AS_OF, TICKERS, SHARES, VALUE, WEIGHT],
+    "nport": [HOLDER, AS_OF, FILED, TICKERS, SHARES, SHARES_TYPE, VALUE, WEIGHT, FILING],
 };
 
 const EMPTY_TEXT: Record<V2HolderSource, string> = {
@@ -246,15 +286,18 @@ const CHANGE_SUBJECT_COLUMNS: Record<"holder" | "security", ColumnDef<V2HolderCh
     },
 };
 
-/** The columns of a change list; `subject` = who / what the row names besides the change. */
+/**
+ * The columns of a change list; `subject` = who / what the row names besides the change. The subject comes first: it is
+ * the column a wide table pins while it scrolls sideways; the quarter's dates (the same on most rows) close the row.
+ */
 function changeColumns(subject: "holder" | "security"): Array<ColumnDef<V2HolderChange>> {
     return [
-        { cell: ({ row }) => day(row.original.as_of), header: "Period End", id: "as_of" },
-        { cell: ({ row }) => day(row.original.prior_as_of), header: "Compared With", id: "prior_as_of" },
-        { cell: ({ row }) => day(row.original.filing_date), header: "Filed", id: "filing_date" },
-        { cell: ({ row }) => CHANGE_TYPE_LABELS[row.original.type], header: "Type", id: "type" },
         CHANGE_SUBJECT_COLUMNS[subject],
+        { cell: ({ row }) => CHANGE_TYPE_LABELS[row.original.type], header: "Type", id: "type" },
         ...CHANGE_VALUE_COLUMNS,
+        { cell: ({ row }) => day(row.original.as_of), header: "Period end", id: "as_of" },
+        { cell: ({ row }) => day(row.original.prior_as_of), header: "Compared with", id: "prior_as_of" },
+        { cell: ({ row }) => day(row.original.filing_date), header: "Filed", id: "filing_date" },
     ];
 }
 
@@ -266,7 +309,7 @@ const CHANGE_VALUE_COLUMNS: Array<ColumnDef<V2HolderChange>> = [
     },
     {
         cell: ({ row }) => right(count(row.original.shares_change)),
-        header: () => <div className="text-right">Change Shares</div>,
+        header: () => <div className="text-right">Change shares</div>,
         id: "shares_change",
     },
     {
@@ -276,12 +319,12 @@ const CHANGE_VALUE_COLUMNS: Array<ColumnDef<V2HolderChange>> = [
     },
     {
         cell: ({ row }) => right(count(row.original.shares)),
-        header: () => <div className="text-right">New Position</div>,
+        header: () => <div className="text-right">New position</div>,
         id: "shares",
     },
     {
         cell: ({ row }) => right(count(row.original.shares_prior)),
-        header: () => <div className="text-right">Old Position</div>,
+        header: () => <div className="text-right">Old position</div>,
         id: "shares_prior",
     },
     {
@@ -334,27 +377,35 @@ export function sectionCountText(section: V2HolderSection): string {
     return `${formatNumberEn(section.rows)} ${section.rows === 1 ? "holder" : "holders"}`;
 }
 
-/** One source of the overview: its title, state, as-of, count, reason, top rows and "Show all". */
+/**
+ * One source of the overview (a `Section`): the source as its title, the state badge, as-of and count as its meta line,
+ * the source note and reason, "Show all" as its action, then the top rows.
+ */
 function HolderSectionView({ onShowAll, rows, section }: { onShowAll: (source: V2HolderSource) => void; rows: Array<V2Holder>; section: V2HolderSection }) {
     const reason = holderReasonText(section.reason);
 
     return (
-        <section aria-label={HOLDER_SOURCE_LABELS[section.source]} className="flex flex-col gap-2" data-testid={`holders-section-${section.source}`}>
-            <div className="flex flex-wrap items-center gap-2">
-                <div className="text-sm font-medium">{HOLDER_SOURCE_LABELS[section.source]}</div>
-                <Badge variant={section.state === "complete" ? "secondary" : "outline"}>{HOLDER_SECTION_STATE_LABELS[section.state]}</Badge>
-                {section.as_of && <span className="text-muted-foreground text-xs">{`as of ${formatDay(section.as_of)}`}</span>}
-                <span className="text-muted-foreground text-xs">{sectionCountText(section)}</span>
-                {section.has_more && (
-                    <Button onClick={() => onShowAll(section.source)} size="xs" type="button" variant="outline">
+        <div data-testid={`holders-section-${section.source}`}>
+            <Section
+                actions={section.has_more && (
+                    <Button onClick={() => onShowAll(section.source)} size="sm" type="button" variant="outline">
                         Show all
                     </Button>
                 )}
-            </div>
-            <div className="text-muted-foreground text-xs">{HOLDER_SOURCE_NOTES[section.source]}</div>
-            {reason && <div className="text-muted-foreground text-xs">{reason}</div>}
-            {rows.length > 0 && (
-                <div className="flex flex-col">
+                description={(
+                    <div className="flex flex-col gap-1">
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                            <Badge variant={section.state === "complete" ? "secondary" : "outline"}>{HOLDER_SECTION_STATE_LABELS[section.state]}</Badge>
+                            {section.as_of && <span>{`as of ${formatDay(section.as_of)}`}</span>}
+                            <span className="tabular-nums">{sectionCountText(section)}</span>
+                        </div>
+                        <div>{HOLDER_SOURCE_NOTES[section.source]}</div>
+                        {reason && <div>{reason}</div>}
+                    </div>
+                )}
+                title={HOLDER_SOURCE_LABELS[section.source]}
+            >
+                {rows.length > 0 && (
                     <DataTable
                         columns={HOLDER_COLUMNS[section.source]}
                         emptyIsGenuine={false}
@@ -362,9 +413,9 @@ function HolderSectionView({ onShowAll, rows, section }: { onShowAll: (source: V
                         isLoading={false}
                         rows={rows}
                     />
-                </div>
-            )}
-        </section>
+                )}
+            </Section>
+        </div>
     );
 }
 
@@ -378,7 +429,16 @@ export function HoldersOverview({ onShowAll, state }: { onShowAll: (source: V2Ho
 
     if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the holders" />;
 
-    if (isLoading && pages.length === 0) return <div className="text-muted-foreground text-sm">Loading holders...</div>;
+    // Shaped like a source's section: title, meta line, table.
+    if (isLoading && pages.length === 0) {
+        return (
+            <div aria-busy className="flex flex-col gap-3" data-testid="holders-overview-loading">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-4 w-72" />
+                <Skeleton className="h-48 w-full" />
+            </div>
+        );
+    }
 
     const page = pages.at(0);
 
@@ -387,7 +447,7 @@ export function HoldersOverview({ onShowAll, state }: { onShowAll: (source: V2Ho
     const sections = page.meta.sections ?? [];
 
     return (
-        <div className="flex flex-col gap-6" data-testid="holders-overview">
+        <div className="flex flex-col gap-8" data-testid="holders-overview">
             <V2MetaLine meta={{ pinned_at: page.meta.pinned_at }} />
             {sections.map(section => (
                 <HolderSectionView

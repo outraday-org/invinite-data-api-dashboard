@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { TABLE_HEAD_CLASS, TABLE_ROW_CLASS } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 
 /** `containerClassName` styles the wrapper: the horizontal scroller (a scroll container — a `sticky` header inside it binds to it, not to the page). */
@@ -7,7 +8,7 @@ function Table({ className, containerClassName, ...props }: React.ComponentProps
     return (
         <div className={cn("relative w-full overflow-x-auto", containerClassName)} data-slot="table-container">
             <table
-                className={cn("w-full caption-bottom text-xs", className)}
+                className={cn("w-full caption-bottom", className)}
                 data-slot="table"
                 {...props}
             />
@@ -48,7 +49,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
 function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     return (
         <tr
-            className={cn("hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors", className)}
+            className={cn(TABLE_ROW_CLASS, className)}
             data-slot="table-row"
             {...props}
         />
@@ -58,7 +59,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
 function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     return (
         <th
-            className={cn("text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0", className)}
+            className={cn(TABLE_HEAD_CLASS, "[&:has([role=checkbox])]:pr-0", className)}
             data-slot="table-head"
             {...props}
         />
@@ -68,7 +69,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
 function TableCell({ className, ...props }: React.ComponentProps<"td">) {
     return (
         <td
-            className={cn("p-2 relative align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0", className)}
+            className={cn("h-9 px-3 py-1.5 relative align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0", className)}
             data-slot="table-cell"
             {...props}
         />

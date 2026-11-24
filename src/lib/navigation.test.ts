@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AAPL_INSTRUMENT, GLD_INSTRUMENT, PDI_INSTRUMENT, SPY_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
 
 import {
+    ACCOUNT_NAV,
     BROWSE_NAV,
     filerContextAnchors,
     filerSubjectLabel,
@@ -11,6 +12,9 @@ import {
     instrumentSubjectLabel,
     isManagerFiler,
     MARKET_NAV,
+    NAV_GROUPS,
+    NAV_PAGES,
+    navGroupOfPath,
     searchPages,
     visibleInstrumentItems,
 } from "./navigation";
@@ -18,6 +22,34 @@ import {
 const labels = (datasets: Parameters<typeof visibleInstrumentItems>[0]) => visibleInstrumentItems(datasets).map(item => item.label);
 
 describe("navigation table", () => {
+    it("every page but Account sits in exactly one sidebar group (the same objects, never redefined)", () => {
+        const grouped = NAV_GROUPS.flatMap(group => group.pages);
+
+        for (const page of NAV_PAGES.filter(entry => entry !== ACCOUNT_NAV)) {
+            expect(grouped.filter(entry => entry === page), page.to).toHaveLength(1);
+        }
+
+        expect(grouped).toHaveLength(NAV_PAGES.length - 1);
+
+        expect(MARKET_NAV.map(page => page.label).slice(0, 5)).toEqual(NAV_GROUPS[0].pages.map(page => page.label));
+    });
+
+    it("the group of a path: the page or one below it; `/` only exactly; a ticker page none", () => {
+        expect(navGroupOfPath("/")?.id).toBe("market");
+
+        expect(navGroupOfPath("/alerts/new")?.id).toBe("build");
+
+        expect(navGroupOfPath("/people/abc/")?.id).toBe("securities");
+
+        expect(navGroupOfPath("/sec/datasets")?.id).toBe("filings");
+
+        expect(navGroupOfPath("/us-macro/gdp")?.id).toBe("macro");
+
+        expect(navGroupOfPath("/AAPL/dividends")).toBeNull();
+
+        expect(navGroupOfPath("/sec/320193")).toBeNull();
+    });
+
     it("a stock: calls, documents, filings, ONE Financials entry, holders, insider trades, no fund holdings", () => {
         expect(labels(AAPL_INSTRUMENT.datasets)).toEqual(["Overview", "Calls", "Investor documents", "Filings", "Financials", "Holders", "Insider trades", "Dividends", "Splits", "News"]);
     });
@@ -30,6 +62,14 @@ describe("navigation table", () => {
         expect(labels(PDI_INSTRUMENT.datasets)).toContain("Calls");
 
         expect(labels(VXX_INSTRUMENT.datasets)).toEqual(["Overview", "Holders", "Dividends", "Splits"]);
+    });
+
+    it("short tab labels only where the sidebar's label is long", () => {
+        const tabs = visibleInstrumentItems(AAPL_INSTRUMENT.datasets).map(item => item.shortLabel ?? item.label);
+
+        expect(tabs).toEqual(["Overview", "Calls", "Documents", "Filings", "Financials", "Holders", "Insider trades", "Dividends", "Splits", "News"]);
+
+        expect(INSTRUMENT_SECTION_GROUPS.flatMap(group => group.items).filter(item => item.shortLabel).map(item => item.label)).toEqual(["Investor documents"]);
     });
 
     it("every section while the datasets are unknown", () => {

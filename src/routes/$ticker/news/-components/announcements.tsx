@@ -8,17 +8,17 @@ import type { ExportColumn } from "@/lib/export";
 import type { NewsSearch } from "@/lib/news/labels";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { tierLabel } from "@/components/ui/credit-hint";
 import { DataTable } from "@/components/ui/data-table";
+import { DayRange } from "@/components/ui/day-range";
 import { ErrorState } from "@/components/ui/error-state";
-import { Input } from "@/components/ui/input";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { Notice } from "@/components/ui/notice";
 import { isTierError } from "@/lib/api/errors";
 import { useV2AnnouncementsInfinite } from "@/lib/api/queries";
-import { DASH, formatDay, formatInstant } from "@/lib/format";
+import { DASH, formatDay, formatDayTimeShort } from "@/lib/format";
 import { ANNOUNCEMENT_TOPICS, CLAIM_STATUS_LABELS, DATE_PRECISION_LABELS, NEWS_ORDER_LABELS, NEWS_TOPIC_LABELS } from "@/lib/news/labels";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const PAGE_SIZE = 50;
 
@@ -41,7 +41,7 @@ export function effectiveLabel(row: Pick<NewsDevelopment, "date_precision" | "ef
 }
 
 const COLUMNS: Array<ColumnDef<NewsDevelopment>> = [
-    { cell: ({ row }) => <span className="whitespace-nowrap">{formatInstant(row.original.announced_at)}</span>, header: "Announced", id: "announced_at" },
+    { cell: ({ row }) => <span className="tabular-nums whitespace-nowrap">{formatDayTimeShort(row.original.announced_at)}</span>, header: "Announced", id: "announced_at" },
     {
         cell: ({ row }) => {
             const { counterparties, products, summary, title } = row.original;
@@ -160,51 +160,60 @@ export function AnnouncementsView({
 
 type AnnouncementSearch = Pick<NewsSearch, "aFrom" | "aSort" | "aTo" | "aTopic" | "effFrom" | "effTo">;
 
-/** A labelled day input of the filter row (empty = none). */
-function DayInput({ label, onChange, value }: { label: string; onChange: (value: string | undefined) => void; value: string | undefined }) {
-    return (
-        <label className="text-muted-foreground flex items-center gap-1 text-xs">
-            {label}
-            <Input aria-label={label} className="w-[150px]" onChange={e => onChange(e.target.value || undefined)} type="date" value={value ?? ""} />
-        </label>
-    );
-}
+/** Every announcements filter cleared. */
+const ANNOUNCEMENT_FILTER_RESET = { aFrom: undefined, aSort: undefined, aTo: undefined, aTopic: undefined, effFrom: undefined, effTo: undefined } satisfies AnnouncementSearch;
 
-/** The Announcements filters, controlled by the route's search (every one is an API parameter). */
+/**
+ * The Announcements filters as one labelled `FilterBar` (ui-redesign task 11), controlled by the route's search (every
+ * one is an API parameter); a day range counts once.
+ */
 export function AnnouncementFilters({ onChange, search }: { onChange: (patch: Partial<AnnouncementSearch>) => void; search: AnnouncementSearch }) {
-    const active = Object.values(search).some(Boolean);
+    const activeCount = [search.aTopic, search.aSort, search.aFrom ?? search.aTo, search.effFrom ?? search.effTo].filter(value => value !== undefined).length;
 
     return (
-        <div className="flex flex-wrap items-center gap-2" data-testid="announcement-filters">
-            <FilterSelect
-                aria-label="Topic"
-                className="w-[180px]"
-                onValueChange={value => onChange({ aTopic: value === ALL ? undefined : value })}
-                options={[{ label: "All topics", value: ALL }, ...ANNOUNCEMENT_TOPICS.map(value => ({ label: NEWS_TOPIC_LABELS[value], value }))]}
-                value={search.aTopic ?? ALL}
-            />
-            <FilterSelect
-                aria-label="Order"
-                className="w-[140px]"
-                onValueChange={value => onChange({ aSort: value === "oldest" ? "oldest" : undefined })}
-                options={[{ label: NEWS_ORDER_LABELS.newest, value: "newest" }, { label: NEWS_ORDER_LABELS.oldest, value: "oldest" }]}
-                value={search.aSort ?? "newest"}
-            />
-            <DayInput label="Announced from" onChange={aFrom => onChange({ aFrom })} value={search.aFrom} />
-            <DayInput label="to" onChange={aTo => onChange({ aTo })} value={search.aTo} />
-            <DayInput label="Effective from" onChange={effFrom => onChange({ effFrom })} value={search.effFrom} />
-            <DayInput label="Effective until" onChange={effTo => onChange({ effTo })} value={search.effTo} />
-            {active && (
-                <Button
-                    onClick={() => onChange({ aFrom: undefined, aSort: undefined, aTo: undefined, aTopic: undefined, effFrom: undefined, effTo: undefined })}
-                    size="sm"
-                    type="button"
-                    variant="ghost"
-                >
-                    Reset
-                </Button>
-            )}
-        </div>
+        <FilterBar activeCount={activeCount} onReset={() => onChange(ANNOUNCEMENT_FILTER_RESET)}>
+            <FilterField label="Topic">
+                {id => (
+                    <FilterSelect
+                        aria-label="Topic"
+                        className="w-full"
+                        id={id}
+                        onValueChange={value => onChange({ aTopic: value === ALL ? undefined : value })}
+                        options={[{ label: "All topics", value: ALL }, ...ANNOUNCEMENT_TOPICS.map(value => ({ label: NEWS_TOPIC_LABELS[value], value }))]}
+                        value={search.aTopic ?? ALL}
+                    />
+                )}
+            </FilterField>
+            <FilterField label="Order">
+                {id => (
+                    <FilterSelect
+                        aria-label="Order"
+                        className="w-full"
+                        id={id}
+                        onValueChange={value => onChange({ aSort: value === "oldest" ? "oldest" : undefined })}
+                        options={[{ label: NEWS_ORDER_LABELS.newest, value: "newest" }, { label: NEWS_ORDER_LABELS.oldest, value: "oldest" }]}
+                        value={search.aSort ?? "newest"}
+                    />
+                )}
+            </FilterField>
+            <FilterField label="Announced" span={2}>
+                <DayRange
+                    from={search.aFrom}
+                    labels={{ from: "Announced from", to: "Announced to" }}
+                    onChange={patch => onChange("from" in patch ? { aFrom: patch.from } : { aTo: patch.to })}
+                    to={search.aTo}
+                />
+            </FilterField>
+            <FilterField label="Takes effect" span={2}>
+                <DayRange
+                    from={search.effFrom}
+                    labels={{ from: "Effective from", to: "Effective until" }}
+                    onChange={patch => onChange("from" in patch ? { effFrom: patch.from } : { effTo: patch.to })}
+                    separator="until"
+                    to={search.effTo}
+                />
+            </FilterField>
+        </FilterBar>
     );
 }
 

@@ -461,7 +461,7 @@ describe("Documents page", () => {
 
         expect(firstPage.fetchNextPage).toHaveBeenCalledTimes(1);
 
-        expect(screen.getByText(/· 1\+ document ·/)).toBeInTheDocument();
+        expect(screen.getByText(/^1\+ document · /)).toBeInTheDocument();
 
         const bothPages = infinite([documentsPage([base]), documentsPage([DOCUMENTS[1]])]);
 
@@ -471,7 +471,7 @@ describe("Documents page", () => {
 
         expect(bothPages.fetchNextPage).not.toHaveBeenCalled();
 
-        expect(screen.getByText(/· 2 documents ·/)).toBeInTheDocument();
+        expect(screen.getByText(/^2 documents · /)).toBeInTheDocument();
 
         expect(screen.queryByRole("button", { name: /Load more/ })).toBeNull();
     });

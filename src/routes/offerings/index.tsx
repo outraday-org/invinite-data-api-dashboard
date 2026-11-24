@@ -10,12 +10,14 @@ import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { DataTable } from "@/components/ui/data-table";
 import { DayRange } from "@/components/ui/day-range";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2OfferingsInfinite } from "@/lib/api/queries";
 import { titleHead } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { IN_PLACE, optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 /** Exemptions the picker offers (as filed; the API takes any code matching `^[A-Za-z0-9.()]{1,12}$`). */
 const EXEMPTION_CODES = ["06b", "06c", "04", "4a5", "3C", "3C.1", "3C.7"] as const;
@@ -86,7 +88,6 @@ export function OfferingsList({ error, hasNextPage, isFetchingNextPage, isLoadin
     return (
         <div className="flex flex-col gap-2">
             <SecReadinessNotice coverage={meta?.coverage} />
-            <V2MetaLine meta={meta} />
             <DataTable
                 columns={MARKET_COLUMNS}
                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
@@ -98,6 +99,7 @@ export function OfferingsList({ error, hasNextPage, isFetchingNextPage, isLoadin
                 onLoadMore={onLoadMore}
                 operationId="listOfferings"
                 rows={pages.flatMap(page => page.data)}
+                toolbarMeta={<V2MetaLine meta={meta} />}
             />
             {error ? <SecReadinessNotice error={error} title="Failed to load more offerings" /> : null}
         </div>
@@ -126,6 +128,9 @@ function OfferingsPage() {
         totalSoldGte: search.sold,
     });
 
+    // The filters set (the day range counts once): the bar's "Filters · n" and "Reset filters".
+    const activeCount = [search.exemption, search.sold, search.amendment, search.industry, search.from ?? search.to].filter(value => value !== undefined).length;
+
     // A linked amount outside the presets is offered too (the URL is the state).
     const soldOptions = React.useMemo(
         () => (search.sold !== undefined && !SOLD_OPTIONS.some(option => option.value === String(search.sold))
@@ -135,17 +140,8 @@ function OfferingsPage() {
     );
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer>
             <PageHeader
-                actions={(
-                    <>
-                        <FilterSelect aria-label="Exemption" className="w-[170px]" onValueChange={value => onChange({ exemption: value === ANY ? undefined : value })} options={EXEMPTION_OPTIONS} value={search.exemption ?? ANY} />
-                        <FilterSelect aria-label="Amount sold" className="w-[170px]" onValueChange={value => onChange({ sold: value === ANY ? undefined : Number(value) })} options={soldOptions} value={search.sold === undefined ? ANY : String(search.sold)} />
-                        <FilterSelect aria-label="Amendment" className="w-[210px]" onValueChange={value => onChange({ amendment: value === ANY ? undefined : value })} options={AMENDMENT_OPTIONS} value={search.amendment ?? ANY} />
-                        <DebouncedInput aria-label="Industry group" className="w-[220px]" onCommit={value => onChange({ industry: value.trim().length >= 2 ? value.trim() : undefined })} placeholder="Industry, as filed" value={search.industry ?? ""} />
-                        <DayRange from={search.from} group labels={{ from: "Filed from", to: "Filed to" }} lead="Filed" onChange={onChange} to={search.to} />
-                    </>
-                )}
                 description={(
                     <>
                         Form D private offerings of every issuer, newest latest filing first (the SEC&apos;s quarterly data
@@ -156,6 +152,24 @@ function OfferingsPage() {
                 title="Private offerings"
             />
 
+            <FilterBar activeCount={activeCount} onReset={() => onChange({ amendment: undefined, exemption: undefined, from: undefined, industry: undefined, sold: undefined, to: undefined })}>
+                <FilterField label="Exemption">
+                    {id => <FilterSelect aria-label="Exemption" className="w-full" id={id} onValueChange={value => onChange({ exemption: value === ANY ? undefined : value })} options={EXEMPTION_OPTIONS} value={search.exemption ?? ANY} />}
+                </FilterField>
+                <FilterField label="Amount sold">
+                    {id => <FilterSelect aria-label="Amount sold" className="w-full" id={id} onValueChange={value => onChange({ sold: value === ANY ? undefined : Number(value) })} options={soldOptions} value={search.sold === undefined ? ANY : String(search.sold)} />}
+                </FilterField>
+                <FilterField label="Amendment">
+                    {id => <FilterSelect aria-label="Amendment" className="w-full" id={id} onValueChange={value => onChange({ amendment: value === ANY ? undefined : value })} options={AMENDMENT_OPTIONS} value={search.amendment ?? ANY} />}
+                </FilterField>
+                <FilterField label="Industry group">
+                    {id => <DebouncedInput aria-label="Industry group" className="w-full" id={id} onCommit={value => onChange({ industry: value.trim().length >= 2 ? value.trim() : undefined })} placeholder="As filed" value={search.industry ?? ""} />}
+                </FilterField>
+                <FilterField label="Latest filing" span={2}>
+                    <DayRange from={search.from} labels={{ from: "Filed from", to: "Filed to" }} onChange={onChange} to={search.to} />
+                </FilterField>
+            </FilterBar>
+
             <OfferingsList
                 error={list.error}
                 hasNextPage={list.hasNextPage}
@@ -164,6 +178,6 @@ function OfferingsPage() {
                 onLoadMore={() => void list.fetchNextPage()}
                 pages={list.data?.pages ?? []}
             />
-        </div>
+        </PageContainer>
     );
 }

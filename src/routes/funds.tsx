@@ -10,6 +10,9 @@ import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { listState } from "@/lib/api/list-state";
 import { useFunds } from "@/lib/api/queries";
@@ -17,7 +20,6 @@ import { formatMoneyCompact } from "@/lib/format";
 import { EXCHANGE_LABELS, FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS } from "@/lib/instruments";
 import { titleHead } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const fundsSearchSchema = z.object({
     exchange: z.string().regex(/^[A-Z]{4}$/).optional().catch(undefined),
@@ -147,7 +149,7 @@ function FundsPage() {
     const funds = useFunds(fundsRequest(search));
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-8 lg:px-8">
+        <PageContainer>
             <PageHeader
                 description={(
                     <>
@@ -158,16 +160,29 @@ function FundsPage() {
                 )}
                 title="Funds"
             />
-            <div className="flex flex-wrap items-center gap-2">
-                <DebouncedInput aria-label="Search funds" className="w-[240px]" onCommit={q => onChange({ q: q || undefined })} placeholder="Ticker or name" value={search.q ?? ""} />
-                <FilterSelect aria-label="Fund type" className="w-[170px]" onValueChange={value => onChange({ type: value === ALL ? undefined : value })} options={TYPE_OPTIONS} value={search.type ?? ALL} />
-                <FilterSelect aria-label="Structure" className="w-[260px]" onValueChange={value => onChange({ structure: value === ALL ? undefined : value })} options={STRUCTURE_OPTIONS} value={search.structure ?? ALL} />
-                <FilterSelect aria-label="Exchange" className="w-[200px]" onValueChange={value => onChange({ exchange: value === ALL ? undefined : value })} options={EXCHANGE_OPTIONS} value={search.exchange ?? ALL} />
-                <FilterSelect aria-label="Sort" className="w-[150px]" onValueChange={value => onChange({ sort: value === "symbol" ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? "symbol"} />
-            </div>
+            <FilterBar
+                activeCount={[search.q, search.type, search.structure, search.exchange, search.sort].filter(value => value !== undefined).length}
+                onReset={() => onChange({ exchange: undefined, q: undefined, sort: undefined, structure: undefined, type: undefined })}
+            >
+                <FilterField label="Search" span={2}>
+                    {id => <DebouncedInput aria-label="Search funds" className="w-full" id={id} onCommit={q => onChange({ q: q || undefined })} placeholder="Ticker or name" value={search.q ?? ""} />}
+                </FilterField>
+                <FilterField label="Fund type">
+                    {id => <FilterSelect aria-label="Fund type" className="w-full" id={id} onValueChange={value => onChange({ type: value === ALL ? undefined : value })} options={TYPE_OPTIONS} value={search.type ?? ALL} />}
+                </FilterField>
+                <FilterField label="Structure">
+                    {id => <FilterSelect aria-label="Structure" className="w-full" id={id} onValueChange={value => onChange({ structure: value === ALL ? undefined : value })} options={STRUCTURE_OPTIONS} value={search.structure ?? ALL} />}
+                </FilterField>
+                <FilterField label="Exchange">
+                    {id => <FilterSelect aria-label="Exchange" className="w-full" id={id} onValueChange={value => onChange({ exchange: value === ALL ? undefined : value })} options={EXCHANGE_OPTIONS} value={search.exchange ?? ALL} />}
+                </FilterField>
+                <FilterField label="Sort">
+                    {id => <FilterSelect aria-label="Sort" className="w-full" id={id} onValueChange={value => onChange({ sort: value === "symbol" ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? "symbol"} />}
+                </FilterField>
+            </FilterBar>
             <FundsList
                 state={listState(funds)}
             />
-        </div>
+        </PageContainer>
     );
 }

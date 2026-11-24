@@ -11,8 +11,11 @@ import { PeopleState } from "@/components/people/people-state";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { Notice } from "@/components/ui/notice";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Stat, StatGrid } from "@/components/ui/stat";
 import { isNotFound } from "@/lib/api/errors";
 import { useV2EventsById, useV2Person, useV2PersonParticipationsInfinite } from "@/lib/api/queries";
 import { eventLabel } from "@/lib/earnings/format";
@@ -32,15 +35,6 @@ const NEW_YORK = "America/New_York";
 /** Calls per page of the person's list: each loaded call also asks its event (`GET /v1/events/{id}`, 1 credit). */
 export const PERSON_CALLS_PAGE = 25;
 
-function Fact({ children, label }: { children: React.ReactNode; label: string }) {
-    return (
-        <div className="flex min-w-0 flex-col gap-0.5">
-            <dt className="text-muted-foreground text-xs">{label}</dt>
-            <dd className="tabular-nums">{children}</dd>
-        </div>
-    );
-}
-
 /** The person's profile: role, latest title / firm, calls, first / last seen, an analyst's questions, other spellings (pure). */
 export function PersonProfileView({ error, isLoading, person }: { error: unknown; isLoading: boolean; person: null | V2Person }) {
     if (error) return <PeopleState error={error} notFound="No person with this id" title="Failed to load the person" />;
@@ -50,26 +44,24 @@ export function PersonProfileView({ error, isLoading, person }: { error: unknown
     const isAnalyst = person.role === "analyst";
 
     return (
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
-            <Fact label="Role"><Badge variant="outline">{personRoleLabel(person)}</Badge></Fact>
-            <Fact label="Calls">{formatNumber(person.appearance_count)}</Fact>
-            <Fact label="First seen">{formatDay(person.first_seen, NEW_YORK)}</Fact>
-            <Fact label="Last seen">{formatDay(person.last_seen, NEW_YORK)}</Fact>
-            {isAnalyst && <Fact label="Questions asked">{formatNumber(person.questions)}</Fact>}
+        <StatGrid>
+            <Stat label="Role" value={<Badge variant="outline">{personRoleLabel(person)}</Badge>} />
+            <Stat label="Calls" value={formatNumber(person.appearance_count)} />
+            <Stat label="First seen" value={formatDay(person.first_seen, NEW_YORK)} />
+            <Stat label="Last seen" value={formatDay(person.last_seen, NEW_YORK)} />
+            {isAnalyst && <Stat label="Questions asked" value={formatNumber(person.questions)} />}
             {isAnalyst && person.mean_difficulty !== null && (
-                <Fact label="Mean question difficulty">
-                    <span title="How pointed the scored questions were (0–1), across every covered call: a description, not a rating">
-                        {`${person.mean_difficulty.toFixed(2)} · ${formatNumber(person.scored_question_count)} scored`}
-                    </span>
-                </Fact>
+                <Stat
+                    label="Mean question difficulty"
+                    value={(
+                        <span title="How pointed the scored questions were (0–1), across every covered call: a description, not a rating">
+                            {`${person.mean_difficulty.toFixed(2)} · ${formatNumber(person.scored_question_count)} scored`}
+                        </span>
+                    )}
+                />
             )}
-            {(person.aliases?.length ?? 0) > 0 && (
-                <div className="col-span-full flex flex-col gap-0.5">
-                    <dt className="text-muted-foreground text-xs">Also written as</dt>
-                    <dd>{person.aliases?.join(" · ")}</dd>
-                </div>
-            )}
-        </dl>
+            {(person.aliases?.length ?? 0) > 0 && <Stat label="Also written as" value={person.aliases?.join(" · ")} />}
+        </StatGrid>
     );
 }
 
@@ -245,13 +237,13 @@ function PersonPage() {
 
     const name = person.data?.name ?? "Person";
 
-    if (!personId) return <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:px-8"><Notice badge="Not found" title="This is not a person id" /></div>;
+    if (!personId) return <PageContainer><Notice badge="Not found" title="This is not a person id" /></PageContainer>;
 
     // An unknown person (404) is the profile's notice alone: no empty calls / history blocks under it (UI walk F090).
     const known = !isNotFound(person.error);
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 lg:px-8">
+        <PageContainer>
             <section className="flex scroll-mt-20 flex-col gap-4" id={PERSON_ANCHORS.profile}>
                 <PageHeader
                     description={person.data ? personDetail(person.data) : null}
@@ -267,8 +259,7 @@ function PersonPage() {
 
             {known && (
                 <>
-                    <section className="flex scroll-mt-20 flex-col gap-2" id={PERSON_ANCHORS.calls}>
-                        <h3 className="text-sm font-semibold">Calls</h3>
+                    <Section className="scroll-mt-20" id={PERSON_ANCHORS.calls} title="Calls">
                         <PersonCallsView
                             calls={calls}
                             error={participations.error}
@@ -279,14 +270,13 @@ function PersonPage() {
                             onLoadMore={() => void participations.fetchNextPage()}
                             personName={name}
                         />
-                    </section>
+                    </Section>
 
-                    <section className="flex scroll-mt-20 flex-col gap-2" id={PERSON_ANCHORS.history}>
-                        <h3 className="text-sm font-semibold">Role & firm history</h3>
+                    <Section className="scroll-mt-20" id={PERSON_ANCHORS.history} title="Role & firm history">
                         <PersonHistoryBlock calls={calls} failed={Boolean(participations.error)} hasMore={participations.hasNextPage} isLoading={participations.isLoading} />
-                    </section>
+                    </Section>
                 </>
             )}
-        </div>
+        </PageContainer>
     );
 }

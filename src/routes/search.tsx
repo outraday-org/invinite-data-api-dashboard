@@ -8,13 +8,16 @@ import { ExportMenu } from "@/components/api/export-menu";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { SearchChip, SearchModeChips, SearchQueryForm } from "@/components/search/search-box";
 import { DayRange } from "@/components/ui/day-range";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { Notice } from "@/components/ui/notice";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2TranscriptSearch } from "@/lib/api/queries";
 import { SEARCH_MODES } from "@/lib/earnings/labels";
 import { formatDay } from "@/lib/format";
-import { titleHead } from "@/lib/layout";
+import { READING_COLUMN_CLASS, titleHead } from "@/lib/layout";
 import { IN_PLACE, optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
+import { cn } from "@/lib/utils";
 import { AskResults, TYPE_LABELS, TYPES } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
 
 /** The operation's page size: ONE page of at most 8 passages (`has_more` is always false). */
@@ -88,7 +91,7 @@ export function TranscriptSearchView({
     const capped = (data?.data.length ?? 0) >= TRANSCRIPT_SEARCH_LIMIT;
 
     return (
-        <div className="flex flex-col gap-2 text-xs/relaxed">
+        <div className={cn("flex flex-col gap-2", READING_COLUMN_CLASS)}>
             <AskResults data={data} error={error} isLoading={isLoading} scope={{ kind: "market" }} />
             {data && capped && (
                 <p className="text-muted-foreground" data-testid="search-narrow">
@@ -110,6 +113,7 @@ function SearchBox({ initial, isFetching, onSubmit }: { initial: string; isFetch
             onSubmit={onSubmit}
             onValueChange={setDraft}
             placeholder="e.g. gross margin, tariffs, &quot;free cash flow&quot;"
+            size="lg"
             value={draft}
         />
     );
@@ -148,8 +152,11 @@ function SearchPage() {
 
     const hits = data?.data ?? [];
 
+    // Every set filter counts once (the call window as one).
+    const activeCount = [search.mode, search.type, search.company, search.from ?? search.to].filter(value => value !== undefined).length;
+
     return (
-        <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer width="narrow">
             <PageHeader
                 description={`What was said on every company's earnings calls: transcripts, Q&A and slide text. One page of at most ${TRANSCRIPT_SEARCH_LIMIT} passages per search (10 credits); narrow it to find more.`}
                 title="Transcript search"
@@ -158,47 +165,54 @@ function SearchPage() {
             {/* Keyed by the submitted query: Back / a link with another `?q=` refills the box. */}
             <SearchBox initial={search.q ?? ""} isFetching={isFetching} key={search.q ?? ""} onSubmit={submit} />
 
-            <div className="flex flex-wrap items-center gap-2">
-                <span className="text-muted-foreground">Match</span>
-                <div aria-label="Mode" className="flex gap-1" role="group">
-                    <SearchModeChips mode={search.mode ?? "lexical"} onModeChange={setMode} />
-                </div>
-                <span className="text-muted-foreground sm:ml-3">In</span>
-                <div aria-label="Type" className="flex flex-wrap gap-1" role="group">
-                    <SearchChip onClick={() => onChange({ type: undefined })} pressed={search.type === undefined}>All</SearchChip>
-                    {TYPES.map(type => (
-                        <SearchChip key={type} onClick={() => onChange({ type })} pressed={search.type === type}>
-                            {TYPE_LABELS[type]}
-                        </SearchChip>
-                    ))}
-                </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-                <DebouncedInput
-                    aria-label="Company (ticker or CIK)"
-                    className="w-[160px]"
-                    onCommit={company => onChange({ company: company.toUpperCase() || undefined })}
-                    placeholder="One company"
-                    value={search.company ?? ""}
-                />
-                <DayRange from={search.from} labels={{ from: "Calls from", to: "Calls to" }} onChange={onChange} to={search.to} />
-                <span className="text-muted-foreground" data-testid="search-window">{windowText(search)}</span>
-                {hits.length > 0 && (
-                    <div className="ml-auto">
-                        <ExportMenu
-                            config={{ dataset: "transcript-search", scope: search.company ?? "all-companies" }}
-                            failed={false}
-                            hasNextPage={false}
-                            isFetchingNextPage={false}
-                            operationId="searchTranscripts"
-                            rows={hits}
-                        />
+            <FilterBar activeCount={activeCount} onReset={() => onChange({ company: undefined, from: undefined, mode: undefined, to: undefined, type: undefined })}>
+                <FilterField label="Match">
+                    <div className="flex flex-wrap gap-1">
+                        <SearchModeChips mode={search.mode ?? "lexical"} onModeChange={setMode} />
                     </div>
+                </FilterField>
+                <FilterField label="In" span={2}>
+                    <div className="flex flex-wrap gap-1">
+                        <SearchChip onClick={() => onChange({ type: undefined })} pressed={search.type === undefined}>All</SearchChip>
+                        {TYPES.map(type => (
+                            <SearchChip key={type} onClick={() => onChange({ type })} pressed={search.type === type}>
+                                {TYPE_LABELS[type]}
+                            </SearchChip>
+                        ))}
+                    </div>
+                </FilterField>
+                <FilterField label="Company">
+                    {id => (
+                        <DebouncedInput
+                            aria-label="Company (ticker or CIK)"
+                            className="w-full"
+                            id={id}
+                            onCommit={company => onChange({ company: company.toUpperCase() || undefined })}
+                            placeholder="One company"
+                            value={search.company ?? ""}
+                        />
+                    )}
+                </FilterField>
+                <FilterField label="Calls" span={2}>
+                    <DayRange from={search.from} labels={{ from: "Calls from", to: "Calls to" }} onChange={onChange} to={search.to} />
+                </FilterField>
+            </FilterBar>
+
+            <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-muted-foreground text-xs" data-testid="search-window">{windowText(search)}</span>
+                {hits.length > 0 && (
+                    <ExportMenu
+                        config={{ dataset: "transcript-search", scope: search.company ?? "all-companies" }}
+                        failed={false}
+                        hasNextPage={false}
+                        isFetchingNextPage={false}
+                        operationId="searchTranscripts"
+                        rows={hits}
+                    />
                 )}
             </div>
 
             <TranscriptSearchView data={data} error={error} isLoading={isFetching} search={search} />
-        </div>
+        </PageContainer>
     );
 }

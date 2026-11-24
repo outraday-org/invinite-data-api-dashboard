@@ -13,13 +13,14 @@ import { AlertUsersListView } from "@/components/alerts/alert-user-list-view";
 import { useAlertUserActions } from "@/components/alerts/use-alert-user-actions";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { Button } from "@/components/ui/button";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { PageHeader } from "@/components/ui/page-header";
 import { ALERT_USER_STATUS_INFO, ALERT_USER_STATUSES, emptyAlertUserForm, fromAlertUser } from "@/lib/alerts/alert-users";
 import { listState } from "@/lib/api/list-state";
 import { useAlertUserDefaults, useAlertUsersInfinite } from "@/lib/api/queries";
 import { titleHead } from "@/lib/layout";
 import { IN_PLACE, optionalEnum, optionalText } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 /** The list's filters as the API names them (`q` = an id prefix). */
 const alertUsersSearchSchema = z.object({
@@ -76,17 +77,21 @@ function AlertUsersPage() {
             <PageHeader
                 actions={(
                     <>
-                        <Button onClick={() => setEdit({ initial: emptyAlertUserForm(), key: `create:${Date.now()}`, mode: "create" })} size="sm" type="button">Add end user</Button>
-                        <Button onClick={() => setBatchOpen(true)} size="sm" type="button" variant="outline">Bulk upsert</Button>
+                        <Button onClick={() => setBatchOpen(true)} type="button" variant="outline">Bulk upsert</Button>
+                        <Button onClick={() => setEdit({ initial: emptyAlertUserForm(), key: `create:${Date.now()}`, mode: "create" })} type="button">Add end user</Button>
                     </>
                 )}
                 description="Your customers' ids on alerts (external_user_id), ordered by id, each with its usage against its effective limits. Limits left empty follow the end-user defaults below."
                 title="End users"
             />
-            <div className="flex flex-wrap items-center gap-2">
-                <FilterSelect aria-label="Status" className="w-[150px]" onValueChange={value => onChange({ status: value === ALL ? undefined : value })} options={STATUS_OPTIONS} value={search.status ?? ALL} />
-                <DebouncedInput aria-label="End user id starts with" className="w-[220px]" onCommit={q => onChange({ q: q || undefined })} placeholder="Id starts with…" value={search.q ?? ""} />
-            </div>
+            <FilterBar activeCount={[search.status, search.q].filter(Boolean).length} onReset={() => onChange({ q: undefined, status: undefined })}>
+                <FilterField label="Status">
+                    {id => <FilterSelect aria-label="Status" className="w-full" id={id} onValueChange={value => onChange({ status: value === ALL ? undefined : value })} options={STATUS_OPTIONS} value={search.status ?? ALL} />}
+                </FilterField>
+                <FilterField label="Id starts with" span={2}>
+                    {id => <DebouncedInput aria-label="Id starts with" className="w-full" id={id} onCommit={q => onChange({ q: q || undefined })} placeholder="customer-" value={search.q ?? ""} />}
+                </FilterField>
+            </FilterBar>
             {actions.deleted && <AlertUserDeleteResultNotice onDismiss={actions.dismissDeleted} outcome={actions.deleted} />}
             <AlertUsersListView
                 busy={actions.busy}

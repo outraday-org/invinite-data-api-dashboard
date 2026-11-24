@@ -1,6 +1,7 @@
 import * as React from "react";
 
-const MOBILE_BREAKPOINT_PX = 768;
+// Below 1024 px the sidebar is off-canvas (a sheet): docked, its 232 px left too little room for tables (ui-redesign F9).
+export const MOBILE_BREAKPOINT_PX = 1024;
 
 export function useIsMobile() {
     // False on the server AND on the first client render (the hydrated markup must match the server's); the effect

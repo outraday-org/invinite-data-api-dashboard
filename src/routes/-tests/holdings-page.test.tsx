@@ -4,7 +4,7 @@ import type * as React from "react";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { FundCompositionList, FundWeightsBlock } from "@/components/sec/fund-views";
+import { FundCompositionList, FundSourceBadge, FundWeightsBlock } from "@/components/sec/fund-views";
 import { ApiRequestError } from "@/lib/api/errors";
 import { weightSumText } from "@/lib/sec/fund";
 import {
@@ -29,10 +29,17 @@ const list = { hasNextPage: false, isFetchingNextPage: false, isLoading: false, 
 const problem = (status: number, code: string, detail: string) => new ApiRequestError(status, { error: code, message: detail });
 
 describe("Fund holdings (`/v1/funds/{fund}/holdings`)", () => {
-    it("the source + as-of badge, the top positions as stated, and 'Load more' for the next page", () => {
-        render(<FundCompositionList state={{ ...list, error: null, hasNextPage: true, pages: [V2_FUND_POSITIONS] }} />);
+    it("the source + as-of badge (the page's filter bar), the top positions as stated, and 'Load more' for the next page", () => {
+        render(<FundSourceBadge asOf={V2_FUND_POSITIONS.meta.as_of} source={V2_FUND_POSITIONS.meta.source} />);
 
         expect(screen.getByTestId("fund-source-badge")).toHaveTextContent("Issuer file · as of Nov 13, 2026");
+
+        cleanup();
+
+        render(<FundCompositionList state={{ ...list, error: null, hasNextPage: true, pages: [V2_FUND_POSITIONS] }} />);
+
+        // The badge is the page's, not the list's.
+        expect(screen.queryByTestId("fund-source-badge")).toBeNull();
 
         // A position with a ticker opens that instrument (as stated; no request per row).
         expect(screen.getByRole("link", { name: "NVIDIA CORP" })).toHaveAttribute("href", "/NVDA");

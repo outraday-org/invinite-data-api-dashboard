@@ -68,12 +68,12 @@ describe("destination picker", () => {
 });
 
 describe("script version picker", () => {
-    it("offers the picked script's compiled versions only", () => {
+    it("offers the picked script's compiled versions only", async () => {
         render(<ScriptVersionPicker id="sv" onChange={vi.fn()} options={scriptOptions()} value="" />);
 
-        fireEvent.click(screen.getByRole("combobox", { name: "Script version" }));
+        fireEvent.click(screen.getByRole("button", { name: "Script version" }));
 
-        const items = within(screen.getByRole("listbox")).getAllByRole("option").map(option => option.textContent);
+        const items = within(await screen.findByRole("menu")).getAllByRole("menuitemradio").map(option => option.textContent);
 
         expect(items).toEqual(["Pick a version", `Version 2 · ${SCRIPT_V2_OK.id}`]);
     });

@@ -55,7 +55,7 @@ export function symbolAlertsText(page: Pick<AlertsListResponse, "data" | "has_mo
 /** The link to the ticker's alerts (pure). */
 export function SymbolAlertsLink({ page, symbol }: { page: Pick<AlertsListResponse, "data" | "has_more">; symbol: string }) {
     return (
-        <Link className="text-primary underline-offset-4 hover:underline" data-testid="symbol-alerts-link" search={{ symbol }} to="/alerts">
+        <Link className="text-primary inline-flex items-center underline-offset-4 hover:underline max-sm:min-h-9" data-testid="symbol-alerts-link" search={{ symbol }} to="/alerts">
             {symbolAlertsText(page, symbol)}
         </Link>
     );

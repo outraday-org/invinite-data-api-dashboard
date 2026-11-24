@@ -11,6 +11,8 @@ import { useEventList } from "@/components/alerts/use-event-list";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { newestEventId, shouldAutoLoad } from "@/lib/alerts/alert-view";
@@ -20,7 +22,6 @@ import { titleHead } from "@/lib/layout";
 import { useLiveAlerts } from "@/lib/live/use-live-alerts";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import { IN_PLACE, optionalEnum, optionalFlag, optionalText } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 /** The feed's filters as the API names them, the opened event (`getAlertEvent`) and the Live switch. */
 const eventsSearchSchema = z.object({
@@ -145,7 +146,6 @@ function AlertEventsPage() {
 
                             onChange({ live: search.live ? undefined : true });
                         }}
-                        size="sm"
                         type="button"
                         variant={search.live ? "default" : "outline"}
                     >
@@ -155,11 +155,20 @@ function AlertEventsPage() {
                 description="Every fired event of your alerts with its payload (the webhook's data). Each page costs 1 credit; the live stream costs none."
                 title="Alert events"
             />
-            <div className="flex flex-wrap items-center gap-2">
-                <FilterSelect aria-label="Event type" className="w-[210px]" onValueChange={value => onChange({ type: value === ALL ? undefined : value })} options={TYPE_OPTIONS} value={search.type ?? ALL} />
-                <DebouncedInput aria-label="Alert id" className="w-[230px]" onCommit={id => onChange({ alert_id: id || undefined })} placeholder="Alert id (alt_…)" value={search.alert_id ?? ""} />
-                <DebouncedInput aria-label="End user id" className="w-[160px]" onCommit={id => onChange({ external_user_id: id || undefined })} placeholder="End user id" value={search.external_user_id ?? ""} />
-            </div>
+            <FilterBar
+                activeCount={[search.type, search.alert_id, search.external_user_id].filter(Boolean).length}
+                onReset={() => onChange({ alert_id: undefined, external_user_id: undefined, type: undefined })}
+            >
+                <FilterField label="Event type">
+                    {id => <FilterSelect aria-label="Event type" className="w-full" id={id} onValueChange={value => onChange({ type: value === ALL ? undefined : value })} options={TYPE_OPTIONS} value={search.type ?? ALL} />}
+                </FilterField>
+                <FilterField label="Alert">
+                    {id => <DebouncedInput aria-label="Alert" className="w-full font-mono" id={id} onCommit={value => onChange({ alert_id: value || undefined })} placeholder="alt_…" value={search.alert_id ?? ""} />}
+                </FilterField>
+                <FilterField label="End user">
+                    {id => <DebouncedInput aria-label="End user" className="w-full" id={id} onCommit={value => onChange({ external_user_id: value || undefined })} placeholder="End user id" value={search.external_user_id ?? ""} />}
+                </FilterField>
+            </FilterBar>
             {search.event && (
                 <SingleEventView error={opened.error} event={opened.data} isLoading={opened.isLoading} onClose={() => onChange({ event: undefined })} onRetry={() => void opened.refetch()} />
             )}

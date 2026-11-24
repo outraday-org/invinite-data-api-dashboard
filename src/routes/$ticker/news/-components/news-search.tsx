@@ -8,11 +8,11 @@ import { SearchCostNote, SearchModeChips, SearchQueryForm } from "@/components/s
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { tierLabel } from "@/components/ui/credit-hint";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2NewsSearchInfinite } from "@/lib/api/queries";
 import { formatInstant } from "@/lib/earnings/format";
 import { HitPassage, MatchBadge, SearchCoverageNote, SearchEmptyState, SearchError } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 /** Hits per page (10 credits a page whatever the size). */
 const NEWS_SEARCH_LIMIT = 20;

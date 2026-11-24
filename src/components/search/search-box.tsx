@@ -16,7 +16,8 @@ export const MIN_SEARCH_QUERY_LENGTH = 2;
  * text to `onSubmit` once it has `MIN_SEARCH_QUERY_LENGTH` characters and `canSubmit` holds. The button is disabled
  * while `busy` and reads "Searching…" while `searching` (default `busy`; the news search keeps "Search" while it only
  * loads a next page). `trailing` follows the button (news: the clear ×); `children` are further fields inside the same
- * form (the SEC filters: Enter in a filter submits too), below the query row.
+ * form (the SEC filters: Enter in a filter submits too), below the query row. `size="lg"` = a 40 px query row (the
+ * page-level `/search`, ui-redesign task 11).
  */
 export function SearchQueryForm({
     busy,
@@ -27,6 +28,7 @@ export function SearchQueryForm({
     onValueChange,
     placeholder,
     searching = busy,
+    size,
     trailing,
     value,
 }: {
@@ -40,6 +42,7 @@ export function SearchQueryForm({
     onValueChange: (value: string) => void;
     placeholder: string;
     searching?: boolean;
+    size?: "lg";
     trailing?: React.ReactNode;
     value: string;
 }) {
@@ -53,8 +56,15 @@ export function SearchQueryForm({
 
     const row = (
         <>
-            <Input aria-label={label} maxLength={500} onChange={event => onValueChange(event.target.value)} placeholder={placeholder} value={value} />
-            <Button disabled={!submittable || busy} type="submit">
+            <Input
+                aria-label={label}
+                className={size === "lg" ? "h-10 text-sm" : undefined}
+                maxLength={500}
+                onChange={event => onValueChange(event.target.value)}
+                placeholder={placeholder}
+                value={value}
+            />
+            <Button className={size === "lg" ? "h-10 px-4" : undefined} disabled={!submittable || busy} type="submit">
                 <Search />
                 {searching ? "Searching…" : "Search"}
             </Button>

@@ -59,7 +59,7 @@ function ScriptsPage() {
                             options={[{ label: "Your scripts", value: "scripts" }, { label: "Built-in templates", value: "templates" }]}
                             value={tab ?? "scripts"}
                         />
-                        {tab !== "templates" && <Button onClick={() => setUploading(true)} size="sm" type="button">Upload script</Button>}
+                        {tab !== "templates" && <Button onClick={() => setUploading(true)} type="button">Upload script</Button>}
                     </>
                 )}
                 description={tab === "templates"

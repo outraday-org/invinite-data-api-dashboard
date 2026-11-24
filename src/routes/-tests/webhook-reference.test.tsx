@@ -16,8 +16,6 @@ vi.mock("@tanstack/react-router", () => ({
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
 }));
 
-vi.mock("@/components/api/api-sheet", () => ({ ApiButton: () => null }));
-
 afterEach(cleanup);
 
 const spec = JSON.parse(readFileSync(resolve(__dirname, "../../../openapi.json"), "utf8")) as { "x-webhooks": Record<string, unknown> };

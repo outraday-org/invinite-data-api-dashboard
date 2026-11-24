@@ -8,9 +8,9 @@ import type {
     V2Session,
 } from "@/lib/api/types";
 
-import { DayRange } from "@/components/ui/day-range";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
 import { orderedWindow } from "@/lib/url-state";
 
 const SESSIONS = ["bmo", "amc", "intraday"] as const satisfies ReadonlyArray<V2Session>;
@@ -113,41 +113,6 @@ const CALENDAR_STATUS_OPTIONS: Array<{ label: string; value: "all" | V2CalendarS
     { label: "Cancelled", value: "cancelled" },
 ];
 
-/** A labelled `Select` over fixed options (the calendar and News filters). */
-export function FilterSelect<T extends string>({
-    "aria-label": ariaLabel,
-    className,
-    disabled,
-    onValueChange,
-    options,
-    title,
-    value,
-}: {
-    /** Required: a select's trigger shows its value, not what it filters (F102). */
-    "aria-label": string;
-    "className": string;
-    "disabled"?: boolean;
-    "onValueChange": (value: T) => void;
-    "options": Array<{ label: string; value: T }>;
-    "title"?: string;
-    "value": T;
-}) {
-    return (
-        <Select disabled={disabled} onValueChange={v => onValueChange(v as T)} value={value}>
-            <SelectTrigger aria-label={ariaLabel} className={className} title={title}>
-                {options.find(opt => opt.value === value)?.label}
-            </SelectTrigger>
-            <SelectContent>
-                {options.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                    </SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
-    );
-}
-
 /**
  * Whether a loaded row passes the filters `/v1/events` has no parameter for: the session and the event status
  * (`calendar.status`, `expand=calendar`).
@@ -161,90 +126,137 @@ export function matchesCalendarSearch(
     return !search.calendarStatus || event.calendar?.status === search.calendarStatus;
 }
 
-/** Calendar filters, controlled by the route's search params (a filter set is a shareable URL). */
-export function CalendarFilters({
-    from,
-    onChange,
-    search,
-    to,
-}: {
-    /** The resolved window (search or default), shown in the date inputs. */
-    from: string;
-    onChange: (patch: Partial<CalendarSearch>) => void;
-    search: CalendarSearch;
-    to: string;
-}) {
-    return (
-        <div className="flex flex-wrap items-center gap-2">
-            <Input
-                aria-label="Symbol"
-                className="w-[110px] uppercase placeholder:normal-case"
-                defaultValue={search.company ?? ""}
-                key={search.company ?? ""}
-                onBlur={event => onChange({ company: event.target.value.trim().toUpperCase() || undefined })}
-                onKeyDown={(event) => {
-                    if (event.key === "Enter") onChange({ company: event.currentTarget.value.trim().toUpperCase() || undefined });
-                }}
-                placeholder="Symbol"
-            />
-            <DayRange from={from} labels={{ from: "From", to: "To" }} onChange={onChange} separatorClassName="text-muted-foreground text-xs" to={to} />
-            <FilterSelect
-                aria-label="Session"
-                className="w-[140px]"
-                onValueChange={value => onChange({ session: value === "all" ? undefined : value })}
-                options={SESSION_OPTIONS}
-                value={search.session ?? "all"}
-            />
-            <FilterSelect
-                aria-label="Event type"
-                className="w-[150px]"
-                onValueChange={value => onChange({ eventType: value === "earnings_call" ? undefined : value })}
-                options={EVENT_TYPE_OPTIONS}
-                value={search.eventType ?? "earnings_call"}
-            />
-            <FilterSelect
-                aria-label="Date certainty"
-                className="w-[150px]"
-                onValueChange={value => onChange({ dateKind: value === "any" ? undefined : value })}
-                options={DATE_KIND_OPTIONS}
-                value={search.dateKind ?? "any"}
-            />
-            <FilterSelect
-                aria-label="Call status"
-                className="w-[150px]"
-                onValueChange={value => onChange({ status: value === "all" ? undefined : value })}
-                options={STATUS_OPTIONS}
-                value={search.status ?? "all"}
-            />
-            <FilterSelect
-                aria-label="Event status"
-                className="w-[170px]"
-                onValueChange={value => onChange({ calendarStatus: value === "all" ? undefined : value })}
-                options={CALENDAR_STATUS_OPTIONS}
-                value={search.calendarStatus ?? "all"}
-            />
-            <Input
-                aria-label="Fiscal year"
-                className="w-[110px]"
-                defaultValue={search.fiscalYear ?? ""}
-                key={`fy-${search.fiscalYear ?? ""}`}
-                max={2200}
-                min={1900}
-                onBlur={(event) => {
-                    const year = Number(event.target.value);
+/** The calendar filters a reader sets, cleared (the window is not one of them: it has its own presets and day inputs). */
+const FILTER_RESET = {
+    calendarStatus: undefined,
+    company: undefined,
+    dateKind: undefined,
+    eventType: undefined,
+    fiscalQuarter: undefined,
+    fiscalYear: undefined,
+    session: undefined,
+    status: undefined,
+} satisfies Partial<CalendarSearch>;
 
-                    onChange({ fiscalYear: Number.isInteger(year) && year >= 1900 ? year : undefined });
-                }}
-                placeholder="Fiscal year"
-                type="number"
-            />
-            <FilterSelect
-                aria-label="Fiscal quarter"
-                className="w-[120px]"
-                onValueChange={value => onChange({ fiscalQuarter: value === "all" ? undefined : Number(value) })}
-                options={QUARTER_OPTIONS}
-                value={search.fiscalQuarter ? String(search.fiscalQuarter) as "1" | "2" | "3" | "4" : "all"}
-            />
-        </div>
+const FILTER_KEYS = Object.keys(FILTER_RESET) as Array<keyof typeof FILTER_RESET>;
+
+/**
+ * Calendar filters (ui-redesign task 11): one labelled `FilterBar`, controlled by the route's search params (a filter
+ * set is a shareable URL). "Reset filters" clears every filter but the window.
+ */
+export function CalendarFilters({ onChange, search }: { onChange: (patch: Partial<CalendarSearch>) => void; search: CalendarSearch }) {
+    const activeCount = FILTER_KEYS.filter(key => search[key] !== undefined).length;
+
+    return (
+        <FilterBar activeCount={activeCount} onReset={() => onChange(FILTER_RESET)}>
+            <FilterField label="Symbol">
+                {id => (
+                    <Input
+                        aria-label="Symbol"
+                        className="w-full uppercase placeholder:normal-case"
+                        defaultValue={search.company ?? ""}
+                        id={id}
+                        key={search.company ?? ""}
+                        onBlur={event => onChange({ company: event.target.value.trim().toUpperCase() || undefined })}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") onChange({ company: event.currentTarget.value.trim().toUpperCase() || undefined });
+                        }}
+                        placeholder="Any company"
+                    />
+                )}
+            </FilterField>
+            <FilterField label="Session">
+                {id => (
+                    <FilterSelect
+                        aria-label="Session"
+                        className="w-full"
+                        id={id}
+                        onValueChange={value => onChange({ session: value === "all" ? undefined : value })}
+                        options={SESSION_OPTIONS}
+                        value={search.session ?? "all"}
+                    />
+                )}
+            </FilterField>
+            <FilterField label="Event type">
+                {id => (
+                    <FilterSelect
+                        aria-label="Event type"
+                        className="w-full"
+                        id={id}
+                        onValueChange={value => onChange({ eventType: value === "earnings_call" ? undefined : value })}
+                        options={EVENT_TYPE_OPTIONS}
+                        value={search.eventType ?? "earnings_call"}
+                    />
+                )}
+            </FilterField>
+            <FilterField label="Date certainty">
+                {id => (
+                    <FilterSelect
+                        aria-label="Date certainty"
+                        className="w-full"
+                        id={id}
+                        onValueChange={value => onChange({ dateKind: value === "any" ? undefined : value })}
+                        options={DATE_KIND_OPTIONS}
+                        value={search.dateKind ?? "any"}
+                    />
+                )}
+            </FilterField>
+            <FilterField label="Call status">
+                {id => (
+                    <FilterSelect
+                        aria-label="Call status"
+                        className="w-full"
+                        id={id}
+                        onValueChange={value => onChange({ status: value === "all" ? undefined : value })}
+                        options={STATUS_OPTIONS}
+                        value={search.status ?? "all"}
+                    />
+                )}
+            </FilterField>
+            <FilterField label="Event status">
+                {id => (
+                    <FilterSelect
+                        aria-label="Event status"
+                        className="w-full"
+                        id={id}
+                        onValueChange={value => onChange({ calendarStatus: value === "all" ? undefined : value })}
+                        options={CALENDAR_STATUS_OPTIONS}
+                        value={search.calendarStatus ?? "all"}
+                    />
+                )}
+            </FilterField>
+            <FilterField label="Fiscal year">
+                {id => (
+                    <Input
+                        aria-label="Fiscal year"
+                        className="w-full"
+                        defaultValue={search.fiscalYear ?? ""}
+                        id={id}
+                        key={`fy-${search.fiscalYear ?? ""}`}
+                        max={2200}
+                        min={1900}
+                        onBlur={(event) => {
+                            const year = Number(event.target.value);
+
+                            onChange({ fiscalYear: Number.isInteger(year) && year >= 1900 ? year : undefined });
+                        }}
+                        placeholder="Any year"
+                        type="number"
+                    />
+                )}
+            </FilterField>
+            <FilterField label="Fiscal quarter">
+                {id => (
+                    <FilterSelect
+                        aria-label="Fiscal quarter"
+                        className="w-full"
+                        id={id}
+                        onValueChange={value => onChange({ fiscalQuarter: value === "all" ? undefined : Number(value) })}
+                        options={QUARTER_OPTIONS}
+                        value={search.fiscalQuarter ? String(search.fiscalQuarter) as "1" | "2" | "3" | "4" : "all"}
+                    />
+                )}
+            </FilterField>
+        </FilterBar>
     );
 }

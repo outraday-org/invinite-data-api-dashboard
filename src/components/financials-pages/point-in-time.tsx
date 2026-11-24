@@ -3,10 +3,11 @@ import * as React from "react";
 import type { V2FilingSource, V2StatementsResponse } from "@/lib/api/types";
 
 import { Button } from "@/components/ui/button";
+import { FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { Input } from "@/components/ui/input";
 import { Notice } from "@/components/ui/notice";
 import { formatDay } from "@/lib/format";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 /** `meta.point_in_time` of a statement page: the selector it was answered for (null = the current renderings). */
 export type PointInTime = NonNullable<V2StatementsResponse["meta"]["point_in_time"]>;
@@ -44,7 +45,7 @@ export type PointInTimePatch = { asOf?: string; filing?: string };
 /**
  * The point-in-time pickers of the statement tabs (`as_of`, `filing`; ratios and growth have neither): "As of" = the
  * newest rendering of each period filed on or before that day; "From filing" = the rendering of one filing. Picking one
- * clears the other.
+ * clears the other. Two labelled `FilterField`s of the tab's `FilterBar` (the "when" row).
  */
 export function PointInTimeControls({ asOf, choices, filing, onChange }: {
     asOf: string | undefined;
@@ -58,24 +59,34 @@ export function PointInTimeControls({ asOf, choices, filing, onChange }: {
     );
 
     return (
-        <div aria-label="Point in time" className="flex flex-wrap items-center gap-2" role="group">
-            <Input
-                aria-label="As of"
-                className="w-[150px]"
-                onChange={event => onChange({ asOf: event.target.value || undefined, filing: undefined })}
-                title="As filed on or before this day"
-                type="date"
-                value={asOf ?? ""}
-            />
-            <FilterSelect
-                aria-label="From filing"
-                className="w-[190px]"
-                onValueChange={value => onChange({ asOf: undefined, filing: value === LATEST ? undefined : value })}
-                options={options}
-                title="The rendering of one filing"
-                value={filing ?? LATEST}
-            />
-        </div>
+        <>
+            <FilterField label="As of">
+                {id => (
+                    <Input
+                        aria-label="As of"
+                        className="w-full"
+                        id={id}
+                        onChange={event => onChange({ asOf: event.target.value || undefined, filing: undefined })}
+                        title="As filed on or before this day"
+                        type="date"
+                        value={asOf ?? ""}
+                    />
+                )}
+            </FilterField>
+            <FilterField label="From filing">
+                {id => (
+                    <FilterSelect
+                        aria-label="From filing"
+                        className="w-full"
+                        id={id}
+                        onValueChange={value => onChange({ asOf: undefined, filing: value === LATEST ? undefined : value })}
+                        options={options}
+                        title="The rendering of one filing"
+                        value={filing ?? LATEST}
+                    />
+                )}
+            </FilterField>
+        </>
     );
 }
 

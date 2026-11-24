@@ -1,23 +1,29 @@
 // @vitest-environment jsdom
 import type * as React from "react";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { V2Instrument } from "@/lib/api/types";
 
 import { ApiRequestError } from "@/lib/api/errors";
 import { useInstrument } from "@/lib/api/queries";
-import { AAPL_INSTRUMENT, GLD_INSTRUMENT, SPY_INSTRUMENT } from "@/lib/instruments-fixtures";
+import { AAPL_INSTRUMENT, GLD_INSTRUMENT, SPY_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { Route } from "@/routes/$ticker/route";
 
-const route = vi.hoisted(() => ({ pathname: "/AAPL", ticker: "AAPL" }));
+const route = vi.hoisted(() => ({ linkProps: [] as Array<Record<string, unknown>>, pathname: "/AAPL", ticker: "AAPL" }));
 
 vi.mock("@tanstack/react-router", () => ({
     createFileRoute: () => (options: Record<string, unknown>) => ({ options, useParams: () => ({ ticker: route.ticker }) }),
-    Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => (
-        <a href={Object.entries(params).reduce((path, [key, value]) => path.replace(`$${key}`, value), to)}>{children}</a>
-    ),
+    Link: (props: { "aria-current"?: "page"; "children": React.ReactNode; "params": Record<string, string>; "to": string }) => {
+        route.linkProps.push(props);
+
+        return (
+            <a aria-current={props["aria-current"]} href={Object.entries(props.params).reduce((path, [key, value]) => path.replace(`$${key}`, value), props.to)}>
+                {props.children}
+            </a>
+        );
+    },
     Outlet: () => <div data-testid="outlet" />,
     useRouterState: ({ select }: { select: (state: { location: { pathname: string } }) => string }) => select({ location: { pathname: route.pathname } }),
 }));
@@ -42,7 +48,15 @@ const show = (instrument: V2Instrument, pathname = `/${instrument.symbol}`) => {
 
 beforeEach(() => {
     vi.clearAllMocks();
+
+    route.linkProps = [];
 });
+
+const tabs = () => within(screen.getByRole("navigation", { name: /^Sections of / })).getAllByRole("link");
+
+const tabLabels = () => tabs().map(link => link.textContent);
+
+const activeTab = () => tabs().filter(link => link.getAttribute("aria-current") === "page").map(link => link.textContent);
 
 describe("$ticker layout (the sidebar's sections: app-sidebar.test.tsx)", () => {
     it("the header names the instrument with its type badges; no brand-colour dots", () => {
@@ -112,6 +126,9 @@ describe("$ticker layout (the sidebar's sections: app-sidebar.test.tsx)", () => 
 
         expect(screen.getByText("ZZZZ is not a known instrument")).toBeInTheDocument();
 
+        // The page keeps one h1 (the typed symbol) without the identity header.
+        expect(screen.getByRole("heading", { level: 1, name: "ZZZZ" })).toBeInTheDocument();
+
         expect(screen.queryByTestId("outlet")).toBeNull();
     });
 
@@ -130,5 +147,95 @@ describe("$ticker layout (the sidebar's sections: app-sidebar.test.tsx)", () => 
         expect(screen.getByText("A symbol has at most 15 characters.")).toBeInTheDocument();
 
         expect(screen.queryByTestId("outlet")).toBeNull();
+    });
+
+    describe("section tabs (the sidebar context group's twin)", () => {
+        it("follow the instrument's datasets: a stock without Holdings, a fund without Financials / Calls, a trust, an ETN", () => {
+            show(AAPL_INSTRUMENT);
+
+            expect(screen.getByRole("navigation", { name: "Sections of AAPL" })).toBeInTheDocument();
+
+            expect(tabLabels()).toEqual(["Overview", "Calls", "Documents", "Filings", "Financials", "Holders", "Insider trades", "Dividends", "Splits", "News"]);
+
+            cleanup();
+
+            show(SPY_INSTRUMENT);
+
+            expect(tabLabels()).toEqual(["Overview", "Filings", "Holders", "Holdings", "Dividends", "Splits"]);
+
+            cleanup();
+
+            show(GLD_INSTRUMENT);
+
+            expect(tabLabels()).toEqual(["Overview", "Filings", "Holders", "Dividends", "Splits"]);
+
+            cleanup();
+
+            show(VXX_INSTRUMENT);
+
+            expect(tabLabels()).toEqual(["Overview", "Holders", "Dividends", "Splits"]);
+        });
+
+        it("the active tab is the section of the URL; a call page keeps Calls; a gated section none", () => {
+            show(AAPL_INSTRUMENT, "/AAPL/filings");
+
+            expect(activeTab()).toEqual(["Filings"]);
+
+            cleanup();
+
+            show(AAPL_INSTRUMENT, "/AAPL");
+
+            expect(activeTab()).toEqual(["Overview"]);
+
+            cleanup();
+
+            show(AAPL_INSTRUMENT, "/AAPL/earnings-calls/evt_123");
+
+            expect(activeTab()).toEqual(["Calls"]);
+
+            cleanup();
+
+            show(GLD_INSTRUMENT, "/GLD/holdings");
+
+            expect(activeTab()).toEqual([]);
+        });
+
+        it("links point at the section of the URL's symbol and carry no search params", () => {
+            show(AAPL_INSTRUMENT, "/AAPL/dividends");
+
+            expect(tabs().map(link => link.getAttribute("href"))).toContain("/AAPL/insider-trades");
+
+            expect(route.linkProps.length).toBeGreaterThan(0);
+
+            expect(route.linkProps.every(props => !("search" in props))).toBe(true);
+        });
+
+        it("a skeleton row while the instrument loads; no tabs for an unknown symbol", () => {
+            route.ticker = "AAPL";
+
+            route.pathname = "/AAPL";
+
+            vi.mocked(useInstrument).mockReturnValue({ data: null, error: null, isLoading: true } as never);
+
+            render(<TickerLayout />);
+
+            expect(screen.getByTestId("section-tabs-skeleton")).toBeInTheDocument();
+
+            expect(screen.getByRole("heading", { level: 1, name: "AAPL" })).toBeInTheDocument();
+
+            cleanup();
+
+            route.ticker = "ZZZZ";
+
+            route.pathname = "/ZZZZ";
+
+            vi.mocked(useInstrument).mockReturnValue({ data: null, error: new ApiRequestError(404, { error: "not_covered", message: "No instrument" }), isLoading: false } as never);
+
+            render(<TickerLayout />);
+
+            expect(screen.queryByRole("navigation")).toBeNull();
+
+            expect(screen.queryByTestId("section-tabs-skeleton")).toBeNull();
+        });
     });
 });

@@ -7,18 +7,20 @@ import type { V2Instrument, V2InstrumentsResponse } from "@/lib/api/types";
 import type { InstrumentTab } from "@/lib/instruments";
 
 import { DebouncedInput } from "@/components/navigation/debounced-input";
-import { TabStrip } from "@/components/navigation/tab-strip";
 import { CompaniesList, companiesSort, COMPANY_SECTORS } from "@/components/reference/companies-list";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCompaniesInfinite, useInstrumentsInfinite } from "@/lib/api/queries";
 import { formatDay } from "@/lib/format";
 import { EXCHANGE_LABELS, FUND_STRUCTURE_LABELS, INSTRUMENT_TABS, INSTRUMENT_TYPE_PLURALS, instrumentBadges } from "@/lib/instruments";
-import { titleHead } from "@/lib/layout";
+import { titleHead, WRAPPING_TABS_LIST_CLASS } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const ALL = "all";
 
@@ -212,33 +214,57 @@ function InstrumentsPage() {
 
     const tab: InstrumentTab = search.type ?? ALL;
 
+    // The structure is a fund's: its filter shows on the ETF / closed-end fund tabs only.
+    const fundTab = !companiesTab && (tab === "etf" || tab === "closed_end_fund");
+
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer>
             <PageHeader
                 description="Every exchange-traded US symbol the Data API knows: stocks, ETFs, closed-end funds and ETNs."
                 title="Instruments"
             />
-            <TabStrip
-                aria-label="Instrument type"
+            <Tabs
                 // The Companies tab drops the instrument-only filters; a type tab drops the sector.
-                onSelect={value => onChange(value === COMPANIES
+                onValueChange={value => onChange(value === COMPANIES
                     ? { active: undefined, structure: undefined, type: undefined, view: COMPANIES }
-                    : { sector: undefined, type: value === ALL ? undefined : value, view: undefined })}
-                options={TAB_OPTIONS}
+                    : { sector: undefined, type: value === ALL ? undefined : value as InstrumentTab, view: undefined })}
                 value={companiesTab ? COMPANIES : tab}
-            />
-            <div className="flex flex-wrap items-center gap-2">
-                <DebouncedInput aria-label="Search instruments" className="w-[240px]" onCommit={q => onChange({ q: q || undefined })} placeholder="Ticker or name" value={search.q ?? ""} />
-                {!companiesTab && (tab === "etf" || tab === "closed_end_fund") && (
-                    <FilterSelect aria-label="Structure" className="w-[200px]" onValueChange={value => onChange({ structure: value === ALL ? undefined : value })} options={STRUCTURE_OPTIONS} value={search.structure ?? ALL} />
+            >
+                <TabsList aria-label="Instrument type" className={WRAPPING_TABS_LIST_CLASS} variant="line">
+                    {TAB_OPTIONS.map(option => <TabsTrigger key={option.value} value={option.value}>{option.label}</TabsTrigger>)}
+                </TabsList>
+            </Tabs>
+            <FilterBar
+                activeCount={[search.q, fundTab ? search.structure : undefined, search.exchange, companiesTab ? search.sector : search.active, search.sort].filter(value => value !== undefined).length}
+                onReset={() => onChange({ active: undefined, exchange: undefined, q: undefined, sector: undefined, sort: undefined, structure: undefined })}
+            >
+                <FilterField label="Search" span={2}>
+                    {id => <DebouncedInput aria-label="Search instruments" className="w-full" id={id} onCommit={q => onChange({ q: q || undefined })} placeholder="Ticker or name" value={search.q ?? ""} />}
+                </FilterField>
+                {fundTab && (
+                    <FilterField label="Structure">
+                        {id => <FilterSelect aria-label="Structure" className="w-full" id={id} onValueChange={value => onChange({ structure: value === ALL ? undefined : value })} options={STRUCTURE_OPTIONS} value={search.structure ?? ALL} />}
+                    </FilterField>
                 )}
-                <FilterSelect aria-label="Exchange" className="w-[200px]" onValueChange={value => onChange({ exchange: value === ALL ? undefined : value })} options={EXCHANGE_OPTIONS} value={search.exchange ?? ALL} />
+                <FilterField label="Exchange">
+                    {id => <FilterSelect aria-label="Exchange" className="w-full" id={id} onValueChange={value => onChange({ exchange: value === ALL ? undefined : value })} options={EXCHANGE_OPTIONS} value={search.exchange ?? ALL} />}
+                </FilterField>
                 {companiesTab
-                    ? <FilterSelect aria-label="Sector" className="w-[200px]" onValueChange={value => onChange({ sector: value === ALL ? undefined : value })} options={SECTOR_OPTIONS} value={search.sector ?? ALL} />
-                    : <FilterSelect aria-label="Listed" className="w-[180px]" onValueChange={value => onChange({ active: value === ALL ? undefined : value })} options={ACTIVE_OPTIONS} value={search.active ?? ALL} />}
-                <FilterSelect aria-label="Sort" className="w-[150px]" onValueChange={value => onChange({ sort: value === "symbol" ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? "symbol"} />
-            </div>
+                    ? (
+                            <FilterField label="Sector">
+                                {id => <FilterSelect aria-label="Sector" className="w-full" id={id} onValueChange={value => onChange({ sector: value === ALL ? undefined : value })} options={SECTOR_OPTIONS} value={search.sector ?? ALL} />}
+                            </FilterField>
+                        )
+                    : (
+                            <FilterField label="Listed">
+                                {id => <FilterSelect aria-label="Listed" className="w-full" id={id} onValueChange={value => onChange({ active: value === ALL ? undefined : value })} options={ACTIVE_OPTIONS} value={search.active ?? ALL} />}
+                            </FilterField>
+                        )}
+                <FilterField label="Sort">
+                    {id => <FilterSelect aria-label="Sort" className="w-full" id={id} onValueChange={value => onChange({ sort: value === "symbol" ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? "symbol"} />}
+                </FilterField>
+            </FilterBar>
             {companiesTab ? <CompaniesTabBody search={search} /> : <InstrumentsTabBody search={search} />}
-        </div>
+        </PageContainer>
     );
 }

@@ -52,7 +52,8 @@ function SpeakerChip({ speaker }: { speaker: TurnSpeaker }) {
         <span className="inline-flex min-w-0 items-center gap-2">
             <SpeakerAvatar imageUrl={speaker.imageUrl} name={speaker.name} speakerRole={speaker.role} />
             <PersonLink className="font-medium" personId={speaker.personId}>{speakerName({ name: speaker.name, speaker_label: speaker.label })}</PersonLink>
-            {detail && <span className="text-muted-foreground">{detail}</span>}
+            {/* One header line: a long title · firm truncates (the whole text in its tooltip). */}
+            {detail && <span className="text-muted-foreground min-w-0 truncate" title={detail}>{detail}</span>}
         </span>
     );
 }

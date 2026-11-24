@@ -7,12 +7,15 @@ import type { V2GrowthBasis, V2GrowthPeriod, V2GrowthResponse } from "@/lib/api/
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
-import { PageHeader } from "@/components/ui/page-header";
+import { FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { useV2GrowthInfinite } from "@/lib/api/queries";
 import { completePeriodsOnly, periodLabel, periodLabels } from "@/lib/financials/statements";
 import { formatFractionPercentCompact, formatMetricId } from "@/lib/utils";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
+import type { FinancialsTabProps } from "./financials-frame";
+
+import { financialsFilterCount, FinancialsFrame, FISCAL_YEAR_FILTER } from "./financials-frame";
 import { useFinancialsSearch } from "./financials-search";
 import { FiscalYearRange } from "./fiscal-year-range";
 
@@ -80,7 +83,7 @@ export function GrowthView({ pages, ...state }: MetricsListState & { pages: Read
 }
 
 /** The page body of the Financials route's tab (`/$ticker/financials?view=`). */
-export function GrowthFinancials({ ticker }: { ticker: string }) {
+export function GrowthFinancials({ tabs, ticker }: FinancialsTabProps) {
     const [search, update] = useFinancialsSearch();
 
     const periodType = search.period ?? "quarterly";
@@ -98,18 +101,23 @@ export function GrowthFinancials({ ticker }: { ticker: string }) {
     });
 
     return (
-        <div className="flex flex-col gap-4">
-            <PageHeader
-                actions={(
-                    <>
-                        <FilterSelect aria-label="Growth basis" className="w-[220px]" onValueChange={value => update({ basis: value === ALL ? undefined : value })} options={basisOptions} value={basis} />
-                        <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
-                        <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
-                    </>
-                )}
-                description="Period-over-period growth metrics (YoY/ QoQ)."
-                title="Growth Financials"
-            />
+        <FinancialsFrame
+            activeCount={financialsFilterCount(search, [FISCAL_YEAR_FILTER])}
+            description="Period-over-period growth metrics (YoY / QoQ)."
+            filters={(
+                <FilterField label="Fiscal years">
+                    <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
+                </FilterField>
+            )}
+            onReset={() => update({ fyFrom: undefined, fyTo: undefined })}
+            tabs={tabs}
+            what={(
+                <>
+                    <FilterSelect aria-label="Growth basis" className="w-[190px]" onValueChange={value => update({ basis: value === ALL ? undefined : value })} options={basisOptions} value={basis} />
+                    <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+                </>
+            )}
+        >
             <GrowthView
                 error={error}
                 hasNextPage={hasNextPage}
@@ -118,6 +126,6 @@ export function GrowthFinancials({ ticker }: { ticker: string }) {
                 onLoadMore={() => fetchNextPage()}
                 pages={data?.pages ?? []}
             />
-        </div>
+        </FinancialsFrame>
     );
 }

@@ -137,7 +137,15 @@ describe("13F holder columns (Data API 7.0 `Holder` row)", () => {
 
         expect(within(row).getByText("Sole")).toBeInTheDocument();
 
-        expect(within(row).getByText("Sole 1,390,000,000 · Shared 0 · None 0")).toBeInTheDocument();
+        // Voting authority: three compact numbers, the exact counts as the cell's title and screen-reader text.
+        expect(within(row).getByText("Sole 1,390,000,000 · Shared 0 · None 0")).toHaveClass("sr-only");
+
+        expect(within(row).getByText("1.39B")).toBeInTheDocument();
+
+        expect(screen.getByRole("columnheader", { name: "Voting authority (sole, shared, none)" })).toBeInTheDocument();
+
+        // The holder is the first column (pinned while the table is cut).
+        expect(within(screen.getAllByRole("row")[0]).getAllByRole("columnheader")[0]).toHaveTextContent("Holder");
 
         expect(within(row).getByRole("link", { name: "EDGAR" })).toHaveAttribute("href", V2_HOLDERS_13F.data[0].filing_url);
 
@@ -147,7 +155,7 @@ describe("13F holder columns (Data API 7.0 `Holder` row)", () => {
 
         expect(screen.getByRole("columnheader", { name: "Filing" })).toBeInTheDocument();
 
-        expect(screen.queryByRole("columnheader", { name: "Voting authority" })).toBeNull();
+        expect(screen.queryByRole("columnheader", { name: "Voting authority (sole, shared, none)" })).toBeNull();
 
         expect(discretionText("OTR")).toBe("Shared (other)");
 

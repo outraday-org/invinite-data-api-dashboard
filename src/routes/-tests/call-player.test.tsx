@@ -448,6 +448,9 @@ describe("RecordingPlayer on the file engine", () => {
     it("the call header shows the event id with its copy button", () => {
         render(<CallHeader event={{ ...event, company_name: "Apple", event_type: "earnings_call", observations: [], reschedule_count: 0 } as V2Event} />);
 
+        // In the "Details" disclosure (closed by default, ui-redesign task 10).
+        fireEvent.click(screen.getByRole("button", { name: "Details" }));
+
         expect(screen.getByText(EVENT_ID)).toBeInTheDocument();
 
         expect(screen.getByRole("button", { name: "Copy event id" })).toBeInTheDocument();

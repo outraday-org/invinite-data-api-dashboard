@@ -13,6 +13,9 @@ import { PersonLink } from "@/components/people/person-link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2PeopleInfinite } from "@/lib/api/queries";
 import { formatDay, formatNumber } from "@/lib/format";
@@ -27,7 +30,6 @@ import {
     personRoleLabel,
 } from "@/lib/people";
 import { IN_PLACE, optionalEnum, optionalText } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 /** `?q=` (name), `?company=` (ticker or CIK), `?event=` (one call), `?role=`, `?sort=` (absent = `-last_seen`). */
 const peopleSearchSchema = z.object({
@@ -146,43 +148,64 @@ function PeoplePage() {
     const list = useV2PeopleInfinite({ company: search.company, event: search.event, limit: 50, q: search.q, role: search.role, sort: search.sort });
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer>
             <PageHeader
-                actions={(
-                    <>
+                description="Executives, analysts and operators who speak on earnings calls, recognised across calls. Each opens the person's page with every call they spoke on."
+                title="People"
+            />
+            <FilterBar
+                activeCount={[search.q, search.company, search.role, search.sort, search.event].filter(value => value !== undefined).length}
+                onReset={() => onChange({ company: undefined, event: undefined, q: undefined, role: undefined, sort: undefined })}
+            >
+                <FilterField label="Name">
+                    {id => (
                         <DebouncedInput
                             aria-label="Search people by name"
-                            className="w-[200px]"
+                            className="w-full"
+                            id={id}
                             onCommit={q => onChange({ q: q || undefined })}
-                            placeholder="Name"
+                            placeholder="Any name"
                             value={search.q ?? ""}
                         />
+                    )}
+                </FilterField>
+                <FilterField label="Company">
+                    {id => (
                         <DebouncedInput
                             aria-label="Company (ticker or CIK)"
-                            className="w-[140px]"
+                            className="w-full"
+                            id={id}
                             onCommit={company => onChange({ company: company.toUpperCase() || undefined })}
-                            placeholder="Company"
+                            placeholder="Ticker or CIK"
                             value={search.company ?? ""}
                         />
+                    )}
+                </FilterField>
+                <FilterField label="Role">
+                    {id => (
                         <FilterSelect
                             aria-label="Role"
-                            className="w-[140px]"
+                            className="w-full"
+                            id={id}
                             onValueChange={role => onChange({ role: role === ALL_ROLES ? undefined : role })}
                             options={ROLE_OPTIONS}
                             value={search.role ?? ALL_ROLES}
                         />
+                    )}
+                </FilterField>
+                <FilterField label="Sort">
+                    {id => (
                         <FilterSelect
                             aria-label="Sort"
-                            className="w-[180px]"
+                            className="w-full"
+                            id={id}
                             onValueChange={sort => onChange({ sort: sort === DEFAULT_PEOPLE_SORT ? undefined : sort })}
                             options={SORT_OPTIONS}
                             value={search.sort ?? DEFAULT_PEOPLE_SORT}
                         />
-                    </>
-                )}
-                description="Executives, analysts and operators who speak on earnings calls, recognised across calls. Each opens the person's page with every call they spoke on."
-                title="People"
-            />
+                    )}
+                </FilterField>
+            </FilterBar>
             {search.event && (
                 <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary">People of one call</Badge>
@@ -201,6 +224,6 @@ function PeoplePage() {
                 pages={list.data?.pages ?? []}
                 search={search}
             />
-        </div>
+        </PageContainer>
     );
 }

@@ -4,9 +4,9 @@ import type { V2ApiStatus, V2Licensing, V2LicensingRight, V2Plan } from "@/lib/a
 import type { OverallStatus } from "@/lib/reference/public-status";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DataTable } from "@/components/ui/data-table";
 import { ErrorState } from "@/components/ui/error-state";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PLAN_LABELS } from "@/lib/account";
 import { PLAN_ORDER } from "@/lib/api/operations.gen";
@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 /**
  * The status widget (O7 group 7): `GET /status` and `GET /status/licensing` as data — on `/account` a status card
  * (overall + every product family and docs group with uptime / latency) and a licensing card (the caller's plan's
- * rights, routes per family), in the sidebar a dot beside "API status". Both operations need no key and cost nothing.
+ * rights, routes per family) as two sections, in the sidebar a dot beside "API status". Both operations need no key and cost nothing.
  */
 
 type Service = NonNullable<V2ApiStatus["services"]>[number];
@@ -141,42 +141,39 @@ const externalLink = (href: string, text: string) => (
     <a className="text-primary underline-offset-4 hover:underline" href={href} rel="noreferrer" target="_blank">{text}</a>
 );
 
-/** The status card of `/account` (pure): overall, the universe, every family and docs group. */
+/** The status section of `/account` (pure): overall, the universe, every family and docs group. */
 export function ApiStatusView({ overall, status }: { overall: OverallStatus; status: V2ApiStatus }) {
     const { companies, earnings_calls: calls } = status.universe;
 
     return (
-        <Card size="sm">
-            <CardHeader>
-                <div className="flex flex-wrap items-center gap-2">
-                    <CardTitle>API status</CardTitle>
-                    <StatusBadge status={overall} />
-                </div>
-                <CardDescription>
+        <Section
+            actions={<StatusBadge status={overall} />}
+            description={(
+                <>
                     {statusSummary(status.services)}
                     {" · as of "}
                     {formatInstant(status.generated_at)}
                     {". Product and group statuses use requests from today and yesterday (UTC). Uptime is the share answered without a server error. "}
                     {externalLink(STATUS_PAGE_URL, "Status page")}
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-                <p className="text-muted-foreground text-xs" data-testid="api-status-universe">
-                    {`Coverage: ${formatNumber(companies)} listed companies · earnings calls for ${formatNumber(calls.companies)} companies (scope ${calls.scope})`}
-                </p>
-                {status.services
-                    ? <DataTable columns={SERVICE_COLUMNS} emptyText="No product states its status." exportConfig={{ dataset: "api-status-products", scope: "all" }} isLoading={false} rows={status.services} />
-                    : <p className="text-muted-foreground text-sm">The API states no product status right now.</p>}
-                {status.groups && status.groups.length > 0 && (
-                    <details>
-                        <summary className="cursor-pointer text-sm font-medium">Per API group: uptime and latency</summary>
-                        <div className="mt-2">
-                            <DataTable columns={GROUP_COLUMNS} emptyText="No API group states its status." exportConfig={{ dataset: "api-status-groups", scope: "all" }} isLoading={false} rows={status.groups} />
-                        </div>
-                    </details>
-                )}
-            </CardContent>
-        </Card>
+                </>
+            )}
+            title="API status"
+        >
+            <p className="text-muted-foreground text-xs" data-testid="api-status-universe">
+                {`Coverage: ${formatNumber(companies)} listed companies · earnings calls for ${formatNumber(calls.companies)} companies (scope ${calls.scope})`}
+            </p>
+            {status.services
+                ? <DataTable columns={SERVICE_COLUMNS} emptyText="No product states its status." exportConfig={{ dataset: "api-status-products", scope: "all" }} isLoading={false} rows={status.services} />
+                : <p className="text-muted-foreground text-sm">The API states no product status right now.</p>}
+            {status.groups && status.groups.length > 0 && (
+                <details>
+                    <summary className="cursor-pointer text-sm font-medium">Per API group: uptime and latency</summary>
+                    <div className="mt-2">
+                        <DataTable columns={GROUP_COLUMNS} emptyText="No API group states its status." exportConfig={{ dataset: "api-status-groups", scope: "all" }} isLoading={false} rows={status.groups} />
+                    </div>
+                </details>
+            )}
+        </Section>
     );
 }
 
@@ -212,7 +209,7 @@ const REACH_COLUMNS: Array<ColumnDef<ReachRow>> = [
     },
 ];
 
-/** The licensing card of `/account` (pure): what the caller's plan may do with the data, and its routes per family. */
+/** The licensing section of `/account` (pure): what the caller's plan may do with the data, and its routes per family. */
 export function LicensingView({ licensing, plan }: { licensing: V2Licensing; plan: V2Plan }) {
     // A pay-as-you-go account (credits without a plan) holds the FREE column's rights: evaluation only.
     const rights = licensing.tiers[plan === "payg" ? "free" : plan];
@@ -223,40 +220,41 @@ export function LicensingView({ licensing, plan }: { licensing: V2Licensing; pla
     const rightBadge = (right: V2LicensingRight) => (!rights[right] ? "Not on your plan" : licensing.by_contract.includes(right) ? "By contract" : "Allowed");
 
     return (
-        <Card size="sm">
-            <CardHeader>
-                <div className="flex flex-wrap items-center gap-2">
-                    <CardTitle>Licensing</CardTitle>
+        <Section
+            actions={(
+                <>
                     <Badge variant="secondary">{`${PLAN_LABELS[plan]} plan`}</Badge>
                     <Badge variant="outline">{`Policy ${licensing.policy_version}`}</Badge>
                     {!licensing.counsel_signed_off && <Badge variant="outline">Draft</Badge>}
-                </div>
-                <CardDescription>
+                </>
+            )}
+            description={(
+                <>
                     {"What your plan may do with the data. "}
                     {externalLink(LICENSING_PAGE_URL, "Full licensing matrix")}
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-                <ul className="grid gap-2 sm:grid-cols-2" data-testid="licensing-rights">
-                    {licensing.rights.map(right => (
-                        <li className="flex flex-col gap-0.5" key={right}>
-                            <span className="flex items-center gap-2">
-                                <Badge variant={rights[right] ? "secondary" : "outline"}>{rightBadge(right)}</Badge>
-                                <span className="font-medium">{RIGHT_LABELS[right]}</span>
-                            </span>
-                            {notes[right] && <span className="text-muted-foreground text-xs">{notes[right]}</span>}
-                        </li>
-                    ))}
-                </ul>
-                <p className="text-muted-foreground text-xs">{licensing.resale}</p>
-                <p className="text-muted-foreground text-xs" data-testid="licensing-internal-use">{licensing.notes.internal_use}</p>
-                <DataTable columns={REACH_COLUMNS} emptyText="The policy lists no routes." exportConfig={{ dataset: "licensing-routes", scope: plan }} isLoading={false} rows={familyReach(licensing.families, plan)} />
-            </CardContent>
-        </Card>
+                </>
+            )}
+            title="Licensing"
+        >
+            <ul className="grid gap-2 sm:grid-cols-2" data-testid="licensing-rights">
+                {licensing.rights.map(right => (
+                    <li className="flex flex-col gap-0.5" key={right}>
+                        <span className="flex items-center gap-2">
+                            <Badge variant={rights[right] ? "secondary" : "outline"}>{rightBadge(right)}</Badge>
+                            <span className="font-medium">{RIGHT_LABELS[right]}</span>
+                        </span>
+                        {notes[right] && <span className="text-muted-foreground text-xs">{notes[right]}</span>}
+                    </li>
+                ))}
+            </ul>
+            <p className="text-muted-foreground text-xs">{licensing.resale}</p>
+            <p className="text-muted-foreground text-xs" data-testid="licensing-internal-use">{licensing.notes.internal_use}</p>
+            <DataTable columns={REACH_COLUMNS} emptyText="The policy lists no routes." exportConfig={{ dataset: "licensing-routes", scope: plan }} isLoading={false} rows={familyReach(licensing.families, plan)} />
+        </Section>
     );
 }
 
-/** The two cards of `/account` (status always; licensing once the plan is known). */
+/** The two sections of `/account` (status always; licensing once the plan is known), stacked. */
 export function AccountStatusCards({ plan }: { plan: null | V2Plan }) {
     const overall = useOverallStatus();
 
@@ -265,11 +263,11 @@ export function AccountStatusCards({ plan }: { plan: null | V2Plan }) {
     const licensing = useApiLicensing();
 
     return (
-        <div className="grid gap-4 lg:grid-cols-2">
+        <>
             {status.data ? <ApiStatusView overall={overall} status={status.data} /> : status.error ? <ErrorState error={status.error} title="Failed to load the API status" /> : <Skeleton className="h-48 w-full" />}
             {licensing.data && plan
                 ? <LicensingView licensing={licensing.data} plan={plan} />
                 : licensing.error ? <ErrorState error={licensing.error} title="Failed to load the licensing policy" /> : <Skeleton className="h-48 w-full" />}
-        </div>
+        </>
     );
 }

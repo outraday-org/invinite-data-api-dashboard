@@ -141,12 +141,12 @@ describe("no direct Data API traffic from the browser", () => {
         expect(wsFrames).toMatch(/new URL\("\/v1\/stream", baseUrl\)/);
     });
 
-    it("the API host is named only by the server env default and the inspector's curl text", () => {
+    it("the API host is named only by the server env default and the request panel's curl text", () => {
         const naming = files.filter(({ text }) => API_HOST.test(text)).map(({ path }) => path).filter(path => !path.endsWith("-fixtures.ts")).sort();
 
-        expect(naming).toEqual(["components/api/api-sheet.tsx", "lib/env.ts"]);
+        expect(naming).toEqual(["components/api/request-panel.tsx", "lib/env.ts"]);
 
-        expect(files.find(({ path }) => path === "components/api/api-sheet.tsx")!.text).not.toMatch(/(?<![\w.])fetch\(/);
+        expect(files.find(({ path }) => path === "components/api/request-panel.tsx")!.text).not.toMatch(/(?<![\w.])fetch\(/);
     });
 
     it("the alert server functions and requests go through the server client", () => {

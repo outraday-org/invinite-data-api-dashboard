@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { toUsageWindow } from "@/lib/account";
 import { ME_PRO, USAGE_7D } from "@/lib/account-fixtures";
-import { AccountSummary, UsageView } from "@/routes/account";
+import { AccountFamilies, AccountPlanLine, AccountSummary, UsageView } from "@/routes/account";
 
 vi.mock("@tanstack/react-router", () => ({
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
@@ -19,9 +19,19 @@ afterEach(cleanup);
 
 describe("/account (`/v1/me`, `/v1/me/usage`)", () => {
     it("plan, limits, credits and the allowed families", () => {
-        render(<AccountSummary me={ME_PRO} />);
+        render(
+            <>
+                <AccountPlanLine me={ME_PRO} />
+                <AccountSummary me={ME_PRO} />
+                <AccountFamilies me={ME_PRO} />
+            </>,
+        );
 
         expect(screen.getByTestId("account-plan")).toHaveTextContent("PRO");
+
+        expect(screen.getByText("100 req/s · 1,000 req/min")).toBeInTheDocument();
+
+        expect(screen.getByRole("heading", { name: "Credits" })).toBeInTheDocument();
 
         expect(screen.getByText("3,728,983")).toBeInTheDocument();
 
@@ -33,13 +43,13 @@ describe("/account (`/v1/me`, `/v1/me/usage`)", () => {
     });
 
     it("shows the Macro family returned for a Free catalog key", () => {
-        render(<AccountSummary me={{ ...ME_PRO, allowed_families: ["Macro"], plan: "free" }} />);
+        render(<AccountFamilies me={{ ...ME_PRO, allowed_families: ["Macro"], plan: "free" }} />);
 
         expect(screen.getByText("Macro")).toBeInTheDocument();
     });
 
     it("never shows the account id, also when the account has no name", () => {
-        render(<AccountSummary me={{ ...ME_PRO, account: { ...ME_PRO.account, name: null } }} />);
+        render(<AccountPlanLine me={{ ...ME_PRO, account: { ...ME_PRO.account, name: null } }} />);
 
         expect(screen.queryByText(ME_PRO.account.id)).not.toBeInTheDocument();
     });

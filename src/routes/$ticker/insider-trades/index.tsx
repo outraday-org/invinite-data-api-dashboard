@@ -1,12 +1,14 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { ChevronRight } from "lucide-react";
 import * as React from "react";
 import { z } from "zod";
 
+import type { DetailFact } from "@/components/sec/ownership-views";
 import type { V2InsiderSide, V2InsiderTrade, V2InsiderTradeDetail, V2InsiderTradesResponse } from "@/lib/api/types";
 
-import { FactGrid } from "@/components/sec/ownership-views";
+import { FactGrid, statedFacts } from "@/components/sec/ownership-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
@@ -15,15 +17,18 @@ import { Copyable } from "@/components/ui/copy-button";
 import { DataTable } from "@/components/ui/data-table";
 import { DayRange } from "@/components/ui/day-range";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { PageHeader } from "@/components/ui/page-header";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Stat, StatGrid } from "@/components/ui/stat";
 import { useInsiderTrade, useV2InsiderTradesInfinite } from "@/lib/api/queries";
 import { formatDay, formatInstant, formatMoney, formatShares } from "@/lib/format";
 import { tickerHead } from "@/lib/layout";
 import { insiderCodeLegend, insiderCodeText, yesNoText as yesNo } from "@/lib/sec/ownership";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { IN_PLACE, optionalDay, optionalEnum, optionalText, orderedWindow } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const KINDS = ["derivative", "non_derivative"] as const;
 
@@ -117,8 +122,9 @@ function CodeCell({ trade }: { trade: V2InsiderTrade }) {
 export function insiderColumns(onOpen?: (trade: V2InsiderTrade) => void): Array<ColumnDef<V2InsiderTrade>> {
     const columns: Array<ColumnDef<V2InsiderTrade>> = [
         {
+            // The day (the pinned first column stays narrow on a phone); the time in its title and in the row detail.
             accessorKey: "filed_at",
-            cell: ({ row }) => formatInstant(row.original.filed_at),
+            cell: ({ row }) => <span title={formatInstant(row.original.filed_at)}>{formatDay(row.original.filed_at)}</span>,
             header: "Filed",
         },
         {
@@ -172,7 +178,7 @@ export function insiderColumns(onOpen?: (trade: V2InsiderTrade) => void): Array<
         {
             accessorKey: "shares_owned_following_transaction",
             cell: ({ row }) => <div className="text-right tabular-nums">{count(row.original.shares_owned_following_transaction)}</div>,
-            header: () => <div className="text-right">Owned After</div>,
+            header: () => <div className="text-right">Owned after</div>,
         },
     ];
 
@@ -191,27 +197,36 @@ export function insiderColumns(onOpen?: (trade: V2InsiderTrade) => void): Array<
     return columns;
 }
 
-/** The legend of the loaded rows' codes and the derivative marker. */
+/**
+ * The legend of the loaded rows' codes and the derivative marker: a disclosure under the table ("Transaction codes"),
+ * closed by default — each code's meaning is also the cell's title.
+ */
 export function InsiderCodeLegend({ rows }: { rows: ReadonlyArray<V2InsiderTrade> }) {
     const legend = insiderCodeLegend(rows.map(row => row.coding_code));
 
     if (legend.length === 0) return null;
 
     return (
-        <div className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-0.5 text-xs" data-testid="insider-code-legend">
-            {legend.map(({ code, label }) => (
-                <span key={code}>
-                    <span className="text-foreground font-medium">{code}</span>
-                    {` ${label}`}
-                </span>
-            ))}
-            {rows.some(row => row.is_derivative) && (
-                <span>
-                    <span className="text-foreground font-medium">Deriv.</span>
-                    {" a derivative-security line (option, RSU, warrant)"}
-                </span>
-            )}
-        </div>
+        <details className="group text-muted-foreground text-xs">
+            <summary className="hover:text-foreground flex min-h-9 w-fit cursor-pointer list-none items-center gap-1 [&::-webkit-details-marker]:hidden">
+                <ChevronRight aria-hidden className="size-3.5 transition-transform group-open:rotate-90" />
+                {`Transaction codes (${legend.length})`}
+            </summary>
+            <div className="flex flex-wrap gap-x-3 gap-y-0.5 pl-5" data-testid="insider-code-legend">
+                {legend.map(({ code, label }) => (
+                    <span key={code}>
+                        <span className="text-foreground font-medium">{code}</span>
+                        {` ${label}`}
+                    </span>
+                ))}
+                {rows.some(row => row.is_derivative) && (
+                    <span>
+                        <span className="text-foreground font-medium">Deriv.</span>
+                        {" a derivative-security line (option, RSU, warrant)"}
+                    </span>
+                )}
+            </div>
+        </details>
     );
 }
 
@@ -280,9 +295,10 @@ const SOURCE_LABELS: Record<V2InsiderTradeDetail["source"], string> = {
 };
 
 /**
- * One insider transaction line in full (pure, `GET /v1/insider-trades/{id}`): the 10b5-1 plan flag, the ownership form
- * and nature, the derivative's terms, holdings before / after, the filing's footnotes. A realtime-feed row leaves the
- * dataset's fields null (dash-free: they are left out).
+ * One insider transaction line in full (pure, `GET /v1/insider-trades/{id}`): the trade as a stat grid (side, code,
+ * shares, price, total, holdings before / after), then sections for the insider (role, owner CIK, 10b5-1 plan,
+ * ownership form and nature), the derivative's terms, the filing and its footnotes. A realtime-feed row leaves the
+ * dataset's fields null: they are left out (no "—" cells, no empty section).
  */
 export function InsiderTradeDetailView({ docsLink, trade }: { docsLink?: React.ReactNode; trade: V2InsiderTradeDetail }) {
     const ownership = trade.direct_indirect ? OWNERSHIP_FORMS[trade.direct_indirect] : null;
@@ -294,41 +310,67 @@ export function InsiderTradeDetailView({ docsLink, trade }: { docsLink?: React.R
         </span>
     );
 
-    const facts: Array<readonly [string, React.ReactNode]> = [
-        ["Insider", trade.reporting_person_name],
-        ["Role", insiderRoles(trade)],
-        ["Owner CIK", trade.owner_cik ? <Copyable label="Copy owner CIK" value={trade.owner_cik} /> : null],
-        ["Security", trade.security_title],
+    const tradeFacts = statedFacts([
         ["Side", `${SIDE_LABELS[trade.side]} (${trade.acquired_disposed === "A" ? "acquired" : "disposed"})`],
         ["Code", insiderCodeText(trade.coding_code)],
-        ["10b5-1 plan", yesNo(trade.is_10b5_1)],
-        ["Ownership", ownership && (trade.nature_of_ownership ? `${ownership} · ${trade.nature_of_ownership}` : ownership)],
         ["Traded", trade.transaction_date ? formatDay(trade.transaction_date) : null],
-        ["Deemed execution", trade.deemed_execution_date ? formatDay(trade.deemed_execution_date) : null],
         ["Shares", count(trade.shares)],
         ["Price", trade.share_price == null ? null : money(trade.share_price)],
         ["Total", trade.total == null ? null : money(trade.total)],
         ["Owned before", trade.shares_owned_before_transaction == null ? null : count(trade.shares_owned_before_transaction)],
         ["Owned after", count(trade.shares_owned_following_transaction)],
+    ]);
+
+    const insiderFacts: Array<DetailFact> = [
+        ["Role", insiderRoles(trade)],
+        ["Owner CIK", trade.owner_cik ? <Copyable label="Copy owner CIK" value={trade.owner_cik} /> : null],
+        ["Security", trade.security_title],
+        ["10b5-1 plan", yesNo(trade.is_10b5_1)],
+        ["Ownership", ownership && (trade.nature_of_ownership ? `${ownership} · ${trade.nature_of_ownership}` : ownership)],
+        ["Deemed execution", trade.deemed_execution_date ? formatDay(trade.deemed_execution_date) : null],
+    ];
+
+    const derivativeFacts: Array<DetailFact> = [
         ["Derivative", yesNo(trade.is_derivative)],
         ["Exercise / conversion price", trade.conversion_exercise_price == null ? null : money(trade.conversion_exercise_price)],
         ["Exercisable from", trade.exercise_date ? formatDay(trade.exercise_date) : null],
         ["Expires", trade.expiration_date ? formatDay(trade.expiration_date) : null],
         ["Underlying", trade.underlying_security_title],
         ["Underlying shares", trade.underlying_shares == null ? null : count(trade.underlying_shares)],
+    ];
+
+    const filingFacts: Array<DetailFact> = [
         ["Period of report", trade.period_of_report ? formatDay(trade.period_of_report) : null],
         ["Filed", formatInstant(trade.filed_at)],
         ["Accession", accession],
         ["Source", SOURCE_LABELS[trade.source]],
     ];
 
+    const derivativeShown = trade.is_derivative === true || statedFacts(derivativeFacts.slice(1)).length > 0;
+
     return (
-        <div className="flex flex-col gap-3 text-sm" data-testid="insider-trade-detail">
-            <FactGrid facts={facts} />
+        <div className="flex flex-col gap-6" data-testid="insider-trade-detail">
+            {tradeFacts.length > 0 && (
+                <StatGrid>
+                    {tradeFacts.map(([label, value]) => <Stat key={label} label={label} value={value} />)}
+                </StatGrid>
+            )}
+            {statedFacts(insiderFacts).length > 0 && (
+                <Section title="Insider">
+                    <FactGrid facts={insiderFacts} />
+                </Section>
+            )}
+            {derivativeShown && (
+                <Section title="Derivative terms">
+                    <FactGrid facts={derivativeFacts} />
+                </Section>
+            )}
+            <Section title="Filing">
+                <FactGrid facts={filingFacts} />
+            </Section>
             {(trade.footnotes?.length ?? 0) > 0 && (
-                <div className="flex flex-col gap-1">
-                    <div className="text-xs font-medium">Footnotes</div>
-                    <ol className="text-muted-foreground flex flex-col gap-1 text-xs">
+                <Section title="Footnotes">
+                    <ol className="text-muted-foreground flex flex-col gap-1">
                         {trade.footnotes?.map(note => (
                             <li key={note.id}>
                                 <span className="text-foreground font-medium">{`${note.id} `}</span>
@@ -336,7 +378,7 @@ export function InsiderTradeDetailView({ docsLink, trade }: { docsLink?: React.R
                             </li>
                         ))}
                     </ol>
-                </div>
+                </Section>
             )}
         </div>
     );
@@ -350,7 +392,7 @@ function InsiderTradeDialog({ id, onClose, row, ticker }: { id: null | string; o
 
     return (
         <Dialog onOpenChange={open => !open && onClose()} open={id !== null}>
-            <DialogContent className="max-h-[85svh] overflow-y-auto sm:max-w-lg">
+            <DialogContent className="max-h-[85svh] overflow-y-auto sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>{shown?.reporting_person_name ?? "Insider trade"}</DialogTitle>
                 </DialogHeader>
@@ -358,7 +400,7 @@ function InsiderTradeDialog({ id, onClose, row, ticker }: { id: null | string; o
                     ? (
                             <InsiderTradeDetailView
                                 docsLink={(
-                                    <Link className="text-primary text-xs underline-offset-4 hover:underline" params={{ ticker }} search={{ docs: shown.accession_number }} to="/$ticker/filings">
+                                    <Link className="text-primary underline-offset-4 hover:underline" params={{ ticker }} search={{ docs: shown.accession_number }} to="/$ticker/filings">
                                         Open the filing
                                     </Link>
                                 )}
@@ -418,29 +460,40 @@ function InsiderTradesPage() {
 
     const onOpen = React.useCallback((trade: V2InsiderTrade) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, trade: trade.id }) }), [navigate]);
 
+    // Each day range counts once.
+    const activeCount = [search.side, from || to, tfrom || tto, search.kind, search.sort].filter(Boolean).length;
+
+    const onReset = () => onChange({ from: undefined, kind: undefined, side: undefined, sort: undefined, tfrom: undefined, to: undefined, tto: undefined });
+
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
             <PageHeader
-                actions={(
-                    <>
-                        <FilterSelect aria-label="Side" className="w-[170px]" onValueChange={(value: SideFilter) => onChange({ side: value === ALL ? undefined : value })} options={SIDE_OPTIONS} value={side} />
-                        <FilterSelect aria-label="Line kind" className="w-[200px]" onValueChange={value => onChange({ kind: value === ALL ? undefined : value })} options={KIND_OPTIONS} value={kind} />
-                        <FilterSelect aria-label="Order" className="w-[170px]" onValueChange={value => onChange({ sort: value === NEWEST ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? NEWEST} />
-                        <DayRange from={from} group labels={{ from: "Filed from", to: "Filed to" }} lead="Filed" onChange={onChange} titled to={to} />
-                        <DayRange
-                            from={tfrom}
-                            group
-                            labels={{ from: "Traded from", to: "Traded to" }}
-                            lead="Traded"
-                            onChange={patch => onChange("from" in patch ? { tfrom: patch.from } : { tto: patch.to })}
-                            titled
-                            to={tto}
-                        />
-                    </>
-                )}
                 description="Insider transactions from Forms 3, 4 and 5. A traded-day filter leaves out lines without a transaction date (the realtime feed's)."
-                title="Insider Trades"
+                title="Insider trades"
             />
+
+            <FilterBar activeCount={activeCount} onReset={onReset}>
+                <FilterField label="Side">
+                    {id => <FilterSelect aria-label="Side" className="w-full" id={id} onValueChange={(value: SideFilter) => onChange({ side: value === ALL ? undefined : value })} options={SIDE_OPTIONS} value={side} />}
+                </FilterField>
+                <FilterField label="Filed" span={2}>
+                    <DayRange from={from} labels={{ from: "Filed from", to: "Filed to" }} onChange={onChange} to={to} />
+                </FilterField>
+                <FilterField label="Traded" span={2}>
+                    <DayRange
+                        from={tfrom}
+                        labels={{ from: "Traded from", to: "Traded to" }}
+                        onChange={patch => onChange("from" in patch ? { tfrom: patch.from } : { tto: patch.to })}
+                        to={tto}
+                    />
+                </FilterField>
+                <FilterField label="Kind">
+                    {id => <FilterSelect aria-label="Line kind" className="w-full" id={id} onValueChange={value => onChange({ kind: value === ALL ? undefined : value })} options={KIND_OPTIONS} value={kind} />}
+                </FilterField>
+                <FilterField label="Order">
+                    {id => <FilterSelect aria-label="Order" className="w-full" id={id} onValueChange={value => onChange({ sort: value === NEWEST ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? NEWEST} />}
+                </FilterField>
+            </FilterBar>
 
             <InsiderTradesView
                 error={error}

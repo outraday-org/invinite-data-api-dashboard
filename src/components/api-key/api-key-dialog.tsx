@@ -66,7 +66,7 @@ export function ApiKeyDialogButton({ className }: { className?: string }) {
     return (
         <div className={cn("flex items-center gap-2", className)}>
             {me && (
-                <Link aria-label={`Account: ${PLAN_LABELS[me.plan]} plan`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" to="/account">
+                <Link aria-label={`Account: ${PLAN_LABELS[me.plan]} plan`} className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring max-sm:hidden" to="/account">
                     <Badge data-testid="plan-badge" variant="secondary">{PLAN_LABELS[me.plan]}</Badge>
                 </Link>
             )}

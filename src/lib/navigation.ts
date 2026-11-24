@@ -7,10 +7,8 @@ import {
     BellIcon,
     BookOpenIcon,
     BriefcaseIcon,
-    BuildingIcon,
     CalendarDaysIcon,
     CalendarOffIcon,
-    ChartPieIcon,
     CircleUserRoundIcon,
     CoinsIcon,
     ContactIcon,
@@ -27,12 +25,10 @@ import {
     LayersIcon,
     LayoutDashboardIcon,
     ListIcon,
-    LockKeyholeIcon,
     MicIcon,
     NewspaperIcon,
     PieChartIcon,
     RadioIcon,
-    ReceiptIcon,
     RocketIcon,
     RssIcon,
     ScaleIcon,
@@ -45,15 +41,17 @@ import {
     UsersIcon,
 } from "lucide-react";
 
+import type { OperationId } from "@/lib/api/operations.gen";
 import type { V2Dataset, V2FilerResponse, V2Instrument } from "@/lib/api/types";
 import type { FileRoutesByTo } from "@/routeTree.gen";
 
+import { OPERATIONS } from "@/lib/api/operations.gen";
 import { INSTRUMENT_TYPE_LABELS, servesSection } from "@/lib/instruments";
 import { PERSON_ANCHORS } from "@/lib/people";
 import { LICENSING_PAGE_URL, STATUS_PAGE_URL } from "@/lib/public-hosts";
 
 /**
- * THE navigation table (backend tasks/data-api-dashboard O5): the sidebar, the landing page's cards and the search's
+ * THE navigation table (backend tasks/data-api-dashboard O5): the sidebar and the search's
  * "Pages" group all read it, so a new top-level route is added here once, in the commit of its route
  * (`route-names.test.ts` fails for a top-level route without an entry).
  */
@@ -62,7 +60,7 @@ import { LICENSING_PAGE_URL, STATUS_PAGE_URL } from "@/lib/public-hosts";
 export type PagePath = Exclude<keyof FileRoutesByTo, `${string}$${string}`>;
 
 export type NavPage = {
-    /** One line for the landing page's cards and the search's "Pages" group. */
+    /** One line for the search's "Pages" group. */
     description: string;
     icon: LucideIcon;
     /** Extra words the search's "Pages" group matches ("ipos" → IPO calendar). */
@@ -78,30 +76,76 @@ export const MACRO_NAV = [
     { description: "Daily nominal Treasury yields by maturity.", icon: SplineIcon, keywords: ["Treasury", "yield curve", "rates", "maturity"], label: "Treasury yield curve", to: "/us-macro/yield-curve" },
 ] as const satisfies ReadonlyArray<NavPage>;
 
-/** Market: always shown. */
-export const MARKET_NAV: ReadonlyArray<NavPage> = [
-    { description: "Live calls, today's earnings, next IPOs and holidays.", icon: HouseIcon, keywords: ["home", "start", "landing"], label: "Home", to: "/" },
-    { description: "Earnings calls of every covered US company by day.", icon: CalendarDaysIcon, keywords: ["calendar", "earnings", "calls", "events"], label: "Earnings calendar", to: "/calendar" },
-    { description: "Every earnings call live right now.", icon: RadioIcon, keywords: ["live", "now", "calls", "audio"], label: "Live calls", to: "/live-calls" },
-    { description: "Offerings from SEC registration to listing.", icon: RocketIcon, keywords: ["ipo", "ipos", "offerings", "listings", "spac"], label: "IPOs", to: "/ipo-calendar" },
-    { description: "US exchange holidays and early closes.", icon: CalendarOffIcon, keywords: ["holidays", "closed", "market", "exchange"], label: "Market holidays", to: "/market-holidays" },
-    ...MACRO_NAV,
+// Every page once, as a constant: `MARKET_NAV`, `BROWSE_NAV` and `NAV_GROUPS` reference the same objects.
+const HOME_NAV: NavPage = { description: "Live calls, today's earnings, next IPOs and holidays.", icon: HouseIcon, keywords: ["home", "start", "landing"], label: "Home", to: "/" };
+
+const CALENDAR_NAV: NavPage = { description: "Earnings calls of every covered US company by day.", icon: CalendarDaysIcon, keywords: ["calendar", "earnings", "calls", "events"], label: "Earnings calendar", to: "/calendar" };
+
+const LIVE_CALLS_NAV: NavPage = { description: "Every earnings call live right now.", icon: RadioIcon, keywords: ["live", "now", "calls", "audio"], label: "Live calls", to: "/live-calls" };
+
+const IPOS_NAV: NavPage = { description: "Offerings from SEC registration to listing.", icon: RocketIcon, keywords: ["ipo", "ipos", "offerings", "listings", "spac"], label: "IPOs", to: "/ipo-calendar" };
+
+const HOLIDAYS_NAV: NavPage = { description: "US exchange holidays and early closes.", icon: CalendarOffIcon, keywords: ["holidays", "closed", "market", "exchange"], label: "Market holidays", to: "/market-holidays" };
+
+const INSTRUMENTS_NAV: NavPage = { description: "Every exchange-traded US symbol: stocks, ETFs, closed-end funds, ETNs.", icon: ListIcon, keywords: ["instruments", "stocks", "symbols", "tickers", "etn", "etns", "browse"], label: "Instruments", to: "/instruments" };
+
+const FUNDS_NAV: NavPage = { description: "Every listed ETF and closed-end fund with net assets.", icon: LayersIcon, keywords: ["funds", "etf", "etfs", "closed-end", "holdings"], label: "Funds", to: "/funds" };
+
+const INSTITUTIONS_NAV: NavPage = { description: "13F investment managers and their portfolios.", icon: LandmarkIcon, keywords: ["institutions", "managers", "13f", "holders", "filers"], label: "Institutions", to: "/institutions" };
+
+const PEOPLE_NAV: NavPage = { description: "Executives and analysts who speak on calls, with every call of each.", icon: ContactIcon, keywords: ["people", "persons", "executives", "analysts", "speakers", "participants"], label: "People", to: "/people" };
+
+const NEWS_FEED_NAV: NavPage = { description: "Your watchlist's news in one list, and every company's new items live.", icon: RssIcon, keywords: ["news", "feed", "watchlist", "live", "press releases"], label: "News feed", to: "/news-feed" };
+
+const FILINGS_NAV: NavPage = { description: "New SEC filings as they arrive, and full-text search across every filer.", icon: ScrollTextIcon, keywords: ["filings", "sec", "edgar", "8-k", "10-k", "live", "search"], label: "Filings", to: "/filings" };
+
+const DATASETS_NAV: NavPage = { description: "The SEC bulk data sets the API serves, with their newest release.", icon: DatabaseIcon, keywords: ["sec", "datasets", "data sets", "bulk", "releases", "13f", "n-port"], label: "SEC data sets", to: "/sec/datasets" };
+
+const TRANSCRIPT_SEARCH_NAV: NavPage = { description: "What was said on every company's earnings calls: passages from transcripts, Q&A and slides.", icon: SearchIcon, keywords: ["search", "transcripts", "transcript", "passages", "quotes", "calls", "full-text"], label: "Transcript search", to: "/search" };
+
+const CATALOG_NAV: NavPage = { description: "Metrics, mapping rules, SEC forms and sections, event types, document kinds.", icon: BookOpenIcon, keywords: ["catalog", "reference", "metrics", "definitions", "mapping", "forms", "sections", "glossary"], label: "Catalog", to: "/catalog" };
+
+const OFFERINGS_NAV: NavPage = { description: "Form D private offerings of every issuer, with amounts, exemptions and related persons.", icon: HandCoinsIcon, keywords: ["offerings", "form d", "private", "placements", "exemptions", "raises"], label: "Offerings", to: "/offerings" };
+
+const ALERTS_NAV: NavPage = { description: "Your alert rules, what fired, live, and every alert's actions.", icon: BellIcon, keywords: ["alerts", "alert", "notifications", "webhooks", "events", "triggers", "watch"], label: "Alerts", to: "/alerts" };
+
+/** Market pages (the search and the route test read the flat lists; the sidebar reads `NAV_GROUPS`). */
+export const MARKET_NAV: ReadonlyArray<NavPage> = [HOME_NAV, CALENDAR_NAV, LIVE_CALLS_NAV, IPOS_NAV, HOLIDAYS_NAV, ...MACRO_NAV];
+
+/** Browse pages. */
+export const BROWSE_NAV: ReadonlyArray<NavPage> = [
+    INSTRUMENTS_NAV,
+    FUNDS_NAV,
+    INSTITUTIONS_NAV,
+    PEOPLE_NAV,
+    NEWS_FEED_NAV,
+    FILINGS_NAV,
+    DATASETS_NAV,
+    TRANSCRIPT_SEARCH_NAV,
+    CATALOG_NAV,
+    OFFERINGS_NAV,
+    ALERTS_NAV,
 ];
 
-/** Browse: always shown. Later tasks add News feed, Filings, Offerings, Search, Catalog, Alerts here with their routes. */
-export const BROWSE_NAV: ReadonlyArray<NavPage> = [
-    { description: "Every exchange-traded US symbol: stocks, ETFs, closed-end funds, ETNs.", icon: ListIcon, keywords: ["instruments", "stocks", "symbols", "tickers", "etn", "etns", "browse"], label: "Instruments", to: "/instruments" },
-    { description: "Every listed ETF and closed-end fund with net assets.", icon: LayersIcon, keywords: ["funds", "etf", "etfs", "closed-end", "holdings"], label: "Funds", to: "/funds" },
-    { description: "13F investment managers and their portfolios.", icon: LandmarkIcon, keywords: ["institutions", "managers", "13f", "holders", "filers"], label: "Institutions", to: "/institutions" },
-    { description: "Executives and analysts who speak on calls, with every call of each.", icon: ContactIcon, keywords: ["people", "persons", "executives", "analysts", "speakers", "participants"], label: "People", to: "/people" },
-    { description: "Your watchlist's news in one list, and every company's new items live.", icon: RssIcon, keywords: ["news", "feed", "watchlist", "live", "press releases"], label: "News feed", to: "/news-feed" },
-    { description: "New SEC filings as they arrive, and full-text search across every filer.", icon: ScrollTextIcon, keywords: ["filings", "sec", "edgar", "8-k", "10-k", "live", "search"], label: "Filings", to: "/filings" },
-    { description: "The SEC bulk data sets the API serves, with their newest release.", icon: DatabaseIcon, keywords: ["sec", "datasets", "data sets", "bulk", "releases", "13f", "n-port"], label: "SEC data sets", to: "/sec/datasets" },
-    { description: "What was said on every company's earnings calls: passages from transcripts, Q&A and slides.", icon: SearchIcon, keywords: ["search", "transcripts", "transcript", "passages", "quotes", "calls", "full-text"], label: "Transcript search", to: "/search" },
-    { description: "Metrics, mapping rules, SEC forms and sections, event types, document kinds.", icon: BookOpenIcon, keywords: ["catalog", "reference", "metrics", "definitions", "mapping", "forms", "sections", "glossary"], label: "Catalog", to: "/catalog" },
-    { description: "Form D private offerings of every issuer, with amounts, exemptions and related persons.", icon: HandCoinsIcon, keywords: ["offerings", "form d", "private", "placements", "exemptions", "raises"], label: "Offerings", to: "/offerings" },
-    { description: "Your alert rules, what fired, live, and every alert's actions.", icon: BellIcon, keywords: ["alerts", "alert", "notifications", "webhooks", "events", "triggers", "watch"], label: "Alerts", to: "/alerts" },
+/** A collapsible group of the sidebar (ui-redesign task 4); its open state is stored per browser. */
+export type NavGroup = { defaultOpen: boolean; id: string; label: string; pages: ReadonlyArray<NavPage> };
+
+/** The sidebar's groups: every page of `MARKET_NAV` and `BROWSE_NAV` in exactly one (`navigation.test.ts`). */
+export const NAV_GROUPS: ReadonlyArray<NavGroup> = [
+    { defaultOpen: true, id: "market", label: "Market", pages: [HOME_NAV, CALENDAR_NAV, LIVE_CALLS_NAV, IPOS_NAV, HOLIDAYS_NAV] },
+    { defaultOpen: true, id: "securities", label: "Securities", pages: [INSTRUMENTS_NAV, FUNDS_NAV, INSTITUTIONS_NAV, PEOPLE_NAV] },
+    { defaultOpen: false, id: "filings", label: "Filings", pages: [FILINGS_NAV, OFFERINGS_NAV, DATASETS_NAV] },
+    { defaultOpen: false, id: "research", label: "News & search", pages: [NEWS_FEED_NAV, TRANSCRIPT_SEARCH_NAV] },
+    { defaultOpen: false, id: "macro", label: "US macro", pages: MACRO_NAV },
+    { defaultOpen: false, id: "build", label: "Build", pages: [ALERTS_NAV, CATALOG_NAV] },
 ];
+
+/** The group holding the page of a path (the page itself or one below it: `/alerts/new` → Build); `/` only exactly. */
+export function navGroupOfPath(pathname: string): NavGroup | null {
+    const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+
+    return NAV_GROUPS.find(group => group.pages.some(page => page.to === "/" ? path === "/" : path === page.to || path.startsWith(`${page.to}/`))) ?? null;
+}
 
 /** The account (bottom of the sidebar, with the plan badge). */
 export const ACCOUNT_NAV: NavPage = {
@@ -153,7 +197,8 @@ export function searchPages(query: string): Array<HelpLink | NavPage> {
 /** A `/$ticker` section path (the overview is "/$ticker"). */
 export type TickerPath = Extract<keyof FileRoutesByTo, `/$ticker${string}`>;
 
-export type InstrumentSection = { icon: LucideIcon; label: string; section: string; to: TickerPath };
+/** `shortLabel`: the ticker header's tab text where the sidebar's label is long ("Investor documents" → "Documents"). */
+export type InstrumentSection = { icon: LucideIcon; label: string; section: string; shortLabel?: string; to: TickerPath };
 
 export type InstrumentSectionGroup = { items: ReadonlyArray<InstrumentSection>; label: string };
 
@@ -166,7 +211,7 @@ export const INSTRUMENT_SECTION_GROUPS: ReadonlyArray<InstrumentSectionGroup> = 
     {
         items: [
             { icon: MicIcon, label: "Calls", section: "earnings-calls", to: "/$ticker/earnings-calls" },
-            { icon: FolderOpenIcon, label: "Investor documents", section: "documents", to: "/$ticker/documents" },
+            { icon: FolderOpenIcon, label: "Investor documents", section: "documents", shortLabel: "Documents", to: "/$ticker/documents" },
         ],
         label: "Earnings",
     },
@@ -265,27 +310,127 @@ export function filerContextAnchors(filer: null | Pick<V2FilerResponse, "fund" |
 /** The icon of the filer context's "Open <TICKER>" link. */
 export const OPEN_LISTING_ICON = ArrowUpRightIcon;
 
-/** A card of the landing page's "Browse" row: a Browse page opened with its filter. */
-export type BrowseCard = { description: string; icon: LucideIcon; label: string } & (
-    | { search: Record<string, never>; to: "/institutions" | typeof MACRO_NAV[number]["to"] }
-    | { search: { structure: "registered_fund" }; to: "/funds" }
-    | { search: { type: "closed_end_fund" | "etf" | "etn" | "stock" }; to: "/instruments" }
-);
-
-/** The landing page's "Browse" row (the Browse pages of `BROWSE_NAV`, each with its first filter). */
-export const BROWSE_CARDS: ReadonlyArray<BrowseCard> = [
-    { description: "Companies listed on US exchanges.", icon: BuildingIcon, label: "Stocks", search: { type: "stock" }, to: "/instruments" },
-    { description: "Exchange-traded funds and trusts.", icon: ChartPieIcon, label: "ETFs", search: { type: "etf" }, to: "/instruments" },
-    { description: "Listed closed-end funds.", icon: LockKeyholeIcon, label: "Closed-end funds", search: { type: "closed_end_fund" }, to: "/instruments" },
-    { description: "Exchange-traded notes.", icon: ReceiptIcon, label: "ETNs", search: { type: "etn" }, to: "/instruments" },
-    { description: "Registered funds with their reported holdings.", icon: LayersIcon, label: "Funds with holdings", search: { structure: "registered_fund" }, to: "/funds" },
-    { description: "13F managers and their portfolios.", icon: LandmarkIcon, label: "Institutions", search: {}, to: "/institutions" },
-    ...MACRO_NAV.map(page => ({ ...page, search: {} })),
-];
-
 /** The blocks of `/people/$personId` (in-page anchors of the sidebar's person context), in page order. */
 export const PERSON_CONTEXT_ANCHORS: ReadonlyArray<FilerAnchor> = [
     { icon: IdCardIcon, id: PERSON_ANCHORS.profile, label: "Profile" },
     { icon: MicIcon, id: PERSON_ANCHORS.calls, label: "Calls" },
     { icon: HistoryIcon, id: PERSON_ANCHORS.history, label: "Role & firm history" },
 ];
+
+// The API's data families: the landing page's "What the API covers" list.
+
+/** The page a family row opens (a ticker page names its example symbol in `params`). */
+export type ApiFamilyLink
+    = | { params: { ticker: string }; to: "/$ticker/financials" }
+        | { params?: undefined; to: PagePath };
+
+/**
+ * A data family of the Data API: its operations are the HTTP operations of `operations.gen.ts` whose path template
+ * starts with one of `prefixes` (`/v1/events` holds `/v1/events/{event_id}/qa`; `/v1/alerts` holds `/v1/alerts:batch`).
+ */
+export type ApiFamily = { description: string; id: string; label: string; link: ApiFamilyLink; prefixes: ReadonlyArray<string> };
+
+/**
+ * The landing page's coverage list (ui-redesign task 7): every HTTP operation belongs to exactly one family — the one
+ * with the LONGEST matching prefix (`/v1/filers/{cik}/holdings` is Ownership, `/v1/filers` Filings);
+ * `api-families.test.ts` fails on an operation without a family, a prefix listed twice or a prefix matching nothing.
+ * The WebSocket `streamEvents` is not an HTTP operation and is not counted ("+ live stream" in the descriptions).
+ */
+export const API_FAMILIES: ReadonlyArray<ApiFamily> = [
+    {
+        description: "Transcripts, audio, slides, Q&A, guidance, KPIs, speakers and investor documents, + live stream.",
+        id: "earnings",
+        label: "Earnings calls",
+        link: { to: "/live-calls" },
+        prefixes: ["/v1/events", "/v1/guidance", "/v1/kpis", "/v1/participants", "/v1/people", "/v1/search/transcripts", "/v1/investor-documents", "/v1/search/investor-documents"],
+    },
+    {
+        description: "Every SEC filing and filer, document text, full-text search, Form D offerings, + live stream.",
+        id: "filings",
+        label: "Filings",
+        link: { to: "/filings" },
+        prefixes: ["/v1/filings", "/v1/filers", "/v1/document-versions", "/v1/search/filings", "/v1/datasets", "/v1/offerings"],
+    },
+    {
+        description: "Standardized and as-reported statements, ratios, growth, segments, facts with their source (e.g. AAPL).",
+        id: "financials",
+        label: "Financials",
+        link: { params: { ticker: "AAPL" }, to: "/$ticker/financials" },
+        prefixes: ["/v1/financials", "/v1/metrics", "/v1/segments", "/v1/facts", "/v1/fact-places", "/v1/fiscal-periods"],
+    },
+    {
+        description: "13F and N-PORT holders, quarter-on-quarter changes, manager portfolios and insider trades.",
+        id: "ownership",
+        label: "Ownership",
+        link: { to: "/institutions" },
+        prefixes: ["/v1/holders", "/v1/holder-changes", "/v1/insider-trades", "/v1/filers/{cik}/holdings", "/v1/filers/{cik}/holding-changes"],
+    },
+    {
+        description: "ETFs and closed-end funds with net assets, positions and weights.",
+        id: "funds",
+        label: "Funds",
+        link: { to: "/funds" },
+        prefixes: ["/v1/funds"],
+    },
+    {
+        description: "Company news with Invinite's summaries, announcements and news search, + live stream.",
+        id: "news",
+        label: "News",
+        link: { to: "/news-feed" },
+        prefixes: ["/v1/news", "/v1/announcements", "/v1/search/news"],
+    },
+    {
+        description: "Dividends, stock splits and IPOs from registration to listing.",
+        id: "corporate-actions",
+        label: "Corporate actions",
+        link: { to: "/ipo-calendar" },
+        prefixes: ["/v1/dividends", "/v1/splits", "/v1/ipos"],
+    },
+    {
+        description: "US inflation, GDP, labor market and the Treasury yield curve.",
+        id: "macro",
+        label: "US macro",
+        link: { to: "/us-macro/inflation" },
+        prefixes: ["/v1/macro"],
+    },
+    {
+        description: "Alert rules, events, end users, webhook destinations and scripts, + live stream.",
+        id: "alerts",
+        label: "Alerts",
+        link: { to: "/alerts" },
+        prefixes: ["/v1/alerts", "/v1/alert-events", "/v1/alert-templates", "/v1/alert-users", "/v1/destinations", "/v1/scripts", "/v1/me/alert-user-defaults"],
+    },
+    {
+        description: "Instruments, companies, catalog definitions, market holidays, your account and the API status.",
+        id: "reference",
+        label: "Reference",
+        link: { to: "/catalog" },
+        prefixes: ["/v1/instruments", "/v1/companies", "/v1/catalog", "/v1/market-holidays", "/v1/me", "/status", "/health"],
+    },
+];
+
+/** Whether a path template lies under a prefix (the prefix itself, a sub-path or a colon verb). */
+function underPrefix(path: string, prefix: string) {
+    return path === prefix || path.startsWith(`${prefix}/`) || path.startsWith(`${prefix}:`);
+}
+
+/** The family of an operation's path template: the one with the longest matching prefix, else null. */
+export function apiFamilyOf(path: string): ApiFamily | null {
+    let best: null | { family: ApiFamily; length: number } = null;
+
+    for (const family of API_FAMILIES) {
+        for (const prefix of family.prefixes) {
+            if (underPrefix(path, prefix) && prefix.length > (best?.length ?? -1)) best = { family, length: prefix.length };
+        }
+    }
+
+    return best?.family ?? null;
+}
+
+/** Each family's operation ids, computed from the operations table (never typed by hand). */
+export const API_FAMILY_OPERATIONS: Readonly<Record<string, ReadonlyArray<OperationId>>> = Object.fromEntries(
+    API_FAMILIES.map(family => [
+        family.id,
+        (Object.keys(OPERATIONS) as Array<OperationId>).filter(id => apiFamilyOf(OPERATIONS[id].path)?.id === family.id),
+    ]),
+);

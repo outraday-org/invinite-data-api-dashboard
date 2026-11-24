@@ -4,10 +4,12 @@ import type * as React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { HeadingLevelProvider } from "@/components/ui/page-header";
 import { useFund, useFundPositionsInfinite, useInstrument } from "@/lib/api/queries";
 import { GLD_INSTRUMENT, VOO_FUND, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { V2_FUND_POSITIONS } from "@/lib/sec/v2-fixtures";
-import { CompositionMeta, FundProfileView, netAssetsText, Route } from "@/routes/$ticker/index";
+import { CompositionMeta, FundProfileView, netAssetsParts } from "@/routes/$ticker/-overview/fund-overview";
+import { Route } from "@/routes/$ticker/index";
 
 const route = vi.hoisted(() => ({ ticker: "VOO" }));
 
@@ -36,19 +38,26 @@ describe("fund overview (`/v1/funds/{fund}`)", () => {
     it("VOO: net assets with date and scope 'series total', no market cap; the registrant links its filer page; classes", () => {
         render(<FundProfileView composition={null} fund={VOO_FUND} />);
 
-        expect(screen.getByTestId("fund-net-assets")).toHaveTextContent("$1.7T · as of Jun 30, 2026 · series total, all share classes");
+        expect(screen.getByTestId("fund-net-assets")).toHaveTextContent("$1.7T");
+
+        expect(screen.getByText("Net assets").parentElement).toHaveTextContent("as of Jun 30, 2026 · series total, all share classes");
 
         expect(screen.queryByText("Market cap")).toBeNull();
 
         expect(screen.getByRole("link", { name: "Vanguard Index Funds" })).toHaveAttribute("href", "/sec/36405");
 
-        expect(screen.getByText("0.03% · as of Apr 29, 2026")).toBeInTheDocument();
+        expect(screen.getByText("Expense ratio (net)").parentElement).toHaveTextContent("Expense ratio (net)0.03%as of Apr 29, 2026");
 
         expect(screen.getByRole("link", { name: "VOO" })).toHaveAttribute("href", "/VOO");
 
         expect(screen.getByText("VFIAX")).toBeInTheDocument();
 
-        expect(netAssetsText({ ...VOO_FUND, net_assets_usd: null })).toBeNull();
+        expect(netAssetsParts({ ...VOO_FUND, net_assets_usd: null })).toBeNull();
+
+        // The same building blocks as a stock: a stat grid, sections, no card.
+        expect(document.querySelectorAll("[data-slot=card]")).toHaveLength(0);
+
+        expect(document.querySelector("[data-slot=stat-grid]")).not.toBeNull();
     });
 
     it("advisers with role, CRD, LEI and affiliation; the website (https only); the data families of expand=coverage", () => {
@@ -82,7 +91,7 @@ describe("fund overview (`/v1/funds/{fund}`)", () => {
 
         expect(screen.getByText("The data families that hold rows for this fund")).toBeInTheDocument();
 
-        expect(screen.getByRole("link", { name: "dividends through Sep 18, 2026" })).toHaveAttribute("href", "/VOO/dividends");
+        expect(screen.getByText("dividends").closest("a")).toHaveAttribute("href", "/VOO/dividends");
 
         cleanup();
 
@@ -137,7 +146,8 @@ describe("fund overview (`/v1/funds/{fund}`)", () => {
 
         vi.mocked(useInstrument).mockReturnValue({ data: VXX_INSTRUMENT, isLoading: false } as never);
 
-        render(<TickerOverview />);
+        // Under the ticker layout's provider (its header's h1 is the symbol), as on the page.
+        render(<HeadingLevelProvider value={2}><TickerOverview /></HeadingLevelProvider>);
 
         // The page title every page renders (F032).
         expect(screen.getByRole("heading", { level: 2, name: "Overview" })).toBeInTheDocument();

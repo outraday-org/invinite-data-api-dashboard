@@ -6,7 +6,8 @@ import { useV2PressRelease } from "@/lib/api/queries";
 import { edgarFolderUrl } from "@/lib/earnings/edgar";
 import { pressReleaseOriginLabel, trustTierLabel } from "@/lib/earnings/labels";
 import { formatInstant } from "@/lib/format";
-import { paragraphs } from "@/lib/utils";
+import { READING_COLUMN_CLASS } from "@/lib/layout";
+import { cn, paragraphs } from "@/lib/utils";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -29,7 +30,7 @@ export function PressReleaseTab({ event, eventId }: CallTabProps) {
     return (
         <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
-                <div className="text-sm font-medium">{data.title ?? "Press release"}</div>
+                <div className="text-section">{data.title ?? "Press release"}</div>
                 <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
                     {data.published_at && <span>{formatInstant(data.published_at)}</span>}
                     <Badge variant="outline">{pressReleaseOriginLabel(data.origin)}</Badge>
@@ -66,13 +67,12 @@ export function PressReleaseTab({ event, eventId }: CallTabProps) {
             {body.length === 0
                 ? <Notice title="No body text stored for this release" />
                 : (
-                        <div className="rounded-md border">
-                            <div className="flex flex-col gap-3 p-3 leading-relaxed">
-                                {body.map((paragraph, index) => (
-                                    // Paragraphs have no id; their order within one release is stable.
-                                    <p className="whitespace-pre-wrap" key={index}>{paragraph}</p>
-                                ))}
-                            </div>
+                        // The reading column, no box (ui-redesign task 10).
+                        <div className={cn("flex flex-col gap-3", READING_COLUMN_CLASS)}>
+                            {body.map((paragraph, index) => (
+                                // Paragraphs have no id; their order within one release is stable.
+                                <p className="whitespace-pre-wrap" key={index}>{paragraph}</p>
+                            ))}
                         </div>
                     )}
         </div>

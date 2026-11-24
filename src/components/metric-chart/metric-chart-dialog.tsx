@@ -11,8 +11,9 @@ import {
     YAxis,
 } from "recharts";
 
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SegmentedButtons } from "@/components/ui/segmented-buttons";
+import { ROW_ACTION_REVEAL_CLASS } from "@/lib/layout";
 import { cn, formatNumberEnCompact } from "@/lib/utils";
 
 export type MetricChartDataPoint = {
@@ -31,17 +32,23 @@ type MetricChartDialogProps = {
 
 type ChartType = "bar" | "line";
 
+const CHART_TYPE_OPTIONS: Array<{ label: string; value: ChartType }> = [
+    { label: "Bar", value: "bar" },
+    { label: "Line", value: "line" },
+];
+
 const formatDefaultValue = (value: number) => formatNumberEnCompact(value);
 
 /**
- * The visible chart button of a metric row (the row stays clickable too): a real button, so the keyboard reaches it.
- * It stops the click from also reaching the row.
+ * The chart button of a metric row (the row stays clickable too): a real button, so the keyboard reaches it; from `lg`
+ * it waits for row hover / focus (`ROW_ACTION_REVEAL_CLASS`), always shown on touch. It stops the click from also
+ * reaching the row.
  */
 export function ChartRowButton({ label, onOpen }: { label: string; onOpen: () => void }) {
     return (
         <button
             aria-label={`Chart ${label}`}
-            className="text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex size-6 shrink-0 items-center justify-center rounded focus-visible:ring-2 focus-visible:outline-none"
+            className={cn("text-muted-foreground hover:text-foreground inline-flex size-6 shrink-0 items-center justify-center rounded transition-opacity", ROW_ACTION_REVEAL_CLASS)}
             onClick={(event) => {
                 event.stopPropagation();
 
@@ -95,23 +102,13 @@ export function MetricChartDialog({
                 <DialogHeader>
                     <DialogTitle>{metricLabel}</DialogTitle>
                 </DialogHeader>
-                <div className="flex items-center gap-2">
-                    <Button
-                        onClick={() => setChartType("bar")}
-                        size="sm"
-                        variant={chartType === "bar" ? "default" : "outline"}
-                    >
-                        Bar
-                    </Button>
-                    <Button
-                        onClick={() => setChartType("line")}
-                        size="sm"
-                        variant={chartType === "line" ? "default" : "outline"}
-                    >
-                        Line
-                    </Button>
-                </div>
-                <div className="border-border/70 bg-muted/20 h-[360px] w-full rounded-lg border p-3">
+                <SegmentedButtons
+                    aria-label="Chart type"
+                    onChange={setChartType}
+                    options={CHART_TYPE_OPTIONS}
+                    value={chartType}
+                />
+                <div className="h-[320px] w-full sm:h-[360px]">
                     {hasValues
                         ? (
                                 <ResponsiveContainer height="100%" width="100%">

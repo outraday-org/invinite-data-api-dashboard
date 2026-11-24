@@ -7,6 +7,7 @@ import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 import { HolderChangesList } from "@/components/sec/holder-views";
 import { ChangeTypeChips } from "@/components/sec/ownership-views";
 import {
+    FilerAnchorRow,
     SecFilerHeader,
     SecFilingsView,
     SecFundView,
@@ -16,19 +17,22 @@ import {
 } from "@/components/sec/sec-filer-views";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { NotFound } from "@/components/ui/not-found";
+import { PageContainer } from "@/components/ui/page-container";
+import { Section } from "@/components/ui/section";
 import { isNotFound } from "@/lib/api/errors";
 import { listState } from "@/lib/api/list-state";
 import { useFilerHoldingChangesInfinite, useFilerHoldingsInfinite, useV2Filer, useV2FilingsInfinite, useV2OfferingsInfinite } from "@/lib/api/queries";
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import { formatDay } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
-import { FILER_ANCHORS, FILER_FILINGS_PAGE, isManagerFiler } from "@/lib/navigation";
+import { FILER_ANCHORS, FILER_FILINGS_PAGE, filerContextAnchors, isManagerFiler } from "@/lib/navigation";
 import { recentFiler, useRecordRecent } from "@/lib/recents";
 import { changeTypesParam, INSTRUMENT_OPTIONS, parseChangeTypes } from "@/lib/sec/ownership";
 import { latest13fPeriodEnd, QUARTER_PICKER_COUNT, quarterPickerOptions } from "@/lib/sec/source";
 import { IN_PLACE, optionalAccession, optionalDay, optionalEnum, optionalFlag, optionalText } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 /**
  * `?form=` (the filings' form filter), `?period=<quarter end>` (the 13F portfolio, asked once set), `?instruments=all`
@@ -124,30 +128,62 @@ function SecFilerPage() {
     // blocks (UI walk F089).
     if (isNotFound(filer.error)) {
         return (
-            <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 lg:px-8">
+            <PageContainer>
                 <SecFilerHeader cik={cik} data={null} error={filer.error} isLoading={false} />
-            </div>
+            </PageContainer>
         );
     }
 
+    const portfolioFilters = period
+        ? (
+                <FilterBar activeCount={search.instruments ? 1 : 0} onReset={() => onChange({ instruments: undefined })}>
+                    <FilterField label="Quarter">
+                        {id => (
+                            <FilterSelect
+                                aria-label="13F quarter"
+                                className="w-full"
+                                id={id}
+                                onValueChange={value => onChange({ period: value })}
+                                options={quarterPickerOptions(latestQuarter, QUARTER_PICKER_COUNT, period)}
+                                value={period}
+                            />
+                        )}
+                    </FilterField>
+                    <FilterField label="Instruments">
+                        {id => (
+                            <FilterSelect
+                                aria-label="13F instruments"
+                                className="w-full"
+                                id={id}
+                                onValueChange={value => onChange({ instruments: value === "all" ? "all" : undefined })}
+                                options={INSTRUMENT_OPTIONS}
+                                value={search.instruments ?? "shares"}
+                            />
+                        )}
+                    </FilterField>
+                </FilterBar>
+            )
+        : null;
+
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 lg:px-8">
-            <section className="flex scroll-mt-20 flex-col gap-4" id={FILER_ANCHORS.profile}>
+        <PageContainer>
+            <div className="flex scroll-mt-20 flex-col gap-3" id={FILER_ANCHORS.profile}>
                 <SecFilerHeader cik={cik} data={filer.data} error={filer.error} isLoading={filer.isLoading} />
-                <h3 className="text-sm font-semibold">Lifecycle</h3>
+                <FilerAnchorRow anchors={filerContextAnchors(filer.data ?? null, isManager)} />
+            </div>
+
+            <Section title="Lifecycle">
                 <SecLifecycleView data={filer.data} error={filer.error} isLoading={filer.isLoading} />
-            </section>
+            </Section>
 
             {filer.data?.fund && (
-                <section className="flex scroll-mt-20 flex-col gap-2" id={FILER_ANCHORS.fund}>
-                    <h3 className="text-sm font-semibold">Fund series</h3>
+                <Section className="scroll-mt-20" id={FILER_ANCHORS.fund} title="Fund series">
                     <SecFundView data={filer.data} />
-                </section>
+                </Section>
             )}
 
             {privateOfferings && (
-                <section className="flex scroll-mt-20 flex-col gap-2" id={FILER_ANCHORS.offerings}>
-                    <h3 className="text-sm font-semibold">Private offerings (Form D)</h3>
+                <Section className="scroll-mt-20" id={FILER_ANCHORS.offerings} title="Private offerings (Form D)">
                     <SecPrivateOfferingsView
                         error={offerings.error}
                         exportScope={`cik-${cik}`}
@@ -158,72 +194,62 @@ function SecFilerPage() {
                         pages={offerings.data?.pages ?? []}
                         summary={privateOfferings}
                     />
-                </section>
+                </Section>
             )}
 
             {isManager && (
-                <section className="flex scroll-mt-20 flex-col gap-2" id={FILER_ANCHORS.portfolio}>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-sm font-semibold">13F portfolio</h3>
-                        {!period && (
-                            <Button onClick={() => onChange({ period: latestQuarter })} size="xs" type="button" variant="outline">
+                <>
+                    <Section
+                        actions={!period && (
+                            <Button onClick={() => onChange({ period: latestQuarter })} size="sm" type="button" variant="outline">
                                 Load the latest quarter
                             </Button>
                         )}
+                        className="scroll-mt-20"
+                        description={period ? undefined : "The positions of one quarter's 13F report, asked on a click."}
+                        id={FILER_ANCHORS.portfolio}
+                        title="13F portfolio"
+                    >
+                        {portfolioFilters}
                         {period && (
-                            <FilterSelect
-                                aria-label="13F quarter"
-                                className="w-[210px]"
-                                onValueChange={value => onChange({ period: value })}
-                                options={quarterPickerOptions(latestQuarter, QUARTER_PICKER_COUNT, period)}
-                                value={period}
+                            <SecPortfolioView
+                                error={portfolio.error}
+                                exportScope={`cik-${cik}`}
+                                hasNextPage={Boolean(portfolio.hasNextPage)}
+                                isFetchingNextPage={portfolio.isFetchingNextPage}
+                                isLoading={portfolio.isLoading}
+                                onMore={() => void portfolio.fetchNextPage()}
+                                pages={portfolio.data?.pages ?? []}
                             />
                         )}
-                        <FilterSelect
-                            aria-label="13F instruments"
-                            className="w-[210px]"
-                            onValueChange={value => onChange({ instruments: value === "all" ? "all" : undefined })}
-                            options={INSTRUMENT_OPTIONS}
-                            value={search.instruments ?? "shares"}
-                        />
-                    </div>
-                    {period && (
-                        <SecPortfolioView
-                            error={portfolio.error}
-                            exportScope={`cik-${cik}`}
-                            hasNextPage={Boolean(portfolio.hasNextPage)}
-                            isFetchingNextPage={portfolio.isFetchingNextPage}
-                            isLoading={portfolio.isLoading}
-                            onMore={() => void portfolio.fetchNextPage()}
-                            pages={portfolio.data?.pages ?? []}
-                        />
-                    )}
+                    </Section>
 
-                    <div className="mt-4 flex flex-wrap items-center gap-2">
-                        <h3 className="text-sm font-semibold">Position changes</h3>
-                        {search.changes
-                            ? <span className="text-muted-foreground text-xs">{period ? `Quarter ending ${formatDay(period)} vs the one before` : "The latest due quarter vs the one before"}</span>
-                            : (
-                                    <Button onClick={() => onChange({ changes: true })} size="xs" type="button" variant="outline">
-                                        Load the changes
-                                    </Button>
-                                )}
-                    </div>
-                    {search.changes && (
-                        <div className="flex flex-col gap-2" data-testid="position-changes">
-                            <ChangeTypeChips onChange={types => onChange({ ctypes: changeTypesParam(types) })} value={changeTypes} />
-                            <HolderChangesList
-                                exportScope={`cik-${cik}`}
-                                state={listState(changes)}
-                                subject="security"
-                            />
-                        </div>
-                    )}
-                </section>
+                    <Section
+                        actions={!search.changes && (
+                            <Button onClick={() => onChange({ changes: true })} size="sm" type="button" variant="outline">
+                                Load the changes
+                            </Button>
+                        )}
+                        description={search.changes
+                            ? (period ? `Quarter ending ${formatDay(period)} vs the one before` : "The latest due quarter vs the one before")
+                            : "What the manager bought, added, trimmed and sold against the quarter before, asked on a click."}
+                        title="Position changes"
+                    >
+                        {search.changes && (
+                            <div className="flex flex-col gap-3" data-testid="position-changes">
+                                <ChangeTypeChips onChange={types => onChange({ ctypes: changeTypesParam(types) })} value={changeTypes} />
+                                <HolderChangesList
+                                    exportScope={`cik-${cik}`}
+                                    state={listState(changes)}
+                                    subject="security"
+                                />
+                            </div>
+                        )}
+                    </Section>
+                </>
             )}
 
-            <section className="flex scroll-mt-20 flex-col gap-2" id={FILER_ANCHORS.filings}>
-                <h3 className="text-sm font-semibold">Filings</h3>
+            <Section className="scroll-mt-20" id={FILER_ANCHORS.filings} title="Filings">
                 <SecFilingsView
                     error={filings.error}
                     form={form}
@@ -235,9 +261,9 @@ function SecFilerPage() {
                     onOpen={next => onChange({ docs: next.kind === "filing" ? next.accession : undefined })}
                     pages={filings.data?.pages ?? []}
                 />
-            </section>
+            </Section>
 
             <SecSourceDialog onClose={() => onChange({ docs: undefined })} target={target} />
-        </div>
+        </PageContainer>
     );
 }

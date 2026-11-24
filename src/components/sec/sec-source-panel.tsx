@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Notice } from "@/components/ui/notice";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useV2DocumentFigure, useV2DocumentVersion, useV2Filing } from "@/lib/api/queries";
 import { formatDay } from "@/lib/format";
 import { READINESS_TEXT, reasonText } from "@/lib/sec/readiness";
@@ -246,6 +247,7 @@ export function V2FilingDocumentsView({
     isLoading,
     onRead,
     selectedFilename,
+    summary = true,
 }: {
     data: null | V2FilingDetailResponse;
     error: unknown;
@@ -253,6 +255,8 @@ export function V2FilingDocumentsView({
     isLoading: boolean;
     onRead: (doc: V2FilingDocumentView) => void;
     selectedFilename: null | string;
+    /** The form / filed / period / EDGAR line above the documents (false on the filing page, whose header states them). */
+    summary?: boolean;
 }) {
     if (error) return <SecReadinessNotice error={error} title="Failed to load the filing's documents" />;
 
@@ -264,71 +268,71 @@ export function V2FilingDocumentsView({
 
     return (
         <section aria-label="Filing documents" className="flex flex-col gap-2">
-            <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
-                <Badge variant="outline">{data.form}</Badge>
-                <span>{`Filed ${formatDay(data.filing_date)}`}</span>
-                {data.report_date && <span>{`Period ${formatDay(data.report_date)}`}</span>}
-                {data.edgar_index_url.startsWith("https://www.sec.gov/") && (
-                    // An outbound link to EDGAR; this app never fetches sec.gov.
-                    <a className={linkClass} href={data.edgar_index_url} rel="noopener noreferrer" target="_blank">
-                        <ExternalLink className="size-3" />
-                        EDGAR index
-                    </a>
-                )}
-            </div>
+            {summary && (
+                <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
+                    <Badge variant="outline">{data.form}</Badge>
+                    <span>{`Filed ${formatDay(data.filing_date)}`}</span>
+                    {data.report_date && <span>{`Period ${formatDay(data.report_date)}`}</span>}
+                    {data.edgar_index_url.startsWith("https://www.sec.gov/") && (
+                        // An outbound link to EDGAR; this app never fetches sec.gov.
+                        <a className={linkClass} href={data.edgar_index_url} rel="noopener noreferrer" target="_blank">
+                            <ExternalLink className="size-3" />
+                            EDGAR index
+                        </a>
+                    )}
+                </div>
+            )}
             {documents.length === 0
                 ? <div className="text-muted-foreground text-xs">This filing lists no documents.</div>
                 : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-xs">
-                                <thead className="text-muted-foreground text-left">
-                                    <tr>
-                                        <th className="p-1 font-normal">Document</th>
-                                        <th className="p-1 font-normal">Description</th>
-                                        <th className="p-1 font-normal">Public copy</th>
-                                        <th className="p-1" />
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {documents.map(doc => (
-                                        <tr
-                                            className={doc.filename === selectedFilename ? "bg-muted/50" : undefined}
-                                            data-filename={doc.filename}
-                                            key={doc.filename}
-                                        >
-                                            <td className="p-1 font-medium">
-                                                {doc.filename}
-                                                {doc.type && <span className="text-muted-foreground font-normal">{` · ${doc.type}`}</span>}
-                                            </td>
-                                            <td className="p-1">{doc.description ?? "—"}</td>
-                                            <td className="p-1">
-                                                {doc.publicUrl
-                                                    ? (
-                                                            <a className={linkClass} href={doc.publicUrl} rel="noopener noreferrer" target="_blank">
-                                                                <ExternalLink className="size-3" />
-                                                                Original
-                                                            </a>
-                                                        )
-                                                    : <span className="text-muted-foreground">{NO_PUBLIC_COPY}</span>}
-                                            </td>
-                                            <td className="p-1 text-right">
-                                                {doc.currentVersionId
-                                                    ? (
-                                                            <div className="flex flex-wrap items-center justify-end gap-1">
-                                                                <Button onClick={() => onRead(doc)} size="xs" type="button" variant="outline">
-                                                                    <FileText />
-                                                                    Read
-                                                                </Button>
-                                                                {extraActions?.({ ...doc, currentVersionId: doc.currentVersionId })}
-                                                            </div>
-                                                        )
-                                                    : <span className="text-muted-foreground">No readable version</span>}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Document</TableHead>
+                                    <TableHead>Description</TableHead>
+                                    <TableHead>Public copy</TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {documents.map(doc => (
+                                    <TableRow
+                                        className={doc.filename === selectedFilename ? "bg-muted/50" : undefined}
+                                        data-filename={doc.filename}
+                                        key={doc.filename}
+                                    >
+                                        <TableCell className="font-medium">
+                                            <span className="font-mono text-xs">{doc.filename}</span>
+                                            {doc.type && <span className="text-muted-foreground font-normal">{` · ${doc.type}`}</span>}
+                                        </TableCell>
+                                        <TableCell className="max-w-[24rem] truncate" title={doc.description ?? undefined}>{doc.description ?? "—"}</TableCell>
+                                        <TableCell>
+                                            {doc.publicUrl
+                                                ? (
+                                                        <a className={linkClass} href={doc.publicUrl} rel="noopener noreferrer" target="_blank">
+                                                            <ExternalLink className="size-3" />
+                                                            Original
+                                                        </a>
+                                                    )
+                                                : <span className="text-muted-foreground">{NO_PUBLIC_COPY}</span>}
+                                        </TableCell>
+                                        <TableCell className="py-1 text-right">
+                                            {doc.currentVersionId
+                                                ? (
+                                                        <div aria-label={`Open ${doc.filename}`} className="flex items-center justify-end gap-0.5" role="group">
+                                                            <Button onClick={() => onRead(doc)} size="sm" type="button" variant="ghost">
+                                                                <FileText />
+                                                                Read
+                                                            </Button>
+                                                            {extraActions?.({ ...doc, currentVersionId: doc.currentVersionId })}
+                                                        </div>
+                                                    )
+                                                : <span className="text-muted-foreground">No readable version</span>}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     )}
         </section>
     );

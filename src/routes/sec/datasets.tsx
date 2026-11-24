@@ -6,6 +6,7 @@ import type { V2DatasetsResponse, V2SecDataset } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { DataTable } from "@/components/ui/data-table";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2DatasetsInfinite } from "@/lib/api/queries";
 import { DASH, formatDay } from "@/lib/format";
@@ -43,7 +44,7 @@ const COLUMNS: Array<ColumnDef<V2SecDataset>> = [
     { cell: ({ row }) => <span className="tabular-nums">{row.original.release}</span>, header: "Newest release", id: "release" },
     { cell: ({ row }) => <span className="tabular-nums">{row.original.released_at ? formatDay(row.original.released_at) : DASH}</span>, header: "Released", id: "released_at" },
     {
-        cell: ({ row }) => <span className="text-muted-foreground text-xs">{row.original.forms.join(", ") || "—"}</span>,
+        cell: ({ row }) => <span className="text-muted-foreground">{row.original.forms.join(", ") || "—"}</span>,
         header: "Forms it covers",
         id: "forms",
     },
@@ -76,12 +77,12 @@ function SecDatasetsPage() {
     const datasets = useV2DatasetsInfinite();
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer>
             <PageHeader
                 description="The SEC bulk data sets the API serves, with the newest release of each: a filing's facts and notes, 13F and N-PORT holdings, insider transactions and Form D offerings come from them."
                 title="SEC data sets"
             />
             <SecDatasetsView error={datasets.error} isLoading={datasets.isLoading} pages={datasets.data?.pages ?? []} />
-        </div>
+        </PageContainer>
     );
 }

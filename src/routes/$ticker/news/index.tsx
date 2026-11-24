@@ -11,11 +11,11 @@ import type { NewsFilters, NewsSearch } from "@/lib/news/labels";
 import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
 import { ExportMenu } from "@/components/api/export-menu";
 import { LIVE_NEWS_PLAN_NOTE, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
-import { TabStrip } from "@/components/navigation/tab-strip";
 import { Button } from "@/components/ui/button";
 import { tierLabel } from "@/components/ui/credit-hint";
 import { PageHeader } from "@/components/ui/page-header";
 import { RequestErrorState } from "@/components/ui/request-error-state";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useV2Company } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
 import { issuerLabels, validateNewsSearch } from "@/lib/news/labels";
@@ -23,7 +23,7 @@ import { IN_PLACE } from "@/lib/url-state";
 
 import { AnnouncementsTab } from "./-components/announcements";
 import { NewsEventFilter } from "./-components/news-event-filter";
-import { NewsFilters as NewsFilterControls } from "./-components/news-filters";
+import { NEWS_FILTER_RESET, NewsFilters as NewsFilterControls, newsFilterCount } from "./-components/news-filters";
 import { NewsItemPanel } from "./-components/news-item-panel";
 import { NewsPager } from "./-components/news-pager";
 import { NewsSearchBox } from "./-components/news-search";
@@ -102,8 +102,10 @@ export function NewsPageView({
     scopeLabel,
     search,
     skippedPages = 0,
+    tabs,
     title = "News",
 }: {
+    /** The filter bar. */
     controls?: React.ReactNode;
     /** Replaces the default description (the watchlist feed's). */
     description?: React.ReactNode;
@@ -112,7 +114,7 @@ export function NewsPageView({
     error: unknown;
     /** The export file's scope (the ticker, `watchlist`); none = no export menu. */
     exportScope?: string;
-    /** The header's actions (the News | Announcements tabs). */
+    /** The header's actions (the alert entry point, the live switch). */
     headerActions?: React.ReactNode;
     /**
      * Rows of the loaded page the page-side filters hid (source, earnings, Company-published: `/v1/news` has no
@@ -130,33 +132,38 @@ export function NewsPageView({
     search?: React.ReactNode;
     /** Pages the auto-advance skipped since the last filter change (all hidden). */
     skippedPages?: number;
+    /** The line tabs under the header (News | Announcements, the feed's scope). */
+    tabs?: React.ReactNode;
     title?: string;
 }) {
     return (
-        <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3">
-                <PageHeader
-                    actions={headerActions}
-                    description={description ?? (
-                        <>
-                            {`${scopeLabel}: SEC filings and the companies' own newsroom publications. `}
-                            Each item is Invinite&apos;s summary of the publication, shown with its source and date; wire services are never a source.
-                        </>
-                    )}
-                    title={title}
-                />
-                {search}
-                {controls}
-                {notice}
-            </div>
+        <div className="flex flex-col gap-6">
+            <PageHeader
+                actions={headerActions}
+                description={description ?? (
+                    <>
+                        {`${scopeLabel}: SEC filings and the companies' own newsroom publications. `}
+                        Each item is Invinite&apos;s summary of the publication, shown with its source and date; wire services are never a source.
+                    </>
+                )}
+                title={title}
+            />
+            {tabs}
+            {search}
+            {(controls || notice) && (
+                <div className="flex flex-col gap-3">
+                    {controls}
+                    {notice}
+                </div>
+            )}
 
             {error
                 ? <ListError error={error} />
                 : (
                         <>
-                            <div>
+                            <div className="flex flex-col gap-2">
                                 {exportScope && (
-                                    <div className="flex justify-end pb-2">
+                                    <div className="flex justify-end">
                                         <ExportMenu
                                             config={{ columns: NEWS_EXPORT_COLUMNS, dataset: "news", scope: exportScope }}
                                             failed={false}
@@ -168,7 +175,7 @@ export function NewsPageView({
                                     </div>
                                 )}
                                 {!isLoading && items.length === 0 && hiddenByFilters === 0
-                                    ? <div className="text-muted-foreground w-full p-2 text-center text-xs">{emptyText}</div>
+                                    ? <div className="text-muted-foreground w-full p-6 text-center text-sm">{emptyText}</div>
                                     : !isLoading && items.length === 0
                                             ? <FilteredOut hidden={hiddenByFilters} pager={pager} shown={0} skippedPages={skippedPages} />
                                             : <NewsTable isLoading={isLoading} items={items} liveIds={liveIds} />}
@@ -194,17 +201,16 @@ function NewsPage() {
         void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
     };
 
+    // News | Announcements as line tabs under the header (ui-redesign task 11).
     const tabs = (
-        <>
-            <AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.news} />
-            <TabStrip
-                aria-label="News view"
-                onSelect={value => onFilterChange({ view: value === "announcements" ? "announcements" : undefined })}
-                options={VIEW_OPTIONS}
-                value={search.view ?? "news"}
-            />
-        </>
+        <Tabs onValueChange={value => onFilterChange({ view: value === "announcements" ? "announcements" : undefined })} value={search.view ?? "news"}>
+            <TabsList aria-label="News view" variant="line">
+                {VIEW_OPTIONS.map(option => <TabsTrigger key={option.value} value={option.value}>{option.label}</TabsTrigger>)}
+            </TabsList>
+        </Tabs>
     );
+
+    const alerts = <AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.news} />;
 
     // The item panel (`?item=`); `title` = the list row's headline, shown before the item answers.
     const panel = (title?: string) => (
@@ -218,8 +224,9 @@ function NewsPage() {
     if (search.view === "announcements") {
         return (
             <>
-                <div className="flex flex-col gap-4">
-                    <PageHeader actions={tabs} title="News" />
+                <div className="flex flex-col gap-6">
+                    <PageHeader actions={alerts} title="News" />
+                    {tabs}
                     <AnnouncementsTab onChange={onFilterChange} search={search} ticker={ticker} />
                 </div>
                 {panel()}
@@ -227,13 +234,14 @@ function NewsPage() {
         );
     }
 
-    return <CompanyNews navigate={navigate} onFilterChange={onFilterChange} panel={panel} search={search} tabs={tabs} ticker={ticker} />;
+    return <CompanyNews alerts={alerts} navigate={navigate} onFilterChange={onFilterChange} panel={panel} search={search} tabs={tabs} ticker={ticker} />;
 }
 
 const VIEW_OPTIONS = [{ label: "News", value: "news" }, { label: "Announcements", value: "announcements" }] as const;
 
 /** The News view of one company: search box, filters, the paged list, the live switch. */
 function CompanyNews({
+    alerts,
     navigate,
     onFilterChange,
     panel,
@@ -241,6 +249,7 @@ function CompanyNews({
     tabs,
     ticker,
 }: {
+    alerts: React.ReactNode;
     navigate: ReturnType<typeof Route.useNavigate>;
     onFilterChange: (patch: Partial<NewsSearch>) => void;
     panel: (title?: string) => React.ReactNode;
@@ -278,14 +287,21 @@ function CompanyNews({
     const news = useNewsList({ company: ticker, event: search.event, filters, liveTickers: [ticker], onLiveStop, search });
 
     const controls = (
-        <div className="flex flex-wrap items-start justify-between gap-2">
-            <NewsFilterControls
-                categories={publisherCik ? issuerLabels(news.fetched, publisherCik, "categories") : []}
-                eventFilter={<NewsEventFilter event={search.event} onChange={event => onFilterChange({ event })} ticker={ticker} />}
-                onChange={patch => onFilterChange(patch.sort === "oldest" ? { ...patch, live: undefined } : patch)}
-                search={search}
-                tags={publisherCik ? issuerLabels(news.fetched, publisherCik, "tags") : []}
-            />
+        <NewsFilterControls
+            activeCount={newsFilterCount(search) + (search.event ? 1 : 0)}
+            categories={publisherCik ? issuerLabels(news.fetched, publisherCik, "categories") : []}
+            eventFilter={id => <NewsEventFilter event={search.event} id={id} onChange={event => onFilterChange({ event })} ticker={ticker} />}
+            onChange={patch => onFilterChange(patch.sort === "oldest" ? { ...patch, live: undefined } : patch)}
+            onReset={() => onFilterChange({ ...NEWS_FILTER_RESET, event: undefined })}
+            search={search}
+            tags={publisherCik ? issuerLabels(news.fetched, publisherCik, "tags") : []}
+        />
+    );
+
+    // The live switch is a header action (it changes what the list is, not which rows it shows).
+    const headerActions = (
+        <>
+            {alerts}
             <LiveToggle
                 listening="Listening for new items"
                 live={search.live === true}
@@ -296,9 +312,8 @@ function CompanyNews({
                     // Live items join the newest-first list: switching it on drops `sort=oldest`.
                     onFilterChange(on ? { live: true, sort: undefined } : { live: undefined });
                 }}
-                size="lg"
             />
-        </div>
+        </>
     );
 
     const notice = stop && <LiveStopNotice planNote={LIVE_NEWS_PLAN_NOTE} stop={stop} />;
@@ -310,7 +325,7 @@ function CompanyNews({
                 emptyText={search.from || search.to || search.event ? undefined : "No news yet."}
                 error={news.error}
                 exportScope={ticker}
-                headerActions={tabs}
+                headerActions={headerActions}
                 hiddenByFilters={news.hidden}
                 isLoading={news.isLoading}
                 items={news.items}
@@ -320,6 +335,7 @@ function CompanyNews({
                 scopeLabel={search.published ? `Published by ${company?.name ?? ticker}` : `News about ${ticker}`}
                 search={<NewsSearchBox company={ticker} from={search.from} placeholder={`Search ${ticker}'s news — e.g. data center, buyback`} to={search.to} />}
                 skippedPages={news.skippedPages}
+                tabs={tabs}
             />
             {panel(news.items.find(item => item.id === search.item)?.title)}
         </>

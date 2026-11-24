@@ -25,15 +25,15 @@ export function splitRatioText(split: Pick<V2Split, "split_from" | "split_to">) 
 }
 
 const COLUMNS: Array<ColumnDef<V2Split>> = [
-    { cell: ({ row }) => formatDay(row.original.execution_date), header: "Execution Date", id: "execution_date" },
+    { cell: ({ row }) => formatDay(row.original.execution_date), header: "Execution date", id: "execution_date" },
     {
         cell: ({ row }) => <div className="text-right tabular-nums">{formatNumber(row.original.split_from)}</div>,
-        header: () => <div className="text-right">Split From</div>,
+        header: () => <div className="text-right">Split from</div>,
         id: "split_from",
     },
     {
         cell: ({ row }) => <div className="text-right tabular-nums">{formatNumber(row.original.split_to)}</div>,
-        header: () => <div className="text-right">Split To</div>,
+        header: () => <div className="text-right">Split to</div>,
         id: "split_to",
     },
     {
@@ -55,7 +55,7 @@ function StockSplitsPage() {
     const splits = React.useMemo(() => data?.pages.flatMap(page => page.data) ?? [], [data]);
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
             {/* Splits of any instrument (a stock, an ETF, an ETN): never "stock split" ([FU2870]). */}
             <PageHeader description="Split history, newest execution date first." title="Splits" />
             <DataTable

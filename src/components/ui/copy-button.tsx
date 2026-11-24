@@ -54,12 +54,18 @@ export function CopyButton({ className, label, value }: { className?: string; la
     );
 }
 
-/** A value with its copy button beside it (`children` = how it is shown; default the value itself). */
+/**
+ * In a `DataTable` row the copy button waits for the row's hover / focus (ui-redesign task 6) — only on a pointer that
+ * can hover: on touch, and outside a table, it is always shown.
+ */
+const ROW_REVEAL_CLASS = "[@media(hover:hover)]:in-data-[slot=data-table]:opacity-0 group-hover/row:opacity-100 group-focus-within/row:opacity-100 focus-visible:opacity-100";
+
+/** An id (accession, CIK, CUSIP, event id) in mono with its copy button beside it (`children` = how it is shown; default the value itself). */
 export function Copyable({ children, className, label, value }: { children?: React.ReactNode; className?: string; label: string; value: string }) {
     return (
-        <span className={cn("inline-flex items-center gap-0.5", className)}>
+        <span className={cn("inline-flex items-center gap-0.5 font-mono", className)}>
             {children ?? value}
-            <CopyButton label={label} value={value} />
+            <CopyButton className={ROW_REVEAL_CLASS} label={label} value={value} />
         </span>
     );
 }

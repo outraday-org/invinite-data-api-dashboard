@@ -10,19 +10,27 @@ import { Badge } from "@/components/ui/badge";
 import { allKeys, defaultOpenKeys, documentHref, documentKindLabel } from "@/lib/earnings/documents";
 import { formatBytes } from "@/lib/earnings/format";
 import { formatDay } from "@/lib/format";
+import { ROW_ACTION_REVEAL_CLASS } from "@/lib/layout";
+import { cn } from "@/lib/utils";
 import { AvailabilityIcons } from "@/routes/$ticker/earnings-calls/-components/availability-icons";
 
 const actionClass = "text-muted-foreground hover:text-foreground inline-flex items-center gap-1 whitespace-nowrap transition-colors";
 
-// Rows share one height and padding; the chevron column (`size-3.5`) is held by a spacer on leaf rows so every icon
-// of a level lines up, and each nested list draws its guide line under its parent's chevron.
-const rowClass = "hover:bg-muted/60 flex min-h-7 items-center gap-1.5 rounded-md px-1.5 py-0.5";
+// Rows share one height (36 px, ui-redesign task 11) and padding; the chevron column (`size-3.5`) is held by a spacer on
+// leaf rows so every icon of a level lines up, and each nested list draws its guide line under its parent's chevron.
+const rowClass = "hover:bg-muted/60 flex min-h-9 items-center gap-1.5 rounded-md px-1.5 py-1";
 
 const guideClass = "ml-[13px] border-l pl-1";
 
 // A document / call row: one line from `sm` up; below it the row wraps and its date + actions take their own line,
 // right-aligned (the Page shell rule: the page never scrolls sideways — the actions column alone is ~250 px).
-const itemRowClass = `${rowClass} flex-wrap sm:flex-nowrap`;
+const itemRowClass = `${rowClass} group/row flex-wrap sm:flex-nowrap`;
+
+// The kind of a document: a quiet square tag, not a pill.
+const KIND_TAG_CLASS = "rounded-sm font-normal";
+
+// A row's actions wait for hover / focus on a hover-capable pointer from `lg` up; on touch they always show.
+const actionsClass = cn("flex items-center justify-end gap-2.5", ROW_ACTION_REVEAL_CLASS);
 
 const rowMetaClass = "text-muted-foreground ml-auto flex w-full shrink-0 items-center justify-end gap-3 text-xs tabular-nums sm:w-auto sm:justify-start sm:pl-3";
 
@@ -65,18 +73,18 @@ function DocumentRow({
     const filing = doc.kind === "sec_filing";
 
     return (
-        <li className={`${itemRowClass} group`} data-document-id={doc.document_id}>
+        <li className={itemRowClass} data-document-id={doc.document_id}>
             <ChevronSpacer />
             <Icon className="text-muted-foreground size-3.5 shrink-0" />
             <span className="min-w-0 truncate" title={doc.title ?? undefined}>{doc.title ?? "Untitled"}</span>
-            <Badge className="font-normal" variant="outline">{documentKindLabel(doc.kind)}</Badge>
-            {doc.link_status === "expired" && <Badge variant="secondary">replay expired</Badge>}
+            <Badge className={KIND_TAG_CLASS} variant="outline">{documentKindLabel(doc.kind)}</Badge>
+            {doc.link_status === "expired" && <Badge className="rounded-sm" variant="secondary">replay expired</Badge>}
             <div className={rowMetaClass}>
                 <span className="w-24" title={filing && doc.filing_date ? "Filed on EDGAR" : undefined}>
                     {documentDate(doc)}
                 </span>
                 <span className="hidden w-16 text-right sm:inline">{doc.bytes !== null ? formatBytes(doc.bytes) : ""}</span>
-                <div className="flex w-36 items-center justify-end gap-2.5">
+                <div className={cn(actionsClass, "w-36")}>
                     {callEventId && (
                         <CallLink aria-label="Call documents" className={actionClass} eventId={callEventId} tab="documents" ticker={ticker}>
                             Call
@@ -146,7 +154,7 @@ function CallRow({ call }: { call: CallEntry }) {
             </span>
             <div className={rowMetaClass}>
                 <span className="w-24">{formatDay(call.date)}</span>
-                <div className="flex items-center justify-end gap-2.5">
+                <div className={actionsClass}>
                     {event.has_press_release && (
                         <CallLink className={actionClass} eventId={event.event_id} tab="press-release" ticker={ticker}>Press release</CallLink>
                     )}

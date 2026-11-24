@@ -118,7 +118,7 @@ describe("DestinationDetailView", () => {
         expect(screen.getByRole("button", { name: "Send test delivery…" })).toBeDisabled();
     });
 
-    it("an active one: actions, settings with header names, the rotation window", () => {
+    it("an active one: actions, settings with header names, the rotation window", async () => {
         const onAction = vi.fn();
 
         render(<DestinationDetailView busy={false} destination={{ ...DESTINATION_ACTIVE, previous_secret_expires_at: "2026-11-22T14:00:00Z" }} onAction={onAction} onEdit={vi.fn()} />);
@@ -127,8 +127,15 @@ describe("DestinationDetailView", () => {
 
         expect(screen.getByText(/Still signs until/)).toBeInTheDocument();
 
-        for (const [name, action] of [["Send test delivery…", "test"], ["Rotate secret…", "rotate"], ["Disable…", "disable"], ["Delete…", "delete"]] as const) {
-            fireEvent.click(screen.getByRole("button", { name }));
+        fireEvent.click(screen.getByRole("button", { name: "Send test delivery…" }));
+
+        expect(onAction).toHaveBeenLastCalledWith("test");
+
+        // Rotate, disable and delete wait behind the title row's ⋯ menu (each still confirmed by the page).
+        for (const [name, action] of [["Rotate secret…", "rotate"], ["Disable…", "disable"], ["Delete…", "delete"]] as const) {
+            fireEvent.click(screen.getByRole("button", { name: `More actions for ${DESTINATION_ACTIVE.id}` }));
+
+            fireEvent.click(await screen.findByRole("menuitem", { name }));
 
             expect(onAction).toHaveBeenLastCalledWith(action);
         }

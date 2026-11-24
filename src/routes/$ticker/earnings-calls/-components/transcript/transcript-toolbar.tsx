@@ -16,8 +16,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { SegmentedButtons } from "@/components/ui/segmented-buttons";
 import { saveJsonFile, savePublicFile, saveTextFile } from "@/lib/download";
 import { formatInstant } from "@/lib/earnings/format";
 import { versionKindText } from "@/lib/earnings/labels";
@@ -103,7 +103,8 @@ function DownloadMenu({ downloads, onViewPdf }: { downloads: TranscriptDownloads
 }
 
 /**
- * The Transcript tab's toolbar, ONE row (task O3): format switch · version select · compare · `⤓ Download` · Copy;
+ * The Transcript tab's toolbar, ONE row (task O3): format switch (`SegmentedButtons`, ui-redesign task 10) · version
+ * select · compare · `⤓ Download` · Copy;
  * under it one muted stats line (`final · 6,798 words · published … · Q&A starts at ▷ 20:54`). The PDF opens from the
  * Download menu in a dialog instead of a permanent row.
  */
@@ -139,29 +140,18 @@ export function TranscriptToolbar({
     return (
         <div className="flex flex-col gap-1">
             <div className="flex flex-wrap items-center gap-2">
-                <Tabs onValueChange={value => onFormatChange(value as TranscriptFormat)} value={format}>
-                    <TabsList>
-                        {TRANSCRIPT_FORMATS.map(option => (
-                            <TabsTrigger key={option.value} value={option.value}>
-                                {option.label}
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
-                </Tabs>
+                <SegmentedButtons aria-label="Transcript format" onChange={onFormatChange} options={TRANSCRIPT_FORMATS} value={format} />
 
                 {versions.length > 0 && (
-                    <Select onValueChange={value => onVersionChange(Number(value))} value={shownVersion === null ? "" : String(shownVersion)}>
-                        <SelectTrigger aria-label="Transcript version" className="max-w-64" size="sm">
-                            <span className="truncate">{shownEntry ? versionLabel(shownEntry) : "Version"}</span>
-                        </SelectTrigger>
-                        <SelectContent>
-                            {versions.map(version => (
-                                <SelectItem key={version.version} value={String(version.version)}>
-                                    {versionLabel(version)}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                    <DropdownSelect
+                        aria-label="Transcript version"
+                        className="max-w-64"
+                        label={shownEntry ? versionLabel(shownEntry) : "Version"}
+                        onValueChange={value => onVersionChange(Number(value))}
+                        options={versions.map(version => ({ label: versionLabel(version), value: String(version.version) }))}
+                        size="sm"
+                        value={shownVersion === null ? undefined : String(shownVersion)}
+                    />
                 )}
 
                 {onCompare && (
@@ -181,7 +171,7 @@ export function TranscriptToolbar({
             </div>
 
             {shownEntry && (
-                <div className="text-muted-foreground flex flex-wrap items-baseline gap-x-1">
+                <div className="text-muted-foreground flex flex-wrap items-baseline gap-x-1 text-xs">
                     <span>{versionKindText(shownEntry)}</span>
                     <span>{`· ${shownEntry.word_count.toLocaleString("en-US")} words`}</span>
                     <span>{`· published ${formatInstant(shownEntry.published_at)}`}</span>

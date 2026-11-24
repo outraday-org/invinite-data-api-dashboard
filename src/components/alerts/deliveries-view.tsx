@@ -9,10 +9,10 @@ import { AlertsState } from "@/components/alerts/alert-parts";
 import { DeliveryStatusBadge } from "@/components/alerts/destination-parts";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { Notice } from "@/components/ui/notice";
 import { deliveriesWithStatus, DELIVERY_STATUS_INFO, DELIVERY_STATUSES, deliveryErrorInfo, TEST_POLL_MS, TEST_WATCH_MS } from "@/lib/alerts/destinations";
 import { formatInstant, formatNumber } from "@/lib/format";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 export type DeliveriesListState = {
     error: unknown;

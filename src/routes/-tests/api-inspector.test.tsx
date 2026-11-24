@@ -1,14 +1,18 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider, useQuery } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { Profiler } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { ViewRequest } from "@/components/api/use-view-requests";
 import type { RequestMeta } from "@/lib/api/request-meta";
 
-import { ApiButton, ApiRequestsView } from "@/components/api/api-sheet";
 import { loadAllText } from "@/components/api/export-menu";
 import { JSON_TREE_CHUNK, JsonTree } from "@/components/api/json-tree";
+import { RequestPanelView } from "@/components/api/request-panel";
+import { useViewRequestCount, useViewRequests, viewRequestsOf, writeRequestsOf } from "@/components/api/use-view-requests";
 import { DataTable } from "@/components/ui/data-table";
+import { ApiRequestError } from "@/lib/api/errors";
 import { fileRequests, shareWithRequests } from "@/lib/api/request-meta";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
@@ -29,65 +33,186 @@ const meta = (patch: Partial<RequestMeta> = {}): RequestMeta => ({
     ...patch,
 });
 
-function Observed({ answer, enabled = true, queryKey }: { answer: unknown; enabled?: boolean; queryKey: string }) {
-    useQuery({ enabled, initialData: answer, queryFn: () => answer, queryKey: [queryKey], staleTime: Number.POSITIVE_INFINITY });
+const viewRequest = (patch: Partial<ViewRequest> = {}): ViewRequest => ({
+    answer: { data: [] },
+    error: null,
+    key: "[\"v2\",\"dividends\"]:0:0",
+    meta: meta(),
+    queryKey: ["v2", "dividends"],
+    ...patch,
+});
+
+const view = (requests: ReadonlyArray<ViewRequest>, pathname = "/AAPL/dividends") => (
+    <RequestPanelView baseUrl="https://api.test" pathname={pathname} requests={requests} />
+);
+
+function Observed({ answer, enabled = true, queryKey }: { answer: unknown; enabled?: boolean; queryKey: ReadonlyArray<string> }) {
+    useQuery({ enabled, initialData: answer, queryFn: () => answer, queryKey, staleTime: Number.POSITIVE_INFINITY });
 
     return null;
 }
 
-describe("API inspector", () => {
-    it("lists every request on screen with summary, cost, request id, curl, CLI line and docs link", () => {
-        render(<ApiRequestsView baseUrl="https://api.test" requests={[{ answer: { data: [] }, error: null, key: "k", meta: meta() }]} />);
+const newClient = () => new QueryClient({ defaultOptions: { queries: { structuralSharing: shareWithRequests } } });
 
-        const card = screen.getByTestId("api-request");
+describe("Request panel view", () => {
+    it("a row: method, path, query on its own line, status, credits, summary and plan; the first one open with curl", () => {
+        render(view([viewRequest()]));
 
-        expect(within(card).getByText("/v1/dividends?limit=40&symbol=AAPL")).toBeInTheDocument();
+        const row = screen.getByTestId("api-request");
 
-        expect(within(card).getByText("List dividends")).toBeInTheDocument();
+        expect(within(row).getByText("GET")).toBeInTheDocument();
 
-        expect(within(card).getByText("Base cost 1 credit · charged 1")).toBeInTheDocument();
+        expect(within(row).getByText("/v1/dividends")).toBeInTheDocument();
 
-        expect(within(card).getByText("req_abc")).toBeInTheDocument();
+        expect(within(row).getByText("?limit=40&symbol=AAPL")).toBeInTheDocument();
 
-        expect(within(card).getByText("curl -sS -H \"Authorization: Bearer $INVINITE_API_KEY\" 'https://api.test/v1/dividends?limit=40&symbol=AAPL'")).toBeInTheDocument();
+        expect(within(row).getByText("200")).toBeInTheDocument();
 
-        expect(within(card).getByText("invd dividends list AAPL --limit 40")).toBeInTheDocument();
+        expect(within(row).getByText("1c")).toBeInTheDocument();
 
-        expect(within(card).getByRole("link", { name: /Docs: listDividends/ })).toHaveAttribute("href", "https://data.invinite.com/docs/get--_v1_dividends");
+        expect(within(row).getByText("List dividends")).toBeInTheDocument();
+
+        expect(within(row).getByText("LITE")).toBeInTheDocument();
+
+        // Expanded by default: curl with the shell variable, never a stored key; the request id; the docs.
+        expect(within(row).getByRole("button", { expanded: true })).toBeInTheDocument();
+
+        expect(within(row).getByText("curl -sS -H \"Authorization: Bearer $INVINITE_API_KEY\" 'https://api.test/v1/dividends?limit=40&symbol=AAPL'")).toBeInTheDocument();
+
+        expect(within(row).getByText("req_abc")).toBeInTheDocument();
+
+        expect(within(row).getByRole("link", { name: /Docs/ })).toHaveAttribute("href", "https://data.invinite.com/docs/get--_v1_dividends");
+
+        fireEvent.click(within(row).getByRole("button", { name: "CLI" }));
+
+        expect(within(row).getByText("invd dividends list AAPL --limit 40")).toBeInTheDocument();
+
+        fireEvent.click(within(row).getByRole("button", { name: "Answer" }));
+
+        expect(within(row).getByText("data:", { exact: false })).toBeInTheDocument();
     });
 
-    it("the sheet reads the mounted queries' requests and never shows the stored key", async () => {
+    it("the summary counts the page's requests and the credits charged; others start collapsed and expand", () => {
+        const second = viewRequest({ key: "b:0:0", meta: meta({ credits: 5, operationId: "listSplits", path: "/v1/splits", requestId: null }), queryKey: ["v2", "splits"] });
+
+        render(view([viewRequest(), second]));
+
+        expect(screen.getByTestId("request-panel-summary")).toHaveTextContent("2 requests · 6 credits charged · api.test");
+
+        const rows = screen.getAllByTestId("api-request");
+
+        expect(within(rows[1]).getByRole("button", { expanded: false })).toBeInTheDocument();
+
+        // Charged above the base cost (1): marked.
+        expect(within(rows[1]).getByText("5c")).toHaveClass("text-warn");
+
+        fireEvent.click(within(rows[1]).getByRole("button", { expanded: false }));
+
+        expect(within(rows[1]).getByTestId("api-request-details")).toBeInTheDocument();
+
+        // No request id stated: no request id line.
+        expect(within(rows[1]).queryByText("Request id")).toBeNull();
+    });
+
+    it("a failed request shows its status and problem code, and the error text", () => {
+        const error = new ApiRequestError(403, { error: "plan_required", message: "Your plan does not include this operation." });
+
+        render(view([viewRequest({ answer: undefined, error, key: "x:error:0", meta: meta({ status: 403 }) })]));
+
+        const row = screen.getByTestId("api-request");
+
+        expect(within(row).getByText("403 plan_required")).toHaveClass("text-destructive");
+
+        expect(within(row).getByText(/Your plan does not include this operation/)).toBeInTheDocument();
+
+        expect(within(row).queryByRole("button", { name: "Answer" })).toBeNull();
+    });
+
+    it("an operation the generated table does not know shows its path without a summary", () => {
+        render(view([viewRequest({ meta: meta({ operationId: "unknown", path: "/v1/newer" }) })]));
+
+        expect(screen.getByText("/v1/newer")).toBeInTheDocument();
+
+        expect(screen.queryByText("List dividends")).toBeNull();
+    });
+
+    it("the empty state, and shell requests folded under App requests", () => {
+        const live = viewRequest({ key: "live:0:0", meta: meta({ operationId: "listEvents", path: "/v1/events", query: { status: "live" } }), queryKey: ["v2", "events", "live"] });
+
+        render(view([live]));
+
+        expect(screen.getByText("This page has not asked the Data API yet.")).toBeInTheDocument();
+
+        const group = screen.getByRole("button", { name: /App requests \(1\)/ });
+
+        expect(group).toHaveAttribute("aria-expanded", "false");
+
+        expect(screen.getByText("sidebar live count")).toBeInTheDocument();
+
+        expect(screen.queryByText("/v1/events")).toBeNull();
+
+        fireEvent.click(group);
+
+        expect(screen.getByText("/v1/events")).toBeInTheDocument();
+
+        expect(screen.getByText("Live streams (WebSocket) are not listed here.", { exact: false })).toBeInTheDocument();
+    });
+
+    it("a list's pages fold under its first row; a new page keeps an open row open", () => {
+        const page = (index: number) => viewRequest({ key: `h:${index}:0`, meta: meta({ query: { cursor: `c${index}` }, requestId: `req_${index}` }) });
+
+        const { rerender } = render(view([page(0), page(1)]));
+
+        expect(screen.getByRole("button", { name: "1 more page" })).toBeInTheDocument();
+
+        expect(screen.getByText("req_0")).toBeInTheDocument();
+
+        rerender(view([page(0), page(1), page(2)]));
+
+        expect(screen.getByRole("button", { name: "2 more pages" })).toBeInTheDocument();
+
+        expect(screen.getByText("req_0")).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: "2 more pages" }));
+
+        expect(screen.getByText("(page 3)")).toBeInTheDocument();
+    });
+
+    it("a write is listed under Writes with its answer redacted", async () => {
+        const client = newClient();
+
+        const answer = { id: "dst_1", secret: "whsec_live_secret" };
+
+        fileRequests(answer, [meta({ body: { url: "https://hooks.test" }, method: "POST", operationId: "createDestination", path: "/v1/destinations", query: {} })]);
+
+        await client.getMutationCache().build(client, { mutationFn: () => Promise.resolve(answer) }).execute(undefined);
+
+        const writes = writeRequestsOf(client.getMutationCache().getAll());
+
+        expect(writes[0].queryKey).toEqual(["write"]);
+
+        render(view(writes, "/alerts/destinations"));
+
+        fireEvent.click(screen.getByRole("button", { name: /Writes \(1\)/ }));
+
+        expect(screen.getByText("POST")).toBeInTheDocument();
+
+        // Writes start collapsed (only the page's first request opens by itself).
+        fireEvent.click(screen.getByRole("button", { expanded: false, name: /\/v1\/destinations/ }));
+
+        fireEvent.click(screen.getByRole("button", { name: "Answer" }));
+
+        expect(document.body.innerHTML).not.toContain("whsec_live_secret");
+
+        expect(document.body.innerHTML).toContain("[redacted]");
+    });
+});
+
+describe("useViewRequests / useViewRequestCount", () => {
+    it("reads the mounted queries' requests with their query key, never a hook switched off, never the stored key", async () => {
         useApiKeyStore.setState({ apiKey: STORED_KEY, hasHydrated: true });
 
-        const client = new QueryClient({ defaultOptions: { queries: { structuralSharing: shareWithRequests } } });
-
-        const answer = { data: [{ amount: 0.26, ex_date: "2026-11-10" }], has_more: false, next_cursor: null };
-
-        fileRequests(answer, [meta()]);
-
-        render(
-            <QueryClientProvider client={client}>
-                <Observed answer={answer} queryKey="dividends" />
-                <ApiButton />
-            </QueryClientProvider>,
-        );
-
-        fireEvent.click(screen.getByRole("button", { name: "API" }));
-
-        expect(await screen.findByTestId("api-request")).toBeInTheDocument();
-
-        fireEvent.click(screen.getByRole("button", { name: "Show answer (JSON)" }));
-
-        // Open to depth 2: the envelope's fields, the rows collapsed.
-        expect(screen.getByText("has_more:", { exact: false })).toBeInTheDocument();
-
-        expect(document.body.innerHTML).not.toContain(STORED_KEY);
-
-        expect(document.body.innerHTML).toContain("$INVINITE_API_KEY");
-    });
-
-    it("a hook switched off (a closed tab) keeps its cached answer but is not listed", async () => {
-        const client = new QueryClient({ defaultOptions: { queries: { structuralSharing: shareWithRequests } } });
+        const client = newClient();
 
         const open = { data: [], has_more: false, next_cursor: null };
 
@@ -97,27 +222,129 @@ describe("API inspector", () => {
 
         fileRequests(closed, [meta({ operationId: "listMetricCatalog", path: "/v1/catalog/metrics", query: {} })]);
 
+        function Panel() {
+            return view(useViewRequests(true), "/catalog");
+        }
+
         render(
             <QueryClientProvider client={client}>
-                <Observed answer={open} queryKey="forms" />
-                <Observed answer={closed} enabled={false} queryKey="metrics" />
-                <ApiButton />
+                <Observed answer={open} queryKey={["catalog", "forms"]} />
+                <Observed answer={closed} enabled={false} queryKey={["catalog", "metrics"]} />
+                <Panel />
             </QueryClientProvider>,
         );
-
-        fireEvent.click(screen.getByRole("button", { name: "API" }));
 
         expect(await screen.findByText("/v1/catalog/forms")).toBeInTheDocument();
 
         expect(screen.getAllByTestId("api-request")).toHaveLength(1);
 
         expect(screen.queryByText("/v1/catalog/metrics")).toBeNull();
+
+        expect(viewRequestsOf(client.getQueryCache().getAll())[0].queryKey).toEqual(["catalog", "forms"]);
+
+        expect(document.body.innerHTML).not.toContain(STORED_KEY);
     });
 
-    it("says so when the page made no request", () => {
-        render(<ApiRequestsView baseUrl="https://api.test" requests={[]} />);
+    it("the toggle's count follows the cache while the panel is closed, counts page requests only, and re-renders only on a change", async () => {
+        const client = newClient();
 
-        expect(screen.getByText("No Data API request on this page yet.")).toBeInTheDocument();
+        const dividends = { data: [] };
+
+        const live = { data: [] };
+
+        fileRequests(dividends, [meta()]);
+
+        fileRequests(live, [meta({ operationId: "listEvents", path: "/v1/events" })]);
+
+        let renders = 0;
+
+        const consoleError = vi.spyOn(console, "error");
+
+        function Count() {
+            return <span data-testid="count">{useViewRequestCount("/AAPL/dividends")}</span>;
+        }
+
+        render(
+            <QueryClientProvider client={client}>
+                <Observed answer={live} queryKey={["v2", "events", "live"]} />
+                <Profiler id="count" onRender={() => { renders += 1; }}>
+                    <Count />
+                </Profiler>
+            </QueryClientProvider>,
+        );
+
+        // The shell's live list is not the page's.
+        expect(screen.getByTestId("count")).toHaveTextContent("0");
+
+        const rendersBefore = renders;
+
+        // An unrelated cache event (a query without filed requests) changes nothing: no re-render.
+        act(() => {
+            client.setQueryData(["other"], { x: 1 });
+        });
+
+        expect(renders).toBe(rendersBefore);
+
+        act(() => {
+            client.getQueryCache().build(client, { queryKey: ["v2", "dividends"] });
+        });
+
+        // A page query with an observer: mount one.
+        render(
+            <QueryClientProvider client={client}>
+                <Observed answer={dividends} queryKey={["v2", "dividends"]} />
+            </QueryClientProvider>,
+        );
+
+        expect(await screen.findByText("1")).toBeInTheDocument();
+
+        consoleError.mockRestore();
+    });
+
+    it("a cache event fired while ANOTHER component renders is counted after that render, never inside it", async () => {
+        const client = newClient();
+
+        const plain = { data: [] };
+
+        const filed = { data: [{ id: 1 }] };
+
+        fileRequests(filed, [meta()]);
+
+        const consoleError = vi.spyOn(console, "error");
+
+        function Count() {
+            return <span data-testid="count">{useViewRequestCount("/AAPL/dividends")}</span>;
+        }
+
+        // Like a `useQuery` building / updating a query in its render: the cache notifies synchronously.
+        function UpdatesInRender() {
+            client.setQueryData(["v2", "dividends"], filed);
+
+            return null;
+        }
+
+        const { rerender } = render(
+            <QueryClientProvider client={client}>
+                <Observed answer={plain} queryKey={["v2", "dividends"]} />
+                <Count />
+            </QueryClientProvider>,
+        );
+
+        expect(screen.getByTestId("count")).toHaveTextContent("0");
+
+        rerender(
+            <QueryClientProvider client={client}>
+                <Observed answer={plain} queryKey={["v2", "dividends"]} />
+                <Count />
+                <UpdatesInRender />
+            </QueryClientProvider>,
+        );
+
+        await waitFor(() => expect(screen.getByTestId("count")).toHaveTextContent("1"));
+
+        expect(consoleError.mock.calls.filter(([message]) => String(message).includes("Cannot update a component"))).toEqual([]);
+
+        consoleError.mockRestore();
     });
 });
 

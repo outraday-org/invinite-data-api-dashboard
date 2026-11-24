@@ -6,13 +6,13 @@ export type DayRangePatch = { from: string | undefined } | { to: string | undefi
 /**
  * THE from / to day-input pair of a filter row: two 150 px date inputs named by `labels` (their accessible names), the
  * `separator` between them ("to"; the holidays page says "and"), an optional muted `lead` ("Filed", "Ex-date",
- * "Between"). `onChange` gets the changed end only, a cleared input as undefined. Without `group` the pieces join the
- * caller's flex row; with `group` they wrap as one unit (a filter row with several ranges: offerings, insider trades).
- * `titled` repeats each label as the input's tooltip (insider trades: two ranges side by side).
+ * "Between"). `onChange` gets the changed end only, a cleared input as undefined. The pieces are ONE wrapping row
+ * (`data-slot="day-range"`): "[from] to [to]" side by side whenever the field has the room (≈ 330 px: a `FilterField
+ * span={2}` from 640 px, the full-width field below it), the second input wrapping under the first only when it has
+ * not. `titled` repeats each label as the input's tooltip (insider trades: two ranges side by side).
  */
 export function DayRange({
     from,
-    group = false,
     labels,
     lead,
     onChange,
@@ -22,7 +22,6 @@ export function DayRange({
     to,
 }: {
     from: string | undefined;
-    group?: boolean;
     labels: { from: string; to: string };
     lead?: string;
     onChange: (patch: DayRangePatch) => void;
@@ -32,8 +31,8 @@ export function DayRange({
     titled?: boolean;
     to: string | undefined;
 }) {
-    const pieces = (
-        <>
+    return (
+        <span className="flex flex-wrap items-center gap-2" data-slot="day-range">
             {lead !== undefined && <span className="text-muted-foreground">{lead}</span>}
             <Input
                 aria-label={labels.from}
@@ -52,8 +51,6 @@ export function DayRange({
                 type="date"
                 value={to ?? ""}
             />
-        </>
+        </span>
     );
-
-    return group ? <span className="flex flex-wrap items-center gap-2">{pieces}</span> : pieces;
 }

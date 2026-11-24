@@ -9,12 +9,15 @@ import { Input } from "@/components/ui/input";
 export function DebouncedInput({
     "aria-label": ariaLabel,
     className,
+    id,
     onCommit,
     placeholder,
     value,
 }: {
     "aria-label": string;
     "className"?: string;
+    /** A `FilterField` label points at it (`htmlFor`). */
+    "id"?: string;
     "onCommit": (value: string) => void;
     "placeholder"?: string;
     "value": string;
@@ -48,5 +51,5 @@ export function DebouncedInput({
         return () => window.clearTimeout(timer);
     }, [draft, onCommit, value]);
 
-    return <Input aria-label={ariaLabel} className={className} onChange={event => setDraft(event.target.value)} placeholder={placeholder} value={draft} />;
+    return <Input aria-label={ariaLabel} className={className} id={id} onChange={event => setDraft(event.target.value)} placeholder={placeholder} value={draft} />;
 }

@@ -1,11 +1,12 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import * as React from "react";
 
+import { FinancialsTableToolbar, PeriodTableFrame } from "@/components/financial-metrics/metrics-list-body";
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
 import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { STICKY_FIRST_CELL } from "@/lib/layout";
+import { PERIOD_CELL, STATEMENT_LABEL_CELL, STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
 
 import type { PresentationPeriod, TreeRow } from "./types";
@@ -13,12 +14,19 @@ import type { PresentationPeriod, TreeRow } from "./types";
 import { ExpandCollapseButtons } from "./expand-collapse-buttons";
 import { addFactTypes, buildTreeRows, flattenToValueMap } from "./utils";
 
+/**
+ * The presentation tree of a statement (one column per period, newest first): group rows medium weight, totals
+ * semibold with a hairline above, 12 px indentation per level; a standardized tree collapses (Expand / Collapse all in
+ * the toolbar row beside `toolbar`, the currency and hint line).
+ */
 export function FinancialsPresentationTable({
     isCollapsible = true,
     periods,
+    toolbar,
 }: {
     isCollapsible?: boolean;
     periods: Array<PresentationPeriod>;
+    toolbar?: React.ReactNode;
 }) {
     const periodLabels = React.useMemo(() => periods.map(p => p.label), [periods]);
 
@@ -106,112 +114,113 @@ export function FinancialsPresentationTable({
     );
 
     return (
-        <div className="flex flex-col gap-2">
-            {isCollapsible
-                ? (
+        <>
+            {(toolbar || isCollapsible) && (
+                <FinancialsTableToolbar>
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-3">{toolbar}</div>
+                    {isCollapsible && (
                         <ExpandCollapseButtons
                             onCollapseAll={() => setExpanded(new Set())}
                             onExpandAll={() => setExpanded(new Set(allExpandableIds))}
                         />
-                    )
-                : null}
-
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className={cn(STICKY_FIRST_CELL, "w-[160px] min-w-[160px] max-w-[160px] sm:w-[420px] sm:min-w-[420px] sm:max-w-[420px]")}>
-                            Metric
-                        </TableHead>
-                        {periods.map(period => (
-                            <TableHead className="text-right" key={period.label} title={period.title}>
-                                {period.label}
+                    )}
+                </FinancialsTableToolbar>
+            )}
+            <PeriodTableFrame>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className={cn(STICKY_FIRST_CELL, STATEMENT_LABEL_CELL)}>
+                                Metric
                             </TableHead>
-                        ))}
-                    </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y-0">
-                    {rows.map((row) => {
-                        return (
-                            <TableRow
-                                className="group h-[41px] leading-5 clickable-financial-row hover:bg-muted/50"
-                                key={row.metricId}
-                                onClick={() => setSelectedRow(row)}
-                            >
-                                <TableCell className={cn(STICKY_FIRST_CELL, "w-[160px] min-w-[160px] max-w-[160px] sm:w-[420px] sm:min-w-[420px] sm:max-w-[420px]")}>
-                                    <div className="flex min-w-0 items-center gap-1">
-                                        {isCollapsible
-                                            ? (
-                                                    row.hasChildren
-                                                        ? (
-                                                                <button
-                                                                    aria-expanded={expanded.has(row.metricId)}
-                                                                    aria-label={`${expanded.has(row.metricId) ? "Collapse" : "Expand"} ${row.label}`}
-                                                                    className={cn(
-                                                                        "text-muted-foreground hover:text-foreground inline-flex h-6 w-6 items-center justify-center rounded",
-                                                                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                                                                    )}
-                                                                    onClick={(event) => {
-                                                                        event.stopPropagation();
+                            {periods.map(period => (
+                                <TableHead className={PERIOD_CELL} key={period.label} title={period.title}>
+                                    {period.label}
+                                </TableHead>
+                            ))}
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody className="divide-y-0">
+                        {rows.map((row) => {
+                            return (
+                                <TableRow
+                                    className={cn("group clickable-financial-row border-b-0", row.isTotal && "border-border border-t")}
+                                    key={row.metricId}
+                                    onClick={() => setSelectedRow(row)}
+                                >
+                                    <TableCell className={cn(STICKY_FIRST_CELL, STATEMENT_LABEL_CELL)}>
+                                        <div className="flex min-w-0 items-center gap-1">
+                                            {isCollapsible
+                                                ? (
+                                                        row.hasChildren
+                                                            ? (
+                                                                    <button
+                                                                        aria-expanded={expanded.has(row.metricId)}
+                                                                        aria-label={`${expanded.has(row.metricId) ? "Collapse" : "Expand"} ${row.label}`}
+                                                                        className="text-muted-foreground hover:text-foreground inline-flex size-6 items-center justify-center rounded"
+                                                                        onClick={(event) => {
+                                                                            event.stopPropagation();
 
-                                                                        setExpanded((prev) => {
-                                                                            const next = new Set(prev);
+                                                                            setExpanded((prev) => {
+                                                                                const next = new Set(prev);
 
-                                                                            if (next.has(row.metricId)) {
-                                                                                next.delete(row.metricId);
-                                                                            }
-                                                                            else {
-                                                                                next.add(row.metricId);
-                                                                            }
+                                                                                if (next.has(row.metricId)) {
+                                                                                    next.delete(row.metricId);
+                                                                                }
+                                                                                else {
+                                                                                    next.add(row.metricId);
+                                                                                }
 
-                                                                            return next;
-                                                                        });
-                                                                    }}
-                                                                    type="button"
-                                                                >
-                                                                    {expanded.has(row.metricId)
-                                                                        ? <ChevronDown className="h-4 w-4" />
-                                                                        : <ChevronRight className="h-4 w-4" />}
-                                                                </button>
-                                                            )
-                                                        : <span className="inline-block h-6 w-6" />
-                                                )
-                                            : null}
+                                                                                return next;
+                                                                            });
+                                                                        }}
+                                                                        type="button"
+                                                                    >
+                                                                        {expanded.has(row.metricId)
+                                                                            ? <ChevronDown className="h-4 w-4" />
+                                                                            : <ChevronRight className="h-4 w-4" />}
+                                                                    </button>
+                                                                )
+                                                            : <span className="inline-block h-6 w-6" />
+                                                    )
+                                                : null}
 
-                                        <div
-                                            className={cn(
-                                                "min-w-0 flex-1 font-medium truncate",
-                                                row.isTotal ? "font-semibold" : null,
-                                            )}
-                                            style={{ paddingLeft: row.depth * 14 }}
-                                            title={row.label}
-                                        >
-                                            {row.label}
+                                            <div
+                                                className={cn(
+                                                    "min-w-0 flex-1 truncate",
+                                                    row.isTotal ? "font-semibold" : row.hasChildren ? "font-medium" : null,
+                                                )}
+                                                style={{ paddingLeft: row.depth * 12 }}
+                                                title={row.label}
+                                            >
+                                                {row.label}
+                                            </div>
+                                            <MetricCatalogLink label={row.label} metricId={row.metricId} />
+                                            <ChartRowButton label={row.label} onOpen={() => setSelectedRow(row)} />
                                         </div>
-                                        <MetricCatalogLink label={row.label} metricId={row.metricId} />
-                                        <ChartRowButton label={row.label} onOpen={() => setSelectedRow(row)} />
-                                    </div>
-                                </TableCell>
+                                    </TableCell>
 
-                                {periodLabels.map((label) => {
-                                    const val = row.values[label];
+                                    {periodLabels.map((label) => {
+                                        const val = row.values[label];
 
-                                    return (
-                                        <TableCell className="text-right" key={`${row.metricId}:${label}`}>
-                                            <span className={cn("tabular-nums", row.isTotal ? "font-semibold" : null)}>
-                                                {val === undefined || val === null
-                                                    ? (row.hasChildren ? "" : "—")
-                                                    : row.metricId === "is_effective_tax_rate"
-                                                        ? formatPercentCompact(val)
-                                                        : formatNumberEnCompact(val)}
-                                            </span>
-                                        </TableCell>
-                                    );
-                                })}
-                            </TableRow>
-                        );
-                    })}
-                </TableBody>
-            </Table>
+                                        return (
+                                            <TableCell className={PERIOD_CELL} key={`${row.metricId}:${label}`}>
+                                                <span className={cn("tabular-nums", row.isTotal ? "font-semibold" : null)}>
+                                                    {val === undefined || val === null
+                                                        ? (row.hasChildren ? "" : "—")
+                                                        : row.metricId === "is_effective_tax_rate"
+                                                            ? formatPercentCompact(val)
+                                                            : formatNumberEnCompact(val)}
+                                                </span>
+                                            </TableCell>
+                                        );
+                                    })}
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+            </PeriodTableFrame>
             <MetricChartDialog
                 data={selectedRow
                     ? periodLabels.map(period => ({
@@ -228,6 +237,6 @@ export function FinancialsPresentationTable({
                 }}
                 open={Boolean(selectedRow)}
             />
-        </div>
+        </>
     );
 }

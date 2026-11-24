@@ -19,12 +19,15 @@ import type { CatalogTab } from "@/lib/reference/catalog";
 
 import { MacroCatalog } from "@/components/macro/macro-catalog";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
-import { TabStrip } from "@/components/navigation/tab-strip";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     useDocumentKindCatalogInfinite,
     useEventTypeCatalogInfinite,
@@ -35,7 +38,7 @@ import {
 } from "@/lib/api/queries";
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { formatNumber } from "@/lib/format";
-import { titleHead } from "@/lib/layout";
+import { ROW_ACTION_REVEAL_CLASS, titleHead, WRAPPING_TABS_LIST_CLASS } from "@/lib/layout";
 import {
     CATALOG_TAB_LABELS,
     CATALOG_TABS,
@@ -46,7 +49,7 @@ import {
     unitLabel,
 } from "@/lib/reference/catalog";
 import { IN_PLACE, optionalEnum, optionalText } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
+import { cn } from "@/lib/utils";
 
 const STATEMENTS = ["income-statement", "balance-sheet", "cash-flow"] as const satisfies ReadonlyArray<StatementType>;
 
@@ -89,16 +92,38 @@ const named = (name: string, id: string) => (
     </div>
 );
 
+// The Metrics table fits 1440 px with a wide description (≤ 2 lines for most rows): the name / id column is 22 rem (the
+// name wraps, a long id is cut with its full text in the tooltip — the filter and the export still hold it) and the unit
+// sits under the statement.
 const METRIC_COLUMNS: Array<ColumnDef<V2MetricCatalogEntry>> = [
-    { cell: ({ row }) => named(row.original.name, row.original.metric_id), header: "Metric", id: "name" },
-    { cell: ({ row }) => statementLabel(row.original.statement), header: "Statement", id: "statement" },
-    { cell: ({ row }) => unitLabel(row.original.unit), header: "Unit", id: "unit" },
-    { cell: ({ row }) => <div className="max-w-[360px] whitespace-normal text-muted-foreground">{row.original.description ?? "—"}</div>, header: "Description", id: "description" },
     {
-        // Only a statement metric has mapping rules (the derived ones are computed from statement metrics).
+        cell: ({ row }) => (
+            <div className="flex w-[22rem] flex-col whitespace-normal">
+                <span className="font-medium">{row.original.name}</span>
+                <span className="text-muted-foreground truncate font-mono text-xs" title={row.original.metric_id}>{row.original.metric_id}</span>
+            </div>
+        ),
+        header: "Metric",
+        id: "name",
+    },
+    {
+        cell: ({ row }) => (
+            <div className="flex flex-col">
+                <span>{statementLabel(row.original.statement)}</span>
+                <span className="text-muted-foreground text-xs">{unitLabel(row.original.unit)}</span>
+            </div>
+        ),
+        header: "Statement · unit",
+        id: "statement",
+    },
+    // ≥ 28 rem wide, so a description wraps to at most two lines at 1440 px.
+    { cell: ({ row }) => <div className="text-muted-foreground min-w-[28rem] whitespace-normal">{row.original.description ?? "—"}</div>, header: "Description", id: "description" },
+    {
+        // Only a statement metric has mapping rules (the derived ones are computed from statement metrics); a quiet
+        // row action, shown on the row's hover / focus where the pointer can hover.
         cell: ({ row }) => (row.original.statement
             ? (
-                    <Link className="text-primary text-xs underline-offset-4 hover:underline" search={{ metric: row.original.metric_id, tab: "mapping-rules" }} to="/catalog">
+                    <Link className={cn("text-muted-foreground hover:text-foreground text-xs underline-offset-4 hover:underline", ROW_ACTION_REVEAL_CLASS)} search={{ metric: row.original.metric_id, tab: "mapping-rules" }} to="/catalog">
                         Mapping rules
                     </Link>
                 )
@@ -218,7 +243,6 @@ export function CatalogTable<TRow>({ list, query, scope, spec }: { list: Catalog
 
     return (
         <div className="flex flex-col gap-2">
-            <p className="text-muted-foreground text-xs" data-testid="catalog-count">{catalogCountText(rows.length, list.rows.length, spec.noun, loading)}</p>
             <DataTable
                 columns={spec.columns}
                 emptyText={query ? `No ${spec.noun} match "${query}".` : `No ${spec.noun}.`}
@@ -229,6 +253,7 @@ export function CatalogTable<TRow>({ list, query, scope, spec }: { list: Catalog
                 onLoadMore={list.onLoadMore}
                 operationId={spec.operationId}
                 rows={rows}
+                toolbarMeta={<span data-testid="catalog-count">{catalogCountText(rows.length, list.rows.length, spec.noun, loading)}</span>}
             />
             {list.error ? <SecReadinessNotice error={list.error} title={`Failed to load more ${spec.noun}`} /> : null}
         </div>
@@ -317,29 +342,44 @@ function CatalogPage() {
     const tab: CatalogTab = search.tab ?? "metrics";
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer>
             <PageHeader
                 description="The reference lists behind the Data API: what each standardized metric means and how it is mapped from filed concepts, the sections of each SEC form, the forms, event types and investor-document kinds."
                 title="Catalog"
             />
-            <TabStrip
-                aria-label="Catalog"
+            <Tabs
                 // A tab change keeps the text filter but drops the other tab's API filters.
-                onSelect={value => onChange({ form: undefined, metric: undefined, statement: undefined, tab: value === "metrics" ? undefined : value })}
-                options={TAB_OPTIONS}
+                onValueChange={value => onChange({ form: undefined, metric: undefined, statement: undefined, tab: value === "metrics" ? undefined : value as CatalogTab })}
                 value={tab}
-            />
-            <div className="flex flex-wrap items-center gap-2">
-                <DebouncedInput aria-label="Filter the catalog" className="w-full sm:w-[280px]" onCommit={q => onChange({ q: q || undefined })} placeholder="Filter by name, id or text" value={search.q ?? ""} />
+            >
+                <TabsList aria-label="Catalog" className={WRAPPING_TABS_LIST_CLASS} variant="line">
+                    {TAB_OPTIONS.map(option => <TabsTrigger key={option.value} value={option.value}>{option.label}</TabsTrigger>)}
+                </TabsList>
+            </Tabs>
+            <FilterBar
+                activeCount={[search.q, search.statement, search.form, search.metric].filter(value => value !== undefined).length}
+                onReset={() => onChange({ form: undefined, metric: undefined, q: undefined, statement: undefined })}
+            >
+                <FilterField label="Filter" span={2}>
+                    {id => <DebouncedInput aria-label="Filter the catalog" className="w-full" id={id} onCommit={q => onChange({ q: q || undefined })} placeholder="Filter by name, id or text" value={search.q ?? ""} />}
+                </FilterField>
                 {(tab === "metrics" || tab === "mapping-rules") && (
-                    <FilterSelect aria-label="Statement" className="w-[180px]" onValueChange={value => onChange({ statement: value === ALL ? undefined : value })} options={STATEMENT_OPTIONS} value={search.statement ?? ALL} />
+                    <FilterField label="Statement">
+                        {id => <FilterSelect aria-label="Statement" className="w-full" id={id} onValueChange={value => onChange({ statement: value === ALL ? undefined : value })} options={STATEMENT_OPTIONS} value={search.statement ?? ALL} />}
+                    </FilterField>
                 )}
                 {tab === "sections" && (
-                    <DebouncedInput aria-label="Form" className="w-[140px]" onCommit={form => onChange({ form: form.trim() || undefined })} placeholder="Form, e.g. 10-K" value={search.form ?? ""} />
+                    <FilterField label="Form">
+                        {id => <DebouncedInput aria-label="Form" className="w-full" id={id} onCommit={form => onChange({ form: form.trim() || undefined })} placeholder="e.g. 10-K" value={search.form ?? ""} />}
+                    </FilterField>
                 )}
-                {tab === "mapping-rules" && search.metric && <FilterChip label={`Metric: ${search.metric}`} onClear={() => onChange({ metric: undefined })} />}
-            </div>
+                {tab === "mapping-rules" && search.metric && (
+                    <FilterBar.Trailing>
+                        <FilterChip label={`Metric: ${search.metric}`} onClear={() => onChange({ metric: undefined })} />
+                    </FilterBar.Trailing>
+                )}
+            </FilterBar>
             <CatalogTabBody search={search} />
-        </div>
+        </PageContainer>
     );
 }

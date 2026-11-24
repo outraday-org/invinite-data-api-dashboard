@@ -36,8 +36,6 @@ vi.mock("@/components/ui/credit-hint", async original => ({
 
 vi.mock("@/components/macro/macro-page-actions", () => ({ MacroPageActions: () => null }));
 
-vi.mock("@/components/api/api-sheet", () => ({ ApiButton: () => null }));
-
 vi.mock("@tanstack/react-router", async original => ({
     ...(await original<object>()),
     Link: ({ children, search, to }: { to: string; children: React.ReactNode; search?: Record<string, string> }) => (
@@ -244,7 +242,9 @@ describe("keyed macro page requests", () => {
 
         expect(screen.getAllByText("Unknown").length).toBeGreaterThan(0);
 
-        fireEvent.change(screen.getByLabelText("Series"), { target: { value: "cpi_all_sa" } });
+        fireEvent.click(screen.getByRole("button", { name: "Series" }));
+
+        fireEvent.click(await screen.findByRole("menuitemradio", { name: "All items adjusted" }));
 
         expect(change).toHaveBeenCalledWith({ series: "cpi_all_sa", view: "history" });
     });
@@ -291,9 +291,10 @@ describe("keyed macro page requests", () => {
 
         mount(<TreasuryMacroPage onChange={() => undefined} search={{ date: "2025-02-14", tenor: "m1_5" }} />);
 
-        expect(await screen.findByText("4.47")).toBeInTheDocument();
+        // The curve row and the maturity table beside the chart both state it.
+        expect((await screen.findAllByText("4.47")).length).toBeGreaterThan(0);
 
-        expect(screen.getByText("1.5 mo")).toBeInTheDocument();
+        expect(screen.getAllByText("1.5 mo").length).toBeGreaterThan(0);
 
         expect(f.curves.mock.calls[0]?.[0].data).toMatchObject({ from: "2025-02-14", to: "2025-02-14" });
 

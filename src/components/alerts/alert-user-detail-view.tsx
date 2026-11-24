@@ -7,22 +7,22 @@ import { JsonTree } from "@/components/api/json-tree";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Notice } from "@/components/ui/notice";
+import { Section } from "@/components/ui/section";
 import { deleteResultText, limitOriginText, limitRows } from "@/lib/alerts/alert-users";
 import { formatInstant } from "@/lib/format";
 
 /**
- * One end user (pure): the profile (id, display name, status, metadata, created / updated) and its limits — its own
- * value (empty = it follows the account default) against the effective one, where the effective one comes from, and
- * the usage against it.
+ * One end user (pure; ui-redesign task 13): the profile (id, display name, status, metadata, created / updated) and its
+ * limits — its own value (empty = it follows the account default) against the effective one, where the effective one
+ * comes from, and the usage against it as a brand bar with "N of M" beside it.
  */
 export function AlertUserProfileView({ user }: { user: AlertUser }) {
     const rows = limitRows(user);
 
     return (
-        <div className="grid gap-4 lg:grid-cols-2">
-            <section className="flex flex-col gap-3 rounded-xl border p-4">
-                <h3 className="text-sm font-semibold">Profile</h3>
-                <dl className="flex flex-col gap-2">
+        <div className="grid gap-8 lg:grid-cols-2">
+            <Section title="Profile">
+                <dl className="flex flex-col">
                     <DetailRow label="End user id">
                         <span className="inline-flex items-center gap-1 font-mono break-all">
                             {user.external_user_id}
@@ -38,22 +38,23 @@ export function AlertUserProfileView({ user }: { user: AlertUser }) {
                         {Object.keys(user.metadata).length > 0 ? <JsonTree value={user.metadata} /> : <span className="text-muted-foreground">None</span>}
                     </DetailRow>
                 </dl>
-            </section>
-            <section className="flex flex-col gap-3 rounded-xl border p-4" data-testid="alert-user-limits">
-                <h3 className="text-sm font-semibold">Limits and usage</h3>
-                <ul className="flex flex-col gap-4">
-                    {rows.map(row => (
-                        <li className="flex flex-col gap-1" key={row.field}>
-                            <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                                <span className="font-medium">{row.label}</span>
-                                <span className="text-muted-foreground">{limitOriginText(row)}</span>
-                            </div>
-                            <UsageBar row={row} />
-                            <span className="text-muted-foreground">{row.help}</span>
-                        </li>
-                    ))}
-                </ul>
-            </section>
+            </Section>
+            <div data-testid="alert-user-limits">
+                <Section title="Limits and usage">
+                    <ul className="flex flex-col gap-4">
+                        {rows.map(row => (
+                            <li className="flex flex-col gap-1" key={row.field}>
+                                <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                                    <span className="font-medium">{row.label}</span>
+                                    <span className="text-muted-foreground text-xs">{limitOriginText(row)}</span>
+                                </div>
+                                <UsageBar row={row} />
+                                <span className="text-muted-foreground text-xs">{row.help}</span>
+                            </li>
+                        ))}
+                    </ul>
+                </Section>
+            </div>
         </div>
     );
 }

@@ -4,20 +4,21 @@ import { z } from "zod";
 import type { AlertsFilters } from "@/lib/api/queries";
 import type { AlertStatus, AlertType } from "@/lib/api/types";
 
-import { BatchResultsView } from "@/components/alerts/alert-parts";
+import { BatchResultsView, quotaText } from "@/components/alerts/alert-parts";
 import { AlertsListView } from "@/components/alerts/alerts-list-view";
 import { useAlertActions } from "@/components/alerts/use-alert-actions";
 import { useIdSelection } from "@/components/alerts/use-id-selection";
 import { MacroAvailabilityNotice, useMacroAccess } from "@/components/macro/macro-availability";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { buttonVariants } from "@/components/ui/button";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { PageHeader } from "@/components/ui/page-header";
 import { ALERT_STATUS_INFO, ALERT_STATUSES, ALERT_TYPE_INFO, ALERT_TYPES } from "@/lib/alerts/labels";
 import { listState } from "@/lib/api/list-state";
 import { useAlertsInfinite } from "@/lib/api/queries";
 import { titleHead } from "@/lib/layout";
 import { IN_PLACE, optionalEnum, optionalText } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 /** The list's filters, named as the API names them (`symbol` / `destination_id`: Data API 7.1). */
 const alertsSearchSchema = z.object({
@@ -75,6 +76,9 @@ function AlertsPage() {
     return <AlertsListContent macroAvailable={macroAccess === "available"} search={search} />;
 }
 
+/** The filters a search sets (the reset clears all six). */
+const FILTER_KEYS = ["status", "type", "symbol", "destination_id", "external_user_id", "client_reference_id"] as const;
+
 function AlertsListContent({ macroAvailable, search}: { search: AlertsSearch; macroAvailable: boolean }) {
     const navigate = Route.useNavigate();
 
@@ -86,24 +90,45 @@ function AlertsListContent({ macroAvailable, search}: { search: AlertsSearch; ma
 
     const actions = useAlertActions({ onBulkDone: ids => setSelected(ids, false), onDeleted: ids => setSelected(ids, false) });
 
+    // The account's quota, from the list's own first page (`meta.quota`): no request of its own.
+    const quota = alerts.data?.pages.at(0)?.meta.quota;
+
+    const activeCount = FILTER_KEYS.filter(key => Boolean(search[key])).length;
+
+    const onReset = () => onChange(Object.fromEntries(FILTER_KEYS.map(key => [key, undefined])));
+
     return (
         <div className="flex flex-col gap-4">
             <PageHeader
-                actions={<Link className={buttonVariants({ size: "sm" })} to="/alerts/new">New alert</Link>}
+                actions={<Link className={buttonVariants()} to="/alerts/new">New alert</Link>}
                 description="Your alert rules, oldest first as the API lists them. Every filter is applied by the API. Fires and deliveries cost no credits; each list page costs 1."
+                meta={quota ? <span data-testid="alerts-quota">{quotaText(quota)}</span> : undefined}
                 title="Alerts"
             />
-            <div className="flex flex-wrap items-center gap-2">
-                <FilterSelect aria-label="Status" className="w-[150px]" onValueChange={value => onChange({ status: value === ALL ? undefined : value })} options={STATUS_OPTIONS} value={search.status ?? ALL} />
-                <FilterSelect aria-label="Type" className="w-[200px]" onValueChange={value => onChange({ type: value === ALL ? undefined : value })} options={macroAvailable ? TYPE_OPTIONS : TYPE_OPTIONS.filter(option => option.value !== "macro")} value={search.type ?? ALL} />
-                <DebouncedInput aria-label="Symbol" className="w-[120px]" onCommit={symbol => onChange({ symbol: symbol || undefined })} placeholder="Symbol" value={search.symbol ?? ""} />
-                <DebouncedInput aria-label="Destination id" className="w-[220px]" onCommit={id => onChange({ destination_id: id || undefined })} placeholder="Destination id (dst_…)" value={search.destination_id ?? ""} />
-                <DebouncedInput aria-label="End user id" className="w-[160px]" onCommit={id => onChange({ external_user_id: id || undefined })} placeholder="End user id" value={search.external_user_id ?? ""} />
-                <DebouncedInput aria-label="Client reference id" className="w-[180px]" onCommit={id => onChange({ client_reference_id: id || undefined })} placeholder="Client reference id" value={search.client_reference_id ?? ""} />
-            </div>
+            <FilterBar activeCount={activeCount} onReset={onReset}>
+                <FilterField label="Status">
+                    {id => <FilterSelect aria-label="Status" className="w-full" id={id} onValueChange={value => onChange({ status: value === ALL ? undefined : value })} options={STATUS_OPTIONS} value={search.status ?? ALL} />}
+                </FilterField>
+                <FilterField label="Type">
+                    {id => <FilterSelect aria-label="Type" className="w-full" id={id} onValueChange={value => onChange({ type: value === ALL ? undefined : value })} options={macroAvailable ? TYPE_OPTIONS : TYPE_OPTIONS.filter(option => option.value !== "macro")} value={search.type ?? ALL} />}
+                </FilterField>
+                <FilterField label="Symbol">
+                    {id => <DebouncedInput aria-label="Symbol" className="w-full" id={id} onCommit={symbol => onChange({ symbol: symbol || undefined })} placeholder="AAPL" value={search.symbol ?? ""} />}
+                </FilterField>
+                <FilterField label="Destination">
+                    {id => <DebouncedInput aria-label="Destination" className="w-full font-mono" id={id} onCommit={value => onChange({ destination_id: value || undefined })} placeholder="dst_…" value={search.destination_id ?? ""} />}
+                </FilterField>
+                <FilterField label="End user">
+                    {id => <DebouncedInput aria-label="End user" className="w-full" id={id} onCommit={value => onChange({ external_user_id: value || undefined })} placeholder="End user id" value={search.external_user_id ?? ""} />}
+                </FilterField>
+                <FilterField label="Client reference">
+                    {id => <DebouncedInput aria-label="Client reference" className="w-full" id={id} onCommit={value => onChange({ client_reference_id: value || undefined })} placeholder="Your alert id" value={search.client_reference_id ?? ""} />}
+                </FilterField>
+            </FilterBar>
             {actions.batch && <BatchResultsView ids={actions.batch.ids} onDismiss={actions.dismissBatch} results={actions.batch.results} />}
             <AlertsListView
-                filtered={Object.values(search).some(Boolean)}
+                filtered={activeCount > 0}
+                onResetFilters={onReset}
                 selection={{ busy: actions.busy, onAction: actions.request, onSelect: setSelected, selected }}
                 state={listState(alerts)}
             />

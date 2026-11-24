@@ -34,7 +34,7 @@ function EventRow({ event, fresh, onToggle, open }: { event: AlertEvent; fresh: 
     const json = React.useMemo(() => (open ? JSON.stringify(event.payload, null, 2) : ""), [event.payload, open]);
 
     return (
-        <li className={cn("rounded-lg border transition-colors duration-1000", glow ? "border-primary/50 bg-primary/10" : "bg-background")} data-event-id={event.id} data-fresh={fresh || undefined}>
+        <li className={cn("rounded-lg border transition-colors duration-1000", glow ? "border-brand/50 bg-brand/10" : "bg-background")} data-event-id={event.id} data-fresh={fresh || undefined}>
             <button aria-expanded={open} className="flex w-full items-start gap-2 p-3 text-left" onClick={onToggle} type="button">
                 {open ? <ChevronDownIcon className="mt-0.5 size-3.5 shrink-0" /> : <ChevronRightIcon className="mt-0.5 size-3.5 shrink-0" />}
                 <span className="flex min-w-0 grow flex-col gap-1">
@@ -42,12 +42,12 @@ function EventRow({ event, fresh, onToggle, open }: { event: AlertEvent; fresh: 
                         <Badge variant="secondary">{alertEventTypeLabel(event.type)}</Badge>
                         {isTestEvent(event) && <Badge variant="outline">Test</Badge>}
                         {fresh && <Badge>New</Badge>}
-                        <span className="text-muted-foreground">{formatInstant(event.occurred_at)}</span>
+                        <span className="text-muted-foreground text-xs">{formatInstant(event.occurred_at)}</span>
                     </span>
                     <span className="font-medium break-words">{eventSummary(event)}</span>
                 </span>
             </button>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pb-3 pl-8 text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pb-3 pl-8 text-xs text-muted-foreground">
                 {event.alert_id
                     ? <Link className="font-mono underline-offset-4 hover:underline" params={{ id: event.alert_id }} to="/alerts/$id">{event.alert_id}</Link>
                     : <span>Account event</span>}
@@ -59,11 +59,11 @@ function EventRow({ event, fresh, onToggle, open }: { event: AlertEvent; fresh: 
             </div>
             {open && (
                 <div className="border-t px-3 py-2">
-                    <div className="mb-1 flex items-center gap-2 text-muted-foreground">
+                    <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
                         <span>Payload (the data of the webhook)</span>
                         <CopyButton label="Copy the payload as JSON" value={json} />
                     </div>
-                    <JsonTree className="max-h-[50vh] overflow-auto rounded-md border p-2" value={event.payload} />
+                    <JsonTree className="bg-muted/30 max-h-[50vh] overflow-auto rounded-md border p-2" value={event.payload} />
                 </div>
             )}
         </li>
@@ -121,7 +121,7 @@ export function AlertEventsView({
 
     return (
         <div className="flex flex-col gap-2">
-            {loadedNote && <p className="text-muted-foreground">{loadedNote}</p>}
+            {loadedNote && <p className="text-muted-foreground text-xs">{loadedNote}</p>}
             {events.length === 0
                 ? <p className="text-muted-foreground">{emptyText}</p>
                 : (
@@ -138,9 +138,9 @@ export function AlertEventsView({
 /** One event by id (`/alerts/events?event=`): the row, open; a 404 = not in the log (yet). */
 export function SingleEventView({ error, event, isLoading, onClose, onRetry }: { error: unknown; event: AlertEvent | null; isLoading: boolean; onClose: () => void; onRetry: () => void }) {
     return (
-        <section aria-label="Opened event" className="flex flex-col gap-2 rounded-xl border border-primary/30 p-3">
+        <section aria-label="Opened event" className="flex flex-col gap-2 rounded-lg border border-brand/40 p-3">
             <div className="flex items-center justify-between gap-2">
-                <h3 className="font-semibold">Opened event</h3>
+                <h3 className="text-section">Opened event</h3>
                 <Button onClick={onClose} size="sm" type="button" variant="ghost">Close</Button>
             </div>
             {isLoading && <Skeleton className="h-16 w-full" />}

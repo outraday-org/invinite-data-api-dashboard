@@ -14,7 +14,10 @@ import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { filerCikParam } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
+import { Section } from "@/components/ui/section";
 import { DASH, formatDay, formatInstant } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import { commaList, hasLiveForm } from "@/lib/live/live-filings";
@@ -132,50 +135,57 @@ function FilingsPage() {
         : null;
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 lg:px-8">
+        <PageContainer>
             <SecSourceDialog onClose={() => onChange({ block: undefined, source: undefined })} target={secTarget} />
 
-            <section aria-label="Live filings" className="flex flex-col gap-3">
-                <PageHeader
-                    actions={(
-                        <>
+            <PageHeader
+                actions={(
+                    <LiveToggle
+                        listening="Listening for new filings"
+                        live={!paused}
+                        mode={live.mode}
+                        onChange={(on) => {
+                            live.clearStop();
+
+                            onChange({ paused: on ? undefined : true });
+                        }}
+                    />
+                )}
+                description="New SEC filings of every filer as they arrive, and a full-text search across every filer's documents."
+                title="Filings"
+            />
+
+            <Section
+                description="Only the filings that arrived since this page opened: the API lists filings per instrument, so there is no market-wide list to load. A filer's history is on its instrument or filer page."
+                title="Live filings"
+            >
+                <LiveStopNotice planNote={LIVE_FILINGS_PLAN_NOTE} stop={live.stop} />
+                <FilterBar activeCount={forms.length > 0 ? 1 : 0} onReset={() => onChange({ form: undefined })}>
+                    <FilterField label="Forms">
+                        {id => (
                             <DebouncedInput
                                 aria-label="Live filings by form"
-                                className="w-[170px]"
+                                className="w-full"
+                                id={id}
                                 onCommit={value => onChange({ form: value.trim() || undefined })}
-                                placeholder="Forms, e.g. 8-K,S-1"
+                                placeholder="e.g. 8-K,S-1"
                                 value={search.form ?? ""}
                             />
-                            <LiveToggle
-                                listening="Listening for new filings"
-                                live={!paused}
-                                mode={live.mode}
-                                onChange={(on) => {
-                                    live.clearStop();
-
-                                    onChange({ paused: on ? undefined : true });
-                                }}
-                            />
-                        </>
-                    )}
-                    description="New SEC filings of every filer as they arrive — only those since this page opened: the API lists filings per instrument, so there is no market-wide list to load. A filer's history is on its instrument or filer page."
-                    title="Filings"
-                />
-                <LiveStopNotice planNote={LIVE_FILINGS_PLAN_NOTE} stop={live.stop} />
+                        )}
+                    </FilterField>
+                </FilterBar>
                 {forms.length > 0 && (
                     <div className="text-muted-foreground text-xs" role="status">
                         {`Showing ${shown.length} of ${live.filings.length} arrived filings (forms ${forms.join(", ")}, filtered in the browser).`}
                     </div>
                 )}
                 <LiveFilingsView filings={shown} mode={live.mode} paused={paused} />
-            </section>
+            </Section>
 
-            <section aria-label="Search every filer" className="flex flex-col gap-2">
-                <h3 className="text-sm font-semibold">Search every filer</h3>
-                <p className="text-muted-foreground text-xs">
-                    Full text of every filer&apos;s SEC documents. Without a company the API reads a capped number of matching
-                    passages, newest filings first; the answer says how many and how to narrow it.
-                </p>
+            <Section
+                description="Full text of every filer's SEC documents. Without a company the API reads a capped number of matching passages, newest filings first; the answer says how many and how to narrow it."
+                title="Search every filer"
+            >
                 <SecFilingSearch
                     filters={{ form: search.searchForm, from: search.filedFrom, item: search.searchItem, to: search.filedTo }}
                     marketWide
@@ -190,7 +200,7 @@ function FilingsPage() {
                     )}
                     symbol=""
                 />
-            </section>
-        </div>
+            </Section>
+        </PageContainer>
     );
 }

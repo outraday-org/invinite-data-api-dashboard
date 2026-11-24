@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 afterEach(cleanup);
 
 describe("Tabs", () => {
-    it("the focusable panel shows a focus ring (F100: it was `outline-none` with nothing in its place)", () => {
+    it("the focusable panel shows the focus outline (F100: it was `outline-none` with nothing in its place)", () => {
         render(
             <Tabs defaultValue="a">
                 <TabsList>
@@ -21,6 +21,8 @@ describe("Tabs", () => {
 
         expect(panel).toHaveAttribute("tabindex", "0");
 
-        expect(panel.className).toMatch(/focus-visible:ring-\[3px\]/);
+        expect(panel.className).toMatch(/focus-visible:outline-2/);
+
+        expect(panel.className).toMatch(/focus-visible:outline-primary/);
     });
 });

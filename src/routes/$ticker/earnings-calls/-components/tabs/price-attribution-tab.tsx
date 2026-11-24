@@ -11,7 +11,9 @@ import {
     LINE_CURSOR,
     TOOLTIP_CONTENT_STYLE,
 } from "@/components/charts/chart-parts";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Stat, StatGrid } from "@/components/ui/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { isEarningsEventLiveish, useV2Participants, useV2PriceAttribution } from "@/lib/api/queries";
 import { formatDecimal, formatSigned } from "@/lib/earnings/labels";
@@ -98,14 +100,9 @@ function AnchorFacts({ data }: { data: V2PriceAttributionResponse }) {
     ];
 
     return (
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-6">
-            {facts.map(fact => (
-                <div className="flex flex-col" key={fact.label}>
-                    <dt className="text-muted-foreground text-xs">{fact.label}</dt>
-                    <dd className="tabular-nums">{fact.value}</dd>
-                </div>
-            ))}
-        </dl>
+        <StatGrid>
+            {facts.map(fact => <Stat key={fact.label} label={fact.label} value={fact.value} />)}
+        </StatGrid>
     );
 }
 
@@ -142,11 +139,11 @@ function TopMinutes({ data }: { data: V2PriceAttributionResponse }) {
     if (data.top_minutes.length === 0) return null;
 
     return (
-        <section className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium">Largest minute moves</h3>
-            <ol className="flex flex-col gap-3">
+        <Section title="Largest minute moves">
+            {/* Hairlines between the minutes, no box per minute (ui-redesign task 10). */}
+            <ol className="flex flex-col divide-y">
                 {data.top_minutes.map(minute => (
-                    <li className="border-border/70 rounded-lg border p-3" key={minute.bucket}>
+                    <li className="py-3 first:pt-0" key={minute.bucket}>
                         <div className="mb-1 flex items-baseline gap-3">
                             <span className="font-medium tabular-nums">{formatMinute(minute.bucket)}</span>
                             <span className="tabular-nums">{formatBps(minute.return_bps)}</span>
@@ -155,7 +152,7 @@ function TopMinutes({ data }: { data: V2PriceAttributionResponse }) {
                     </li>
                 ))}
             </ol>
-        </section>
+        </Section>
     );
 }
 

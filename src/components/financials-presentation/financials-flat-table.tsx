@@ -3,11 +3,12 @@ import * as React from "react";
 import type { V2StatementPeriod } from "@/lib/api/types";
 import type { StatementColumn, StatementLine } from "@/lib/financials/statements";
 
+import { PeriodTableFrame } from "@/components/financial-metrics/metrics-list-body";
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
 import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { STICKY_FIRST_CELL } from "@/lib/layout";
+import { PERIOD_CELL, STATEMENT_LABEL_CELL, STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
 
 import type { AsReportedExplainTarget } from "./as-reported-explain-dialog";
@@ -50,66 +51,68 @@ export function FinancialsFlatTable({ cik = null, columns, lines, rows }: {
     const [explainingReported, setExplainingReported] = React.useState<AsReportedExplainTarget | null>(null);
 
     return (
-        <div className="flex flex-col gap-2">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className={cn(STICKY_FIRST_CELL, "w-[160px] min-w-[160px] max-w-[160px] sm:w-[420px] sm:min-w-[420px] sm:max-w-[420px]")}>Metric</TableHead>
-                        {columns.map(column => (
-                            <TableHead className="text-right" key={column.label} title={column.title}>
-                                {column.label}
-                            </TableHead>
-                        ))}
-                    </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y-0">
-                    {lines.map(line => (
-                        <TableRow className="group h-[41px] leading-5 clickable-financial-row hover:bg-muted/50" key={line.id} onClick={() => setSelected(line)}>
-                            <TableCell className={cn(STICKY_FIRST_CELL, "w-[160px] min-w-[160px] max-w-[160px] sm:w-[420px] sm:min-w-[420px] sm:max-w-[420px]")}>
-                                <div className="flex min-w-0 items-center gap-1">
-                                    <div className="min-w-0 flex-1 truncate font-medium" title={line.title ?? line.label}>{line.label}</div>
-                                    <MetricCatalogLink label={line.label} metricId={line.id} />
-                                    <ChartRowButton label={line.label} onOpen={() => setSelected(line)} />
-                                </div>
-                            </TableCell>
-                            {columns.map((column, index) => {
-                                const cell = line.values[index];
-
-                                return (
-                                    <TableCell className="text-right" key={`${line.id}:${column.label}`}>
-                                        {cell?.factId || cell?.reported
-                                            ? (
-                                                    <button
-                                                        aria-label={`Explain ${line.label}, ${column.label}`}
-                                                        className={cn("tabular-nums rounded-sm focus-visible:outline-2 focus-visible:outline-ring", cell.derived ? "italic" : null)}
-                                                        onClick={(event) => {
-                                                            event.stopPropagation();
-
-                                                            const period = `${line.label} · ${column.label}`;
-
-                                                            if (cell.factId) setExplaining({ accession: cell.accession ?? null, factId: cell.factId, formula: cell.formula, htmlTagId: cell.htmlTagId ?? null, period });
-                                                            else if (cell.reported) setExplainingReported({ cik, concept: line.id, fact: cell.reported, period, rows });
-                                                        }}
-                                                        title={[cellTitle(cell), "Click: explain this number"].filter(Boolean).join("\n")}
-                                                        type="button"
-                                                    >
-                                                        {formatterOf(line.id)(cell.value)}
-                                                    </button>
-                                                )
-                                            : cell
-                                                ? (
-                                                        <span className={cn("tabular-nums", cell.derived ? "italic" : null)} title={cellTitle(cell)}>
-                                                            {formatterOf(line.id)(cell.value)}
-                                                        </span>
-                                                    )
-                                                : <span className="tabular-nums">—</span>}
-                                    </TableCell>
-                                );
-                            })}
+        <>
+            <PeriodTableFrame>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className={cn(STICKY_FIRST_CELL, STATEMENT_LABEL_CELL)}>Metric</TableHead>
+                            {columns.map(column => (
+                                <TableHead className={PERIOD_CELL} key={column.label} title={column.title}>
+                                    {column.label}
+                                </TableHead>
+                            ))}
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody className="divide-y-0">
+                        {lines.map(line => (
+                            <TableRow className="group clickable-financial-row" key={line.id} onClick={() => setSelected(line)}>
+                                <TableCell className={cn(STICKY_FIRST_CELL, STATEMENT_LABEL_CELL)}>
+                                    <div className="flex min-w-0 items-center gap-1">
+                                        <div className="min-w-0 flex-1 truncate" title={line.title ?? line.label}>{line.label}</div>
+                                        <MetricCatalogLink label={line.label} metricId={line.id} />
+                                        <ChartRowButton label={line.label} onOpen={() => setSelected(line)} />
+                                    </div>
+                                </TableCell>
+                                {columns.map((column, index) => {
+                                    const cell = line.values[index];
+
+                                    return (
+                                        <TableCell className={PERIOD_CELL} key={`${line.id}:${column.label}`}>
+                                            {cell?.factId || cell?.reported
+                                                ? (
+                                                        <button
+                                                            aria-label={`Explain ${line.label}, ${column.label}`}
+                                                            className={cn("tabular-nums rounded-sm focus-visible:outline-2 focus-visible:outline-ring", cell.derived ? "italic" : null)}
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+
+                                                                const period = `${line.label} · ${column.label}`;
+
+                                                                if (cell.factId) setExplaining({ accession: cell.accession ?? null, factId: cell.factId, formula: cell.formula, htmlTagId: cell.htmlTagId ?? null, period });
+                                                                else if (cell.reported) setExplainingReported({ cik, concept: line.id, fact: cell.reported, period, rows });
+                                                            }}
+                                                            title={[cellTitle(cell), "Click: explain this number"].filter(Boolean).join("\n")}
+                                                            type="button"
+                                                        >
+                                                            {formatterOf(line.id)(cell.value)}
+                                                        </button>
+                                                    )
+                                                : cell
+                                                    ? (
+                                                            <span className={cn("tabular-nums", cell.derived ? "italic" : null)} title={cellTitle(cell)}>
+                                                                {formatterOf(line.id)(cell.value)}
+                                                            </span>
+                                                        )
+                                                    : <span className="tabular-nums">—</span>}
+                                        </TableCell>
+                                    );
+                                })}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </PeriodTableFrame>
             <MetricChartDialog
                 data={selected ? columns.map((column, index) => ({ period: column.label, value: selected.values[index]?.value })) : []}
                 formatValue={selected ? formatterOf(selected.id) : undefined}
@@ -121,6 +124,6 @@ export function FinancialsFlatTable({ cik = null, columns, lines, rows }: {
             />
             <FactExplainDialog onClose={() => setExplaining(null)} target={explaining} />
             <AsReportedExplainDialog onClose={() => setExplainingReported(null)} target={explainingReported} />
-        </div>
+        </>
     );
 }

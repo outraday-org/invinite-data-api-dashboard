@@ -6,8 +6,10 @@ import type { LiveTurn, LiveTurnSpeaker } from "@/lib/live/live-transcript-reduc
 
 import { Badge } from "@/components/ui/badge";
 import { useV2Participants } from "@/lib/api/queries";
+import { READING_COLUMN_CLASS } from "@/lib/layout";
 import { liveTurns } from "@/lib/live/live-transcript-reducer";
 import { activeTurnIndex, positionToCallMs } from "@/lib/live/position-to-call-ms";
+import { cn } from "@/lib/utils";
 
 import type { LiveCall } from "../audio-context";
 import type { SpeakerImages } from "../tabs/transcript-turns";
@@ -162,7 +164,7 @@ export function LiveTranscript({ eventId }: { eventId: string }) {
             {turns.length === 0
                 ? <p className="text-muted-foreground text-xs">No transcript yet.</p>
                 : (
-                        <PlaybackTurns className="flex flex-col gap-3" segments={segments}>
+                        <PlaybackTurns className={cn("flex flex-col gap-3", READING_COLUMN_CLASS)} segments={segments}>
                             {turns.map((turn, index) => (
                                 <PlaybackTurnBlock
                                     badge={turn.speaker === null ? undefined : <ProvisionalBadge speaker={turn.speaker} />}

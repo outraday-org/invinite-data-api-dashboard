@@ -7,11 +7,14 @@ import { PeriodTypeButtons } from "@/components/financials-presentation/period-t
 import { StatementSelect } from "@/components/financials-presentation/statement-select";
 import { Button } from "@/components/ui/button";
 import { tierLabel, usePlanAllows } from "@/components/ui/credit-hint";
-import { PageHeader } from "@/components/ui/page-header";
+import { FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { isTierError } from "@/lib/api/errors";
 import { useV2FinancialsInfinite } from "@/lib/api/queries";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
+import type { FinancialsTabProps } from "./financials-frame";
+
+import { financialsFilterCount, FinancialsFrame, STATEMENT_FILTERS } from "./financials-frame";
 import { useFinancialsSearch } from "./financials-search";
 import { FiscalYearRange } from "./fiscal-year-range";
 import { filingChoices, PointInTimeBanner, PointInTimeControls } from "./point-in-time";
@@ -38,7 +41,7 @@ const VIEW_SUBTITLES: Record<V2FinancialsView, string> = {
 };
 
 /** The page body of the Financials route's tab (`/$ticker/financials?view=`). */
-export function AsReportedFinancials({ ticker }: { ticker: string }) {
+export function AsReportedFinancials({ tabs, ticker }: FinancialsTabProps) {
     const [search, update] = useFinancialsSearch();
 
     const statement = search.statement ?? "income-statement";
@@ -86,29 +89,41 @@ export function AsReportedFinancials({ ticker }: { ticker: string }) {
     }, [error, pickedView, view]);
 
     return (
-        <div className="flex flex-col gap-4">
-            <PageHeader
-                actions={(
-                    <>
-                        <StatementSelect onValueChange={value => update({ chart: undefined, statement: value === "income-statement" ? undefined : value })} value={statement} />
-                        <ViewButtons badges={AS_REPORTED_VIEW_OPERATIONS} onValueChange={value => update({ chart: undefined, layout: value })} value={view} />
-                        <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+        <FinancialsFrame
+            activeCount={financialsFilterCount(search, [...STATEMENT_FILTERS, ["sign"], ["reportedOnly"]])}
+            description={VIEW_SUBTITLES[view]}
+            filters={(
+                <>
+                    <FilterField label="Fiscal years">
                         <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
-                        <PointInTimeControls asOf={search.asOf} choices={choices} filing={search.filing} onChange={update} />
+                    </FilterField>
+                    <PointInTimeControls asOf={search.asOf} choices={choices} filing={search.filing} onChange={update} />
+                    <FilterField label="Signs">
+                        {id => <FilterSelect aria-label="Display sign" className="w-full" id={id} onValueChange={value => update({ sign: value === "as_filed" ? undefined : value })} options={DISPLAY_SIGN_OPTIONS} value={displaySign} />}
+                    </FilterField>
+                    <FilterField label="Derived values">
                         <Button
                             aria-pressed={reportedOnly}
+                            className="w-full"
                             onClick={() => update({ reportedOnly: reportedOnly ? undefined : true })}
                             title="Hide the values Invinite derived (Q4, TTM, YTD)"
-                            variant={reportedOnly ? "default" : "outline"}
+                            variant={reportedOnly ? "secondary" : "outline"}
                         >
                             Reported only
                         </Button>
-                        <FilterSelect aria-label="Display sign" className="w-[190px]" onValueChange={value => update({ sign: value === "as_filed" ? undefined : value })} options={DISPLAY_SIGN_OPTIONS} value={displaySign} />
-                    </>
-                )}
-                description={VIEW_SUBTITLES[view]}
-                title="As Reported Financials"
-            />
+                    </FilterField>
+                </>
+            )}
+            onReset={() => update({ asOf: undefined, filing: undefined, fyFrom: undefined, fyTo: undefined, reportedOnly: undefined, sign: undefined })}
+            tabs={tabs}
+            what={(
+                <>
+                    <StatementSelect onValueChange={value => update({ chart: undefined, statement: value === "income-statement" ? undefined : value })} value={statement} />
+                    <ViewButtons badges={AS_REPORTED_VIEW_OPERATIONS} onValueChange={value => update({ chart: undefined, layout: value })} value={view} />
+                    <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+                </>
+            )}
+        >
             <PointInTimeBanner onClear={() => update({ asOf: undefined, filing: undefined })} pointInTime={pages.at(0)?.meta.point_in_time} />
             <FinancialsStatementsView
                 basis="as-reported"
@@ -121,6 +136,6 @@ export function AsReportedFinancials({ ticker }: { ticker: string }) {
                 statement={statement}
                 view={view}
             />
-        </div>
+        </FinancialsFrame>
     );
 }

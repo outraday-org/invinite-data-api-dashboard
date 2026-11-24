@@ -10,9 +10,15 @@ import { CHANGE_TYPES } from "@/lib/sec/ownership";
  * for a detail view and the 13F change-type chips. Pure.
  */
 
+/** One fact of a detail: its label and value (null / undefined / "" = not stated). */
+export type DetailFact = readonly [string, React.ReactNode];
+
+/** The facts that carry a value (a `FactGrid`'s rows, a `StatGrid`'s cells): the others are left out, never "—". */
+export const statedFacts = (facts: ReadonlyArray<DetailFact>) => facts.filter(([, value]) => value !== null && value !== undefined && value !== "");
+
 /** A detail's facts as a two-column grid; a fact without a value is left out. */
-export function FactGrid({ facts, testId }: { facts: ReadonlyArray<readonly [string, React.ReactNode]>; testId?: string }) {
-    const shown = facts.filter(([, value]) => value !== null && value !== undefined && value !== "");
+export function FactGrid({ facts, testId }: { facts: ReadonlyArray<DetailFact>; testId?: string }) {
+    const shown = statedFacts(facts);
 
     if (shown.length === 0) return null;
 

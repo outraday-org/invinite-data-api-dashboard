@@ -9,6 +9,7 @@ import { AlertsState } from "@/components/alerts/alert-parts";
 import { useAlertActions } from "@/components/alerts/use-alert-actions";
 import { useEventList } from "@/components/alerts/use-event-list";
 import { PageHeader } from "@/components/ui/page-header";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fromAlert } from "@/lib/alerts/alert-form";
 import { alertTypeLabel } from "@/lib/alerts/labels";
@@ -31,10 +32,9 @@ function AlertEvents({ id }: { id: string }) {
     const list = useEventList(query);
 
     return (
-        <section className="flex flex-col gap-2">
-            <h3 className="text-sm font-semibold">Events</h3>
+        <Section title="Events">
             <AlertEventsView emptyText="This alert has not fired yet." events={list.events} liveIds={new Set()} loadedNote={list.note} operationId="listAlertEventsForAlert" state={list.state} />
-        </section>
+        </Section>
     );
 }
 
@@ -73,7 +73,7 @@ function AlertPage() {
 
     return (
         <div className="flex flex-col gap-4">
-            <PageHeader description={edit ? `Editing version ${loaded.version}. The type never changes.` : loaded.client_reference_id ?? undefined} title={edit ? `Edit ${title.toLowerCase()}` : title} />
+            {edit && <PageHeader description={`Editing version ${loaded.version}. The type never changes.`} title={`Edit ${title.toLowerCase()}`} />}
             {edit
                 ? (
                         <EditAlertForm

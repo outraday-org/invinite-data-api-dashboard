@@ -6,7 +6,6 @@ import { z } from "zod";
 
 import type { V2Ipo, V2IposResponse, V2IpoStage } from "@/lib/api/types";
 
-import { TabStrip } from "@/components/navigation/tab-strip";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +13,13 @@ import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { DayRange } from "@/components/ui/day-range";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
+import { Section } from "@/components/ui/section";
+import { Stat, StatGrid } from "@/components/ui/stat";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIpo, useV2IposInfinite } from "@/lib/api/queries";
 import { V2_IPO_STAGES } from "@/lib/api/v2";
 import { zonedDate } from "@/lib/earnings/format";
@@ -22,7 +27,6 @@ import { formatDay, formatInstant, formatShares } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { IN_PLACE } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const IPO_TABS = ["upcoming", "recent"] as const;
 
@@ -121,7 +125,7 @@ const COLUMNS: Array<ColumnDef<V2Ipo>> = [
     {
         accessorKey: "listing_date",
         cell: ({ row }) => formatDay(row.original.listing_date),
-        header: "Listing Date",
+        header: "Listing date",
     },
     {
         cell: ({ row }) => {
@@ -194,7 +198,7 @@ const COLUMNS: Array<ColumnDef<V2Ipo>> = [
         cell: ({ row }) => (
             <div className="text-right tabular-nums">{formatOfferAmount(row.original.total_offer_size, row.original.currency)}</div>
         ),
-        header: () => <div className="text-right">Offer Size</div>,
+        header: () => <div className="text-right">Offer size</div>,
     },
     {
         cell: ({ row }) => {
@@ -313,12 +317,7 @@ export function IpoDetail({ ipo }: { ipo: V2Ipo }) {
 
     const listing = ipo.sources.listing;
 
-    const facts: Array<[string, null | string]> = [
-        ["Stage", IPO_STAGE_LABELS[ipo.stage]],
-        ["Exchange", ipo.exchange],
-        ["Price", offerPriceText(ipo)],
-        ["Shares offered", formatShares(ipo.shares_offered)],
-        ["Offer size", formatOfferAmount(ipo.total_offer_size, ipo.currency)],
+    const timeline: Array<[string, null | string]> = [
         ["First public (SEC)", registration?.first_public_at ? formatInstant(registration.first_public_at) : null],
         ["Price range set", registration?.price_range_at ? formatInstant(registration.price_range_at) : null],
         ["Exchange approved", registration?.exchange_approved_at ? formatInstant(registration.exchange_approved_at) : null],
@@ -337,23 +336,37 @@ export function IpoDetail({ ipo }: { ipo: V2Ipo }) {
 
     const linkClass = "underline-offset-4 hover:underline";
 
+    const steps = timeline.filter((fact): fact is [string, string] => Boolean(fact[1]));
+
     return (
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5" data-testid="ipo-detail">
-            <dt className="text-muted-foreground">Issuer</dt>
-            <dd>
-                {cik
-                    ? <Link className={linkClass} params={{ cik }} title="SEC filer: identity, lifecycle, filings and Form D private offerings" to="/sec/$cik">{ipo.issuer_name || `CIK ${cik}`}</Link>
-                    : ipo.issuer_name || "—"}
-            </dd>
-            <dt className="text-muted-foreground">Symbol</dt>
-            <dd>{listed ? <Link className={linkClass} params={{ ticker: listed }} to="/$ticker">{listed}</Link> : ipoSymbolText(ipo)}</dd>
-            {facts.filter((fact): fact is [string, string] => Boolean(fact[1])).map(([label, value]) => (
-                <React.Fragment key={label}>
-                    <dt className="text-muted-foreground">{label}</dt>
-                    <dd className="tabular-nums">{value}</dd>
-                </React.Fragment>
-            ))}
-        </dl>
+        <div className="flex min-w-0 flex-col gap-5" data-testid="ipo-detail">
+            <StatGrid>
+                <Stat
+                    label="Issuer"
+                    value={cik
+                        ? <Link className={linkClass} params={{ cik }} title="SEC filer: identity, lifecycle, filings and Form D private offerings" to="/sec/$cik">{ipo.issuer_name || `CIK ${cik}`}</Link>
+                        : ipo.issuer_name || "—"}
+                />
+                <Stat label="Symbol" value={listed ? <Link className={linkClass} params={{ ticker: listed }} to="/$ticker">{listed}</Link> : ipoSymbolText(ipo)} />
+                <Stat label="Stage" value={IPO_STAGE_LABELS[ipo.stage]} />
+                {ipo.exchange && <Stat label="Exchange" value={ipo.exchange} />}
+                <Stat label="Price" value={offerPriceText(ipo)} />
+                <Stat label="Shares offered" value={formatShares(ipo.shares_offered)} />
+                <Stat label="Offer size" value={formatOfferAmount(ipo.total_offer_size, ipo.currency)} />
+            </StatGrid>
+            {steps.length > 0 && (
+                <Section title="Timeline">
+                    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
+                        {steps.map(([label, value]) => (
+                            <React.Fragment key={label}>
+                                <dt className="text-muted-foreground">{label}</dt>
+                                <dd className="tabular-nums">{value}</dd>
+                            </React.Fragment>
+                        ))}
+                    </dl>
+                </Section>
+            )}
+        </div>
     );
 }
 
@@ -364,7 +377,7 @@ function IpoDetailDialog({ ipo, onClose }: { ipo: null | V2Ipo; onClose: () => v
 
     return (
         <Dialog onOpenChange={open => !open && onClose()} open={ipo !== null}>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>{shown?.issuer_name ?? "Offering"}</DialogTitle>
                 </DialogHeader>
@@ -422,36 +435,49 @@ function IposPage() {
     const onChange = (patch: Partial<IpoSearch>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer>
             <PageHeader
-                actions={(
-                    <TabStrip
-                        aria-label="IPOs"
-                        onSelect={value => onChange({ tab: value === "recent" ? "recent" : undefined })}
-                        options={[{ label: "Upcoming", value: "upcoming" }, { label: "Recent", value: "recent" }]}
-                        value={search.tab ?? "upcoming"}
-                    />
-                )}
                 description="Offerings from SEC registration to listing. Upcoming = not trading or withdrawn yet, from the next listing date on (offerings without one last); Recent = listed, newest first."
                 title="IPO calendar"
             />
-            <div className="flex flex-wrap items-center gap-2">
-                <FilterSelect
-                    aria-label="Stage"
-                    className="w-[180px]"
-                    onValueChange={(value: StageFilter) => onChange({ stage: value === ALL ? undefined : value })}
-                    options={STAGE_OPTIONS}
-                    value={search.stage ?? ALL}
-                />
-                <FilterSelect
-                    aria-label="SPAC"
-                    className="w-[170px]"
-                    onValueChange={value => onChange({ spac: value === ALL ? undefined : value })}
-                    options={SPAC_OPTIONS}
-                    value={search.spac ?? ALL}
-                />
-                <DayRange from={search.from} labels={{ from: "Listing from", to: "Listing to" }} onChange={onChange} to={search.to} />
-            </div>
+            <Tabs onValueChange={value => onChange({ tab: value === "recent" ? "recent" : undefined })} value={search.tab ?? "upcoming"}>
+                <TabsList aria-label="IPOs" variant="line">
+                    <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+                    <TabsTrigger value="recent">Recent</TabsTrigger>
+                </TabsList>
+            </Tabs>
+            <FilterBar
+                activeCount={[search.stage, search.spac, search.from ?? search.to].filter(value => value !== undefined).length}
+                onReset={() => onChange({ from: undefined, spac: undefined, stage: undefined, to: undefined })}
+            >
+                <FilterField label="Stage">
+                    {id => (
+                        <FilterSelect
+                            aria-label="Stage"
+                            className="w-full"
+                            id={id}
+                            onValueChange={(value: StageFilter) => onChange({ stage: value === ALL ? undefined : value })}
+                            options={STAGE_OPTIONS}
+                            value={search.stage ?? ALL}
+                        />
+                    )}
+                </FilterField>
+                <FilterField label="SPAC">
+                    {id => (
+                        <FilterSelect
+                            aria-label="SPAC"
+                            className="w-full"
+                            id={id}
+                            onValueChange={value => onChange({ spac: value === ALL ? undefined : value })}
+                            options={SPAC_OPTIONS}
+                            value={search.spac ?? ALL}
+                        />
+                    )}
+                </FilterField>
+                <FilterField label="Listing date" span={2}>
+                    <DayRange from={search.from} labels={{ from: "Listing from", to: "Listing to" }} onChange={onChange} to={search.to} />
+                </FilterField>
+            </FilterBar>
 
             <IposView
                 error={error}
@@ -463,6 +489,6 @@ function IposPage() {
                 pages={pages}
             />
             <IpoDetailDialog ipo={open} onClose={() => setOpen(null)} />
-        </div>
+        </PageContainer>
     );
 }

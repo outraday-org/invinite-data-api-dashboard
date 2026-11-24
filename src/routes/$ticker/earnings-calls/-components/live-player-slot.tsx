@@ -8,7 +8,9 @@ import type { KeywordWatch } from "@/lib/live/ws-frames";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
+import { Section } from "@/components/ui/section";
 import { isEarningsEventLiveish, useV2PriceAttribution } from "@/lib/api/queries";
 import { formatInstant } from "@/lib/format";
 import { liveHighlightList, parseKeywords } from "@/lib/live/live-highlights";
@@ -44,23 +46,24 @@ function KeywordWatchForm({ onWatch, watch }: { onWatch: (watch: KeywordWatch) =
         >
             <Input
                 aria-label="Keywords to watch"
-                className="h-7 w-72 max-w-full text-xs"
+                className="w-72 max-w-full"
                 onChange={changeEvent => setDraft(changeEvent.target.value)}
                 placeholder="Watch for keywords, e.g. tariffs, buyback"
                 value={draft}
             />
-            <select
+            <DropdownSelect
                 aria-label="Keyword match"
-                className="border-input bg-background h-7 rounded-md border px-1.5 text-xs"
-                onChange={changeEvent => setMatch(changeEvent.target.value === "stem" ? "stem" : "exact")}
+                onValueChange={next => setMatch(next)}
+                options={[
+                    { label: "exact words", value: "exact" },
+                    { label: "word forms too (tariff → tariffs)", value: "stem" },
+                ]}
+                size="sm"
                 value={match}
-            >
-                <option value="exact">exact words</option>
-                <option value="stem">word forms too (tariff → tariffs)</option>
-            </select>
+            />
             <Button size="sm" type="submit" variant="outline">Watch</Button>
             {watch.keywords.length > 0 && (
-                <span className="text-muted-foreground text-xs">
+                <span className="text-muted-foreground">
                     Watching
                     {" "}
                     {watch.keywords.join(", ")}
@@ -102,13 +105,12 @@ function LiveHighlights({ live }: { live: LiveCall }) {
     const highlights = liveHighlightList(live.transcript.highlights);
 
     return (
-        <section aria-label="Live highlights" className="flex flex-col gap-2">
-            <h3 className="text-xs font-semibold">Live highlights</h3>
+        <Section aria-label="Live highlights" className="gap-2" title="Live highlights">
             <KeywordWatchForm onWatch={live.setWatch} watch={live.watch} />
             {highlights.length === 0
-                ? <p className="text-muted-foreground text-xs">No keyword hits or guidance yet.</p>
+                ? <p className="text-muted-foreground">No keyword hits or guidance yet.</p>
                 : <ul className="flex flex-col gap-1">{highlights.map(highlight => <HighlightRow highlight={highlight} key={`${highlight.kind}-${highlight.key}`} />)}</ul>}
-        </section>
+        </Section>
     );
 }
 
@@ -221,12 +223,11 @@ function LiveCallCard({ event, live }: { event: V2Event; live: LiveCall }) {
 
                 <LiveHighlights live={live} />
 
-                <section aria-label="Live price" className="flex flex-col gap-2">
-                    <h3 className="text-xs font-semibold">Price</h3>
+                <Section aria-label="Live price" className="gap-2" title="Price">
                     {prices.ticks.length > 0 || priceSeed.length > 0
                         ? <LivePriceChart buckets={priceSeed} callT0={callT0} cursorMs={priceCursorMs} prices={prices} />
-                        : <p className="text-muted-foreground text-sm">No price ticks yet.</p>}
-                </section>
+                        : <p className="text-muted-foreground">No price ticks yet.</p>}
+                </Section>
 
                 <Diagnostics live={live} priceRows={priceSeed.length} />
             </CardContent>

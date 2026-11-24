@@ -3,6 +3,7 @@ import { CartesianGrid, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAx
 
 import type { V2KpiMention } from "@/lib/api/types";
 
+import { AXIS_TICK } from "@/components/charts/chart-parts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -49,11 +50,11 @@ function KpiHistoryChart({ mentions }: { mentions: ReadonlyArray<V2KpiMention> }
                             // Two weeks either side: one call (or calls a day apart) still gets a readable axis.
                             domain={([min, max]: readonly [number, number]) => [min - AXIS_PAD_MS, max + AXIS_PAD_MS]}
                             name="Call"
-                            tick={{ fill: "var(--muted-foreground)", fontSize: 10 }}
+                            tick={AXIS_TICK}
                             tickFormatter={(value: number) => formatDay(new Date(value).toISOString().slice(0, 10))}
                             type="number"
                         />
-                        <YAxis dataKey="value" name="Value" tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={format} width={72} />
+                        <YAxis dataKey="value" name="Value" tick={AXIS_TICK} tickFormatter={format} width={72} />
                         <Tooltip
                             content={({ active, payload }) => {
                                 const point = active ? (payload[0] as undefined | { payload?: (typeof data)[number] })?.payload : undefined;

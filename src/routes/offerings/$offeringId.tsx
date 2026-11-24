@@ -4,16 +4,18 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 
 import type { V2OfferingDetail } from "@/lib/api/types";
 
-import { FactGrid } from "@/components/sec/ownership-views";
+import { FactGrid, statedFacts } from "@/components/sec/ownership-views";
 import { exemptionLabel, offeringAmountText } from "@/components/sec/sec-filer-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { filerCikParam } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Copyable } from "@/components/ui/copy-button";
 import { Notice } from "@/components/ui/notice";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Stat, StatGrid } from "@/components/ui/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useOffering } from "@/lib/api/queries";
 import { formatDay, formatMoney } from "@/lib/format";
@@ -43,21 +45,10 @@ function CikLink({ children, cik }: { children?: React.ReactNode; cik: null | st
     );
 }
 
-function Block({ children, title }: { children: React.ReactNode; title: string }) {
-    return (
-        <Card className="border-border/60 min-w-0">
-            <CardHeader>
-                <CardTitle>{title}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm">{children}</CardContent>
-        </Card>
-    );
-}
-
 /**
  * One Form D offering in full (pure, `GET /v1/offerings/{offering_id}`): the amounts (size, sold, remaining, minimum
  * investment), commissions and finders' fees, investors, the issuer (its filer page, co-issuers), the exemptions, the
- * related persons as filed and the offering's filings.
+ * related persons as filed and the offering's filings. Amounts as a `StatGrid`, the rest as `Section`s (no card).
  */
 export function OfferingDetailView({ offering }: { offering: V2OfferingDetail }) {
     const amounts: Array<readonly [string, React.ReactNode]> = [
@@ -105,56 +96,55 @@ export function OfferingDetailView({ offering }: { offering: V2OfferingDetail })
     ];
 
     return (
-        <div className="grid gap-4 md:grid-cols-2" data-testid="offering-detail">
-            <Block title="Amounts">
-                <FactGrid facts={amounts} />
-            </Block>
-            <Block title="Issuer">
-                <FactGrid facts={issuer} />
-            </Block>
-            <Block title="Offering">
-                <FactGrid facts={terms} />
-            </Block>
-            <Block title="Filings">
-                <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-8" data-testid="offering-detail">
+            {/* The amounts as a stat grid (ui-redesign task 9); a value the filing leaves out is left out. */}
+            <StatGrid>
+                {statedFacts(amounts).map(([label, value]) => <Stat key={label} label={label} value={value} />)}
+            </StatGrid>
+            <div className="grid gap-8 md:grid-cols-2">
+                <Section title="Issuer">
+                    <FactGrid facts={issuer} />
+                </Section>
+                <Section title="Offering">
+                    <FactGrid facts={terms} />
+                </Section>
+                <Section title="Filings">
                     <FactGrid facts={filings} />
-                    <ul className="flex flex-col gap-1 text-xs">
+                    <ul className="flex flex-col gap-1">
                         {offering.accessions.map(accession => (
                             <li className="flex items-center gap-2" key={accession}>
-                                <Copyable className="tabular-nums" label="Copy accession number" value={accession} />
+                                <Copyable label="Copy accession number" value={accession} />
                                 {accession === offering.latest_accession && <Badge variant="secondary">Latest</Badge>}
                             </li>
                         ))}
                     </ul>
-                </div>
-            </Block>
-            <div className="min-w-0 md:col-span-2">
-                <Block title="Related persons">
-                    {offering.related_persons.length === 0
-                        ? <div className="text-muted-foreground">No related person was filed.</div>
-                        : (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Name</TableHead>
-                                            <TableHead>Relationship</TableHead>
-                                            <TableHead>Clarification</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {offering.related_persons.map((person, index) => (
-                                            // A name can appear twice (two relationships filed separately).
-                                            <TableRow key={`${person.name}-${index}`}>
-                                                <TableCell className="font-medium">{person.name}</TableCell>
-                                                <TableCell>{person.relationships.join(", ") || "—"}</TableCell>
-                                                <TableCell className="whitespace-normal">{person.clarification ?? "—"}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            )}
-                </Block>
+                </Section>
             </div>
+            <Section title="Related persons">
+                {offering.related_persons.length === 0
+                    ? <div className="text-muted-foreground">No related person was filed.</div>
+                    : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Name</TableHead>
+                                        <TableHead>Relationship</TableHead>
+                                        <TableHead>Clarification</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {offering.related_persons.map((person, index) => (
+                                        // A name can appear twice (two relationships filed separately).
+                                        <TableRow key={`${person.name}-${index}`}>
+                                            <TableCell className="font-medium">{person.name}</TableCell>
+                                            <TableCell>{person.relationships.join(", ") || "—"}</TableCell>
+                                            <TableCell className="whitespace-normal">{person.clarification ?? "—"}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+            </Section>
         </div>
     );
 }
@@ -168,7 +158,7 @@ function OfferingPage() {
     const { data, error, isLoading } = useOffering(offeringId);
 
     const shell = (body: React.ReactNode) => (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer>
             <PageHeader
                 description={(
                     <>
@@ -180,7 +170,7 @@ function OfferingPage() {
                 title={data?.issuer_name ?? "Private offering"}
             />
             {body}
-        </div>
+        </PageContainer>
     );
 
     if (!offeringId) return shell(<Notice badge="Not found" title="This is not an offering id (a Form D file number such as 021-599503, or an accession number)" />);

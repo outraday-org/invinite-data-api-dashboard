@@ -169,6 +169,7 @@ export function CreateAlertForm({ initial, initialScriptId }: { initial: AlertFo
                 onCheck={() => void onCheck()}
                 onSubmit={() => void onSubmit()}
                 pending={{ check: check.isPending, submit: create.isPending }}
+                preview={{ body: toCreateBody(state, templates.data?.data ?? []).body, method: "POST", path: "/v1/alerts" }}
                 scriptOptions={pickers.scriptOptions}
                 state={state}
                 templates={{ data: templates.data?.data ?? [], error: templates.error, isLoading: templates.isLoading }}
@@ -244,6 +245,7 @@ export function EditAlertForm({ alert, initial, onDone, onReload }: { alert: Ale
                 }}
                 onSubmit={() => void onSubmit()}
                 pending={{ check: false, submit: update.isPending }}
+                preview={{ body: toUpdateBody(state, version, templates.data?.data ?? []).body, method: "PATCH", path: `/v1/alerts/${alert.id}` }}
                 scriptOptions={pickers.scriptOptions}
                 state={state}
                 templates={{ data: templates.data?.data ?? [], error: templates.error, isLoading: templates.isLoading }}

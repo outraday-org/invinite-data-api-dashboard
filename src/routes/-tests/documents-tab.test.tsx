@@ -104,7 +104,7 @@ describe("DocumentsTab", () => {
 
         expect(useV2InvestorDocumentsInfinite).toHaveBeenLastCalledWith({ event: EVENT_ID, kind: undefined, limit: 200, sort: "event_date" });
 
-        expect(screen.getByRole("combobox", { name: "Order" })).toHaveTextContent("Call date, oldest first");
+        expect(screen.getByRole("button", { name: "Order" })).toHaveTextContent("Call date, oldest first");
     });
 
     it("lists the call's SEC filings apart under Filings, with their EDGAR filing date", () => {

@@ -24,7 +24,10 @@ function SecStateNotice({ operationId, state, title, titles }: { operationId?: O
             const detail = reasonText(state.reason) ?? state.message;
 
             // The detail line only when it adds something to the title.
-            return <Notice badge={text.badge} title={heading}>{detail && detail !== heading ? detail : undefined}</Notice>;
+            // A partial / pending answer shows rows that may be incomplete: the warn accent.
+            const tone = state.status === "partial" || state.status === "pending" ? "warn" : "neutral";
+
+            return <Notice badge={text.badge} title={heading} tone={tone}>{detail && detail !== heading ? detail : undefined}</Notice>;
         }
         case "restart_required":
             return <Notice badge="Start over" title="The results changed since the first page — run it again" />;

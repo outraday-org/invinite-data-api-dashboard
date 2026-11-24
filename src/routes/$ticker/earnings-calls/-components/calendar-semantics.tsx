@@ -49,7 +49,7 @@ export const CALL_TIME_QUALITY_LABELS: Record<CallTimeQuality, string> = {
  * width, since a table cell does not (`whitespace-nowrap`) — unwrapped they made the calendar wider than its column at
  * every screen width, so its day headings never stuck.
  */
-const CELL_META_CLASS = "text-muted-foreground block max-w-52 text-[0.625rem] whitespace-normal";
+const CELL_META_CLASS = "text-muted-foreground block max-w-52 min-w-36 text-xs whitespace-normal";
 
 const NO_CALL_STATUSES = new Set(["no_call", "not_expected"]);
 
@@ -129,14 +129,17 @@ export function CalendarCallCell({ event }: { event: V2Event }) {
         return (
             <div className="flex flex-col">
                 <span className="text-muted-foreground">No call</span>
-                {calendar?.call.status && <span className="text-muted-foreground text-[0.625rem]">{calendar.call.status.replaceAll("_", " ")}</span>}
+                {calendar?.call.status && <span className="text-muted-foreground text-xs">{calendar.call.status.replaceAll("_", " ")}</span>}
             </div>
         );
     }
 
     const call = calendar?.call;
 
-    const quality = call?.time_quality ? CALL_TIME_QUALITY_LABELS[call.time_quality] : null;
+    // A date-only call already says "date only" under its day (`CallTime`): the quality would repeat it.
+    const quality = call?.time_quality && !(call.time_quality === "date_only" && event.call_time_source === null)
+        ? CALL_TIME_QUALITY_LABELS[call.time_quality]
+        : null;
 
     const source = call?.source;
 

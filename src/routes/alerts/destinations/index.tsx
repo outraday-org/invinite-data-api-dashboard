@@ -40,7 +40,7 @@ function DestinationsPage() {
     return (
         <div className="flex flex-col gap-4">
             <PageHeader
-                actions={<Button onClick={() => setNew(true)} size="sm" type="button">New destination</Button>}
+                actions={<Button onClick={() => setNew(true)} type="button">New destination</Button>}
                 description="Webhook endpoints your alerts deliver to, oldest first as the API lists them. Each request is signed with the destination's secret (see Webhooks). Each list page costs 1 credit."
                 title="Destinations"
             />

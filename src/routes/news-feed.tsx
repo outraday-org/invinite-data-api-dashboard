@@ -6,10 +6,11 @@ import type { LiveNewsStop } from "@/lib/live/use-live-news";
 import type { NewsFeedSearch, NewsFilters } from "@/lib/news/labels";
 
 import { LIVE_NEWS_PLAN_NOTE, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
-import { TabStrip } from "@/components/navigation/tab-strip";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageContainer } from "@/components/ui/page-container";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { titleHead } from "@/lib/layout";
 import { validateNewsFeedSearch } from "@/lib/news/labels";
 import { parseTickers, useWatchlist, WATCHLIST_MAX } from "@/lib/news/watchlist";
@@ -141,47 +142,40 @@ function NewsFeedPage() {
     });
 
     const controls = (
-        <div className="flex flex-wrap items-start justify-between gap-2">
-            <NewsFilterControls
-                categories={[]}
-                companyScope={false}
-                onChange={patch => onChange(patch.sort === "oldest" ? { ...patch, live: undefined } : patch)}
-                search={search}
-                tags={[]}
-                windowFilters={scope === "watchlist"}
-            />
-            <LiveToggle
-                listening="Listening for new items"
-                live={live}
-                mode={news.liveMode}
-                onChange={(on) => {
-                    setStop(null);
+        <NewsFilterControls
+            categories={[]}
+            companyScope={false}
+            onChange={patch => onChange(patch.sort === "oldest" ? { ...patch, live: undefined } : patch)}
+            search={search}
+            tags={[]}
+            windowFilters={scope === "watchlist"}
+        />
+    );
 
-                    onChange(on ? { live: true, sort: undefined } : { live: undefined });
-                }}
-                size="lg"
-            />
-        </div>
+    const liveToggle = (
+        <LiveToggle
+            listening="Listening for new items"
+            live={live}
+            mode={news.liveMode}
+            onChange={(on) => {
+                setStop(null);
+
+                onChange(on ? { live: true, sort: undefined } : { live: undefined });
+            }}
+        />
     );
 
     const selectedTitle = news.items.find(item => item.id === search.item)?.title;
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer>
             <NewsPageView
                 controls={controls}
                 description={feedDescription(scope)}
                 emptyText={feedEmptyText({ live, scope, tickers: watchlist.list.length })}
                 error={news.error}
                 exportScope={scope}
-                headerActions={(
-                    <TabStrip
-                        aria-label="Feed scope"
-                        onSelect={value => onChange({ scope: value === "market" ? "market" : undefined })}
-                        options={SCOPE_OPTIONS}
-                        value={scope}
-                    />
-                )}
+                headerActions={liveToggle}
                 hiddenByFilters={news.hidden}
                 isLoading={!watchlist.ready || news.isLoading}
                 items={news.items}
@@ -204,6 +198,13 @@ function NewsFeedPage() {
                     </>
                 )}
                 skippedPages={news.skippedPages}
+                tabs={(
+                    <Tabs onValueChange={value => onChange({ scope: value === "market" ? "market" : undefined })} value={scope}>
+                        <TabsList aria-label="Feed scope" variant="line">
+                            {SCOPE_OPTIONS.map(option => <TabsTrigger key={option.value} value={option.value}>{option.label}</TabsTrigger>)}
+                        </TabsList>
+                    </Tabs>
+                )}
                 title="News feed"
             />
             <NewsItemPanel
@@ -211,6 +212,6 @@ function NewsFeedPage() {
                 onClose={() => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, item: undefined }) })}
                 title={selectedTitle}
             />
-        </div>
+        </PageContainer>
     );
 }

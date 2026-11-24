@@ -7,13 +7,16 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isTierError } from "@/lib/api/errors";
 import { useV2EventsInfinite, useV2LiveEvents } from "@/lib/api/queries";
 import { groupEventsByNewYorkDay } from "@/lib/earnings/calendar-groups";
-import { eventLabel, formatCallTime, formatStartedAgo, zonedDate } from "@/lib/earnings/format";
+import { eventLabel, formatStartedAgo, zonedDate } from "@/lib/earnings/format";
 import { titleHead } from "@/lib/layout";
+import { callTimeShort } from "@/routes/$ticker/earnings-calls/-components/call-time";
 import { EventLink } from "@/routes/$ticker/earnings-calls/-components/event-link";
 import { EventTypeBadge } from "@/routes/$ticker/earnings-calls/-components/event-type-badge";
 import { LiveDot } from "@/routes/$ticker/earnings-calls/-components/live-dot";
@@ -88,19 +91,18 @@ export function LiveCallsView({ asOf, error, isLoading, live, next, nextError = 
 
     if (live.length > 0) {
         return (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {live.map(event => <LiveCallCard asOf={asOf} event={event} key={event.event_id} />)}
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-6">
             <Notice badge="None live" title="No call is live right now.">
                 The page refreshes every 15 seconds; a call shows here once its capture starts.
             </Notice>
-            <section className="flex flex-col gap-2">
-                <h3 className="text-sm font-semibold">Next scheduled calls</h3>
+            <Section title="Next scheduled calls">
                 {nextError
                     ? <ErrorState error={nextError} title="Failed to load the next calls" />
                     : nextLoading
@@ -110,16 +112,18 @@ export function LiveCallsView({ asOf, error, isLoading, live, next, nextError = 
                             : (
                                     <ul className="flex flex-col divide-y" data-testid="next-calls">
                                         {next.map(event => (
-                                            <li className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-1.5" key={event.event_id}>
-                                                <span className="text-muted-foreground w-44 tabular-nums">{formatCallTime(event)}</span>
+                                            <li className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2 sm:flex-nowrap" key={event.event_id}>
+                                                <span className="text-muted-foreground w-48 shrink-0 tabular-nums whitespace-nowrap">
+                                                    {callTimeShort(event)}
+                                                </span>
                                                 <EventLink className="font-medium hover:underline" event={event}>{event.symbol}</EventLink>
-                                                <span className="truncate">{event.company_name}</span>
-                                                <span className="text-muted-foreground">{eventLabel(event)}</span>
+                                                <span className="min-w-0 truncate sm:flex-1" title={event.company_name}>{event.company_name}</span>
+                                                <span className="text-muted-foreground shrink-0">{eventLabel(event)}</span>
                                             </li>
                                         ))}
                                     </ul>
                                 )}
-            </section>
+            </Section>
         </div>
     );
 }
@@ -147,7 +151,7 @@ function LiveCallsPage() {
     });
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer>
             <PageHeader
                 description={live.length > 0 ? `${live.length} ${live.length === 1 ? "call" : "calls"} live now. Open one to follow its transcript and audio.` : "Earnings calls and events being captured right now."}
                 title="Live calls"
@@ -161,6 +165,6 @@ function LiveCallsPage() {
                 nextError={next.error}
                 nextLoading={next.isLoading}
             />
-        </div>
+        </PageContainer>
     );
 }

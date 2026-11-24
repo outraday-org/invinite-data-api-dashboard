@@ -11,6 +11,7 @@ import {
 
 import type { V2GuidanceBasis, V2GuidancePeriodKind } from "@/lib/api/types";
 
+import { AXIS_TICK } from "@/components/charts/chart-parts";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorState } from "@/components/ui/error-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -84,8 +85,8 @@ function HistoryBody({ company, target }: { company: string; target: GuidanceHis
             <div className="border-border/70 bg-muted/20 h-64 w-full rounded-lg border p-3">
                 <ResponsiveContainer height="100%" width="100%">
                     <ComposedChart data={points} margin={{ bottom: 0, left: 4, right: 20, top: 12 }}>
-                        <XAxis dataKey="label" tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickLine={false} />
-                        <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 10 }} tickFormatter={format} width={72} />
+                        <XAxis dataKey="label" tick={AXIS_TICK} tickLine={false} />
+                        <YAxis tick={AXIS_TICK} tickFormatter={format} width={72} />
                         <Tooltip
                             formatter={value => (Array.isArray(value)
                                 ? value.map(item => (typeof item === "number" ? format(item) : item)).join(" – ")

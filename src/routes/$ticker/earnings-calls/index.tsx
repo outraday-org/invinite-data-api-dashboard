@@ -10,19 +10,23 @@ import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-
 import { CopyButton } from "@/components/ui/copy-button";
 import { DataTable } from "@/components/ui/data-table";
 import { ErrorState } from "@/components/ui/error-state";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
+import { Section } from "@/components/ui/section";
+import { SegmentedButtons } from "@/components/ui/segmented-buttons";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useV2EventsInfinite } from "@/lib/api/queries";
-import { eventLabel, formatInstant, isUpcoming } from "@/lib/earnings/format";
+import { eventLabel, isUpcoming } from "@/lib/earnings/format";
+import { DASH, formatInstantShort } from "@/lib/format";
 import { tickerHead } from "@/lib/layout";
 import { IN_PLACE, optionalEnum } from "@/lib/url-state";
 import { DocumentSearch } from "@/routes/$ticker/documents/-components/document-search";
 
 import { AskThisCall } from "./-components/ask-this-call";
 import { AvailabilityIcons } from "./-components/availability-icons";
-import { FilterSelect } from "./-components/calendar-filters";
 import { CallStatusBadge } from "./-components/call-status-badge";
 import { CallTime } from "./-components/call-time";
 import { EventLink } from "./-components/event-link";
@@ -61,10 +65,33 @@ export function tabHasMore(tab: "past" | "upcoming", past: number, hasNextPage: 
     return tab === "upcoming" ? hasNextPage && past === 0 : hasNextPage;
 }
 
-/** The columns of a tab: an upcoming call has not started or ended, so the Upcoming tab has no such columns. */
+/** The columns of a tab: an upcoming call has no recording yet, so the Upcoming tab has no Recording column. */
 export function columnsForTab<T extends { id?: string }>(columns: ReadonlyArray<T>, tab: "past" | "upcoming"): Array<T> {
-    return tab === "upcoming" ? columns.filter(column => column.id !== "started_at" && column.id !== "ended_at") : [...columns];
+    return tab === "upcoming" ? columns.filter(column => column.id !== "recording") : [...columns];
 }
+
+/**
+ * The Recording cell: "11:06 PM – 11:59 PM EST" (the zone once when both ends share it), "from 11:06 PM EST" while the
+ * call is still being captured, "—" without a start (`formatInstantShort`: one line in a narrow list, F13).
+ */
+export function recordingText(startedAt: null | string | undefined, endedAt: null | string | undefined, timeZone?: string) {
+    if (!startedAt) return DASH;
+
+    const start = formatInstantShort(startedAt, timeZone);
+
+    if (!endedAt) return `from ${start}`;
+
+    const end = formatInstantShort(endedAt, timeZone);
+
+    const zone = start.split(" ").at(-1);
+
+    return zone && end.endsWith(` ${zone}`) ? `${start.slice(0, -zone.length - 1)} – ${end}` : `${start} – ${end}`;
+}
+
+const SEARCH_SCOPES = [
+    { label: "Transcripts", value: "transcripts" },
+    { label: "Documents", value: "documents" },
+] as const;
 
 /** The fiscal years of the picker: the next one and the eight before it. */
 const fiscalYearOptions = (now: Date) => {
@@ -161,14 +188,9 @@ function EarningsCallsPage() {
                 id: "status",
             },
             {
-                cell: ({ row }) => <span className="tabular-nums whitespace-nowrap">{formatInstant(row.original.started_at)}</span>,
-                header: "Started",
-                id: "started_at",
-            },
-            {
-                cell: ({ row }) => <span className="tabular-nums whitespace-nowrap">{formatInstant(row.original.ended_at)}</span>,
-                header: "Ended",
-                id: "ended_at",
+                cell: ({ row }) => <span className="tabular-nums whitespace-nowrap">{recordingText(row.original.started_at, row.original.ended_at)}</span>,
+                header: "Recording",
+                id: "recording",
             },
             {
                 cell: ({ row }) => <AvailabilityIcons event={row.original} />,
@@ -177,7 +199,7 @@ function EarningsCallsPage() {
             },
             {
                 cell: ({ row }) => (
-                    <EventLink className="text-xs underline-offset-4 hover:underline" event={row.original}>
+                    <EventLink className="underline-offset-4 hover:underline" event={row.original}>
                         Open
                     </EventLink>
                 ),
@@ -199,13 +221,13 @@ function EarningsCallsPage() {
                     newest first: transcript, audio, slides, press release and documents per event.
                 </>
             )}
-            title="Earnings Calls"
+            title="Earnings calls"
         />
     );
 
     if (error && covered) {
         return (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-6">
                 {header}
                 <ErrorState error={error} title="Failed to load earnings calls" />
             </div>
@@ -213,7 +235,7 @@ function EarningsCallsPage() {
     }
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
             {header}
 
             {!covered
@@ -223,59 +245,71 @@ function EarningsCallsPage() {
                         </Notice>
                     )
                 : (
-                        <div className="flex flex-col gap-2">
+                        <>
                             {/* Only while this company has an event live; nothing otherwise. */}
                             <LiveNowStrip ticker={ticker} />
 
                             {/* Company-wide search: transcripts ("Search this call", hits link to their call) or documents. */}
-                            <div className="flex flex-col gap-1">
-                                <Tabs onValueChange={value => setSearch({ search: value === "documents" ? "documents" : undefined })} value={searchScope}>
-                                    <TabsList variant="line">
-                                        <TabsTrigger value="transcripts">Transcripts</TabsTrigger>
-                                        <TabsTrigger value="documents">Documents</TabsTrigger>
-                                    </TabsList>
-                                </Tabs>
+                            <Section
+                                actions={(
+                                    <SegmentedButtons
+                                        aria-label="Search in"
+                                        onChange={value => setSearch({ search: value === "documents" ? "documents" : undefined })}
+                                        options={SEARCH_SCOPES}
+                                        value={searchScope}
+                                    />
+                                )}
+                                title="Search"
+                            >
                                 {searchScope === "transcripts"
                                     ? <AskThisCall scope={{ identifier: ticker, kind: "company" }} />
                                     : <DocumentSearch identifier={ticker} />}
-                            </div>
+                            </Section>
 
-                            <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex flex-col gap-4">
                                 <Tabs onValueChange={value => setSearch({ tab: value as CallsTab })} value={tab}>
-                                    <TabsList variant="line">
+                                    <TabsList aria-label="Calls" variant="line">
                                         <TabsTrigger value="upcoming">
                                             Upcoming
                                             {" "}
-                                            <span className="text-muted-foreground">{counts.upcoming}</span>
+                                            <span className="text-muted-foreground tabular-nums">{counts.upcoming}</span>
                                         </TabsTrigger>
                                         <TabsTrigger value="past">
                                             Past
                                             {" "}
-                                            <span className="text-muted-foreground">{counts.past}</span>
+                                            <span className="text-muted-foreground tabular-nums">{counts.past}</span>
                                         </TabsTrigger>
                                     </TabsList>
                                 </Tabs>
-                                <FilterSelect
-                                    aria-label="Fiscal year"
-                                    className="w-[150px]"
-                                    onValueChange={value => setSearch({ fiscalYear: value === "all" ? undefined : Number(value) })}
-                                    options={yearOptions}
-                                    value={fiscalYear ? String(fiscalYear) : "all"}
+
+                                <FilterBar activeCount={fiscalYear ? 1 : 0} onReset={() => setSearch({ fiscalYear: undefined })}>
+                                    <FilterField label="Fiscal year">
+                                        {id => (
+                                            <FilterSelect
+                                                aria-label="Fiscal year"
+                                                className="w-full"
+                                                id={id}
+                                                onValueChange={value => setSearch({ fiscalYear: value === "all" ? undefined : Number(value) })}
+                                                options={yearOptions}
+                                                value={fiscalYear ? String(fiscalYear) : "all"}
+                                            />
+                                        )}
+                                    </FilterField>
+                                </FilterBar>
+
+                                <DataTable
+                                    columns={shownColumns}
+                                    emptyText={tab === "upcoming" ? "No upcoming calls." : "No past calls."}
+                                    exportConfig={{ dataset: `calls-${tab}`, scope: ticker }}
+                                    hasNextPage={tabHasMore(tab, past.length, hasNextPage)}
+                                    isFetchingNextPage={isFetchingNextPage}
+                                    isLoading={isLoading}
+                                    onLoadMore={() => void fetchNextPage()}
+                                    operationId="listEvents"
+                                    rows={events}
                                 />
                             </div>
-
-                            <DataTable
-                                columns={shownColumns}
-                                emptyText={tab === "upcoming" ? "No upcoming calls." : "No past calls."}
-                                exportConfig={{ dataset: `calls-${tab}`, scope: ticker }}
-                                hasNextPage={tabHasMore(tab, past.length, hasNextPage)}
-                                isFetchingNextPage={isFetchingNextPage}
-                                isLoading={isLoading}
-                                onLoadMore={() => void fetchNextPage()}
-                                operationId="listEvents"
-                                rows={events}
-                            />
-                        </div>
+                        </>
                     )}
         </div>
     );

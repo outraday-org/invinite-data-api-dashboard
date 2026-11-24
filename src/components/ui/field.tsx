@@ -27,7 +27,7 @@ function FieldLegend({
 }: React.ComponentProps<"legend"> & { variant?: "label" | "legend" }) {
     return (
         <legend
-            className={cn("mb-2 font-medium data-[variant=label]:text-xs/relaxed data-[variant=legend]:text-sm", className)}
+            className={cn("mb-2 font-medium data-[variant=label]:text-sm data-[variant=legend]:text-sm", className)}
             data-slot="field-legend"
             data-variant={variant}
             {...props}
@@ -94,7 +94,7 @@ function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
     return (
         <p
             className={cn(
-                "text-muted-foreground text-left text-xs/relaxed [[data-variant=legend]+&]:-mt-1.5 leading-normal font-normal group-has-data-[orientation=horizontal]/field:text-balance",
+                "text-muted-foreground text-left text-sm [[data-variant=legend]+&]:-mt-1.5 leading-normal font-normal group-has-data-[orientation=horizontal]/field:text-balance",
                 "last:mt-0 nth-last-2:-mt-1",
                 "[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4",
                 className,
@@ -146,7 +146,7 @@ function FieldError({
 
     return (
         <div
-            className={cn("text-destructive text-xs/relaxed font-normal", className)}
+            className={cn("text-destructive text-xs font-normal", className)}
             data-slot="field-error"
             role="alert"
             {...props}
@@ -182,7 +182,7 @@ function FieldSeparator({
 }) {
     return (
         <div
-            className={cn("-my-2 h-5 text-xs/relaxed group-data-[variant=outline]/field-group:-mb-2 relative", className)}
+            className={cn("-my-2 h-5 text-xs group-data-[variant=outline]/field-group:-mb-2 relative", className)}
             data-content={!!children}
             data-slot="field-separator"
             {...props}
@@ -204,7 +204,7 @@ function FieldTitle({ className, ...props }: React.ComponentProps<"div">) {
     return (
         <div
             className={cn(
-                "gap-2 text-xs/relaxed font-medium group-data-[disabled=true]/field:opacity-50 flex w-fit items-center leading-snug",
+                "gap-2 text-sm font-medium group-data-[disabled=true]/field:opacity-50 flex w-fit items-center leading-snug",
                 className,
             )}
             data-slot="field-label"

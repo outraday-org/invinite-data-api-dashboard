@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 import type * as React from "react";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { LandingData } from "@/routes/index";
 
 import { CALENDAR_EVENT } from "@/lib/earnings/calendar-fixtures";
+import { API_FAMILIES, API_FAMILY_OPERATIONS } from "@/lib/navigation";
 import { V2_IPOS } from "@/lib/sec/v2-fixtures";
+import { useRequestPanelStore } from "@/lib/stores/request-panel-store";
 import { LandingView } from "@/routes/index";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -40,14 +42,38 @@ const data: LandingData = {
 };
 
 describe("landing page (with a valid key)", () => {
-    it("a failed block says so instead of \"nothing ahead\"", () => {
+    it("the intro's \"API\" button opens the request panel", () => {
+        useRequestPanelStore.setState({ open: false });
+
+        render(<LandingView {...data} />);
+
+        expect(screen.getByRole("heading", { level: 1, name: "Invinite Data API, live" })).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: "API" }));
+
+        expect(useRequestPanelStore.getState().open).toBe(true);
+    });
+
+    it("a failed list says so instead of \"nothing ahead\"; the other lists still render", () => {
         render(<LandingView {...data} holiday={{ data: null, failed: true, isLoading: false }} ipos={{ data: [], failed: true, isLoading: false }} />);
 
-        expect(screen.getAllByText(/Could not load this block/)).toHaveLength(2);
+        expect(screen.getAllByText(/Could not load this list/)).toHaveLength(2);
 
         expect(screen.queryByText("No holiday announced ahead.")).toBeNull();
 
         expect(screen.queryByText("No IPO with a listing date ahead.")).toBeNull();
+
+        expect(within(screen.getByTestId("landing-live")).getByText("MLCO")).toBeInTheDocument();
+    });
+
+    it("a failed calendar request fails the two earnings columns only", () => {
+        render(<LandingView {...data} week={{ data: [], failed: true, isLoading: false }} />);
+
+        expect(within(screen.getByTestId("landing-today-column")).getByText(/Could not load this list/)).toBeInTheDocument();
+
+        expect(within(screen.getByTestId("landing-week-column")).getByText(/Could not load this list/)).toBeInTheDocument();
+
+        expect(within(screen.getByTestId("landing-live-column")).queryByText(/Could not load/)).toBeNull();
     });
 
     it("live calls, today's and the week's earnings, next IPOs and the next holiday from the answers", () => {
@@ -55,36 +81,54 @@ describe("landing page (with a valid key)", () => {
 
         expect(within(screen.getByTestId("landing-live")).getByText("MLCO")).toBeInTheDocument();
 
-        const todayBlock = screen.getByText("Earnings today").closest("[data-slot=card]")!;
+        const todayColumn = screen.getByTestId("landing-today-column");
 
-        expect(within(todayBlock as HTMLElement).getByText("MLCO")).toBeInTheDocument();
+        expect(within(todayColumn).getByText("MLCO")).toBeInTheDocument();
 
-        const laterBlock = screen.getByText("Later this week").closest("[data-slot=card]")!;
+        expect(within(todayColumn).queryByText("LATER")).toBeNull();
 
-        expect(within(laterBlock as HTMLElement).getByText("LATER")).toBeInTheDocument();
+        expect(within(screen.getByTestId("landing-week-column")).getByText("LATER")).toBeInTheDocument();
 
         expect(within(screen.getByTestId("landing-ipos")).getByRole("link", { name: "NEWCO" })).toHaveAttribute("href", "/NEWCO");
 
         expect(within(screen.getByTestId("landing-holiday")).getByText("Thanksgiving Day")).toBeInTheDocument();
     });
 
-    it("the Browse cards come from the navigation table, each with its filter", () => {
+    it("empty lists say so in one line", () => {
+        render(<LandingView {...data} ipos={{ data: [], isLoading: false }} live={{ ...data.live, data: [] }} week={{ data: [], isLoading: false }} />);
+
+        expect(screen.getByText("No call is live right now.")).toBeInTheDocument();
+
+        expect(screen.getByText("No earnings call today.")).toBeInTheDocument();
+
+        expect(screen.getByText("No more calls this week.")).toBeInTheDocument();
+
+        expect(screen.getByText("No IPO with a listing date ahead.")).toBeInTheDocument();
+    });
+
+    it("what the API covers: one row per family, linking its page, the count from the operations table", () => {
         render(<LandingView {...data} />);
 
-        const cards = within(screen.getByTestId("browse-cards")).getAllByRole("link");
+        const rows = within(screen.getByTestId("api-families")).getAllByRole("link");
 
-        expect(cards.map(card => card.getAttribute("href"))).toEqual([
-            "/instruments?type=stock",
-            "/instruments?type=etf",
-            "/instruments?type=closed_end_fund",
-            "/instruments?type=etn",
-            "/funds?structure=registered_fund",
+        expect(rows).toHaveLength(API_FAMILIES.length);
+
+        expect(rows.map(row => row.getAttribute("href"))).toEqual([
+            "/live-calls",
+            "/filings",
+            "/AAPL/financials",
             "/institutions",
+            "/funds",
+            "/news-feed",
+            "/ipo-calendar",
             "/us-macro/inflation",
-            "/us-macro/gdp",
-            "/us-macro/labor",
-            "/us-macro/yield-curve",
+            "/alerts",
+            "/catalog",
         ]);
+
+        const counts = within(screen.getByTestId("api-families")).getAllByTestId("family-count").map(count => count.textContent);
+
+        expect(counts).toEqual(API_FAMILIES.map(family => `${API_FAMILY_OPERATIONS[family.id].length} operations`));
     });
 
     it("recently opened: instruments and institutions", () => {
@@ -95,9 +139,11 @@ describe("landing page (with a valid key)", () => {
         expect(recents).toEqual(["/AAPL", "/sec/102909"]);
     });
 
-    it("says so when nothing is live", () => {
-        render(<LandingView {...data} live={{ ...data.live, data: [] }} />);
+    it("loading lists show skeleton rows, not text", () => {
+        render(<LandingView {...data} live={{ ...data.live, data: [], isLoading: true }} week={{ data: [], isLoading: true }} />);
 
-        expect(screen.getByText("No call is live right now.")).toBeInTheDocument();
+        expect(screen.queryByText("No call is live right now.")).toBeNull();
+
+        expect(screen.queryByText("No earnings call today.")).toBeNull();
     });
 });

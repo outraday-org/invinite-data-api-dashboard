@@ -14,6 +14,7 @@ import { ALERT_FILING, ALERT_INDICATOR, ALERT_PRICE, ALERTS_PAGE_FIXTURE, BATCH_
 import { ApiRequestError } from "@/lib/api/errors";
 import { useAlertsInfinite } from "@/lib/api/queries";
 import { alertsRequest, Route } from "@/routes/alerts/index";
+import { activeAlertsTab } from "@/routes/alerts/route";
 
 const search = vi.hoisted(() => ({ value: {} as Record<string, unknown> }));
 
@@ -50,7 +51,7 @@ const selection = (patch: Partial<Parameters<typeof AlertsListView>[0]["selectio
 });
 
 describe("/alerts list (`GET /v1/alerts`)", () => {
-    it("one row per alert: type linking its page, what it watches, status, destinations, end user, fires, last fired; quota line", () => {
+    it("one row per alert: type linking its page, what it watches, status, destinations, end user, fires, last fired", () => {
         render(<AlertsListView selection={selection()} state={state()} />);
 
         const filing = screen.getByRole("link", { name: "SEC filing" });
@@ -71,7 +72,8 @@ describe("/alerts list (`GET /v1/alerts`)", () => {
 
         expect(screen.getByText("AAPL, MSFT, NVDA +1")).toBeInTheDocument();
 
-        expect(screen.getByTestId("alerts-quota")).toHaveTextContent("6 of 100 alerts in use · 1 of 10 script / indicator alerts · fire cap 1,000 a day (UTC)");
+        // The quota line is the list page's header meta (ui-redesign task 13), not part of the list.
+        expect(screen.queryByTestId("alerts-quota")).not.toBeInTheDocument();
     });
 
     it("a disabled alert names its reason on the status badge", () => {
@@ -112,16 +114,36 @@ describe("/alerts list (`GET /v1/alerts`)", () => {
         expect(screen.queryByText("No alert matches these filters.")).not.toBeInTheDocument();
     });
 
-    it("the account list: an empty text by whether a filter is set (F118)", () => {
+    it("the account list: a first-time invitation, or \"no match\" with Reset filters when a filter is set (F118)", () => {
         const empty = state({ pages: [{ ...ALERTS_PAGE_FIXTURE, data: [], has_more: false, next_cursor: null }] });
 
-        const { rerender } = render(<AlertsListView selection={selection()} state={empty} />);
+        const onResetFilters = vi.fn();
 
-        expect(screen.getByText("No alert yet: create one with New alert.")).toBeInTheDocument();
+        const { rerender } = render(<AlertsListView onResetFilters={onResetFilters} selection={selection()} state={empty} />);
 
-        rerender(<AlertsListView filtered selection={selection()} state={empty} />);
+        const invitation = screen.getByTestId("alerts-empty");
+
+        expect(within(invitation).getByRole("heading", { name: "No alert yet" })).toBeInTheDocument();
+
+        expect(within(invitation).getByRole("link", { name: "New alert" })).toHaveAttribute("href", "/alerts/new");
+
+        expect(within(invitation).getByRole("link", { name: "Read the webhook reference" })).toHaveAttribute("href", "/alerts/webhooks");
+
+        expect(screen.queryByRole("table")).toBeNull();
+
+        rerender(<AlertsListView filtered onResetFilters={onResetFilters} selection={selection()} state={empty} />);
 
         expect(screen.getByText("No alert matches these filters.")).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: "Reset filters" }));
+
+        expect(onResetFilters).toHaveBeenCalledTimes(1);
+    });
+
+    it("the bulk bar appears only while rows are selected", () => {
+        render(<AlertsListView selection={selection()} state={state()} />);
+
+        expect(screen.queryByTestId("bulk-bar")).toBeNull();
     });
 
     it("bulk results: per item, a partial failure visible with its reason", () => {
@@ -132,6 +154,20 @@ describe("/alerts list (`GET /v1/alerts`)", () => {
         expect(box).toHaveTextContent("2 of 3 done · 1 refused");
 
         expect(within(box).getByText(/Refused: not_found — No alert alt_gone on this account\./)).toBeInTheDocument();
+    });
+});
+
+describe("family tabs", () => {
+    it("the active tab: the sub-tab a page is or starts with; the form and an alert's page stay \"Alerts\"", () => {
+        expect(activeAlertsTab("/alerts")).toBe("/alerts");
+
+        expect(activeAlertsTab("/alerts/new")).toBe("/alerts");
+
+        expect(activeAlertsTab("/alerts/alt_123/")).toBe("/alerts");
+
+        expect(activeAlertsTab("/alerts/destinations/dst_1")).toBe("/alerts/destinations");
+
+        expect(activeAlertsTab("/alerts/users/team%2Fa")).toBe("/alerts/users");
     });
 });
 
@@ -163,6 +199,14 @@ describe("filters: every one goes to the API and lives in the URL", () => {
         expect(useAlertsInfinite).toHaveBeenLastCalledWith(expect.objectContaining({ destinationId: undefined, symbol: "AAPL" }));
 
         expect(screen.getByRole("heading", { name: "Alerts" })).toBeInTheDocument();
+
+        // The quota from the list's own first page, as the header's meta line.
+        expect(screen.getByTestId("alerts-quota")).toHaveTextContent("6 of 100 alerts in use · 1 of 10 script / indicator alerts · fire cap 1,000 a day (UTC)");
+
+        // Labelled filters; one set → Reset filters.
+        expect(screen.getByLabelText("Symbol")).toHaveValue("AAPL");
+
+        expect(screen.getByRole("button", { name: "Reset filters" })).toBeInTheDocument();
 
         search.value = {};
     });

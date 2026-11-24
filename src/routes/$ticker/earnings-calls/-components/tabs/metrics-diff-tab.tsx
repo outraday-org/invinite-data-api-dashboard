@@ -4,7 +4,8 @@ import * as React from "react";
 import type { V2Event, V2EventComparisonResponse, V2EventStatsResponse } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isNotFound } from "@/lib/api/errors";
 import { useV2EventComparison, useV2EventsInfinite, useV2EventStats } from "@/lib/api/queries";
@@ -58,15 +59,6 @@ const METRIC_ROWS: Array<{ label: string; value: (metrics: Metrics) => string }>
     { label: "Speakers", value: m => String(m.speaker_count) },
     { label: "Unattributed words", value: m => percent(m.unknown_speaker_word_share) },
 ];
-
-function Section({ children, title }: { children: React.ReactNode; title: string }) {
-    return (
-        <section className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium">{title}</h3>
-            {children}
-        </section>
-    );
-}
 
 function MetricsSection({ eventId }: Pick<CallTabProps, "eventId">) {
     const { data, error, isLoading } = useV2EventStats(eventId);
@@ -294,25 +286,19 @@ export function PriorPicker({
     return (
         <div className="flex flex-wrap items-center gap-2">
             <span className="text-muted-foreground">Compare with</span>
-            <Select
+            <DropdownSelect
+                aria-label="Compare with"
+                className="max-w-72"
+                label={label}
                 onOpenChange={onOpenChange}
-                onValueChange={value => onPriorChange(value === DERIVED_PRIOR || typeof value !== "string" ? undefined : value)}
+                onValueChange={value => onPriorChange(value === DERIVED_PRIOR ? undefined : value)}
+                options={[{ label: "Previous call", value: DERIVED_PRIOR }, ...calls.map(call => ({ label: priorLabel(call), value: call.event_id }))]}
+                size="sm"
                 value={prior ?? DERIVED_PRIOR}
             >
-                <SelectTrigger aria-label="Compare with" className="max-w-72" size="sm">
-                    <span className="truncate">{label}</span>
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value={DERIVED_PRIOR}>Previous call</SelectItem>
-                    {isLoading && <div className="text-muted-foreground px-2 py-1">Loading the earlier calls…</div>}
-                    {failed && <div className="text-muted-foreground px-2 py-1">The earlier calls could not be loaded.</div>}
-                    {calls.map(call => (
-                        <SelectItem key={call.event_id} value={call.event_id}>
-                            {priorLabel(call)}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+                {isLoading && <div className="text-muted-foreground px-2 py-1">Loading the earlier calls…</div>}
+                {failed && <div className="text-muted-foreground px-2 py-1">The earlier calls could not be loaded.</div>}
+            </DropdownSelect>
             <span className="text-muted-foreground">One comparison is derived per call: with its previous call.</span>
         </div>
     );

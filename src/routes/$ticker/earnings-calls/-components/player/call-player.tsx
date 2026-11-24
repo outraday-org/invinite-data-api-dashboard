@@ -212,7 +212,7 @@ export function CallPlayer({
     }
     else if (engine.state === "idle") {
         body = (
-            <Button onClick={engine.play} size="sm" type="button">
+            <Button className="max-sm:h-10" onClick={engine.play} size="sm" type="button">
                 <Play />
                 {playLabel}
             </Button>
@@ -251,9 +251,11 @@ export function CallPlayer({
         <div
             aria-label="Call player"
             className={cn(
-                "bg-background/95 sticky z-20 flex flex-col rounded-md border backdrop-blur transition-[padding]",
+                // No box (ui-redesign task 10): a top hairline; once pinned a bottom hairline and a shadow part it from the
+                // text scrolling under it. The background stays opaque enough to read the controls over the transcript.
+                "bg-background/95 sticky z-20 flex flex-col border-t backdrop-blur transition-[padding]",
                 STICKY_TOP_CLASS,
-                compact ? "gap-0.5 px-2 py-1 shadow-sm" : "gap-2 p-3",
+                compact ? "gap-0.5 border-b py-1 shadow-sm" : "gap-2 py-2.5",
             )}
             data-compact={compact || undefined}
             ref={barRef}

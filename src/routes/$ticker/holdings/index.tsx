@@ -4,22 +4,26 @@ import { z } from "zod";
 
 import type { V2FundWeightDimension } from "@/lib/api/types";
 
-import { FundCompositionList, FundWeightsBlock } from "@/components/sec/fund-views";
+import { TabStrip } from "@/components/navigation/tab-strip";
+import { FundCompositionList, FundSourceBadge, FundWeightsBlock } from "@/components/sec/fund-views";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { PageHeader } from "@/components/ui/page-header";
+import { Section } from "@/components/ui/section";
 import { listState } from "@/lib/api/list-state";
 import { useFundPositionsInfinite, useFundWeightsInfinite } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
 import { FUND_DIMENSION_LABELS, fundPickerDays } from "@/lib/sec/fund";
 import { IN_PLACE, optionalDay, optionalEnum } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const DIMENSIONS = ["sector", "country", "asset_class"] as const satisfies ReadonlyArray<V2FundWeightDimension>;
 
 const ALL_DIMENSIONS = "all";
 
+/** The weights' segmented control (`?dim=`): every dimension, or one. */
 const DIMENSION_OPTIONS: Array<{ label: string; value: typeof ALL_DIMENSIONS | V2FundWeightDimension }> = [
-    { label: "Every weight dimension", value: ALL_DIMENSIONS },
-    ...DIMENSIONS.map(dimension => ({ label: `${FUND_DIMENSION_LABELS[dimension]} weights`, value: dimension })),
+    { label: "All", value: ALL_DIMENSIONS },
+    ...DIMENSIONS.map(dimension => ({ label: FUND_DIMENSION_LABELS[dimension], value: dimension })),
 ];
 
 export const Route = createFileRoute("/$ticker/holdings/")({
@@ -66,21 +70,11 @@ function FundHoldingsPage() {
         return [{ label: "Freshest", value: FRESHEST }, ...days, ...(asOf && !days.some(entry => entry.value === asOf) ? [{ label: asOf, value: asOf }] : [])];
     }, [asOf, stored]);
 
+    const meta = holdings.data?.pages.at(0)?.meta;
+
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
             <PageHeader
-                actions={(
-                    <>
-                        <FilterSelect aria-label="As of" className="w-[260px]" onValueChange={setDay} options={options} value={day} />
-                        <FilterSelect
-                            aria-label="Weight dimension"
-                            className="w-[210px]"
-                            onValueChange={value => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, dim: value === ALL_DIMENSIONS ? undefined : value }) })}
-                            options={DIMENSION_OPTIONS}
-                            value={dim ?? ALL_DIMENSIONS}
-                        />
-                    </>
-                )}
                 description={(
                     <>
                         What this fund holds, from the issuer&apos;s own holdings file (daily or monthly) or else the fund&apos;s
@@ -90,16 +84,33 @@ function FundHoldingsPage() {
                 title="Holdings"
             />
 
-            <FundWeightsBlock
-                state={listState(weights)}
-            />
+            {/* The composition both sections show: its as-of (picker) and its source (badge). */}
+            <FilterBar activeCount={asOf ? 1 : 0} onReset={() => setDay(FRESHEST)}>
+                <FilterField label="As of">
+                    {id => <FilterSelect aria-label="As of" className="w-full" id={id} onValueChange={setDay} options={options} value={day} />}
+                </FilterField>
+                <FilterBar.Trailing>
+                    <FundSourceBadge asOf={meta?.as_of} source={meta?.source} />
+                </FilterBar.Trailing>
+            </FilterBar>
 
-            <div className="relative">
-                <FundCompositionList
-                    exportScope={ticker}
-                    state={listState(holdings)}
-                />
-            </div>
+            <Section
+                actions={(
+                    <TabStrip
+                        aria-label="Weight dimension"
+                        onSelect={value => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, dim: value === ALL_DIMENSIONS ? undefined : value }) })}
+                        options={DIMENSION_OPTIONS}
+                        value={dim ?? ALL_DIMENSIONS}
+                    />
+                )}
+                title="Weights"
+            >
+                <FundWeightsBlock state={listState(weights)} />
+            </Section>
+
+            <Section title="Positions">
+                <FundCompositionList exportScope={ticker} state={listState(holdings)} />
+            </Section>
         </div>
     );
 }

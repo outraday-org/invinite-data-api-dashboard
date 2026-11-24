@@ -21,10 +21,13 @@ const ITEMS: Array<{ flag: keyof AvailabilityFlags; icon: LucideIcon; label: str
     { flag: "has_documents", icon: FolderOpen, label: "Documents" },
 ];
 
-/** One icon per material of a call; muted when the API's `has_*` flag is false. */
-export function AvailabilityIcons({ event }: { event: AvailabilityFlags }) {
+/**
+ * One icon per material of a call; muted when the API's `has_*` flag is false. `labelled` (the call header) adds the
+ * word beside each icon from 640 px; below it, and in the lists, the icon alone carries the name (label + tooltip).
+ */
+export function AvailabilityIcons({ event, labelled = false }: { event: AvailabilityFlags; labelled?: boolean }) {
     return (
-        <div className="flex items-center gap-1.5">
+        <div className={cn("flex items-center", labelled ? "flex-wrap gap-x-3 gap-y-1" : "gap-1.5")}>
             {ITEMS.map(({ flag, icon: Icon, label }) => {
                 const available = event[flag];
 
@@ -32,7 +35,7 @@ export function AvailabilityIcons({ event }: { event: AvailabilityFlags }) {
                     <Tooltip key={flag}>
                         <TooltipTrigger
                             aria-label={`${label}: ${available ? "available" : "not available"}`}
-                            render={<span />}
+                            render={<span className={cn(labelled && "inline-flex items-center gap-1", labelled && !available && "text-muted-foreground/60")} />}
                         >
                             <Icon
                                 className={cn(
@@ -40,6 +43,7 @@ export function AvailabilityIcons({ event }: { event: AvailabilityFlags }) {
                                     available ? "text-foreground" : "text-muted-foreground/40",
                                 )}
                             />
+                            {labelled && <span aria-hidden className="max-sm:hidden">{label}</span>}
                         </TooltipTrigger>
                         <TooltipContent>
                             {available ? `${label} available` : `${label}: not available`}

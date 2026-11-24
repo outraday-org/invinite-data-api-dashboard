@@ -20,16 +20,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copyable } from "@/components/ui/copy-button";
 import { DataTable } from "@/components/ui/data-table";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { Notice } from "@/components/ui/notice";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
 import { fiscalYearEndText, formatDay, formatMoneyCompact } from "@/lib/format";
 import { netAssetsScopeText } from "@/lib/sec/fund";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { listOf, reviewStatusOf, scalarEntries } from "@/lib/sec/source";
 import { formatFractionPercentCompact, formatNumberEn } from "@/lib/utils";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 import type { SecPanelTarget } from "./sec-source-panel";
 
@@ -101,22 +103,48 @@ export function SecFilerHeader({ cik, data, error, isLoading }: { cik: string; d
 
     const facts = stated.flatMap(([key, value]): Array<[string, string]> => (value ? [[key, value]] : []));
 
+    const name = data?.name || `CIK ${cik}`;
+
+    // The ticker header's visual language (ui-redesign task 9): the name as the page's h1, the listing and phase as
+    // badges, the CIK with its copy button, the stated facts as one muted line.
     return (
-        <PageHeader
-            description={(
-                <div className="flex flex-col gap-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Copyable className="tabular-nums" label="Copy CIK" value={data?.cik ?? cik}>{`CIK ${data?.cik ?? cik}`}</Copyable>
-                        {data?.listing
-                            ? <Badge variant="secondary">{data.listing.exchange ? `${data.listing.ticker} · ${data.listing.exchange}` : data.listing.ticker}</Badge>
-                            : <Badge variant="outline">No ticker</Badge>}
-                        {data?.phase && <Badge variant="outline">{PHASE_LABELS[data.phase]}</Badge>}
-                    </div>
-                    <Facts entries={facts} />
+        <header className="flex flex-col gap-2 pt-1" data-testid="filer-identity">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <h1 className="min-w-0 text-xl font-bold tracking-tight wrap-break-word lg:text-2xl">{name}</h1>
+                <div className="flex flex-wrap items-center gap-1.5">
+                    {data?.listing
+                        ? <Badge variant="secondary">{data.listing.exchange ? `${data.listing.ticker} · ${data.listing.exchange}` : data.listing.ticker}</Badge>
+                        : <Badge variant="outline">No ticker</Badge>}
+                    {data?.phase && <Badge variant="outline">{PHASE_LABELS[data.phase]}</Badge>}
                 </div>
-            )}
-            title={data?.name || `CIK ${cik}`}
-        />
+            </div>
+            <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1">
+                <Copyable label="Copy CIK" value={data?.cik ?? cik}>{`CIK ${data?.cik ?? cik}`}</Copyable>
+                <Facts entries={facts} />
+            </div>
+        </header>
+    );
+}
+
+/**
+ * The filer page's blocks as an in-page tab row under its header (ui-redesign task 9): the same list as the sidebar's
+ * filer context (`filerContextAnchors`), plain `#id` links (no scroll tracking).
+ */
+export function FilerAnchorRow({ anchors }: { anchors: ReadonlyArray<{ id: string; label: string }> }) {
+    if (anchors.length < 2) return null;
+
+    return (
+        <nav aria-label="On this page" className="-mx-4 flex gap-1 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0" data-testid="filer-anchors">
+            {anchors.map(anchor => (
+                <a
+                    className="text-muted-foreground hover:text-foreground flex h-9 shrink-0 items-center rounded-sm px-2.5 whitespace-nowrap transition-colors max-sm:h-10"
+                    href={`#${anchor.id}`}
+                    key={anchor.id}
+                >
+                    {anchor.label}
+                </a>
+            ))}
+        </nav>
     );
 }
 
@@ -152,7 +180,7 @@ function TextList({ empty, items, title }: { empty: string; items: ReadonlyArray
             {items.length === 0
                 ? <div className="text-muted-foreground text-xs">{empty}</div>
                 : (
-                        <ul className="flex flex-col gap-0.5 text-xs">
+                        <ul className="flex flex-col gap-0.5">
                             {items.map(item => <li key={item.key}>{item.text}</li>)}
                         </ul>
                     )}
@@ -268,47 +296,45 @@ export function SecFundView({ data }: { data: null | V2FilerResponse }) {
                 ]}
             />
             {fund.series.length === 0
-                ? <div className="text-muted-foreground text-xs">No fund series.</div>
+                ? <div className="text-muted-foreground">No fund series.</div>
                 : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-xs">
-                                <thead className="text-muted-foreground text-left">
-                                    <tr>
-                                        <th className="p-1 font-normal">Series</th>
-                                        <th className="p-1 font-normal">Exchange</th>
-                                        <th className="p-1 font-normal">Class tickers</th>
-                                        <th className="p-1 text-right font-normal">Expense ratio</th>
-                                        <th className="p-1 font-normal">Net assets</th>
-                                        <th className="p-1 text-right font-normal">1y</th>
-                                        <th className="p-1 text-right font-normal">5y</th>
-                                        <th className="p-1 text-right font-normal">10y</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {fund.series.map((series) => {
-                                        const returns = returnsOf(series);
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Series</TableHead>
+                                    <TableHead>Exchange</TableHead>
+                                    <TableHead>Class tickers</TableHead>
+                                    <TableHead className="text-right">Expense ratio</TableHead>
+                                    <TableHead>Net assets</TableHead>
+                                    <TableHead className="text-right">1y</TableHead>
+                                    <TableHead className="text-right">5y</TableHead>
+                                    <TableHead className="text-right">10y</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {fund.series.map((series) => {
+                                    const returns = returnsOf(series);
 
-                                        const tickers = series.share_classes.flatMap(entry => (entry.ticker ? [entry.ticker] : []));
+                                    const tickers = series.share_classes.flatMap(entry => (entry.ticker ? [entry.ticker] : []));
 
-                                        return (
-                                            <tr key={series.fund_key}>
-                                                <td className="p-1">
-                                                    <span className="font-medium" title={series.fund_key}>{seriesName(series, data)}</span>
-                                                    {series.is_etf && <Badge className="ml-1" variant="outline">ETF</Badge>}
-                                                </td>
-                                                <td className="p-1">{series.exchange ?? "—"}</td>
-                                                <td className="p-1">{tickers.length > 0 ? tickers.join(", ") : "—"}</td>
-                                                <td className="p-1 text-right tabular-nums">{fraction(series.expense_ratio_net)}</td>
-                                                <td className="p-1 tabular-nums">{netAssetsText(series)}</td>
-                                                <td className="p-1 text-right tabular-nums">{fraction(returns?.one_year ?? null)}</td>
-                                                <td className="p-1 text-right tabular-nums">{fraction(returns?.five_year ?? null)}</td>
-                                                <td className="p-1 text-right tabular-nums">{fraction(returns?.ten_year ?? null)}</td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                                    return (
+                                        <TableRow key={series.fund_key}>
+                                            <TableCell>
+                                                <span className="font-medium" title={series.fund_key}>{seriesName(series, data)}</span>
+                                                {series.is_etf && <Badge className="ml-1" variant="outline">ETF</Badge>}
+                                            </TableCell>
+                                            <TableCell>{series.exchange ?? "—"}</TableCell>
+                                            <TableCell>{tickers.length > 0 ? tickers.join(", ") : "—"}</TableCell>
+                                            <TableCell className="text-right tabular-nums">{fraction(series.expense_ratio_net)}</TableCell>
+                                            <TableCell className="tabular-nums">{netAssetsText(series)}</TableCell>
+                                            <TableCell className="text-right tabular-nums">{fraction(returns?.one_year ?? null)}</TableCell>
+                                            <TableCell className="text-right tabular-nums">{fraction(returns?.five_year ?? null)}</TableCell>
+                                            <TableCell className="text-right tabular-nums">{fraction(returns?.ten_year ?? null)}</TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
                     )}
         </section>
     );
@@ -533,54 +559,56 @@ export function SecFilingsView({
 
     return (
         <section aria-label="Filings" className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-                <FilterSelect aria-label="Form type" className="w-[200px]" onValueChange={value => onFormChange(value === "all" ? null : value)} options={options} value={form ?? "all"} />
-            </div>
+            <FilterBar activeCount={form ? 1 : 0} onReset={() => onFormChange(null)}>
+                <FilterField label="Form type">
+                    {id => <FilterSelect aria-label="Form type" className="w-full" id={id} onValueChange={value => onFormChange(value === "all" ? null : value)} options={options} value={form ?? "all"} />}
+                </FilterField>
+            </FilterBar>
             <SecReadinessNotice coverage={pages.at(-1)?.meta.coverage} />
             {filings.length === 0
-                ? (isV2GenuineEmpty(first.meta.coverage) && <div className="text-muted-foreground text-xs">No filings.</div>)
+                ? (isV2GenuineEmpty(first.meta.coverage) && <div className="text-muted-foreground">No filings.</div>)
                 : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-xs">
-                                <thead className="text-muted-foreground text-left">
-                                    <tr>
-                                        <th className="p-1 font-normal">Form</th>
-                                        <th className="p-1 font-normal">Filed</th>
-                                        <th className="p-1 font-normal">Period</th>
-                                        <th className="p-1 font-normal">Accession</th>
-                                        <th className="p-1 font-normal">Roles</th>
-                                        <th className="p-1" />
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filings.map(filing => (
-                                        <tr key={filing.accession}>
-                                            <td className="p-1 font-medium">{filing.form}</td>
-                                            <td className="p-1 tabular-nums">{formatDay(filing.filing_date)}</td>
-                                            <td className="p-1 tabular-nums">{formatDay(filing.report_date)}</td>
-                                            <td className="p-1 tabular-nums"><Copyable label="Copy accession number" value={filing.accession} /></td>
-                                            <td className="p-1">{filing.roles.map(filingRoleLabel).join(", ") || "—"}</td>
-                                            <td className="flex items-center justify-end gap-2 p-1">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Form</TableHead>
+                                    <TableHead>Filed</TableHead>
+                                    <TableHead>Period</TableHead>
+                                    <TableHead>Accession</TableHead>
+                                    <TableHead>Roles</TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {filings.map(filing => (
+                                    <TableRow key={filing.accession}>
+                                        <TableCell className="font-medium">{filing.form}</TableCell>
+                                        <TableCell className="tabular-nums">{formatDay(filing.filing_date)}</TableCell>
+                                        <TableCell className="tabular-nums">{formatDay(filing.report_date)}</TableCell>
+                                        <TableCell><Copyable label="Copy accession number" value={filing.accession} /></TableCell>
+                                        <TableCell>{filing.roles.map(filingRoleLabel).join(", ") || "—"}</TableCell>
+                                        <TableCell className="py-1">
+                                            <div className="flex items-center justify-end gap-1">
                                                 {filing.edgar_index_url.startsWith("https://www.sec.gov/") && (
-                                                    <a className="underline-offset-4 hover:underline" href={filing.edgar_index_url} rel="noopener noreferrer" target="_blank">
+                                                    <a className="px-2 underline-offset-4 hover:underline" href={filing.edgar_index_url} rel="noopener noreferrer" target="_blank">
                                                         EDGAR
                                                     </a>
                                                 )}
                                                 <Button
                                                     onClick={() => onOpen({ accession: filing.accession, kind: "filing", title: `${filing.form} · ${filing.accession}` })}
-                                                    size="xs"
+                                                    size="sm"
                                                     type="button"
-                                                    variant="outline"
+                                                    variant="ghost"
                                                 >
                                                     <FileText />
                                                     Documents
                                                 </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     )}
             {error ? <SecReadinessNotice error={error} title="Failed to load more filings" /> : null}
             {hasNextPage && (
@@ -659,7 +687,6 @@ export function SecPortfolioView({
     return (
         <section aria-label="13F portfolio" className="flex flex-col gap-2">
             <SecReadinessNotice coverage={pages.at(-1)?.meta.coverage} />
-            {first && <V2MetaLine meta={first.meta} />}
             {filing && (
                 <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs" data-testid="portfolio-filing">
                     <span>{`13F filed ${formatDay(filing.filing_date)}`}</span>
@@ -678,6 +705,7 @@ export function SecPortfolioView({
                 onLoadMore={onMore}
                 operationId="listFilerHoldings"
                 rows={rows}
+                toolbarMeta={first && <V2MetaLine meta={first.meta} />}
             />
             {error ? <SecReadinessNotice error={error} title="Failed to load more positions" /> : null}
         </section>

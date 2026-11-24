@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { DASH, fiscalYearEndText, formatDay, formatInstant, formatMoney, formatMoneyCompact, formatNumber, formatShares } from "@/lib/format";
+import { DASH, fiscalYearEndText, formatDay, formatDayTimeShort, formatInstant, formatInstantShort, formatMoney, formatMoneyCompact, formatNumber, formatShares } from "@/lib/format";
 import { pageTitle } from "@/lib/layout";
 
 describe("formatDay", () => {
@@ -36,6 +36,42 @@ describe("formatInstant", () => {
         expect(formatInstant("2026-10-29")).toBe("Oct 29, 2026");
 
         expect(formatInstant(null)).toBe(DASH);
+    });
+});
+
+describe("formatDayTimeShort", () => {
+    it("the day and the short time on one line; a date-only string is its day", () => {
+        expect(formatDayTimeShort("2026-11-24T18:00:00.000Z", "America/New_York")).toBe("Nov 24, 2026 · 1:00 PM EST");
+
+        expect(formatDayTimeShort("2026-11-24T23:30:00.000Z", "Europe/Berlin")).toBe("Nov 25, 2026 · 12:30 AM CET");
+
+        expect(formatDayTimeShort("2026-10-29")).toBe("Oct 29, 2026");
+
+        expect(formatDayTimeShort(null)).toBe(DASH);
+
+        expect(formatDayTimeShort("soon")).toBe("soon");
+    });
+});
+
+describe("formatInstantShort", () => {
+    it("the time with the zone's short name: American (en-US) and European (en-GB) names", () => {
+        expect(formatInstantShort("2026-11-24T18:00:00.000Z", "America/New_York")).toBe("1:00 PM EST");
+
+        expect(formatInstantShort("2026-11-24T12:00:00.000Z", "Europe/Berlin")).toBe("1:00 PM CET");
+
+        expect(formatInstantShort("2026-11-24T12:00:00.000Z", "UTC")).toBe("12:00 PM UTC");
+    });
+
+    it("a zone without a short name shows its offset", () => {
+        expect(formatInstantShort("2026-11-24T12:00:00.000Z", "Asia/Kolkata")).toBe("5:30 PM GMT+5:30");
+    });
+
+    it("a date-only string is its day; absent = dash, unparsable = as given", () => {
+        expect(formatInstantShort("2026-10-29")).toBe("Oct 29, 2026");
+
+        expect(formatInstantShort(null)).toBe(DASH);
+
+        expect(formatInstantShort("soon")).toBe("soon");
     });
 });
 

@@ -3,7 +3,7 @@ import * as React from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { AlertsState } from "@/components/alerts/alert-parts";
+import { AlertsState, MoreActionsMenu } from "@/components/alerts/alert-parts";
 import { ScriptDeleteConflict, ScriptVersionsList, ScriptVersionView } from "@/components/alerts/script-detail-view";
 import { ScriptUploadDialog } from "@/components/alerts/script-upload-dialog";
 import { Button } from "@/components/ui/button";
@@ -94,18 +94,21 @@ function ScriptPage() {
             <PageHeader
                 actions={(
                     <div className="flex flex-wrap items-center gap-2" data-testid="script-actions">
-                        <Button disabled={full} onClick={() => setUploading(true)} size="sm" title={full ? `A script has at most ${SCRIPT_VERSIONS_MAX} versions` : undefined} type="button" variant="outline">
+                        <Button disabled={full} onClick={() => setUploading(true)} title={full ? `A script has at most ${SCRIPT_VERSIONS_MAX} versions` : undefined} type="button" variant="outline">
                             {full ? `${SCRIPT_VERSIONS_MAX} of ${SCRIPT_VERSIONS_MAX} versions — limit reached` : "Upload new version"}
                         </Button>
-                        <Button disabled={remove.isPending} onClick={() => setConfirmDelete(true)} size="sm" type="button" variant="destructive">Delete…</Button>
+                        <MoreActionsMenu
+                            actions={[{ destructive: true, disabled: remove.isPending, label: "Delete…", onSelect: () => setConfirmDelete(true) }]}
+                            disabled={remove.isPending}
+                            label={`More actions for ${loaded.name}`}
+                        />
                     </div>
                 )}
-                description={(
-                    <span>
-                        {loaded.description ?? "No description."}
-                        {" · "}
+                description={loaded.description ?? "No description."}
+                meta={(
+                    <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="font-mono">{loaded.id}</span>
-                        {` · ${loaded.version_count} of ${SCRIPT_VERSIONS_MAX} versions · `}
+                        <span>{`· ${loaded.version_count} of ${SCRIPT_VERSIONS_MAX} versions ·`}</span>
                         <Link className="text-primary underline-offset-4 hover:underline" search={{ type: "script" }} to="/alerts">Script alerts</Link>
                     </span>
                 )}
@@ -117,7 +120,7 @@ function ScriptPage() {
                 : versions.isLoading
                     ? <Skeleton className="h-40 w-full" />
                     : (
-                            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_minmax(0,1fr)]">
+                            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[15rem_minmax(0,1fr)]">
                                 <ScriptVersionsList onSelect={pick} selected={selected?.version ?? null} versions={list} />
                                 {selected ? <ScriptVersionView scriptId={loaded.id} version={selected} /> : <p className="text-muted-foreground">No version stored.</p>}
                             </div>

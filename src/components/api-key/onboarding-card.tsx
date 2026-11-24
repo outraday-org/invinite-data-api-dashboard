@@ -1,6 +1,7 @@
 import { KeyRound } from "lucide-react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageContainer } from "@/components/ui/page-container";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import { ApiKeyInlineField } from "./api-key-inline";
@@ -20,7 +21,7 @@ export function OnboardingCard({ refused }: { refused: boolean }) {
     const hasKey = useApiKeyStore(s => s.hasHydrated && Boolean(s.apiKey));
 
     return (
-        <div className="mx-auto flex w-full max-w-2xl flex-col gap-4 px-4 py-10" data-testid="onboarding-card">
+        <PageContainer data-testid="onboarding-card" width="narrow">
             <Card>
                 <CardHeader className="gap-2">
                     <CardTitle className="flex items-center gap-2 text-base">
@@ -43,6 +44,6 @@ export function OnboardingCard({ refused }: { refused: boolean }) {
                     </div>
                 </CardContent>
             </Card>
-        </div>
+        </PageContainer>
     );
 }

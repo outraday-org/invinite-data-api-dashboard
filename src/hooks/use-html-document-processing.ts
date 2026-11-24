@@ -8,7 +8,10 @@ type UseHtmlDocumentProcessingParams = {
     url: string;
 };
 
-/** Invinite's brand green (the app's `--brand`); the framed document has none of this app's CSS variables. */
+/**
+ * Invinite's brand green: the light `--brand` (#218635) of `src/styles.css`. A literal on purpose — it is written into
+ * the framed document's `srcDoc`, where `var(--brand)` does not exist; change it with the token.
+ */
 export const HIGHLIGHT_GREEN = "oklch(0.545 0.149 146.3)";
 
 /** The style marking `id`: an attribute selector with the id as a CSS string (any character is safe inside it). */

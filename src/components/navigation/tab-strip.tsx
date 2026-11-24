@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import { segmentClass, SEGMENTED_GROUP_CLASS } from "@/components/ui/segmented-buttons";
 import { cn } from "@/lib/utils";
 
 export type TabStripOption<T extends string> = { count?: string; label: string; value: T };
@@ -7,6 +8,8 @@ export type TabStripOption<T extends string> = { count?: string; label: string; 
 /**
  * A row of exclusive choices kept in the URL by the page (a tab, a window, a pill): `role="tablist"` with one
  * `aria-selected` tab, ←/→ move and select, Home / End jump. The page decides what a value means (`onSelect`).
+ * Looks like a quiet segmented control (28 px, 36 px touch targets below 640 px; the app's one focus outline); the line
+ * tabs of `ui/tabs.tsx` are the in-page tab bars.
  */
 export function TabStrip<T extends string>({
     "aria-label": ariaLabel,
@@ -42,7 +45,7 @@ export function TabStrip<T extends string>({
     return (
         <div
             aria-label={ariaLabel}
-            className={cn("bg-muted text-muted-foreground inline-flex w-fit max-w-full flex-wrap items-center gap-0.5 rounded-lg p-[3px]", className)}
+            className={cn(SEGMENTED_GROUP_CLASS, "max-w-full flex-wrap", className)}
             role="tablist"
         >
             {options.map((option, index) => {
@@ -51,10 +54,7 @@ export function TabStrip<T extends string>({
                 return (
                     <button
                         aria-selected={selected}
-                        className={cn(
-                            "inline-flex h-6 items-center gap-1 rounded-md px-2 text-xs font-medium whitespace-nowrap transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                            selected ? "bg-background text-foreground shadow-sm" : "hover:text-foreground",
-                        )}
+                        className={segmentClass(selected)}
                         key={option.value}
                         onClick={() => onSelect(option.value)}
                         onKeyDown={onKeyDown}

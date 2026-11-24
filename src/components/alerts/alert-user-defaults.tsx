@@ -7,6 +7,7 @@ import type { AlertUserDefaults } from "@/lib/api/types";
 import { AlertsState } from "@/components/alerts/alert-parts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fromDefaults, LIMIT_SPECS, limitValueText, toDefaultsBody } from "@/lib/alerts/alert-users";
 import { errorDescription } from "@/lib/api/errors";
@@ -55,15 +56,15 @@ export function AlertUserDefaultsView({
             <dl className="grid gap-3 sm:grid-cols-3">
                 {LIMIT_SPECS.map(spec => (
                     <div className="flex min-w-0 flex-col gap-1" data-field={`default-${spec.field}`} key={spec.field}>
-                        <dt className="font-medium">
+                        <dt className="text-sm font-medium">
                             {editing ? <label htmlFor={`default-${spec.field}`}>{spec.label}</label> : spec.label}
                         </dt>
                         <dd className="flex flex-col gap-1">
                             {editing
                                 ? <Input id={`default-${spec.field}`} inputMode="numeric" onChange={event => onChange({ ...state, [spec.field]: event.target.value })} placeholder="No limit" value={state[spec.field]} />
                                 : <span className="text-sm tabular-nums">{limitValueText(defaults[spec.field])}</span>}
-                            <span className="text-muted-foreground">{spec.help}</span>
-                            {errors[spec.field] && <span className="text-destructive" role="alert">{errors[spec.field]}</span>}
+                            <span className="text-muted-foreground text-xs">{spec.help}</span>
+                            {errors[spec.field] && <span className="text-destructive text-xs" role="alert">{errors[spec.field]}</span>}
                         </dd>
                     </div>
                 ))}
@@ -78,7 +79,7 @@ export function AlertUserDefaultsView({
                             </>
                         )
                     : <Button onClick={onEdit} size="sm" type="button" variant="outline">Edit defaults</Button>}
-                <span className="text-muted-foreground">
+                <span className="text-muted-foreground text-xs">
                     {defaults.updated_at ? `Last changed ${formatInstant(defaults.updated_at)}.` : "Never set."}
                     {" A default lowered below an end user's count keeps its alerts and refuses new ones."}
                 </span>
@@ -130,11 +131,7 @@ export function AlertUserDefaultsPanel() {
     };
 
     return (
-        <section aria-labelledby="alert-user-defaults-title" className="flex scroll-mt-24 flex-col gap-3 rounded-xl border p-4" id={DEFAULTS_ANCHOR}>
-            <div className="flex flex-col gap-1">
-                <h3 className="text-sm font-semibold" id="alert-user-defaults-title">End-user defaults</h3>
-                <p className="text-muted-foreground">The limits of every end user without its own value, and of every new one. Empty = no limit.</p>
-            </div>
+        <Section className="scroll-mt-24" description="The limits of every end user without its own value, and of every new one. Empty = no limit." id={DEFAULTS_ANCHOR} title="End-user defaults">
             {loaded
                 ? (
                         <AlertUserDefaultsView
@@ -158,6 +155,6 @@ export function AlertUserDefaultsPanel() {
                         />
                     )
                 : query.error ? <AlertsState error={query.error} title="Failed to load the end-user defaults" /> : <Skeleton className="h-20 w-full" />}
-        </section>
+        </Section>
     );
 }

@@ -2,8 +2,10 @@ import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/met
 import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
 import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { STICKY_FIRST_CELL } from "@/lib/layout";
+import { PERIOD_CELL, STATEMENT_LABEL_CELL, STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact } from "@/lib/utils";
+
+import { PeriodTableFrame } from "./metrics-list-body";
 
 export type MetricsTableRow = {
     group?: string;
@@ -38,74 +40,76 @@ export function FinancialMetricsTable({
     const [selectedRow, setSelectedRow] = useChartSelection(rows, row => row.key);
 
     return (
-        <div className="flex flex-col gap-2">
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        {hasGroupColumn
-                            ? (
-                                    <TableHead className={cn(STICKY_FIRST_CELL, "w-[140px] min-w-[140px] max-w-[140px] sm:w-[320px] sm:min-w-[320px] sm:max-w-[320px]")}>
-                                        {groupLabel}
-                                    </TableHead>
-                                )
-                            : null}
-                        <TableHead className={cn(!hasGroupColumn && STICKY_FIRST_CELL, "w-[160px] min-w-[160px] max-w-[160px]")}>
-                            {labelHeader}
-                        </TableHead>
-                        {periodLabels.map(label => (
-                            <TableHead className="text-right" key={label}>
-                                {label}
-                            </TableHead>
-                        ))}
-                    </TableRow>
-                </TableHeader>
-                <TableBody className="divide-y-0">
-                    {rows.map(row => (
-                        <TableRow
-                            className="group h-[41px] leading-5 clickable-financial-row hover:bg-muted/50"
-                            key={row.key}
-                            onClick={() => setSelectedRow(row)}
-                        >
+        <>
+            <PeriodTableFrame>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
                             {hasGroupColumn
                                 ? (
-                                        <TableCell className={cn(STICKY_FIRST_CELL, "w-[140px] min-w-[140px] max-w-[140px] sm:w-[320px] sm:min-w-[320px] sm:max-w-[320px]")}>
-                                            <div className="flex min-w-0 items-center gap-1">
-                                                <div className="min-w-0 flex-1 truncate" title={row.group ?? ""}>
-                                                    {row.group ?? "—"}
-                                                </div>
-                                                <MetricCatalogLink label={row.group ?? row.label} metricId={row.metricId} />
-                                            </div>
-                                        </TableCell>
+                                        <TableHead className={cn(STICKY_FIRST_CELL, STATEMENT_LABEL_CELL)}>
+                                            {groupLabel}
+                                        </TableHead>
                                     )
                                 : null}
-                            <TableCell className={cn(!hasGroupColumn && STICKY_FIRST_CELL, "w-[160px] min-w-[160px] max-w-[160px]")}>
-                                <div className="flex min-w-0 items-center gap-1">
-                                    <div className="min-w-0 flex-1 truncate" title={row.label}>
-                                        {row.label}
-                                    </div>
-                                    {!hasGroupColumn && <MetricCatalogLink label={row.label} metricId={row.metricId} />}
-                                    <ChartRowButton label={chartName(row)} onOpen={() => setSelectedRow(row)} />
-                                </div>
-                            </TableCell>
-                            {periodLabels.map((label) => {
-                                const val = row.values[label];
-
-                                return (
-                                    <TableCell className="text-right" key={`${row.key}:${label}`}>
-                                        <span className="tabular-nums">
-                                            {val === undefined
-                                                ? "—"
-                                                : ((row.formatValue ?? formatValue)
-                                                        ? (row.formatValue ?? formatValue)!(val)
-                                                        : formatNumberEnCompact(val))}
-                                        </span>
-                                    </TableCell>
-                                );
-                            })}
+                            <TableHead className={cn(hasGroupColumn ? "w-[120px] min-w-[120px] max-w-[120px]" : cn(STICKY_FIRST_CELL, STATEMENT_LABEL_CELL))}>
+                                {labelHeader}
+                            </TableHead>
+                            {periodLabels.map(label => (
+                                <TableHead className={PERIOD_CELL} key={label}>
+                                    {label}
+                                </TableHead>
+                            ))}
                         </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+                    </TableHeader>
+                    <TableBody className="divide-y-0">
+                        {rows.map(row => (
+                            <TableRow
+                                className="group clickable-financial-row"
+                                key={row.key}
+                                onClick={() => setSelectedRow(row)}
+                            >
+                                {hasGroupColumn
+                                    ? (
+                                            <TableCell className={cn(STICKY_FIRST_CELL, STATEMENT_LABEL_CELL)}>
+                                                <div className="flex min-w-0 items-center gap-1">
+                                                    <div className="min-w-0 flex-1 truncate" title={row.group ?? ""}>
+                                                        {row.group ?? "—"}
+                                                    </div>
+                                                    <MetricCatalogLink label={row.group ?? row.label} metricId={row.metricId} />
+                                                </div>
+                                            </TableCell>
+                                        )
+                                    : null}
+                                <TableCell className={cn(hasGroupColumn ? "w-[120px] min-w-[120px] max-w-[120px]" : cn(STICKY_FIRST_CELL, STATEMENT_LABEL_CELL))}>
+                                    <div className="flex min-w-0 items-center gap-1">
+                                        <div className="min-w-0 flex-1 truncate" title={row.label}>
+                                            {row.label}
+                                        </div>
+                                        {!hasGroupColumn && <MetricCatalogLink label={row.label} metricId={row.metricId} />}
+                                        <ChartRowButton label={chartName(row)} onOpen={() => setSelectedRow(row)} />
+                                    </div>
+                                </TableCell>
+                                {periodLabels.map((label) => {
+                                    const val = row.values[label];
+
+                                    return (
+                                        <TableCell className={PERIOD_CELL} key={`${row.key}:${label}`}>
+                                            <span className="tabular-nums">
+                                                {val === undefined
+                                                    ? "—"
+                                                    : ((row.formatValue ?? formatValue)
+                                                            ? (row.formatValue ?? formatValue)!(val)
+                                                            : formatNumberEnCompact(val))}
+                                            </span>
+                                        </TableCell>
+                                    );
+                                })}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </PeriodTableFrame>
             <MetricChartDialog
                 data={selectedRow
                     ? periodLabels.map(period => ({
@@ -122,6 +126,6 @@ export function FinancialMetricsTable({
                 }}
                 open={Boolean(selectedRow)}
             />
-        </div>
+        </>
     );
 }

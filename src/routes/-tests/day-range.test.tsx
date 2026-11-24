@@ -25,17 +25,22 @@ describe("DayRange (the from / to day pair of every filter row)", () => {
         expect(onChange).toHaveBeenLastCalledWith({ from: undefined });
     });
 
-    it("lead, separator, group and titled", () => {
+    it("lead, separator, one wrapping row and titled", () => {
         const { container } = render(
             <div>
-                <DayRange from={undefined} group labels={{ from: "Traded from", to: "Traded to" }} lead="Traded" onChange={() => {}} titled to={undefined} />
+                <DayRange from={undefined} labels={{ from: "Traded from", to: "Traded to" }} lead="Traded" onChange={() => {}} titled to={undefined} />
                 <DayRange from={undefined} labels={{ from: "Holidays from", to: "Holidays to" }} lead="Between" onChange={() => {}} separator="and" to={undefined} />
             </div>,
         );
 
-        const [grouped] = container.querySelectorAll("div > span.flex-wrap");
+        const [traded, holidays] = container.querySelectorAll("[data-slot='day-range']");
 
-        expect(grouped.textContent).toBe("Tradedto");
+        // Lead, inputs and separator wrap as one unit: side by side when the field has the room.
+        expect(traded.className).toContain("flex-wrap");
+
+        expect(traded.textContent).toBe("Tradedto");
+
+        expect(holidays.querySelectorAll("input")).toHaveLength(2);
 
         expect(screen.getByLabelText("Traded from").getAttribute("title")).toBe("Traded from");
 

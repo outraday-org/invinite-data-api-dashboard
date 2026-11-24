@@ -1,6 +1,6 @@
 import type { SegmentedFinancialsSegmentId } from "@/lib/api/types";
 
-import { Select, SelectContent, SelectItem, SelectTrigger } from "@/components/ui/select";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
 
 const segmentOptions: Array<{ label: string; value: "all" | SegmentedFinancialsSegmentId }> = [
     { label: "All Segments", value: "all" },
@@ -35,20 +35,13 @@ export function SegmentSelect({
     onValueChange: (value: "all" | SegmentedFinancialsSegmentId) => void;
 }) {
     return (
-        <Select
-            onValueChange={v => onValueChange(v as "all" | SegmentedFinancialsSegmentId)}
+        <DropdownSelect
+            aria-label="Segment"
+            className="w-full"
+            onValueChange={onValueChange}
+            options={segmentOptions}
+            placeholder="Select segment"
             value={value}
-        >
-            <SelectTrigger aria-label="Segment" className="w-[260px]">
-                {segmentOptions.find(opt => opt.value === value)?.label ?? "Select segment"}
-            </SelectTrigger>
-            <SelectContent>
-                {segmentOptions.map(opt => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                    </SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
+        />
     );
 }

@@ -87,7 +87,7 @@ describe("AnnouncementFilters", () => {
 
         expect(onChange).toHaveBeenLastCalledWith({ aFrom: "2026-10-01" });
 
-        fireEvent.click(screen.getByText("Reset"));
+        fireEvent.click(screen.getByText("Reset filters"));
 
         expect(onChange).toHaveBeenLastCalledWith({ aFrom: undefined, aSort: undefined, aTo: undefined, aTopic: undefined, effFrom: undefined, effTo: undefined });
     });

@@ -7,10 +7,11 @@ import type { DocumentsSearch } from "@/lib/earnings/documents";
 
 import { SecFilingSearch } from "@/components/sec/sec-filing-search";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
-import { Button } from "@/components/ui/button";
 import { tierLabel } from "@/components/ui/credit-hint";
 import { PageHeader } from "@/components/ui/page-header";
 import { RequestErrorState } from "@/components/ui/request-error-state";
+import { Section } from "@/components/ui/section";
+import { SegmentedButtons } from "@/components/ui/segmented-buttons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2Company, useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
@@ -143,8 +144,12 @@ function DocumentsPage() {
 
     const loadingMore = Boolean(library.hasNextPage) || Boolean(events.hasNextPage);
 
+    const countLine = !isLoading && !error
+        ? `${documents.length}${loadingMore ? "+" : ""} document${documents.length === 1 ? "" : "s"}${companyName ? ` · ${companyName}` : ""}`
+        : null;
+
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
             <PageHeader
                 description={(
                     <>
@@ -153,64 +158,48 @@ function DocumentsPage() {
                         conference decks, letters. Company-published material, shown as published.
                     </>
                 )}
+                meta={countLine}
                 title="Documents"
             />
 
-            <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1">
-                    <div aria-label="Search source" className="flex items-center gap-1" role="group">
-                        {SEARCH_SOURCES.map(source => (
-                            <Button
-                                aria-pressed={searchSource === source.value}
-                                key={source.value}
-                                onClick={() => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, block: undefined, searchIn: source.value === "sec" ? "sec" : undefined, source: undefined }) })}
-                                size="xs"
-                                type="button"
-                                variant={searchSource === source.value ? "secondary" : "outline"}
-                            >
-                                {source.label}
-                            </Button>
-                        ))}
-                    </div>
-                    {searchSource === "company" ? <DocumentSearch identifier={ticker} /> : <SecFilingsSource onOpen={openSecTarget} target={secTarget} ticker={ticker} />}
-                </div>
+            <Section
+                actions={(
+                    <SegmentedButtons
+                        aria-label="Search source"
+                        onChange={value => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, block: undefined, searchIn: value === "sec" ? "sec" : undefined, source: undefined }) })}
+                        options={SEARCH_SOURCES}
+                        value={searchSource}
+                    />
+                )}
+                title="Search"
+            >
+                {searchSource === "company" ? <DocumentSearch identifier={ticker} /> : <SecFilingsSource onOpen={openSecTarget} target={secTarget} ticker={ticker} />}
+            </Section>
 
-                <section className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div className="text-sm font-medium">
-                            Documents
-                            {!isLoading && !error && (
-                                <span className="text-muted-foreground font-normal">
-                                    {` · ${documents.length}${loadingMore ? "+" : ""} document${documents.length === 1 ? "" : "s"}`}
-                                    {companyName ? ` · ${companyName}` : ""}
-                                </span>
-                            )}
-                        </div>
-                        <DocumentFilters onChange={onFilterChange} search={search} />
-                    </div>
+            <Section title="Library">
+                <DocumentFilters onChange={onFilterChange} search={search} />
 
-                    {error
-                        ? <LibraryError error={error} />
-                        : isLoading
-                            ? <Skeleton className="h-40 w-full" />
-                            : tree.length === 0
-                                ? (
-                                        <div className="text-muted-foreground w-full p-2 text-center text-xs">
-                                            {search.q
-                                                ? `No documents match “${search.q}”.`
-                                                : filtered ? "No documents match these filters." : "No documents stored for this company yet."}
-                                        </div>
-                                    )
-                                : (
-                                        <DocumentTree
-                                            filtering={Boolean(search.q)}
-                                            onShowText={setTextOf}
-                                            ticker={ticker}
-                                            tree={tree}
-                                        />
-                                    )}
-                </section>
-            </div>
+                {error
+                    ? <LibraryError error={error} />
+                    : isLoading
+                        ? <Skeleton className="h-40 w-full" />
+                        : tree.length === 0
+                            ? (
+                                    <div className="text-muted-foreground w-full p-6 text-center text-sm">
+                                        {search.q
+                                            ? `No documents match “${search.q}”.`
+                                            : filtered ? "No documents match these filters." : "No documents stored for this company yet."}
+                                    </div>
+                                )
+                            : (
+                                    <DocumentTree
+                                        filtering={Boolean(search.q)}
+                                        onShowText={setTextOf}
+                                        ticker={ticker}
+                                        tree={tree}
+                                    />
+                                )}
+            </Section>
 
             <DocumentTextDialog doc={textOf} onClose={() => setTextOf(null)} />
         </div>

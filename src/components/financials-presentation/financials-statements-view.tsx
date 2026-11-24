@@ -5,8 +5,8 @@ import type { OperationId } from "@/lib/api/operations.gen";
 import type { StatementType, V2FinancialsBasis, V2FinancialsView, V2StatementPeriod, V2StatementsResponse } from "@/lib/api/types";
 
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
-import { Button } from "@/components/ui/button";
 import { PlanBadge } from "@/components/ui/credit-hint";
+import { SegmentedButtons } from "@/components/ui/segmented-buttons";
 import { hasStatement, presentationPeriods, statementColumns, statementLines } from "@/lib/financials/statements";
 
 import { FinancialsFlatTable } from "./financials-flat-table";
@@ -18,28 +18,23 @@ const VIEW_OPTIONS: Array<{ label: string; value: V2FinancialsView }> = [
     { label: "Presentation", value: "presentation" },
 ];
 
-/** The view switch of the statement pages (summary / detailed (PRO) / presentation (PRO)), the same for both bases. */
+/**
+ * The view switch of the statement pages (summary / detailed / presentation), the same for both bases: a segmented
+ * control; a view whose operation the plan lacks carries its generated plan badge.
+ */
 export function ViewButtons({ badges, onValueChange, value }: {
-    /** The operation behind a view: its PRO badge shows before any request when the plan lacks it (O6). */
+    /** The operation behind a view: its plan badge shows before any request when the plan lacks it (O6). */
     badges?: Partial<Record<V2FinancialsView, OperationId>>;
     onValueChange: (value: V2FinancialsView) => void;
     value: V2FinancialsView;
 }) {
-    return (
-        <div aria-label="View" className="flex gap-1" role="group">
-            {VIEW_OPTIONS.map(opt => (
-                <Button
-                    aria-pressed={value === opt.value}
-                    key={opt.value}
-                    onClick={() => onValueChange(opt.value)}
-                    variant={value === opt.value ? "default" : "outline"}
-                >
-                    {opt.label}
-                    {badges?.[opt.value] && <PlanBadge operationId={badges[opt.value]!} />}
-                </Button>
-            ))}
-        </div>
-    );
+    const options = VIEW_OPTIONS.map((option) => {
+        const operationId = badges?.[option.value];
+
+        return { ...option, badge: operationId ? <PlanBadge operationId={operationId} /> : undefined };
+    });
+
+    return <SegmentedButtons aria-label="View" onChange={onValueChange} options={options} value={value} />;
 }
 
 /** Where "Explain this number" lives: the detailed view (a standardized fact id, an as-reported value's own lineage). */
@@ -88,6 +83,14 @@ export function FinancialsStatementsView({
 
     const meta = pages.at(0)?.meta;
 
+    // The line above the table: the currency and where "Explain this number" lives (the tree adds Expand / Collapse).
+    const toolbar = (
+        <>
+            {meta?.currency && <span data-testid="financials-meta">{`Values in ${meta.currency}`}</span>}
+            <span data-testid="explain-hint">{EXPLAIN_HINTS[basis][view]}</span>
+        </>
+    );
+
     return (
         <MetricsListBody
             coverage={meta?.coverage}
@@ -97,13 +100,10 @@ export function FinancialsStatementsView({
             pendingTitle={STATEMENTS_PENDING_TITLE}
             state={state}
             title="Failed to load financials"
+            toolbar={view === "presentation" ? undefined : <div className="flex min-w-0 flex-wrap items-center gap-x-3">{toolbar}</div>}
         >
-            <div className="text-muted-foreground flex flex-wrap gap-x-3 text-xs">
-                {meta?.currency && <span data-testid="financials-meta">{`Values in ${meta.currency}`}</span>}
-                <span data-testid="explain-hint">{EXPLAIN_HINTS[basis][view]}</span>
-            </div>
             {view === "presentation"
-                ? <FinancialsPresentationTable isCollapsible={basis === "standardized"} periods={trees} />
+                ? <FinancialsPresentationTable isCollapsible={basis === "standardized"} periods={trees} toolbar={toolbar} />
                 : <FinancialsFlatTable cik={rows.at(0)?.company.cik ?? null} columns={columns} lines={lines} rows={rows} />}
         </MetricsListBody>
     );

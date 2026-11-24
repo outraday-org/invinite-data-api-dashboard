@@ -6,12 +6,14 @@ import { z } from "zod";
 
 import type { V2MarketHoliday, V2MarketHolidaysResponse } from "@/lib/api/types";
 
-import { TabStrip } from "@/components/navigation/tab-strip";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { DayRange } from "@/components/ui/day-range";
 import { ErrorState } from "@/components/ui/error-state";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useV2MarketHolidaysInfinite } from "@/lib/api/queries";
 import { zonedDate } from "@/lib/earnings/format";
 import { DASH, formatDay, formatInstant } from "@/lib/format";
@@ -135,23 +137,26 @@ function MarketHolidaysPage() {
     const onRange = (patch: Pick<HolidaysSearch, "from" | "to">) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
     return (
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-6 lg:px-8">
+        <PageContainer>
             <PageHeader
-                actions={(
-                    <TabStrip
-                        aria-label="Holidays"
-                        // A tab change keeps the day range (it narrows either tab).
-                        onSelect={value => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, tab: value === "past" ? "past" : undefined }) })}
-                        options={[{ label: "Upcoming", value: "upcoming" }, { label: "Past", value: "past" }]}
-                        value={past ? "past" : "upcoming"}
-                    />
-                )}
                 description="US market holidays. The answer names no exchange: one calendar for the US exchanges. A partial day shows its open and close in New York time; any other day is closed all day."
                 title="Market holidays"
             />
-            <div className="flex flex-wrap items-center gap-2">
-                <DayRange from={search.from} labels={{ from: "Holidays from", to: "Holidays to" }} lead="Between" onChange={onRange} separator="and" to={search.to} />
-            </div>
+            <Tabs
+                // A tab change keeps the day range (it narrows either tab).
+                onValueChange={value => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, tab: value === "past" ? "past" : undefined }) })}
+                value={past ? "past" : "upcoming"}
+            >
+                <TabsList aria-label="Holidays" variant="line">
+                    <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+                    <TabsTrigger value="past">Past</TabsTrigger>
+                </TabsList>
+            </Tabs>
+            <FilterBar activeCount={search.from ?? search.to ? 1 : 0} onReset={() => onRange({ from: undefined, to: undefined })}>
+                <FilterField label="Date" span={2}>
+                    <DayRange from={search.from} labels={{ from: "Holidays from", to: "Holidays to" }} onChange={onRange} to={search.to} />
+                </FilterField>
+            </FilterBar>
             <MarketHolidaysView
                 error={error}
                 hasNextPage={hasNextPage}
@@ -160,6 +165,6 @@ function MarketHolidaysPage() {
                 onLoadMore={() => void fetchNextPage()}
                 pages={data?.pages ?? []}
             />
-        </div>
+        </PageContainer>
     );
 }

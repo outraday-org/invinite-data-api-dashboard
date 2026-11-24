@@ -73,6 +73,54 @@ export function formatInstant(value: Absent | string, timeZone?: string): string
     }).format(parsed).replace(/\u202F/g, " "); // ICU's narrow no-break space before AM / PM
 }
 
+const GMT_OFFSET = /^GMT[+-]/;
+
+/** A zone's short name at `date`: `en-US` knows the American ones ("EST"), `en-GB` the European ones ("CET"); else the offset. */
+function shortZoneName(date: Date, timeZone: string | undefined): string {
+    const name = (locale: string) => new Intl.DateTimeFormat(locale, { timeZone, timeZoneName: "short" })
+        .formatToParts(date)
+        .find(part => part.type === "timeZoneName")?.value ?? "";
+
+    const american = name("en-US");
+
+    if (!GMT_OFFSET.test(american)) return american;
+
+    const british = name("en-GB");
+
+    return GMT_OFFSET.test(british) || !british ? american : british;
+}
+
+/**
+ * "1:00 PM CET" in `timeZone` (default: the viewer's): the time with the zone's short name, for narrow lists (a long
+ * zone name wrapped times onto a second line). A zone without a short name shows its offset ("GMT+5:30"); a date-only
+ * string → `formatDay`. `formatInstant` stays the full form.
+ */
+export function formatInstantShort(value: Absent | string, timeZone?: string): string {
+    if (!value) return DASH;
+
+    if (DATE_ONLY.test(value)) return formatDay(value);
+
+    const parsed = new Date(value);
+
+    if (Number.isNaN(parsed.getTime())) return value;
+
+    const time = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone }).format(parsed).replace(/\u202F/g, " ");
+
+    return `${time} ${shortZoneName(parsed, timeZone)}`;
+}
+
+/**
+ * "Nov 2, 2026 · 11:00 PM CET": the day and `formatInstantShort`'s time, in `timeZone` (default: the viewer's) — a list
+ * row's moment on one line (F13); a date-only string → `formatDay`.
+ */
+export function formatDayTimeShort(value: Absent | string, timeZone?: string): string {
+    if (!value) return DASH;
+
+    if (DATE_ONLY.test(value) || Number.isNaN(new Date(value).getTime())) return formatDay(value, timeZone);
+
+    return `${formatDay(value, timeZone)} · ${formatInstantShort(value, timeZone)}`;
+}
+
 const COMPACT_STEPS: ReadonlyArray<[number, string]> = [
     [1e12, "T"],
     [1e9, "B"],

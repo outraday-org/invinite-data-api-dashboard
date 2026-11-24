@@ -33,21 +33,24 @@ export function AlertUserStatusBadge({ status }: { status: AlertUserStatus }) {
     );
 }
 
-/** Usage against one effective limit: "3 of 10" over a bar (full = red); no bar without a limit. */
+/**
+ * Usage against one effective limit (ui-redesign task 13): a bar in the brand colour (80 % = warn, full = red) with
+ * "3 of 10" beside it ("· default" when the limit is the account default); no bar without a limit.
+ */
 export function UsageBar({ className, row }: { className?: string; row: Pick<LimitRow, "effective" | "label" | "source" | "used"> }) {
     const share = usageShare(row.used, row.effective);
 
     return (
-        <div className={cn("flex min-w-28 flex-col gap-1", className)} title={`${row.label}: ${usageText(row.used, row.effective)} — ${LIMIT_SOURCE_TEXT[row.source]}`}>
-            <span className="tabular-nums">
+        <div className={cn("flex min-w-36 items-center gap-2", className)} title={`${row.label}: ${usageText(row.used, row.effective)} — ${LIMIT_SOURCE_TEXT[row.source]}`}>
+            {share !== null && (
+                <div aria-label={`${row.label} ${Math.round(share * 100)} % used`} className="bg-muted h-1.5 min-w-12 flex-1 overflow-hidden rounded-full" role="img">
+                    <div className={cn("h-full rounded-full", share >= 1 ? "bg-destructive" : share >= 0.8 ? "bg-warn" : "bg-brand")} style={{ width: `${Math.max(2, share * 100)}%` }} />
+                </div>
+            )}
+            <span className="shrink-0 tabular-nums whitespace-nowrap">
                 {usageText(row.used, row.effective)}
                 {row.source === "default" && <span className="text-muted-foreground"> · default</span>}
             </span>
-            {share !== null && (
-                <div aria-label={`${row.label} ${Math.round(share * 100)} % used`} className="h-1.5 w-full overflow-hidden rounded-full bg-muted" role="img">
-                    <div className={cn("h-full rounded-full", share >= 1 ? "bg-destructive" : share >= 0.8 ? "bg-amber-500" : "bg-primary")} style={{ width: `${Math.max(2, share * 100)}%` }} />
-                </div>
-            )}
         </div>
     );
 }

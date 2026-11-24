@@ -5,13 +5,13 @@ import type { PlaybackSegment, TimedWord } from "@/lib/earnings/follow-along";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LoadMoreButton } from "@/components/ui/load-more-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2Participants, useV2QaInfinite } from "@/lib/api/queries";
 import { buildCaptionWords, wordsBetween } from "@/lib/earnings/follow-along";
 import { speakerName } from "@/lib/earnings/transcript";
+import { READING_COLUMN_CLASS } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 
 import type { CallTabProps } from "../call-tabs";
@@ -131,31 +131,30 @@ const QaCard = React.memo(function QaCard({
     const answer = answerSpeakers(pair, images);
 
     return (
-        // A follow-up is indented under the question before it.
-        <Card className={cn(pair.is_follow_up && "ml-6 border-l-2")} size="sm">
-            <CardContent className="flex flex-col gap-3">
-                <QaScoreBadges scores={pair.scores} />
+        // One pair per block, hairlines between them (no card per pair, ui-redesign task 10); a follow-up is indented
+        // under the question before it.
+        <article className={cn("flex flex-col gap-3 border-t pt-4 first:border-t-0 first:pt-0", pair.is_follow_up && "ml-6 border-l-2 pl-3")}>
+            <QaScoreBadges scores={pair.scores} />
+            <PlaybackTurnBlock
+                badge={<Badge variant="outline">{pair.is_follow_up ? "Follow-up" : "Question"}</Badge>}
+                index={2 * index}
+                speaker={analystSpeaker(pair, images)}
+                startMs={pair.question_start_ms}
+                text={pair.question}
+                words={segments[2 * index]?.words ?? null}
+            />
+            <div className="border-l pl-3">
                 <PlaybackTurnBlock
-                    badge={<Badge variant="outline">{pair.is_follow_up ? "Follow-up" : "Question"}</Badge>}
-                    index={2 * index}
-                    speaker={analystSpeaker(pair, images)}
-                    startMs={pair.question_start_ms}
-                    text={pair.question}
-                    words={segments[2 * index]?.words ?? null}
+                    badge={<Badge variant="secondary">Answer</Badge>}
+                    coSpeakers={answer.coSpeakers}
+                    index={2 * index + 1}
+                    speaker={answer.speaker}
+                    startMs={pair.answer_start_ms}
+                    text={pair.answer}
+                    words={segments[2 * index + 1]?.words ?? null}
                 />
-                <div className="border-l pl-3">
-                    <PlaybackTurnBlock
-                        badge={<Badge variant="secondary">Answer</Badge>}
-                        coSpeakers={answer.coSpeakers}
-                        index={2 * index + 1}
-                        speaker={answer.speaker}
-                        startMs={pair.answer_start_ms}
-                        text={pair.answer}
-                        words={segments[2 * index + 1]?.words ?? null}
-                    />
-                </div>
-            </CardContent>
-        </Card>
+            </div>
+        </article>
     );
 });
 
@@ -203,7 +202,7 @@ export function QaTab({ eventId }: CallTabProps) {
 
     return (
         <div className="flex flex-col gap-2">
-            <PlaybackTurns className="flex flex-col gap-2" segments={segments}>
+            <PlaybackTurns className={cn("flex flex-col gap-4", READING_COLUMN_CLASS)} segments={segments}>
                 {pairs.map((pair, index) => <QaCard images={images} index={index} key={pair.seq} pair={pair} segments={segments} />)}
             </PlaybackTurns>
 

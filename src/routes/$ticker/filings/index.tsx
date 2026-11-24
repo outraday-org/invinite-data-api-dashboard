@@ -204,8 +204,11 @@ function FilingsPage() {
         );
     }
 
+    // The filter bar's filters (the filed-day range counts once); the sort is the table header's toggle.
+    const activeCount = [search.form, search.items, search.from || search.to].filter(Boolean).length;
+
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
             <HtmlDialog
                 dialog={htmlDialog}
                 onOpenChange={(open) => {
@@ -221,10 +224,6 @@ function FilingsPage() {
                 actions={(
                     <>
                         <AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.filings} />
-                        <Button aria-pressed={search.search === true} onClick={() => onChange({ search: search.search ? undefined : true })} type="button" variant={search.search ? "secondary" : "outline"}>
-                            <SearchIcon />
-                            Search text
-                        </Button>
                         <LiveToggle
                             listening="Listening for new filings"
                             live={search.live === true}
@@ -237,6 +236,7 @@ function FilingsPage() {
                         />
                     </>
                 )}
+                activeCount={activeCount}
                 availableFormTypes={formTypes}
                 facetLine={facetSummary(facet, formTypeFilter)}
                 formTypeFilter={formTypeFilter}
@@ -246,8 +246,15 @@ function FilingsPage() {
                 onFormTypeChange={val => onChange({ form: val === "all" || !val ? undefined : val })}
                 onItemsChange={value => onChange({ items: value.trim() || undefined })}
                 onRangeChange={patch => onChange(patch)}
+                onReset={() => onChange({ form: undefined, from: undefined, items: undefined, to: undefined })}
                 sortDirection={sortDirection}
                 to={search.to}
+                trailing={(
+                    <Button aria-pressed={search.search === true} onClick={() => onChange({ search: search.search ? undefined : true })} type="button" variant={search.search ? "secondary" : "outline"}>
+                        <SearchIcon />
+                        Search text
+                    </Button>
+                )}
             />
 
             <LiveStopNotice planNote={LIVE_FILINGS_PLAN_NOTE} stop={live.stop} />

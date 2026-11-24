@@ -7,6 +7,8 @@ import type { V2HolderSource } from "@/lib/api/types";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { HolderChangesList, HoldersList, HoldersOverview } from "@/components/sec/holder-views";
 import { ChangeTypeChips } from "@/components/sec/ownership-views";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { FilterSelect } from "@/components/ui/filter-select";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { listState } from "@/lib/api/list-state";
@@ -17,7 +19,6 @@ import { HOLDER_SOURCE_LABELS } from "@/lib/sec/fund";
 import { changeTypesParam, INSTRUMENT_OPTIONS, parseChangeTypes, parseCikList } from "@/lib/sec/ownership";
 import { latest13fPeriodEnd, QUARTER_PICKER_COUNT, quarterPickerOptions, recentQuarterEnds } from "@/lib/sec/source";
 import { IN_PLACE, optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
-import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
 const TABS = ["overview", "13f", "nport", "issuer_file", "changes"] as const;
 
@@ -134,32 +135,18 @@ function HoldersPage() {
 
     const bySource = { "13f": thirteenF, "issuer_file": issuerFile, "nport": nport };
 
+    // What the open tab's bar shows (a day pair / chip group counts once) and what "Reset filters" clears.
+    const activeCount = tab === "changes"
+        ? [periodEnd, changeTypes.length > 0, search.prior, search.filer].filter(Boolean).length
+        : [tab !== "issuer_file" && periodEnd, instrumentsApply && instruments].filter(Boolean).length;
+
+    const onReset = () => onChange(tab === "changes"
+        ? { filer: undefined, period: undefined, prior: undefined, types: undefined }
+        : { period: undefined, ...(instrumentsApply && { instruments: undefined }) });
+
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6">
             <PageHeader
-                actions={(
-                    <>
-                        {/* Issuer files are read as of their newest file: the quarter does not apply on that tab ([FU2870]). */}
-                        <FilterSelect
-                            aria-label="Quarter"
-                            className="w-[220px]"
-                            disabled={tab === "issuer_file"}
-                            onValueChange={setPeriod}
-                            options={periodOptions}
-                            title={tab === "issuer_file" ? "Issuer files are read as of their newest file" : undefined}
-                            value={period}
-                        />
-                        <FilterSelect
-                            aria-label="13F instruments"
-                            className="w-[210px]"
-                            disabled={!instrumentsApply}
-                            onValueChange={value => onChange({ instruments: value === "all" ? "all" : undefined })}
-                            options={INSTRUMENT_OPTIONS}
-                            title={instrumentsApply ? "13F positions counted" : "Applies to the overview and the 13F list"}
-                            value={instruments ?? "shares"}
-                        />
-                    </>
-                )}
                 description={(
                     <>
                         Who holds this security, per source: managers&apos; quarterly 13F reports, funds&apos; N-PORT
@@ -170,45 +157,86 @@ function HoldersPage() {
                 title="Holders"
             />
 
-            <Tabs onValueChange={value => setTab(value as Tab)} value={tab}>
+            <Tabs className="gap-4" onValueChange={value => setTab(value as Tab)} value={tab}>
                 {/* Wraps at phone width: the page never scrolls sideways. */}
                 <TabsList className={WRAPPING_TABS_LIST_CLASS} variant="line">
-                    <TabsTrigger className="h-[34px]" value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
                     {SOURCES.map(source => (
-                        <TabsTrigger className="h-[34px]" key={source} value={source}>{HOLDER_SOURCE_LABELS[source]}</TabsTrigger>
+                        <TabsTrigger key={source} value={source}>{HOLDER_SOURCE_LABELS[source]}</TabsTrigger>
                     ))}
-                    <TabsTrigger className="h-[34px]" value="changes">13F changes</TabsTrigger>
+                    <TabsTrigger value="changes">13F changes</TabsTrigger>
                 </TabsList>
 
-                <TabsContent className="relative mt-2" value="overview">
+                {/* Issuer files are read as of their newest file: no quarter on that tab ([FU2870]), so no bar. */}
+                {tab !== "issuer_file" && (
+                    <FilterBar activeCount={activeCount} onReset={onReset}>
+                        <FilterField label="Quarter">
+                            {id => <FilterSelect aria-label="Quarter" className="w-full" id={id} onValueChange={setPeriod} options={periodOptions} value={period} />}
+                        </FilterField>
+                        {instrumentsApply && (
+                            <FilterField label="13F instruments">
+                                {id => (
+                                    <FilterSelect
+                                        aria-label="13F instruments"
+                                        className="w-full"
+                                        id={id}
+                                        onValueChange={value => onChange({ instruments: value === "all" ? "all" : undefined })}
+                                        options={INSTRUMENT_OPTIONS}
+                                        value={instruments ?? "shares"}
+                                    />
+                                )}
+                            </FilterField>
+                        )}
+                        {tab === "changes" && (
+                            <FilterField label="Compared with">
+                                {id => (
+                                    <FilterSelect
+                                        aria-label="Prior quarter"
+                                        className="w-full"
+                                        id={id}
+                                        onValueChange={value => onChange({ prior: value === PREVIOUS ? undefined : value })}
+                                        options={priorOptions}
+                                        value={search.prior ?? PREVIOUS}
+                                    />
+                                )}
+                            </FilterField>
+                        )}
+                        {tab === "changes" && (
+                            <FilterField label="Manager CIKs">
+                                {id => (
+                                    <DebouncedInput
+                                        aria-label="Manager CIKs"
+                                        className="w-full"
+                                        id={id}
+                                        onCommit={value => onChange({ filer: value.trim() || undefined })}
+                                        placeholder="Comma list"
+                                        value={search.filer ?? ""}
+                                    />
+                                )}
+                            </FilterField>
+                        )}
+                        {tab === "changes" && (
+                            <FilterField className="sm:col-span-2" label="Change types">
+                                <div data-testid="changes-filters">
+                                    <ChangeTypeChips onChange={types => onChange({ types: changeTypesParam(types) })} value={changeTypes} />
+                                </div>
+                            </FilterField>
+                        )}
+                    </FilterBar>
+                )}
+
+                <TabsContent value="overview">
                     <HoldersOverview onShowAll={setTab} state={listState(overview)} />
                 </TabsContent>
 
                 {SOURCES.map(source => (
-                    <TabsContent className="relative mt-2" key={source} value={source}>
+                    <TabsContent key={source} value={source}>
                         <HoldersList exportScope={ticker} source={source} state={listState(bySource[source])} />
                     </TabsContent>
                 ))}
 
-                <TabsContent className="relative mt-2 flex flex-col gap-3" value="changes">
-                    <div className="flex flex-wrap items-center gap-2" data-testid="changes-filters">
-                        <ChangeTypeChips onChange={types => onChange({ types: changeTypesParam(types) })} value={changeTypes} />
-                        <FilterSelect
-                            aria-label="Prior quarter"
-                            className="w-[220px]"
-                            onValueChange={value => onChange({ prior: value === PREVIOUS ? undefined : value })}
-                            options={priorOptions}
-                            value={search.prior ?? PREVIOUS}
-                        />
-                        <DebouncedInput
-                            aria-label="Manager CIKs"
-                            className="w-[220px]"
-                            onCommit={value => onChange({ filer: value.trim() || undefined })}
-                            placeholder="Manager CIKs (comma list)"
-                            value={search.filer ?? ""}
-                        />
-                        {search.filer && !filers && <span className="text-muted-foreground text-xs">No CIK in this list: every manager is shown</span>}
-                    </div>
+                <TabsContent className="flex flex-col gap-3" value="changes">
+                    {search.filer && !filers && <div className="text-muted-foreground text-xs">No CIK in this list: every manager is shown</div>}
                     <HolderChangesList exportScope={ticker} state={listState(changes)} />
                 </TabsContent>
             </Tabs>

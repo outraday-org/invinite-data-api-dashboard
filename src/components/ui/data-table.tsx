@@ -8,8 +8,10 @@ import type { OperationId } from "@/lib/api/operations.gen";
 
 import { ExportMenu } from "@/components/api/export-menu";
 import { LoadMoreButton } from "@/components/ui/load-more-button";
+import { ScrollEdgeFades } from "@/components/ui/scroll-row";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatNumber } from "@/lib/format";
 import { LG_STICKY_TOP_CLASS } from "@/lib/layout";
 import { cn } from "@/lib/utils";
 
@@ -27,22 +29,31 @@ function ColumnContent<TProps extends object>({ props, template }: { props: TPro
 const SKELETON_ROWS = 5;
 
 /**
- * Whether the table fits its column (no horizontal scroller needed). A table wider than its column keeps the wrapper as
- * its horizontal scroller, so the page never scrolls sideways; only a table that fits lets its header stick to the window.
+ * Whether the table fits its column (no horizontal scroller needed), and whether a scroller is scrolled to its right
+ * end. A table wider than its column keeps the wrapper as its horizontal scroller, so the page never scrolls sideways;
+ * only a table that fits lets its header stick to the window; a cut table fades its right edge until scrolled to the end.
  * Without `ResizeObserver` (tests, SSR) the table counts as fitting.
  */
-function useTableFits(wrapper: React.RefObject<HTMLDivElement | null>, enabled: boolean) {
+function useTableFits(wrapper: React.RefObject<HTMLDivElement | null>) {
     const [fits, setFits] = React.useState(true);
+
+    const [atEnd, setAtEnd] = React.useState(true);
 
     React.useEffect(() => {
         const element = wrapper.current;
 
         const table = element?.querySelector("table");
 
-        if (!enabled || !element || !table || typeof ResizeObserver === "undefined") return;
+        const scroller = element?.querySelector<HTMLElement>("[data-slot=table-container]");
+
+        if (!element || !table || typeof ResizeObserver === "undefined") return;
 
         // +1: sub-pixel rounding of a table exactly as wide as its column.
-        const measure = () => setFits(table.getBoundingClientRect().width <= element.clientWidth + 1);
+        const measure = () => {
+            setFits(table.getBoundingClientRect().width <= element.clientWidth + 1);
+
+            setAtEnd(!scroller || scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 1);
+        };
 
         measure();
 
@@ -52,10 +63,23 @@ function useTableFits(wrapper: React.RefObject<HTMLDivElement | null>, enabled: 
 
         observer.observe(table);
 
-        return () => observer.disconnect();
-    }, [enabled, wrapper]);
+        scroller?.addEventListener("scroll", measure, { passive: true });
 
-    return fits;
+        return () => {
+            observer.disconnect();
+
+            scroller?.removeEventListener("scroll", measure);
+        };
+    }, [wrapper]);
+
+    return { atEnd, fits };
+}
+
+/** "40 loaded" while a next page exists (the API has no total), else "12 rows". */
+export function loadedCountText(count: number, hasNextPage: boolean) {
+    if (hasNextPage) return `${formatNumber(count)} loaded`;
+
+    return `${formatNumber(count)} ${count === 1 ? "row" : "rows"}`;
 }
 
 /** A right-aligned, tabular-figure cell (numbers, amounts) of a `DataTable` column. */
@@ -70,11 +94,17 @@ export const right = (text: string) => <div className="text-right tabular-nums">
  *   both); the page itself never scrolls sideways.
  * - `stickyFirstColumn` (wide tables: insider trades): the wrapper scrolls sideways at every width, the first column
  *   stays; the header is then never window-sticky (same CSS limit).
+ * - Below 640 px a table of more than 4 columns keeps its first column (the wrapper scrolls sideways), and so does such
+ *   a table at any width once it is wider than its column (a docked request panel); a cut table fades its right edge
+ *   until scrolled to the end.
+ * - Toolbar (ui-redesign task 6): left the count ("40 loaded" / "12 rows") and `toolbarMeta`, right the "Export" menu;
+ *   while the first page loads it keeps its height (no jump), and it is left out when it has nothing to show.
  * - States: skeleton rows while the first page loads, `errorState` in a full-width row (first page or a failed next
  *   page), the empty row only for a genuine empty answer (`emptyIsGenuine`: a pending / partial coverage's notice
- *   stands above the table instead), "Load more" with "N loaded" by `next_cursor`.
- * - O6: `operationId` (the list's operation) puts its cost on "Load more"; `exportConfig` adds the "Export" menu above
- *   the table (CSV / JSON of the loaded rows, "load all" after a confirm naming the per-page cost).
+ *   stands above the table instead) — both in a 120 px block —, "Load more" centred under the table by `next_cursor`.
+ * - Rows: hover fill, first column `font-medium`; a `Copyable` id shows its copy button on row hover / focus.
+ * - O6: `operationId` (the list's operation) puts its cost on "Load more"; `exportConfig` adds the "Export" menu
+ *   (CSV / JSON of the loaded rows, "load all" after a confirm naming the per-page cost).
  */
 export function DataTable<TRow>({
     columnClassName,
@@ -93,12 +123,13 @@ export function DataTable<TRow>({
     rowClassName,
     rows,
     stickyFirstColumn = false,
+    toolbarMeta,
 }: {
     /** Extra classes per column id (widths, alignment). */
     columnClassName?: (columnId: string) => string | undefined;
     columns: Array<ColumnDef<TRow>>;
     emptyIsGenuine?: boolean;
-    emptyText: string;
+    emptyText: React.ReactNode;
     /** A rendered error (`ErrorState`, `SecReadinessNotice`) for a failed request; null / undefined = none. */
     errorState?: React.ReactNode;
     /** The "Export" menu above the table (rows as given; columns default to every field, flattened). */
@@ -119,6 +150,8 @@ export function DataTable<TRow>({
     rowClassName?: (row: TRow) => string | undefined;
     rows: Array<TRow>;
     stickyFirstColumn?: boolean;
+    /** A meta / coverage line in the toolbar, after the count. */
+    toolbarMeta?: React.ReactNode;
 }) {
     const table = useReactTable({ columns, data: rows, getCoreRowModel: getCoreRowModel() });
 
@@ -126,7 +159,7 @@ export function DataTable<TRow>({
 
     const wrapper = React.useRef<HTMLDivElement>(null);
 
-    const fits = useTableFits(wrapper, !stickyFirstColumn);
+    const { atEnd, fits } = useTableFits(wrapper);
 
     const stickyHeader = !stickyFirstColumn && fits && !groupOf;
 
@@ -140,95 +173,118 @@ export function DataTable<TRow>({
         return groups;
     }, [groupOf, rows]);
 
-    const firstColumn = (index: number) => (stickyFirstColumn && index === 0 ? "sticky left-0 z-10 bg-background" : undefined);
+    // Below 640 px a wide table (more than 4 columns) keeps its first column too; at any width once it is cut (task 8).
+    const phoneSticky = !stickyFirstColumn && columns.length > 4;
+
+    const firstColumn = (index: number) => {
+        if (index !== 0) return undefined;
+
+        // Opaque (the scrolled cells pass under it), the row's 50 % hover fill mixed in.
+        if (stickyFirstColumn || (phoneSticky && !fits)) return "sticky left-0 z-10 bg-background group-hover/row:bg-[color-mix(in_oklch,var(--muted)_50%,var(--background))]";
+
+        return phoneSticky ? "max-sm:sticky max-sm:left-0 max-sm:z-10 max-sm:bg-background max-sm:group-hover/row:bg-[color-mix(in_oklch,var(--muted)_50%,var(--background))]" : undefined;
+    };
 
     const showSkeleton = isLoading && rows.length === 0 && !errorState;
 
     const showEmpty = !isLoading && rows.length === 0 && emptyIsGenuine && !errorState;
 
+    const count = rows.length > 0 ? loadedCountText(rows.length, hasNextPage) : null;
+
+    const showToolbar = Boolean(exportConfig || toolbarMeta || count || showSkeleton);
+
     return (
-        <div className="flex min-w-0 flex-col" data-slot="data-table" ref={wrapper}>
-            {exportConfig && (
-                <div className="flex justify-end pb-2">
-                    <ExportMenu
-                        config={exportConfig}
-                        failed={!!errorState}
-                        hasNextPage={hasNextPage}
-                        isFetchingNextPage={isFetchingNextPage}
-                        onLoadMore={onLoadMore}
-                        operationId={operationId}
-                        rows={rows}
-                    />
+        <div className="flex min-w-0 flex-col gap-2" data-slot="data-table" ref={wrapper}>
+            {showToolbar && (
+                <div className="flex min-h-7 flex-wrap items-center justify-between gap-x-4 gap-y-1" data-slot="data-table-toolbar">
+                    <div className="text-muted-foreground flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                        {count && <span className="tabular-nums" data-testid="data-table-count">{count}</span>}
+                        {toolbarMeta}
+                    </div>
+                    {exportConfig && (
+                        <ExportMenu
+                            config={exportConfig}
+                            failed={!!errorState}
+                            hasNextPage={hasNextPage}
+                            isFetchingNextPage={isFetchingNextPage}
+                            onLoadMore={onLoadMore}
+                            operationId={operationId}
+                            rows={rows}
+                        />
+                    )}
                 </div>
             )}
-            <Table containerClassName={stickyHeader || (groupOf && fits) ? "lg:overflow-x-visible" : undefined}>
-                <TableHeader className={cn(stickyHeader && cn("bg-background lg:sticky lg:z-20", LG_STICKY_TOP_CLASS))}>
-                    {table.getHeaderGroups().map(headerGroup => (
-                        <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header, index) => (
-                                <TableHead className={cn(firstColumn(index), columnClassName?.(header.column.id))} key={header.id}>
-                                    {header.isPlaceholder ? null : <ColumnContent props={header.getContext()} template={header.column.columnDef.header} />}
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    ))}
-                </TableHeader>
-                <TableBody>
-                    {table.getRowModel().rows.map((row: Row<TRow>, rowIndex, all) => {
-                        const group = groupOf?.(row.original);
+            <div className="relative min-w-0">
+                <Table containerClassName={stickyHeader || (groupOf && fits) ? "lg:overflow-x-visible" : undefined}>
+                    <TableHeader className={cn(stickyHeader && cn("bg-background lg:sticky lg:z-20", LG_STICKY_TOP_CLASS))}>
+                        {table.getHeaderGroups().map(headerGroup => (
+                            <TableRow key={headerGroup.id}>
+                                {headerGroup.headers.map((header, index) => (
+                                    <TableHead className={cn(firstColumn(index), columnClassName?.(header.column.id))} key={header.id}>
+                                        {header.isPlaceholder ? null : <ColumnContent props={header.getContext()} template={header.column.columnDef.header} />}
+                                    </TableHead>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableHeader>
+                    <TableBody>
+                        {table.getRowModel().rows.map((row: Row<TRow>, rowIndex, all) => {
+                            const group = groupOf?.(row.original);
 
-                        const startsGroup = group !== undefined && (rowIndex === 0 || groupOf?.(all[rowIndex - 1].original) !== group);
+                            const startsGroup = group !== undefined && (rowIndex === 0 || groupOf?.(all[rowIndex - 1].original) !== group);
 
-                        return (
-                            <React.Fragment key={row.id}>
-                                {startsGroup && (
-                                    <TableRow className="hover:bg-transparent" data-testid="data-table-group">
-                                        <TableCell
-                                            className={cn("bg-muted/95 supports-backdrop-filter:backdrop-blur py-1.5 font-medium lg:sticky lg:z-10", fits && LG_STICKY_TOP_CLASS)}
-                                            colSpan={columnCount}
-                                        >
-                                            {groupHeading ? groupHeading(group, groupRows.get(group) ?? []) : group}
-                                        </TableCell>
+                            return (
+                                <React.Fragment key={row.id}>
+                                    {startsGroup && (
+                                        <TableRow className="hover:bg-transparent" data-testid="data-table-group">
+                                            <TableCell
+                                                className={cn("bg-muted/95 supports-backdrop-filter:backdrop-blur py-1.5 font-medium lg:sticky lg:z-10", fits && LG_STICKY_TOP_CLASS)}
+                                                colSpan={columnCount}
+                                            >
+                                                {groupHeading ? groupHeading(group, groupRows.get(group) ?? []) : group}
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                    <TableRow className={rowClassName?.(row.original)}>
+                                        {row.getVisibleCells().map((cell, index) => (
+                                            <TableCell className={cn(index === 0 && "font-medium", firstColumn(index), columnClassName?.(cell.column.id))} key={cell.id}>
+                                                <ColumnContent props={cell.getContext()} template={cell.column.columnDef.cell} />
+                                            </TableCell>
+                                        ))}
                                     </TableRow>
-                                )}
-                                <TableRow className={rowClassName?.(row.original)}>
-                                    {row.getVisibleCells().map((cell, index) => (
-                                        <TableCell className={cn(firstColumn(index), columnClassName?.(cell.column.id))} key={cell.id}>
-                                            <ColumnContent props={cell.getContext()} template={cell.column.columnDef.cell} />
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            </React.Fragment>
-                        );
-                    })}
+                                </React.Fragment>
+                            );
+                        })}
 
-                    {showSkeleton && Array.from({ length: SKELETON_ROWS }, (_, rowIndex) => (
-                        <TableRow data-testid="data-table-skeleton" key={`skeleton-${rowIndex}`}>
-                            {Array.from({ length: columnCount }, (__, cellIndex) => (
-                                <TableCell key={cellIndex}><Skeleton className="h-4 w-full min-w-8" /></TableCell>
-                            ))}
-                        </TableRow>
-                    ))}
+                        {showSkeleton && Array.from({ length: SKELETON_ROWS }, (_, rowIndex) => (
+                            <TableRow data-testid="data-table-skeleton" key={`skeleton-${rowIndex}`}>
+                                {Array.from({ length: columnCount }, (__, cellIndex) => (
+                                    <TableCell key={cellIndex}><Skeleton className="h-4 w-full min-w-8" /></TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
 
-                    {showEmpty && (
-                        <TableRow className="hover:bg-transparent">
-                            <TableCell className="text-muted-foreground text-center whitespace-normal" colSpan={columnCount}>{emptyText}</TableCell>
-                        </TableRow>
-                    )}
+                        {showEmpty && (
+                            <TableRow className="hover:bg-transparent">
+                                <TableCell className="text-muted-foreground h-30 text-center text-sm whitespace-normal" colSpan={columnCount}>{emptyText}</TableCell>
+                            </TableRow>
+                        )}
 
-                    {errorState && (
-                        <TableRow className="hover:bg-transparent">
-                            <TableCell className="whitespace-normal" colSpan={columnCount}>{errorState}</TableCell>
-                        </TableRow>
-                    )}
-                </TableBody>
-            </Table>
+                        {errorState && (
+                            <TableRow className="hover:bg-transparent">
+                                <TableCell className="h-30 text-sm whitespace-normal" colSpan={columnCount}>{errorState}</TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+                {/* The cut edge of a table wider than its column, until scrolled to the end. */}
+                <ScrollEdgeFades edges={{ end: !fits && !atEnd, start: false }} testId="data-table-fade" />
+            </div>
 
             {onLoadMore && (
                 <LoadMoreButton
                     hasNextPage={hasNextPage}
                     isFetchingNextPage={isFetchingNextPage}
-                    loadedCount={rows.length}
                     onLoadMore={onLoadMore}
                     operationId={operationId}
                 />

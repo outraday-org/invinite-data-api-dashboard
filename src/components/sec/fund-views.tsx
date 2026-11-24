@@ -6,9 +6,11 @@ import type { V2FundAdviser, V2FundPosition, V2FundPositionsResponse, V2FundSour
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecurityLink } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Copyable } from "@/components/ui/copy-button";
 import { DataTable, right } from "@/components/ui/data-table";
 import { Notice } from "@/components/ui/notice";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     FUND_DIMENSION_LABELS,
     fundBasisNote,
@@ -90,7 +92,7 @@ const COMPOSITION_COLUMNS: Array<ColumnDef<V2FundPosition>> = [
         header: "ISIN",
         id: "isin",
     },
-    { accessorKey: "asset_class", cell: ({ row }) => row.original.asset_class ?? "—", header: "Asset Class" },
+    { accessorKey: "asset_class", cell: ({ row }) => row.original.asset_class ?? "—", header: "Asset class" },
     { cell: ({ row }) => <BasisValue basis={row.original.sector_basis} value={row.original.sector} />, header: "Sector", id: "sector" },
     { cell: ({ row }) => <BasisValue basis={row.original.country_basis} value={row.original.country} />, header: "Country", id: "country" },
     {
@@ -101,7 +103,7 @@ const COMPOSITION_COLUMNS: Array<ColumnDef<V2FundPosition>> = [
     {
         accessorKey: "market_value_usd",
         cell: ({ row }) => right(money(row.original.market_value_usd)),
-        header: () => <div className="text-right">Market Value</div>,
+        header: () => <div className="text-right">Market value</div>,
     },
     {
         accessorKey: "shares",
@@ -121,8 +123,9 @@ const NOTIONAL_COLUMN: ColumnDef<V2FundPosition> = {
 const hasNotional = (rows: ReadonlyArray<V2FundPosition>) => rows.some(row => row.notional_value_usd != null);
 
 /**
- * One fund's composition (`/v1/funds/{fund}/holdings`), largest weight first: the source badge, the reason of a partial or
- * deliberately empty answer (a single-asset trust is a notice, never an empty table), the rows and "Load more".
+ * One fund's composition (`/v1/funds/{fund}/holdings`), largest weight first: the reason of a partial or deliberately
+ * empty answer (a single-asset trust is a notice, never an empty table), the rows and "Load more". The source + as-of
+ * badge (`FundSourceBadge`) is the page's: the Holdings page shows it in its filter bar beside the as-of picker.
  */
 export function FundCompositionList({ exportScope, state }: { exportScope?: string; state: ListState<V2FundPositionsResponse> }) {
     const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
@@ -140,9 +143,6 @@ export function FundCompositionList({ exportScope, state }: { exportScope?: stri
     return (
         <div className="flex flex-col gap-2">
             <SecReadinessNotice coverage={meta?.coverage} />
-            <div className="flex flex-wrap items-center gap-2 text-xs">
-                <FundSourceBadge asOf={meta?.as_of} source={meta?.source} />
-            </div>
             {meta?.reason === "single_asset_trust"
                 ? (
                         <Notice badge="Single asset" title={reason ?? ""} />
@@ -179,7 +179,19 @@ export function FundWeightsBlock({ state }: { state: ListState<V2FundWeightsResp
 
     if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the fund weights" />;
 
-    if (isLoading && pages.length === 0) return <div className="text-muted-foreground text-sm">Loading weights...</div>;
+    // Shaped like the bars: three dimension columns.
+    if (isLoading && pages.length === 0) {
+        return (
+            <div aria-busy className="grid gap-x-8 gap-y-6 md:grid-cols-3">
+                {[0, 1, 2].map(column => (
+                    <div className="flex flex-col gap-2" key={column}>
+                        <Skeleton className="h-4 w-24" />
+                        {[0, 1, 2, 3].map(row => <Skeleton className="h-6 w-full" key={row} />)}
+                    </div>
+                ))}
+            </div>
+        );
+    }
 
     const meta = pages.at(0)?.meta;
 
@@ -193,8 +205,8 @@ export function FundWeightsBlock({ state }: { state: ListState<V2FundWeightsResp
             <div className="flex flex-col gap-2">
                 <SecReadinessNotice coverage={meta?.coverage} />
                 {reason
-                    ? <div className="text-muted-foreground text-sm" data-testid="fund-weights-reason">{reason}</div>
-                    : isV2GenuineEmpty(meta?.coverage) && <div className="text-muted-foreground text-sm">No weights for this composition.</div>}
+                    ? <div className="text-muted-foreground" data-testid="fund-weights-reason">{reason}</div>
+                    : isV2GenuineEmpty(meta?.coverage) && <div className="text-muted-foreground">No weights for this composition.</div>}
             </div>
         );
     }
@@ -205,18 +217,20 @@ export function FundWeightsBlock({ state }: { state: ListState<V2FundWeightsResp
         <div className="flex flex-col gap-3" data-testid="fund-weights">
             <SecReadinessNotice coverage={meta?.coverage} />
             {sum && <div className="text-muted-foreground text-xs" data-testid="fund-weight-sum">{sum}</div>}
-            <div className="grid gap-4 md:grid-cols-3">
+            {/* One column per dimension while every dimension is shown; a single one takes the width. */}
+            <div className={groups.length > 1 ? "grid gap-x-8 gap-y-6 md:grid-cols-3" : "grid max-w-2xl gap-6"}>
                 {groups.map(group => (
-                    <div className="flex flex-col gap-1" key={group.dimension}>
-                        <div className="text-sm font-medium">{FUND_DIMENSION_LABELS[group.dimension]}</div>
+                    <div className="flex flex-col gap-1.5" key={group.dimension}>
+                        <div className="font-medium">{FUND_DIMENSION_LABELS[group.dimension]}</div>
                         {group.weights.map(weight => (
-                            <div className="flex flex-col gap-0.5" key={weight.bucket}>
-                                <div className="flex justify-between gap-2 text-xs">
+                            // The label and value sit outside (above) the bar: readable whatever the bar's length.
+                            <div className="flex flex-col gap-1" key={weight.bucket}>
+                                <div className="flex justify-between gap-2">
                                     <span className="truncate">{weight.bucket}</span>
                                     <span className="tabular-nums">{weightText(weight.weight_pct)}</span>
                                 </div>
-                                <div className="bg-muted h-1.5 rounded">
-                                    <div className="bg-primary h-1.5 rounded" style={{ width: `${Math.max(0, Math.min(100, weight.weight_pct))}%` }} />
+                                <div className="bg-muted h-1.5 rounded-full">
+                                    <div className="bg-brand/60 h-1.5 rounded-full" style={{ width: `${Math.max(0, Math.min(100, weight.weight_pct))}%` }} />
                                 </div>
                             </div>
                         ))}
@@ -225,9 +239,9 @@ export function FundWeightsBlock({ state }: { state: ListState<V2FundWeightsResp
                 ))}
             </div>
             {hasNextPage && (
-                <button className="text-primary self-start text-xs underline" disabled={isFetchingNextPage} onClick={onLoadMore} type="button">
+                <Button className="self-start" disabled={isFetchingNextPage} onClick={onLoadMore} size="sm" type="button" variant="outline">
                     {isFetchingNextPage ? "Loading..." : "More buckets"}
-                </button>
+                </Button>
             )}
             {error ? <SecReadinessNotice error={error} title="Failed to load the fund weights" /> : null}
         </div>

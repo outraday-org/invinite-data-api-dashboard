@@ -20,16 +20,6 @@ function skipped(previous: string, next: string, frequency: MacroSeries["frequen
 
     if (frequency === "W") return hi.getTime() - lo.getTime() > 7 * millis;
 
-    if (frequency === "D") {
-        for (let ms = lo.getTime() + millis; ms < hi.getTime(); ms += millis) {
-            const day = new Date(ms).getUTCDay();
-
-            if (day !== 0 && day !== 6) return true;
-        }
-
-        return false;
-    }
-
     lo.setUTCMonth(lo.getUTCMonth() + (frequency === "Q" ? 3 : 1));
 
     return lo < hi;
@@ -37,6 +27,9 @@ function skipped(previous: string, next: string, frequency: MacroSeries["frequen
 
 export const historyPoints = (rows: Array<MacroPoint>, frequency: MacroSeries["frequency"]) => {
     const ordered = [...rows].sort((a, b) => a.label.localeCompare(b.label));
+
+    // Treasury history is indexed by published curve dates. A missing tenor on a curve already has a null value.
+    if (frequency === "D") return ordered;
 
     return ordered.flatMap((row, i) =>
         i > 0 && skipped(ordered[i - 1].label, row.label, frequency)
@@ -82,7 +75,7 @@ export const MacroChart = ({
                 dot={points.length < 32}
                 isAnimationActive={false}
                 name={unit}
-                stroke="var(--chart-1)"
+                stroke="var(--series-1)"
                 strokeWidth={2}
                 type="linear"
             />

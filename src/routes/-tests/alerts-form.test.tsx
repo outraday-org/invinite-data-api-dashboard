@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // @vitest-environment jsdom
@@ -109,19 +109,19 @@ describe("AlertFormView (one form from the field map)", () => {
     it("offers macro as a new rule type only after the API advertises it", async () => {
         const screenView = render(view({ macroAccess: "not-advertised" }));
 
-        fireEvent.click(screen.getByRole("combobox", { name: "Alert type" }));
+        fireEvent.click(screen.getByRole("button", { name: "Alert type" }));
 
-        await screen.findByRole("option", { name: "SEC filing" });
+        await screen.findByRole("menuitemradio", { name: "SEC filing" });
 
-        expect(screen.queryByRole("option", { name: "US macro" })).toBeNull();
+        expect(screen.queryByRole("menuitemradio", { name: "US macro" })).toBeNull();
 
         screenView.unmount();
 
         render(view({ macroAccess: "available" }));
 
-        fireEvent.click(screen.getByRole("combobox", { name: "Alert type" }));
+        fireEvent.click(screen.getByRole("button", { name: "Alert type" }));
 
-        expect(await screen.findByRole("option", { name: "US macro" })).toBeInTheDocument();
+        expect(await screen.findByRole("menuitemradio", { name: "US macro" })).toBeInTheDocument();
     });
 
     it("numeric bounds as a hint", () => {
@@ -132,6 +132,72 @@ describe("AlertFormView (one form from the field map)", () => {
         expect(rangeText({ max: 6 })).toBe(" (at most 6)");
 
         expect(rangeText({})).toBe("");
+    });
+
+    it("list fields are chip inputs over the same text: symbols in, the model's text out", () => {
+        const onChange = vi.fn();
+
+        render(view({ onChange, state: { ...emptyAlertForm("filing"), condition: { symbols: "AAPL" } } }));
+
+        expect(screen.getByRole("button", { name: "Remove AAPL" })).toBeInTheDocument();
+
+        fireEvent.change(screen.getByLabelText("Symbols"), { target: { value: "MSFT," } });
+
+        expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ condition: { symbols: "AAPL, MSFT" } }));
+    });
+
+    it("rarely used fields wait in \"More conditions\"; an error there opens it", () => {
+        const { rerender } = render(view({ state: emptyAlertForm("filing") }));
+
+        const more = screen.getByRole("button", { name: /^More conditions/ });
+
+        expect(more).toHaveAttribute("aria-expanded", "false");
+
+        // Mounted while closed: the label, the error and the 400 mapping keep working.
+        expect(screen.getByText("Include amendments")).toBeInTheDocument();
+
+        rerender(view({ errors: { "condition.stage": "stage: one of detected, processed" }, state: emptyAlertForm("filing") }));
+
+        expect(screen.getByRole("button", { name: /^More conditions/ })).toHaveAttribute("aria-expanded", "true");
+
+        expect(screen.getByText("stage: one of detected, processed").closest("[data-field]")).toHaveAttribute("data-field", "alert-field-condition-stage");
+    });
+
+    it("a field filled in when the form opens opens its disclosure", () => {
+        render(view({ state: { ...emptyAlertForm("filing"), condition: { ciks: "320193" } } }));
+
+        expect(screen.getByRole("button", { name: /^More conditions/ })).toHaveAttribute("aria-expanded", "true");
+    });
+
+    it("the summary says the alert in words and shows the request body it sends", () => {
+        const state = { ...emptyAlertForm("filing"), condition: { form_types: "8-K", symbols: "AAPL" } };
+
+        render(view({ preview: { body: { condition: { form_types: ["8-K"], symbols: ["AAPL"] }, type: "filing" }, method: "POST", path: "/v1/alerts" }, state }));
+
+        const summary = screen.getByTestId("alert-form-summary");
+
+        expect(within(summary).getByTestId("alert-form-sentence")).toHaveTextContent("SEC filing on AAPL");
+
+        expect(summary).toHaveTextContent("form types 8-K");
+
+        expect(summary).toHaveTextContent("POST /v1/alerts");
+
+        expect(summary).toHaveTextContent("\"filing\"");
+    });
+
+    it("help without a bound waits behind its (i); help with a bound stays visible", () => {
+        render(view());
+
+        const about = screen.getByRole("button", { name: "About Operator" });
+
+        expect(about).toHaveAttribute("aria-expanded", "false");
+
+        fireEvent.click(about);
+
+        expect(about).toHaveAttribute("aria-expanded", "true");
+
+        // "Move (%)"-like bounds are never tucked away: Level's help names its bound.
+        expect(screen.queryByRole("button", { name: "About Level" })).toBeNull();
     });
 
     it("editing keeps the type fixed and says so; Check only on create", () => {
@@ -159,7 +225,7 @@ describe("CreateAlertForm", () => {
 
         fireEvent.click(screen.getByRole("button", { name: "Add numeric threshold" }));
 
-        expect(screen.getByLabelText("Threshold series")).toHaveValue("treasury_par_y10");
+        expect(screen.getByRole("button", { name: "Threshold series" })).toHaveTextContent("(treasury_par_y10)");
 
         fireEvent.change(screen.getByLabelText("Threshold value (percent)"), { target: { value: "4" } });
 

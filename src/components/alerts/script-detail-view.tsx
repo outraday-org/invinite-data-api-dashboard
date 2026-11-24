@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Notice } from "@/components/ui/notice";
+import { Stat, StatGrid } from "@/components/ui/stat";
 import { alertIdsInDetail, defaultText, diagnosticsByLine, diagnosticsSummary, inputRangeText, manifestInputs } from "@/lib/alerts/scripts";
 import { formatInstant } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -23,14 +24,14 @@ export function ScriptVersionsList({ onSelect, selected, versions }: { onSelect:
                 <li key={version.id}>
                     <button
                         aria-current={version.version === selected ? "true" : undefined}
-                        className={cn("flex w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border px-3 py-2 text-left hover:bg-muted/50", version.version === selected && "border-primary bg-muted/50")}
+                        className={cn("flex w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border px-3 py-2 text-left hover:bg-muted/50", version.version === selected && "border-brand bg-muted/50")}
                         onClick={() => onSelect(version.version)}
                         type="button"
                     >
                         <span className="font-medium">{`v${version.version}`}</span>
                         <ScriptVersionStatusBadge status={version.status} />
                         <span className="text-muted-foreground">{diagnosticsSummary(version.diagnostics)}</span>
-                        <span className="w-full text-muted-foreground">{formatInstant(version.created_at)}</span>
+                        <span className="w-full text-xs text-muted-foreground">{formatInstant(version.created_at)}</span>
                     </button>
                 </li>
             ))}
@@ -129,9 +130,9 @@ export function ScriptVersionView({ scriptId, version }: { scriptId: string; ver
     const inputs = manifestInputs(version.manifest);
 
     return (
-        <div className="flex min-w-0 flex-col gap-4" data-testid="script-version">
+        <div className="flex min-w-0 flex-col gap-6" data-testid="script-version">
             <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-sm font-semibold">{`Version ${version.version}`}</h3>
+                <h3 className="text-section">{`Version ${version.version}`}</h3>
                 <ScriptVersionStatusBadge status={version.status} />
                 {version.status === "ok"
                     ? (
@@ -141,16 +142,21 @@ export function ScriptVersionView({ scriptId, version }: { scriptId: string; ver
                         )
                     : <span className="text-muted-foreground">Fix the errors and upload a new version to use it in alerts.</span>}
             </div>
-            <dl className="flex flex-col gap-2">
-                <DetailRow label="Version id">
-                    <span className="inline-flex items-center gap-1 font-mono break-all">
-                        {version.id}
-                        <CopyButton label="Copy script version id" value={version.id} />
-                    </span>
-                </DetailRow>
-                <DetailRow label="Compiler">{version.compiler_version}</DetailRow>
-                <DetailRow label="Source SHA-256"><span className="font-mono break-all">{version.source_sha256}</span></DetailRow>
-                <DetailRow label="Uploaded">{formatInstant(version.created_at)}</DetailRow>
+            <StatGrid>
+                <Stat
+                    label="Version id"
+                    value={(
+                        <span className="inline-flex items-center gap-1 font-mono text-sm break-all">
+                            {version.id}
+                            <CopyButton label="Copy script version id" value={version.id} />
+                        </span>
+                    )}
+                />
+                <Stat label="Compiler" value={version.compiler_version} />
+                <Stat label="Uploaded" value={formatInstant(version.created_at)} />
+                <Stat label="Source SHA-256" value={<span className="font-mono text-xs break-all">{version.source_sha256}</span>} />
+            </StatGrid>
+            <dl className="flex flex-col">
                 <DetailRow label="Alert condition ids">
                     {version.alert_ids.length > 0
                         ? (
@@ -159,16 +165,16 @@ export function ScriptVersionView({ scriptId, version }: { scriptId: string; ver
                                 </div>
                             )
                         : <span className="text-muted-foreground">None</span>}
-                    <p className="text-muted-foreground">What a script alert&apos;s condition.alert_ids can name (its alertCondition ids and alert() call sites); empty there = all.</p>
+                    <p className="text-muted-foreground text-xs">What a script alert&apos;s condition.alert_ids can name (its alertCondition ids and alert() call sites); empty there = all.</p>
                 </DetailRow>
             </dl>
-            <section className="flex flex-col gap-2">
-                <h4 className="font-semibold">Declared inputs</h4>
+            <div className="flex flex-col gap-2">
+                <h4 className="text-sm font-semibold">Declared inputs</h4>
                 {inputs.length > 0
                     ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left" data-testid="script-inputs">
-                                    <thead className="text-muted-foreground">
+                                    <thead className="text-muted-foreground text-xs">
                                         <tr>
                                             <th className="py-1 pr-3 font-medium">Input</th>
                                             <th className="py-1 pr-3 font-medium">Kind</th>
@@ -179,13 +185,13 @@ export function ScriptVersionView({ scriptId, version }: { scriptId: string; ver
                                     <tbody>
                                         {inputs.map(input => (
                                             <tr className="border-t" key={input.name}>
-                                                <td className="py-1 pr-3">
+                                                <td className="py-1.5 pr-3">
                                                     <span className="font-mono">{input.name}</span>
                                                     {input.title !== input.name && <span className="text-muted-foreground">{` · ${input.title}`}</span>}
                                                 </td>
-                                                <td className="py-1 pr-3">{input.kind}</td>
-                                                <td className="py-1 pr-3 font-mono">{defaultText(input.default)}</td>
-                                                <td className="py-1">{inputRangeText(input) || "—"}</td>
+                                                <td className="py-1.5 pr-3">{input.kind}</td>
+                                                <td className="py-1.5 pr-3 font-mono">{defaultText(input.default)}</td>
+                                                <td className="py-1.5">{inputRangeText(input) || "—"}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -193,15 +199,15 @@ export function ScriptVersionView({ scriptId, version }: { scriptId: string; ver
                             </div>
                         )
                     : <p className="text-muted-foreground">{version.manifest === null ? "No manifest: the compile failed." : "The script declares no inputs."}</p>}
-            </section>
-            <section className="flex flex-col gap-2">
-                <h4 className="font-semibold">{`Diagnostics · ${diagnosticsSummary(version.diagnostics)}`}</h4>
+            </div>
+            <div className="flex flex-col gap-2">
+                <h4 className="text-sm font-semibold">{`Diagnostics · ${diagnosticsSummary(version.diagnostics)}`}</h4>
                 <ScriptDiagnosticsList diagnostics={version.diagnostics} />
-            </section>
-            <section className="flex flex-col gap-2">
-                <h4 className="font-semibold">Source</h4>
+            </div>
+            <div className="flex flex-col gap-2">
+                <h4 className="text-sm font-semibold">Source</h4>
                 <ScriptSourceView diagnostics={version.diagnostics} source={version.source} />
-            </section>
+            </div>
         </div>
     );
 }

@@ -6,10 +6,12 @@ import { tierLabel } from "@/components/ui/credit-hint";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ErrorState } from "@/components/ui/error-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isNotFound, isTierError } from "@/lib/api/errors";
 import { useNewsAnnouncements, useNewsItem, useNewsText } from "@/lib/api/queries";
 import { formatInstant } from "@/lib/earnings/format";
+import { READING_COLUMN_CLASS } from "@/lib/layout";
 import {
     CLAIM_STATUS_LABELS,
     edgarLabel,
@@ -19,6 +21,7 @@ import {
     publishedBy,
     sourceLabel,
 } from "@/lib/news/labels";
+import { cn } from "@/lib/utils";
 import { Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
 import { SummaryBody } from "./summary-body";
@@ -29,47 +32,46 @@ const EXTERNAL = { rel: "noopener noreferrer", target: "_blank" } as const;
  * The attribution block (D26: backend earnings tasks/inhouse-news-pipeline README), rendered ABOVE every text this
  * dashboard shows: publisher, original link, publication date, the API's statement (the text below is Invinite's
  * summary, not the publisher's), the © holder of an issuer publication and an SEC filing's form + accession. This is
- * the reference rendering other consumers copy.
+ * the reference rendering other consumers copy. A quiet `Section` "Source" (ui-redesign task 11): no box, a label /
+ * value list in the small size.
  */
 export function AttributionBlock({ attribution }: { attribution: NewsAttribution }) {
     const edgar = edgarLabel(attribution.edgar);
 
     return (
-        <dl aria-label="Attribution" className="bg-muted/40 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 rounded-md border p-3 text-xs">
-            <dt className="text-muted-foreground">Publisher</dt>
-            <dd>{attribution.publisher_host ? `${attribution.publisher} (${attribution.publisher_host})` : attribution.publisher}</dd>
-            <dt className="text-muted-foreground">Published</dt>
-            <dd>{formatInstant(attribution.published_at)}</dd>
-            <dt className="text-muted-foreground">Source</dt>
-            <dd className="break-all">
-                <a className="underline underline-offset-4" href={attribution.source_url} {...EXTERNAL}>{attribution.source_url}</a>
-            </dd>
-            {edgar && (
-                <>
-                    <dt className="text-muted-foreground">SEC EDGAR</dt>
-                    <dd>{edgar}</dd>
-                </>
-            )}
-            <dt className="text-muted-foreground">Notice</dt>
-            <dd>
-                {attribution.statement}
-                {attribution.rights === "issuer" ? ` © ${attribution.publisher.replace(/\.$/, "")}.` : " Public record (SEC filing)."}
-            </dd>
-        </dl>
+        <Section title="Source">
+            <dl aria-label="Attribution" className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
+                <dt className="text-muted-foreground">Publisher</dt>
+                <dd>{attribution.publisher_host ? `${attribution.publisher} (${attribution.publisher_host})` : attribution.publisher}</dd>
+                <dt className="text-muted-foreground">Published</dt>
+                <dd>{formatInstant(attribution.published_at)}</dd>
+                <dt className="text-muted-foreground">Source</dt>
+                <dd className="break-all">
+                    <a className="underline underline-offset-4" href={attribution.source_url} {...EXTERNAL}>{attribution.source_url}</a>
+                </dd>
+                {edgar && (
+                    <>
+                        <dt className="text-muted-foreground">SEC EDGAR</dt>
+                        <dd>{edgar}</dd>
+                    </>
+                )}
+                <dt className="text-muted-foreground">Notice</dt>
+                <dd>
+                    {attribution.statement}
+                    {attribution.rights === "issuer" ? ` © ${attribution.publisher.replace(/\.$/, "")}.` : " Public record (SEC filing)."}
+                </dd>
+            </dl>
+        </Section>
     );
 }
 
 /** AI-read developments, each with its claim status (a planned launch is labelled planned). */
 function Developments({ developments }: { developments: ReadonlyArray<NewsDevelopment> }) {
     return (
-        <section className="flex flex-col gap-2">
-            <div className="text-sm font-medium">AI-extracted developments</div>
-            <div className="text-muted-foreground text-xs">
-                Read by a model from the publication: what the publisher announced — not verified facts.
-            </div>
-            <ul className="flex flex-col gap-2">
+        <Section description="Read by a model from the publication: what the publisher announced — not verified facts." title="AI-extracted developments">
+            <ul className="flex flex-col divide-y">
                 {developments.map(development => (
-                    <li className="flex flex-col gap-1 rounded-md border p-2 text-xs" data-testid="news-development" key={development.id}>
+                    <li className="flex flex-col gap-1 py-2" data-testid="news-development" key={development.id}>
                         <div className="flex flex-wrap items-center gap-2">
                             <Badge variant="outline">{NEWS_TOPIC_LABELS[development.topic]}</Badge>
                             <Badge variant={development.claim_status === "planned" ? "secondary" : "outline"}>
@@ -89,7 +91,7 @@ function Developments({ developments }: { developments: ReadonlyArray<NewsDevelo
                     </li>
                 ))}
             </ul>
-        </section>
+        </Section>
     );
 }
 
@@ -147,30 +149,32 @@ export function NewsItemView({
 
             <AttributionBlock attribution={text?.attribution ?? item.attribution} />
 
-            {item.description && <p className="text-sm font-medium" data-testid="news-lede">{item.description}</p>}
+            <div className={cn("flex flex-col gap-3", READING_COLUMN_CLASS)}>
+                {item.description && <p className="font-medium" data-testid="news-lede">{item.description}</p>}
 
-            {textError
-                ? <ErrorState error={textError} title="Failed to load the summary" />
-                : text === null
-                    ? <Skeleton className="h-24 w-full" />
-                    : blocks.length > 0
-                        ? (
-                                <section className="flex flex-col gap-1">
-                                    {item.summary_words !== null && (
-                                        <div className="text-muted-foreground text-xs">
-                                            {`Summary by Invinite · ${item.summary_words.toLocaleString("en-US")} words`}
-                                        </div>
-                                    )}
-                                    <SummaryBody blocks={blocks} />
-                                </section>
-                            )
-                        : (
-                                <Notice title="Headline and link only">
-                                    No summary is served for this item.
-                                    {" "}
-                                    <a className="underline underline-offset-4" href={item.attribution.source_url} {...EXTERNAL}>Open at source</a>
-                                </Notice>
-                            )}
+                {textError
+                    ? <ErrorState error={textError} title="Failed to load the summary" />
+                    : text === null
+                        ? <Skeleton className="h-24 w-full" />
+                        : blocks.length > 0
+                            ? (
+                                    <section className="flex flex-col gap-1">
+                                        {item.summary_words !== null && (
+                                            <div className="text-muted-foreground text-xs">
+                                                {`Summary by Invinite · ${item.summary_words.toLocaleString("en-US")} words`}
+                                            </div>
+                                        )}
+                                        <SummaryBody blocks={blocks} />
+                                    </section>
+                                )
+                            : (
+                                    <Notice title="Headline and link only">
+                                        No summary is served for this item.
+                                        {" "}
+                                        <a className="underline underline-offset-4" href={item.attribution.source_url} {...EXTERNAL}>Open at source</a>
+                                    </Notice>
+                                )}
+            </div>
 
             {announcements.length > 0 && <Developments developments={announcements} />}
 
@@ -189,7 +193,7 @@ export function NewsItemPanel({ id, onClose, title }: { id: null | string; onClo
 
     return (
         <Dialog onOpenChange={open => !open && onClose()} open={id !== null}>
-            <DialogContent className="sm:max-w-5xl">
+            <DialogContent className="sm:max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>{item.data?.title ?? title ?? "News item"}</DialogTitle>
                     <DialogDescription>Invinite&apos;s summary of the announcement</DialogDescription>

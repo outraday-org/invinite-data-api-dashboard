@@ -6,9 +6,31 @@ import { Sidebar, SidebarProvider, SidebarTrigger } from "@/components/ui/sideba
 
 afterEach(cleanup);
 
+const queries: Array<string> = [];
+
 beforeEach(() => {
-    // A phone: `useIsMobile` reads `(max-width: 767px)`.
-    vi.stubGlobal("matchMedia", (query: string) => ({ addEventListener: vi.fn(), matches: true, media: query, removeEventListener: vi.fn() }));
+    queries.length = 0;
+
+    // A phone or a tablet: `useIsMobile` reads `(max-width: 1023px)`.
+    vi.stubGlobal("matchMedia", (query: string) => {
+        queries.push(query);
+
+        return { addEventListener: vi.fn(), matches: true, media: query, removeEventListener: vi.fn() };
+    });
+});
+
+describe("the sidebar breakpoint", () => {
+    it("is off-canvas below 1024 px (ui-redesign F9: docked at 768 px it took a third of a tablet)", () => {
+        render(
+            <SidebarProvider>
+                <Sidebar>
+                    <span>Browse</span>
+                </Sidebar>
+            </SidebarProvider>,
+        );
+
+        expect(queries).toContain("(max-width: 1023px)");
+    });
 });
 
 describe("the sidebar on a phone (a sheet over the page)", () => {

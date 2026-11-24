@@ -16,6 +16,7 @@ import { timedWordsOfTurns, toWordTurns } from "@/lib/earnings/follow-along";
 import { formatMs } from "@/lib/earnings/format";
 import { scrollToTurn } from "@/lib/earnings/scroll-to-turn";
 import { textAnswerData, toTranscriptView, transcriptPlainText } from "@/lib/earnings/transcript";
+import { READING_COLUMN_CLASS } from "@/lib/layout";
 
 import type { CallTabProps } from "../call-tabs";
 import type { TranscriptDownloads } from "../transcript/transcript-toolbar";
@@ -325,7 +326,10 @@ export function TranscriptTab({ event, eventId, onSearchChange, onTranscriptJump
                 <div className="text-muted-foreground">Company-published transcript (no audio timings)</div>
             )}
 
-            <TranscriptBody error={transcript.error} format={format} operationId={transcriptOperationId} qaStartMs={qaStartMs} speakerImages={speakerImages} view={view} words={words} />
+            {/* The reading column: ≈ 72 characters a line in every format (ui-redesign task 10). */}
+            <div className={READING_COLUMN_CLASS}>
+                <TranscriptBody error={transcript.error} format={format} operationId={transcriptOperationId} qaStartMs={qaStartMs} speakerImages={speakerImages} view={view} words={words} />
+            </div>
 
             {compare && (
                 <Dialog onOpenChange={setCompareOpen} open={compareOpen}>

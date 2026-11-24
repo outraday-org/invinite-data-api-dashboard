@@ -8,6 +8,7 @@ import { HighlightedText, SearchCoverageNote, SpanHighlightedText } from "@/comp
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DayRange } from "@/components/ui/day-range";
+import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2FilingSearchInfinite } from "@/lib/api/queries";
@@ -167,6 +168,8 @@ export function SecSearchResults({
     return (
         <>
             <SecReadinessNotice coverage={last.meta.coverage} />
+            {/* The result's meta line first: how many passages the capped search examined, and how to narrow it. */}
+            <SearchMatchesNote hint={searchIndex?.hint} matches={searchIndex?.matches} />
             {hits.length === 0
                 ? (isSearchGenuineEmpty(last.meta.coverage, searchIndex) && <div className="text-muted-foreground">No passages found</div>)
                 : (
@@ -184,7 +187,6 @@ export function SecSearchResults({
                             ))}
                         </ul>
                     )}
-            <SearchMatchesNote hint={searchIndex?.hint} matches={searchIndex?.matches} />
             <SearchCoverageNote coverage={searchIndex ?? { completeness: "unknown", reasons: [] }} />
             {error ? <SecReadinessNotice error={error} title="Failed to load more results" /> : null}
             {hasNextPage && (
@@ -265,6 +267,12 @@ export function SecFilingSearch({
 
     const setFilter = (patch: SecSearchFilters) => setFilterDraft(prev => ({ ...prev, ...patch }));
 
+    const draftFilters = cleanFilters(filterDraft);
+
+    // The filled-in filters (the day range counts once): the bar's "Filters · n" and "Reset filters" (the draft only —
+    // filters apply on Search).
+    const activeFilters = [draftFilters.form, draftFilters.item, draftFilters.from ?? draftFilters.to].filter(Boolean).length;
+
     return (
         <section className="flex flex-col gap-2 rounded-md border p-3">
             <SearchQueryForm
@@ -276,26 +284,38 @@ export function SecFilingSearch({
                 placeholder={`${label} — e.g. supply chain risk`}
                 value={draft}
             >
-                <div className="flex flex-wrap items-center gap-2">
-                    <Input
-                        aria-label="Form"
-                        className="w-[110px]"
-                        maxLength={20}
-                        onChange={event => setFilter({ form: event.target.value })}
-                        placeholder="Form, e.g. 10-K"
-                        value={filterDraft.form ?? ""}
-                    />
-                    <Input
-                        aria-label="Section items"
-                        className="w-[150px]"
-                        maxLength={200}
-                        onChange={event => setFilter({ item: event.target.value })}
-                        placeholder="Items, e.g. 1A,7"
-                        title="Section ids, comma list"
-                        value={filterDraft.item ?? ""}
-                    />
-                    <DayRange from={filterDraft.from} labels={{ from: "Search filed from", to: "Search filed to" }} onChange={setFilter} to={filterDraft.to} />
-                </div>
+                <FilterBar activeCount={activeFilters} label="Search filters" onReset={() => setFilterDraft({})}>
+                    <FilterField label="Form">
+                        {id => (
+                            <Input
+                                aria-label="Form"
+                                className="w-full"
+                                id={id}
+                                maxLength={20}
+                                onChange={event => setFilter({ form: event.target.value })}
+                                placeholder="e.g. 10-K"
+                                value={filterDraft.form ?? ""}
+                            />
+                        )}
+                    </FilterField>
+                    <FilterField label="Section items">
+                        {id => (
+                            <Input
+                                aria-label="Section items"
+                                className="w-full"
+                                id={id}
+                                maxLength={200}
+                                onChange={event => setFilter({ item: event.target.value })}
+                                placeholder="e.g. 1A,7"
+                                title="Section ids, comma list"
+                                value={filterDraft.item ?? ""}
+                            />
+                        )}
+                    </FilterField>
+                    <FilterField label="Filed" span={2}>
+                        <DayRange from={filterDraft.from} labels={{ from: "Search filed from", to: "Search filed to" }} onChange={setFilter} to={filterDraft.to} />
+                    </FilterField>
+                </FilterBar>
             </SearchQueryForm>
             <div className="flex flex-wrap items-center gap-1">
                 <SearchModeChips mode={mode} onModeChange={setMode} />

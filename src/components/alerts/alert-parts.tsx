@@ -1,12 +1,14 @@
 import type * as React from "react";
 
 import { Link } from "@tanstack/react-router";
+import { MoreHorizontalIcon } from "lucide-react";
 
 import type { BatchItemResult } from "@/lib/alerts/labels";
 import type { AlertQuotaUsage, AlertStatus } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -120,9 +122,37 @@ export function BatchResultsView({ ids, onDismiss, results }: { ids: ReadonlyArr
 /** A labelled value of a definition list (summary cards). */
 export function DetailRow({ children, label }: { children: React.ReactNode; label: string }) {
     return (
-        <div className="grid grid-cols-1 gap-0.5 sm:grid-cols-[180px_1fr] sm:gap-3">
+        <div className="grid grid-cols-1 gap-0.5 border-b py-2 last:border-b-0 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-4">
             <dt className="text-muted-foreground">{label}</dt>
             <dd className="min-w-0 break-words">{children}</dd>
         </div>
+    );
+}
+
+export type MoreAction = { destructive?: boolean; disabled?: boolean; label: string; onSelect: () => void };
+
+/**
+ * The `⋯` menu of a detail page's title row (ui-redesign task 13): the outward and destructive actions (send a test,
+ * rotate a secret, disable, delete) wait behind it; each item still runs the page's action, which asks through
+ * `ConfirmAction` first. Destructive items come last, after a separator.
+ */
+export function MoreActionsMenu({ actions, disabled, label }: { actions: ReadonlyArray<MoreAction>; disabled?: boolean; label: string }) {
+    const plain = actions.filter(action => !action.destructive);
+
+    const destructive = actions.filter(action => action.destructive);
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger render={<Button aria-label={label} disabled={disabled} size="icon" type="button" variant="outline" />}>
+                <MoreHorizontalIcon />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                    {plain.map(action => <DropdownMenuItem disabled={action.disabled} key={action.label} onClick={action.onSelect}>{action.label}</DropdownMenuItem>)}
+                    {plain.length > 0 && destructive.length > 0 && <DropdownMenuSeparator />}
+                    {destructive.map(action => <DropdownMenuItem disabled={action.disabled} key={action.label} onClick={action.onSelect} variant="destructive">{action.label}</DropdownMenuItem>)}
+                </DropdownMenuGroup>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }

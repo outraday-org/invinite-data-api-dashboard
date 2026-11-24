@@ -156,19 +156,42 @@ describe("ComparisonView + PriorPicker (Metrics & diff)", () => {
     it("names the default and the picked call", () => {
         const { rerender } = render(<PriorPicker calls={[]} isLoading={false} onOpenChange={vi.fn()} onPriorChange={vi.fn()} prior={undefined} />);
 
-        expect(screen.getByRole("combobox", { name: "Compare with" })).toHaveTextContent("Previous call");
+        expect(screen.getByRole("button", { name: "Compare with" })).toHaveTextContent("Previous call");
 
         rerender(<PriorPicker calls={[AAPL_Q4_EVENT]} isLoading={false} onOpenChange={vi.fn()} onPriorChange={vi.fn()} prior={AAPL_Q4_EVENT.event_id} />);
 
-        expect(screen.getByRole("combobox", { name: "Compare with" })).toHaveTextContent("Q4 FY2026 · Nov 2, 2026");
+        expect(screen.getByRole("button", { name: "Compare with" })).toHaveTextContent("Q4 FY2026 · Nov 2, 2026");
     });
 });
 
 describe("CallHeader (O7 group 5 facts)", () => {
+    it("titles the call in sentence form, and names the company of a call under another symbol", () => {
+        const { rerender } = render(<CallHeader event={AAPL_Q4_EVENT} pageSymbol="aapl" />);
+
+        expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Q4 FY2026 earnings call");
+
+        expect(screen.queryByText("Apple Inc. · AAPL")).toBeNull();
+
+        rerender(<CallHeader event={AAPL_Q4_EVENT} pageSymbol="MSFT" />);
+
+        expect(screen.getByText("Apple Inc. · AAPL")).toBeInTheDocument();
+    });
+
     it("links the results filing and the periodic report", () => {
         render(<CallHeader event={AAPL_Q4_EVENT} />);
 
         expect(screen.getByText("SEC filing · high confidence")).toBeInTheDocument();
+
+        // The filings sit in the "Details" disclosure, closed by default (ui-redesign task 10).
+        const details = screen.getByRole("button", { name: "Details" });
+
+        expect(details).toHaveAttribute("aria-expanded", "false");
+
+        expect(screen.queryByText("Results filing")).toBeNull();
+
+        fireEvent.click(details);
+
+        expect(details).toHaveAttribute("aria-expanded", "true");
 
         expect(screen.getByText("Results filing")).toBeInTheDocument();
 
@@ -185,6 +208,8 @@ describe("CallHeader (O7 group 5 facts)", () => {
         render(<CallHeader event={EXPIRED_ESTIMATE_EVENT} />);
 
         expect(screen.getByText("Estimate · low confidence")).toHaveAttribute("title", "The start time may still change");
+
+        fireEvent.click(screen.getByRole("button", { name: "Details" }));
 
         expect(screen.getByText("Estimate replaced by the confirmed date")).toBeInTheDocument();
 
