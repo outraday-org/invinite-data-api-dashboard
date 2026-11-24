@@ -130,16 +130,10 @@ export function FinancialsPresentationTable({
                     </TableRow>
                 </TableHeader>
                 <TableBody className="divide-y-0">
-                    {rows.map((row, index) => {
-                        const hasTotalAfter = index + 1 < rows.length
-                            && rows[index + 1].isTotal;
-
+                    {rows.map((row) => {
                         return (
                             <TableRow
-                                className={cn(
-                                    hasTotalAfter ? "border-b-foreground" : null,
-                                    "group h-[41px] leading-5 cursor-pointer hover:bg-muted/50",
-                                )}
+                                className="group h-[41px] leading-5 cursor-pointer hover:bg-muted/50"
                                 key={row.metricId}
                                 onClick={() => setSelectedRow(row)}
                             >

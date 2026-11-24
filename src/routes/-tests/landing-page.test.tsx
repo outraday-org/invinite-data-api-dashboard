@@ -80,6 +80,7 @@ describe("landing page (with a valid key)", () => {
             "/instruments?type=etn",
             "/funds?structure=registered_fund",
             "/institutions",
+            "/spot-coins",
             "/us-macro/inflation",
             "/us-macro/gdp",
             "/us-macro/labor",

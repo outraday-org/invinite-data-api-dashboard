@@ -1,4 +1,4 @@
-import { ArrowDown } from "lucide-react";
+import { ArrowDown, ArrowRight } from "lucide-react";
 import * as React from "react";
 
 import type { OperationId } from "@/lib/api/operations.gen";
@@ -9,15 +9,18 @@ import { formatNumber } from "@/lib/format";
 
 /**
  * The one "Load more" of every cursor list: hidden on the last page; `loadedCount` adds "N loaded" beside it (lists
- * whose API has no total say how far they got); `operationId` puts the page's cost in a tooltip (O6).
+ * whose API has no total say how far they got); `operationId` puts the page's cost in a tooltip (O6). `direction`
+ * "right" = the next page adds columns (a statement's older periods): "Load older periods" with a right arrow.
  */
 export function LoadMoreButton({
+    direction = "down",
     hasNextPage,
     isFetchingNextPage,
     loadedCount,
     onLoadMore,
     operationId,
 }: {
+    direction?: "down" | "right";
     hasNextPage: boolean;
     isFetchingNextPage: boolean;
     loadedCount?: number;
@@ -30,8 +33,8 @@ export function LoadMoreButton({
 
     const label = (
         <>
-            <ArrowDown className="size-4" />
-            {isFetchingNextPage ? "Loading..." : "Load more"}
+            {direction === "right" ? <ArrowRight className="size-4" /> : <ArrowDown className="size-4" />}
+            {isFetchingNextPage ? "Loading..." : direction === "right" ? "Load older periods" : "Load more"}
         </>
     );
 

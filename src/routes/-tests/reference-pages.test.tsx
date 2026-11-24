@@ -41,6 +41,7 @@ vi.mock("@/lib/api/queries", () => ({
     // The flat statement table's "Explain this number" dialog: idle (no value clicked).
     useV2Fact: () => ({ data: undefined, error: null, isLoading: false }),
     useV2FactPlaces: () => ({ data: undefined, error: null, isLoading: false }),
+    useV2Filing: () => ({ data: undefined, error: null, isLoading: false }),
 }));
 
 vi.mock("@/components/ui/credit-hint", async importOriginal => ({

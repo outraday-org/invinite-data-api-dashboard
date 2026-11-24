@@ -11,7 +11,7 @@ import { IN_PLACE, optionalAccession, optionalDay, optionalEnum, optionalFlag, o
 export const FINANCIAL_VIEW_VALUES = ["standardized", "as-reported", "ratios", "growth", "cagr", "segments"] as const;
 
 /**
- * Every filter of the Financials route's tabs (O6 URL state; a tab change keeps only `view`): `statement`, `period`,
+ * Every filter of the Financials route's tabs (O6 URL state; a tab change keeps every filter but the chart — `tabSearch`): `statement`, `period`,
  * `layout` (summary / detailed / presentation — `view` is the tab; the Segments tab: summary / detailed), `reportedOnly`
  * + `sign` (as reported), `category` (ratios), `basis` (growth), `horizon` (CAGR), `segment` + `metric` + `axis`
  * (segments), the point in time `asOf` / `filing` (statements), the fiscal-year window `fyFrom` / `fyTo` (every tab)
@@ -39,6 +39,29 @@ export const financialsSearchSchema = z.object({
 });
 
 export type FinancialsSearch = z.infer<typeof financialsSearchSchema>;
+
+type FinancialView = (typeof FINANCIAL_VIEW_VALUES)[number];
+
+/** A tab's period when `?period=` is absent: CAGR reads annual, every other tab quarterly. */
+export const defaultPeriodOf = (view: FinancialView) => (view === "cagr" ? "annual" : "quarterly");
+
+/**
+ * The search after a tab change: the statement, period, layout (summary / detailed / presentation), point in time and
+ * fiscal-year window stay as they are (a tab ignores what it has no control for); the charted row closes. The period
+ * is carried as SHOWN, so CAGR's annual default never turns a quarterly view annual (or back).
+ */
+export function tabSearch(prev: FinancialsSearch, next: FinancialView): FinancialsSearch {
+    const from = prev.view ?? "standardized";
+
+    const period = prev.period ?? defaultPeriodOf(from);
+
+    return {
+        ...prev,
+        chart: undefined,
+        period: period === defaultPeriodOf(next) ? undefined : period,
+        view: next === "standardized" ? undefined : next,
+    };
+}
 
 /** The Financials route's search and its in-place updater (a changed filter closes an open chart). */
 export function useFinancialsSearch() {

@@ -3,7 +3,7 @@ import * as React from "react";
 
 import type { FinancialView } from "@/components/financials-pages/views";
 
-import { financialsSearchSchema } from "@/components/financials-pages/financials-search";
+import { financialsSearchSchema, tabSearch } from "@/components/financials-pages/financials-search";
 import { financialViewsFor } from "@/components/financials-pages/views";
 import { ChartParamContext } from "@/components/metric-chart/use-chart-selection";
 import { TabStrip } from "@/components/navigation/tab-strip";
@@ -48,7 +48,7 @@ function FinancialsPage() {
         <div className="flex flex-col gap-4">
             <TabStrip
                 aria-label="Financials view"
-                onSelect={(value: FinancialView) => void navigate({ ...IN_PLACE, search: { view: value === "standardized" ? undefined : value } })}
+                onSelect={(value: FinancialView) => void navigate({ ...IN_PLACE, search: prev => tabSearch(prev, value) })}
                 options={views.map(entry => ({ label: entry.label, value: entry.value }))}
                 value={active.value}
             />

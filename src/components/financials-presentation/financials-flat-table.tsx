@@ -9,8 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
 
+import type { AsReportedExplainTarget } from "./as-reported-explain-dialog";
 import type { ExplainTarget } from "./fact-explain-dialog";
 
+import { AsReportedExplainDialog } from "./as-reported-explain-dialog";
 import { FactExplainDialog } from "./fact-explain-dialog";
 
 const formatterOf = (id: string) => (id === "is_effective_tax_rate" ? formatPercentCompact : formatNumberEnCompact);
@@ -29,13 +31,16 @@ function cellTitle(cell: NonNullable<StatementLine["values"][number]>) {
 
 /**
  * The flat statement table of the summary / detailed views: one line per metric / concept, one column per period
- * (newest first). A derived value is italic (its tooltip says so); a click charts the line. A value with a fact id (the
- * standardized detailed view) is a button: "Explain this number" (`/v1/facts/{id}`), without charting the line.
+ * (newest first). A derived value is italic (its tooltip says so); a click charts the line. A detailed value is a
+ * button: "Explain this number" without charting the line — a standardized one by its fact id (`/v1/facts/{id}`), an
+ * as-reported one from the fact itself (formula, operands, filing; `cik` = the company's, for the EDGAR links).
  */
-export function FinancialsFlatTable({ columns, lines }: { columns: Array<StatementColumn>; lines: Array<StatementLine> }) {
+export function FinancialsFlatTable({ cik = null, columns, lines }: { cik?: null | string; columns: Array<StatementColumn>; lines: Array<StatementLine> }) {
     const [selected, setSelected] = useChartSelection(lines, line => line.id);
 
     const [explaining, setExplaining] = React.useState<ExplainTarget | null>(null);
+
+    const [explainingReported, setExplainingReported] = React.useState<AsReportedExplainTarget | null>(null);
 
     return (
         <div className="flex flex-col gap-2">
@@ -65,7 +70,7 @@ export function FinancialsFlatTable({ columns, lines }: { columns: Array<Stateme
 
                                 return (
                                     <TableCell className="text-right" key={`${line.id}:${column.label}`}>
-                                        {cell?.factId
+                                        {cell?.factId || cell?.reported
                                             ? (
                                                     <button
                                                         aria-label={`Explain ${line.label}, ${column.label}`}
@@ -73,7 +78,10 @@ export function FinancialsFlatTable({ columns, lines }: { columns: Array<Stateme
                                                         onClick={(event) => {
                                                             event.stopPropagation();
 
-                                                            setExplaining({ factId: cell.factId!, formula: cell.formula, period: `${line.label} · ${column.label}` });
+                                                            const period = `${line.label} · ${column.label}`;
+
+                                                            if (cell.factId) setExplaining({ accession: cell.accession ?? null, factId: cell.factId, formula: cell.formula, htmlTagId: cell.htmlTagId ?? null, period });
+                                                            else if (cell.reported) setExplainingReported({ cik, concept: line.id, fact: cell.reported, period });
                                                         }}
                                                         title={[cellTitle(cell), "Click: explain this number"].filter(Boolean).join("\n")}
                                                         type="button"
@@ -105,6 +113,7 @@ export function FinancialsFlatTable({ columns, lines }: { columns: Array<Stateme
                 open={Boolean(selected)}
             />
             <FactExplainDialog onClose={() => setExplaining(null)} target={explaining} />
+            <AsReportedExplainDialog onClose={() => setExplainingReported(null)} target={explainingReported} />
         </div>
     );
 }

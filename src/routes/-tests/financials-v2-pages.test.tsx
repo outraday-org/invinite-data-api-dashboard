@@ -3,7 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { cagrRows, CagrView } from "@/components/financials-pages/cagr";
-import { financialsSearchSchema } from "@/components/financials-pages/financials-search";
+import { financialsSearchSchema, tabSearch } from "@/components/financials-pages/financials-search";
 import { parseFiscalYear } from "@/components/financials-pages/fiscal-year-range";
 import { GrowthView } from "@/components/financials-pages/growth";
 import { filingChoices, PointInTimeBanner, PointInTimeControls } from "@/components/financials-pages/point-in-time";
@@ -13,6 +13,7 @@ import { segmentFilterOptions, SegmentsDetailedView } from "@/components/financi
 import { FactExplanationView } from "@/components/financials-presentation/fact-explain-dialog";
 import { FinancialsStatementsView } from "@/components/financials-presentation/financials-statements-view";
 import { addFactTypes, buildTreeRows } from "@/components/financials-presentation/utils";
+import { highlightStyle } from "@/hooks/use-html-document-processing";
 import { ApiRequestError } from "@/lib/api/errors";
 import { factExplanationModel, factIdText, factPlaceTargets, readableFormula } from "@/lib/financials/fact-explanation";
 import { completePeriodsOnly, periodLabel, segmentLines, statementLines } from "@/lib/financials/statements";
@@ -45,11 +46,24 @@ vi.mock("@/lib/api/queries", () => ({
     // The explain dialog's two requests: idle until a value is clicked (then loading in these tests).
     useV2Fact: vi.fn((factId: null | string) => ({ data: undefined, error: null, isLoading: Boolean(factId) })),
     useV2FactPlaces: vi.fn((factId: null | string) => ({ data: undefined, error: null, isLoading: Boolean(factId) })),
+    // The as-reported explanation's one request: the filing's documents, for a filed value's element link.
+    useV2Filing: vi.fn((accession: null | string) => ({
+        data: accession
+            ? { accession, documents: [{ current_version_id: null, description: null, filename: "aapl-20260627.htm", source_url: "https://storage.example/aapl-20260627.htm", type: "10-Q" }], form: "10-Q" }
+            : undefined,
+        error: null,
+        isLoading: false,
+    })),
     useV2FinancialsInfinite: vi.fn(),
     useV2GrowthInfinite: vi.fn(),
     useV2RatiosInfinite: vi.fn(),
     useV2SegmentsDetailedInfinite: vi.fn(),
     useV2SegmentsInfinite: vi.fn(),
+}));
+
+// The framed document fetches its HTML through React Query: its props are what these views decide.
+vi.mock("@/components/html/html-viewer", () => ({
+    HtmlViewer: ({ highlightId, url }: { highlightId?: null | string; url: string }) => <div data-highlight={highlightId ?? undefined} data-testid="html-viewer" data-url={url} />,
 }));
 
 // The plan badges read `/v1/me` (outside these pure views): no badge.
@@ -66,7 +80,7 @@ const list = { error: null, hasNextPage: false, isFetchingNextPage: false, isLoa
 const problem = (status: number, code: string, detail: string) => new ApiRequestError(status, { error: code, message: detail });
 
 describe("Statements (`/v1/financials/*`)", () => {
-    it("summary (standardized): one line per metric, one column per period, the filing in the header tooltip, Load more by cursor", () => {
+    it("summary (standardized): one line per metric, one column per period, the filing in the header tooltip, Load older periods by cursor", () => {
         const onLoadMore = vi.fn();
 
         render(
@@ -96,7 +110,7 @@ describe("Statements (`/v1/financials/*`)", () => {
 
         expect(screen.getByTestId("financials-meta")).toHaveTextContent("Values in USD");
 
-        fireEvent.click(screen.getByRole("button", { name: /Load more/ }));
+        fireEvent.click(screen.getByRole("button", { name: /Load older periods/ }));
 
         expect(onLoadMore).toHaveBeenCalledTimes(1);
     });
@@ -114,6 +128,99 @@ describe("Statements (`/v1/financials/*`)", () => {
         expect(derived).toHaveClass("italic");
 
         expect(derived.getAttribute("title")).toContain("Computed by Invinite");
+    });
+
+    it("detailed (as reported): a value explains itself — a derived one by formula, a filed one by its filing and element", () => {
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_DETAILED]} statement="income-statement" view="detailed" />);
+
+        expect(screen.getByTestId("explain-hint")).toHaveTextContent("Click a value to explain it");
+
+        fireEvent.click(screen.getByRole("button", { name: "Explain Net income, Q3 2026" }));
+
+        const derived = screen.getByTestId("as-reported-explanation");
+
+        expect(within(derived).getByText("Computed by Invinite")).toBeInTheDocument();
+
+        expect(within(derived).getByText("FY - Q1 - Q2 - Q3")).toBeInTheDocument();
+
+        expect(within(derived).getByText("us-gaap:NetIncomeLoss")).toBeInTheDocument();
+
+        cleanup();
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_DETAILED]} statement="income-statement" view="detailed" />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Explain Revenues, Q3 2026" }));
+
+        const filed = screen.getByTestId("as-reported-explanation");
+
+        expect(within(filed).getByText("Reported by the company")).toBeInTheDocument();
+
+        // The explanation, not the row chart.
+        expect(screen.queryByRole("dialog", { name: /Revenues$/ })).toBeNull();
+
+        // The filing's 10-Q opens framed at the value's element, which the viewer marks.
+        fireEvent.click(within(filed).getByRole("button", { name: "Show the value in the filing" }));
+
+        const viewer = screen.getByTestId("html-viewer");
+
+        expect(viewer).toHaveAttribute("data-url", "https://storage.example/aapl-20260627.htm");
+
+        expect(viewer).toHaveAttribute("data-highlight", "f-12");
+
+        expect(screen.getByRole("link", { name: /Open in new tab/ })).toHaveAttribute("href", "https://storage.example/aapl-20260627.htm#f-12");
+    });
+
+    it("detailed (as reported): a computed value with a filing opens it at the top (no element stated)", () => {
+        const page = structuredClone(V2_AS_REPORTED_DETAILED);
+
+        page.data[0].statements.income_statement!.facts["us-gaap:NetIncomeLoss"].accession = "0000320193-26-000073";
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[page]} statement="income-statement" view="detailed" />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Explain Net income, Q3 2026" }));
+
+        fireEvent.click(screen.getByRole("button", { name: "Open the filing" }));
+
+        expect(screen.getByTestId("html-viewer")).not.toHaveAttribute("data-highlight");
+
+        expect(screen.getByText(/no place in the document is stated/)).toBeInTheDocument();
+    });
+
+    it("detailed (standardized): the cell hands its filing + element to the explanation, which opens it", () => {
+        const onOpen = vi.fn();
+
+        render(<FactExplanationView fact={{ data: V2_FACT, error: null, isLoading: false }} filing={{ elementId: "f-76", onOpen }} formula={null} onOpenFiling={() => undefined} onOpenPlace={() => undefined} places={null} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Show the value in the filing" }));
+
+        expect(onOpen).toHaveBeenCalledTimes(1);
+
+        cleanup();
+
+        render(<FactExplanationView fact={{ data: V2_FACT, error: null, isLoading: false }} filing={{ elementId: null, onOpen }} formula={null} onOpenFiling={() => undefined} onOpenPlace={() => undefined} places={null} />);
+
+        expect(screen.getByRole("button", { name: "Open the filing" })).toBeInTheDocument();
+    });
+
+    it("the highlight is a box-shadow ring in the brand green on the element id (quoted: any id is safe)", () => {
+        const style = highlightStyle("f-12\"]x");
+
+        expect(style.startsWith("[id=\"f-12\\\"]x\"]{box-shadow:0 0 0 2px oklch(0.545 0.149 146.3)")).toBe(true);
+
+        expect(style).not.toContain("border:");
+    });
+
+    it("a tab change keeps the statement, layout, window and the period as shown; the chart closes", () => {
+        const kept = { fyFrom: 2020, layout: "detailed", statement: "balance-sheet" } as const;
+
+        expect(tabSearch({ ...kept, chart: "is_total_revenue" }, "as-reported")).toEqual({ ...kept, chart: undefined, period: undefined, view: "as-reported" });
+
+        // Quarterly (the default) stays quarterly on CAGR, whose default is annual; CAGR's annual stays annual elsewhere.
+        expect(tabSearch({ view: "ratios" }, "cagr").period).toBe("quarterly");
+
+        expect(tabSearch({ view: "cagr" }, "standardized")).toEqual({ chart: undefined, period: "annual", view: undefined });
+
+        expect(tabSearch({ period: "ttm", view: "as-reported" }, "standardized").period).toBe("ttm");
     });
 
     it("presentation (as reported): the filer's tree with its total (`is_total`)", () => {
@@ -213,7 +320,7 @@ describe("Statements (`/v1/financials/*`)", () => {
 
         expect(screen.queryByText("No financial data available.")).toBeNull();
 
-        expect(screen.getByRole("button", { name: /load more/i })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Load older periods/ })).toBeInTheDocument();
     });
 });
 
@@ -316,7 +423,7 @@ describe("Metrics (`/v1/metrics/*`, `/v1/segments`)", () => {
 
         expect(screen.queryByText("Q2 2026")).toBeNull();
 
-        expect(screen.getByRole("button", { name: /Load more/ })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Load older periods/ })).toBeInTheDocument();
     });
 
     it("CAGR: one line per metric × horizon, the longest horizon first", () => {

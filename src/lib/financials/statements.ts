@@ -65,6 +65,10 @@ export type StatementCell = {
     /** The standardized fact's id (the standardized detailed view only): "Explain this number" asks `/v1/facts/{id}`. */
     factId?: string;
     formula?: null | string;
+    /** The value's inline-XBRL element in its filing (the detailed views; null = a computed value or none stated). */
+    htmlTagId?: null | string;
+    /** The as-reported detailed fact (its own formula, filing and element): "Explain this number" reads it, no request. */
+    reported?: V2AsReportedDetailedFact;
     unit?: null | string;
     value: number;
 };
@@ -95,11 +99,11 @@ function toCell(fact: FlatFact): StatementCell {
     if (typeof fact === "number") return { value: fact };
 
     if (isDetailedStandardized(fact)) {
-        return { accession: fact.accession, factId: fact.fact_id, formula: fact.formula?.formula_str ?? null, unit: fact.unit, value: fact.value };
+        return { accession: fact.accession, factId: fact.fact_id, formula: fact.formula?.formula_str ?? null, htmlTagId: fact.html_tag_id, unit: fact.unit, value: fact.value };
     }
 
     if (isDetailedAsReported(fact)) {
-        return { accession: fact.accession, derived: fact.derived, formula: fact.formula?.formula_str ?? null, value: fact.value };
+        return { accession: fact.accession, derived: fact.derived, formula: fact.formula?.formula_str ?? null, htmlTagId: fact.html_tag_id, reported: fact, value: fact.value };
     }
 
     return { derived: fact.derived, value: fact.value };

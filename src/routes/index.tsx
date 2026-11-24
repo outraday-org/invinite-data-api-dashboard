@@ -14,6 +14,7 @@ import { callCalendarDate, eventLabel, formatCallTime, formatStartedAgo, zonedDa
 import { formatDay } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import { BROWSE_CARDS } from "@/lib/navigation";
+import { recentLink } from "@/lib/recents";
 import { selectRecents, useTickerStore } from "@/lib/stores/ticker-store";
 import { EventLink } from "@/routes/$ticker/earnings-calls/-components/event-link";
 import { LiveDot } from "@/routes/$ticker/earnings-calls/-components/live-dot";
@@ -190,19 +191,10 @@ export function LandingView({ holiday, ipos, live, recents, today, week }: Landi
                     <h2 className="text-sm font-semibold">Recently opened</h2>
                     <div className="flex flex-wrap gap-2" data-testid="landing-recents">
                         {recents.map(recent => (
-                            recent.kind === "filer"
-                                ? (
-                                        <Link className="hover:bg-muted/50 flex items-center gap-2 rounded-md border px-2 py-1" key={`filer-${recent.ref}`} params={{ cik: recent.ref }} to="/sec/$cik">
-                                            <span className="font-medium">{recent.label}</span>
-                                            {recent.badge && <Badge variant="outline">{recent.badge}</Badge>}
-                                        </Link>
-                                    )
-                                : (
-                                        <Link className="hover:bg-muted/50 flex items-center gap-2 rounded-md border px-2 py-1" key={`instrument-${recent.ref}`} params={{ ticker: recent.ref }} to="/$ticker">
-                                            <span className="font-medium">{recent.label}</span>
-                                            <span className="text-muted-foreground max-w-48 truncate">{recent.name}</span>
-                                        </Link>
-                                    )
+                            <Link className="hover:bg-muted/50 flex items-center gap-2 rounded-md border px-2 py-1" key={`${recent.kind}-${recent.ref}`} {...recentLink(recent)}>
+                                <span className="font-medium">{recent.label}</span>
+                                {recent.badge && <Badge variant="outline">{recent.badge}</Badge>}
+                            </Link>
                         ))}
                     </div>
                 </section>

@@ -24,6 +24,9 @@ export type V2Instrument = ApiResponse<"/v1/instruments/{symbol}", "get">;
 export type V2InstrumentType = V2Instrument["type"];
 export type V2FundStructure = NonNullable<V2Instrument["structure"]>;
 export type V2Dataset = V2Instrument["datasets"][number];
+/** A spot coin is addressed by slug independently of listed symbols. */
+export type V2Coin = ApiResponse<"/v1/coins/{coin}", "get">;
+
 export type V2FundsResponse = ApiResponse<"/v1/funds", "get">;
 export type V2FundListItem = V2FundsResponse["data"][number];
 export type V2FundType = V2FundListItem["type"];

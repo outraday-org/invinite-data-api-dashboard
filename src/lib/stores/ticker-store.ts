@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-/** A subject opened recently: an instrument (`/$ticker`) or an SEC filer / institution (`/sec/$cik`). */
+/** A subject opened recently: an instrument (`/$ticker`), a spot coin (`/spot-coins/$coin`) or a filer (`/sec/$cik`). */
 export type RecentSubject
-    = | { badge: null | string; kind: "filer"; label: string; name: null | string; ref: string }
+    = | { badge: null | string; kind: "coin" | "filer"; label: string; name: null | string; ref: string }
         | { badge: null | string; kind: "instrument"; label: string; name: null | string; ref: string };
 
 /** The recents before the store is hydrated (one stable empty list: a selector must not build a new one per call). */
@@ -41,8 +41,8 @@ export function withRecent(recents: ReadonlyArray<RecentSubject>, subject: Recen
 }
 
 /**
- * The recently opened subjects (instruments and filers) of this browser: the search's empty state and the landing
- * page's "Recently opened". Written when an instrument or filer page has loaded its subject.
+ * The recently opened subjects (instruments, coins and filers) of this browser: the search's empty state and the landing
+ * page's "Recently opened". Written when a subject page has loaded its profile.
  */
 export const useTickerStore = create<RecentsState>()(
     persist(

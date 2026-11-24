@@ -254,6 +254,19 @@ export const OPERATIONS = {
         summary: "Get an event's recording",
         tier: "pro",
     },
+    getCoin: {
+        cli: {
+            action: "get",
+            group: "coins",
+            positional: "coin",
+        },
+        credits: 1,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_coins_{coin}",
+        method: "GET",
+        path: "/v1/coins/{coin}",
+        summary: "Get a spot coin",
+        tier: "free",
+    },
     getCompany: {
         cli: {
             action: "get",
@@ -851,6 +864,19 @@ export const OPERATIONS = {
         path: "/v1/metrics/cagr",
         summary: "List CAGRs",
         tier: "lite",
+    },
+    listCoins: {
+        cli: {
+            action: "list",
+            group: "coins",
+            positional: null,
+        },
+        credits: 1,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_coins",
+        method: "GET",
+        path: "/v1/coins",
+        summary: "List spot coins",
+        tier: "free",
     },
     listCompanies: {
         cli: {
@@ -2477,6 +2503,8 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "GET /v1/catalog/mapping-rules": "listMappingRules",
     "GET /v1/catalog/metrics": "listMetricCatalog",
     "GET /v1/catalog/sections": "listSectionCatalog",
+    "GET /v1/coins": "listCoins",
+    "GET /v1/coins/{coin}": "getCoin",
     "GET /v1/companies": "listCompanies",
     "GET /v1/companies/{company}": "getCompany",
     "GET /v1/datasets": "listDatasets",

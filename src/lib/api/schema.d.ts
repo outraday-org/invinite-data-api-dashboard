@@ -598,6 +598,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/coins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List spot coins
+         * @description Search the active spot cryptocurrency directory.
+         *
+         *     Search by slug, name or display symbol with `q`. Exact matches appear first. Without a search term, coins are ordered by slug.
+         */
+        get: operations["listCoins"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/coins/{coin}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a spot coin
+         * @description Get an active spot cryptocurrency by its slug.
+         *
+         *     Use the slug from `listCoins`, such as `bitcoin`. Listed funds and stocks have separate instrument identifiers.
+         */
+        get: operations["getCoin"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/companies": {
         parameters: {
             query?: never;
@@ -10294,6 +10338,68 @@ export interface components {
             /** @description 30-year Treasury par yield in percent when available */
             y30: null | number;
         };
+        /**
+         * Coin
+         * @description An active spot cryptocurrency identified by its slug.
+         */
+        Coin: {
+            /**
+             * @description Stable spot coin identifier. Use this value for coin endpoints.
+             * @example bitcoin
+             */
+            slug: string;
+            /**
+             * @description Trading symbol. Several coins can share a symbol.
+             * @example BTC
+             */
+            symbol: null | string;
+            /**
+             * @description Coin name.
+             * @example Bitcoin
+             */
+            name: string;
+            /**
+             * @description Quote currency.
+             * @example USD
+             */
+            currency: string;
+            /** @description Whether the coin is active in the spot asset directory. */
+            is_active: boolean;
+            /**
+             * Format: date
+             * @description Date of the first block, when recorded.
+             */
+            genesis_date: null | string;
+            /** @description Hashing algorithm, when recorded. */
+            hashing_algorithm: null | string;
+            /**
+             * Format: date-time
+             * @description UTC timestamp of the latest stored directory or profile update.
+             */
+            updated_at: string;
+            /** @description Data families served by the coin API. */
+            datasets: Array<"profile">;
+            /** @description Number of coin units in public circulation, when reported. */
+            circulating_supply: null | number;
+            /** @description Number of coin units currently in existence, when reported. */
+            total_supply: null | number;
+            /** @description Maximum possible supply, when reported. */
+            max_supply: null | number;
+            /** @description Market capitalization rank in the source directory, when reported. */
+            market_cap_rank: null | number;
+            /** @description Source classifications, when available. */
+            categories: Array<string>;
+            /**
+             * @description Directory data provider.
+             * @enum {string}
+             */
+            source: "CoinGecko";
+            /**
+             * Format: uri
+             * @description The provider’s public page for this coin.
+             */
+            source_url: string;
+        };
         WebSocketSubscribeMacro: {
             /** @enum {string} */
             type: "subscribe";
@@ -13581,6 +13687,83 @@ export interface operations {
                      *     }
                      */
                     "application/json": components["schemas"]["Audio"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getCoin: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /**
+                 * @description The spot coin slug from listCoins.
+                 * @example bitcoin
+                 */
+                coin: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "slug": "bitcoin",
+                     *       "symbol": "BTC",
+                     *       "name": "Bitcoin",
+                     *       "currency": "USD",
+                     *       "is_active": true,
+                     *       "genesis_date": "2009-01-03",
+                     *       "hashing_algorithm": "SHA-256",
+                     *       "circulating_supply": 20116587,
+                     *       "total_supply": 20116587,
+                     *       "max_supply": 21000000,
+                     *       "market_cap_rank": 1,
+                     *       "categories": [
+                     *         "Smart Contract Platform"
+                     *       ],
+                     *       "updated_at": "2026-11-24T04:23:30.405Z",
+                     *       "source": "CoinGecko",
+                     *       "source_url": "https://www.coingecko.com/en/coins/bitcoin",
+                     *       "datasets": [
+                     *         "profile"
+                     *       ]
+                     *     }
+                     */
+                    "application/json": components["schemas"]["Coin"];
                 };
             };
             304: components["responses"]["NotModified"];
@@ -18998,6 +19181,111 @@ export interface operations {
             402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listCoins: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Case-insensitive match on coin slug, name or display symbol.
+                 * @example bitcoin
+                 */
+                q?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "slug": "bitcoin",
+                     *           "symbol": "BTC",
+                     *           "name": "Bitcoin",
+                     *           "currency": "USD",
+                     *           "is_active": true,
+                     *           "genesis_date": "2009-01-03",
+                     *           "hashing_algorithm": "SHA-256",
+                     *           "circulating_supply": 20116587,
+                     *           "total_supply": 20116587,
+                     *           "max_supply": 21000000,
+                     *           "market_cap_rank": 1,
+                     *           "categories": [
+                     *             "Smart Contract Platform"
+                     *           ],
+                     *           "updated_at": "2026-11-24T04:23:30.405Z",
+                     *           "source": "CoinGecko",
+                     *           "source_url": "https://www.coingecko.com/en/coins/bitcoin",
+                     *           "datasets": [
+                     *             "profile"
+                     *           ]
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {}
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["Coin"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -26881,7 +27169,7 @@ export interface operations {
                              * @description Docs group of the v2 API
                              * @enum {string}
                              */
-                            group: "alert_events" | "alert_users" | "alerts" | "calendar" | "call_analytics" | "catalog" | "companies" | "corporate_actions" | "destinations" | "events" | "filings" | "financials" | "funds" | "guidance" | "holdings" | "insider_trades" | "instruments" | "investor_documents" | "macro" | "metrics" | "news" | "offerings" | "scripts" | "transcripts";
+                            group: "alert_events" | "alert_users" | "alerts" | "calendar" | "call_analytics" | "catalog" | "coins" | "companies" | "corporate_actions" | "destinations" | "events" | "filings" | "financials" | "funds" | "guidance" | "holdings" | "insider_trades" | "instruments" | "investor_documents" | "macro" | "metrics" | "news" | "offerings" | "scripts" | "transcripts";
                             /** @description Docs group title (e.g. Insider trades) */
                             name: string;
                             /**

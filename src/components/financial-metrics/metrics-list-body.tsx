@@ -101,7 +101,7 @@ export function MetricsListBody({
             {hasRows
                 ? children
                 : (isV2GenuineEmpty(coverage) && !hasNextPage ? <div className="text-muted-foreground">{emptyText}</div> : null)}
-            <LoadMoreButton hasNextPage={hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={onLoadMore} />
+            <LoadMoreButton direction="right" hasNextPage={hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={onLoadMore} />
             {error ? <FinancialsStateNotice error={error} pendingTitle={pendingTitle} title="Failed to load more periods" /> : null}
         </div>
     );

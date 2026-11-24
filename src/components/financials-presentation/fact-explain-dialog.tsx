@@ -1,10 +1,12 @@
 import * as React from "react";
 
+import type { FilingDocumentTarget } from "@/components/sec/filing-document-dialog";
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 import type { V2FactPlacesResponse, V2FactResponse } from "@/lib/api/types";
 import type { FactPlaceTarget } from "@/lib/financials/fact-explanation";
 
 import { FinancialsStateNotice } from "@/components/financial-metrics/metrics-list-body";
+import { FilingDocumentDialog, OpenFilingButton } from "@/components/sec/filing-document-dialog";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
 import { PlanBadge, usePlanAllows } from "@/components/ui/credit-hint";
@@ -17,8 +19,11 @@ import { edgarFolderUrl } from "@/lib/earnings/edgar";
 import { factExplanationModel, factPlaceTargets, readableFormula } from "@/lib/financials/fact-explanation";
 import { formatNumberEn } from "@/lib/utils";
 
-/** The value cell a reader clicked: its fact id and the formula the detailed view already carries. */
-export type ExplainTarget = { factId: string; formula: null | string | undefined; period: string };
+/**
+ * The value cell a reader clicked: its fact id, the formula the detailed view already carries and the filing the value
+ * comes from with its inline-XBRL element ("Open the filing" at the value; null element = at the top).
+ */
+export type ExplainTarget = { accession?: null | string; factId: string; formula: null | string | undefined; htmlTagId?: null | string; period: string };
 
 type Loadable<T> = { data: null | T | undefined; error: unknown; isLoading: boolean };
 
@@ -79,8 +84,10 @@ function PlacesBlock({ onOpenPlace, places }: { onOpenPlace: (target: FactPlaceT
  * "Explain this number" (pure): the standardized fact's value, the mapping rule that produced it, the formula and its
  * operands, the reported facts it rests on (each with its filing) and the places in the filed document.
  */
-export function FactExplanationView({ fact, formula, onOpenFiling, onOpenPlace, places }: {
+export function FactExplanationView({ fact, filing = null, formula, onOpenFiling, onOpenPlace, places }: {
     fact: Loadable<V2FactResponse>;
+    /** The clicked value's own filing: "Open the filing" (at the value when `elementId` is set). */
+    filing?: null | { elementId: null | string; onOpen: () => void };
     formula: null | string | undefined;
     onOpenFiling: (accession: string) => void;
     onOpenPlace: (target: FactPlaceTarget) => void;
@@ -106,6 +113,7 @@ export function FactExplanationView({ fact, formula, onOpenFiling, onOpenPlace, 
                 <Field label="Metric">{model.metricName}</Field>
                 <Field label="Value"><span className="tabular-nums">{`${full(model.value)}${model.unit ? ` ${model.unit.toUpperCase()}` : ""}`}</span></Field>
                 <Field label="Fact id"><code className="text-xs">{model.factId}</code></Field>
+                {filing && <Field label="Filing"><OpenFilingButton elementId={filing.elementId} onOpen={filing.onOpen} /></Field>}
             </Section>
 
             <Section title="Rule">
@@ -185,6 +193,10 @@ export function FactExplainDialog({ onClose, target }: { onClose: () => void; ta
 
     const [source, setSource] = React.useState<null | SecPanelTarget>(null);
 
+    const [document, setDocument] = React.useState<FilingDocumentTarget | null>(null);
+
+    const valueFiling = target?.accession ?? null;
+
     return (
         <>
             <Dialog onOpenChange={open => !open && onClose()} open={target !== null}>
@@ -198,6 +210,9 @@ export function FactExplainDialog({ onClose, target }: { onClose: () => void; ta
                             {target && (
                                 <FactExplanationView
                                     fact={{ data: fact.data, error: fact.error, isLoading: fact.isLoading }}
+                                    filing={valueFiling
+                                        ? { elementId: target.htmlTagId ?? null, onOpen: () => setDocument({ accession: valueFiling, elementId: target.htmlTagId ?? null, title: target.period }) }
+                                        : null}
                                     formula={target.formula}
                                     onOpenFiling={accession => setSource({ accession, kind: "filing" })}
                                     onOpenPlace={place => setSource({ blockId: place.blockId, kind: "citation", title: `${target.period} in the filing · ${place.label.toLowerCase()}`, versionId: place.versionId })}
@@ -209,6 +224,7 @@ export function FactExplainDialog({ onClose, target }: { onClose: () => void; ta
                 </DialogContent>
             </Dialog>
             <SecSourceDialog onClose={() => setSource(null)} target={source} />
+            <FilingDocumentDialog onClose={() => setDocument(null)} target={document} />
         </>
     );
 }

@@ -13,7 +13,7 @@ import { completePeriodsOnly, periodLabel, periodLabels } from "@/lib/financials
 import { formatFractionPercentCompact, formatMetricId } from "@/lib/utils";
 import { FilterSelect } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 
-import { useFinancialsSearch } from "./financials-search";
+import { defaultPeriodOf, useFinancialsSearch } from "./financials-search";
 import { FiscalYearRange } from "./fiscal-year-range";
 
 /** Periods per page of `/v1/metrics/cagr`: one row per period and horizon (every horizon = three rows per period). */
@@ -89,8 +89,8 @@ export function CagrFinancials({ ticker }: { ticker: string }) {
 
     const horizon: HorizonFilter = search.horizon ?? "all";
 
-    // CAGR's default period is annual (the other tabs default to quarterly; a tab change drops `?period=`).
-    const periodType = search.period ?? "annual";
+    // CAGR's default period is annual (the other tabs default to quarterly; a tab change carries the shown period).
+    const periodType = search.period ?? defaultPeriodOf("cagr");
 
     // `/v1/metrics/cagr?company=<ticker>&period=<type>[&horizon=3|5|10]` (v1 `period_years`).
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2CagrInfinite({
@@ -108,7 +108,7 @@ export function CagrFinancials({ ticker }: { ticker: string }) {
                 actions={(
                     <>
                         <FilterSelect aria-label="Horizon" className="w-[200px]" onValueChange={value => update({ horizon: value === "all" ? undefined : value })} options={cagrPeriodOptions} value={horizon} />
-                        <PeriodTypeButtons onValueChange={value => update({ period: value === "annual" ? undefined : value })} value={periodType} />
+                        <PeriodTypeButtons onValueChange={value => update({ period: value === defaultPeriodOf("cagr") ? undefined : value })} value={periodType} />
                         <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
                     </>
                 )}
