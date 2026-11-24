@@ -2153,7 +2153,7 @@ export function useCompaniesInfinite(input: CompaniesInput) {
     });
 }
 
-/** How long the status answer is fresh (the API judges the last 24 hours; the sidebar and the account share it). */
+/** How long the account card can reuse the API’s product and group metrics. */
 const STATUS_STALE_MS = 5 * 60 * 1000;
 
 /** `GET /status` (no credits): status and uptime per product family and docs group. Status-aware, no toast. */

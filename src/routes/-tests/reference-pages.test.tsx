@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
 import { FinancialsFlatTable } from "@/components/financials-presentation/financials-flat-table";
-import { ApiStatusView, familyReach, LicensingView, overallStatus, StatusDot, statusSummary, uptimeText } from "@/components/reference/api-status";
+import { ApiStatusView, familyReach, LicensingView, StatusDot, uptimeText } from "@/components/reference/api-status";
 import { CompaniesList, companiesSort } from "@/components/reference/companies-list";
 import { FiscalPeriodsView, latestFiscalYearEnd } from "@/components/reference/fiscal-periods-card";
 import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
@@ -174,24 +174,14 @@ describe("/instruments Companies tab (`GET /v1/companies`)", () => {
 });
 
 describe("status widget (`/status`, `/status/licensing`)", () => {
-    it("overall = the worst family; the summary names the families; uptime in percent, none = —", () => {
-        expect(overallStatus(V2_API_STATUS.services)).toBe("outage");
-
-        expect(overallStatus(null)).toBe("unknown");
-
-        expect(overallStatus([{ status: "operational" }])).toBe("operational");
-
-        expect(statusSummary(V2_API_STATUS.services)).toBe("Outage: News · Degraded: SEC filings, Institutional ownership");
-
-        expect(statusSummary([{ family: "company", status: "operational" }])).toBe("All products operational");
-
+    it("formats uptime as a percentage", () => {
         expect(uptimeText(0.989)).toBe("98.9%");
 
         expect(uptimeText(null)).toBe("—");
     });
 
     it("the account card lists every product, the universe and the docs groups", () => {
-        render(<ApiStatusView status={V2_API_STATUS} />);
+        render(<ApiStatusView overall="degraded" status={V2_API_STATUS} />);
 
         const macro = screen.getByText("Macro").closest("tr")!;
 
@@ -211,19 +201,24 @@ describe("status widget (`/status`, `/status/licensing`)", () => {
     });
 
     it("`services: null` = no table, a sentence", () => {
-        render(<ApiStatusView status={{ ...V2_API_STATUS, groups: null, services: null }} />);
+        render(<ApiStatusView overall="unknown" status={{ ...V2_API_STATUS, groups: null, services: null }} />);
 
         expect(screen.getByText("The API states no product status right now.")).toBeInTheDocument();
 
         expect(screen.getByText("Status unavailable")).toBeInTheDocument();
     });
 
-    it("the sidebar dot carries the summary for screen readers", () => {
-        render(<StatusDot status="degraded" summary="Degraded: SEC filings" />);
+    it.each([
+        ["operational", "All services operational", "bg-emerald-500"],
+        ["degraded", "Partial service disruption", "bg-amber-500"],
+        ["outage", "API outage", "bg-destructive"],
+        ["unknown", "Status unavailable", "bg-muted-foreground/40"],
+    ] as const)("the sidebar dot presents %s by colour and accessible text", (status, label, color) => {
+        render(<StatusDot status={status} />);
 
-        expect(screen.getByTestId("api-status-dot")).toHaveAttribute("title", "Degraded: SEC filings");
+        expect(screen.getByTestId("api-status-dot")).toHaveAttribute("title", label);
 
-        expect(screen.getByRole("img", { name: "Degraded: SEC filings" })).toBeInTheDocument();
+        expect(screen.getByRole("img", { name: label }).firstElementChild).toHaveClass(color);
     });
 
     it("licensing: the plan's rights and the routes it reaches per family", () => {

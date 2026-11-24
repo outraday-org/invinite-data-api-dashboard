@@ -205,7 +205,7 @@ function PersonContext({ enabled, personId }: { enabled: boolean; personId: stri
 /**
  * The one sidebar of every page (root layout): Market and Browse always, the Context of the open subject (an
  * instrument's sections by its `datasets`, a filer's blocks), Help, and the account with its plan badge. Every entry
- * comes from `src/lib/navigation.ts`. Nothing is requested before the key answered `/v1/me`.
+ * comes from `src/lib/navigation.ts`. Only the public status snapshot is requested before the key answers `/v1/me`.
  */
 export function AppSidebar() {
     const params = useParams({ strict: false });
@@ -250,7 +250,7 @@ export function AppSidebar() {
                             <SidebarMenuItem key={link.href}>
                                 <a className={linkClass} href={link.href} rel="noreferrer" target="_blank">
                                     <ItemContent icon={link.icon} label={link.label}>
-                                        {link.href === STATUS_PAGE_URL && <ApiStatusDot enabled={keyReady} />}
+                                        {link.href === STATUS_PAGE_URL && <ApiStatusDot />}
                                     </ItemContent>
                                 </a>
                             </SidebarMenuItem>

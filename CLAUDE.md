@@ -704,12 +704,12 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   + ticker → `/$ticker`, name, exchange, sector, fiscal year end (`MM-DD` → "Sep 30"; served on the rows since 2026-11-22 — it was null everywhere before,
   "—" when null), CIK → `/sec/$cik`. Each tab's list is its own component, so only the open tab's request runs.
 - **Status widget** (`src/components/reference/api-status.tsx`): `/account` shows `AccountStatusCards` = the API status
-  card (`GET /status`, `useApiStatus`: overall = the worst family, the families as a table with 7 / 30 / 90-day uptime,
+  card (`GET /status`, `useApiStatus`: the families as a table with 7 / 30 / 90-day uptime,
   the coverage universe, the docs groups with uptime and p50 / p95 buckets behind a disclosure) and the licensing card
   (`GET /status/licensing`, `useApiLicensing`: the caller's plan's rights with the policy's notes, the resale rule,
   "Draft" while `counsel_signed_off` is false, the `internal_use` note, routes per family the plan reaches by tier order; a `payg` account reads the FREE column and ranks as PRO). The sidebar's Help
-  block has `ApiStatusDot` beside "API status" (same cached `/status` query, asked once the key answered; colour = the
-  overall status, the summary in its label). Both operations need no key and cost nothing. `/status` and `/licensing`
+  block has `ApiStatusDot` beside "API status". Its colour and the account card’s overall badge share the public status Worker’s
+  `/api/snapshot.overall_status`, polled every minute without a key. Failed or missing snapshots show grey. Both operations need no key and cost nothing. `/status` and `/licensing`
   stay 301 redirects; `/health` has no view (reason in the coverage table).
 - **Fiscal periods**: the stock overview has a "Fiscal periods" card (`fiscal-periods-card.tsx`) when the instrument
   has the `fiscal_periods` dataset — `useCompanyFiscalPeriods` (the filings list's request, every page), newest 8 +
@@ -866,7 +866,7 @@ missing, duplicate or unknown id: a new operation of the spec needs its row (pag
 | `listDocumentKindCatalog` | `GET /v1/catalog/document-kinds` | `/catalog?tab=document-kinds` (O7 group 7) |
 | `listMappingRules` | `GET /v1/catalog/mapping-rules` | `/catalog?tab=mapping-rules` (`statement`, `metric_id` from a metric row; O7 group 7) |
 | `listCompanies` | `GET /v1/companies` | `/instruments?view=companies` (Companies tab: `q`, `exchange`, `sector`, `sort`; O7 group 7) |
-| `statusGet` | `GET /status` | `/account` (API status card); sidebar Help (status dot beside "API status"); O7 group 7 |
+| `statusGet` | `GET /status` | `/account` (API status card tables); O7 group 7 |
 | `statusLicensing` | `GET /status/licensing` | `/account` (licensing card: the plan's rights, routes per family); O7 group 7 |
 | `healthGet` | `GET /health` | No view, by design: a liveness probe (`status`, `timestamp`) that says nothing a reader can act on; `/status` (above) carries the product states and uptime the dashboard shows |
 | `listAlerts` | `GET /v1/alerts` | `/alerts` (filters incl. 7.1's `symbol` / `destination_id`; quota line); quota on a refused create (`limit=1`) (alerts task 2); `/alerts/users/$externalUserId` (`external_user_id`), the ticker pages' "N alerts on X" (`symbol`, `limit=100`) (alerts task 4) |

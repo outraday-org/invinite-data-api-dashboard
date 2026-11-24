@@ -1,6 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
-import type { V2ApiStatus, V2Licensing, V2LicensingRight, V2Plan, V2ServiceStatus } from "@/lib/api/types";
+import type { V2ApiStatus, V2Licensing, V2LicensingRight, V2Plan } from "@/lib/api/types";
+import type { OverallStatus } from "@/lib/reference/public-status";
 
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { useApiLicensing, useApiStatus } from "@/lib/api/queries";
 import { planRank } from "@/lib/api/request-meta";
 import { DASH, formatInstant, formatNumber } from "@/lib/format";
 import { LICENSING_PAGE_URL, STATUS_PAGE_URL } from "@/lib/public-hosts";
+import { useOverallStatus } from "@/lib/reference/public-status";
 import { cn } from "@/lib/utils";
 
 /**
@@ -26,11 +28,6 @@ type Service = NonNullable<V2ApiStatus["services"]>[number];
 type Group = NonNullable<V2ApiStatus["groups"]>[number];
 
 type Family = V2Licensing["families"][number];
-
-/** The overall state: the worst family status; `unknown` while the API states none (`services: null`). */
-export type OverallStatus = "unknown" | V2ServiceStatus;
-
-const STATUS_RANK: Record<V2ServiceStatus, number> = { degraded: 1, operational: 0, outage: 2 };
 
 export const STATUS_LABELS: Record<OverallStatus, string> = {
     degraded: "Degraded",
@@ -63,16 +60,9 @@ export const FAMILY_LABELS: Record<Family["family"] | Service["family"], string>
     websocket: "WebSocket",
 };
 
-/** The worst status of the families (pure). */
-export function overallStatus(services: null | ReadonlyArray<Pick<Service, "status">> | undefined): OverallStatus {
-    if (!services || services.length === 0) return "unknown";
-
-    return services.reduce<V2ServiceStatus>((worst, service) => (STATUS_RANK[service.status] > STATUS_RANK[worst] ? service.status : worst), "operational");
-}
-
 /** "Degraded: SEC filings, Institutional ownership · Outage: News" — or "All products operational" (pure). */
-export function statusSummary(services: null | ReadonlyArray<Pick<Service, "family" | "status">> | undefined) {
-    if (!services) return STATUS_LABELS.unknown;
+function statusSummary(services: null | ReadonlyArray<Pick<Service, "family" | "status">> | undefined) {
+    if (!services?.length) return "Product family status unavailable";
 
     const parts = (["outage", "degraded"] as const)
         .map((status) => {
@@ -82,7 +72,7 @@ export function statusSummary(services: null | ReadonlyArray<Pick<Service, "fami
         })
         .filter(Boolean);
 
-    return parts.length > 0 ? parts.join(" · ") : "All products operational";
+    return parts.length > 0 ? `Product families · ${parts.join(" · ")}` : "All product families operational";
 }
 
 /** A share of answered requests (0.989 → "98.9%"); null = too little traffic to judge ("—"). */
@@ -106,8 +96,17 @@ export function StatusBadge({ status }: { status: OverallStatus }) {
     );
 }
 
-/** The sidebar's dot beside "API status" (pure): its colour = the overall status; the families in its title and label. */
-export function StatusDot({ status, summary }: { status: OverallStatus; summary: string }) {
+const OVERALL_LABELS: Record<OverallStatus, string> = {
+    degraded: "Partial service disruption",
+    operational: "All services operational",
+    outage: "API outage",
+    unknown: "Status unavailable",
+};
+
+/** The sidebar's status is available by colour, screen reader and tooltip. */
+export function StatusDot({ status }: { status: OverallStatus }) {
+    const summary = OVERALL_LABELS[status];
+
     return (
         <span aria-label={summary} className="ml-auto flex items-center" data-testid="api-status-dot" role="img" title={summary}>
             <span className={cn("size-2 rounded-full", DOT_CLASSES[status])} />
@@ -115,18 +114,16 @@ export function StatusDot({ status, summary }: { status: OverallStatus; summary:
     );
 }
 
-/** The sidebar's live status dot (`/status`, shared with `/account`; nothing until the key answered). */
-export function ApiStatusDot({ enabled }: { enabled: boolean }) {
-    const { data, error } = useApiStatus(enabled);
+/** The public snapshot also drives the overall badge on the account page. */
+export function ApiStatusDot() {
+    const overall = useOverallStatus();
 
-    if (!data && !error) return null;
-
-    return <StatusDot status={overallStatus(data?.services)} summary={data ? statusSummary(data.services) : STATUS_LABELS.unknown} />;
+    return <StatusDot status={overall} />;
 }
 
 const SERVICE_COLUMNS: Array<ColumnDef<Service>> = [
     { cell: ({ row }) => FAMILY_LABELS[row.original.family], header: "Product", id: "family" },
-    { cell: ({ row }) => <StatusBadge status={row.original.status} />, header: "Last 24 hours", id: "status" },
+    { cell: ({ row }) => <StatusBadge status={row.original.status} />, header: "Status", id: "status" },
     { cell: ({ row }) => <div className="text-right tabular-nums">{uptimeText(row.original.uptime_7d)}</div>, header: () => <div className="text-right">7 days</div>, id: "uptime_7d" },
     { cell: ({ row }) => <div className="text-right tabular-nums">{uptimeText(row.original.uptime_30d)}</div>, header: () => <div className="text-right">30 days</div>, id: "uptime_30d" },
     { cell: ({ row }) => <div className="text-right tabular-nums">{uptimeText(row.original.uptime_90d)}</div>, header: () => <div className="text-right">90 days</div>, id: "uptime_90d" },
@@ -134,7 +131,7 @@ const SERVICE_COLUMNS: Array<ColumnDef<Service>> = [
 
 const GROUP_COLUMNS: Array<ColumnDef<Group>> = [
     { cell: ({ row }) => row.original.name, header: "API group", id: "name" },
-    { cell: ({ row }) => <StatusBadge status={row.original.status} />, header: "Last 24 hours", id: "status" },
+    { cell: ({ row }) => <StatusBadge status={row.original.status} />, header: "Status", id: "status" },
     { cell: ({ row }) => <div className="text-right tabular-nums">{uptimeText(row.original.uptime_7d)}</div>, header: () => <div className="text-right">Uptime 7 days</div>, id: "uptime_7d" },
     { cell: ({ row }) => <div className="text-right tabular-nums">{latencyText(row.original.p50_ms_7d)}</div>, header: () => <div className="text-right">p50 (7 days)</div>, id: "p50_ms_7d" },
     { cell: ({ row }) => <div className="text-right tabular-nums">{latencyText(row.original.p95_ms_7d)}</div>, header: () => <div className="text-right">p95 (7 days)</div>, id: "p95_ms_7d" },
@@ -145,9 +142,7 @@ const externalLink = (href: string, text: string) => (
 );
 
 /** The status card of `/account` (pure): overall, the universe, every family and docs group. */
-export function ApiStatusView({ status }: { status: V2ApiStatus }) {
-    const overall = overallStatus(status.services);
-
+export function ApiStatusView({ overall, status }: { overall: OverallStatus; status: V2ApiStatus }) {
     const { companies, earnings_calls: calls } = status.universe;
 
     return (
@@ -161,7 +156,7 @@ export function ApiStatusView({ status }: { status: V2ApiStatus }) {
                     {statusSummary(status.services)}
                     {" · as of "}
                     {formatInstant(status.generated_at)}
-                    {". Uptime = the share of requests answered without a server error; a status covers the last 24 hours. "}
+                    {". Product and group statuses use requests from today and yesterday (UTC). Uptime is the share answered without a server error. "}
                     {externalLink(STATUS_PAGE_URL, "Status page")}
                 </CardDescription>
             </CardHeader>
@@ -263,13 +258,15 @@ export function LicensingView({ licensing, plan }: { licensing: V2Licensing; pla
 
 /** The two cards of `/account` (status always; licensing once the plan is known). */
 export function AccountStatusCards({ plan }: { plan: null | V2Plan }) {
+    const overall = useOverallStatus();
+
     const status = useApiStatus();
 
     const licensing = useApiLicensing();
 
     return (
         <div className="grid gap-4 lg:grid-cols-2">
-            {status.data ? <ApiStatusView status={status.data} /> : status.error ? <ErrorState error={status.error} title="Failed to load the API status" /> : <Skeleton className="h-48 w-full" />}
+            {status.data ? <ApiStatusView overall={overall} status={status.data} /> : status.error ? <ErrorState error={status.error} title="Failed to load the API status" /> : <Skeleton className="h-48 w-full" />}
             {licensing.data && plan
                 ? <LicensingView licensing={licensing.data} plan={plan} />
                 : licensing.error ? <ErrorState error={licensing.error} title="Failed to load the licensing policy" /> : <Skeleton className="h-48 w-full" />}
