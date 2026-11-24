@@ -50,6 +50,13 @@ function schemaFieldTypes(): Record<string, Set<string>> {
     const out: Record<string, Set<string>> = {};
 
     for (const [field, schema] of Object.entries(conditionInput.properties!)) {
+        // Namespaced economic-series fields belong to the single macro condition; some have no type in their prose.
+        if (field.startsWith("macro_")) {
+            out[field] = new Set(["macro"]);
+
+            continue;
+        }
+
         const ref = refOf(schema);
 
         if (ref) {

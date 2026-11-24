@@ -19,11 +19,11 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
 
 ### API Layer (`src/lib/api/`)
 
-- **openapi.json**: the pinned data API spec, adopted from the API's versioned `reference/openapi.json` (see "Data contract ownership"). It is the Data API 11.0.0 contract (tag `data-sdk-v11.0.0`, API commit `79fe20a`). Its status groups include Corporate actions, Calendar and Offerings. 10.3.0 spells a pay-as-you-go account `payg` in `/v1/me/usage` too, so `PLAN_LABELS` has no `prepaid`, and the earnings-call transcript / document alert events need PRO; 10.1 / 10.2 were additive. 10.0 (tag `data-sdk-v10.0.0`; invinite `tasks-julian/todo-0/data-api-pricing-v2` task 4): 10.0 moved 32 STANDARD operations to LITE (filings, filers, documents, guidance, holders, metrics, news items, people, IPOs, offerings) and 8 to PRO (transcript, Q&A, stats, investor documents and their two searches), added `payg` to `/v1/me.plan` (credits without a plan, reaches what PRO reaches except live data, the API's 403 says which) and made LITE internal use (no licensing right) with the note `internal_use`; 9.0 had introduced the five tiers and `by_contract`. Copy it over, then `pnpm generate:api` (its output is committed after `pnpm run check`'s `eslint --fix`, which re-sorts it). `pnpm-workspace.yaml` holds pnpm 11's `allowBuilds` (esbuild `true`; `@parcel/watcher`, `msw`, `sharp`, `unrs-resolver` `false` — prebuilt binaries / an unused msw worker): without a decision for every dependency build script pnpm 11 stops with `ERR_PNPM_IGNORED_BUILDS`. A new dependency with a build script needs its own entry
+- **openapi.json**: the pinned data API spec, adopted from the API's versioned `reference/openapi.json` (see "Data contract ownership"). It is the additive US macro reference at API commit `eb6efa3d3923c38bf26ec67cd88da994ef5ec0ed`, based on the Data API 11.0.0 contract (tag `data-sdk-v11.0.0`, API commit `79fe20a`). Its status groups include Corporate actions, Calendar, Offerings and Macro. 10.3.0 spells a pay-as-you-go account `payg` in `/v1/me/usage` too, so `PLAN_LABELS` has no `prepaid`, and the earnings-call transcript / document alert events need PRO; 10.1 / 10.2 were additive. 10.0 (tag `data-sdk-v10.0.0`; invinite `tasks-julian/todo-0/data-api-pricing-v2` task 4): 10.0 moved 32 STANDARD operations to LITE (filings, filers, documents, guidance, holders, metrics, news items, people, IPOs, offerings) and 8 to PRO (transcript, Q&A, stats, investor documents and their two searches), added `payg` to `/v1/me.plan` (credits without a plan, reaches what PRO reaches except live data, the API's 403 says which) and made LITE internal use (no licensing right) with the note `internal_use`; 9.0 had introduced the five tiers and `by_contract`. Copy it over, then `pnpm generate:api` (its output is committed after `pnpm run check`'s `eslint --fix`, which re-sorts it). `pnpm-workspace.yaml` holds pnpm 11's `allowBuilds` (esbuild `true`; `@parcel/watcher`, `msw`, `sharp`, `unrs-resolver` `false` — prebuilt binaries / an unused msw worker): without a decision for every dependency build script pnpm 11 stops with `ERR_PNPM_IGNORED_BUILDS`. A new dependency with a build script needs its own entry
 - **schema.d.ts**: Auto-generated TypeScript types from OpenAPI spec. Regenerate with `pnpm run generate:api`
 - **types.ts**: Derived response/entity types using the `ApiResponse` helper to extract typed responses from schema
 - **client.server.ts**: Creates typed `openapi-fetch` client with Bearer auth
-- **server-functions.ts**: TanStack Start server functions (`createServerFn`) with Zod validation. These run on the server and handle API calls
+- **server-functions.ts**: TanStack Start server functions (`createServerFn`) with Zod validation. These run on the server and handle API calls. Every RPC whose input includes a key uses POST to keep the key out of its URL. Upstream reads retain GET
 - **queries.ts**: React Query hooks (`useQuery`/`useInfiniteQuery`) that call server functions. Each hook manages API key from store and shows error toasts
 - **errors.ts**: `ApiRequestError` (`status`, `code` = the body's `error`, `body`). Every earnings server function throws it via `throwApiError(error, response)`; the shared earnings hook helpers (`useEarningsQuery` / `useEarningsInfinite` in `queries.ts`) revive it on the client (`rethrowApiError` → `fromSerialized`: a server function's thrown Error crosses to the client as a plain `Error` with its own properties) and never retry an API answer (`retryUnlessApiError`). A hook with `errorMessage: null` is status-aware — no toast, the page renders the state: event, transcript, press release, stats, comparison, prosody, price attribution (a 404 `not_found` is a page state there: not derived yet / first call, the reason in `detail`), audio, slides, investor documents / document search, transcript search, live audio (403 `forbidden` = audio refused, 503 `unavailable` = media outage / search off) and the live list (its 15-s refetch would otherwise toast on every failure; the "Live now" strip shows a one-line note). The other earnings hooks toast with their `errorMessage`. The REST plan gate is the `403` problem `plan_required` (the legacy `403 { error: "Forbidden" }` is still read) (`isTierError`; `forbidden_tier` is the WebSocket's code). A v2 problem+json body is read too (see "Data API v2"). Non-earnings hooks keep their own pattern (raw `throw error` + `useErrorToast`)
 - **Earnings calls**: every earnings page reads the events family (see "Data API v2"); no old `/v1/earnings-calls/*` server function or hook is left (people: `/people` + `/people/$personId`, see "People"; the 7.0 contract has no webhook or analyst route). `getApiBaseUrl` / `useApiBaseUrl` return the (non-secret) API base URL for the `/v1/stream` WebSocket. `useV2Event` refetches every 30 s while `isEarningsEventLiveish` (armed / capturing / captured without a transcript); `useV2LiveEvents(enabled)`; `useV2LiveAudio` is never stale and refetches only every 15 s while `not_started`
@@ -54,6 +54,7 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
   accession, newest first, ≤ 200; nothing is replayed. Close 4001 / 4003 / 4029 stop (no reconnect loop) and turn the
   switch off with `LiveStopNotice`; other closes reconnect 1 s → 30 s × 10. The socket is not an HTTP request
   and is not in the API inspector. Page wiring: `$ticker/filings/-components/use-live-filings-feed.ts`.
+- **US macro live and alerts**: `MacroPageActions` gates the browser socket on the stream tier and excludes standalone pay-as-you-go. Each macro page opens the socket only after the reader selects Live. After acknowledgement, and for affected series and period ranges, cancel in-flight data reads, invalidate matching cached observations and refetch only active queries. The current REST page is authoritative across distinct releases. Treasury curves refresh together. The last accepted release and version remain visible even for an unchanged headline. The socket is free and the ordinary REST refreshes are metered. A Lite key can use the separately entitled macro alert form. Its series, fields and units come from `MACRO_ALERT_SERIES`, generated from the pinned Data API contract.
 - **One stream socket, one switch**: `src/lib/live/stream-socket.ts` `openStreamSocket` is the socket lifecycle of
   the three channel hooks `use-live-filings.ts`, `use-live-news.ts` and `use-live-alerts.ts` (admission closes
   `admissionCloses` 4001 / 4003 / 4029 = final stops, backoff 1 s → 30 s × 10 then `CONNECTION_LOST`, the channel's
@@ -350,7 +351,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 ### API inspector, export, URL state (backend `tasks/data-api-dashboard` O6)
 
 - **Operations table** `src/lib/api/operations.gen.ts` (generated, committed after `pnpm run check`): `pnpm generate:api`
-  = `openapi-typescript` + `node scripts/generate-operations.mjs`. One entry per operation of `openapi.json` (124,
+  = `openapi-typescript` + `node scripts/generate-operations.mjs`. One entry per operation of `openapi.json` (133,
   `operations.test.ts` counts them): method, path template, summary, `credits` (`x-credits`, null for `/health`,
   `/status*`), `tier` (`x-tier`), `cli` (`x-cli` group / action / positional), `docsUrl`
   (`https://data.invinite.com/docs/<method>--<path, / → _>`); `OPERATION_IDS_BY_ROUTE` (`"GET /v1/funds/{fund}"` → id);
@@ -499,7 +500,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   only in `lib/live/use-live-*.ts` through `liveWsUrl` (`/v1/stream`) and in `lib/live/stream-socket.ts`, whose every
   caller is a `use-live-*` hook passing `liveWsUrl(…)`, the host named only by `env.ts` and the curl text.
 - **Field map** (`src/lib/alerts/condition-fields.ts`): `FIELD_SPECS` (every `AlertConditionInput` field: editor kind,
-  label, help, enum, bounds; `optionsByType` for `scope` / `kinds` / `interval` / `frequency`), `TYPE_FIELDS` (17 types),
+  label, help, enum, bounds; `optionsByType` for `scope` / `kinds` / `interval` / `frequency`), `TYPE_FIELDS` (18 types),
   `CONDITION_FIELDS`, `TRIGGER_FIELDS` (`cooldown_bars` script / indicator, `rearm*` price types). `condition-fields.test.ts`
   parses the schema's descriptions ("Same types as `x`", "price types", "Keyword types", the `$ref` fields) and fails on a
   missing / extra type or field, an enum or a bound. The form model `alert-form.ts` (pure): `toCreateBody`,
@@ -760,13 +761,22 @@ calls, with its page. Created by O7 group 1 from `server-functions.ts` at `ab8a8
 `healthGet` with its reason), group 6's (`getInsiderTrade`, `getOffering`, `listFilerHoldingChanges`); group 5 adds no operation, it widens five rows (`listKpis`,
 `searchTranscripts`, `getEventComparison`, `listInvestorDocuments`, `getInvestorDocument`). Every O7
 group appended its rows, the alerts tasklist its 36 (30 alert / destination + 6 script operations); an operation
-with no view states why here. **Complete (A4-final, 2026-11-21): 125 rows = the 125 operation ids of `openapi.json`, each
-exactly once** — the 124 HTTP operations of `operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, one
+with no view states why here. **Complete (A4-final, 2026-11-21): 134 rows = the 134 operation ids of `openapi.json`, each
+exactly once** — the 133 HTTP operations of `operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, one
 row naming its channels). `src/lib/api/coverage.test.ts` parses this table against `openapi.json` and fails on a
 missing, duplicate or unknown id: a new operation of the spec needs its row (page or reason) here.
 
 | Operation | Request | Page |
 |-----------|---------|------|
+| `listMacroSeries` | `GET /v1/macro/series` | /catalog?tab=macro |
+| `listMacroInflation` | `GET /v1/macro/inflation` | /us-macro/inflation |
+| `getMacroInflationSnapshot` | `GET /v1/macro/inflation/snapshot` | /us-macro/inflation |
+| `listMacroGdp` | `GET /v1/macro/gdp` | /us-macro/gdp |
+| `getMacroGdpSnapshot` | `GET /v1/macro/gdp/snapshot` | /us-macro/gdp |
+| `listMacroLabor` | `GET /v1/macro/labor` | /us-macro/labor |
+| `getMacroLaborSnapshot` | `GET /v1/macro/labor/snapshot` | /us-macro/labor |
+| `listTreasuryYieldCurves` | `GET /v1/macro/yield-curve` | /us-macro/yield-curve |
+| `getTreasuryYieldCurveSnapshot` | `GET /v1/macro/yield-curve/snapshot` | /us-macro/yield-curve |
 | `getAsReportedFinancials` | `GET /v1/financials/as-reported` | `/$ticker/financials?view=as-reported` (summary) |
 | `getAsReportedFinancialsDetailed` | `GET /v1/financials/as-reported/detailed` | `/$ticker/financials?view=as-reported` (detailed) |
 | `getAsReportedFinancialsPresentation` | `GET /v1/financials/as-reported/presentation` | `/$ticker/financials?view=as-reported` (presentation) |
@@ -892,3 +902,7 @@ missing, duplicate or unknown id: a new operation of the spec needs its row (pag
 | `deleteScript` | `DELETE /v1/scripts/{id}` | `/alerts/scripts/$id` Delete (confirmed; a 409 names the alerts) (alerts task 4) |
 | `createScriptVersion` | `POST /v1/scripts/{id}/versions` | `/alerts/scripts/$id` "Upload new version" (alerts task 4) |
 | `listScriptVersions` | `GET /v1/scripts/{id}/versions` | `/alerts/scripts/$id` (versions, diagnostics, source) (alerts task 4) |
+
+## US macro pages
+
+Market navigation and the home cards open four ticker-independent pages under `/us-macro/`. The Free catalog lives at `/catalog?tab=macro`; Lite history and snapshot reads use the same stored key and inspector as the other data pages. The pinned API revision is `eb6efa3d3923c38bf26ec67cd88da994ef5ec0ed`, reference SHA-256 `03945a9e4a5f8ce2d79c334a476fff35754d2a587a02b7a85cd15d9c8659c35b`.

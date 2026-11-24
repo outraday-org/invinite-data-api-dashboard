@@ -159,7 +159,7 @@ const symbolSchema = z.string().trim().min(1).max(SYMBOL_MAX_LENGTH);
 const fundSchema = z.string().trim().min(1).max(20);
 
 /** Search everything exchange-traded by ticker prefix or name (`GET /v1/instruments?q=`, one page). */
-export const getInstruments = createServerFn({ method: "GET" })
+export const getInstruments = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cursor: cursorSchema,
@@ -195,7 +195,7 @@ export const getInstruments = createServerFn({ method: "GET" })
     });
 
 /** One instrument: its type, structure, company or fund link and `datasets` (404 `not_covered` = not known). */
-export const getInstrument = createServerFn({ method: "GET" })
+export const getInstrument = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, symbol: symbolSchema }))
     .handler(async ({ data }): Promise<V2Instrument> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/instruments/{symbol}", {
@@ -208,7 +208,7 @@ export const getInstrument = createServerFn({ method: "GET" })
     });
 
 /** The listed funds (ETFs and closed-end funds; an ETN is no fund) by cursor. */
-export const getFunds = createServerFn({ method: "GET" })
+export const getFunds = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cursor: cursorSchema,
@@ -232,7 +232,7 @@ export const getFunds = createServerFn({ method: "GET" })
     });
 
 /** One fund's profile (ticker or fund key): net assets with date and scope, expense ratio, registrant, classes. */
-export const getFund = createServerFn({ method: "GET" })
+export const getFund = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, expand: z.array(z.enum(V2_COMPANY_EXPANDS)).optional(), fund: fundSchema }))
     .handler(async ({ data }): Promise<V2Fund> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/funds/{fund}", {
@@ -257,7 +257,7 @@ const FISCAL_PERIOD_MAX_PAGES = 10;
  * row's `report_date` with its fiscal / calendar quarter by `period_end`. A company the financial data does not cover
  * (a pre-IPO CIK, 404 `not_covered`) has none → [].
  */
-export const getCompanyFiscalPeriods = createServerFn({ method: "GET" })
+export const getCompanyFiscalPeriods = createServerFn({ method: "POST" })
     .inputValidator(fiscalPeriodsSchema)
     .handler(async ({ data }): Promise<Array<CompanyFiscalPeriod>> => {
         const api = createApiClient(data.apiKey);
@@ -304,7 +304,7 @@ const newsListSchema = z.object({
     topic: z.array(z.string()).optional(),
 });
 
-export const getV2News = createServerFn({ method: "GET" })
+export const getV2News = createServerFn({ method: "POST" })
     .inputValidator(newsListSchema)
     .handler(async ({ data }): Promise<V2NewsListResponse> => {
         const { apiKey, company, cursor, event, kind, limit, publishedAtGte, publishedAtLt, sort, topic } = data;
@@ -332,7 +332,7 @@ export const getV2News = createServerFn({ method: "GET" })
 
 const newsItemInputSchema = z.object({ apiKey: apiKeySchema, id: z.string().uuid() });
 
-export const getV2NewsItem = createServerFn({ method: "GET" })
+export const getV2NewsItem = createServerFn({ method: "POST" })
     .inputValidator(newsItemInputSchema)
     .handler(async ({ data }): Promise<V2NewsItem> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/news/{id}", {
@@ -351,7 +351,7 @@ const NEWS_TEXT_MAX_PAGES = 10;
  * `GET /v1/news/{id}/text`, every page (`next_cursor`; lead decision G2). The blocks of all pages are joined into one
  * answer.
  */
-export const getV2NewsText = createServerFn({ method: "GET" })
+export const getV2NewsText = createServerFn({ method: "POST" })
     .inputValidator(newsItemInputSchema)
     .handler(async ({ data }): Promise<V2NewsText> => {
         const api = createApiClient(data.apiKey);
@@ -379,7 +379,7 @@ export const getV2NewsText = createServerFn({ method: "GET" })
         return joined;
     });
 
-export const getV2Announcements = createServerFn({ method: "GET" })
+export const getV2Announcements = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, item: z.string().uuid(), limit: pageLimitSchema }))
     .handler(async ({ data }): Promise<V2AnnouncementsResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/announcements", {
@@ -411,7 +411,7 @@ const versionIdSchema = z.uuid();
  * The filer registry (`GET /v1/filers`, 1 credit a page): by name or ticker (`q`), by `phase` (`manager` = the 13F
  * institutions), sorted, by cursor.
  */
-export const getV2Filers = createServerFn({ method: "GET" })
+export const getV2Filers = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cursor: cursorSchema,
@@ -453,7 +453,7 @@ const filingSearchSchema = z.object({
  * Ranked, cited passages from SEC documents (`GET /v1/search/filings`, one index page per request).
  * `case_sensitive` is sent with `mode=literal` only.
  */
-export const getV2FilingSearch = createServerFn({ method: "GET" })
+export const getV2FilingSearch = createServerFn({ method: "POST" })
     .inputValidator(filingSearchSchema)
     .handler(async ({ data }): Promise<V2FilingSearchResponse> => {
         const { apiKey, caseSensitive, cursor, filedFrom, filedTo, form, item, limit, mode, q, symbol } = data;
@@ -492,7 +492,7 @@ const v2CompanySchema = z.object({
     expand: z.array(z.enum(V2_COMPANY_EXPANDS)).optional(),
 });
 
-export const getV2Company = createServerFn({ method: "GET" })
+export const getV2Company = createServerFn({ method: "POST" })
     .inputValidator(v2CompanySchema)
     .handler(async ({ data }): Promise<V2CompanyResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/companies/{company}", {
@@ -514,7 +514,7 @@ const v2DividendsSchema = z.object({
     symbol: symbolSchema,
 });
 
-export const getV2Dividends = createServerFn({ method: "GET" })
+export const getV2Dividends = createServerFn({ method: "POST" })
     .inputValidator(v2DividendsSchema)
     .handler(async ({ data }): Promise<V2DividendsResponse> => {
         const { apiKey, cursor, exDateGte, exDateLte, limit, sort, symbol } = data;
@@ -536,7 +536,7 @@ const v2SplitsSchema = z.object({
     symbol: symbolSchema,
 });
 
-export const getV2Splits = createServerFn({ method: "GET" })
+export const getV2Splits = createServerFn({ method: "POST" })
     .inputValidator(v2SplitsSchema)
     .handler(async ({ data }): Promise<V2SplitsResponse> => {
         const { apiKey, cursor, limit, sort, symbol } = data;
@@ -559,7 +559,7 @@ const v2MarketHolidaysSchema = z.object({
     sort: z.enum(["date", "-date"] as const satisfies ReadonlyArray<V2MarketHolidaysSort>).optional(),
 });
 
-export const getV2MarketHolidays = createServerFn({ method: "GET" })
+export const getV2MarketHolidays = createServerFn({ method: "POST" })
     .inputValidator(v2MarketHolidaysSchema)
     .handler(async ({ data }): Promise<V2MarketHolidaysResponse> => {
         const { apiKey, cursor, dateGte, dateLte, limit, sort } = data;
@@ -579,7 +579,7 @@ const v2FilerSchema = z.object({
     expand: z.array(z.enum(V2_FILER_EXPANDS)).optional(),
 });
 
-export const getV2Filer = createServerFn({ method: "GET" })
+export const getV2Filer = createServerFn({ method: "POST" })
     .inputValidator(v2FilerSchema)
     .handler(async ({ data }): Promise<V2FilerResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/filers/{cik}", {
@@ -618,7 +618,7 @@ const v2EventsSchema = z.object({
 });
 
 /** `GET /v1/events`: without `company` a calendar window (≤ 92 days; `status=live` alone needs none). */
-export const getV2Events = createServerFn({ method: "GET" })
+export const getV2Events = createServerFn({ method: "POST" })
     .inputValidator(v2EventsSchema)
     .handler(async ({ data }): Promise<V2EventsResponse> => {
         const { apiKey, company, cursor, dateKind, expand, fiscalQuarter, fiscalYear, limit, scheduledAtGte, scheduledAtLte, sort, status, type } = data;
@@ -647,7 +647,7 @@ export const getV2Events = createServerFn({ method: "GET" })
         return res;
     });
 
-export const getV2Event = createServerFn({ method: "GET" })
+export const getV2Event = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema.extend({ expand: z.array(z.enum(V2_EVENT_EXPANDS)).optional() }))
     .handler(async ({ data }): Promise<V2EventResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/events/{event_id}", {
@@ -659,7 +659,7 @@ export const getV2Event = createServerFn({ method: "GET" })
         return res;
     });
 
-export const getV2PressRelease = createServerFn({ method: "GET" })
+export const getV2PressRelease = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema)
     .handler(async ({ data }): Promise<V2PressReleaseResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/events/{event_id}/press-release", {
@@ -671,7 +671,7 @@ export const getV2PressRelease = createServerFn({ method: "GET" })
         return res;
     });
 
-export const getV2Qa = createServerFn({ method: "GET" })
+export const getV2Qa = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema.extend({ cursor: cursorSchema, include: z.literal("scores").optional(), limit: pageLimitSchema }))
     .handler(async ({ data }): Promise<V2QaResponse> => {
         const { apiKey, cursor, eventId, include, limit } = data;
@@ -685,7 +685,7 @@ export const getV2Qa = createServerFn({ method: "GET" })
         return res;
     });
 
-export const getV2Slides = createServerFn({ method: "GET" })
+export const getV2Slides = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema.extend({ include: z.array(z.enum(V2_SLIDES_INCLUDES)).optional(), pages: z.string().trim().min(1).optional() }))
     .handler(async ({ data }): Promise<V2SlidesResponse> => {
         const { apiKey, eventId, include, pages } = data;
@@ -699,7 +699,7 @@ export const getV2Slides = createServerFn({ method: "GET" })
         return res;
     });
 
-export const getV2Audio = createServerFn({ method: "GET" })
+export const getV2Audio = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema)
     .handler(async ({ data }): Promise<V2AudioResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/events/{event_id}/audio", {
@@ -711,7 +711,7 @@ export const getV2Audio = createServerFn({ method: "GET" })
         return res;
     });
 
-export const getV2LiveAudio = createServerFn({ method: "GET" })
+export const getV2LiveAudio = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema)
     .handler(async ({ data }): Promise<V2LiveAudioResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/events/{event_id}/live-audio", {
@@ -723,7 +723,7 @@ export const getV2LiveAudio = createServerFn({ method: "GET" })
         return res;
     });
 
-export const getV2EventStats = createServerFn({ method: "GET" })
+export const getV2EventStats = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema)
     .handler(async ({ data }): Promise<V2EventStatsResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/events/{event_id}/stats", {
@@ -739,7 +739,7 @@ export const getV2EventStats = createServerFn({ method: "GET" })
  * The comparison with the previous call (the one the pipeline derives). `prior` may name that call; any other event id
  * answers 404 `not_found` whose `detail` names the derived prior (O7 group 5's picker shows it).
  */
-export const getV2EventComparison = createServerFn({ method: "GET" })
+export const getV2EventComparison = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema.extend({ prior: eventIdSchema.optional() }))
     .handler(async ({ data }): Promise<V2EventComparisonResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/events/{event_id}/comparison", {
@@ -751,7 +751,7 @@ export const getV2EventComparison = createServerFn({ method: "GET" })
         return res;
     });
 
-export const getV2Prosody = createServerFn({ method: "GET" })
+export const getV2Prosody = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema.extend({ section: z.enum(["prepared", "qa", "all"] as const satisfies ReadonlyArray<V2ProsodySection>).optional() }))
     .handler(async ({ data }): Promise<V2ProsodyResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/events/{event_id}/prosody", {
@@ -763,7 +763,7 @@ export const getV2Prosody = createServerFn({ method: "GET" })
         return res;
     });
 
-export const getV2PriceAttribution = createServerFn({ method: "GET" })
+export const getV2PriceAttribution = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema)
     .handler(async ({ data }): Promise<V2PriceAttributionResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/events/{event_id}/price-attribution", {
@@ -778,7 +778,7 @@ export const getV2PriceAttribution = createServerFn({ method: "GET" })
 const transcriptVersionSchema = z.number().int().min(1).optional();
 
 /** The turns of one version (`layer` raw | cleaned; `words` adds each turn's timed words). */
-export const getV2Transcript = createServerFn({ method: "GET" })
+export const getV2Transcript = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema.extend({
         layer: z.enum(["raw", "cleaned"] as const satisfies ReadonlyArray<V2TranscriptLayer>).optional(),
         version: transcriptVersionSchema,
@@ -797,7 +797,7 @@ export const getV2Transcript = createServerFn({ method: "GET" })
     });
 
 /** The transcript as text blocks (`split=sections`: prepared remarks + Q&A). */
-export const getV2TranscriptText = createServerFn({ method: "GET" })
+export const getV2TranscriptText = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema.extend({
         split: z.enum(["none", "sections"] as const satisfies ReadonlyArray<V2TranscriptSplit>).optional(),
         version: transcriptVersionSchema,
@@ -814,7 +814,7 @@ export const getV2TranscriptText = createServerFn({ method: "GET" })
         return res;
     });
 
-export const getV2TranscriptVersions = createServerFn({ method: "GET" })
+export const getV2TranscriptVersions = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema.extend({ cursor: cursorSchema, limit: pageLimitSchema }))
     .handler(async ({ data }): Promise<V2TranscriptVersionsResponse> => {
         const { apiKey, cursor, eventId, limit } = data;
@@ -828,7 +828,7 @@ export const getV2TranscriptVersions = createServerFn({ method: "GET" })
         return res;
     });
 
-export const getV2TranscriptDiff = createServerFn({ method: "GET" })
+export const getV2TranscriptDiff = createServerFn({ method: "POST" })
     .inputValidator(eventInputSchema.extend({ from: z.number().int().min(1), to: z.number().int().min(1) }))
     .handler(async ({ data }): Promise<V2TranscriptDiffResponse> => {
         const { apiKey, eventId, from, to } = data;
@@ -846,7 +846,7 @@ export const getV2TranscriptDiff = createServerFn({ method: "GET" })
  * One page of ranked passages (the API answers ≤ 8 hits, `has_more: false`); `meta.index` = the index coverage. `type`
  * is a hit's type (one spelling since lead decision 11: `prepared`).
  */
-export const getV2TranscriptSearch = createServerFn({ method: "GET" })
+export const getV2TranscriptSearch = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         company: z.string().trim().min(1).optional(),
@@ -898,7 +898,7 @@ const v2GuidanceSchema = z.object({
  * `GET /v1/guidance` (`company` or `event`). Always `review=any`: the contract default `approved` matches no row
  * today (every item is `auto` or `needs_review`).
  */
-export const getV2Guidance = createServerFn({ method: "GET" })
+export const getV2Guidance = createServerFn({ method: "POST" })
     .inputValidator(v2GuidanceSchema)
     .handler(async ({ data }): Promise<V2GuidanceResponse> => {
         const { apiKey, basis, company, cursor, event, limit, metric, periodKind, sort } = data;
@@ -913,7 +913,7 @@ export const getV2Guidance = createServerFn({ method: "GET" })
     });
 
 /** `GET /v1/kpis`: one call's KPIs (`event`) or a company's history of one metric (`company` + `metric`, O7 group 5). */
-export const getV2Kpis = createServerFn({ method: "GET" })
+export const getV2Kpis = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         company: z.string().trim().min(1).optional(),
@@ -936,7 +936,7 @@ export const getV2Kpis = createServerFn({ method: "GET" })
     });
 
 /** The speakers of one event (`/v1/participants?event=`), with the quotes each name was resolved from. */
-export const getV2Participants = createServerFn({ method: "GET" })
+export const getV2Participants = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, event: eventIdSchema, limit: pageLimitSchema }))
     .handler(async ({ data }): Promise<V2ParticipantsResponse> => {
         const { apiKey, cursor, event, limit } = data;
@@ -963,7 +963,7 @@ const v2InvestorDocumentsSchema = z.object({
 });
 
 /** The IR library and every call's documents in one list (`source: company | call`); `pages` is null in lists. */
-export const getV2InvestorDocuments = createServerFn({ method: "GET" })
+export const getV2InvestorDocuments = createServerFn({ method: "POST" })
     .inputValidator(v2InvestorDocumentsSchema)
     .handler(async ({ data }): Promise<V2InvestorDocumentsResponse> => {
         const { apiKey, category, company, cursor, event, fiscalYear, kind, limit, sort } = data;
@@ -981,7 +981,7 @@ export const getV2InvestorDocuments = createServerFn({ method: "GET" })
     });
 
 /** One document of either source; `pages` inlines the per-page text (`expand=pages`, ≤ 2 MB) and `body_text`. */
-export const getV2InvestorDocument = createServerFn({ method: "GET" })
+export const getV2InvestorDocument = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, documentId: z.uuid(), pages: z.boolean().optional() }))
     .handler(async ({ data }): Promise<V2InvestorDocumentResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/investor-documents/{document_id}", {
@@ -994,7 +994,7 @@ export const getV2InvestorDocument = createServerFn({ method: "GET" })
     });
 
 /** One page of passages (≤ 20, `has_more: false`); no source filter and no case switch in v2. */
-export const getV2InvestorDocumentSearch = createServerFn({ method: "GET" })
+export const getV2InvestorDocumentSearch = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         company: z.string().trim().min(1).optional(),
@@ -1035,7 +1035,7 @@ const v2FilingsSchema = z.object({
 });
 
 /** An instrument's filings by cursor (`meta.form_facet` = its forms with counts) (`sort`: `filed_at` only). */
-export const getV2Filings = createServerFn({ method: "GET" })
+export const getV2Filings = createServerFn({ method: "POST" })
     .inputValidator(v2FilingsSchema)
     .handler(async ({ data }): Promise<V2FilingsResponse> => {
         const { apiKey, cursor, filedFrom, filedTo, form, items, limit, sort, symbol } = data;
@@ -1061,7 +1061,7 @@ export const getV2Filings = createServerFn({ method: "GET" })
     });
 
 /** One filing's manifest; `expand: ["documents"]` lists its documents (`current_version_id`, public `source_url`). */
-export const getV2Filing = createServerFn({ method: "GET" })
+export const getV2Filing = createServerFn({ method: "POST" })
     .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema, expand: z.array(z.enum(V2_FILING_EXPANDS)).optional() }))
     .handler(async ({ data }): Promise<V2FilingDetailResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/filings/{accession}", {
@@ -1075,7 +1075,7 @@ export const getV2Filing = createServerFn({ method: "GET" })
     });
 
 /** One immutable document version: a block range (`b00107-b00244`), with its footnotes / neighbours. */
-export const getV2DocumentVersion = createServerFn({ method: "GET" })
+export const getV2DocumentVersion = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         blocks: z.string().regex(/^b\d+(-b\d+)?$/).optional(),
@@ -1096,7 +1096,7 @@ export const getV2DocumentVersion = createServerFn({ method: "GET" })
     });
 
 /** A figure of a document version (`image.url` = its permanent public image, or `image: null`). */
-export const getV2DocumentFigure = createServerFn({ method: "GET" })
+export const getV2DocumentFigure = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, blockId: z.string().regex(/^b\d+$/), versionId: versionIdSchema }))
     .handler(async ({ data }): Promise<V2DocumentFigureResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/document-versions/{version_id}/figures/{block_id}", {
@@ -1122,7 +1122,7 @@ const holderChangeTypeSchema = z.enum(["new", "added", "reduced", "sold_out", "u
  * the overview (owner decision 12): one door page per source in `data`, one after another, `meta.sections[]` naming
  * each one's state, as-of, total and `has_more` (no cursor). `periodEnd` is never sent with `source=issuer_file` (400).
  */
-export const getHolders = createServerFn({ method: "GET" })
+export const getHolders = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cursor: cursorSchema,
@@ -1157,7 +1157,7 @@ export const getHolders = createServerFn({ method: "GET" })
  * The proven 13F position changes of one security's holders vs the prior quarter (`unchanged` only when `type` asks);
  * `filer` = only those managers (CIKs, 1–50), `priorPeriodEnd` = the quarter compared against (default the previous).
  */
-export const getHolderChanges = createServerFn({ method: "GET" })
+export const getHolderChanges = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cursor: cursorSchema,
@@ -1191,7 +1191,7 @@ export const getHolderChanges = createServerFn({ method: "GET" })
     });
 
 /** A 13F manager's portfolio for one quarter (`period_end` omitted = the newest quarter whose 13F deadline passed). */
-export const getFilerHoldings = createServerFn({ method: "GET" })
+export const getFilerHoldings = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cik: cikSchema,
@@ -1216,7 +1216,7 @@ export const getFilerHoldings = createServerFn({ method: "GET" })
  * A listed fund's composition from the freshest source (the issuer's daily / monthly file, else its latest N-PORT
  * report; `meta.source` / `meta.as_of` name it), largest weight first; `asOf` = the composition stored on or before it.
  */
-export const getFundPositions = createServerFn({ method: "GET" })
+export const getFundPositions = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         asOf: z.iso.date().optional(),
@@ -1237,7 +1237,7 @@ export const getFundPositions = createServerFn({ method: "GET" })
     });
 
 /** A fund's sector / country / asset-class weights of the composition `getFundPositions` serves (`basis` per bucket). */
-export const getFundWeights = createServerFn({ method: "GET" })
+export const getFundWeights = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         asOf: z.iso.date().optional(),
@@ -1275,7 +1275,7 @@ const v2InsiderTradesSchema = z.object({
 });
 
 /** A company's insider trades, newest filed first (`side` buy = acquired, sell = disposed). */
-export const getV2InsiderTrades = createServerFn({ method: "GET" })
+export const getV2InsiderTrades = createServerFn({ method: "POST" })
     .inputValidator(v2InsiderTradesSchema)
     .handler(async ({ data }): Promise<V2InsiderTradesResponse> => {
         const { apiKey, company, cursor, filedAtGte, filedAtLte, isDerivative, limit, side, sort, transactionDateGte, transactionDateLte } = data;
@@ -1315,7 +1315,7 @@ const v2IposSchema = z.object({
 });
 
 /** Offerings, one row each (registration track + listing-calendar row); `company` optional (pre-listing offerings have none). */
-export const getV2Ipos = createServerFn({ method: "GET" })
+export const getV2Ipos = createServerFn({ method: "POST" })
     .inputValidator(v2IposSchema)
     .handler(async ({ data }): Promise<V2IposResponse> => {
         const { apiKey, company, cursor, isSpac, limit, listingDateGte, listingDateLte, sort, stage } = data;
@@ -1360,7 +1360,7 @@ const v2OfferingsSchema = z.object({
  * Form D issuer) or a listed ticker, omitted = every offering; the filters narrow by latest filing day, exemption,
  * industry group, amount sold and amendment.
  */
-export const getV2Offerings = createServerFn({ method: "GET" })
+export const getV2Offerings = createServerFn({ method: "POST" })
     .inputValidator(v2OfferingsSchema)
     .handler(async ({ data }): Promise<V2OfferingsResponse> => {
         const { apiKey, company, cursor, exemption, filedGte, filedLte, industry, isAmendment, limit, totalSoldGte } = data;
@@ -1458,7 +1458,7 @@ const asReportedQuery = (data: V2AsReportedInput) => v2Query({
 });
 
 /** Standardized statements, summary: `facts` = `{metric_id: value}`. */
-export const getV2Standardized = createServerFn({ method: "GET" })
+export const getV2Standardized = createServerFn({ method: "POST" })
     .inputValidator(v2StandardizedSchema)
     .handler(async ({ data }): Promise<V2StandardizedResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/financials/standardized", {
@@ -1471,7 +1471,7 @@ export const getV2Standardized = createServerFn({ method: "GET" })
     });
 
 /** Standardized statements with lineage (PRO): `facts` = `{metric_id: {value, unit, fact_id, formula, …}}`. */
-export const getV2StandardizedDetailed = createServerFn({ method: "GET" })
+export const getV2StandardizedDetailed = createServerFn({ method: "POST" })
     .inputValidator(v2StandardizedSchema)
     .handler(async ({ data }): Promise<V2StandardizedDetailedResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/financials/standardized/detailed", {
@@ -1484,7 +1484,7 @@ export const getV2StandardizedDetailed = createServerFn({ method: "GET" })
     });
 
 /** Standardized statements as a presentation tree (PRO): `facts` = `[{metric_id, value, children?}]`. */
-export const getV2StandardizedPresentation = createServerFn({ method: "GET" })
+export const getV2StandardizedPresentation = createServerFn({ method: "POST" })
     .inputValidator(v2StandardizedSchema)
     .handler(async ({ data }): Promise<V2StandardizedPresentationResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/financials/standardized/presentation", {
@@ -1497,7 +1497,7 @@ export const getV2StandardizedPresentation = createServerFn({ method: "GET" })
     });
 
 /** As-reported statements, summary: `facts` = `{concept: {value, derived}}`. */
-export const getV2AsReported = createServerFn({ method: "GET" })
+export const getV2AsReported = createServerFn({ method: "POST" })
     .inputValidator(v2AsReportedSchema)
     .handler(async ({ data }): Promise<V2AsReportedResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/financials/as-reported", {
@@ -1510,7 +1510,7 @@ export const getV2AsReported = createServerFn({ method: "GET" })
     });
 
 /** As-reported statements with labels and lineage (PRO). */
-export const getV2AsReportedDetailed = createServerFn({ method: "GET" })
+export const getV2AsReportedDetailed = createServerFn({ method: "POST" })
     .inputValidator(v2AsReportedSchema)
     .handler(async ({ data }): Promise<V2AsReportedDetailedResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/financials/as-reported/detailed", {
@@ -1523,7 +1523,7 @@ export const getV2AsReportedDetailed = createServerFn({ method: "GET" })
     });
 
 /** As-reported statements as the filer's presentation tree (PRO): `[{concept, label, value?, depth, is_total?, children?}]`. */
-export const getV2AsReportedPresentation = createServerFn({ method: "GET" })
+export const getV2AsReportedPresentation = createServerFn({ method: "POST" })
     .inputValidator(v2AsReportedSchema)
     .handler(async ({ data }): Promise<V2AsReportedPresentationResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/financials/as-reported/presentation", {
@@ -1536,7 +1536,7 @@ export const getV2AsReportedPresentation = createServerFn({ method: "GET" })
     });
 
 /** Ratios per period, `{category: {metric_id: value}}` (`category` any of; v1's `solvency` = `leverage`). */
-export const getV2Ratios = createServerFn({ method: "GET" })
+export const getV2Ratios = createServerFn({ method: "POST" })
     .inputValidator(v2PeriodListSchema.extend({ category: z.array(z.enum(V2_RATIO_CATEGORIES)).optional() }))
     .handler(async ({ data }): Promise<V2RatiosResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/metrics/ratios", {
@@ -1549,7 +1549,7 @@ export const getV2Ratios = createServerFn({ method: "GET" })
     });
 
 /** Growth per period and basis (`basis` yoy | qoq, v1 `growth_type`; omitted = both, one row each). */
-export const getV2Growth = createServerFn({ method: "GET" })
+export const getV2Growth = createServerFn({ method: "POST" })
     .inputValidator(v2PeriodListSchema.extend({ basis: z.enum(["yoy", "qoq"]).optional() }))
     .handler(async ({ data }): Promise<V2GrowthResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/metrics/growth", {
@@ -1562,7 +1562,7 @@ export const getV2Growth = createServerFn({ method: "GET" })
     });
 
 /** CAGR per period and horizon (`horizon` 3 | 5 | 10 years, v1 `period_years`; omitted = every horizon). */
-export const getV2Cagr = createServerFn({ method: "GET" })
+export const getV2Cagr = createServerFn({ method: "POST" })
     .inputValidator(v2PeriodListSchema.extend({ horizon: z.union([z.literal(3), z.literal(5), z.literal(10)]).optional() }))
     .handler(async ({ data }): Promise<V2CagrResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/metrics/cagr", {
@@ -1586,7 +1586,7 @@ type V2SegmentsInput = z.infer<typeof v2SegmentsSchema>;
 const segmentsQuery = (data: V2SegmentsInput) => v2Query({ ...periodListQuery(data), axis: v2Expand(data.axis), metric: v2Expand(data.metric) });
 
 /** Segment facts, one row each (`metric_id`, `segment_id`, `value`, `dimensions[]`). */
-export const getV2Segments = createServerFn({ method: "GET" })
+export const getV2Segments = createServerFn({ method: "POST" })
     .inputValidator(v2SegmentsSchema)
     .handler(async ({ data }): Promise<V2SegmentsResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/segments", {
@@ -1599,7 +1599,7 @@ export const getV2Segments = createServerFn({ method: "GET" })
     });
 
 /** Segment facts with lineage (PRO): adds `metric` (the XBRL concept), `accession`, `html_tag_id`, `html_label`, `unit`. */
-export const getV2SegmentsDetailed = createServerFn({ method: "GET" })
+export const getV2SegmentsDetailed = createServerFn({ method: "POST" })
     .inputValidator(v2SegmentsSchema)
     .handler(async ({ data }): Promise<V2SegmentsDetailedResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/segments/detailed", {
@@ -1612,7 +1612,7 @@ export const getV2SegmentsDetailed = createServerFn({ method: "GET" })
     });
 
 /** Why a standardized fact has its value (`fact_id` of a detailed standardized fact). */
-export const getV2Fact = createServerFn({ method: "GET" })
+export const getV2Fact = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, factId: z.string().trim().min(1).max(200) }))
     .handler(async ({ data }): Promise<V2FactResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/facts/{fact_id}", {
@@ -1627,7 +1627,7 @@ export const getV2Fact = createServerFn({ method: "GET" })
 // Account and IPO detail (backend tasks/data-api-dashboard O5). `/v1/me` (0 credits) is the key validator.
 
 /** Who the caller is: plan, rate limits, credits, allowed families (0 credits; 401 = no or an invalid key). */
-export const getMe = createServerFn({ method: "GET" })
+export const getMe = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema }))
     .handler(async ({ data }): Promise<V2Me> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/me");
@@ -1638,7 +1638,7 @@ export const getMe = createServerFn({ method: "GET" })
     });
 
 /** The caller's usage over the last `days` UTC days (1–90; the API answers a 7 / 30 / 90 window; 0 credits). */
-export const getMyUsage = createServerFn({ method: "GET" })
+export const getMyUsage = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, days: z.number().int().min(1).max(90).optional() }))
     .handler(async ({ data }): Promise<V2Usage> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/me/usage", {
@@ -1651,7 +1651,7 @@ export const getMyUsage = createServerFn({ method: "GET" })
     });
 
 /** One offering by its id (the IPO calendar's row detail). */
-export const getIpo = createServerFn({ method: "GET" })
+export const getIpo = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, ipoId: z.string().trim().min(1).max(200) }))
     .handler(async ({ data }): Promise<V2IpoDetail> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/ipos/{ipo_id}", {
@@ -1669,7 +1669,7 @@ export const getIpo = createServerFn({ method: "GET" })
 const personIdSchema = z.uuid();
 
 /** People who appear on calls (`GET /v1/people`): by name (`q`), company, event, role; sorted; by cursor. */
-export const getV2People = createServerFn({ method: "GET" })
+export const getV2People = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         company: z.string().trim().min(1).max(200).optional(),
@@ -1693,7 +1693,7 @@ export const getV2People = createServerFn({ method: "GET" })
     });
 
 /** One person (`GET /v1/people/{person_id}`). */
-export const getV2Person = createServerFn({ method: "GET" })
+export const getV2Person = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, personId: personIdSchema }))
     .handler(async ({ data }): Promise<V2Person> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/people/{person_id}", {
@@ -1706,7 +1706,7 @@ export const getV2Person = createServerFn({ method: "GET" })
     });
 
 /** Every call one person spoke on (`GET /v1/participants?person=`), one participation per call, by cursor. */
-export const getV2PersonParticipations = createServerFn({ method: "GET" })
+export const getV2PersonParticipations = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: pageLimitSchema, person: personIdSchema }))
     .handler(async ({ data }): Promise<V2ParticipantsResponse> => {
         const { apiKey, cursor, limit, person } = data;
@@ -1725,7 +1725,7 @@ export const getV2PersonParticipations = createServerFn({ method: "GET" })
 const FACT_PLACE_STATUSES = ["placed", "hidden", "not_in_document", "derived", "unmatched"] as const satisfies ReadonlyArray<V2FactPlaceStatus>;
 
 /** Where facts sit in a document version (PRO): by `fact` (a standardized fact's source facts) or `documentVersion`. */
-export const getV2FactPlaces = createServerFn({ method: "GET" })
+export const getV2FactPlaces = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cursor: cursorSchema,
@@ -1757,7 +1757,7 @@ export const getV2FactPlaces = createServerFn({ method: "GET" })
  * `GET /v1/search/news` (STANDARD, 10 credits a page): headlines, ledes and summary passages; `company` (a ticker or a
  * comma list) is optional — without it the whole market is searched. The window = `published_at.gte` / `.lt`.
  */
-export const getV2NewsSearch = createServerFn({ method: "GET" })
+export const getV2NewsSearch = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         company: z.string().trim().min(1).optional(),
@@ -1794,7 +1794,7 @@ export const getV2NewsSearch = createServerFn({ method: "GET" })
  * `GET /v1/announcements?company=` (STANDARD, 2 credits a page): a company's announcements with the topic, the
  * announced window (`announced_at.gte` / `.lt`) and the effective range (`effective_from.gte`, `effective_to.lte`).
  */
-export const getV2AnnouncementsList = createServerFn({ method: "GET" })
+export const getV2AnnouncementsList = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         announcedAtGte: z.string().optional(),
         announcedAtLt: z.string().optional(),
@@ -1833,7 +1833,7 @@ export const getV2AnnouncementsList = createServerFn({ method: "GET" })
 // sections and fact places, the SEC data sets. Each list pages by `cursor` with the same filters.
 
 /** A filing's numeric XBRL facts (SEC financial statement data sets), `tag` = concepts (comma list). */
-export const getV2FilingFacts = createServerFn({ method: "GET" })
+export const getV2FilingFacts = createServerFn({ method: "POST" })
     .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema, cursor: cursorSchema, limit: pageLimitSchema, tag: z.string().trim().min(1).max(500).optional() }))
     .handler(async ({ data }): Promise<V2FilingFactsResponse> => {
         const { accession, apiKey, cursor, limit, tag } = data;
@@ -1848,7 +1848,7 @@ export const getV2FilingFacts = createServerFn({ method: "GET" })
     });
 
 /** A filing's text facts (XBRL text blocks), `tag` = concepts (comma list). */
-export const getV2FilingNotes = createServerFn({ method: "GET" })
+export const getV2FilingNotes = createServerFn({ method: "POST" })
     .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema, cursor: cursorSchema, limit: pageLimitSchema, tag: z.string().trim().min(1).max(500).optional() }))
     .handler(async ({ data }): Promise<V2FilingNotesResponse> => {
         const { accession, apiKey, cursor, limit, tag } = data;
@@ -1863,7 +1863,7 @@ export const getV2FilingNotes = createServerFn({ method: "GET" })
     });
 
 /** The comment-letter graph around a filing (`max_depth` hops, `direction`); one answer, no cursor. */
-export const getV2ReviewChain = createServerFn({ method: "GET" })
+export const getV2ReviewChain = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         accession: accessionSchema,
         apiKey: apiKeySchema,
@@ -1884,7 +1884,7 @@ export const getV2ReviewChain = createServerFn({ method: "GET" })
     });
 
 /** The reported lines of one 13F-HR or NPORT-P filing as filed (`meta.family`), in the filing's line order. */
-export const getV2FilingHoldings = createServerFn({ method: "GET" })
+export const getV2FilingHoldings = createServerFn({ method: "POST" })
     .inputValidator(z.object({ accession: accessionSchema, apiKey: apiKeySchema, cursor: cursorSchema, limit: z.number().int().min(1).max(1000).optional() }))
     .handler(async ({ data }): Promise<V2FilingHoldingsResponse> => {
         const { accession, apiKey, cursor, limit } = data;
@@ -1899,7 +1899,7 @@ export const getV2FilingHoldings = createServerFn({ method: "GET" })
     });
 
 /** The section outline of a document version (`generic` headings by default, `legacy` = the old section ids). */
-export const getV2DocumentSections = createServerFn({ method: "GET" })
+export const getV2DocumentSections = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cursor: cursorSchema,
@@ -1921,7 +1921,7 @@ export const getV2DocumentSections = createServerFn({ method: "GET" })
     });
 
 /** The SEC data set releases the filings routes serve (newest release per data set). */
-export const getV2Datasets = createServerFn({ method: "GET" })
+export const getV2Datasets = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: pageLimitSchema }))
     .handler(async ({ data }): Promise<V2DatasetsResponse> => {
         const { apiKey, cursor, limit } = data;
@@ -1944,7 +1944,7 @@ const catalogPageSchema = z.object({ apiKey: apiKeySchema, cursor: cursorSchema,
 const catalogStatementSchema = z.array(z.enum(V2_STATEMENTS)).optional();
 
 /** The standardized metrics (`GET /v1/catalog/metrics`, `statement` comma list). */
-export const getMetricCatalog = createServerFn({ method: "GET" })
+export const getMetricCatalog = createServerFn({ method: "POST" })
     .inputValidator(catalogPageSchema.extend({ statement: catalogStatementSchema }))
     .handler(async ({ data }): Promise<V2MetricCatalogResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/metrics", {
@@ -1957,7 +1957,7 @@ export const getMetricCatalog = createServerFn({ method: "GET" })
     });
 
 /** The sections of each form (`GET /v1/catalog/sections`, `form` comma list). */
-export const getSectionCatalog = createServerFn({ method: "GET" })
+export const getSectionCatalog = createServerFn({ method: "POST" })
     .inputValidator(catalogPageSchema.extend({ form: z.array(z.string().trim().min(1).max(20)).optional() }))
     .handler(async ({ data }): Promise<V2SectionCatalogResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/sections", {
@@ -1970,7 +1970,7 @@ export const getSectionCatalog = createServerFn({ method: "GET" })
     });
 
 /** The SEC forms the API serves (`GET /v1/catalog/forms`). */
-export const getFormCatalog = createServerFn({ method: "GET" })
+export const getFormCatalog = createServerFn({ method: "POST" })
     .inputValidator(catalogPageSchema)
     .handler(async ({ data }): Promise<V2FormCatalogResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/forms", {
@@ -1983,7 +1983,7 @@ export const getFormCatalog = createServerFn({ method: "GET" })
     });
 
 /** The event types (`GET /v1/catalog/event-types`). */
-export const getEventTypeCatalog = createServerFn({ method: "GET" })
+export const getEventTypeCatalog = createServerFn({ method: "POST" })
     .inputValidator(catalogPageSchema)
     .handler(async ({ data }): Promise<V2EventTypeCatalogResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/event-types", {
@@ -1996,7 +1996,7 @@ export const getEventTypeCatalog = createServerFn({ method: "GET" })
     });
 
 /** The investor-document kinds (`GET /v1/catalog/document-kinds`). */
-export const getDocumentKindCatalog = createServerFn({ method: "GET" })
+export const getDocumentKindCatalog = createServerFn({ method: "POST" })
     .inputValidator(catalogPageSchema)
     .handler(async ({ data }): Promise<V2DocumentKindCatalogResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/document-kinds", {
@@ -2009,7 +2009,7 @@ export const getDocumentKindCatalog = createServerFn({ method: "GET" })
     });
 
 /** The standardized metrics' mapping rules (`GET /v1/catalog/mapping-rules`, `statement` / `metric_id` comma lists). */
-export const getMappingRules = createServerFn({ method: "GET" })
+export const getMappingRules = createServerFn({ method: "POST" })
     .inputValidator(catalogPageSchema.extend({
         metricId: z.array(z.string().trim().regex(/^[a-z0-9_]{1,120}$/)).optional(),
         statement: catalogStatementSchema,
@@ -2033,7 +2033,7 @@ export const getMappingRules = createServerFn({ method: "GET" })
     });
 
 /** Operating companies with a US listing (`GET /v1/companies`: `q` name / ticker prefix, `exchange` / `sector` lists). */
-export const getCompanies = createServerFn({ method: "GET" })
+export const getCompanies = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cursor: cursorSchema,
@@ -2063,7 +2063,7 @@ export const getCompanies = createServerFn({ method: "GET" })
     });
 
 /** Whether each product works (`GET /status`): status and uptime per family and per docs group, the universe. */
-export const getApiStatus = createServerFn({ method: "GET" })
+export const getApiStatus = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema }))
     .handler(async ({ data }): Promise<V2ApiStatus> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/status");
@@ -2074,7 +2074,7 @@ export const getApiStatus = createServerFn({ method: "GET" })
     });
 
 /** The licensing policy (`GET /status/licensing`): rights per tier and the right and tier of every route. */
-export const getApiLicensing = createServerFn({ method: "GET" })
+export const getApiLicensing = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema }))
     .handler(async ({ data }): Promise<V2Licensing> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/status/licensing");
@@ -2088,7 +2088,7 @@ export const getApiLicensing = createServerFn({ method: "GET" })
 // 13F manager's position changes. 1 credit a request each.
 
 /** One insider transaction line (`GET /v1/insider-trades/{id}`): 10b5-1 flag, ownership nature, derivative fields, footnotes. */
-export const getInsiderTrade = createServerFn({ method: "GET" })
+export const getInsiderTrade = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, id: z.string().trim().min(1).max(200) }))
     .handler(async ({ data }): Promise<V2InsiderTradeDetail> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/insider-trades/{id}", {
@@ -2101,7 +2101,7 @@ export const getInsiderTrade = createServerFn({ method: "GET" })
     });
 
 /** One Form D offering (`GET /v1/offerings/{offering_id}`): amounts, commissions, investors, related persons, filings. */
-export const getOffering = createServerFn({ method: "GET" })
+export const getOffering = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, offeringId: z.string().regex(OFFERING_ID_PATTERN) }))
     .handler(async ({ data }): Promise<V2OfferingDetail> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/offerings/{offering_id}", {
@@ -2114,7 +2114,7 @@ export const getOffering = createServerFn({ method: "GET" })
     });
 
 /** A 13F manager's position changes vs the prior quarter (`GET /v1/filers/{cik}/holding-changes`; `unchanged` only when `type` asks). */
-export const getFilerHoldingChanges = createServerFn({ method: "GET" })
+export const getFilerHoldingChanges = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cik: cikSchema,

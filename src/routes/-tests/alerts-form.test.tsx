@@ -6,7 +6,7 @@ import type * as MutationsModule from "@/lib/api/mutations";
 
 import { CreateAlertForm, EditAlertForm } from "@/components/alerts/alert-editor";
 import { AlertFormView, rangeText } from "@/components/alerts/alert-form-view";
-import { emptyAlertForm, fromAlert } from "@/lib/alerts/alert-form";
+import { emptyAlertForm, fromAlert, prefilledForm, toUpdateBody } from "@/lib/alerts/alert-form";
 import { ALERT_FILING, ALERT_PRICE, TEMPLATES_FIXTURE } from "@/lib/alerts/alerts-fixtures";
 import { ApiRequestError } from "@/lib/api/errors";
 
@@ -128,6 +128,39 @@ describe("AlertFormView (one form from the field map)", () => {
 });
 
 describe("CreateAlertForm", () => {
+    it("prefills a Treasury tenor, edits a unit-labelled threshold and round-trips delivery and cooldown", async () => {
+        const state = prefilledForm("macro", undefined, { series: "treasury_par_y10" });
+
+        state.trigger = { cooldown_seconds: "120", mode: "every_time" };
+
+        state.destinationIds = "dst_saved";
+
+        mutations.next.push(() => Promise.resolve({ done: "validated", id: null }));
+
+        render(<CreateAlertForm initial={state} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Add numeric threshold" }));
+
+        expect(screen.getByLabelText("Threshold series")).toHaveValue("treasury_par_y10");
+
+        fireEvent.change(screen.getByLabelText("Threshold value (percent)"), { target: { value: "4" } });
+
+        fireEvent.click(screen.getByRole("button", { name: "Check" }));
+
+        await screen.findByText("The API accepted this alert");
+
+        const expected = { macro_events: ["macro.released", "macro.revised"], macro_families: ["yield_curve"], macro_series_ids: ["treasury_par_y10"], macro_threshold: {
+            field: "value", operator: "gt", series_id: "treasury_par_y10", value: 4,
+        } };
+
+        expect(mutations.calls[0].input).toMatchObject({ body: { condition: expected, destination_ids: ["dst_saved"], trigger: { cooldown_seconds: 120 }, type: "macro" }, validateOnly: true });
+
+        const saved = { ...ALERT_PRICE, cik: null, condition: expected as typeof ALERT_PRICE.condition, destination_ids: ["dst_saved"], symbol: null,
+            trigger: { cooldown_seconds: 120, mode: "every_time" as const }, type: "macro" as const, version: 3 };
+
+        expect(toUpdateBody(fromAlert(saved), saved.version)).toMatchObject({ body: { condition: expected, destination_ids: ["dst_saved"], trigger: { cooldown_seconds: 120 }, version: 3 }, errors: {} });
+    });
+
     it("Check sends validate_only and says nothing was created", async () => {
         mutations.next.push(() => Promise.resolve({ done: "validated", id: null }));
 

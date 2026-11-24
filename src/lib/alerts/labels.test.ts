@@ -9,10 +9,10 @@ type Schema = { enum?: Array<string>; items?: Schema; properties?: Record<string
 const schemas = (JSON.parse(readFileSync(join(__dirname, "..", "..", "..", "openapi.json"), "utf8")) as { components: { schemas: Record<string, Schema> } }).components.schemas;
 
 describe("alert labels against openapi.json", () => {
-    it("the 7 groups hold every Alert.type exactly once, each with a label and a line", () => {
+    it("the 8 groups hold every Alert.type exactly once, each with a label and a line", () => {
         const types = schemas.Alert.properties!.type.enum!;
 
-        expect(ALERT_TYPE_GROUPS).toHaveLength(7);
+        expect(ALERT_TYPE_GROUPS).toHaveLength(8);
 
         expect([...ALERT_TYPES].sort()).toEqual([...types].sort());
 

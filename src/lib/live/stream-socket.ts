@@ -104,6 +104,8 @@ export function openStreamSocket(url: string, options: StreamSocketOptions): Str
         socket = next;
 
         next.addEventListener("open", () => {
+            if (disposed || stopped || socket !== next) return;
+
             const reopened = openedOnce;
 
             openedOnce = true;
@@ -111,7 +113,9 @@ export function openStreamSocket(url: string, options: StreamSocketOptions): Str
             options.onOpen(reopened);
         });
 
-        next.addEventListener("message", (message: MessageEvent) => options.onMessage(message.data));
+        next.addEventListener("message", (message: MessageEvent) => {
+            if (!disposed && !stopped && socket === next) options.onMessage(message.data);
+        });
 
         next.addEventListener("close", (event: CloseEvent) => {
             clearTimeout(resubscribeTimer);

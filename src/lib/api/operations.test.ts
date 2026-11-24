@@ -16,8 +16,8 @@ const specOperations = Object.entries(spec.paths).flatMap(([path, item]) =>
         .map(([method, operation]) => ({ method: method.toUpperCase(), operation, path })));
 
 describe("operations.gen.ts (pnpm generate:api)", () => {
-    it("has one entry per operation of openapi.json (124)", () => {
-        expect(specOperations).toHaveLength(124);
+    it("has one entry per operation of openapi.json (133)", () => {
+        expect(specOperations).toHaveLength(133);
 
         expect(Object.keys(OPERATIONS)).toHaveLength(specOperations.length);
     });

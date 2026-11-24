@@ -55,6 +55,10 @@ describe("navigation table", () => {
     });
 
     it("the search's Pages group matches labels, paths and keywords", () => {
+        for (const [term, path] of [["CPI", "inflation"], ["payrolls", "labor"], ["treasury", "yield-curve"], ["GDP", "gdp"]]) {
+            expect(searchPages(term).some(page => "to" in page && page.to === "/us-macro/" + path)).toBe(true);
+        }
+
         expect(searchPages("ipo").map(page => page.label)).toEqual(["IPOs"]);
 
         expect(searchPages("calendar").map(page => page.label)).toEqual(expect.arrayContaining(["Earnings calendar", "IPOs"]));

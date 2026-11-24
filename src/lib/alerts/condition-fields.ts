@@ -1,13 +1,16 @@
 import type { AlertConditionField, AlertTriggerField, AlertType } from "@/lib/api/types";
 
+import { MACRO_ALERT_SERIES } from "@/lib/api/operations.gen";
+
 import { BAR_ALERT_TYPES, PRICE_ALERT_TYPES } from "./labels";
+import { MACRO_EVENTS, MACRO_FAMILIES } from "./macro-condition";
 
 /**
  * The alert form's field map (backend tasks/data-api-dashboard 2-alerts task 2): which `AlertConditionInput` fields
- * each of the 17 types takes, and how each field is edited. Read from the schema's per-field descriptions ("each field
+ * each alert type takes, and how each field is edited. Read from the schema's per-field descriptions ("each field
  * names the types that take it"); `condition-fields.test.ts` parses `openapi.json` and fails when a type or a field is
  * missing here, when a field here is not in the schema, or when an enum / bound differs. Labels and help are the
- * descriptions, shortened. One form for every type, never 17 hand-written ones.
+ * descriptions, shortened. One form for every type, with shared trigger and delivery controls.
  */
 
 export type FieldKind
@@ -131,6 +134,10 @@ export const FIELD_SPECS: Record<AlertConditionField, FieldSpec> = {
     },
     level: { help: "The price level (> 0).", kind: "number", label: "Level", min: 0 },
     lookback_bars: { help: "Bars in the baseline, 5–200 (rvol_slot: sessions, 2–20).", kind: "integer", label: "Lookback bars", max: 200, min: 2 },
+    macro_events: { help: "Choose releases, revisions, or both.", kind: "enum-list", label: "Publication events", maxItems: 2, options: MACRO_EVENTS },
+    macro_families: { help: "An empty selection includes all four families.", kind: "enum-list", label: "Macro families", maxItems: 4, options: MACRO_FAMILIES },
+    macro_series_ids: { help: "An empty selection includes every series in the selected families.", kind: "enum-list", label: "Series and tenors", maxItems: 64, options: Object.keys(MACRO_ALERT_SERIES) },
+    macro_threshold: { help: "Match a published value or change.", kind: "json", label: "Numeric threshold" },
     match: { help: "Any or all keywords (default any).", kind: "enum", label: "Match", options: ["any", "all"] },
     mention_delta_rule: { help: "Mentions moved against the previous call (direction up / down / either, min_delta).", kind: "json", label: "Mention change", placeholder: "{\"direction\": \"up\", \"min_delta\": 3}" },
     min_mentions: { help: "Fire at this many mentions.", kind: "integer", label: "Minimum mentions", max: 1000, min: 1 },
@@ -199,6 +206,7 @@ export const TYPE_FIELDS: Record<AlertType, ReadonlyArray<AlertConditionField>> 
     fundamental_metric: [...ONE_COMPANY, "rules"],
     halt: [...COMPANIES, "statuses", "reason_codes"],
     indicator: [...INSTRUMENT, "interval", "template", "condition", "filters", "evaluation", "frequency"],
+    macro: ["macro_events", "macro_families", "macro_series_ids", "macro_threshold"],
     news: [...COMPANIES, "kinds", "sources", "earnings_only"],
     news_keyword: [...COMPANIES, "keywords", "match", "scope", "sources", "earnings_only"],
     price: [...INSTRUMENT, "operator", "level"],

@@ -191,6 +191,10 @@ describe("status widget (`/status`, `/status/licensing`)", () => {
     it("the account card lists every product, the universe and the docs groups", () => {
         render(<ApiStatusView status={V2_API_STATUS} />);
 
+        const macro = screen.getByText("Macro").closest("tr")!;
+
+        expect(within(macro).getAllByText("—").length).toBeGreaterThanOrEqual(2);
+
         const news = screen.getByText("News").closest("tr")!;
 
         expect(within(news).getByText("Outage")).toBeInTheDocument();

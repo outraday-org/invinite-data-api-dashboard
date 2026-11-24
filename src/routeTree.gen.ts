@@ -30,6 +30,10 @@ import { Route as OfferingsIndexRouteImport } from './routes/offerings/index'
 import { Route as FilingsIndexRouteImport } from './routes/filings/index'
 import { Route as AlertsIndexRouteImport } from './routes/alerts/index'
 import { Route as TickerIndexRouteImport } from './routes/$ticker/index'
+import { Route as UsMacroYieldCurveRouteImport } from './routes/us-macro/yield-curve'
+import { Route as UsMacroLaborRouteImport } from './routes/us-macro/labor'
+import { Route as UsMacroInflationRouteImport } from './routes/us-macro/inflation'
+import { Route as UsMacroGdpRouteImport } from './routes/us-macro/gdp'
 import { Route as SecDatasetsRouteImport } from './routes/sec/datasets'
 import { Route as SecCikRouteImport } from './routes/sec/$cik'
 import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
@@ -170,6 +174,26 @@ const TickerIndexRoute = TickerIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => TickerRouteRoute,
+} as any)
+const UsMacroYieldCurveRoute = UsMacroYieldCurveRouteImport.update({
+  id: '/us-macro/yield-curve',
+  path: '/us-macro/yield-curve',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsMacroLaborRoute = UsMacroLaborRouteImport.update({
+  id: '/us-macro/labor',
+  path: '/us-macro/labor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsMacroInflationRoute = UsMacroInflationRouteImport.update({
+  id: '/us-macro/inflation',
+  path: '/us-macro/inflation',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UsMacroGdpRoute = UsMacroGdpRouteImport.update({
+  id: '/us-macro/gdp',
+  path: '/us-macro/gdp',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const SecDatasetsRoute = SecDatasetsRouteImport.update({
   id: '/sec/datasets',
@@ -385,6 +409,10 @@ export interface FileRoutesByFullPath {
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/sec/datasets': typeof SecDatasetsRoute
+  '/us-macro/gdp': typeof UsMacroGdpRoute
+  '/us-macro/inflation': typeof UsMacroInflationRoute
+  '/us-macro/labor': typeof UsMacroLaborRoute
+  '/us-macro/yield-curve': typeof UsMacroYieldCurveRoute
   '/$ticker/': typeof TickerIndexRoute
   '/alerts/': typeof AlertsIndexRoute
   '/filings': typeof FilingsIndexRoute
@@ -441,6 +469,10 @@ export interface FileRoutesByTo {
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/sec/datasets': typeof SecDatasetsRoute
+  '/us-macro/gdp': typeof UsMacroGdpRoute
+  '/us-macro/inflation': typeof UsMacroInflationRoute
+  '/us-macro/labor': typeof UsMacroLaborRoute
+  '/us-macro/yield-curve': typeof UsMacroYieldCurveRoute
   '/$ticker': typeof TickerIndexRoute
   '/alerts': typeof AlertsIndexRoute
   '/filings': typeof FilingsIndexRoute
@@ -500,6 +532,10 @@ export interface FileRoutesById {
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/sec/datasets': typeof SecDatasetsRoute
+  '/us-macro/gdp': typeof UsMacroGdpRoute
+  '/us-macro/inflation': typeof UsMacroInflationRoute
+  '/us-macro/labor': typeof UsMacroLaborRoute
+  '/us-macro/yield-curve': typeof UsMacroYieldCurveRoute
   '/$ticker/': typeof TickerIndexRoute
   '/alerts/': typeof AlertsIndexRoute
   '/filings/': typeof FilingsIndexRoute
@@ -560,6 +596,10 @@ export interface FileRouteTypes {
     | '/people/$personId'
     | '/sec/$cik'
     | '/sec/datasets'
+    | '/us-macro/gdp'
+    | '/us-macro/inflation'
+    | '/us-macro/labor'
+    | '/us-macro/yield-curve'
     | '/$ticker/'
     | '/alerts/'
     | '/filings'
@@ -616,6 +656,10 @@ export interface FileRouteTypes {
     | '/people/$personId'
     | '/sec/$cik'
     | '/sec/datasets'
+    | '/us-macro/gdp'
+    | '/us-macro/inflation'
+    | '/us-macro/labor'
+    | '/us-macro/yield-curve'
     | '/$ticker'
     | '/alerts'
     | '/filings'
@@ -674,6 +718,10 @@ export interface FileRouteTypes {
     | '/people/$personId'
     | '/sec/$cik'
     | '/sec/datasets'
+    | '/us-macro/gdp'
+    | '/us-macro/inflation'
+    | '/us-macro/labor'
+    | '/us-macro/yield-curve'
     | '/$ticker/'
     | '/alerts/'
     | '/filings/'
@@ -729,6 +777,10 @@ export interface RootRouteChildren {
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   SecCikRoute: typeof SecCikRoute
   SecDatasetsRoute: typeof SecDatasetsRoute
+  UsMacroGdpRoute: typeof UsMacroGdpRoute
+  UsMacroInflationRoute: typeof UsMacroInflationRoute
+  UsMacroLaborRoute: typeof UsMacroLaborRoute
+  UsMacroYieldCurveRoute: typeof UsMacroYieldCurveRoute
   FilingsIndexRoute: typeof FilingsIndexRoute
   OfferingsIndexRoute: typeof OfferingsIndexRoute
   PeopleIndexRoute: typeof PeopleIndexRoute
@@ -882,6 +934,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/$ticker/'
       preLoaderRoute: typeof TickerIndexRouteImport
       parentRoute: typeof TickerRouteRoute
+    }
+    '/us-macro/yield-curve': {
+      id: '/us-macro/yield-curve'
+      path: '/us-macro/yield-curve'
+      fullPath: '/us-macro/yield-curve'
+      preLoaderRoute: typeof UsMacroYieldCurveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/us-macro/labor': {
+      id: '/us-macro/labor'
+      path: '/us-macro/labor'
+      fullPath: '/us-macro/labor'
+      preLoaderRoute: typeof UsMacroLaborRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/us-macro/inflation': {
+      id: '/us-macro/inflation'
+      path: '/us-macro/inflation'
+      fullPath: '/us-macro/inflation'
+      preLoaderRoute: typeof UsMacroInflationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/us-macro/gdp': {
+      id: '/us-macro/gdp'
+      path: '/us-macro/gdp'
+      fullPath: '/us-macro/gdp'
+      preLoaderRoute: typeof UsMacroGdpRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/sec/datasets': {
       id: '/sec/datasets'
@@ -1238,6 +1318,10 @@ const rootRouteChildren: RootRouteChildren = {
   PeoplePersonIdRoute: PeoplePersonIdRoute,
   SecCikRoute: SecCikRoute,
   SecDatasetsRoute: SecDatasetsRoute,
+  UsMacroGdpRoute: UsMacroGdpRoute,
+  UsMacroInflationRoute: UsMacroInflationRoute,
+  UsMacroLaborRoute: UsMacroLaborRoute,
+  UsMacroYieldCurveRoute: UsMacroYieldCurveRoute,
   FilingsIndexRoute: FilingsIndexRoute,
   OfferingsIndexRoute: OfferingsIndexRoute,
   PeopleIndexRoute: PeopleIndexRoute,

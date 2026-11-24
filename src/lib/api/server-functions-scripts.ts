@@ -22,7 +22,7 @@ import { apiKeySchema, pageInput, resourceIdSchema } from "./server-schemas";
 
 const sourceSchema = z.string().min(1).max(SCRIPT_SOURCE_MAX);
 
-export const listScripts = createServerFn({ method: "GET" })
+export const listScripts = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, ...pageInput }))
     .handler(({ data }): Promise<ScriptsListResponse> => listScriptsRequest(createApiClient(data.apiKey), { cursor: data.cursor, limit: data.limit }));
 
@@ -39,7 +39,7 @@ export const createScript = createServerFn({ method: "POST" })
         source: data.source,
     }));
 
-export const getScript = createServerFn({ method: "GET" })
+export const getScript = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<Script> => getScriptRequest(createApiClient(data.apiKey), data.id));
 
@@ -51,6 +51,6 @@ export const createScriptVersion = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema, source: sourceSchema }))
     .handler(({ data }): Promise<ScriptVersion> => createScriptVersionRequest(createApiClient(data.apiKey), data.id, data.source));
 
-export const listScriptVersions = createServerFn({ method: "GET" })
+export const listScriptVersions = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema, ...pageInput }))
     .handler(({ data }): Promise<ScriptVersionsResponse> => listScriptVersionsRequest(createApiClient(data.apiKey), data.id, { cursor: data.cursor, limit: data.limit }));

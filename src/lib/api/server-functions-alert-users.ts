@@ -33,7 +33,7 @@ import { apiKeySchema, cursorSchema, pageLimitSchema } from "./server-schemas";
  * (`alert-users.ts`); the id is never trimmed (any character is part of it).
  */
 
-export const listAlertUsers = createServerFn({ method: "GET" })
+export const listAlertUsers = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         cursor: cursorSchema,
@@ -51,7 +51,7 @@ export const listAlertUsers = createServerFn({ method: "GET" })
 /** A per-user operation: the id goes into the path (any text but `.` / `..`, which a URL parser drops as dot segments). */
 const userInput = z.object({ apiKey: apiKeySchema, externalUserId: pathUserIdSchema });
 
-export const getAlertUser = createServerFn({ method: "GET" })
+export const getAlertUser = createServerFn({ method: "POST" })
     .inputValidator(userInput)
     .handler(({ data }): Promise<AlertUser> => getAlertUserRequest(createApiClient(data.apiKey), data.externalUserId));
 
@@ -75,7 +75,7 @@ export const resumeAlertUser = createServerFn({ method: "POST" })
     .inputValidator(userInput)
     .handler(({ data }): Promise<AlertUser> => resumeAlertUserRequest(createApiClient(data.apiKey), data.externalUserId));
 
-export const getAlertUserDefaults = createServerFn({ method: "GET" })
+export const getAlertUserDefaults = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema }))
     .handler(({ data }): Promise<AlertUserDefaults> => getAlertUserDefaultsRequest(createApiClient(data.apiKey)));
 

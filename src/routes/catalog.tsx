@@ -17,6 +17,7 @@ import type {
 } from "@/lib/api/types";
 import type { CatalogTab } from "@/lib/reference/catalog";
 
+import { MacroCatalog } from "@/components/macro/macro-catalog";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { TabStrip } from "@/components/navigation/tab-strip";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
@@ -283,6 +284,7 @@ function CatalogTabBody({ search }: { search: CatalogSearch }) {
         case "document-kinds": return <CatalogTable list={documentKinds} query={search.q} scope={scope} spec={CATALOG_SPECS["document-kinds"]} />;
         case "event-types": return <CatalogTable list={eventTypes} query={search.q} scope={scope} spec={CATALOG_SPECS["event-types"]} />;
         case "forms": return <CatalogTable list={forms} query={search.q} scope={scope} spec={CATALOG_SPECS.forms} />;
+        case "macro": return <MacroCatalog filter={search.q} />;
         case "mapping-rules": return <CatalogTable list={rules} query={search.q} scope={scope} spec={CATALOG_SPECS["mapping-rules"]} />;
         case "metrics": return <CatalogTable list={metrics} query={search.q} scope={scope} spec={CATALOG_SPECS.metrics} />;
         case "sections": return <CatalogTable list={sections} query={search.q} scope={scope} spec={CATALOG_SPECS.sections} />;

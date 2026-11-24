@@ -1,0 +1,302 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "name": "multi_family",
+      "frame": {
+        "source": "backend-us-macro",
+        "schema_version": 1,
+        "channel": "macro",
+        "type": "macro.released",
+        "event_id": "macro_22379a4ffae8f7ab76df448dac3107594f96ea2cab30cdff99674be76243e002",
+        "release_id": "bea:personal-income-outlays:2025M01",
+        "version": 1,
+        "agency": "BEA",
+        "release_name": "Personal Income and Outlays",
+        "families": [
+          "gdp",
+          "inflation"
+        ],
+        "published_at": "2025-02-28T13:30:00Z",
+        "observed_at": "2025-02-28T13:30:32Z",
+        "readings": [
+          {
+            "series_id": "pce_all_sa",
+            "reference_date": "2025-01-01",
+            "value": 125.678,
+            "unit": "index",
+            "base_period": "2017=100",
+            "status": "available",
+            "change_1m_pct": 0.2,
+            "change_12m_pct": 2.5
+          },
+          {
+            "series_id": "personal_income",
+            "reference_date": "2025-01-01",
+            "value": 24678.123,
+            "unit": "billion USD",
+            "base_period": null,
+            "status": "available",
+            "change_prior": 12.5,
+            "change_year": 987.1,
+            "change_year_pct": 4.2
+          }
+        ],
+        "curve": null,
+        "affected": [
+          {
+            "series_id": "pce_all_sa",
+            "first_reference_date": "2025-01-01",
+            "last_reference_date": "2025-01-01",
+            "history_url": "/v1/macro/inflation?series=pce_all_sa&reference_date.gte=2025-01-01&reference_date.lte=2025-01-01"
+          },
+          {
+            "series_id": "personal_income",
+            "first_reference_date": "2025-01-01",
+            "last_reference_date": "2025-01-01",
+            "history_url": "/v1/macro/gdp?series=personal_income&reference_date.gte=2025-01-01&reference_date.lte=2025-01-01"
+          }
+        ]
+      }
+    },
+    {
+      "name": "advance_estimate",
+      "frame": {
+        "source": "backend-us-macro",
+        "schema_version": 1,
+        "channel": "macro",
+        "type": "macro.released",
+        "event_id": "macro_268041c565746ad58fb95fea08eb2034bc3eb9500aa2aec8ad1ea8611669b904",
+        "release_id": "bea:gdp:2025Q1:advance",
+        "version": 1,
+        "agency": "BEA",
+        "release_name": "GDP, advance estimate",
+        "families": [
+          "gdp"
+        ],
+        "published_at": "2025-04-30T12:30:00Z",
+        "observed_at": "2025-04-30T12:30:31Z",
+        "readings": [
+          {
+            "series_id": "real_gdp_growth",
+            "reference_date": "2025-01-01",
+            "value": 2.3,
+            "unit": "percent",
+            "base_period": null,
+            "status": "available",
+            "change_prior": -0.2,
+            "change_year": -0.4
+          }
+        ],
+        "curve": null,
+        "affected": [
+          {
+            "series_id": "real_gdp_growth",
+            "first_reference_date": "2025-01-01",
+            "last_reference_date": "2025-01-01",
+            "history_url": "/v1/macro/gdp?series=real_gdp_growth&reference_date.gte=2025-01-01&reference_date.lte=2025-01-01"
+          }
+        ]
+      }
+    },
+    {
+      "name": "unchanged_estimate",
+      "frame": {
+        "source": "backend-us-macro",
+        "schema_version": 1,
+        "channel": "macro",
+        "type": "macro.released",
+        "event_id": "macro_28fc51fb461b179c3b66141a4245bdcf650133ae71047ecf5683bbf5fadd0682",
+        "release_id": "bea:gdp:2025Q1:second",
+        "version": 1,
+        "agency": "BEA",
+        "release_name": "GDP, second estimate",
+        "families": [
+          "gdp"
+        ],
+        "published_at": "2025-05-29T12:30:00Z",
+        "observed_at": "2025-05-29T12:30:32Z",
+        "readings": [
+          {
+            "series_id": "real_gdp_growth",
+            "reference_date": "2025-01-01",
+            "value": 2.3,
+            "unit": "percent",
+            "base_period": null,
+            "status": "available",
+            "change_prior": -0.2,
+            "change_year": -0.4
+          }
+        ],
+        "curve": null,
+        "affected": []
+      }
+    },
+    {
+      "name": "correction",
+      "frame": {
+        "source": "backend-us-macro",
+        "schema_version": 1,
+        "channel": "macro",
+        "type": "macro.revised",
+        "event_id": "macro_ec83dde5916006bcf3ae632da1277b18a6a069af3b6dd6b58c68ba9b52f06167",
+        "release_id": "bea:gdp:2025Q1:second",
+        "version": 2,
+        "agency": "BEA",
+        "release_name": "GDP, second estimate",
+        "families": [
+          "gdp"
+        ],
+        "published_at": null,
+        "observed_at": "2025-06-03T16:05:00Z",
+        "readings": [
+          {
+            "series_id": "real_gdp_growth",
+            "reference_date": "2025-01-01",
+            "value": 2.2,
+            "unit": "percent",
+            "base_period": null,
+            "status": "available",
+            "change_prior": -0.3,
+            "change_year": -0.5
+          }
+        ],
+        "curve": null,
+        "affected": [
+          {
+            "series_id": "real_gdp_growth",
+            "first_reference_date": "2025-01-01",
+            "last_reference_date": "2025-01-01",
+            "history_url": "/v1/macro/gdp?series=real_gdp_growth&reference_date.gte=2025-01-01&reference_date.lte=2025-01-01"
+          }
+        ]
+      }
+    },
+    {
+      "name": "treasury_curve",
+      "frame": {
+        "source": "backend-us-macro",
+        "schema_version": 1,
+        "channel": "macro",
+        "type": "macro.released",
+        "event_id": "macro_3d38e0c649fc9a9689762ea60f4d8e0887526f448e370031f25a2c04e92a3f9e",
+        "release_id": "treasury:nominal-par:2025-02-14",
+        "version": 1,
+        "agency": "Treasury",
+        "release_name": "Daily Treasury Par Yield Curve Rates",
+        "families": [
+          "yield_curve"
+        ],
+        "published_at": null,
+        "observed_at": "2025-02-14T22:10:00Z",
+        "readings": [],
+        "curve": {
+          "agency": "Treasury",
+          "date": "2025-02-14",
+          "observed_at": "2025-02-14T22:10:00Z",
+          "source_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve",
+          "m1": 4.37,
+          "m1_5": null,
+          "m2": 4.38,
+          "m3": 4.34,
+          "m4": 4.35,
+          "m6": 4.32,
+          "y1": 4.23,
+          "y2": 4.26,
+          "y3": 4.26,
+          "y5": 4.33,
+          "y7": 4.41,
+          "y10": 4.47,
+          "y20": 4.75,
+          "y30": 4.69
+        },
+        "affected": [
+          {
+            "series_id": "treasury_par_m1",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_m1_5",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_m2",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_m3",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_m4",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_m6",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_y1",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_y10",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_y2",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_y20",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_y3",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_y30",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_y5",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          },
+          {
+            "series_id": "treasury_par_y7",
+            "first_reference_date": "2025-02-14",
+            "last_reference_date": "2025-02-14",
+            "history_url": "/v1/macro/yield-curve?date.gte=2025-02-14&date.lte=2025-02-14"
+          }
+        ]
+      }
+    }
+  ]
+}

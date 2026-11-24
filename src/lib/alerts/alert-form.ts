@@ -12,11 +12,13 @@ import type {
     UpdateAlertRequest,
 } from "@/lib/api/types";
 
+import { MACRO_ALERT_SERIES } from "@/lib/api/operations.gen";
 import { isRecord } from "@/lib/guards";
 
 import type { FieldSpec, TriggerScalarField } from "./condition-fields";
 
 import { ACTIVE_WINDOW_DAYS, CONDITION_FIELDS, INDICATOR_STRUCTURED_FIELDS, triggerFieldsFor } from "./condition-fields";
+import { isMacroSeries, MACRO_OPERATOR_LABELS, readMacroThreshold, thresholdFields } from "./macro-condition";
 
 /**
  * The alert form's model (pure, tested): the form keeps text as typed; `toAlertBody` turns it into the request body of
@@ -62,7 +64,7 @@ const EMPTY_WINDOW: ActiveWindowState = { activeDurationSeconds: "", anchorAt: "
 export function emptyAlertForm(type: AlertType = "filing"): AlertFormState {
     return {
         clientReferenceId: "",
-        condition: {},
+        condition: type === "macro" ? { macro_events: ["macro.released", "macro.revised"] } : {},
         destinationIds: "",
         externalUserId: "",
         indicatorMode: "template",
@@ -320,11 +322,27 @@ function readForm(state: AlertFormState, templates: ReadonlyArray<AlertTemplate>
             continue;
         }
 
+        if (spec.name === "macro_threshold" && state.condition.macro_threshold) {
+            const threshold = readMacroThreshold(state.condition.macro_threshold);
+
+            if (!threshold || !Object.hasOwn(MACRO_OPERATOR_LABELS, threshold.operator) || !Object.hasOwn(thresholdFields(threshold.series_id), threshold.field)
+                || threshold.value.trim() === "" || !Number.isFinite(Number(threshold.value))) {
+                errors["condition.macro_threshold"] = "Choose a series, a published field, an operator and a finite number.";
+            }
+            else {
+                condition.macro_threshold = { ...threshold, value: Number(threshold.value) };
+            }
+
+            continue;
+        }
+
         const read = readField(spec, state.condition[spec.name]);
 
         if ("error" in read) errors[`condition.${spec.name}`] = read.error;
         else if (read.value !== undefined) condition[spec.name] = read.value;
     }
+
+    if (state.type === "macro" && !condition.macro_events) errors["condition.macro_events"] = "Choose at least one publication event.";
 
     const trigger: Record<string, JsonValue> = {};
 
@@ -501,11 +519,17 @@ export function fromAlert(alert: Alert, { duplicate = false }: { duplicate?: boo
  * `version` (a script version id, "Create alert from this version") makes it a `script` alert of that version;
  * `template` (a template key, "Use template") an `indicator` alert of that built-in template.
  */
-export function prefilledForm(type: AlertType | undefined, symbol: string | undefined, { template, version }: { template?: string; version?: string } = {}): AlertFormState {
+export function prefilledForm(type: AlertType | undefined, symbol: string | undefined, { series, template, version }: { template?: string; version?: string; series?: string } = {}): AlertFormState {
     const state = emptyAlertForm(version ? "script" : template ? "indicator" : type);
 
     if (version) state.condition.script_version_id = version;
     else if (template) state.template = { inputs: {}, key: template };
+
+    if (state.type === "macro" && isMacroSeries(series)) {
+        state.condition.macro_series_ids = [series];
+
+        state.condition.macro_families = [MACRO_ALERT_SERIES[series].family];
+    }
 
     if (!symbol) return state;
 

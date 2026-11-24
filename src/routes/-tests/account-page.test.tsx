@@ -32,6 +32,12 @@ describe("/account (`/v1/me`, `/v1/me/usage`)", () => {
         expect(screen.getByText("Example Capital")).toBeInTheDocument();
     });
 
+    it("shows the Macro family returned for a Free catalog key", () => {
+        render(<AccountSummary me={{ ...ME_PRO, allowed_families: ["Macro"], plan: "free" }} />);
+
+        expect(screen.getByText("Macro")).toBeInTheDocument();
+    });
+
     it("never shows the account id, also when the account has no name", () => {
         render(<AccountSummary me={{ ...ME_PRO, account: { ...ME_PRO.account, name: null } }} />);
 

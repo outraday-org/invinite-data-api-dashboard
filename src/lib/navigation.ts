@@ -15,9 +15,11 @@ import {
     CoinsIcon,
     ContactIcon,
     DatabaseIcon,
+    FactoryIcon,
     FileTextIcon,
     FolderOpenIcon,
     HandCoinsIcon,
+    HardHatIcon,
     HistoryIcon,
     HouseIcon,
     IdCardIcon,
@@ -36,7 +38,9 @@ import {
     ScaleIcon,
     ScrollTextIcon,
     SearchIcon,
+    SplineIcon,
     SplitIcon,
+    TrendingUpIcon,
     UserRoundIcon,
     UsersIcon,
 } from "lucide-react";
@@ -67,6 +71,13 @@ export type NavPage = {
     to: PagePath;
 };
 
+export const MACRO_NAV = [
+    { description: "US consumer price indexes and monthly and annual inflation.", icon: TrendingUpIcon, keywords: ["inflation", "CPI", "PCE", "prices"], label: "Inflation", to: "/us-macro/inflation" },
+    { description: "US GDP growth, income and spending.", icon: FactoryIcon, keywords: ["GDP", "output", "income", "economic growth"], label: "GDP & income", to: "/us-macro/gdp" },
+    { description: "Payrolls, employment, earnings, openings and weekly claims.", icon: HardHatIcon, keywords: ["labor", "payrolls", "jobs", "JOLTS", "unemployment", "claims"], label: "Labor market", to: "/us-macro/labor" },
+    { description: "Daily nominal Treasury yields by maturity.", icon: SplineIcon, keywords: ["Treasury", "yield curve", "rates", "maturity"], label: "Treasury yield curve", to: "/us-macro/yield-curve" },
+] as const satisfies ReadonlyArray<NavPage>;
+
 /** Market: always shown. */
 export const MARKET_NAV: ReadonlyArray<NavPage> = [
     { description: "Live calls, today's earnings, next IPOs and holidays.", icon: HouseIcon, keywords: ["home", "start", "landing"], label: "Home", to: "/" },
@@ -74,6 +85,7 @@ export const MARKET_NAV: ReadonlyArray<NavPage> = [
     { description: "Every earnings call live right now.", icon: RadioIcon, keywords: ["live", "now", "calls", "audio"], label: "Live calls", to: "/live-calls" },
     { description: "Offerings from SEC registration to listing.", icon: RocketIcon, keywords: ["ipo", "ipos", "offerings", "listings", "spac"], label: "IPOs", to: "/ipo-calendar" },
     { description: "US exchange holidays and early closes.", icon: CalendarOffIcon, keywords: ["holidays", "closed", "market", "exchange"], label: "Market holidays", to: "/market-holidays" },
+    ...MACRO_NAV,
 ];
 
 /** Browse: always shown. Later tasks add News feed, Filings, Offerings, Search, Catalog, Alerts here with their routes. */
@@ -255,7 +267,7 @@ export const OPEN_LISTING_ICON = ArrowUpRightIcon;
 
 /** A card of the landing page's "Browse" row: a Browse page opened with its filter. */
 export type BrowseCard = { description: string; icon: LucideIcon; label: string } & (
-    | { search: Record<string, never>; to: "/institutions" }
+    | { search: Record<string, never>; to: "/institutions" | typeof MACRO_NAV[number]["to"] }
     | { search: { structure: "registered_fund" }; to: "/funds" }
     | { search: { type: "closed_end_fund" | "etf" | "etn" | "stock" }; to: "/instruments" }
 );
@@ -268,6 +280,7 @@ export const BROWSE_CARDS: ReadonlyArray<BrowseCard> = [
     { description: "Exchange-traded notes.", icon: ReceiptIcon, label: "ETNs", search: { type: "etn" }, to: "/instruments" },
     { description: "Registered funds with their reported holdings.", icon: LayersIcon, label: "Funds with holdings", search: { structure: "registered_fund" }, to: "/funds" },
     { description: "13F managers and their portfolios.", icon: LandmarkIcon, label: "Institutions", search: {}, to: "/institutions" },
+    ...MACRO_NAV.map(page => ({ ...page, search: {} })),
 ];
 
 /** The blocks of `/people/$personId` (in-page anchors of the sidebar's person context), in page order. */

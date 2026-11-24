@@ -50,7 +50,7 @@ const eventTypeSchema = z.enum(ALERT_EVENT_TYPES);
 /** A request body: free JSON objects (the per-type shape is the API's to check; its 400 names the field). */
 const bodySchema = z.record(z.string(), z.json());
 
-export const listAlerts = createServerFn({ method: "GET" })
+export const listAlerts = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
         clientReferenceId: z.string().trim().min(1).max(200).optional(),
@@ -73,7 +73,7 @@ export const listAlerts = createServerFn({ method: "GET" })
         type: data.type,
     }));
 
-export const getAlert = createServerFn({ method: "GET" })
+export const getAlert = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<Alert> => getAlertRequest(createApiClient(data.apiKey), data.id));
 
@@ -117,7 +117,7 @@ export const batchAlerts = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, items: z.array(bodySchema).min(1).max(ALERT_BATCH_MAX) }))
     .handler(({ data }): Promise<AlertBatchResponse> => batchAlertsRequest(createApiClient(data.apiKey), data.items as Array<AlertBatchItem>));
 
-export const listAlertEvents = createServerFn({ method: "GET" })
+export const listAlertEvents = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         after: z.string().trim().min(1).max(64).optional(),
         alertId: z.string().trim().min(1).max(64).optional(),
@@ -136,11 +136,11 @@ export const listAlertEvents = createServerFn({ method: "GET" })
         type: data.type,
     }));
 
-export const getAlertEvent = createServerFn({ method: "GET" })
+export const getAlertEvent = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<AlertEvent> => getAlertEventRequest(createApiClient(data.apiKey), data.id));
 
-export const listAlertEventsForAlert = createServerFn({ method: "GET" })
+export const listAlertEventsForAlert = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, id: resourceIdSchema, limit: pageLimitSchema, type: eventTypeSchema.optional() }))
     .handler(({ data }): Promise<AlertEventsResponse> => listAlertEventsForAlertRequest(createApiClient(data.apiKey), data.id, {
         cursor: data.cursor,
@@ -148,6 +148,6 @@ export const listAlertEventsForAlert = createServerFn({ method: "GET" })
         type: data.type,
     }));
 
-export const listAlertTemplates = createServerFn({ method: "GET" })
+export const listAlertTemplates = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, cursor: cursorSchema, limit: pageLimitSchema }))
     .handler(({ data }): Promise<AlertTemplatesResponse> => listAlertTemplatesRequest(createApiClient(data.apiKey), { cursor: data.cursor, limit: data.limit }));

@@ -1,6 +1,7 @@
+import { createClientRpc } from "@tanstack/react-start/client-rpc";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 /**
  * The browser never calls the Data API host (backend tasks/data-api-dashboard 2-alerts task 2): every request goes
@@ -35,6 +36,53 @@ const FETCH_ALLOWED: Readonly<Record<string, string>> = {
 const API_HOST = /api\.data\.invinite\.com/;
 
 describe("no direct Data API traffic from the browser", () => {
+    it("sends every key-bearing server function in the RPC body", () => {
+        const readableByUrl = files.flatMap(({ text }) => [...text.matchAll(/export const (\w+) = createServerFn\(\{ method: "GET" \}\)/g)].map(match => match[1]));
+
+        expect(readableByUrl).toEqual(["getApiBaseUrl"]);
+
+        const shell = files.find(file => file.path === "lib/api/server-functions.ts")!.text;
+
+        expect(shell).toContain("getMe = createServerFn({ method: \"POST\" })");
+
+        const macro = files.find(file => file.path === "lib/api/server-functions-macro.ts")!.text;
+
+        expect(macro.match(/createServerFn\(\{ method: "POST" \}\)/g)).toHaveLength(5);
+    });
+
+    it("keeps a synthetic key out of URLs in the installed Start transport", async () => {
+        const key = "test-only-dashboard-credential";
+
+        const capture = vi.fn((_url: string, _options: RequestInit) => Promise.resolve(Response.json({})));
+
+        vi.stubGlobal("fetch", capture);
+
+        try {
+            for (const [path, id] of [["lib/api/server-functions.ts", "getMe"], ["lib/api/server-functions-macro.ts", "getMacroCatalog"]]) {
+                const file = files.find(f => f.path === path)!;
+
+                const method = new RegExp(`export const ${id} = createServerFn\\(\\{ method: "(GET|POST)"`).exec(file.text)?.[1];
+
+                expect(method).toBe("POST");
+
+                await createClientRpc(id)({ data: { apiKey: key }, method });
+            }
+
+            expect(capture).toHaveBeenCalledTimes(2);
+
+            for (const [url, request] of capture.mock.calls) {
+                expect(url).not.toContain(key);
+
+                expect(url).not.toContain("?");
+
+                expect(request.method).toBe("POST");
+
+                expect(request.body).toContain(key);
+            }
+        }
+        finally { vi.unstubAllGlobals(); }
+    });
+
     it("only the server client creates an openapi-fetch client or reads the API base URL from the environment", () => {
         const clients = files.filter(({ text }) => /from "openapi-fetch"/.test(text) && /\bcreateClient\b/.test(text)).map(({ path }) => path);
 

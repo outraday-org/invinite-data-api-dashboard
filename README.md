@@ -15,7 +15,7 @@ You can provide `INVINITE_DATA_API_KEY` two ways:
 - Env var: set `INVINITE_DATA_API_KEY` in your environment (or a `.env` file) before
   starting the dev server. This is used on the server/SSR side.
 
-REST requests always go through the server functions. One exception: the live
+REST requests always go through the server functions. A key-bearing dashboard RPC uses a same-origin POST body. The server still calls the original API method and path. One exception: the live
 transcript of an earnings call in progress opens
 `wss://<api>/v1/stream?api_key=<stored key>` (channel `events.live`; live news: `news`) straight from the browser (the app runs on
 Netlify, which cannot hold a server-side socket, and the key is already in this
@@ -53,3 +53,5 @@ runs, the others are skipped) so `pnpm install` / `pnpm run` do not stop on
 - `/$ticker/earnings-calendar` — market earnings calendar (date window / status / session / event type — one type or "All events" — in the URL) with a "Live now" strip.
 - `/$ticker/ipos` — IPOs.
 - `/$ticker/market-holidays` — market holidays.
+
+The Market section includes US inflation, GDP and income, labor, and Treasury yields. Browse the Free series catalog at `/catalog?tab=macro`. Family pages link current observations to historical ranges with normal per-request credit billing.

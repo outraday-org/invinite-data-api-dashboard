@@ -1,9 +1,13 @@
 import type { Alert, AlertEvent, AlertEventsResponse } from "@/lib/api/types";
 
+import { MACRO_ALERT_SERIES } from "@/lib/api/operations.gen";
 import { shouldLoadNextPage } from "@/lib/api/use-auto-load-pages";
 import { isRecord } from "@/lib/guards";
 
+import type { MacroFamily } from "./macro-condition";
+
 import { alertEventTypeLabel } from "./labels";
+import { familyLabels, isMacroSeries } from "./macro-condition";
 
 /**
  * Pure view helpers of the alerts pages (tested): what an alert watches in one line, an event in one line, and the
@@ -21,6 +25,16 @@ const TARGETS_SHOWN = 3;
  */
 export function alertTarget(alert: Pick<Alert, "cik" | "condition" | "symbol">): string {
     const condition = isRecord(alert.condition) ? alert.condition : {};
+
+    if (Array.isArray(condition.macro_events)) {
+        if (isRecord(condition.macro_threshold) && isMacroSeries(condition.macro_threshold.series_id)) return MACRO_ALERT_SERIES[condition.macro_threshold.series_id].label;
+
+        const ids = strings(condition.macro_series_ids).filter(isMacroSeries);
+
+        if (ids.length) return ids.map(id => MACRO_ALERT_SERIES[id].label).join(", ");
+
+        return strings(condition.macro_families).map(f => Object.hasOwn(familyLabels, f) ? familyLabels[f as MacroFamily] : f).join(", ") || "All US macro series";
+    }
 
     const one = alert.symbol ?? (typeof condition.symbol === "string" ? condition.symbol : null);
 
@@ -48,7 +62,14 @@ export function eventSummary(event: Pick<AlertEvent, "payload" | "type">): strin
 
     const reason = payload.reason;
 
-    if (isRecord(reason) && typeof reason.summary === "string" && reason.summary) return reason.summary;
+    if (isRecord(reason) && typeof reason.summary === "string" && reason.summary) {
+        const details = reason.details;
+
+        if (isRecord(details) && typeof details.release_id === "string" && typeof details.version === "number")
+            return `${reason.summary} · ${details.release_id} · version ${details.version}`;
+
+        return reason.summary;
+    }
 
     if (typeof payload.from === "string" && typeof payload.to === "string") return `${payload.from} → ${payload.to}`;
 

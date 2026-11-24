@@ -13,6 +13,7 @@ import { fieldText } from "@/lib/alerts/alert-form";
 import { alertTarget } from "@/lib/alerts/alert-view";
 import { CONDITION_FIELDS, triggerFieldsFor, WEEKDAY_LABELS } from "@/lib/alerts/condition-fields";
 import { ALERT_TYPE_INFO, canPause, canResume, enumWords } from "@/lib/alerts/labels";
+import { describeMacroThreshold } from "@/lib/alerts/macro-condition";
 import { formatInstant, formatNumber } from "@/lib/format";
 import { isRecord } from "@/lib/guards";
 
@@ -79,7 +80,7 @@ export function AlertDetailView({ alert, busy, children, onAction, onEdit }: { a
             </div>
             <dl className="flex flex-col gap-2 rounded-xl border p-4">
                 <DetailRow label="Type">{`${ALERT_TYPE_INFO[alert.type].label} — ${ALERT_TYPE_INFO[alert.type].summary}`}</DetailRow>
-                {conditionRows.map(spec => <DetailRow key={spec.name} label={spec.label}>{valueText(spec, condition[spec.name])}</DetailRow>)}
+                {conditionRows.map(spec => <DetailRow key={spec.name} label={spec.label}>{spec.name === "macro_threshold" ? describeMacroThreshold(condition[spec.name]) : valueText(spec, condition[spec.name])}</DetailRow>)}
                 {triggerRows.map(spec => <DetailRow key={spec.name} label={spec.label}>{valueText(spec, trigger[spec.name])}</DetailRow>)}
                 {trigger.active_window !== undefined && (
                     <DetailRow label="Active window">

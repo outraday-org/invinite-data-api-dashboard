@@ -84,6 +84,8 @@ export interface paths {
          * @description List events from your account’s alert feed.
          *
          *     Events arrive oldest first in commit order. To resume after an event you processed, pass its ID in `after`. Narrow the feed to a specific alert or end user when needed. Returns `503` when the alerts platform is switched off.
+         *
+         *     A macro rule fire is an account event. Its reason identifies the source edition and matching observations.
          */
         get: operations["listAlertEvents"];
         put?: never;
@@ -274,6 +276,8 @@ export interface paths {
          * @description List your account’s alert rules, oldest first.
          *
          *     Use `symbol` to find rules for an instrument or `destination_id` to find rules that send to a particular webhook. Each page includes the account’s alert quota usage in `meta.quota`. Returns `503` when the alerts platform is switched off.
+         *
+         *     Set type=macro to list rules on economic releases.
          */
         get: operations["listAlerts"];
         put?: never;
@@ -282,6 +286,8 @@ export interface paths {
          * @description Create an alert that fires when its condition is met.
          *
          *     Retry the same request with the same `Idempotency-Key` to replay its response. A live alert with the same `client_reference_id` returns unchanged with `200`. Set `validate_only=true` to check the rule and receive `204` without saving it. Returns `503` when the alerts platform is switched off.
+         *
+         *     A macro rule can select releases, revisions, families or series. Use macro_threshold to compare one published value or change in its documented unit.
          */
         post: operations["createAlert"];
         delete?: never;
@@ -426,6 +432,8 @@ export interface paths {
          * @description Change multiple alerts in a single request.
          *
          *     Submit up to 500 items. Use `upsert` with `client_reference_id` to create or update a rule. Results follow input order, and each successful change survives a failure in another item. Returns `503` when the alerts platform is switched off.
+         *
+         *     Macro items use the same conditions and admission rules as single writes.
          */
         post: operations["batchAlerts"];
         delete?: never;
@@ -2050,6 +2058,204 @@ export interface paths {
          *     Select a `company` or `event`, then use `metric` to follow a measure across calls. Each mention includes its source sentence. A figure from a transcript can also link to a matching filing.
          */
         get: operations["listKpis"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/macro/gdp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List US GDP and income readings
+         * @description List historical US output, income, spending and growth contribution readings.
+         *
+         *     Choose a catalog series and a reference date range. Growth is the agency annualized rate. Dollar levels use billions and contributions use percentage points.
+         */
+        get: operations["listMacroGdp"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/macro/gdp/snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the US GDP and income snapshot
+         * @description Get the latest observation for each US output or income series.
+         *
+         *     Each series retains its own reference period and observation time. A missing exact-calendar comparison produces a null change. Page through the series in identifier order.
+         */
+        get: operations["getMacroGdpSnapshot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/macro/inflation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List US inflation readings
+         * @description List historical US consumer price and personal consumption price index readings.
+         *
+         *     Choose a catalog series and a reference date range. Changes use exact one-month and twelve-month comparisons. A missing comparison or a zero denominator yields null.
+         */
+        get: operations["listMacroInflation"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/macro/inflation/snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the US inflation snapshot
+         * @description Get the latest observation for each US inflation series.
+         *
+         *     Each series retains its own reference period and observation time. A missing exact-calendar comparison produces a null change. Page through the series in identifier order.
+         */
+        get: operations["getMacroInflationSnapshot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/macro/labor": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List US labor readings
+         * @description List historical US employment, unemployment, earnings, openings and claims readings.
+         *
+         *     Choose a catalog series. Monthly readings use the first day of the month. Weekly claims use their Saturday week ending and a 52-week yearly comparison.
+         */
+        get: operations["listMacroLabor"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/macro/labor/snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the US labor market snapshot
+         * @description Get the latest observation for each US labor market series.
+         *
+         *     Each series retains its own reference period and observation time. A missing exact-calendar comparison produces a null change. Page through the series in identifier order.
+         */
+        get: operations["getMacroLaborSnapshot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/macro/series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List US macro series
+         * @description List the US economic series available for historical and snapshot reads.
+         *
+         *     Filter by family or page through the catalog with a cursor. Coverage dates describe stored numeric observations. Each Treasury entry names its field in the dated curve.
+         */
+        get: operations["listMacroSeries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/macro/yield-curve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List US Treasury yield curves
+         * @description List dated US Treasury nominal par yield curves in percent.
+         *
+         *     Select a range of quotation dates. Each date includes all fourteen maturities, with null for an unavailable rate. Nonpublication days produce no curve.
+         */
+        get: operations["listTreasuryYieldCurves"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/macro/yield-curve/snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the latest US Treasury yield curve
+         * @description Get the latest dated US Treasury nominal par yield curve.
+         *
+         *     Each maturity belongs to the same quotation date. Historical gaps and maturities that have yet to be issued have null yields.
+         */
+        get: operations["getTreasuryYieldCurveSnapshot"];
         put?: never;
         post?: never;
         delete?: never;
@@ -8168,7 +8374,7 @@ export interface components {
              * @description The alert type
              * @enum {string}
              */
-            type: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+            type: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
             /** @enum {string} */
             status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
             /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
@@ -8395,6 +8601,13 @@ export interface components {
             condition?: components["schemas"]["IndicatorCondition"];
             filters?: components["schemas"]["IndicatorFilters"];
             resolved?: components["schemas"]["IndicatorResolved"];
+            /** @description Required release kinds for a macro alert */
+            macro_events?: Array<"macro.released" | "macro.revised">;
+            /** @description Optional economic dataset families */
+            macro_families?: Array<"gdp" | "inflation" | "labor" | "yield_curve">;
+            /** @description Optional public macro series identifiers */
+            macro_series_ids?: Array<"consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa">;
+            macro_threshold?: components["schemas"]["MacroThreshold"];
         };
         /**
          * ScriptSeriesInput
@@ -8609,6 +8822,29 @@ export interface components {
             };
         };
         /**
+         * MacroThreshold
+         * @description Numeric comparison on one published economic series and period.
+         */
+        MacroThreshold: {
+            /**
+             * @description Public macro series identifier
+             * @enum {string}
+             */
+            series_id: "consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa";
+            /**
+             * @description Numeric field supported by the selected series
+             * @enum {string}
+             */
+            field: "change_1m_pct" | "change_12m_pct" | "change_prior" | "change_year" | "change_year_pct" | "value";
+            /**
+             * @description Comparison operator
+             * @enum {string}
+             */
+            operator: "gt" | "gte" | "lt" | "lte";
+            /** @description Finite threshold in the selected field’s published unit */
+            value: number;
+        };
+        /**
          * AlertTrigger
          * @description When the alert may fire
          */
@@ -8674,7 +8910,7 @@ export interface components {
         };
         /**
          * AlertQuotaUsage
-         * @description The account's CURRENT alert limits and their use (every page of GET /v1/alerts carries it, whatever the filters): the plan's defaults, or the limits an ENTERPRISE contract sets instead. Alerts with status active, paused or scheduled count; script and indicator alerts are a subset with their own limit. Plan defaults (active / script): FREE 0 / 0, LITE 50 / 5, STANDARD 500 / 50, PRO 2,000 / 500, ENTERPRISE 2,000 / 500. No plan has a daily fire cap: fires_per_day_limit is null unless an ENTERPRISE contract sets one
+         * @description The account's CURRENT alert limits and their use (every page of GET /v1/alerts carries it, whatever the filters): the plan's defaults, or the limits an ENTERPRISE contract sets instead. Alerts with status active, paused or scheduled count; script and indicator alerts are a subset with their own limit. Plan defaults (active / script): FREE 0 / 0, LITE 50 / 5, STANDARD 500 / 50, PRO 2,000 / 500, ENTERPRISE 2,000 / 500. No plan has a daily fire cap: fires_per_day_limit is null unless an ENTERPRISE contract sets one Macro rules count toward the ordinary active-alert limit.
          */
         AlertQuotaUsage: {
             /** @description Alerts that count against the quota (active, paused, scheduled) */
@@ -8879,6 +9115,13 @@ export interface components {
             template?: components["schemas"]["IndicatorTemplateRef"];
             condition?: components["schemas"]["IndicatorConditionInput"];
             filters?: components["schemas"]["IndicatorFiltersInput"];
+            /** @description Required release kinds for a macro alert */
+            macro_events?: Array<"macro.released" | "macro.revised">;
+            /** @description Optional economic dataset families */
+            macro_families?: Array<"gdp" | "inflation" | "labor" | "yield_curve">;
+            /** @description Optional public macro series identifiers */
+            macro_series_ids?: Array<"consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa">;
+            macro_threshold?: components["schemas"]["MacroThresholdInput"];
         };
         /**
          * ScriptSeriesInputInput
@@ -9048,6 +9291,29 @@ export interface components {
             condition: components["schemas"]["IndicatorFilterConditionInput"];
         };
         /**
+         * MacroThresholdInput
+         * @description Numeric comparison on one published economic series and period.
+         */
+        MacroThresholdInput: {
+            /**
+             * @description Public macro series identifier
+             * @enum {string}
+             */
+            series_id: "consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa";
+            /**
+             * @description Numeric field supported by the selected series
+             * @enum {string}
+             */
+            field: "change_1m_pct" | "change_12m_pct" | "change_prior" | "change_year" | "change_year_pct" | "value";
+            /**
+             * @description Comparison operator
+             * @enum {string}
+             */
+            operator: "gt" | "gte" | "lt" | "lte";
+            /** @description Finite threshold in the selected field’s published unit */
+            value: number;
+        };
+        /**
          * AlertTriggerInput
          * @description When the alert may fire (request form)
          */
@@ -9145,7 +9411,7 @@ export interface components {
             /** @description upsert: apply only to this version */
             version?: number;
             /** @enum {string} */
-            type?: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+            type?: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
             condition?: components["schemas"]["AlertConditionInput"];
             trigger?: components["schemas"]["AlertTriggerInput"];
             /** @description Destination ids (≤ 10) */
@@ -9662,6 +9928,538 @@ export interface components {
              */
             updated_at: null | string;
         };
+        /**
+         * MacroSeries
+         * @description Public identity, units, source and actual observation coverage for one US macro series.
+         */
+        MacroSeries: {
+            /** @description Stable public series identifier */
+            series_id: string;
+            /**
+             * @description US macro dataset family
+             * @enum {string}
+             */
+            family: "gdp" | "inflation" | "labor" | "yield_curve";
+            /**
+             * @description Government source agency
+             * @enum {string}
+             */
+            agency: "BEA" | "BLS" | "ETA" | "Treasury";
+            /** @description Series or field in the agency dataset */
+            source_code: string;
+            /**
+             * Format: uri
+             * @description Official agency source
+             */
+            source_url: string;
+            /** @description Two-letter country code */
+            country: string;
+            /**
+             * @description Monthly, quarterly, weekly or daily frequency
+             * @enum {string}
+             */
+            frequency: "D" | "M" | "Q" | "W";
+            /**
+             * @description Agency seasonal treatment
+             * @enum {string}
+             */
+            seasonal_adjustment: "NA" | "NSA" | "SA";
+            /** @description Unit of the published value */
+            unit: string;
+            /** @description Index base or chained-dollar reference year */
+            base_period: null | string;
+            /** @description Multiplier applied to the source level to obtain the published unit */
+            scale: number;
+            /** @description Displayed decimal places for the source level */
+            precision: number;
+            /** @description Convention for the reference date */
+            period_anchor: string;
+            /** @description Human-readable name */
+            label: string;
+            /** @description Whether the published measure is annualized */
+            annual_rate: boolean;
+            /** @description Treasury maturity key for curve series */
+            tenor: null | string;
+            /** @description Maturity in months for Treasury series */
+            maturity_months: null | number;
+            /** @description Operation for this series’ historical data */
+            history_operation_id: string;
+            /** @description Operation for its latest data */
+            snapshot_operation_id: string;
+            /** @description Field on the dated Treasury curve */
+            curve_field: null | string;
+            /**
+             * Format: date
+             * @description First reference date with a stored numeric value
+             */
+            first_date: null | string;
+            /**
+             * Format: date
+             * @description Last reference date with a stored numeric value
+             */
+            last_date: null | string;
+            /**
+             * Format: date
+             * @description Latest observed reference period
+             */
+            reference_date: null | string;
+            /**
+             * Format: date-time
+             * @description Confirmed agency publication time when available
+             */
+            published_at: null | string;
+            /**
+             * Format: date-time
+             * @description Latest source observation time when available
+             */
+            observed_at: null | string;
+        };
+        /**
+         * MacroInflationReading
+         * @description US inflation observation with agency metadata and exact-calendar comparisons.
+         */
+        MacroInflationReading: {
+            /** @description Stable public series identifier */
+            series_id: string;
+            /**
+             * @description US macro dataset family
+             * @enum {string}
+             */
+            family: "gdp" | "inflation" | "labor" | "yield_curve";
+            /**
+             * @description Government source agency
+             * @enum {string}
+             */
+            agency: "BEA" | "BLS" | "ETA" | "Treasury";
+            /** @description Series or field in the agency dataset */
+            source_code: string;
+            /**
+             * Format: uri
+             * @description Official agency source
+             */
+            source_url: string;
+            /** @description Two-letter country code */
+            country: string;
+            /**
+             * @description Monthly, quarterly, weekly or daily frequency
+             * @enum {string}
+             */
+            frequency: "D" | "M" | "Q" | "W";
+            /**
+             * @description Agency seasonal treatment
+             * @enum {string}
+             */
+            seasonal_adjustment: "NA" | "NSA" | "SA";
+            /** @description Unit of the published value */
+            unit: string;
+            /** @description Index base or chained-dollar reference year */
+            base_period: null | string;
+            /** @description Multiplier applied to the source level to obtain the published unit */
+            scale: number;
+            /** @description Displayed decimal places for the source level */
+            precision: number;
+            /** @description Convention for the reference date */
+            period_anchor: string;
+            /**
+             * Format: date
+             * @description Reference period start, week-ending Saturday or quotation date
+             */
+            reference_date: string;
+            /**
+             * Format: date-time
+             * @description Confirmed agency publication time when available
+             */
+            published_at: null | string;
+            /**
+             * Format: date-time
+             * @description UTC time the published data was observed
+             */
+            observed_at: string;
+            /** @description Published value in this series’ unit */
+            value: null | number;
+            /**
+             * @description Published observation availability
+             * @enum {string}
+             */
+            status: "available" | "suppressed" | "unavailable" | "withdrawn";
+            /** @description Source footnotes for this observation */
+            footnotes: Array<string>;
+            /** @description Percent change from the exact prior month, rounded to one decimal */
+            change_1m_pct: null | number;
+            /** @description Percent change from the exact prior year, rounded to one decimal */
+            change_12m_pct: null | number;
+        };
+        /**
+         * MacroGdpReading
+         * @description US gdp observation with agency metadata and exact-calendar comparisons.
+         */
+        MacroGdpReading: {
+            /** @description Stable public series identifier */
+            series_id: string;
+            /**
+             * @description US macro dataset family
+             * @enum {string}
+             */
+            family: "gdp" | "inflation" | "labor" | "yield_curve";
+            /**
+             * @description Government source agency
+             * @enum {string}
+             */
+            agency: "BEA" | "BLS" | "ETA" | "Treasury";
+            /** @description Series or field in the agency dataset */
+            source_code: string;
+            /**
+             * Format: uri
+             * @description Official agency source
+             */
+            source_url: string;
+            /** @description Two-letter country code */
+            country: string;
+            /**
+             * @description Monthly, quarterly, weekly or daily frequency
+             * @enum {string}
+             */
+            frequency: "D" | "M" | "Q" | "W";
+            /**
+             * @description Agency seasonal treatment
+             * @enum {string}
+             */
+            seasonal_adjustment: "NA" | "NSA" | "SA";
+            /** @description Unit of the published value */
+            unit: string;
+            /** @description Index base or chained-dollar reference year */
+            base_period: null | string;
+            /** @description Multiplier applied to the source level to obtain the published unit */
+            scale: number;
+            /** @description Displayed decimal places for the source level */
+            precision: number;
+            /** @description Convention for the reference date */
+            period_anchor: string;
+            /**
+             * Format: date
+             * @description Reference period start, week-ending Saturday or quotation date
+             */
+            reference_date: string;
+            /**
+             * Format: date-time
+             * @description Confirmed agency publication time when available
+             */
+            published_at: null | string;
+            /**
+             * Format: date-time
+             * @description UTC time the published data was observed
+             */
+            observed_at: string;
+            /** @description Published value in this series’ unit */
+            value: null | number;
+            /**
+             * @description Published observation availability
+             * @enum {string}
+             */
+            status: "available" | "suppressed" | "unavailable" | "withdrawn";
+            /** @description Source footnotes for this observation */
+            footnotes: Array<string>;
+            /** @description Difference from the exact prior period in native units or percentage points */
+            change_prior: null | number;
+            /** @description Difference from the exact yearly comparison in native units or percentage points */
+            change_year: null | number;
+            /** @description Yearly percent change for eligible levels, rounded to one decimal */
+            change_year_pct: null | number;
+        };
+        /**
+         * MacroLaborReading
+         * @description US labor observation with agency metadata and exact-calendar comparisons.
+         */
+        MacroLaborReading: {
+            /** @description Stable public series identifier */
+            series_id: string;
+            /**
+             * @description US macro dataset family
+             * @enum {string}
+             */
+            family: "gdp" | "inflation" | "labor" | "yield_curve";
+            /**
+             * @description Government source agency
+             * @enum {string}
+             */
+            agency: "BEA" | "BLS" | "ETA" | "Treasury";
+            /** @description Series or field in the agency dataset */
+            source_code: string;
+            /**
+             * Format: uri
+             * @description Official agency source
+             */
+            source_url: string;
+            /** @description Two-letter country code */
+            country: string;
+            /**
+             * @description Monthly, quarterly, weekly or daily frequency
+             * @enum {string}
+             */
+            frequency: "D" | "M" | "Q" | "W";
+            /**
+             * @description Agency seasonal treatment
+             * @enum {string}
+             */
+            seasonal_adjustment: "NA" | "NSA" | "SA";
+            /** @description Unit of the published value */
+            unit: string;
+            /** @description Index base or chained-dollar reference year */
+            base_period: null | string;
+            /** @description Multiplier applied to the source level to obtain the published unit */
+            scale: number;
+            /** @description Displayed decimal places for the source level */
+            precision: number;
+            /** @description Convention for the reference date */
+            period_anchor: string;
+            /**
+             * Format: date
+             * @description Reference period start, week-ending Saturday or quotation date
+             */
+            reference_date: string;
+            /**
+             * Format: date-time
+             * @description Confirmed agency publication time when available
+             */
+            published_at: null | string;
+            /**
+             * Format: date-time
+             * @description UTC time the published data was observed
+             */
+            observed_at: string;
+            /** @description Published value in this series’ unit */
+            value: null | number;
+            /**
+             * @description Published observation availability
+             * @enum {string}
+             */
+            status: "available" | "suppressed" | "unavailable" | "withdrawn";
+            /** @description Source footnotes for this observation */
+            footnotes: Array<string>;
+            /** @description Difference from the exact prior period in native units or percentage points */
+            change_prior: null | number;
+            /** @description Difference from the exact yearly comparison in native units or percentage points */
+            change_year: null | number;
+            /** @description Yearly percent change for eligible levels, rounded to one decimal */
+            change_year_pct: null | number;
+        };
+        /**
+         * TreasuryYieldCurve
+         * @description Nominal Treasury par yields from one dated publication. Unavailable maturities are null.
+         */
+        TreasuryYieldCurve: {
+            /**
+             * Format: date
+             * @description Treasury quotation date
+             */
+            date: string;
+            /** @description Government agency publishing the curve */
+            agency: string;
+            /**
+             * Format: uri
+             * @description Official agency source
+             */
+            source_url: string;
+            /**
+             * Format: date-time
+             * @description UTC time the published data was observed
+             */
+            observed_at: string;
+            /** @description 1-month Treasury par yield in percent when available */
+            m1: null | number;
+            /** @description 1.5-month Treasury par yield in percent when available */
+            m1_5: null | number;
+            /** @description 2-month Treasury par yield in percent when available */
+            m2: null | number;
+            /** @description 3-month Treasury par yield in percent when available */
+            m3: null | number;
+            /** @description 4-month Treasury par yield in percent when available */
+            m4: null | number;
+            /** @description 6-month Treasury par yield in percent when available */
+            m6: null | number;
+            /** @description 1-year Treasury par yield in percent when available */
+            y1: null | number;
+            /** @description 2-year Treasury par yield in percent when available */
+            y2: null | number;
+            /** @description 3-year Treasury par yield in percent when available */
+            y3: null | number;
+            /** @description 5-year Treasury par yield in percent when available */
+            y5: null | number;
+            /** @description 7-year Treasury par yield in percent when available */
+            y7: null | number;
+            /** @description 10-year Treasury par yield in percent when available */
+            y10: null | number;
+            /** @description 20-year Treasury par yield in percent when available */
+            y20: null | number;
+            /** @description 30-year Treasury par yield in percent when available */
+            y30: null | number;
+        };
+        WebSocketSubscribeMacro: {
+            /** @enum {string} */
+            type: "subscribe";
+            /** @enum {string} */
+            channel: "macro";
+            families?: Array<"gdp" | "inflation" | "labor" | "yield_curve">;
+        };
+        WebSocketUnsubscribeMacro: {
+            /** @enum {string} */
+            type: "unsubscribe";
+            /** @enum {string} */
+            channel: "macro";
+        };
+        WebSocketMacroSubscribedEvent: {
+            /** @enum {string} */
+            type: "subscribed";
+            /** @enum {string} */
+            channel: "macro";
+            families: Array<"gdp" | "inflation" | "labor" | "yield_curve">;
+        };
+        WebSocketMacroUnsubscribedEvent: {
+            /** @enum {string} */
+            type: "unsubscribed";
+            /** @enum {string} */
+            channel: "macro";
+        };
+        WebSocketMacroReleasedEvent: {
+            /** @enum {string} */
+            source: "backend-us-macro";
+            /** @enum {number} */
+            schema_version: 1;
+            /** @enum {string} */
+            channel: "macro";
+            /** @enum {string} */
+            type: "macro.released";
+            event_id: string;
+            release_id: string;
+            version: number;
+            /** @enum {string} */
+            agency: "BEA" | "BLS" | "ETA" | "Treasury";
+            release_name: string;
+            families: Array<"gdp" | "inflation" | "labor" | "yield_curve">;
+            /** Format: date-time */
+            published_at: null | string;
+            /** Format: date-time */
+            observed_at: string;
+            readings: Array<{
+                /** @enum {string} */
+                series_id: "consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa";
+                /** Format: date */
+                reference_date: string;
+                value: null | number;
+                unit: string;
+                base_period: null | string;
+                /** @enum {string} */
+                status: "available" | "suppressed" | "unavailable" | "withdrawn";
+                change_1m_pct?: null | number;
+                change_12m_pct?: null | number;
+                change_prior?: null | number;
+                change_year?: null | number;
+                change_year_pct?: null | number;
+            }>;
+            curve: null | {
+                /** @enum {string} */
+                agency: "Treasury";
+                /** Format: date */
+                date: string;
+                /** Format: date-time */
+                observed_at: string;
+                /** Format: uri */
+                source_url: string;
+                m1: null | number;
+                m1_5: null | number;
+                m2: null | number;
+                m3: null | number;
+                m4: null | number;
+                m6: null | number;
+                y1: null | number;
+                y2: null | number;
+                y3: null | number;
+                y5: null | number;
+                y7: null | number;
+                y10: null | number;
+                y20: null | number;
+                y30: null | number;
+            };
+            affected: Array<{
+                /** @enum {string} */
+                series_id: "consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa";
+                /** Format: date */
+                first_reference_date: string;
+                /** Format: date */
+                last_reference_date: string;
+                history_url: string;
+            }>;
+        };
+        WebSocketMacroRevisedEvent: {
+            /** @enum {string} */
+            source: "backend-us-macro";
+            /** @enum {number} */
+            schema_version: 1;
+            /** @enum {string} */
+            channel: "macro";
+            /** @enum {string} */
+            type: "macro.revised";
+            event_id: string;
+            release_id: string;
+            version: number;
+            /** @enum {string} */
+            agency: "BEA" | "BLS" | "ETA" | "Treasury";
+            release_name: string;
+            families: Array<"gdp" | "inflation" | "labor" | "yield_curve">;
+            /** Format: date-time */
+            published_at: null | string;
+            /** Format: date-time */
+            observed_at: string;
+            readings: Array<{
+                /** @enum {string} */
+                series_id: "consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa";
+                /** Format: date */
+                reference_date: string;
+                value: null | number;
+                unit: string;
+                base_period: null | string;
+                /** @enum {string} */
+                status: "available" | "suppressed" | "unavailable" | "withdrawn";
+                change_1m_pct?: null | number;
+                change_12m_pct?: null | number;
+                change_prior?: null | number;
+                change_year?: null | number;
+                change_year_pct?: null | number;
+            }>;
+            curve: null | {
+                /** @enum {string} */
+                agency: "Treasury";
+                /** Format: date */
+                date: string;
+                /** Format: date-time */
+                observed_at: string;
+                /** Format: uri */
+                source_url: string;
+                m1: null | number;
+                m1_5: null | number;
+                m2: null | number;
+                m3: null | number;
+                m4: null | number;
+                m6: null | number;
+                y1: null | number;
+                y2: null | number;
+                y3: null | number;
+                y5: null | number;
+                y7: null | number;
+                y10: null | number;
+                y20: null | number;
+                y30: null | number;
+            };
+            affected: Array<{
+                /** @enum {string} */
+                series_id: "consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa";
+                /** Format: date */
+                first_reference_date: string;
+                /** Format: date */
+                last_reference_date: string;
+                history_url: string;
+            }>;
+        };
         /** @description A new SEC filing with its `ticker` (null before an IPO) and `proposed_symbols`. Until 2026-10 the frame forwarded the upstream camelCase envelope (`schemaVersion`, `eventKey`, `filing.accessionNumber`, …) instead of this documented shape; it now is exactly this object */
         WebSocketFiling: {
             /** @description SEC filing accession number */
@@ -10071,10 +10869,10 @@ export interface components {
             /** Format: uuid */
             subscription_id?: string;
             /**
-             * @description news for a refusal of a news frame (channel_unavailable = live news is switched off; read GET /v1/news); alerts for a refusal of an alerts frame (channel_unavailable = alerts are switched off)
+             * @description news for a refusal of a news frame (channel_unavailable = live news is switched off; read GET /v1/news); alerts for an account alert subscription or macro for a US macro subscription
              * @enum {string}
              */
-            channel?: "alerts" | "news";
+            channel?: "alerts" | "macro" | "news";
         };
         /** @description Client frame: follow new news items. One news subscription per connection; a second subscribe replaces the filters. No filter = every item. tickers and ciks together = either; every other filter narrows */
         StreamSubscribeNews: {
@@ -10541,7 +11339,7 @@ export interface operations {
                      * @description The alert type
                      * @enum {string}
                      */
-                    type: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+                    type: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
                     condition: components["schemas"]["AlertConditionInput"];
                     trigger?: components["schemas"]["AlertTriggerInput"];
                     /** @description Destination ids (≤ 10) */
@@ -14442,6 +15240,367 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    getMacroGdpSnapshot: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Sort by series_id; prefix with a minus sign for descending order.
+                 * @example series_id
+                 */
+                sort?: "-series_id" | "series_id";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, maximum 1000)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "series_id": "consumer_spending_contribution",
+                     *           "family": "gdp",
+                     *           "agency": "BEA",
+                     *           "source_code": "DPCERY",
+                     *           "source_url": "https://apps.bea.gov/national/Release/TXT/NipaDataQ.txt",
+                     *           "country": "US",
+                     *           "frequency": "Q",
+                     *           "seasonal_adjustment": "SA",
+                     *           "unit": "percentage points",
+                     *           "base_period": null,
+                     *           "scale": 1,
+                     *           "precision": 2,
+                     *           "period_anchor": "quarter_start",
+                     *           "reference_date": "2026-07-01",
+                     *           "value": 2.52,
+                     *           "status": "available",
+                     *           "footnotes": [],
+                     *           "observed_at": "2026-11-24T07:14:45.383Z",
+                     *           "published_at": null,
+                     *           "change_prior": 0.01,
+                     *           "change_year": 0.07,
+                     *           "change_year_pct": null
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["MacroGdpReading"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getMacroInflationSnapshot: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Sort by series_id; prefix with a minus sign for descending order.
+                 * @example series_id
+                 */
+                sort?: "-series_id" | "series_id";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, maximum 1000)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "series_id": "cpi_all_nsa",
+                     *           "family": "inflation",
+                     *           "agency": "BLS",
+                     *           "source_code": "CUUR0000SA0",
+                     *           "source_url": "https://data.bls.gov/timeseries/CUUR0000SA0",
+                     *           "country": "US",
+                     *           "frequency": "M",
+                     *           "seasonal_adjustment": "NSA",
+                     *           "unit": "index",
+                     *           "base_period": "1982-84=100",
+                     *           "scale": 1,
+                     *           "precision": 3,
+                     *           "period_anchor": "month_start",
+                     *           "reference_date": "2026-10-01",
+                     *           "value": 337.511,
+                     *           "status": "available",
+                     *           "footnotes": [],
+                     *           "observed_at": "2026-11-24T07:14:21.970Z",
+                     *           "published_at": null,
+                     *           "change_1m_pct": 0.2,
+                     *           "change_12m_pct": null
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["MacroInflationReading"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getMacroLaborSnapshot: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Sort by series_id; prefix with a minus sign for descending order.
+                 * @example series_id
+                 */
+                sort?: "-series_id" | "series_id";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, maximum 1000)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "series_id": "continued_claims_4_week_sa",
+                     *           "family": "labor",
+                     *           "agency": "ETA",
+                     *           "source_code": "ContinuedClaims/SA4WK",
+                     *           "source_url": "https://oui.doleta.gov/press/2026/111926.pdf",
+                     *           "country": "US",
+                     *           "frequency": "W",
+                     *           "seasonal_adjustment": "SA",
+                     *           "unit": "claims",
+                     *           "base_period": null,
+                     *           "scale": 1,
+                     *           "precision": 0,
+                     *           "period_anchor": "week_ending_saturday",
+                     *           "reference_date": "2026-11-07",
+                     *           "value": 1717000,
+                     *           "status": "available",
+                     *           "footnotes": [
+                     *             "Advance, weekly DOL news release."
+                     *           ],
+                     *           "observed_at": "2026-11-24T07:24:47.480Z",
+                     *           "published_at": "2026-11-19T13:30:00.000Z",
+                     *           "change_prior": 10250,
+                     *           "change_year": -235500,
+                     *           "change_year_pct": -12.1
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["MacroLaborReading"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     getMe: {
         parameters: {
             query?: never;
@@ -17018,6 +18177,75 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    getTreasuryYieldCurveSnapshot: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Latest published Treasury curve */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "date": "2026-11-23",
+                     *       "agency": "Treasury",
+                     *       "source_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml?data=daily_treasury_yield_curve&field_tdr_date_value_month=202611",
+                     *       "observed_at": "2026-11-24T07:15:22.149Z",
+                     *       "m1": 4.2,
+                     *       "m2": 4.3,
+                     *       "m3": 4.37,
+                     *       "m4": 4.36,
+                     *       "m6": 4.45,
+                     *       "y1": 4.57,
+                     *       "y2": 4.63,
+                     *       "y3": 4.69,
+                     *       "y5": 4.74,
+                     *       "y7": 4.81,
+                     *       "y10": 4.92,
+                     *       "y20": 5.33,
+                     *       "y30": 5.29,
+                     *       "m1_5": 4.27
+                     *     }
+                     */
+                    "application/json": components["schemas"]["TreasuryYieldCurve"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     healthGet: {
         parameters: {
             query?: never;
@@ -17237,7 +18465,7 @@ export interface operations {
                  * @description Only alerts of this type
                  * @example filing
                  */
-                type?: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+                type?: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
                 /**
                  * @description Only alerts of this end user (your own id, set at create)
                  * @example user_8812
@@ -21949,6 +23177,570 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listMacroGdp: {
+        parameters: {
+            query: {
+                /**
+                 * @description Select a public series from this family
+                 * @example real_gdp_growth
+                 */
+                "series": "consumer_spending_contribution" | "corporate_profits" | "government_contribution" | "investment_contribution" | "net_exports_contribution" | "nominal_gdp" | "personal_income" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate";
+                /**
+                 * @description `reference_date` on or after this value
+                 * @example 2026-01-01
+                 */
+                "reference_date.gte"?: string;
+                /**
+                 * @description `reference_date` after this value
+                 * @example 2026-01-01
+                 */
+                "reference_date.gt"?: string;
+                /**
+                 * @description `reference_date` on or before this value
+                 * @example 2026-01-01
+                 */
+                "reference_date.lte"?: string;
+                /**
+                 * @description `reference_date` before this value
+                 * @example 2026-01-01
+                 */
+                "reference_date.lt"?: string;
+                /**
+                 * @description Sort by reference_date; prefix with a minus sign for descending order.
+                 * @example -reference_date
+                 */
+                "sort"?: "-reference_date" | "reference_date";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, maximum 1000)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "series_id": "real_gdp_growth",
+                     *           "family": "gdp",
+                     *           "agency": "BEA",
+                     *           "source_code": "A191RL",
+                     *           "source_url": "https://apps.bea.gov/national/Release/TXT/NipaDataQ.txt",
+                     *           "country": "US",
+                     *           "frequency": "Q",
+                     *           "seasonal_adjustment": "SA",
+                     *           "unit": "percent",
+                     *           "base_period": null,
+                     *           "scale": 1,
+                     *           "precision": 1,
+                     *           "period_anchor": "quarter_start",
+                     *           "reference_date": "2026-07-01",
+                     *           "value": 3.4,
+                     *           "status": "available",
+                     *           "footnotes": [],
+                     *           "observed_at": "2026-11-24T07:14:45.383Z",
+                     *           "published_at": null,
+                     *           "change_prior": 1.2,
+                     *           "change_year": -0.5,
+                     *           "change_year_pct": null
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDIwLTA3LTAxIl0sImYiOiI1YzIxNWUxZWIyZjdlNjJkIn0",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["MacroGdpReading"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listMacroInflation: {
+        parameters: {
+            query: {
+                /**
+                 * @description Select a public series from this family
+                 * @example cpi_all_sa
+                 */
+                "series": "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "pce_all_sa" | "pce_core_sa";
+                /**
+                 * @description `reference_date` on or after this value
+                 * @example 2026-01-01
+                 */
+                "reference_date.gte"?: string;
+                /**
+                 * @description `reference_date` after this value
+                 * @example 2026-01-01
+                 */
+                "reference_date.gt"?: string;
+                /**
+                 * @description `reference_date` on or before this value
+                 * @example 2026-01-01
+                 */
+                "reference_date.lte"?: string;
+                /**
+                 * @description `reference_date` before this value
+                 * @example 2026-01-01
+                 */
+                "reference_date.lt"?: string;
+                /**
+                 * @description Sort by reference_date; prefix with a minus sign for descending order.
+                 * @example -reference_date
+                 */
+                "sort"?: "-reference_date" | "reference_date";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, maximum 1000)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "series_id": "cpi_all_sa",
+                     *           "family": "inflation",
+                     *           "agency": "BLS",
+                     *           "source_code": "CUSR0000SA0",
+                     *           "source_url": "https://data.bls.gov/timeseries/CUSR0000SA0",
+                     *           "country": "US",
+                     *           "frequency": "M",
+                     *           "seasonal_adjustment": "SA",
+                     *           "unit": "index",
+                     *           "base_period": "1982-84=100",
+                     *           "scale": 1,
+                     *           "precision": 3,
+                     *           "period_anchor": "month_start",
+                     *           "reference_date": "2026-10-01",
+                     *           "value": 337.476,
+                     *           "status": "available",
+                     *           "footnotes": [],
+                     *           "observed_at": "2026-11-24T07:14:21.970Z",
+                     *           "published_at": null,
+                     *           "change_1m_pct": 0.4,
+                     *           "change_12m_pct": null
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI0LTEwLTAxIl0sImYiOiJlYTBkOTExZmQzY2Y1OWM1In0",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["MacroInflationReading"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listMacroLabor: {
+        parameters: {
+            query: {
+                /**
+                 * @description Select a public series from this family
+                 * @example initial_claims_sa
+                 */
+                "series": "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "job_openings_nsa" | "job_openings_sa" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "quits_nsa" | "quits_sa" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa";
+                /**
+                 * @description `reference_date` on or after this value
+                 * @example 2026-01-01
+                 */
+                "reference_date.gte"?: string;
+                /**
+                 * @description `reference_date` after this value
+                 * @example 2026-01-01
+                 */
+                "reference_date.gt"?: string;
+                /**
+                 * @description `reference_date` on or before this value
+                 * @example 2026-01-01
+                 */
+                "reference_date.lte"?: string;
+                /**
+                 * @description `reference_date` before this value
+                 * @example 2026-01-01
+                 */
+                "reference_date.lt"?: string;
+                /**
+                 * @description Sort by reference_date; prefix with a minus sign for descending order.
+                 * @example -reference_date
+                 */
+                "sort"?: "-reference_date" | "reference_date";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, maximum 1000)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "series_id": "initial_claims_sa",
+                     *           "family": "labor",
+                     *           "agency": "ETA",
+                     *           "source_code": "InitialClaims/SA",
+                     *           "source_url": "https://oui.doleta.gov/press/2026/111926.pdf",
+                     *           "country": "US",
+                     *           "frequency": "W",
+                     *           "seasonal_adjustment": "SA",
+                     *           "unit": "claims",
+                     *           "base_period": null,
+                     *           "scale": 1,
+                     *           "precision": 0,
+                     *           "period_anchor": "week_ending_saturday",
+                     *           "reference_date": "2026-11-14",
+                     *           "value": 203000,
+                     *           "status": "available",
+                     *           "footnotes": [
+                     *             "Advance, weekly DOL news release."
+                     *           ],
+                     *           "observed_at": "2026-11-24T07:24:47.480Z",
+                     *           "published_at": "2026-11-19T13:30:00.000Z",
+                     *           "change_prior": 1000,
+                     *           "change_year": -19000,
+                     *           "change_year_pct": -8.6
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA1LTMwIl0sImYiOiI0N2EzMWY2ZDk1NmM3MTE1In0",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["MacroLaborReading"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listMacroSeries: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Filter by macro dataset family
+                 * @example inflation
+                 */
+                family?: "gdp" | "inflation" | "labor" | "yield_curve";
+                /**
+                 * @description Sort by series_id; prefix with a minus sign for descending order.
+                 * @example series_id
+                 */
+                sort?: "-series_id" | "series_id";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, maximum 1000)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "series_id": "cpi_all_nsa",
+                     *           "family": "inflation",
+                     *           "agency": "BLS",
+                     *           "source_code": "CUUR0000SA0",
+                     *           "source_url": "https://data.bls.gov/timeseries/CUUR0000SA0",
+                     *           "country": "US",
+                     *           "frequency": "M",
+                     *           "seasonal_adjustment": "NSA",
+                     *           "unit": "index",
+                     *           "base_period": "1982-84=100",
+                     *           "scale": 1,
+                     *           "precision": 3,
+                     *           "period_anchor": "month_start",
+                     *           "label": "CPI-U: All items (NSA)",
+                     *           "annual_rate": false,
+                     *           "tenor": null,
+                     *           "maturity_months": null,
+                     *           "first_date": "1913-01-01",
+                     *           "last_date": "2026-10-01",
+                     *           "reference_date": "2026-10-01",
+                     *           "observed_at": "2026-11-24T07:14:21.970Z",
+                     *           "published_at": null,
+                     *           "history_operation_id": "listMacroInflation",
+                     *           "snapshot_operation_id": "getMacroInflationSnapshot",
+                     *           "curve_field": null
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["MacroSeries"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listMappingRules: {
         parameters: {
             query?: {
@@ -24017,6 +25809,142 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listTreasuryYieldCurves: {
+        parameters: {
+            query?: {
+                /**
+                 * @description `date` on or after this value
+                 * @example 2026-01-01
+                 */
+                "date.gte"?: string;
+                /**
+                 * @description `date` after this value
+                 * @example 2026-01-01
+                 */
+                "date.gt"?: string;
+                /**
+                 * @description `date` on or before this value
+                 * @example 2026-01-01
+                 */
+                "date.lte"?: string;
+                /**
+                 * @description `date` before this value
+                 * @example 2026-01-01
+                 */
+                "date.lt"?: string;
+                /**
+                 * @description Sort by date; prefix with a minus sign for descending order.
+                 * @example -date
+                 */
+                "sort"?: "-date" | "date";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, maximum 1000)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "date": "2026-11-23",
+                     *           "agency": "Treasury",
+                     *           "source_url": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/pages/xml?data=daily_treasury_yield_curve&field_tdr_date_value_month=202611",
+                     *           "observed_at": "2026-11-24T07:15:22.149Z",
+                     *           "m1": 4.2,
+                     *           "m2": 4.3,
+                     *           "m3": 4.37,
+                     *           "m4": 4.36,
+                     *           "m6": 4.45,
+                     *           "y1": 4.57,
+                     *           "y2": 4.63,
+                     *           "y3": 4.69,
+                     *           "y5": 4.74,
+                     *           "y7": 4.81,
+                     *           "y10": 4.92,
+                     *           "y20": 5.33,
+                     *           "y30": 5.29,
+                     *           "m1_5": 4.27
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTEwLTE5Il0sImYiOiIyZDA1MmJlNDk4NTdjNWVhIn0",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["TreasuryYieldCurve"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     pauseAlert: {
         parameters: {
             query?: never;
@@ -24953,7 +26881,7 @@ export interface operations {
                              * @description Docs group of the v2 API
                              * @enum {string}
                              */
-                            group: "alert_events" | "alert_users" | "alerts" | "calendar" | "call_analytics" | "catalog" | "companies" | "corporate_actions" | "destinations" | "events" | "filings" | "financials" | "funds" | "guidance" | "holdings" | "insider_trades" | "instruments" | "investor_documents" | "metrics" | "news" | "offerings" | "scripts" | "transcripts";
+                            group: "alert_events" | "alert_users" | "alerts" | "calendar" | "call_analytics" | "catalog" | "companies" | "corporate_actions" | "destinations" | "events" | "filings" | "financials" | "funds" | "guidance" | "holdings" | "insider_trades" | "instruments" | "investor_documents" | "macro" | "metrics" | "news" | "offerings" | "scripts" | "transcripts";
                             /** @description Docs group title (e.g. Insider trades) */
                             name: string;
                             /**

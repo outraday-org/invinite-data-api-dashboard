@@ -86,6 +86,7 @@ export const V2_COMPANIES: V2CompaniesResponse = {
 export const V2_API_STATUS: V2ApiStatus = {
     generated_at: "2026-11-21T16:16:40.387Z",
     groups: [
+        { group: "macro", name: "Macro", p50_ms_7d: null, p95_ms_7d: null, status: "operational", uptime_7d: 1, uptime_30d: 1, uptime_90d: 1 },
         { group: "instruments", name: "Instruments", p50_ms_7d: 25, p95_ms_7d: 800, status: "operational", uptime_7d: 1, uptime_30d: 1, uptime_90d: 1 },
         { group: "companies", name: "Companies", p50_ms_7d: 25, p95_ms_7d: null, status: "degraded", uptime_7d: 0.995, uptime_30d: 0.997, uptime_90d: 0.997 },
     ],

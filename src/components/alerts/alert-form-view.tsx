@@ -17,6 +17,8 @@ import { ACTIVE_WINDOW_DAYS, ACTIVE_WINDOW_UNITS, CONDITION_FIELDS, INDICATOR_ST
 import { ALERT_TYPE_GROUPS, ALERT_TYPE_INFO, enumWords } from "@/lib/alerts/labels";
 import { cn } from "@/lib/utils";
 
+import { MacroConditionFields } from "./macro-condition-fields";
+
 /** The select's value for "not set" (a select item needs a non-empty value). */
 const UNSET = "__unset";
 
@@ -307,7 +309,7 @@ function Section({ children, title }: { children: React.ReactNode; title: string
 export type TemplatesState = { data: ReadonlyArray<AlertTemplate>; error: unknown; isLoading: boolean };
 
 /**
- * The alert form (pure; `/alerts/new` and `/alerts/$id?edit=true`): 1 Type (17, in 7 groups; fixed on edit), 2 Condition
+ * The alert form (pure; `/alerts/new` and `/alerts/$id?edit=true`): 1 Type (18, in 8 groups; fixed on edit), 2 Condition
  * (the type's fields from `CONDITION_FIELDS`; the indicator's template or structured condition), 3 Trigger, 4 Delivery
  * (destination ids, end user — an existing one suggested —, reference, metadata). Field errors sit under their field; `notice` above the buttons
  * (a conflict, a quota, the Check result). "Check" = `validate_only` (nothing created).
@@ -365,7 +367,7 @@ export function AlertFormView({
             }}
         >
             <Section title="1. Type">
-                <TypePicker disabled={mode === "edit"} onChange={type => set({ type })} type={state.type} />
+                <TypePicker disabled={mode === "edit"} onChange={type => set({ type, ...(type === "macro" && !state.condition.macro_events ? { condition: { ...state.condition, macro_events: ["macro.released", "macro.revised"] } } : {}) })} type={state.type} />
                 {mode === "edit" && <p className="text-muted-foreground">The type of an alert never changes; duplicate it to start from another type.</p>}
             </Section>
             <Section title="2. Condition">
@@ -379,7 +381,8 @@ export function AlertFormView({
                     </div>
                 )}
                 <div className="grid gap-3 sm:grid-cols-2">
-                    {fields.map((spec) => {
+                    {state.type === "macro" && <MacroConditionFields condition={state.condition} errors={errors} onChange={condition => set({ condition })} />}
+                    {state.type !== "macro" && fields.map((spec) => {
                         if (spec.kind === "template") return <TemplatePicker errors={errors} key={spec.name} onChange={template => set({ template })} state={state.template} templates={templates} />;
 
                         const text = typeof state.condition[spec.name] === "string" ? state.condition[spec.name] as string : "";

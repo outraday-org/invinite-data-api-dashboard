@@ -127,6 +127,8 @@ export const OPERATIONS = ${JSON.stringify(sortedEntries(operations), null, 4)} 
 
 export type OperationId = keyof typeof OPERATIONS;
 
+export const MACRO_ALERT_SERIES = ${JSON.stringify(spec.paths["/v1/macro/series"].get["x-macro-alert-series"], null, 4)} as const;
+
 /** \`"GET /v1/funds/{fund}"\` → operationId. */
 export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = ${JSON.stringify(sortedEntries(routes), null, 4)};
 

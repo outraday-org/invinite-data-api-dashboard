@@ -52,6 +52,8 @@ describe("route names vs tickers", () => {
 
         const leaf = (pathname: string) => router.matchRoutes(pathname, {}).at(-1)?.routeId;
 
+        expect(leaf("/MACRO")).toBe("/$ticker");
+
         expect(leaf("/LIVE")).toBe("/$ticker");
 
         expect(leaf("/IPOS")).toBe("/$ticker");

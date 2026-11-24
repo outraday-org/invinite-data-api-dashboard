@@ -22,6 +22,7 @@ import { optionalEnum, optionalText } from "@/lib/url-state";
 const newAlertSearchSchema = z.object({
     from: optionalText(64),
     script: optionalText(64),
+    series: optionalText(100),
     symbol: optionalText(64),
     template: optionalText(100),
     type: optionalEnum(ALERT_TYPES as [AlertType, ...Array<AlertType>]),
@@ -69,12 +70,12 @@ function NewAlertPage() {
         );
     }
 
-    const initial = source.data ? fromAlert(source.data, { duplicate: true }) : prefilledForm(search.type, search.symbol, { template: search.template, version: search.version });
+    const initial = source.data ? fromAlert(source.data, { duplicate: true }) : prefilledForm(search.type, search.symbol, { series: search.series, template: search.template, version: search.version });
 
     return (
         <div className="flex flex-col gap-4">
             {header}
-            <CreateAlertForm initial={initial} initialScriptId={search.script} key={search.from ?? [search.type, search.symbol, search.version, search.template].map(part => part ?? "").join(":")} />
+            <CreateAlertForm initial={initial} initialScriptId={search.script} key={search.from ?? [search.type, search.symbol, search.series, search.version, search.template].map(part => part ?? "").join(":")} />
         </div>
     );
 }

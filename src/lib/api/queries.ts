@@ -319,22 +319,23 @@ type EarningsQueryExtras<T> = Pick<
  * page classifies `error` (`status`, `code`); a string = toast with that title, except for an
  * `ApiRequestError` whose status is in `quietStatuses` (a page state, e.g. 404 "No transcript").
  */
-function useEarningsQuery<T>(options: EarningsQueryExtras<T> & {
+export function useEarningsQuery<T>(options: EarningsQueryExtras<T> & {
     enabled: boolean;
     errorMessage: null | string;
-    load: (apiKey: string | undefined) => Promise<T>;
+    cancelable?: boolean;
+    load: (apiKey: string | undefined, signal?: AbortSignal) => Promise<T>;
     queryKey: ReadonlyArray<unknown>;
     quietStatuses?: ReadonlyArray<number>;
     staleTime: number;
 }) {
     const { apiKey, apiKeyUpdatedAt, hasHydrated } = useApiKey();
 
-    const { enabled, errorMessage, load, queryKey, quietStatuses, ...rest } = options;
+    const { cancelable, enabled, errorMessage, load, queryKey, quietStatuses, ...rest } = options;
 
     const result = useQuery<T, Error, T, ReadonlyArray<unknown>>({
         ...rest,
         enabled: hasHydrated && enabled,
-        queryFn: () => load(apiKey ?? undefined).catch(rethrowApiError),
+        queryFn: context => load(apiKey ?? undefined, cancelable ? context.signal : undefined).catch(rethrowApiError),
         queryKey: [...queryKey, String(apiKeyUpdatedAt)],
         retry: rest.retry ?? retryUnlessApiError,
     });
@@ -354,10 +355,11 @@ const nextCursorOf = (lastPage: { next_cursor?: null | string }) => lastPage.nex
  * The infinite twin of `useEarningsQuery` over a cursor list: the first page asks without a cursor, the next ones with
  * the last page's `next_cursor` (`/v1/news` pages by cursor with a pager instead: `useNewsPage`).
  */
-function useEarningsInfinite<TPage extends { next_cursor?: null | string }>(options: {
+export function useEarningsInfinite<TPage extends { next_cursor?: null | string }>(options: {
     enabled: boolean;
     errorMessage: null | string;
-    fetchPage: (cursor: null | string, apiKey: string | undefined) => Promise<TPage>;
+    cancelable?: boolean;
+    fetchPage: (cursor: null | string, apiKey: string | undefined, signal?: AbortSignal) => Promise<TPage>;
     queryKey: ReadonlyArray<unknown>;
     quietStatuses?: ReadonlyArray<number>;
     /** Asked again while the loaded pages say so (e.g. `meta.coverage.state` pending: `refetchWhileCoveragePending`). */
@@ -372,7 +374,7 @@ function useEarningsInfinite<TPage extends { next_cursor?: null | string }>(opti
         enabled: hasHydrated && enabled,
         getNextPageParam: nextCursorOf,
         initialPageParam: null,
-        queryFn: ({ pageParam }) => fetchPage(pageParam, apiKey ?? undefined).catch(rethrowApiError),
+        queryFn: context => fetchPage(context.pageParam, apiKey ?? undefined, options.cancelable ? context.signal : undefined).catch(rethrowApiError),
         queryKey: [...queryKey, String(apiKeyUpdatedAt)],
         refetchInterval,
         retry: retryUnlessApiError,
@@ -499,8 +501,9 @@ export function useNewsAnnouncements(id: null | string) {
 }
 
 /** The API base URL (not a secret) for the browser's own live-transcript WebSocket; asked once. */
-export function useApiBaseUrl() {
+export function useApiBaseUrl(enabled = true) {
     const result = useQuery({
+        enabled,
         gcTime: Number.POSITIVE_INFINITY,
         queryFn: () => getApiBaseUrl(),
         queryKey: ["api-base-url"],

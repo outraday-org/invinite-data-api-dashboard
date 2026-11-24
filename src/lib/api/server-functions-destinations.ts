@@ -67,11 +67,11 @@ const updateBodySchema = z.object({
     url: z.string().min(1).max(2048).optional(),
 }).refine(body => Object.keys(body).length > 0, "At least one field");
 
-export const listDestinations = createServerFn({ method: "GET" })
+export const listDestinations = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, ...pageInput }))
     .handler(({ data }): Promise<DestinationsListResponse> => listDestinationsRequest(createApiClient(data.apiKey), { cursor: data.cursor, limit: data.limit }));
 
-export const getDestination = createServerFn({ method: "GET" })
+export const getDestination = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<Destination> => getDestinationRequest(createApiClient(data.apiKey), data.id));
 
@@ -98,7 +98,7 @@ export const testDestination = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema }))
     .handler(({ data }): Promise<DestinationTestAccepted> => testDestinationRequest(createApiClient(data.apiKey), data.id));
 
-export const listDestinationDeliveries = createServerFn({ method: "GET" })
+export const listDestinationDeliveries = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, id: resourceIdSchema, ...pageInput }))
     .handler(({ data }): Promise<DestinationDeliveriesResponse> => listDestinationDeliveriesRequest(createApiClient(data.apiKey), data.id, {
         cursor: data.cursor,

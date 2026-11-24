@@ -25,6 +25,14 @@ afterEach(cleanup);
 const listState = { error: null, hasNextPage: false, isFetchingNextPage: false, isLoading: false, onLoadMore: vi.fn() };
 
 describe("/alerts/events (the feed)", () => {
+    it("shows the macro release identity and version on a destination fire", () => {
+        const event = fixtureEvent("evt_macro", { payload: { reason: { details: { release_id: "treasury:2026-01-02", source_event_type: "macro.revised", version: 2 }, summary: "Ten-year yield above 4 percent" } } });
+
+        render(<AlertEventsView events={[event]} liveIds={new Set()} loadedNote="All events" operationId="listAlertEvents" state={listState} />);
+
+        expect(screen.getByText(/Treasury:2026-01-02 · version 2/i)).toBeInTheDocument();
+    });
+
     it("newest first; a live event is marked New; a row opens its payload", () => {
         const live = fixtureEvent("evt_09", { occurred_at: "2026-11-21T15:00:00Z" });
 
