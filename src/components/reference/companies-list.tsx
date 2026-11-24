@@ -13,26 +13,8 @@ import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 /**
  * The Companies tab of `/instruments` (O7 group 7): `GET /v1/companies`, the operating companies with a US listing (an
  * instrument of type `stock`), with the fields the instruments list lacks — sector, fiscal year end, CIK — and the
- * API's own filters (`q` name / ticker prefix, `exchange`, `sector`).
+ * API's own filters (`q` name / ticker prefix, `exchange`, `sector` — its choices from `/v1/catalog/sectors`).
  */
-
-/**
- * The sectors `/v1/companies` answered on 2026-11-21 (the spec states no enum): the filter's choices. A sector the API
- * adds later is still served (no filter = every sector) and shown in its rows.
- */
-export const COMPANY_SECTORS = [
-    "Basic Materials",
-    "Communication Services",
-    "Consumer Cyclical",
-    "Consumer Defensive",
-    "Energy",
-    "Financial Services",
-    "Healthcare",
-    "Industrials",
-    "Real Estate",
-    "Technology",
-    "Utilities",
-] as const;
 
 /** The instruments page's sort (`symbol` / `name`, ±) as the companies list's (`ticker` / `name`, ±). */
 export function companiesSort(sort: string | undefined): undefined | V2CompaniesSort {

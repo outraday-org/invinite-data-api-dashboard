@@ -27,6 +27,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ApiRequestError, isTierError } from "@/lib/api/errors";
+import { formerTickerText } from "@/lib/api/v2";
 import { fiscalYearEndText, formatDay, formatMoneyCompact } from "@/lib/format";
 import { netAssetsScopeText } from "@/lib/sec/fund";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
@@ -189,9 +190,10 @@ function TextList({ empty, items, title }: { empty: string; items: ReadonlyArray
 }
 
 /**
- * The issuer lifecycle (pure, `GET /v1/filers/{cik}?expand=lifecycle,proposed_symbols,former_names,successors`): phase,
- * kind, first public sighting, registration tracks (each with its review status stated, never assumed), pending
- * actions, proposed symbols of a pending IPO, successors, former names and warnings. A filer without lifecycle
+ * The issuer lifecycle (pure, `GET /v1/filers/{cik}?expand=lifecycle,proposed_symbols,former_names,former_tickers,successors`):
+ * phase, kind, first public sighting, registration tracks (each with its review status stated, never assumed), pending
+ * actions, proposed symbols of a pending IPO, successors, former names, former tickers (each with where it was seen:
+ * the SEC company ticker file or a retired listing) and warnings. A filer without lifecycle
  * evidence (`lifecycle: null`) says so; a refused request is its notice.
  */
 export function SecLifecycleView({ data, error, isLoading }: { data: null | V2FilerResponse; error: unknown; isLoading: boolean }) {
@@ -226,6 +228,9 @@ export function SecLifecycleView({ data, error, isLoading }: { data: null | V2Fi
         text: former.until ? `${former.name} (until ${former.until})` : former.name,
     }));
 
+    // A ticker can come back (registry and listing both name it): the index keeps the keys apart.
+    const formerTickers = (data.former_tickers ?? []).map((former, index) => ({ key: `${index}-${former.ticker}`, text: formerTickerText(former) }));
+
     return (
         <section aria-label="Issuer lifecycle" className="flex flex-col gap-3">
             {lifecycle
@@ -240,6 +245,7 @@ export function SecLifecycleView({ data, error, isLoading }: { data: null | V2Fi
             {symbols.length > 0 && <TextList empty="" items={symbols} title="Proposed symbols" />}
             <TextList empty="No successor." items={successors} title="Successors" />
             {formerNames.length > 0 && <TextList empty="" items={formerNames} title="Former names" />}
+            {formerTickers.length > 0 && <TextList empty="" items={formerTickers} title="Former tickers" />}
             {warnings.length > 0 && (
                 <div className="text-muted-foreground flex flex-col text-xs" role="status">
                     {warnings.map(warning => <span key={warning}>{warning.replaceAll("_", " ")}</span>)}

@@ -65,7 +65,8 @@ export const SECTION_DATASETS: Record<string, ReadonlyArray<V2Dataset> | V2Datas
     "financials": ["financials", "metrics", "segments"],
     "holders": "holders",
     "holdings": "fund_holdings",
-    "insider-trades": "insider_trades",
+    // The trades tab and the holdings tab (Data API 11.2).
+    "insider-trades": ["insider_trades", "insider_holdings"],
     "news": "news",
     "stock-splits": "splits",
 };
@@ -99,6 +100,7 @@ const DATASET_WORDS: Partial<Record<V2Dataset, string>> = {
     events: "earnings calls and events",
     financials: "financial statements",
     fund_holdings: "fund holdings",
+    insider_holdings: "insider holdings",
     insider_trades: "insider trades",
     investor_documents: "company documents",
     metrics: "financial metrics",

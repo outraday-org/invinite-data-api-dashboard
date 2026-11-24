@@ -3,10 +3,12 @@ import type {
     V2ApiStatus,
     V2CompaniesResponse,
     V2DividendsResponse,
+    V2ExchangeCatalogResponse,
     V2Licensing,
     V2MappingRulesResponse,
     V2MetricCatalogResponse,
     V2SectionCatalogResponse,
+    V2SectorCatalogResponse,
 } from "@/lib/api/types";
 
 // Fixtures of O7 group 7 (tests only), trimmed from the live answers of 2026-11-21.
@@ -27,6 +29,32 @@ export const V2_SECTION_CATALOG: V2SectionCatalogResponse = {
     data: [
         { form: "10-K", section_id: "part_i-item_1", title: "Business" },
         { form: "10-K", section_id: "part_i-item_1a", title: "Risk Factors" },
+    ],
+    has_more: false,
+    meta: {},
+    next_cursor: null,
+};
+
+/** `GET /v1/catalog/exchanges` in the contract's shape (Data API 11.2; example counts, not a live answer). */
+export const V2_EXCHANGE_CATALOG: V2ExchangeCatalogResponse = {
+    data: [
+        { company_count: 3300, instrument_count: 5600, mic: "XNAS", name: "Nasdaq" },
+        { company_count: 1900, instrument_count: 3100, mic: "XNYS", name: "New York Stock Exchange" },
+    ],
+    has_more: false,
+    meta: {},
+    next_cursor: null,
+};
+
+/** `GET /v1/catalog/sectors` in the contract's shape (Data API 11.2; example counts, not a live answer). */
+export const V2_SECTOR_CATALOG: V2SectorCatalogResponse = {
+    data: [
+        {
+            company_count: 780,
+            industries: [{ company_count: 210, industry: "Software - Application" }, { company_count: 120, industry: "Semiconductors" }],
+            sector: "Technology",
+        },
+        { company_count: 640, industries: [{ company_count: 300, industry: "Biotechnology" }], sector: "Healthcare" },
     ],
     has_more: false,
     meta: {},

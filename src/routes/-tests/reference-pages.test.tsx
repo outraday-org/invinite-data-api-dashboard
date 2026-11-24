@@ -16,13 +16,15 @@ import {
     V2_API_STATUS,
     V2_COMPANIES,
     V2_DIVIDENDS,
+    V2_EXCHANGE_CATALOG,
     V2_LICENSING,
     V2_MAPPING_RULES,
     V2_METRIC_CATALOG,
+    V2_SECTOR_CATALOG,
 } from "@/lib/reference/reference-fixtures";
 import { dividendsRequest, DividendsView, dividendTypeLabel } from "@/routes/$ticker/dividends/index";
 import { CATALOG_SPECS, catalogCountText, CatalogTable } from "@/routes/catalog";
-import { companiesRequest } from "@/routes/instruments";
+import { companiesRequest, sectorFilter } from "@/routes/instruments";
 import { holidaysRequest } from "@/routes/market-holidays";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -39,6 +41,7 @@ vi.mock("@tanstack/react-router", () => ({
 // Keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
     // The flat statement table's "Explain this number" dialog: idle (no value clicked).
+    useFinancialVintages: () => ({ data: null, error: null, isLoading: false }),
     useReportedValueLookup: () => ({ data: null, error: null, isLoading: false }),
     useV2Fact: () => ({ data: undefined, error: null, isLoading: false }),
     useV2FactPlaces: () => ({ data: undefined, error: null, isLoading: false }),
@@ -54,6 +57,8 @@ vi.mock("@/components/ui/credit-hint", async importOriginal => ({
 afterEach(cleanup);
 
 const list = { error: null, hasNextPage: false, isFetchingNextPage: false, isLoading: false, onLoadMore: () => undefined };
+
+const SECTORS = V2_SECTOR_CATALOG.data.map(entry => entry.sector);
 
 describe("/catalog", () => {
     const metricsSpec = CATALOG_SPECS.metrics;
@@ -111,6 +116,34 @@ describe("/catalog", () => {
     });
 });
 
+describe("/catalog exchanges and sectors (Data API 11.2)", () => {
+    it("an exchange row shows its counts and links the companies and instruments on it", () => {
+        render(<CatalogTable list={{ ...list, rows: V2_EXCHANGE_CATALOG.data }} query={undefined} scope="all" spec={CATALOG_SPECS.exchanges} />);
+
+        const nasdaq = screen.getByText("Nasdaq").closest("tr")!;
+
+        expect(within(nasdaq).getByText("3,300")).toBeInTheDocument();
+
+        expect(within(nasdaq).getByRole("link", { name: "Companies" })).toHaveAttribute("href", "/instruments?exchange=XNAS&view=companies");
+
+        expect(within(nasdaq).getByRole("link", { name: "Instruments" })).toHaveAttribute("href", "/instruments?exchange=XNAS");
+
+        expect(screen.getByTestId("catalog-count")).toHaveTextContent("2 exchanges");
+    });
+
+    it("a sector row lists its industries; the filter searches industries too", () => {
+        render(<CatalogTable list={{ ...list, rows: V2_SECTOR_CATALOG.data }} query="biotech" scope="all" spec={CATALOG_SPECS.sectors} />);
+
+        expect(screen.queryByText("Technology")).toBeNull();
+
+        const healthcare = screen.getByText("Healthcare").closest("tr")!;
+
+        expect(within(healthcare).getByTestId("sector-industries")).toHaveTextContent("Biotechnology · 300");
+
+        expect(within(healthcare).getByRole("link", { name: "Companies" })).toHaveAttribute("href", "/instruments?sector=Healthcare&view=companies");
+    });
+});
+
 describe("metric catalog links on financial metric labels", () => {
     it("a catalog metric links /catalog?q=<id>; an as-reported concept gets no link", () => {
         render(
@@ -158,7 +191,7 @@ describe("/instruments Companies tab (`GET /v1/companies`)", () => {
     });
 
     it("the shared search, exchange and sort map to the companies operation; the sector is its own", () => {
-        expect(companiesRequest({ exchange: "XNAS", q: "apple", sector: "Technology", sort: "-symbol", view: "companies" })).toEqual({
+        expect(companiesRequest({ exchange: "XNAS", q: "apple", sector: "Technology", sort: "-symbol", view: "companies" }, SECTORS)).toEqual({
             enabled: true,
             exchange: ["XNAS"],
             limit: 50,
@@ -170,6 +203,23 @@ describe("/instruments Companies tab (`GET /v1/companies`)", () => {
         expect(companiesSort(undefined)).toBeUndefined();
 
         expect(companiesSort("name")).toBe("name");
+    });
+
+    it("the sector filters only when `/v1/catalog/sectors` names it; a sector in the URL waits for that list", () => {
+        expect(sectorFilter("Technology", SECTORS)).toBe("Technology");
+
+        expect(sectorFilter("Crypto", SECTORS)).toBeUndefined();
+
+        expect(sectorFilter("Technology", undefined)).toBeUndefined();
+
+        // An unknown sector: no filter, the list is asked.
+        expect(companiesRequest({ sector: "Crypto", view: "companies" }, SECTORS)).toMatchObject({ enabled: true, sector: undefined });
+
+        // The sector list still loading: no unfiltered page first.
+        expect(companiesRequest({ sector: "Technology", view: "companies" }, undefined)).toMatchObject({ enabled: false });
+
+        // No sector in the URL: asked at once.
+        expect(companiesRequest({ view: "companies" }, undefined)).toMatchObject({ enabled: true, sector: undefined });
     });
 });
 

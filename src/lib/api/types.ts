@@ -120,9 +120,13 @@ export type V2DividendsSort = NonNullable<ApiQuery<"/v1/dividends">["sort"]>;
 export type V2SplitsSort = NonNullable<ApiQuery<"/v1/splits">["sort"]>;
 export type V2MarketHolidaysSort = NonNullable<ApiQuery<"/v1/market-holidays">["sort"]>;
 /** `GET /v1/companies/{company}?expand=` values the dashboard asks for. */
-export type V2CompanyExpand = "coverage";
+export type V2CompanyExpand = "coverage" | "former_tickers";
+/** `GET /v1/funds/{fund}?expand=` values. */
+export type V2FundExpand = "coverage";
 /** `GET /v1/filers/{cik}?expand=` values. */
-export type V2FilerExpand = "former_names" | "fund" | "lifecycle" | "private_offerings" | "proposed_symbols" | "successors";
+export type V2FilerExpand = "former_names" | "former_tickers" | "fund" | "lifecycle" | "private_offerings" | "proposed_symbols" | "successors";
+/** A ticker the registrant used before (`expand=former_tickers` of a company or filer; Data API 11.2). */
+export type V2FormerTicker = NonNullable<V2CompanyResponse["former_tickers"]>[number];
 
 // Data API v2 SEC family (`/v1/filings*`, `/v1/document-versions/*`, `/v1/holders`, `/v1/holder-changes`,
 // `/v1/insider-trades*`, `/v1/ipos*`, backend tasks/data-api-v2 task 6). Readiness is `meta.coverage.state` on a 200
@@ -134,6 +138,8 @@ export type V2FilingDetailResponse = SecJson<ApiResponse<"/v1/filings/{accession
 export type V2DocumentVersionResponse = SecJson<ApiResponse<"/v1/document-versions/{version_id}", "get">>;
 export type V2DocumentFigureResponse = SecJson<ApiResponse<"/v1/document-versions/{version_id}/figures/{block_id}", "get">>;
 export type V2InsiderTradesResponse = ApiResponse<"/v1/insider-trades", "get">;
+/** Holding lines of Forms 3 / 4 / 5 (a security held without a transaction; Data API 11.2). */
+export type V2InsiderHoldingsResponse = ApiResponse<"/v1/insider-holdings", "get">;
 export type V2IposResponse = ApiResponse<"/v1/ipos", "get">;
 /** Form D private offerings (Data API release 5.7, tag IPOs). */
 export type V2OfferingsResponse = ApiResponse<"/v1/offerings", "get">;
@@ -148,6 +154,8 @@ export type V2FilingsSort = Extract<NonNullable<ApiQuery<"/v1/filings">["sort"]>
 export type V2FilingExpand = "documents" | "parties" | "relations";
 export type V2InsiderTrade = V2InsiderTradesResponse["data"][number];
 export type V2InsiderSide = V2InsiderTrade["side"];
+export type V2InsiderHolding = V2InsiderHoldingsResponse["data"][number];
+export type V2InsiderHoldingsSort = NonNullable<ApiQuery<"/v1/insider-holdings">["sort"]>;
 export type V2Ipo = V2IposResponse["data"][number];
 export type V2IpoStage = V2Ipo["stage"];
 export type V2IposSort = NonNullable<ApiQuery<"/v1/ipos">["sort"]>;
@@ -277,6 +285,9 @@ export type V2AsReportedFacts = NonNullable<V2AsReportedResponse["data"][number]
 export type V2AsReportedDetailedFacts = NonNullable<V2AsReportedDetailedResponse["data"][number]["statements"]["income_statement"]>["facts"];
 export type V2AsReportedDetailedFact = V2AsReportedDetailedFacts[string];
 export type V2AsReportedPresentationNode = NonNullable<V2AsReportedPresentationResponse["data"][number]["statements"]["income_statement"]>["facts"][number];
+/** Every filing that stated a value for one as-reported concept and period, oldest first (Data API 11.2). */
+export type V2FinancialVintagesResponse = ApiResponse<"/v1/financials/vintages", "get">;
+export type V2FinancialVintage = V2FinancialVintagesResponse["data"][number];
 export type V2DisplaySign = NonNullable<ApiQuery<"/v1/financials/as-reported">["display_sign"]>;
 export type V2RatioPeriod = V2RatiosResponse["data"][number];
 /** `category=` (any of); v1's `solvency` is the contract's `leverage`. */
@@ -369,6 +380,12 @@ export type V2EventTypeCatalogResponse = ApiResponse<"/v1/catalog/event-types", 
 export type V2EventTypeCatalogEntry = V2EventTypeCatalogResponse["data"][number];
 export type V2DocumentKindCatalogResponse = ApiResponse<"/v1/catalog/document-kinds", "get">;
 export type V2DocumentKindCatalogEntry = V2DocumentKindCatalogResponse["data"][number];
+/** The exchanges of the served instruments with their counts (Data API 11.2). */
+export type V2ExchangeCatalogResponse = ApiResponse<"/v1/catalog/exchanges", "get">;
+export type V2ExchangeCatalogEntry = V2ExchangeCatalogResponse["data"][number];
+/** The sectors of the operating companies with their industries (Data API 11.2): the values `sector=` accepts. */
+export type V2SectorCatalogResponse = ApiResponse<"/v1/catalog/sectors", "get">;
+export type V2SectorCatalogEntry = V2SectorCatalogResponse["data"][number];
 /** A standardized metric's mapping rule; `rule` is free JSON in the spec (read by guards, `src/lib/reference/catalog.ts`). */
 export type V2MappingRulesResponse = SecJson<ApiResponse<"/v1/catalog/mapping-rules", "get">>;
 export type V2MappingRule = V2MappingRulesResponse["data"][number];

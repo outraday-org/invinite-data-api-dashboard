@@ -6,8 +6,9 @@ import * as React from "react";
 import { z } from "zod";
 
 import type { DetailFact } from "@/components/sec/ownership-views";
-import type { V2InsiderSide, V2InsiderTrade, V2InsiderTradeDetail, V2InsiderTradesResponse } from "@/lib/api/types";
+import type { V2InsiderHolding, V2InsiderHoldingsResponse, V2InsiderSide, V2InsiderTrade, V2InsiderTradeDetail, V2InsiderTradesResponse } from "@/lib/api/types";
 
+import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { FactGrid, statedFacts } from "@/components/sec/ownership-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
@@ -23,10 +24,11 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Stat, StatGrid } from "@/components/ui/stat";
-import { useInsiderTrade, useV2InsiderTradesInfinite } from "@/lib/api/queries";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useInsiderTrade, useV2InsiderHoldingsInfinite, useV2InsiderTradesInfinite } from "@/lib/api/queries";
 import { formatDay, formatInstant, formatMoney, formatShares } from "@/lib/format";
-import { tickerHead } from "@/lib/layout";
-import { insiderCodeLegend, insiderCodeText, yesNoText as yesNo } from "@/lib/sec/ownership";
+import { tickerHead, WRAPPING_TABS_LIST_CLASS } from "@/lib/layout";
+import { insiderCodeLegend, insiderCodeText, parseCikList, yesNoText as yesNo } from "@/lib/sec/ownership";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { IN_PLACE, optionalDay, optionalEnum, optionalText, orderedWindow } from "@/lib/url-state";
 
@@ -34,15 +36,22 @@ const KINDS = ["derivative", "non_derivative"] as const;
 
 type Kind = (typeof KINDS)[number];
 
+const TABS = ["trades", "holdings"] as const;
+
+type Tab = (typeof TABS)[number];
+
 /**
- * `?side=buy|sell`, `?from=&to=` (filed days), `?tfrom=&tto=` (transaction days), `?kind=derivative|non_derivative`,
- * `?sort=oldest` (oldest filed first; default newest), `?trade=<id>` (the open row detail).
+ * `?tab=holdings` (default trades), `?owner=<CIK list>` (reporting owners, both tabs), `?kind=derivative|non_derivative`
+ * and `?sort=oldest` (both tabs: oldest filed / reported first; default newest); the trades tab's `?side=buy|sell`,
+ * `?from=&to=` (filed days), `?tfrom=&tto=` (transaction days) and `?trade=<id>` (the open row detail).
  */
 const insiderSearchSchema = z.object({
     from: optionalDay(),
     kind: optionalEnum(KINDS),
+    owner: optionalText(600),
     side: optionalEnum(["buy", "sell"] as const satisfies ReadonlyArray<V2InsiderSide>),
     sort: optionalEnum(["oldest"]),
+    tab: optionalEnum(TABS),
     tfrom: optionalDay(),
     to: optionalDay(),
     trade: optionalText(200),
@@ -78,10 +87,16 @@ const KIND_OPTIONS: Array<{ label: string; value: Kind | typeof ALL }> = [
 
 const NEWEST = "newest";
 
-const SORT_OPTIONS: Array<{ label: string; value: "oldest" | typeof NEWEST }> = [
-    { label: "Newest filed first", value: NEWEST },
-    { label: "Oldest filed first", value: "oldest" },
-];
+const SORT_OPTIONS: Record<Tab, Array<{ label: string; value: "oldest" | typeof NEWEST }>> = {
+    holdings: [
+        { label: "Newest reported first", value: NEWEST },
+        { label: "Oldest reported first", value: "oldest" },
+    ],
+    trades: [
+        { label: "Newest filed first", value: NEWEST },
+        { label: "Oldest filed first", value: "oldest" },
+    ],
+};
 
 const SIDE_LABELS: Record<V2InsiderSide, string> = { buy: "Buy", sell: "Sell" };
 
@@ -89,8 +104,18 @@ const money = (value: null | number) => formatMoney(value);
 
 const count = (value: null | number | undefined) => formatShares(value);
 
+type InsiderRoleFields = Pick<
+    V2InsiderTrade,
+    | "reporting_person_is_director"
+    | "reporting_person_is_officer"
+    | "reporting_person_is_other"
+    | "reporting_person_is_ten_percent_owner"
+    | "reporting_person_officer_title"
+    | "reporting_person_other_text"
+>;
+
 /** The insider's roles in words ("Officer (Chief Executive Officer)", "Director", "10% Owner", the other text). */
-export function insiderRoles(trade: V2InsiderTrade) {
+export function insiderRoles(trade: InsiderRoleFields) {
     const roles: Array<string> = [];
 
     if (trade.reporting_person_is_director) roles.push("Director");
@@ -289,6 +314,124 @@ export function InsiderTradesView({
 
 const OWNERSHIP_FORMS: Record<NonNullable<V2InsiderTradeDetail["direct_indirect"]>, string> = { D: "Direct", I: "Indirect" };
 
+/** "Indirect · By Trust" / "Direct"; not stated = "—". */
+const ownershipText = (line: Pick<V2InsiderHolding, "direct_indirect" | "nature_of_ownership">) => {
+    if (!line.direct_indirect) return "—";
+
+    const form = OWNERSHIP_FORMS[line.direct_indirect];
+
+    return line.nature_of_ownership ? `${form} · ${line.nature_of_ownership}` : form;
+};
+
+/** The holdings table's columns: what each insider held, as reported on its Form 3 / 4 / 5 (no transaction). */
+export const INSIDER_HOLDING_COLUMNS: Array<ColumnDef<V2InsiderHolding>> = [
+    {
+        accessorKey: "as_of",
+        cell: ({ row }) => formatDay(row.original.as_of),
+        header: "As of",
+    },
+    {
+        accessorKey: "reporting_person_name",
+        cell: ({ row }) => <div className="truncate" title={row.original.owner_cik ? `Owner CIK ${row.original.owner_cik}` : undefined}>{row.original.reporting_person_name}</div>,
+        header: "Insider",
+    },
+    {
+        cell: ({ row }) => <div className="truncate">{insiderRoles(row.original)}</div>,
+        header: "Role",
+        id: "role",
+    },
+    {
+        accessorKey: "security_title",
+        cell: ({ row }) => (
+            <div className="flex items-center gap-1">
+                <span className="truncate">{row.original.security_title}</span>
+                {row.original.is_derivative && <Badge title="A derivative security (option, RSU, warrant)" variant="outline">Deriv.</Badge>}
+            </div>
+        ),
+        header: "Security",
+    },
+    {
+        accessorKey: "shares_owned",
+        // A filing that states a value instead of shares shows the value.
+        cell: ({ row }) => (
+            <div className="text-right tabular-nums">
+                {row.original.shares_owned == null && row.original.value_owned != null ? money(row.original.value_owned) : count(row.original.shares_owned)}
+            </div>
+        ),
+        header: () => <div className="text-right">Held</div>,
+    },
+    {
+        cell: ({ row }) => <div className="truncate">{ownershipText(row.original)}</div>,
+        header: "Ownership",
+        id: "ownership",
+    },
+    {
+        accessorKey: "conversion_exercise_price",
+        cell: ({ row }) => <div className="text-right tabular-nums">{row.original.conversion_exercise_price == null ? "—" : money(row.original.conversion_exercise_price)}</div>,
+        header: () => <div className="text-right">Exercise price</div>,
+    },
+    {
+        accessorKey: "expiration_date",
+        cell: ({ row }) => formatDay(row.original.expiration_date),
+        header: "Expires",
+    },
+    {
+        accessorKey: "form",
+        cell: ({ row }) => <span title={`Filed ${formatInstant(row.original.filed_at)} · ${row.original.accession_number}`}>{row.original.form ?? "—"}</span>,
+        header: "Form",
+    },
+];
+
+/**
+ * The insider holdings list (pure, `GET /v1/insider-holdings`): what each insider holds without a transaction on the
+ * filing, newest reported first; the same honest states as the trades list.
+ */
+export function InsiderHoldingsView({
+    error,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    onLoadMore,
+    pages,
+    symbol,
+}: {
+    error: unknown;
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+    isLoading: boolean;
+    onLoadMore: () => void;
+    pages: ReadonlyArray<V2InsiderHoldingsResponse>;
+    /** The export's file-name scope (the page's ticker). */
+    symbol?: string;
+}) {
+    const rows = React.useMemo(() => pages.flatMap(page => page.data), [pages]);
+
+    if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load insider holdings" />;
+
+    const meta = pages.at(0)?.meta;
+
+    return (
+        <div className="flex flex-col gap-2">
+            <SecReadinessNotice coverage={meta?.coverage} />
+            <V2MetaLine meta={meta} />
+            <DataTable
+                columns={INSIDER_HOLDING_COLUMNS}
+                emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
+                emptyText="No insider holdings for these filters."
+                exportConfig={symbol ? { dataset: "insider-holdings", scope: symbol } : undefined}
+                hasNextPage={hasNextPage}
+                isFetchingNextPage={isFetchingNextPage}
+                isLoading={isLoading}
+                onLoadMore={onLoadMore}
+                operationId="listInsiderHoldings"
+                rows={rows}
+                stickyFirstColumn
+            />
+            {error ? <SecReadinessNotice error={error} title="Failed to load more insider holdings" /> : null}
+        </div>
+    );
+}
+
 const SOURCE_LABELS: Record<V2InsiderTradeDetail["source"], string> = {
     f345: "SEC Form 3/4/5 data set",
     sec_api: "Realtime Form 4 feed",
@@ -428,11 +571,26 @@ export function insiderTradesRequest(ticker: string, search: InsiderSearch) {
         from,
         isDerivative: search.kind ? search.kind === "derivative" : undefined,
         limit: INSIDER_PAGE,
+        owner: ownerParam(search.owner),
         side: search.side,
         sort: search.sort === "oldest" ? ("filed_at" as const) : undefined,
         to,
         tradedFrom: traded.from,
         tradedTo: traded.to,
+    };
+}
+
+/** `owner=` from the typed CIK list (digits only, ≤ 50, de-duplicated); nothing valid = undefined (every insider). */
+export const ownerParam = (text: string | undefined) => parseCikList(text)?.join(",");
+
+/** `/v1/insider-holdings?company=<ticker>` for a search state (owner, kind and order; the trade filters do not apply). */
+export function insiderHoldingsRequest(ticker: string, search: InsiderSearch) {
+    return {
+        company: ticker,
+        isDerivative: search.kind ? search.kind === "derivative" : undefined,
+        limit: INSIDER_PAGE,
+        owner: ownerParam(search.owner),
+        sort: search.sort === "oldest" ? ("as_of" as const) : undefined,
     };
 }
 
@@ -445,13 +603,24 @@ function InsiderTradesPage() {
 
     const kind = search.kind ?? ALL;
 
+    const tab: Tab = search.tab ?? "trades";
+
     const navigate = Route.useNavigate();
 
     const onChange = (patch: Partial<InsiderSearch>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
-    const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2InsiderTradesInfinite(insiderTradesRequest(ticker, search));
+    // Only the open tab's list is asked (the other hook is idle with an empty company and no owner).
+    const tradesRequest = insiderTradesRequest(ticker, search);
 
-    const pages = React.useMemo(() => data?.pages ?? [], [data]);
+    const trades = useV2InsiderTradesInfinite(tab === "trades" ? tradesRequest : { ...tradesRequest, company: "", owner: undefined });
+
+    const holdingsRequest = insiderHoldingsRequest(ticker, search);
+
+    const holdings = useV2InsiderHoldingsInfinite(tab === "holdings" ? holdingsRequest : { ...holdingsRequest, company: "", owner: undefined });
+
+    const pages = React.useMemo(() => trades.data?.pages ?? [], [trades.data]);
+
+    const holdingPages = React.useMemo(() => holdings.data?.pages ?? [], [holdings.data]);
 
     const openRow = React.useMemo(
         () => (search.trade ? (pages.flatMap(page => page.data).find(row => row.id === search.trade) ?? null) : null),
@@ -460,51 +629,94 @@ function InsiderTradesPage() {
 
     const onOpen = React.useCallback((trade: V2InsiderTrade) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, trade: trade.id }) }), [navigate]);
 
-    // Each day range counts once.
-    const activeCount = [search.side, from || to, tfrom || tto, search.kind, search.sort].filter(Boolean).length;
+    const tradesTab = tab === "trades";
 
-    const onReset = () => onChange({ from: undefined, kind: undefined, side: undefined, sort: undefined, tfrom: undefined, to: undefined, tto: undefined });
+    // Each day range counts once; the trade-only filters count on the trades tab only.
+    const activeCount = [search.owner, search.kind, search.sort, ...(tradesTab ? [search.side, from || to, tfrom || tto] : [])].filter(Boolean).length;
+
+    const onReset = () => onChange({ from: undefined, kind: undefined, owner: undefined, side: undefined, sort: undefined, tfrom: undefined, to: undefined, tto: undefined });
 
     return (
         <div className="flex flex-col gap-6">
             <PageHeader
-                description="Insider transactions from Forms 3, 4 and 5. A traded-day filter leaves out lines without a transaction date (the realtime feed's)."
+                description="Insider transactions and holdings from Forms 3, 4 and 5. A traded-day filter leaves out lines without a transaction date (the realtime feed's)."
                 title="Insider trades"
             />
 
-            <FilterBar activeCount={activeCount} onReset={onReset}>
-                <FilterField label="Side">
-                    {id => <FilterSelect aria-label="Side" className="w-full" id={id} onValueChange={(value: SideFilter) => onChange({ side: value === ALL ? undefined : value })} options={SIDE_OPTIONS} value={side} />}
-                </FilterField>
-                <FilterField label="Filed" span={2}>
-                    <DayRange from={from} labels={{ from: "Filed from", to: "Filed to" }} onChange={onChange} to={to} />
-                </FilterField>
-                <FilterField label="Traded" span={2}>
-                    <DayRange
-                        from={tfrom}
-                        labels={{ from: "Traded from", to: "Traded to" }}
-                        onChange={patch => onChange("from" in patch ? { tfrom: patch.from } : { tto: patch.to })}
-                        to={tto}
-                    />
-                </FilterField>
-                <FilterField label="Kind">
-                    {id => <FilterSelect aria-label="Line kind" className="w-full" id={id} onValueChange={value => onChange({ kind: value === ALL ? undefined : value })} options={KIND_OPTIONS} value={kind} />}
-                </FilterField>
-                <FilterField label="Order">
-                    {id => <FilterSelect aria-label="Order" className="w-full" id={id} onValueChange={value => onChange({ sort: value === NEWEST ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? NEWEST} />}
-                </FilterField>
-            </FilterBar>
+            <Tabs className="gap-4" onValueChange={value => onChange({ tab: value === "holdings" ? "holdings" : undefined, trade: undefined })} value={tab}>
+                <TabsList aria-label="Insider data" className={WRAPPING_TABS_LIST_CLASS} variant="line">
+                    <TabsTrigger value="trades">Trades</TabsTrigger>
+                    <TabsTrigger value="holdings">Holdings</TabsTrigger>
+                </TabsList>
 
-            <InsiderTradesView
-                error={error}
-                hasNextPage={hasNextPage}
-                isFetchingNextPage={isFetchingNextPage}
-                isLoading={isLoading}
-                onLoadMore={() => fetchNextPage()}
-                onOpen={onOpen}
-                pages={pages}
-                symbol={ticker}
-            />
+                <FilterBar activeCount={activeCount} onReset={onReset}>
+                    <FilterField label="Insider CIKs">
+                        {id => (
+                            <DebouncedInput
+                                aria-label="Insider CIKs"
+                                className="w-full"
+                                id={id}
+                                onCommit={value => onChange({ owner: value.trim() || undefined })}
+                                placeholder="Reporting-owner CIK(s)"
+                                value={search.owner ?? ""}
+                            />
+                        )}
+                    </FilterField>
+                    {tradesTab && (
+                        <FilterField label="Side">
+                            {id => <FilterSelect aria-label="Side" className="w-full" id={id} onValueChange={(value: SideFilter) => onChange({ side: value === ALL ? undefined : value })} options={SIDE_OPTIONS} value={side} />}
+                        </FilterField>
+                    )}
+                    {tradesTab && (
+                        <FilterField label="Filed" span={2}>
+                            <DayRange from={from} labels={{ from: "Filed from", to: "Filed to" }} onChange={onChange} to={to} />
+                        </FilterField>
+                    )}
+                    {tradesTab && (
+                        <FilterField label="Traded" span={2}>
+                            <DayRange
+                                from={tfrom}
+                                labels={{ from: "Traded from", to: "Traded to" }}
+                                onChange={patch => onChange("from" in patch ? { tfrom: patch.from } : { tto: patch.to })}
+                                to={tto}
+                            />
+                        </FilterField>
+                    )}
+                    <FilterField label="Kind">
+                        {id => <FilterSelect aria-label="Line kind" className="w-full" id={id} onValueChange={value => onChange({ kind: value === ALL ? undefined : value })} options={KIND_OPTIONS} value={kind} />}
+                    </FilterField>
+                    <FilterField label="Order">
+                        {id => <FilterSelect aria-label="Order" className="w-full" id={id} onValueChange={value => onChange({ sort: value === NEWEST ? undefined : value })} options={SORT_OPTIONS[tab]} value={search.sort ?? NEWEST} />}
+                    </FilterField>
+                </FilterBar>
+
+                {search.owner && !ownerParam(search.owner) && <div className="text-muted-foreground text-xs">No CIK in this list: every insider is shown</div>}
+
+                <TabsContent value="trades">
+                    <InsiderTradesView
+                        error={trades.error}
+                        hasNextPage={trades.hasNextPage}
+                        isFetchingNextPage={trades.isFetchingNextPage}
+                        isLoading={trades.isLoading}
+                        onLoadMore={() => trades.fetchNextPage()}
+                        onOpen={onOpen}
+                        pages={pages}
+                        symbol={ticker}
+                    />
+                </TabsContent>
+
+                <TabsContent value="holdings">
+                    <InsiderHoldingsView
+                        error={holdings.error}
+                        hasNextPage={holdings.hasNextPage}
+                        isFetchingNextPage={holdings.isFetchingNextPage}
+                        isLoading={holdings.isLoading}
+                        onLoadMore={() => holdings.fetchNextPage()}
+                        pages={holdingPages}
+                        symbol={ticker}
+                    />
+                </TabsContent>
+            </Tabs>
 
             <InsiderTradeDialog id={search.trade ?? null} onClose={() => onChange({ trade: undefined })} row={openRow} ticker={ticker} />
         </div>

@@ -14,11 +14,20 @@ import {
     V2_HOLDERS_OVERVIEW,
     V2_HOLDERS_OVERVIEW_NOT_COVERED,
     V2_HOLDERS_PENDING,
+    V2_INSIDER_HOLDINGS,
     V2_INSIDER_TRADE_DETAIL,
     V2_INSIDER_TRADES,
     V2_IPOS,
 } from "@/lib/sec/v2-fixtures";
-import { insiderRoles, InsiderTradeDetailView, insiderTradesRequest, InsiderTradesView } from "@/routes/$ticker/insider-trades/index";
+import {
+    insiderHoldingsRequest,
+    InsiderHoldingsView,
+    insiderRoles,
+    InsiderTradeDetailView,
+    insiderTradesRequest,
+    InsiderTradesView,
+    ownerParam,
+} from "@/routes/$ticker/insider-trades/index";
 import { ipoIssuerCik, IposView, ipoSymbolText, offerPriceText } from "@/routes/ipo-calendar";
 
 // The page modules' routes need a router; the pure views do not.
@@ -32,6 +41,7 @@ vi.mock("@tanstack/react-router", () => ({
 // Keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
     useInsiderTrade: vi.fn(),
+    useV2InsiderHoldingsInfinite: vi.fn(),
     useV2InsiderTradesInfinite: vi.fn(),
     useV2IposInfinite: vi.fn(),
 }));
@@ -369,6 +379,54 @@ describe("Insider trades (`/v1/insider-trades`)", () => {
         expect(screen.getByText("Not known to the SEC store")).toBeInTheDocument();
 
         expect(screen.queryByRole("table")).toBeNull();
+    });
+});
+
+describe("Insider holdings and the owner filter (Data API 11.2)", () => {
+    it("holdings: as of, insider, role, security with the derivative marker, held, ownership, exercise price, form", () => {
+        render(<InsiderHoldingsView {...list} error={null} hasNextPage pages={[V2_INSIDER_HOLDINGS]} />);
+
+        const cook = screen.getByText("Cook Timothy D").closest("tr")!;
+
+        expect(within(cook).getByText("Officer (Chief Executive Officer)")).toBeInTheDocument();
+
+        expect(within(cook).getByText("3,280,180")).toBeInTheDocument();
+
+        expect(within(cook).getByText("Direct")).toBeInTheDocument();
+
+        const option = screen.getByText("Levinson Arthur D").closest("tr")!;
+
+        expect(within(option).getByText("Deriv.")).toBeInTheDocument();
+
+        expect(within(option).getByText("Indirect · By Trust")).toBeInTheDocument();
+
+        expect(within(option).getByText("$112.50")).toBeInTheDocument();
+
+        expect(screen.getByRole("button", { name: /load more/i })).toBeInTheDocument();
+    });
+
+    it("holdings: 404 not_covered is a state, no table", () => {
+        render(<InsiderHoldingsView {...list} error={problem(404, "not_covered", "No insider holdings are stored for this company")} pages={[]} />);
+
+        expect(screen.queryByRole("table")).toBeNull();
+    });
+
+    it("owner: digits only, de-duplicated, comma-joined; nothing valid = every insider; both lists send it", () => {
+        expect(ownerParam("0001214156, 1214156 1631982")).toBe("1214156,1631982");
+
+        expect(ownerParam("cook")).toBeUndefined();
+
+        expect(insiderTradesRequest("AAPL", { owner: "0001214156" })).toMatchObject({ company: "AAPL", owner: "1214156" });
+
+        expect(insiderHoldingsRequest("AAPL", { kind: "derivative", owner: "1214156", sort: "oldest" })).toEqual({
+            company: "AAPL",
+            isDerivative: true,
+            limit: 50,
+            owner: "1214156",
+            sort: "as_of",
+        });
+
+        expect(insiderHoldingsRequest("AAPL", {})).toMatchObject({ isDerivative: undefined, owner: undefined, sort: undefined });
     });
 });
 

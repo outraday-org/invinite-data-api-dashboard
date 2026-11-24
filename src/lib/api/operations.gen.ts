@@ -969,6 +969,19 @@ export const OPERATIONS = {
         summary: "List event types",
         tier: "free",
     },
+    listExchangeCatalog: {
+        cli: {
+            action: "exchanges",
+            group: "catalog",
+            positional: null,
+        },
+        credits: 1,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_exchanges",
+        method: "GET",
+        path: "/v1/catalog/exchanges",
+        summary: "List exchanges",
+        tier: "free",
+    },
     listFactPlaces: {
         cli: {
             action: "fact-places",
@@ -1072,6 +1085,19 @@ export const OPERATIONS = {
         path: "/v1/filings",
         summary: "List filings",
         tier: "lite",
+    },
+    listFinancialVintages: {
+        cli: {
+            action: "vintages",
+            group: "metrics",
+            positional: "company",
+        },
+        credits: 1,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_financials_vintages",
+        method: "GET",
+        path: "/v1/financials/vintages",
+        summary: "List the filed values of a fact",
+        tier: "pro",
     },
     listFiscalPeriods: {
         cli: {
@@ -1189,6 +1215,19 @@ export const OPERATIONS = {
         path: "/v1/holders",
         summary: "List who holds a stock or a fund",
         tier: "lite",
+    },
+    listInsiderHoldings: {
+        cli: {
+            action: "holdings",
+            group: "insider-trades",
+            positional: "company",
+        },
+        credits: 1,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_insider-holdings",
+        method: "GET",
+        path: "/v1/insider-holdings",
+        summary: "List insider holdings",
+        tier: "standard",
     },
     listInsiderTrades: {
         cli: {
@@ -1461,6 +1500,19 @@ export const OPERATIONS = {
         method: "GET",
         path: "/v1/catalog/sections",
         summary: "List filing section ids",
+        tier: "free",
+    },
+    listSectorCatalog: {
+        cli: {
+            action: "sectors",
+            group: "catalog",
+            positional: null,
+        },
+        credits: 1,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_sectors",
+        method: "GET",
+        path: "/v1/catalog/sectors",
+        summary: "List sectors",
         tier: "free",
     },
     listSegments: {
@@ -2473,10 +2525,12 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "GET /v1/announcements": "listAnnouncements",
     "GET /v1/catalog/document-kinds": "listDocumentKindCatalog",
     "GET /v1/catalog/event-types": "listEventTypeCatalog",
+    "GET /v1/catalog/exchanges": "listExchangeCatalog",
     "GET /v1/catalog/forms": "listFormCatalog",
     "GET /v1/catalog/mapping-rules": "listMappingRules",
     "GET /v1/catalog/metrics": "listMetricCatalog",
     "GET /v1/catalog/sections": "listSectionCatalog",
+    "GET /v1/catalog/sectors": "listSectorCatalog",
     "GET /v1/companies": "listCompanies",
     "GET /v1/companies/{company}": "getCompany",
     "GET /v1/datasets": "listDatasets",
@@ -2520,6 +2574,7 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "GET /v1/financials/standardized": "getStandardizedFinancials",
     "GET /v1/financials/standardized/detailed": "getStandardizedFinancialsDetailed",
     "GET /v1/financials/standardized/presentation": "getStandardizedFinancialsPresentation",
+    "GET /v1/financials/vintages": "listFinancialVintages",
     "GET /v1/fiscal-periods": "listFiscalPeriods",
     "GET /v1/funds": "listFunds",
     "GET /v1/funds/{fund}": "getFund",
@@ -2528,6 +2583,7 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "GET /v1/guidance": "listGuidance",
     "GET /v1/holder-changes": "listHolderChanges",
     "GET /v1/holders": "listHolders",
+    "GET /v1/insider-holdings": "listInsiderHoldings",
     "GET /v1/insider-trades": "listInsiderTrades",
     "GET /v1/insider-trades/{id}": "getInsiderTrade",
     "GET /v1/instruments": "listInstruments",

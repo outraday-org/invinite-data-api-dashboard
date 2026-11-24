@@ -174,6 +174,28 @@ describe("overview key facts and identifiers (O7 group 4)", () => {
         expect(screen.queryByText("Links")).toBeNull();
 
         expect(screen.queryByText("FIGI")).toBeNull();
+
+        expect(screen.queryByText("Former tickers")).toBeNull();
+    });
+
+    it("identifiers: former tickers (`expand=former_tickers`), each with where it was seen", () => {
+        render(
+            <IdentifiersView
+                company={{
+                    ...AAPL,
+                    former_tickers: [
+                        { exchange: "XNAS", first_seen_on: "2012-05-18", last_seen_on: "2022-06-08", source: "listing", ticker: "FB" },
+                        { exchange: null, first_seen_on: null, last_seen_on: "2021-10-01", source: "registry", ticker: "FBK" },
+                    ],
+                }}
+            />,
+        );
+
+        const formers = screen.getByTestId("former-tickers");
+
+        expect(within(formers).getByText("FB · XNAS · May 18, 2012 – Jun 8, 2022 · Retired listing")).toBeInTheDocument();
+
+        expect(within(formers).getByText("FBK · ? – Oct 1, 2021 · SEC company ticker file")).toBeInTheDocument();
     });
 });
 

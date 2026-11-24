@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useV2Company, useV2EventsInfinite, useV2FilingsInfinite } from "@/lib/api/queries";
+import { formerTickerText } from "@/lib/api/v2";
 import { eventLabel, formatCallTime } from "@/lib/earnings/format";
 import { formatDay, formatMoneyCompact, formatNumber, formatShares } from "@/lib/format";
 import { formatNumberEn } from "@/lib/utils";
@@ -22,12 +23,12 @@ import { EventLink } from "@/routes/$ticker/earnings-calls/-components/event-lin
 import { CoverageSection, ExternalLink, httpsHref, OverviewColumns, OverviewSkeleton } from "./overview-parts";
 
 /**
- * A stock's overview (ui-redesign task 8; `GET /v1/companies/{company}?expand=coverage`): the description first, key
+ * A stock's overview (ui-redesign task 8; `GET /v1/companies/{company}?expand=coverage,former_tickers`): the description first, key
  * facts as a stat grid, "Next up" (next call, latest filing) and "Identifiers" beside them, the data families, the
  * fiscal periods. Requests as before: the company, one upcoming event, one filing, the fiscal periods.
  */
 export function CompanyOverview({ datasets, ticker }: { datasets: ReadonlyArray<V2Dataset>; ticker: string }) {
-    const { data: company, error, isLoading } = useV2Company(ticker, { expand: ["coverage"] });
+    const { data: company, error, isLoading } = useV2Company(ticker, { expand: ["coverage", "former_tickers"] });
 
     if (error instanceof ApiRequestError && error.code === "not_covered") {
         return <Notice badge="Not covered" title={`${ticker} is not covered by the Invinite API`}>{error.message}</Notice>;
@@ -106,6 +107,7 @@ export type CompanyFactFields = Pick<
     | "employees"
     | "exchange"
     | "filer_cik"
+    | "former_tickers"
     | "homepage_url"
     | "industry"
     | "insider_own_pct"
@@ -155,7 +157,7 @@ function ownershipStat(label: string, pct: null | number | undefined, shares: nu
  * The key facts (pure): size, listing, classification, ownership. A value the API leaves null is left out (no "—"
  * cell); the grid's last cell fills its row instead of standing alone.
  */
-export function KeyFactsView({ company }: { company: Omit<CompanyFactFields, "cik" | "composite_figi" | "filer_cik" | "homepage_url" | "investor_relations_url"> }) {
+export function KeyFactsView({ company }: { company: Omit<CompanyFactFields, "cik" | "composite_figi" | "filer_cik" | "former_tickers" | "homepage_url" | "investor_relations_url"> }) {
     const cells = [
         company.market_cap != null && <Stat key="market_cap" label="Market cap" value={formatMoneyCompact(company.market_cap)} />,
         company.shares_outstanding != null && <Stat key="shares" label="Shares outstanding" value={formatShares(company.shares_outstanding)} />,
@@ -176,8 +178,14 @@ export function KeyFactsView({ company }: { company: Omit<CompanyFactFields, "ci
     return <div data-testid="company-key-facts"><StatGrid>{cells}</StatGrid></div>;
 }
 
-/** The identifiers (pure): CIK (copy, → `/sec/$cik`), FIGI (copy), the website and IR site (http(s) only), address. */
-export function IdentifiersView({ company }: { company: Pick<CompanyFactFields, "cik" | "city" | "composite_figi" | "country_code" | "filer_cik" | "homepage_url" | "investor_relations_url" | "state" | "street" | "zip_code"> }) {
+/**
+ * The identifiers (pure): CIK (copy, → `/sec/$cik`), FIGI (copy), former tickers (`expand=former_tickers`, newest first,
+ * each with where it was seen), the website and IR site (http(s) only), address.
+ */
+export function IdentifiersView({ company }: {
+    company: Partial<Pick<CompanyFactFields, "former_tickers">>
+        & Pick<CompanyFactFields, "cik" | "city" | "composite_figi" | "country_code" | "filer_cik" | "homepage_url" | "investor_relations_url" | "state" | "street" | "zip_code">;
+}) {
     const homepage = httpsHref(company.homepage_url);
 
     const investorRelations = httpsHref(company.investor_relations_url);
@@ -200,6 +208,16 @@ export function IdentifiersView({ company }: { company: Pick<CompanyFactFields, 
                         : null,
                 ],
                 ["FIGI", company.composite_figi ? <Copyable label="Copy composite FIGI" value={company.composite_figi} /> : null],
+                [
+                    "Former tickers",
+                    company.former_tickers?.length
+                        ? (
+                                <ul data-testid="former-tickers">
+                                    {company.former_tickers.map((former, index) => <li key={`${index}-${former.ticker}`}>{formerTickerText(former)}</li>)}
+                                </ul>
+                            )
+                        : null,
+                ],
                 [
                     "Links",
                     homepage || investorRelations

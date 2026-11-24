@@ -29,6 +29,7 @@ import type {
     V2EventStatus,
     V2EventType,
     V2EventTypeCatalogResponse,
+    V2ExchangeCatalogResponse,
     V2FactPlacesResponse,
     V2FactPlaceStatus,
     V2FactResponse,
@@ -45,6 +46,7 @@ import type {
     V2FilingSearchResponse,
     V2FilingsResponse,
     V2FilingsSort,
+    V2FinancialVintagesResponse,
     V2FormCatalogResponse,
     V2Fund,
     V2FundPositionsResponse,
@@ -62,6 +64,8 @@ import type {
     V2HoldersInstruments,
     V2HolderSource,
     V2HoldersResponse,
+    V2InsiderHoldingsResponse,
+    V2InsiderHoldingsSort,
     V2InsiderSide,
     V2InsiderTradeDetail,
     V2InsiderTradesResponse,
@@ -106,6 +110,7 @@ import type {
     V2ReviewDirection,
     V2SectionCatalogResponse,
     V2SectionOutline,
+    V2SectorCatalogResponse,
     V2SegmentsDetailedResponse,
     V2SegmentsResponse,
     V2SlidesResponse,
@@ -138,6 +143,7 @@ import {
     V2_EVENT_EXPANDS,
     V2_FILER_EXPANDS,
     V2_FILING_EXPANDS,
+    V2_FUND_EXPANDS,
     V2_IPO_STAGES,
     V2_RATIO_CATEGORIES,
     V2_SLIDES_INCLUDES,
@@ -233,7 +239,7 @@ export const getFunds = createServerFn({ method: "POST" })
 
 /** One fund's profile (ticker or fund key): net assets with date and scope, expense ratio, registrant, classes. */
 export const getFund = createServerFn({ method: "POST" })
-    .inputValidator(z.object({ apiKey: apiKeySchema, expand: z.array(z.enum(V2_COMPANY_EXPANDS)).optional(), fund: fundSchema }))
+    .inputValidator(z.object({ apiKey: apiKeySchema, expand: z.array(z.enum(V2_FUND_EXPANDS)).optional(), fund: fundSchema }))
     .handler(async ({ data }): Promise<V2Fund> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/funds/{fund}", {
             params: { path: { fund: data.fund }, query: v2Query({ expand: v2Expand(data.expand) }) },
@@ -1258,9 +1264,15 @@ export const getFundWeights = createServerFn({ method: "POST" })
         return res;
     });
 
+/** Reporting-owner CIKs (`owner=`, 1–50 CIKs of digits, comma-joined by the caller). */
+const ownerSchema = z.string().trim().regex(/^\d{1,10}(,\d{1,10}){0,49}$/).optional();
+
+/** One of `company` / `owner` is required by the insider lists (both together narrow to both). */
+const companyOrOwner = (data: { company?: string; owner?: string }) => Boolean(data.company || data.owner);
+
 const v2InsiderTradesSchema = z.object({
     apiKey: apiKeySchema,
-    company: z.string().trim().min(1),
+    company: z.string().trim().min(1).optional(),
     cursor: cursorSchema,
     /** Days (`YYYY-MM-DD`): the spec declares every `filed_at.*` as `format: date` (an instant is a 400, [FU2994]). */
     filedAtGte: z.iso.date().optional(),
@@ -1268,17 +1280,18 @@ const v2InsiderTradesSchema = z.object({
     /** true = derivative-security lines only, false = non-derivative only; omitted = both. */
     isDerivative: z.boolean().optional(),
     limit: pageLimitSchema,
+    owner: ownerSchema,
     side: z.enum(["buy", "sell"] as const satisfies ReadonlyArray<V2InsiderSide>).optional(),
     sort: z.enum(["filed_at", "-filed_at"] as const satisfies ReadonlyArray<V2InsiderTradesSort>).optional(),
     transactionDateGte: z.iso.date().optional(),
     transactionDateLte: z.iso.date().optional(),
-});
+}).refine(companyOrOwner, "company or owner is required");
 
-/** A company's insider trades, newest filed first (`side` buy = acquired, sell = disposed). */
+/** A company's (or reporting owner's) insider trades, newest filed first (`side` buy = acquired, sell = disposed). */
 export const getV2InsiderTrades = createServerFn({ method: "POST" })
     .inputValidator(v2InsiderTradesSchema)
     .handler(async ({ data }): Promise<V2InsiderTradesResponse> => {
-        const { apiKey, company, cursor, filedAtGte, filedAtLte, isDerivative, limit, side, sort, transactionDateGte, transactionDateLte } = data;
+        const { apiKey, company, cursor, filedAtGte, filedAtLte, isDerivative, limit, owner, side, sort, transactionDateGte, transactionDateLte } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/insider-trades", {
             params: {
@@ -1289,12 +1302,37 @@ export const getV2InsiderTrades = createServerFn({ method: "POST" })
                     "filed_at.lte": filedAtLte,
                     "is_derivative": isDerivative,
                     limit,
+                    owner,
                     side,
                     sort,
                     "transaction_date.gte": transactionDateGte,
                     "transaction_date.lte": transactionDateLte,
                 }),
             },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** A company's (or reporting owner's) Form 3 / 4 / 5 holding lines, newest reported first (Data API 11.2). */
+export const getV2InsiderHoldings = createServerFn({ method: "POST" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        company: z.string().trim().min(1).optional(),
+        cursor: cursorSchema,
+        /** true = derivative-security lines only, false = non-derivative only; omitted = both. */
+        isDerivative: z.boolean().optional(),
+        limit: pageLimitSchema,
+        owner: ownerSchema,
+        sort: z.enum(["as_of", "-as_of"] as const satisfies ReadonlyArray<V2InsiderHoldingsSort>).optional(),
+    }).refine(companyOrOwner, "company or owner is required"))
+    .handler(async ({ data }): Promise<V2InsiderHoldingsResponse> => {
+        const { apiKey, company, cursor, isDerivative, limit, owner, sort } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/insider-holdings", {
+            params: { query: v2Query({ company, cursor, is_derivative: isDerivative, limit, owner, sort }) },
         });
 
         if (error) throwApiError(error, response);
@@ -1622,6 +1660,41 @@ export const getV2Fact = createServerFn({ method: "POST" })
         if (error) throwApiError(error, response);
 
         return res as V2FactResponse;
+    });
+
+/**
+ * Every filing that stated a value for one as-reported concept and period, oldest first (`GET /v1/financials/vintages`):
+ * the original filing and each later one that repeated or restated it; `is_current` = the value the statements serve.
+ */
+export const getFinancialVintages = createServerFn({ method: "POST" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        company: z.string().trim().min(1),
+        /** The filed concept, local name (`Revenues`) or with its prefix (`us-gaap:Revenues`). */
+        concept: z.string().trim().regex(/^(?:[A-Z][\w.-]{0,60}:)?[A-Z_][\w.-]{0,200}$/i),
+        cursor: cursorSchema,
+        limit: pageLimitSchema,
+        periodEnd: z.iso.date(),
+        /** Omitted = every duration ending on `periodEnd`, and instants. */
+        periodStart: z.iso.date().optional(),
+    }))
+    .handler(async ({ data }): Promise<V2FinancialVintagesResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/financials/vintages", {
+            params: {
+                query: v2Query({
+                    company: data.company,
+                    concept: data.concept,
+                    cursor: data.cursor,
+                    limit: data.limit,
+                    period_end: data.periodEnd,
+                    period_start: data.periodStart,
+                }),
+            },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
     });
 
 // Account and IPO detail (backend tasks/data-api-dashboard O5). `/v1/me` (0 credits) is the key validator.
@@ -1987,6 +2060,32 @@ export const getEventTypeCatalog = createServerFn({ method: "POST" })
     .inputValidator(catalogPageSchema)
     .handler(async ({ data }): Promise<V2EventTypeCatalogResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/event-types", {
+            params: { query: v2Query({ cursor: data.cursor, limit: data.limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The exchanges of the served instruments with their counts (`GET /v1/catalog/exchanges`). */
+export const getExchangeCatalog = createServerFn({ method: "POST" })
+    .inputValidator(catalogPageSchema)
+    .handler(async ({ data }): Promise<V2ExchangeCatalogResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/exchanges", {
+            params: { query: v2Query({ cursor: data.cursor, limit: data.limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The sectors of the operating companies with their industries (`GET /v1/catalog/sectors`). */
+export const getSectorCatalog = createServerFn({ method: "POST" })
+    .inputValidator(catalogPageSchema)
+    .handler(async ({ data }): Promise<V2SectorCatalogResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/sectors", {
             params: { query: v2Query({ cursor: data.cursor, limit: data.limit }) },
         });
 

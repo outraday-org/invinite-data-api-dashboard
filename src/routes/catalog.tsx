@@ -10,10 +10,12 @@ import type {
     StatementType,
     V2DocumentKindCatalogEntry,
     V2EventTypeCatalogEntry,
+    V2ExchangeCatalogEntry,
     V2FormCatalogEntry,
     V2MappingRule,
     V2MetricCatalogEntry,
     V2SectionCatalogEntry,
+    V2SectorCatalogEntry,
 } from "@/lib/api/types";
 import type { CatalogTab } from "@/lib/reference/catalog";
 
@@ -31,10 +33,12 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     useDocumentKindCatalogInfinite,
     useEventTypeCatalogInfinite,
+    useExchangeCatalogInfinite,
     useFormCatalogInfinite,
     useMappingRulesInfinite,
     useMetricCatalogInfinite,
     useSectionCatalogInfinite,
+    useSectorCatalogInfinite,
 } from "@/lib/api/queries";
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { formatNumber } from "@/lib/format";
@@ -188,6 +192,51 @@ const MAPPING_RULE_COLUMNS: Array<ColumnDef<V2MappingRule>> = [
     },
 ];
 
+const countCell = (value: number) => <div className="text-right tabular-nums">{formatNumber(value)}</div>;
+
+const linkClass = "text-primary text-xs underline-offset-4 hover:underline";
+
+const EXCHANGE_COLUMNS: Array<ColumnDef<V2ExchangeCatalogEntry>> = [
+    { cell: ({ row }) => named(row.original.name, row.original.mic), header: "Exchange", id: "name" },
+    { cell: ({ row }) => countCell(row.original.company_count), header: () => <div className="text-right">Companies</div>, id: "company_count" },
+    { cell: ({ row }) => countCell(row.original.instrument_count), header: () => <div className="text-right">Instruments</div>, id: "instrument_count" },
+    {
+        // `exchange=` of `/v1/companies` and `/v1/instruments` takes the MIC this row names.
+        cell: ({ row }) => (
+            <span className="flex gap-3">
+                <Link className={linkClass} search={{ exchange: row.original.mic, view: "companies" }} to="/instruments">Companies</Link>
+                <Link className={linkClass} search={{ exchange: row.original.mic }} to="/instruments">Instruments</Link>
+            </span>
+        ),
+        header: "",
+        id: "links",
+    },
+];
+
+const SECTOR_COLUMNS: Array<ColumnDef<V2SectorCatalogEntry>> = [
+    { cell: ({ row }) => <span className="font-medium">{row.original.sector}</span>, header: "Sector", id: "sector" },
+    { cell: ({ row }) => countCell(row.original.company_count), header: () => <div className="text-right">Companies</div>, id: "company_count" },
+    {
+        // Largest first, as the API orders them; each with its company count.
+        cell: ({ row }) => (
+            <ul className="flex min-w-[28rem] flex-wrap gap-1 whitespace-normal" data-testid="sector-industries">
+                {row.original.industries.map(entry => (
+                    <li key={entry.industry}>
+                        <Badge variant="outline">{`${entry.industry} · ${formatNumber(entry.company_count)}`}</Badge>
+                    </li>
+                ))}
+            </ul>
+        ),
+        header: "Industries",
+        id: "industries",
+    },
+    {
+        cell: ({ row }) => <Link className={linkClass} search={{ sector: row.original.sector, view: "companies" }} to="/instruments">Companies</Link>,
+        header: "",
+        id: "companies",
+    },
+];
+
 /** The state of one tab's list, as every catalog hook answers it. */
 export type CatalogList<TRow> = {
     error: unknown;
@@ -210,6 +259,7 @@ type TableSpec<TRow> = {
 export const CATALOG_SPECS = {
     "document-kinds": { columns: DOCUMENT_KIND_COLUMNS, idOf: row => row.kind, noun: "document kinds", operationId: "listDocumentKindCatalog", textsOf: row => [row.label, row.category] } satisfies TableSpec<V2DocumentKindCatalogEntry>,
     "event-types": { columns: EVENT_TYPE_COLUMNS, idOf: row => row.event_type, noun: "event types", operationId: "listEventTypeCatalog", textsOf: row => [row.label, row.description] } satisfies TableSpec<V2EventTypeCatalogEntry>,
+    "exchanges": { columns: EXCHANGE_COLUMNS, idOf: row => row.mic, noun: "exchanges", operationId: "listExchangeCatalog", textsOf: row => [row.name] } satisfies TableSpec<V2ExchangeCatalogEntry>,
     "forms": { columns: FORM_COLUMNS, idOf: row => row.form, noun: "forms", operationId: "listFormCatalog", textsOf: row => [row.description, row.family] } satisfies TableSpec<V2FormCatalogEntry>,
     "mapping-rules": {
         columns: MAPPING_RULE_COLUMNS,
@@ -224,6 +274,7 @@ export const CATALOG_SPECS = {
     } satisfies TableSpec<V2MappingRule>,
     "metrics": { columns: METRIC_COLUMNS, idOf: row => row.metric_id, noun: "metrics", operationId: "listMetricCatalog", textsOf: row => [row.name, row.description, row.unit] } satisfies TableSpec<V2MetricCatalogEntry>,
     "sections": { columns: SECTION_COLUMNS, idOf: row => row.section_id, noun: "sections", operationId: "listSectionCatalog", textsOf: row => [row.form, row.title] } satisfies TableSpec<V2SectionCatalogEntry>,
+    "sectors": { columns: SECTOR_COLUMNS, idOf: row => row.sector, noun: "sectors", operationId: "listSectorCatalog", textsOf: row => row.industries.map(entry => entry.industry) } satisfies TableSpec<V2SectorCatalogEntry>,
 };
 
 /** "342 metrics" / "12 of 342 metrics" / "+" while pages are still loading. */
@@ -303,16 +354,22 @@ function CatalogTabBody({ search }: { search: CatalogSearch }) {
 
     const rules = useCatalogList(useMappingRulesInfinite({ enabled: tab === "mapping-rules", metricId: search.metric ? [search.metric] : undefined, statement }));
 
+    const exchanges = useCatalogList(useExchangeCatalogInfinite({ enabled: tab === "exchanges" }));
+
+    const sectors = useCatalogList(useSectorCatalogInfinite({ enabled: tab === "sectors" }));
+
     const scope = [search.statement, search.form, search.metric].filter(Boolean).join("-") || "all";
 
     switch (tab) {
         case "document-kinds": return <CatalogTable list={documentKinds} query={search.q} scope={scope} spec={CATALOG_SPECS["document-kinds"]} />;
         case "event-types": return <CatalogTable list={eventTypes} query={search.q} scope={scope} spec={CATALOG_SPECS["event-types"]} />;
+        case "exchanges": return <CatalogTable list={exchanges} query={search.q} scope={scope} spec={CATALOG_SPECS.exchanges} />;
         case "forms": return <CatalogTable list={forms} query={search.q} scope={scope} spec={CATALOG_SPECS.forms} />;
         case "macro": return <MacroCatalog filter={search.q} />;
         case "mapping-rules": return <CatalogTable list={rules} query={search.q} scope={scope} spec={CATALOG_SPECS["mapping-rules"]} />;
         case "metrics": return <CatalogTable list={metrics} query={search.q} scope={scope} spec={CATALOG_SPECS.metrics} />;
         case "sections": return <CatalogTable list={sections} query={search.q} scope={scope} spec={CATALOG_SPECS.sections} />;
+        case "sectors": return <CatalogTable list={sectors} query={search.q} scope={scope} spec={CATALOG_SPECS.sectors} />;
     }
 }
 
@@ -329,7 +386,8 @@ function FilterChip({ label, onClear }: { label: string; onClear: () => void }) 
 /**
  * The reference catalogs of the Data API (`/v1/catalog/*`, free, 1 credit a page): standardized metrics (the target of
  * every financial metric label's catalog link, `?q=<metric_id>`), filing sections per form, forms, event types,
- * investor-document kinds and the metrics' mapping rules. The open tab loads all its pages (≤ 5) and the text filter
+ * investor-document kinds, the metrics' mapping rules, the exchanges and the sectors with their industries (the
+ * values `exchange=` / `sector=` accept). The open tab loads all its pages (≤ 5) and the text filter
  * searches them; statement / form / metric are sent to the API.
  */
 function CatalogPage() {
@@ -344,7 +402,7 @@ function CatalogPage() {
     return (
         <PageContainer>
             <PageHeader
-                description="The reference lists behind the Data API: what each standardized metric means and how it is mapped from filed concepts, the sections of each SEC form, the forms, event types and investor-document kinds."
+                description="The reference lists behind the Data API: what each standardized metric means and how it is mapped from filed concepts, the sections of each SEC form, the forms, event types, investor-document kinds, exchanges and sectors."
                 title="Catalog"
             />
             <Tabs

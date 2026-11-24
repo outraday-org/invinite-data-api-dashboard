@@ -12,13 +12,17 @@ import type {
     V2EventExpand,
     V2FilerExpand,
     V2FilingExpand,
+    V2FormerTicker,
+    V2FundExpand,
     V2IpoStage,
     V2RatioCategory,
     V2SlidesInclude,
     V2StatementKey,
 } from "./types";
 
-export const V2_COMPANY_EXPANDS = ["coverage"] as const satisfies ReadonlyArray<V2CompanyExpand>;
+export const V2_COMPANY_EXPANDS = ["coverage", "former_tickers"] as const satisfies ReadonlyArray<V2CompanyExpand>;
+
+export const V2_FUND_EXPANDS = ["coverage"] as const satisfies ReadonlyArray<V2FundExpand>;
 
 export const V2_EVENT_EXPANDS = ["calendar", "observations"] as const satisfies ReadonlyArray<V2EventExpand>;
 
@@ -29,6 +33,7 @@ export const V2_FILER_EXPANDS = [
     "lifecycle",
     "proposed_symbols",
     "former_names",
+    "former_tickers",
     "successors",
     "fund",
     "private_offerings",
@@ -107,4 +112,19 @@ export function coverageEntries(coverage: null | undefined | V2CompanyCoverage) 
         family,
         text: through ? `${coverageFamilyLabel(family)} through ${formatDay(through)}` : coverageFamilyLabel(family),
     }));
+}
+
+/** Where a former ticker was seen (`registry` dates = when the SEC company ticker file listed it, `listing` = a retired listing's dates). */
+export const FORMER_TICKER_SOURCE_LABELS: Record<V2FormerTicker["source"], string> = {
+    listing: "Retired listing",
+    registry: "SEC company ticker file",
+};
+
+/** A former ticker in words: "FB · XNAS · May 18, 2012 – Jun 8, 2022 · Retired listing" (unknown parts left out). */
+export function formerTickerText(former: V2FormerTicker) {
+    const span = former.first_seen_on || former.last_seen_on
+        ? `${former.first_seen_on ? formatDay(former.first_seen_on) : "?"} – ${former.last_seen_on ? formatDay(former.last_seen_on) : "?"}`
+        : null;
+
+    return [former.ticker, former.exchange, span, FORMER_TICKER_SOURCE_LABELS[former.source]].filter(Boolean).join(" · ");
 }

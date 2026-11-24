@@ -19,6 +19,8 @@ export type PresentationFact
 export type PresentationPeriod = {
     facts: Array<AsReportedPresentationFactRaw> | Array<StandardizedPresentationFactRaw>;
     label: string;
+    /** `source.is_preliminary`: the period's values come from the earnings release before the 10-Q / 10-K. */
+    preliminary?: boolean;
     /** The column header's tooltip (the filing the period was rendered from). */
     title?: string;
 };

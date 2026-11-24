@@ -62,6 +62,7 @@ import type {
     V2EventStatus,
     V2EventType,
     V2EventTypeCatalogResponse,
+    V2ExchangeCatalogResponse,
     V2FactPlacesResponse,
     V2FactPlaceStatus,
     V2FactResponse,
@@ -82,8 +83,10 @@ import type {
     V2FilingsSort,
     V2FinancialsBasis,
     V2FinancialsView,
+    V2FinancialVintagesResponse,
     V2FormCatalogResponse,
     V2Fund,
+    V2FundExpand,
     V2FundPositionsResponse,
     V2FundsResponse,
     V2FundsSort,
@@ -100,6 +103,8 @@ import type {
     V2HoldersInstruments,
     V2HolderSource,
     V2HoldersResponse,
+    V2InsiderHoldingsResponse,
+    V2InsiderHoldingsSort,
     V2InsiderSide,
     V2InsiderTradeDetail,
     V2InsiderTradesResponse,
@@ -148,6 +153,7 @@ import type {
     V2ReviewDirection,
     V2SectionCatalogResponse,
     V2SectionOutline,
+    V2SectorCatalogResponse,
     V2SegmentsDetailedResponse,
     V2SegmentsResponse,
     V2SlidesInclude,
@@ -175,8 +181,10 @@ import {
     getCompanyFiscalPeriods,
     getDocumentKindCatalog,
     getEventTypeCatalog,
+    getExchangeCatalog,
     getFilerHoldingChanges,
     getFilerHoldings,
+    getFinancialVintages,
     getFormCatalog,
     getFund,
     getFundPositions,
@@ -194,6 +202,7 @@ import {
     getMyUsage,
     getOffering,
     getSectionCatalog,
+    getSectorCatalog,
     getV2Announcements,
     getV2AnnouncementsList,
     getV2AsReported,
@@ -223,6 +232,7 @@ import {
     getV2FilingSearch,
     getV2Growth,
     getV2Guidance,
+    getV2InsiderHoldings,
     getV2InsiderTrades,
     getV2InvestorDocument,
     getV2InvestorDocuments,
@@ -676,7 +686,7 @@ export function useFunds(input: FundsInput) {
 }
 
 /** One fund's profile (ticker or fund key), `expand=coverage` when asked; idle for "" (a stock or an ETN never asks). */
-export function useFund(fund: string, expand: ReadonlyArray<V2CompanyExpand> = []) {
+export function useFund(fund: string, expand: ReadonlyArray<V2FundExpand> = []) {
     return useEarningsQuery<V2Fund>({
         enabled: fund.trim().length > 0,
         errorMessage: null,
@@ -1339,12 +1349,15 @@ export function useFundWeightsInfinite(input: { asOf?: string; dimension?: strin
 }
 
 export type V2InsiderTradesInput = {
+    /** Ticker or CIK; "" = none (then `owner` alone scopes the list). */
     company: string;
     /** Day (`YYYY-MM-DD`): `filed_at.gte` (the spec's `format: date`; an instant is a 400, [FU2994]). */
     from?: string;
     /** true = derivative lines only, false = non-derivative only; omitted = both. */
     isDerivative?: boolean;
     limit?: number;
+    /** Reporting-owner CIKs, comma-joined (`owner=`): with a company, that company's lines of these insiders. */
+    owner?: string;
     side?: V2InsiderSide;
     sort?: V2InsiderTradesSort;
     /** Day (`YYYY-MM-DD`), inclusive: `filed_at.lte`. */
@@ -1356,18 +1369,21 @@ export type V2InsiderTradesInput = {
 
 /** A company's insider trades, newest filed first, by cursor. A 404 `not_covered` (none ever stored) is a page state. */
 export function useV2InsiderTradesInfinite(input: V2InsiderTradesInput) {
+    const company = input.company.trim() || undefined;
+
     return useEarningsInfinite<V2InsiderTradesResponse>({
-        enabled: input.company.trim().length > 0,
+        enabled: Boolean(company || input.owner),
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2InsiderTrades({
             data: {
                 apiKey,
-                company: input.company,
+                company,
                 cursor: cursor ?? undefined,
                 filedAtGte: input.from,
                 filedAtLte: input.to,
                 isDerivative: input.isDerivative,
                 limit: input.limit,
+                owner: input.owner,
                 side: input.side,
                 sort: input.sort,
                 transactionDateGte: input.tradedFrom,
@@ -1378,6 +1394,7 @@ export function useV2InsiderTradesInfinite(input: V2InsiderTradesInput) {
             "v2",
             "insider-trades",
             input.company,
+            input.owner ?? "",
             input.side ?? "",
             input.from ?? "",
             input.to ?? "",
@@ -1387,6 +1404,33 @@ export function useV2InsiderTradesInfinite(input: V2InsiderTradesInput) {
             input.isDerivative ?? "",
             input.sort ?? "",
         ],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export type V2InsiderHoldingsInput = {
+    /** Ticker or CIK; "" = none (then `owner` alone scopes the list). */
+    company: string;
+    /** true = derivative lines only, false = non-derivative only; omitted = both. */
+    isDerivative?: boolean;
+    limit?: number;
+    /** Reporting-owner CIKs, comma-joined (`owner=`). */
+    owner?: string;
+    sort?: V2InsiderHoldingsSort;
+};
+
+/** Form 3 / 4 / 5 holding lines (no transaction), newest reported first, by cursor; status-aware like the trades. */
+export function useV2InsiderHoldingsInfinite(input: V2InsiderHoldingsInput) {
+    const company = input.company.trim() || undefined;
+
+    return useEarningsInfinite<V2InsiderHoldingsResponse>({
+        enabled: Boolean(company || input.owner),
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2InsiderHoldings({
+            data: { apiKey, company, cursor: cursor ?? undefined, isDerivative: input.isDerivative, limit: input.limit, owner: input.owner, sort: input.sort },
+        }),
+        queryKey: ["v2", "insider-holdings", input.company, input.owner ?? "", input.isDerivative ?? "", input.sort ?? "", input.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
@@ -1636,6 +1680,32 @@ export function useV2Fact(factId: null | string) {
         errorMessage: null,
         load: apiKey => getV2Fact({ data: { apiKey, factId: factId ?? "" } }),
         queryKey: ["v2", "fact", factId ?? ""],
+        staleTime: FINANCIALS_STALE_MS,
+    });
+}
+
+/** One as-reported concept and period of a company: the "Filed values" panel's request. */
+export type FinancialVintagesTarget = { company: string; concept: string; periodEnd: string; periodStart?: null | string };
+
+/**
+ * Every filing that stated a value for the concept and period, oldest first (`GET /v1/financials/vintages`, one page of
+ * 200: a value is rarely filed more than a handful of times); null = idle. Status-aware: the panel renders the error.
+ */
+export function useFinancialVintages(target: FinancialVintagesTarget | null) {
+    return useEarningsQuery<V2FinancialVintagesResponse>({
+        enabled: target !== null,
+        errorMessage: null,
+        load: apiKey => getFinancialVintages({
+            data: {
+                apiKey,
+                company: target?.company ?? "",
+                concept: target?.concept ?? "",
+                limit: 200,
+                periodEnd: target?.periodEnd ?? "",
+                periodStart: target?.periodStart ?? undefined,
+            },
+        }),
+        queryKey: ["v2", "financial-vintages", target?.company ?? "", target?.concept ?? "", target?.periodEnd ?? "", target?.periodStart ?? ""],
         staleTime: FINANCIALS_STALE_MS,
     });
 }
@@ -2120,6 +2190,27 @@ export function useDocumentKindCatalogInfinite(input: { enabled: boolean }) {
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getDocumentKindCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
         queryKey: ["v2", "catalog", "document-kinds"],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+export function useExchangeCatalogInfinite(input: { enabled: boolean }) {
+    return useEarningsInfinite<V2ExchangeCatalogResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getExchangeCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
+        queryKey: ["v2", "catalog", "exchanges"],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+/** The sectors with their industries: the `/catalog` tab and the `/instruments` Companies tab's sector choices. */
+export function useSectorCatalogInfinite(input: { enabled: boolean }) {
+    return useEarningsInfinite<V2SectorCatalogResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getSectorCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
+        queryKey: ["v2", "catalog", "sectors"],
         staleTime: REFERENCE_STALE_MS,
     });
 }

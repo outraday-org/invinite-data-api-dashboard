@@ -128,10 +128,11 @@ describe("SecLifecycleView", () => {
         expect(screen.getByText("Temporarily unavailable — try again later")).toBeInTheDocument();
     });
 
-    it("phase, tracks with their review status, pending actions, proposed symbols, successors, former names", () => {
+    it("phase, tracks with their review status, pending actions, proposed symbols, successors, former names and tickers", () => {
         const data: V2FilerResponse = {
             ...TICKERLESS_FILER,
             former_names: [{ name: "Acme Holdings Inc", until: "2024-05-01" }],
+            former_tickers: [{ exchange: "XNYS", first_seen_on: "2021-01-04", last_seen_on: "2023-02-01", source: "registry", ticker: "ACMQ" }],
             lifecycle: {
                 first_public_seen_at: null,
                 ipo_pending: [],
@@ -163,6 +164,8 @@ describe("SecLifecycleView", () => {
         expect(screen.getByText("Acme Inc · CIK 0000000099 · legal successor")).toBeInTheDocument();
 
         expect(screen.getByText("Acme Holdings Inc (until 2024-05-01)")).toBeInTheDocument();
+
+        expect(screen.getByText("ACMQ · XNYS · Jan 4, 2021 – Feb 1, 2023 · SEC company ticker file")).toBeInTheDocument();
 
         expect(screen.getByText("listing unconfirmed")).toBeInTheDocument();
     });

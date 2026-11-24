@@ -510,6 +510,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/catalog/exchanges": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List exchanges
+         * @description List the exchanges of the served instruments with how many companies and instruments list on each.
+         *
+         *     Use a `mic` as the `exchange` filter of the company, instrument and fund lists.
+         */
+        get: operations["listExchangeCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/catalog/forms": {
         parameters: {
             query?: never;
@@ -590,6 +612,28 @@ export interface paths {
          *     Use `form` to see the sections of one form. Pass a section ID in the `item` filter on `GET /v1/search/filings` to search within that part of a filing.
          */
         get: operations["listSectionCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/catalog/sectors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List sectors
+         * @description List the sectors of the operating companies with their industries and how many companies each holds.
+         *
+         *     Use a `sector` as the `sector` filter of the company list.
+         */
+        get: operations["listSectorCatalog"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1668,6 +1712,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/financials/vintages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the filed values of a fact
+         * @description List every filing that stated one XBRL concept of a company for one period, oldest filing first.
+         *
+         *     Each row is the original value or a later filing that repeated or restated it; `is_current` marks the filing whose value the statements serve today. Name the concept as filed (`Revenues` or `us-gaap:Revenues`) and the period's end; add `period_start` to pick one duration (a quarter, not the year to date ending the same day) and `member` for one dimensioned value such as a segment.
+         */
+        get: operations["listFinancialVintages"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/fiscal-periods": {
         parameters: {
             query?: never;
@@ -1860,6 +1926,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/insider-holdings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List insider holdings
+         * @description List the holdings reported on SEC Forms 3, 4 and 5, with direct or indirect ownership and derivative terms.
+         *
+         *     A holding line is a security the insider holds without a transaction on the filing. Use `company` for an issuer's insiders or `owner` for one insider's holdings across every issuer (one of the two is required). Results run from the newest reported date to the oldest.
+         */
+        get: operations["listInsiderHoldings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/insider-trades": {
         parameters: {
             query?: never;
@@ -1871,7 +1959,7 @@ export interface paths {
          * List insider trades
          * @description List insider transactions reported in SEC ownership filings.
          *
-         *     Use `company` and a filing or transaction date range. Results run from newest filing to oldest and include Form 4 transactions and any transaction lines supplied for Forms 3 and 5.
+         *     Use `company` for an issuer's insiders or `owner` for one insider's transactions across every issuer (one of the two is required), with a filing or transaction date range. Results run from newest filing to oldest and include Form 4 transactions and any transaction lines supplied for Forms 3 and 5.
          *
          *     Both derivative and non-derivative transactions appear. Use `is_derivative=false` for non-derivative transactions alone.
          */
@@ -2417,7 +2505,7 @@ export interface paths {
          * List ratios
          * @description List a company's financial ratios by fiscal period.
          *
-         *     Select an annual, quarterly, year-to-date or trailing twelve-month `period`. Use `category` to request groups such as profitability or liquidity, and a `fiscal_year` range to narrow the history. The newest periods appear first.
+         *     Select an annual, quarterly, year-to-date or trailing twelve-month `period`. Use `category` to request groups such as profitability, liquidity or efficiency (turnover and days ratios), and a `fiscal_year` range to narrow the history. The newest periods appear first.
          */
         get: operations["listRatios"];
         put?: never;
@@ -3177,7 +3265,7 @@ export interface components {
                 registrant_cik: null | string;
             };
             /** @description The data families served for this instrument: its type's table (the same table every `company=` / `symbol=` refusal names), without `dividends` when no dividend row is stored for the symbol (an ETF or closed-end fund outside the dividend coverage scope, a stock that never paid); actual depth: `expand=coverage` on the company or fund */
-            datasets: Array<"alerts" | "dividends" | "events" | "filings" | "financials" | "fiscal_periods" | "fund_holdings" | "fund_weights" | "guidance" | "holders" | "insider_trades" | "investor_documents" | "ipos" | "metrics" | "news" | "offerings" | "people" | "profile" | "segments" | "splits" | "transcripts">;
+            datasets: Array<"alerts" | "dividends" | "events" | "filings" | "financials" | "fiscal_periods" | "fund_holdings" | "fund_weights" | "guidance" | "holders" | "insider_holdings" | "insider_trades" | "investor_documents" | "ipos" | "metrics" | "news" | "offerings" | "people" | "profile" | "segments" | "splits" | "transcripts">;
         };
         /**
          * MetaCoverage
@@ -3346,6 +3434,42 @@ export interface components {
                     through: null | string;
                 }>;
             };
+            /** @description With `expand=former_tickers`: tickers used before, newest first; the current tickers are left out */
+            former_tickers?: Array<components["schemas"]["FormerTicker"]> | null;
+        };
+        /**
+         * FormerTicker
+         * @description A ticker the registrant was listed or registered under before; neither date is an SEC validity date: `registry` dates are when our SEC registry loader observed the ticker in the SEC company ticker file, `listing` dates are the listing dates of a retired instrument (a ticker change, a reassigned symbol or a succession; a delisting is not a former ticker)
+         */
+        FormerTicker: {
+            /**
+             * @description Ticker
+             * @example FB
+             */
+            ticker: string;
+            /**
+             * @description Exchange (MIC); null when the stated venue has no MIC mapping
+             * @example XNAS
+             */
+            exchange: null | string;
+            /**
+             * Format: date
+             * @description First day seen (registry) or the listing date (listing); null when unknown
+             * @example 2012-05-18
+             */
+            first_seen_on: null | string;
+            /**
+             * Format: date
+             * @description Last day seen (registry) or the first day the retirement was observed (listing)
+             * @example 2022-06-08
+             */
+            last_seen_on: null | string;
+            /**
+             * @description registry = the SEC company ticker file as our loader observed it; listing = a retired instrument row
+             * @example listing
+             * @enum {string}
+             */
+            source: "listing" | "registry";
         };
         /**
          * FundListItem
@@ -3752,6 +3876,8 @@ export interface components {
             fund?: components["schemas"]["FilerFund"] | null;
             /** @description With `expand=private_offerings`: summary of the filer's Form D private offerings (GET /v1/offerings?company=); null for a filer without Form D offerings and while Form D data is not served. Only for filers the SEC registry knows */
             private_offerings?: components["schemas"]["FilerPrivateOfferings"] | null;
+            /** @description With `expand=former_tickers`: tickers used before, newest first; the current tickers are left out */
+            former_tickers?: Array<components["schemas"]["FormerTicker"]> | null;
         };
         /**
          * ProposedTicker
@@ -4293,6 +4419,61 @@ export interface components {
             };
         };
         /**
+         * ExchangeCatalogEntry
+         * @description One exchange of the served instruments: the values `exchange=` accepts on GET /v1/companies, /v1/instruments and /v1/funds
+         */
+        ExchangeCatalogEntry: {
+            /**
+             * @description ISO 10383 operating MIC
+             * @example XNAS
+             */
+            mic: string;
+            /**
+             * @description Exchange name
+             * @example Nasdaq
+             */
+            name: string;
+            /**
+             * @description Operating companies whose primary listing is on this exchange
+             * @example 3300
+             */
+            company_count: number;
+            /**
+             * @description Listed instruments (stocks, funds, ETNs) on this exchange
+             * @example 5600
+             */
+            instrument_count: number;
+        };
+        /**
+         * SectorCatalogEntry
+         * @description One sector of the operating companies with its industries: the values `sector=` accepts on GET /v1/companies
+         */
+        SectorCatalogEntry: {
+            /**
+             * @description Sector
+             * @example Technology
+             */
+            sector: string;
+            /**
+             * @description Operating companies in the sector
+             * @example 780
+             */
+            company_count: number;
+            /** @description Industries of the sector, largest first */
+            industries: Array<{
+                /**
+                 * @description Industry
+                 * @example Software - Application
+                 */
+                industry: string;
+                /**
+                 * @description Operating companies in the industry
+                 * @example 210
+                 */
+                company_count: number;
+            }>;
+        };
+        /**
          * StandardizedPeriod
          * @description One fiscal period of standardized statements
          */
@@ -4372,6 +4553,8 @@ export interface components {
             filed_at: string;
             /** @description true when a later filing restated this period (point-in-time reads only) */
             restated: boolean;
+            /** @description true when the period's values come from a preliminary release rendering: the figures of an earnings release (8-K) published before the quarterly or annual report states them; the report's rendering replaces it (false) */
+            is_preliminary: boolean;
         };
         /**
          * StandardizedFacts
@@ -4847,6 +5030,52 @@ export interface components {
             is_total?: boolean;
             /** @description Nested child facts with facts schema (only present if there are children) */
             children?: Array<components["schemas"]["AsReportedPresentationNode"]>;
+        };
+        /**
+         * FinancialVintage
+         * @description One filing that stated a value for the concept and period: the original filing and every later filing that repeated or restated it, oldest first
+         */
+        FinancialVintage: {
+            /**
+             * @description Accession of the filing
+             * @example 0000320193-24-000123
+             */
+            accession: string;
+            /**
+             * @description Form
+             * @example 10-K
+             */
+            form: null | string;
+            /**
+             * Format: date
+             * @description Filing date
+             * @example 2024-11-01
+             */
+            filing_date: null | string;
+            /**
+             * Format: date
+             * @description Start of the fact's duration; null for an instant
+             * @example 2023-10-01
+             */
+            period_start: null | string;
+            /**
+             * Format: date
+             * @description End of the duration, or the instant
+             * @example 2024-09-28
+             */
+            period_end: null | string;
+            /**
+             * @description The value as this filing stated it
+             * @example 391035000000
+             */
+            value: null | number;
+            /**
+             * @description Unit
+             * @example USD
+             */
+            unit: null | string;
+            /** @description true for the filing whose value the financial statements serve today */
+            is_current: boolean;
         };
         /**
          * RatioPeriod
@@ -5949,7 +6178,7 @@ export interface components {
              */
             deemed_execution_date: null | string;
             /**
-             * @description CIK of the reporting owner (10 digits); one row per owner of a joint filing; sec_api rows (realtime Form 4 feed) leave it null
+             * @description CIK of the reporting owner (10 digits); one row per owner of a joint filing; null where the filing names no CIK for the owner
              * @example 0001496686
              */
             owner_cik: null | string;
@@ -6005,6 +6234,117 @@ export interface components {
             id: string;
             /** @description Footnote text */
             text: string;
+        };
+        /**
+         * InsiderHolding
+         * @description One holding line of an SEC Form 3, 4 or 5 (a security the reporting owner holds without a transaction on the filing): one row per reporting owner
+         */
+        InsiderHolding: {
+            /**
+             * @description Holding line id
+             * @example f345:0001214156-25-000003:NONDERIV_HOLDING:1a2b:1:1214156
+             */
+            id: string;
+            /**
+             * @description Accession of the ownership filing
+             * @example 0001214156-25-000003
+             */
+            accession_number: string;
+            /**
+             * @description Form of the filing (3, 4, 5 or an amendment)
+             * @example 4
+             */
+            form: null | string;
+            /**
+             * @description Issuer CIK (10 digits)
+             * @example 0000320193
+             */
+            cik: string;
+            /**
+             * Format: date-time
+             * @description When the filing was accepted by EDGAR
+             */
+            filed_at: string;
+            /**
+             * Format: date
+             * @description Date the holding is reported for (the filing's period of report)
+             * @example 2025-10-02
+             */
+            as_of: null | string;
+            /**
+             * @description CIK of the reporting owner (10 digits); null where the filing names no CIK for the owner
+             * @example 0001214156
+             */
+            owner_cik: null | string;
+            /**
+             * @description Reporting owner
+             * @example COOK TIMOTHY D
+             */
+            reporting_person_name: string;
+            /** @description Director */
+            reporting_person_is_director: boolean;
+            /** @description Officer */
+            reporting_person_is_officer: boolean;
+            /**
+             * @description Officer title
+             * @example Chief Executive Officer
+             */
+            reporting_person_officer_title: null | string;
+            /** @description Owner of 10 % or more of a class */
+            reporting_person_is_ten_percent_owner: boolean;
+            /** @description Other relationship */
+            reporting_person_is_other: boolean;
+            /** @description The other relationship as filed */
+            reporting_person_other_text: null | string;
+            /**
+             * @description Security as filed
+             * @example Common Stock
+             */
+            security_title: null | string;
+            /**
+             * @description Shares (or units) held
+             * @example 3280180
+             */
+            shares_owned: null | number;
+            /** @description Value held where the filing states a value instead of shares */
+            value_owned: null | number;
+            /**
+             * @description Ownership form: D = direct, I = indirect
+             * @example D
+             * @enum {string|null}
+             */
+            direct_indirect: "D" | "I" | null;
+            /**
+             * @description Nature of an indirect ownership as filed
+             * @example By Trust
+             */
+            nature_of_ownership: null | string;
+            /** @description true = a derivative security (option, RSU, warrant) */
+            is_derivative: boolean;
+            /** @description Conversion or exercise price of a derivative security */
+            conversion_exercise_price: null | number;
+            /**
+             * Format: date
+             * @description Date the derivative security becomes exercisable
+             */
+            exercise_date: null | string;
+            /**
+             * Format: date
+             * @description Expiration date of the derivative security
+             */
+            expiration_date: null | string;
+            /** @description Underlying security of a derivative security */
+            underlying_security_title: null | string;
+            /** @description Underlying shares of a derivative security */
+            underlying_shares: null | number;
+            /** @description The filing's footnotes referenced by this line */
+            footnotes: Array<components["schemas"]["InsiderTradeFootnote"]> | null;
+            /**
+             * @description f345 = the SEC Form 3/4/5 data set (quarterly, the record), sec_api = the realtime feed
+             * @example f345
+             * @enum {string}
+             */
+            source: "f345" | "sec_api";
         };
         /**
          * Ipo
@@ -12071,6 +12411,11 @@ export interface operations {
                  */
                 "sort"?: "-period_end" | "period_end";
                 /**
+                 * @description Comma list of XBRL concepts as `facts` names them (`Revenues`; a prefix such as `us-gaap:` is ignored) to keep inside `facts`; the presentation view keeps each listed node with the path to it. A concept the period does not state is left out
+                 * @example Revenues,NetIncomeLoss
+                 */
+                "metrics"?: string;
+                /**
                  * @description Comma list of root-level fields to keep (R7)
                  * @example fiscal_year,period_end
                  */
@@ -12141,7 +12486,8 @@ export interface operations {
                      *             "accession": "0000320193-26-000026",
                      *             "form": "10-K",
                      *             "filed_at": "2026-11-03T13:05:15Z",
-                     *             "restated": false
+                     *             "restated": false,
+                     *             "is_preliminary": false
                      *           },
                      *           "statements": {
                      *             "income_statement": {
@@ -12446,6 +12792,11 @@ export interface operations {
                  */
                 "sort"?: "-period_end" | "period_end";
                 /**
+                 * @description Comma list of XBRL concepts as `facts` names them (`Revenues`; a prefix such as `us-gaap:` is ignored) to keep inside `facts`; the presentation view keeps each listed node with the path to it. A concept the period does not state is left out
+                 * @example Revenues,NetIncomeLoss
+                 */
+                "metrics"?: string;
+                /**
                  * @description Comma list of root-level fields to keep (R7)
                  * @example fiscal_year,period_end
                  */
@@ -12516,7 +12867,8 @@ export interface operations {
                      *             "accession": "0000320193-26-000026",
                      *             "form": "10-K",
                      *             "filed_at": "2026-11-03T13:05:15Z",
-                     *             "restated": false
+                     *             "restated": false,
+                     *             "is_preliminary": false
                      *           },
                      *           "statements": {
                      *             "income_statement": {
@@ -13318,6 +13670,11 @@ export interface operations {
                  */
                 "sort"?: "-period_end" | "period_end";
                 /**
+                 * @description Comma list of XBRL concepts as `facts` names them (`Revenues`; a prefix such as `us-gaap:` is ignored) to keep inside `facts`; the presentation view keeps each listed node with the path to it. A concept the period does not state is left out
+                 * @example Revenues,NetIncomeLoss
+                 */
+                "metrics"?: string;
+                /**
                  * @description Comma list of root-level fields to keep (R7)
                  * @example fiscal_year,period_end
                  */
@@ -13388,7 +13745,8 @@ export interface operations {
                      *             "accession": "0000320193-26-000026",
                      *             "form": "10-K",
                      *             "filed_at": "2026-11-03T13:05:15Z",
-                     *             "restated": false
+                     *             "restated": false,
+                     *             "is_preliminary": false
                      *           },
                      *           "statements": {
                      *             "income_statement": {
@@ -13598,7 +13956,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Optional objects to include: `coverage` (comma list)
+                 * @description Optional objects to include: `coverage`, `former_tickers` (comma list)
                  * @example coverage
                  */
                 expand?: string;
@@ -14481,7 +14839,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Optional objects to include: `lifecycle`, `proposed_symbols`, `former_names`, `successors`, `fund`, `private_offerings` (comma list)
+                 * @description Optional objects to include: `lifecycle`, `proposed_symbols`, `former_names`, `former_tickers`, `successors`, `fund`, `private_offerings` (comma list)
                  * @example lifecycle
                  */
                 expand?: string;
@@ -16684,6 +17042,11 @@ export interface operations {
                  */
                 "sort"?: "-period_end" | "period_end";
                 /**
+                 * @description Comma list of metric ids (GET /v1/catalog/metrics) to keep inside `facts`; the presentation view keeps each listed node with the path to it. An unknown id answers 400
+                 * @example is_total_revenue,is_net_income
+                 */
+                "metrics"?: string;
+                /**
                  * @description Comma list of root-level fields to keep (R7)
                  * @example fiscal_year,period_end
                  */
@@ -16744,7 +17107,8 @@ export interface operations {
                      *             "accession": "0000320193-26-000026",
                      *             "form": "10-K",
                      *             "filed_at": "2026-11-03T13:05:15Z",
-                     *             "restated": false
+                     *             "restated": false,
+                     *             "is_preliminary": false
                      *           },
                      *           "statements": {
                      *             "income_statement": {
@@ -16925,6 +17289,11 @@ export interface operations {
                  */
                 "sort"?: "-period_end" | "period_end";
                 /**
+                 * @description Comma list of metric ids (GET /v1/catalog/metrics) to keep inside `facts`; the presentation view keeps each listed node with the path to it. An unknown id answers 400
+                 * @example is_total_revenue,is_net_income
+                 */
+                "metrics"?: string;
+                /**
                  * @description Comma list of root-level fields to keep (R7)
                  * @example fiscal_year,period_end
                  */
@@ -16985,7 +17354,8 @@ export interface operations {
                      *             "accession": "0000320193-26-000026",
                      *             "form": "10-K",
                      *             "filed_at": "2026-11-03T13:05:15Z",
-                     *             "restated": false
+                     *             "restated": false,
+                     *             "is_preliminary": false
                      *           },
                      *           "statements": {
                      *             "income_statement": {
@@ -17730,6 +18100,11 @@ export interface operations {
                  */
                 "sort"?: "-period_end" | "period_end";
                 /**
+                 * @description Comma list of metric ids (GET /v1/catalog/metrics) to keep inside `facts`; the presentation view keeps each listed node with the path to it. An unknown id answers 400
+                 * @example is_total_revenue,is_net_income
+                 */
+                "metrics"?: string;
+                /**
                  * @description Comma list of root-level fields to keep (R7)
                  * @example fiscal_year,period_end
                  */
@@ -17790,7 +18165,8 @@ export interface operations {
                      *             "accession": "0000320193-26-000026",
                      *             "form": "10-K",
                      *             "filed_at": "2026-11-03T13:05:15Z",
-                     *             "restated": false
+                     *             "restated": false,
+                     *             "is_preliminary": false
                      *           },
                      *           "statements": {
                      *             "income_statement": {
@@ -19985,6 +20361,75 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listExchangeCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["ExchangeCatalogEntry"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listFactPlaces: {
         parameters: {
             query?: {
@@ -20982,6 +21427,101 @@ export interface operations {
                                  */
                                 newest_filing_date: null | string;
                             }>;
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listFinancialVintages: {
+        parameters: {
+            query: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK of ONE company (all digits, any padding). Required.
+                 * @example AAPL
+                 */
+                company: string;
+                /**
+                 * @description XBRL concept as filed: the local name (`Revenues`) or with its prefix (`us-gaap:Revenues`)
+                 * @example Revenues
+                 */
+                concept: string;
+                /**
+                 * @description End of the fact's duration, or its instant
+                 * @example 2024-09-28
+                 */
+                period_end: string;
+                /**
+                 * @description Start of the duration (omitted = every duration ending on `period_end`, and instants)
+                 * @example 2023-10-01
+                 */
+                period_start?: string;
+                /**
+                 * @description One dimension member (`aapl:GreaterChinaSegmentMember` or its local name): the value of that member; omitted = the consolidated value
+                 * @example aapl:GreaterChinaSegmentMember
+                 */
+                member?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["FinancialVintage"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
                         };
                     };
                 };
@@ -22344,14 +22884,129 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
-    listInsiderTrades: {
+    listInsiderHoldings: {
         parameters: {
-            query: {
+            query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
-                "company": string;
+                "company"?: string;
+                /**
+                 * @description Reporting-owner CIK (all digits, any padding): the insider's own rows across every issuer; a comma list of 1–50 reads several owners. One of `company` / `owner` is required
+                 * @example 0001214156
+                 */
+                "owner"?: string;
+                /**
+                 * @description `as_of` on or after this value (rows without a reported date are excluded)
+                 * @example 2025-01-01
+                 */
+                "as_of.gte"?: string;
+                /**
+                 * @description `as_of` after this value (rows without a reported date are excluded)
+                 * @example 2025-01-01
+                 */
+                "as_of.gt"?: string;
+                /**
+                 * @description `as_of` on or before this value (rows without a reported date are excluded)
+                 * @example 2025-01-01
+                 */
+                "as_of.lte"?: string;
+                /**
+                 * @description `as_of` before this value (rows without a reported date are excluded)
+                 * @example 2025-01-01
+                 */
+                "as_of.lt"?: string;
+                /**
+                 * @description Omitted = derivative and non-derivative holdings; true = only derivative securities (options, RSUs, warrants); false = only non-derivative holdings
+                 * @example false
+                 */
+                "is_derivative"?: boolean;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended; rows without a reported date come last in descending order. Default `-as_of`
+                 * @example -as_of
+                 */
+                "sort"?: "-as_of" | "as_of";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["InsiderHolding"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listInsiderTrades: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                "company"?: string;
+                /**
+                 * @description Reporting-owner CIK (all digits, any padding): the insider's own rows across every issuer; a comma list of 1–50 reads several owners. One of `company` / `owner` is required
+                 * @example 0001214156
+                 */
+                "owner"?: string;
                 /**
                  * @description buy = acquired, sell = disposed
                  * @example buy
@@ -24973,9 +25628,14 @@ export interface operations {
                      *             },
                      *             "liquidity": {
                      *               "ratio_quick_ratio": 0.59,
-                     *               "ratio_current_ratio": 1.02,
+                     *               "ratio_current_ratio": 1.02
+                     *             },
+                     *             "efficiency": {
                      *               "ratio_inventory_turnover": 16.86,
-                     *               "ratio_asset_turnover": 1.18
+                     *               "ratio_asset_turnover": 1.18,
+                     *               "ratio_receivables_turnover": 11.46,
+                     *               "ratio_days_sales_outstanding": 31.86,
+                     *               "ratio_days_inventory_outstanding": 21.64
                      *             },
                      *             "profitability": {
                      *               "ratio_return_on_assets_pct": 34.61,
@@ -24984,7 +25644,8 @@ export interface operations {
                      *               "ratio_gross_margin_pct": 48.79,
                      *               "ratio_operating_margin_pct": 33.01,
                      *               "ratio_ebitda_margin_pct": 35.81,
-                     *               "ratio_net_margin_pct": 27.6
+                     *               "ratio_net_margin_pct": 27.6,
+                     *               "ratio_payout_ratio_pct": 11.89
                      *             }
                      *           }
                      *         }
@@ -25245,6 +25906,75 @@ export interface operations {
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["SectionCatalogEntry"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listSectorCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["SectorCatalogEntry"]>;
                         /** @description true when a next page exists */
                         has_more: boolean;
                         /** @description Opaque cursor of the next page; null on the last page */

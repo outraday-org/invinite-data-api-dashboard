@@ -42,7 +42,7 @@ const EXPLAIN_HINTS: Record<V2FinancialsBasis, Record<V2FinancialsView, string>>
     "as-reported": {
         detailed: "Click a value to explain it: formula and operands of a computed value, source filing and its place in the filing.",
         presentation: "The Detailed view explains each value.",
-        summary: "The Detailed view explains each value.",
+        summary: "Click a filed value to see every filing that stated it; the Detailed view explains each value.",
     },
     "standardized": {
         detailed: "Click a value to explain it: rule, formula, source filing and its place in the filing.",
@@ -104,7 +104,7 @@ export function FinancialsStatementsView({
         >
             {view === "presentation"
                 ? <FinancialsPresentationTable isCollapsible={basis === "standardized"} periods={trees} toolbar={toolbar} />
-                : <FinancialsFlatTable cik={rows.at(0)?.company.cik ?? null} columns={columns} lines={lines} rows={rows} />}
+                : <FinancialsFlatTable cik={rows.at(0)?.company.cik ?? null} columns={columns} filedValues={basis === "as-reported"} lines={lines} rows={rows} />}
         </MetricsListBody>
     );
 }
