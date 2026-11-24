@@ -21,6 +21,19 @@ export default [
         ],
     },
     ...tanstackConfig,
+    {
+        // This config file is plain JS outside the TypeScript project (no `allowJs`): lint it without type information,
+        // so the type-aware rules of tanstackConfig are off for it.
+        files: ["eslint.config.js"],
+        languageOptions: { parserOptions: { project: false } },
+        rules: {
+            "@typescript-eslint/naming-convention": "off",
+            "@typescript-eslint/no-for-in-array": "off",
+            "@typescript-eslint/no-unnecessary-condition": "off",
+            "@typescript-eslint/no-unnecessary-type-assertion": "off",
+            "@typescript-eslint/require-await": "off",
+        },
+    },
     stylistic.configs.customize({
         // the following options are the default values
         indent: 4,
