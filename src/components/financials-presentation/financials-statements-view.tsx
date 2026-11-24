@@ -13,7 +13,7 @@ import { FinancialsFlatTable } from "./financials-flat-table";
 import { FinancialsPresentationTable } from "./financials-presentation-table";
 
 const VIEW_OPTIONS: Array<{ label: string; value: V2FinancialsView }> = [
-    { label: "Summary", value: "summary" },
+    { label: "Standard", value: "summary" },
     { label: "Detailed", value: "detailed" },
     { label: "Presentation", value: "presentation" },
 ];
@@ -104,7 +104,7 @@ export function FinancialsStatementsView({
             </div>
             {view === "presentation"
                 ? <FinancialsPresentationTable isCollapsible={basis === "standardized"} periods={trees} />
-                : <FinancialsFlatTable cik={rows.at(0)?.company.cik ?? null} columns={columns} lines={lines} />}
+                : <FinancialsFlatTable cik={rows.at(0)?.company.cik ?? null} columns={columns} lines={lines} rows={rows} />}
         </MetricsListBody>
     );
 }

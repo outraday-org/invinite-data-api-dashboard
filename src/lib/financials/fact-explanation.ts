@@ -8,6 +8,10 @@ import type { JsonValue, V2FactPlace, V2FactResponse } from "@/lib/api/types";
 import { formatDay } from "@/lib/format";
 import { formatMetricId } from "@/lib/utils";
 
+import type { ValueRef } from "./value-ref";
+
+import { refMonths, refOfFactId, refPeriodText } from "./value-ref";
+
 type JsonObject = { [key: string]: JsonValue };
 
 const isObject = (value: JsonValue | undefined): value is JsonObject => typeof value === "object" && value !== null && !Array.isArray(value);
@@ -94,7 +98,20 @@ export type FactRuleModel = {
     statement: null | string;
 };
 
-export type FactOperandModel = { label: string; nested: number; value: null | number };
+/**
+ * One operand: its label, how many operands it nests, its value as weighted in the formula (`value`, a subtracted one
+ * negative) and as stored (`stored`), and the filed value it names (`ref`, a raw fact id; null = a metric).
+ */
+export type FactOperandModel = {
+    concept: null | string;
+    label: string;
+    months: null | number;
+    nested: number;
+    period: null | string;
+    ref: null | ValueRef;
+    stored: null | number;
+    value: null | number;
+};
 
 export type FactSourceModel = {
     accession: null | string;
@@ -151,10 +168,19 @@ function operandModel(operand: JsonValue): FactOperandModel {
 
     const nested = Object.values(object).find(Array.isArray);
 
+    const ref = id ? refOfFactId(id) : null;
+
+    const value = numeric(object.value) ?? numeric(object.weighted_value) ?? numeric(object.stored_value);
+
     return {
+        concept: ref?.concept ?? text(object.concept) ?? (metricId ? formatMetricId(metricId) || metricId : null),
         label,
+        months: ref ? refMonths(ref) : null,
         nested: Array.isArray(nested) ? nested.length : 0,
-        value: numeric(object.value) ?? numeric(object.weighted_value) ?? numeric(object.stored_value),
+        period: ref ? refPeriodText(ref) : null,
+        ref,
+        stored: numeric(object.stored_value) ?? numeric(object.value) ?? value,
+        value,
     };
 }
 

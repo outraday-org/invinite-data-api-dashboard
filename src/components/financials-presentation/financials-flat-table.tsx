@@ -1,5 +1,6 @@
 import * as React from "react";
 
+import type { V2StatementPeriod } from "@/lib/api/types";
 import type { StatementColumn, StatementLine } from "@/lib/financials/statements";
 
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
@@ -33,9 +34,15 @@ function cellTitle(cell: NonNullable<StatementLine["values"][number]>) {
  * The flat statement table of the summary / detailed views: one line per metric / concept, one column per period
  * (newest first). A derived value is italic (its tooltip says so); a click charts the line. A detailed value is a
  * button: "Explain this number" without charting the line — a standardized one by its fact id (`/v1/facts/{id}`), an
- * as-reported one from the fact itself (formula, operands, filing; `cik` = the company's, for the EDGAR links).
+ * as-reported one from the fact itself (formula, operands, filing; `cik` = the company's, for the EDGAR links; `rows` =
+ * the loaded periods, where a formula member's own filing is looked up first).
  */
-export function FinancialsFlatTable({ cik = null, columns, lines }: { cik?: null | string; columns: Array<StatementColumn>; lines: Array<StatementLine> }) {
+export function FinancialsFlatTable({ cik = null, columns, lines, rows }: {
+    cik?: null | string;
+    columns: Array<StatementColumn>;
+    lines: Array<StatementLine>;
+    rows?: ReadonlyArray<V2StatementPeriod>;
+}) {
     const [selected, setSelected] = useChartSelection(lines, line => line.id);
 
     const [explaining, setExplaining] = React.useState<ExplainTarget | null>(null);
@@ -57,7 +64,7 @@ export function FinancialsFlatTable({ cik = null, columns, lines }: { cik?: null
                 </TableHeader>
                 <TableBody className="divide-y-0">
                     {lines.map(line => (
-                        <TableRow className="group h-[41px] leading-5 cursor-pointer hover:bg-muted/50" key={line.id} onClick={() => setSelected(line)}>
+                        <TableRow className="group h-[41px] leading-5 clickable-financial-row hover:bg-muted/50" key={line.id} onClick={() => setSelected(line)}>
                             <TableCell className={cn(STICKY_FIRST_CELL, "w-[160px] min-w-[160px] max-w-[160px] sm:w-[420px] sm:min-w-[420px] sm:max-w-[420px]")}>
                                 <div className="flex min-w-0 items-center gap-1">
                                     <div className="min-w-0 flex-1 truncate font-medium" title={line.title ?? line.label}>{line.label}</div>
@@ -74,14 +81,14 @@ export function FinancialsFlatTable({ cik = null, columns, lines }: { cik?: null
                                             ? (
                                                     <button
                                                         aria-label={`Explain ${line.label}, ${column.label}`}
-                                                        className={cn("tabular-nums rounded-sm underline decoration-dotted underline-offset-4 hover:text-primary focus-visible:outline-2 focus-visible:outline-ring", cell.derived ? "italic text-muted-foreground" : null)}
+                                                        className={cn("tabular-nums rounded-sm focus-visible:outline-2 focus-visible:outline-ring", cell.derived ? "italic" : null)}
                                                         onClick={(event) => {
                                                             event.stopPropagation();
 
                                                             const period = `${line.label} · ${column.label}`;
 
                                                             if (cell.factId) setExplaining({ accession: cell.accession ?? null, factId: cell.factId, formula: cell.formula, htmlTagId: cell.htmlTagId ?? null, period });
-                                                            else if (cell.reported) setExplainingReported({ cik, concept: line.id, fact: cell.reported, period });
+                                                            else if (cell.reported) setExplainingReported({ cik, concept: line.id, fact: cell.reported, period, rows });
                                                         }}
                                                         title={[cellTitle(cell), "Click: explain this number"].filter(Boolean).join("\n")}
                                                         type="button"
@@ -91,7 +98,7 @@ export function FinancialsFlatTable({ cik = null, columns, lines }: { cik?: null
                                                 )
                                             : cell
                                                 ? (
-                                                        <span className={cn("tabular-nums", cell.derived ? "italic text-muted-foreground" : null)} title={cellTitle(cell)}>
+                                                        <span className={cn("tabular-nums", cell.derived ? "italic" : null)} title={cellTitle(cell)}>
                                                             {formatterOf(line.id)(cell.value)}
                                                         </span>
                                                     )

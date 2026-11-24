@@ -5,6 +5,7 @@ import * as React from "react";
 import { toast } from "sonner";
 
 import type { AssetGroupCategory } from "@/lib/earnings/documents";
+import type { ValueLookup } from "@/lib/financials/value-ref";
 
 import { isSymbolParam } from "@/lib/instruments";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
@@ -36,6 +37,7 @@ import type {
     V2AnnouncementsResponse,
     V2AnnouncementsSort,
     V2ApiStatus,
+    V2AsReportedDetailedResponse,
     V2AudioResponse,
     V2CagrHorizon,
     V2CagrResponse,
@@ -1634,6 +1636,23 @@ export function useV2Fact(factId: null | string) {
         errorMessage: null,
         load: apiKey => getV2Fact({ data: { apiKey, factId: factId ?? "" } }),
         queryKey: ["v2", "fact", factId ?? ""],
+        staleTime: FINANCIALS_STALE_MS,
+    });
+}
+
+/**
+ * The as-reported detailed rows that hold a formula member's filed value (`company` = a CIK or ticker; null = idle):
+ * one request of the member's period type over the fiscal years around its end, every statement — the member's own
+ * filing and inline-XBRL element are read from them (`findValueSource`).
+ */
+export function useReportedValueLookup(company: null | string, lookup: null | ValueLookup) {
+    return useEarningsQuery<V2AsReportedDetailedResponse>({
+        enabled: Boolean(company) && lookup !== null,
+        errorMessage: null,
+        load: apiKey => getV2AsReportedDetailed({
+            data: { apiKey, company: company ?? "", fiscalYearGte: lookup?.fiscalYearGte, fiscalYearLte: lookup?.fiscalYearLte, limit: 20, period: lookup?.period ?? "annual" },
+        }),
+        queryKey: ["v2", "financials-value-lookup", company ?? "", lookup?.period ?? "", lookup?.fiscalYearGte ?? "", lookup?.fiscalYearLte ?? ""],
         staleTime: FINANCIALS_STALE_MS,
     });
 }

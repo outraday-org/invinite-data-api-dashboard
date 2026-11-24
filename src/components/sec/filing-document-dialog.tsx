@@ -10,8 +10,11 @@ import { useV2Filing } from "@/lib/api/queries";
 import { primaryDocumentOf } from "@/lib/sec/parity";
 import { toV2FilingDocuments } from "@/lib/sec/source";
 
-/** A filing to show: its accession, the value's inline-XBRL element (null = open at the top) and what the reader clicked. */
-export type FilingDocumentTarget = { accession: string; elementId: null | string; title: string };
+/**
+ * A filing to show: its accession (null = not known: still being looked up, or not found), the value's inline-XBRL
+ * element (null = open at the top) and what the reader clicked.
+ */
+export type FilingDocumentTarget = { accession: null | string; elementId: null | string; title: string };
 
 /**
  * The filing's main document: the one whose type is the form (the 10-Q / 10-K itself; the filing answer names no
@@ -33,10 +36,17 @@ export const elementUrl = (url: string, elementId: null | string) => (elementId 
  * its element is known; at the top otherwise. Asks `/v1/filings/{accession}?expand=documents` (the cache the filings
  * page shares) while open.
  */
-export function FilingDocumentDialog({ onClose, target }: { onClose: () => void; target: FilingDocumentTarget | null }) {
+export function FilingDocumentDialog({ onClose, resolving, target }: {
+    onClose: () => void;
+    /** The lookup of the value's filing (a formula member names none): its state while `target.accession` is null. */
+    resolving?: { error: unknown; isLoading: boolean };
+    target: FilingDocumentTarget | null;
+}) {
     const filing = useV2Filing(target?.accession ?? null, ["documents"]);
 
     const url = filingDocumentUrl(filing.data);
+
+    const unresolved = target !== null && target.accession === null;
 
     return (
         <Dialog onOpenChange={open => !open && onClose()} open={target !== null}>
@@ -44,7 +54,7 @@ export function FilingDocumentDialog({ onClose, target }: { onClose: () => void;
                 <div className="flex h-full min-h-0 flex-col">
                     <DialogHeader className="p-4 pb-2">
                         <DialogTitle className="flex items-start justify-between gap-3">
-                            <span className="min-w-0 truncate">{filing.data ? `${filing.data.form} · ${target?.accession ?? ""}` : (target?.accession ?? "Filing")}</span>
+                            <span className="min-w-0 truncate">{filing.data ? `${filing.data.form} · ${target?.accession ?? ""}` : (target?.accession ?? (unresolved && resolving?.isLoading ? "Finding the filing…" : "Filing"))}</span>
                             {url && (
                                 <a className="text-primary flex shrink-0 items-center gap-1 text-xs font-normal hover:underline" href={elementUrl(url, target?.elementId ?? null)} rel="noopener noreferrer" target="_blank">
                                     Open in new tab
@@ -54,30 +64,27 @@ export function FilingDocumentDialog({ onClose, target }: { onClose: () => void;
                         </DialogTitle>
                         <DialogDescription className="[overflow-wrap:anywhere]">
                             {target
-                                ? (target.elementId ? `${target.title} · the value is marked in the document` : `${target.title} · no place in the document is stated for this value`)
+                                ? (target.elementId ? `${target.title} · the value is marked in the document` : target.title)
                                 : null}
                         </DialogDescription>
                     </DialogHeader>
                     <div className="min-h-0 grow px-4 pb-4">
-                        {filing.error
-                            ? <SecReadinessNotice error={filing.error} title="Failed to load the filing" />
-                            : filing.isLoading
-                                ? <Skeleton className="h-full w-full" />
-                                : url
-                                    ? <HtmlViewer className="h-full" highlightId={target?.elementId ?? null} title={target?.title ?? "Filing"} url={url} />
-                                    : <div className="text-muted-foreground text-sm">The filing has no public HTML copy yet.</div>}
+                        {unresolved
+                            ? (resolving?.error
+                                    ? <SecReadinessNotice error={resolving.error} title="Failed to find the value's filing" />
+                                    : resolving?.isLoading
+                                        ? <Skeleton className="h-full w-full" />
+                                        : <div className="text-muted-foreground text-sm">The filing of this value was not found.</div>)
+                            : filing.error
+                                ? <SecReadinessNotice error={filing.error} title="Failed to load the filing" />
+                                : filing.isLoading
+                                    ? <Skeleton className="h-full w-full" />
+                                    : url
+                                        ? <HtmlViewer className="h-full" highlightId={target?.elementId ?? null} title={target?.title ?? "Filing"} url={url} />
+                                        : <div className="text-muted-foreground text-sm">The filing has no public HTML copy yet.</div>}
                     </div>
                 </div>
             </DialogContent>
         </Dialog>
-    );
-}
-
-/** The "Open the filing" button of an explained value (at the value when its element is known). */
-export function OpenFilingButton({ elementId, onOpen }: { elementId: null | string; onOpen: () => void }) {
-    return (
-        <button className="text-primary inline-flex items-center gap-1 font-medium underline-offset-4 hover:underline" onClick={onOpen} type="button">
-            {elementId ? "Show the value in the filing" : "Open the filing"}
-        </button>
     );
 }

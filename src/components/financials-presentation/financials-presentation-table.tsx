@@ -133,7 +133,7 @@ export function FinancialsPresentationTable({
                     {rows.map((row) => {
                         return (
                             <TableRow
-                                className="group h-[41px] leading-5 cursor-pointer hover:bg-muted/50"
+                                className="group h-[41px] leading-5 clickable-financial-row hover:bg-muted/50"
                                 key={row.metricId}
                                 onClick={() => setSelectedRow(row)}
                             >

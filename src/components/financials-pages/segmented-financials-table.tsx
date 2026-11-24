@@ -42,7 +42,7 @@ export function SegmentedFinancialsTable({ periodLabels, rows: lines }: { period
                 <TableBody className="divide-y-0">
                     {rows.map(row => (
                         <TableRow
-                            className="group h-[41px] leading-5 cursor-pointer hover:bg-muted/50"
+                            className="group h-[41px] leading-5 clickable-financial-row hover:bg-muted/50"
                             key={row.key}
                             onClick={() => setSelectedRow(row)}
                         >

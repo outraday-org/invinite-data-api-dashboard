@@ -167,3 +167,14 @@
     @apply border-border
   }
 }
+
+:is(a[href], button, summary, select, [role="button"], [role="link"], .cursor-pointer, .clickable-financial-row) {
+    cursor: default;
+}
+
+@media (hover: hover) {
+    :where(a[href], button, summary, select, [role="button"], [role="link"]):hover:not(:disabled, [aria-disabled="true"], [data-disabled]),
+    .clickable-financial-row > td:hover:not(:has(:is(button, a):hover)) {
+        opacity: 0.85;
+    }
+}

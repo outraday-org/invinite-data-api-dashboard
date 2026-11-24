@@ -72,7 +72,7 @@ export function SegmentsView({
 
 /** The two segment views: the summary table (`/v1/segments`) and the PRO lineage list (`/v1/segments/detailed`). */
 const SEGMENT_VIEWS: Array<{ label: string; value: SegmentsLayout }> = [
-    { label: "Summary", value: "summary" },
+    { label: "Standard", value: "summary" },
     { label: "Detailed", value: "detailed" },
 ];
 

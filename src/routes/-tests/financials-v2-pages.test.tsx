@@ -15,11 +15,13 @@ import { FinancialsStatementsView } from "@/components/financials-presentation/f
 import { addFactTypes, buildTreeRows } from "@/components/financials-presentation/utils";
 import { highlightStyle } from "@/hooks/use-html-document-processing";
 import { ApiRequestError } from "@/lib/api/errors";
+import { useReportedValueLookup } from "@/lib/api/queries";
 import { factExplanationModel, factIdText, factPlaceTargets, readableFormula } from "@/lib/financials/fact-explanation";
 import { completePeriodsOnly, periodLabel, segmentLines, statementLines } from "@/lib/financials/statements";
 import {
     V2_AS_REPORTED_DETAILED,
     V2_AS_REPORTED_PRESENTATION,
+    V2_AS_REPORTED_Q4,
     V2_CAGR,
     V2_FACT,
     V2_FACT_PLACES,
@@ -41,25 +43,35 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 // Keep the server functions (TanStack Start) unloaded.
-vi.mock("@/lib/api/queries", () => ({
-    useV2CagrInfinite: vi.fn(),
-    // The explain dialog's two requests: idle until a value is clicked (then loading in these tests).
-    useV2Fact: vi.fn((factId: null | string) => ({ data: undefined, error: null, isLoading: Boolean(factId) })),
-    useV2FactPlaces: vi.fn((factId: null | string) => ({ data: undefined, error: null, isLoading: Boolean(factId) })),
-    // The as-reported explanation's one request: the filing's documents, for a filed value's element link.
-    useV2Filing: vi.fn((accession: null | string) => ({
-        data: accession
-            ? { accession, documents: [{ current_version_id: null, description: null, filename: "aapl-20260627.htm", source_url: "https://storage.example/aapl-20260627.htm", type: "10-Q" }], form: "10-Q" }
-            : undefined,
-        error: null,
-        isLoading: false,
-    })),
-    useV2FinancialsInfinite: vi.fn(),
-    useV2GrowthInfinite: vi.fn(),
-    useV2RatiosInfinite: vi.fn(),
-    useV2SegmentsDetailedInfinite: vi.fn(),
-    useV2SegmentsInfinite: vi.fn(),
-}));
+vi.mock("@/lib/api/queries", async () => {
+    const { V2_AS_REPORTED_ANNUAL_LOOKUP } = await import("@/lib/financials/v2-fixtures");
+
+    return {
+        // A formula member's filing outside the loaded rows: one as-reported detailed request (answered at once here).
+        useReportedValueLookup: vi.fn((company: null | string, lookup: unknown) => ({
+            data: company && lookup ? V2_AS_REPORTED_ANNUAL_LOOKUP : null,
+            error: null,
+            isLoading: false,
+        })),
+        useV2CagrInfinite: vi.fn(),
+        // The explain dialog's two requests: idle until a value is clicked (then loading in these tests).
+        useV2Fact: vi.fn((factId: null | string) => ({ data: undefined, error: null, isLoading: Boolean(factId) })),
+        useV2FactPlaces: vi.fn((factId: null | string) => ({ data: undefined, error: null, isLoading: Boolean(factId) })),
+        // The as-reported explanation's one request: the filing's documents, for a filed value's element link.
+        useV2Filing: vi.fn((accession: null | string) => ({
+            data: accession
+                ? { accession, documents: [{ current_version_id: null, description: null, filename: "aapl-20260627.htm", source_url: "https://storage.example/aapl-20260627.htm", type: "10-Q" }], form: "10-Q" }
+                : undefined,
+            error: null,
+            isLoading: false,
+        })),
+        useV2FinancialsInfinite: vi.fn(),
+        useV2GrowthInfinite: vi.fn(),
+        useV2RatiosInfinite: vi.fn(),
+        useV2SegmentsDetailedInfinite: vi.fn(),
+        useV2SegmentsInfinite: vi.fn(),
+    };
+});
 
 // The framed document fetches its HTML through React Query: its props are what these views decide.
 vi.mock("@/components/html/html-viewer", () => ({
@@ -141,7 +153,8 @@ describe("Statements (`/v1/financials/*`)", () => {
 
         expect(within(derived).getByText("Computed by Invinite")).toBeInTheDocument();
 
-        expect(within(derived).getByText("FY - Q1 - Q2 - Q3")).toBeInTheDocument();
+        // The formula as chips: no member describes "FY" / "Q1" …, so each is its text between the operators.
+        expect(within(within(derived).getByTestId("formula-expression")).getAllByText(/^(?:FY|Q[123]|−)$/u).map(node => node.textContent)).toEqual(["FY", "−", "Q1", "−", "Q2", "−", "Q3"]);
 
         expect(within(derived).getByText("us-gaap:NetIncomeLoss")).toBeInTheDocument();
 
@@ -170,6 +183,51 @@ describe("Statements (`/v1/financials/*`)", () => {
         expect(screen.getByRole("link", { name: /Open in new tab/ })).toHaveAttribute("href", "https://storage.example/aapl-20260627.htm#f-12");
     });
 
+    it("detailed (as reported): a computed Q4's members are chips, each opening its own filing at the value", () => {
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_Q4]} statement="income-statement" view="detailed" />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Explain Total net sales, Q4 2026" }));
+
+        const view = screen.getByTestId("as-reported-explanation");
+
+        // A computed value is in no filing: no "Show the value in the filing".
+        expect(within(view).queryByRole("button", { name: "Show the value in the filing" })).toBeNull();
+
+        const formula = within(view).getByTestId("formula-expression");
+
+        expect(formula).not.toHaveTextContent("RevenueFromContractWithCustomerExcludingAssessedTax");
+
+        expect(formula).toHaveTextContent("Sep 28, 2025 – Sep 26, 2026 · 12 mo478,834,000,000−");
+
+        expect(formula).toHaveTextContent("=114,477,000,000");
+
+        const chips = within(formula).getAllByRole("button", { name: /^Sep|^Dec|^Mar/u });
+
+        expect(chips).toHaveLength(4);
+
+        // Q3 is a loaded column: its filing and element, no request.
+        fireEvent.click(chips[3]);
+
+        expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-highlight", "f-56");
+
+        expect(vi.mocked(useReportedValueLookup)).toHaveBeenLastCalledWith(null, null);
+
+        fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+
+        cleanup();
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_Q4]} statement="income-statement" view="detailed" />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Explain Total net sales, Q4 2026" }));
+
+        // The fiscal year is no loaded column: one annual request around its end, then the 10-K at its element.
+        fireEvent.click(within(screen.getByTestId("formula-expression")).getAllByRole("button")[0]);
+
+        expect(vi.mocked(useReportedValueLookup)).toHaveBeenLastCalledWith("0000320193", { fiscalYearGte: 2025, fiscalYearLte: 2027, period: "annual" });
+
+        expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-highlight", "f-210");
+    });
+
     it("detailed (as reported): a computed value with a filing opens it at the top (no element stated)", () => {
         const page = structuredClone(V2_AS_REPORTED_DETAILED);
 
@@ -179,11 +237,13 @@ describe("Statements (`/v1/financials/*`)", () => {
 
         fireEvent.click(screen.getByRole("button", { name: "Explain Net income, Q3 2026" }));
 
-        fireEvent.click(screen.getByRole("button", { name: "Open the filing" }));
+        expect(screen.queryByText("In the filing")).toBeNull();
+
+        fireEvent.click(screen.getByRole("button", { name: "0000320193-26-000073" }));
 
         expect(screen.getByTestId("html-viewer")).not.toHaveAttribute("data-highlight");
 
-        expect(screen.getByText(/no place in the document is stated/)).toBeInTheDocument();
+        expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-url", "https://storage.example/aapl-20260627.htm");
     });
 
     it("detailed (standardized): the cell hands its filing + element to the explanation, which opens it", () => {
@@ -591,10 +651,12 @@ describe("Explain this number (`/v1/facts/{fact_id}`, `/v1/fact-places`)", () =>
 
         const model = factExplanationModel(derived);
 
-        expect(model.operands).toEqual([
-            { label: "RevenueFromContractWithCustomerExcludingAssessedTax · Sep 28, 2025 – Sep 26, 2026", nested: 0, value: 478_834_000_000 },
-            { label: "RevenueFromContractWithCustomerExcludingAssessedTax · Sep 28, 2025 – Dec 27, 2025", nested: 0, value: -143_756_000_000 },
+        expect(model.operands).toMatchObject([
+            { label: "RevenueFromContractWithCustomerExcludingAssessedTax · Sep 28, 2025 – Sep 26, 2026", months: 12, nested: 0, period: "Sep 28, 2025 – Sep 26, 2026", stored: 478_834_000_000, value: 478_834_000_000 },
+            { label: "RevenueFromContractWithCustomerExcludingAssessedTax · Sep 28, 2025 – Dec 27, 2025", months: 3, nested: 0, stored: 143_756_000_000, value: -143_756_000_000 },
         ]);
+
+        expect(model.operands[0]?.ref).toEqual({ concept: "RevenueFromContractWithCustomerExcludingAssessedTax", end: "2026-09-26", instant: null, start: "2025-09-28" });
 
         expect(model.sources[0]?.value).toBe(114_477_000_000);
 
@@ -657,7 +719,7 @@ describe("Explain this number (`/v1/facts/{fact_id}`, `/v1/fact-places`)", () =>
             />,
         );
 
-        expect(screen.getByText("is_revenue_fy - is_revenue_q1 - is_revenue_q2 - is_revenue_q3")).toBeInTheDocument();
+        expect(screen.getByTestId("formula-expression")).toHaveTextContent("is_revenue_fy−is_revenue_q1−is_revenue_q2−is_revenue_q3=94,036,000,000");
 
         expect(screen.getByText("Your plan does not include this view")).toBeInTheDocument();
 

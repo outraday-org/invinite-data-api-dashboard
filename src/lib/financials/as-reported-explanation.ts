@@ -9,10 +9,18 @@ import type { V2AsReportedDetailedFact } from "@/lib/api/types";
 import { formatDay } from "@/lib/format";
 import { formatMetricId } from "@/lib/utils";
 
-import { readableFormula } from "./fact-explanation";
+import type { FormulaTerm } from "./formula-terms";
+import type { ValueRef } from "./value-ref";
 
-/** One operand of a derived value: what it is, the period it covers and its value. */
-export type AsReportedMemberModel = { label: string; period: null | string; reported: boolean; value: number };
+import { readableFormula } from "./fact-explanation";
+import { formulaTerms } from "./formula-terms";
+import { localConcept, refMonths, refOfMember } from "./value-ref";
+
+/**
+ * One operand of a derived value: what it is, the period it covers (and its length in months), its value and the
+ * filed value it names (`ref`: its filing is looked up by it; null = a standardized member, no filing).
+ */
+export type AsReportedMemberModel = { label: string; months: null | number; period: null | string; ref: null | ValueRef; reported: boolean; value: number };
 
 export type AsReportedExplanationModel = {
     /** The filing the value comes from (a derived value: the filing of the period it completes). */
@@ -24,11 +32,15 @@ export type AsReportedExplanationModel = {
     derived: boolean;
     /** The formula with each raw fact id in words; null = the value is reported as filed. */
     formula: null | string;
+    /** The formula as terms over `members` (operators, parentheses, operands matched to their member). */
+    formulaTerms: Array<FormulaTerm>;
     /** The inline-XBRL element id of the value in the filed HTML; null = none stated (always null for a derived value). */
     htmlTagId: null | string;
     /** The taxonomy's standard label, when it differs from the caption. */
     label: null | string;
     members: Array<AsReportedMemberModel>;
+    /** The members name more than one concept: each chip names its own. */
+    mixedConcepts: boolean;
     /** A restated value: the figure / caption / filing that first reported it. */
     original: null | { accession: null | string; filedOn: null | string; label: null | string; value: null | number };
     /** A per-share or share-count value on today's split basis: the filed figure and the factor applied. */
@@ -57,20 +69,25 @@ export function asReportedExplanation(concept: string, fact: V2AsReportedDetaile
 
     const restated = fact.original_value !== null || fact.original_label !== null || fact.original_accession !== null;
 
+    const members = (fact.formula?.members ?? []).map((member) => {
+        const ref = refOfMember(member);
+
+        return { label: memberLabel(member), months: ref ? refMonths(ref) : null, period: memberPeriod(member), ref, reported: member.type === "reported", value: member.value };
+    });
+
+    const formulaStr = fact.formula?.formula_str ?? null;
+
     return {
         accession: fact.accession,
         caption,
         concept,
         derived: fact.derived,
-        formula: fact.formula?.formula_str ? readableFormula(fact.formula.formula_str) : null,
+        formula: formulaStr ? readableFormula(formulaStr) : null,
+        formulaTerms: formulaStr ? formulaTerms(formulaStr, members.map(member => member.ref)) : [],
         htmlTagId: fact.html_tag_id,
         label: fact.label && fact.label !== caption ? fact.label : null,
-        members: (fact.formula?.members ?? []).map(member => ({
-            label: memberLabel(member),
-            period: memberPeriod(member),
-            reported: member.type === "reported",
-            value: member.value,
-        })),
+        members,
+        mixedConcepts: new Set(members.map(member => (member.ref ? localConcept(member.ref.concept) : member.label))).size > 1,
         original: restated
             ? { accession: fact.original_accession, filedOn: day(fact.original_filing_date), label: fact.original_label, value: fact.original_value }
             : null,

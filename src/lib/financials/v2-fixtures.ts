@@ -109,6 +109,94 @@ export const V2_AS_REPORTED_DETAILED: V2AsReportedDetailedResponse = {
     next_cursor: null,
 };
 
+const REVENUE = "RevenueFromContractWithCustomerExcludingAssessedTax";
+
+const rawId = (start: string, end: string) => `320193|${REVENUE}|${start}T00:00:00|${end}T00:00:00|-|-`;
+
+const reportedFact = (value: number, accession: null | string, htmlTagId: null | string, derived = false) => ({
+    accession,
+    company_label: "Total net sales",
+    decimals: -6,
+    derived,
+    formula: null,
+    html_tag_id: htmlTagId,
+    label: "Revenue",
+    original_accession: null,
+    original_filing_date: null,
+    original_label: null,
+    original_value: null,
+    split_factor: null,
+    value,
+    value_as_reported: null,
+});
+
+const member = (start: string, end: string, value: number) => ({ concept: REVENUE, end_date: end, start_date: start, type: "reported" as const, value });
+
+/**
+ * As-reported detailed, quarterly (live shape of AAPL 2026-11-24): Q4 FY2026 computed as FY − Q1 − Q2 − Q3 over raw
+ * fact ids, and the filed Q3 the table has loaded (its filing and element), so the Q3 member resolves without a request.
+ */
+export const V2_AS_REPORTED_Q4: V2AsReportedDetailedResponse = {
+    data: [
+        {
+            ...coordinates(2026, 4, "2026-09-26"),
+            currency: "USD",
+            period_start: "2026-06-28",
+            source: { ...source("0000320193-26-000026"), form: "10-K" },
+            statements: {
+                income_statement: {
+                    facts: {
+                        [`us-gaap:${REVENUE}`]: {
+                            ...reportedFact(114_477_000_000, "0000320193-26-000026", null, true),
+                            formula: {
+                                formula_str: [
+                                    rawId("2025-09-28", "2026-09-26"),
+                                    rawId("2025-09-28", "2025-12-27"),
+                                    rawId("2025-12-28", "2026-03-28"),
+                                    rawId("2026-03-29", "2026-06-27"),
+                                ].join(" - "),
+                                members: [
+                                    member("2025-09-28", "2026-09-26", 478_834_000_000),
+                                    member("2025-09-28", "2025-12-27", 143_756_000_000),
+                                    member("2025-12-28", "2026-03-28", 111_184_000_000),
+                                    member("2026-03-29", "2026-06-27", 109_417_000_000),
+                                ],
+                            },
+                        },
+                    },
+                },
+            },
+        },
+        {
+            ...coordinates(2026, 3, "2026-06-27"),
+            currency: "USD",
+            period_start: "2026-03-29",
+            source: source("0000320193-26-000020"),
+            statements: { income_statement: { facts: { [`us-gaap:${REVENUE}`]: reportedFact(109_417_000_000, "0000320193-26-000020", "f-56") } } },
+        },
+    ],
+    has_more: true,
+    meta: { basis: "as_reported", currency: "USD", point_in_time: null },
+    next_cursor: "eyJ2IjozfQ",
+};
+
+/** The annual as-reported detailed rows a member lookup asks (FY2026 filed in the 10-K at its element). */
+export const V2_AS_REPORTED_ANNUAL_LOOKUP: V2AsReportedDetailedResponse = {
+    data: [
+        {
+            ...coordinates(2026, 4, "2026-09-26"),
+            currency: "USD",
+            period: "annual",
+            period_start: "2025-09-28",
+            source: { ...source("0000320193-26-000026"), form: "10-K" },
+            statements: { income_statement: { facts: { [`us-gaap:${REVENUE}`]: reportedFact(478_834_000_000, "0000320193-26-000026", "f-210") } } },
+        },
+    ],
+    has_more: false,
+    meta: { basis: "as_reported", currency: "USD", point_in_time: null },
+    next_cursor: null,
+};
+
 export const V2_AS_REPORTED_PRESENTATION: V2AsReportedPresentationResponse = {
     data: [
         {

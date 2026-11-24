@@ -3,11 +3,13 @@ import * as React from "react";
 import type { FilingDocumentTarget } from "@/components/sec/filing-document-dialog";
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 import type { V2FactPlacesResponse, V2FactResponse } from "@/lib/api/types";
-import type { FactPlaceTarget } from "@/lib/financials/fact-explanation";
+import type { FactOperandModel, FactPlaceTarget } from "@/lib/financials/fact-explanation";
+import type { ValueRef } from "@/lib/financials/value-ref";
 
 import { FinancialsStateNotice } from "@/components/financial-metrics/metrics-list-body";
-import { FilingDocumentDialog, OpenFilingButton } from "@/components/sec/filing-document-dialog";
+import { FilingDocumentDialog } from "@/components/sec/filing-document-dialog";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PlanBadge, usePlanAllows } from "@/components/ui/credit-hint";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,9 +17,25 @@ import { Notice } from "@/components/ui/notice";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2Fact, useV2FactPlaces } from "@/lib/api/queries";
-import { edgarFolderUrl } from "@/lib/earnings/edgar";
 import { factExplanationModel, factPlaceTargets, readableFormula } from "@/lib/financials/fact-explanation";
-import { formatNumberEn } from "@/lib/utils";
+import { formulaTerms } from "@/lib/financials/formula-terms";
+
+import type { ValueFilingTarget } from "./explain-parts";
+
+import {
+    ExplainField,
+    ExplainFields,
+    ExplainSection,
+    FilingRef,
+    FormulaExpression,
+    fullNumber,
+    Mono,
+    OperandChip,
+    ResultChip,
+    ShowInFilingButton,
+    ValueFilingDialog,
+    ValueHero,
+} from "./explain-parts";
 
 /**
  * The value cell a reader clicked: its fact id, the formula the detailed view already carries and the filing the value
@@ -26,26 +44,6 @@ import { formatNumberEn } from "@/lib/utils";
 export type ExplainTarget = { accession?: null | string; factId: string; formula: null | string | undefined; htmlTagId?: null | string; period: string };
 
 type Loadable<T> = { data: null | T | undefined; error: unknown; isLoading: boolean };
-
-const full = (value: null | number) => (value === null ? "—" : formatNumberEn(value, { maximumFractionDigits: 6 }));
-
-function Section({ children, title }: { children: React.ReactNode; title: string }) {
-    return (
-        <section className="flex flex-col gap-1.5">
-            <h3 className="text-sm font-semibold">{title}</h3>
-            <div className="text-sm">{children}</div>
-        </section>
-    );
-}
-
-function Field({ children, label }: { children: React.ReactNode; label: string }) {
-    return (
-        <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
-            <span className="text-muted-foreground shrink-0 sm:w-28">{label}</span>
-            <span className="min-w-0 break-words">{children}</span>
-        </div>
-    );
-}
 
 /**
  * "Show in filing": the placed spots of the fact's source facts, each opening the document at its block. `places` null =
@@ -81,20 +79,29 @@ function PlacesBlock({ onOpenPlace, places }: { onOpenPlace: (target: FactPlaceT
 }
 
 /**
- * "Explain this number" (pure): the standardized fact's value, the mapping rule that produced it, the formula and its
- * operands, the reported facts it rests on (each with its filing) and the places in the filed document.
+ * "Explain this number" (pure): the standardized fact's value up front (its place in the filing as the action), the
+ * mapping rule that produced it, the formula as operand chips (a raw operand opens its own filing at the value), the
+ * reported facts it rests on (each opening its filing at its element) and the places in the filed document.
  */
-export function FactExplanationView({ fact, filing = null, formula, onOpenFiling, onOpenPlace, places }: {
+export function FactExplanationView({ fact, filing = null, formula, onOpenFiling, onOpenPlace, onOpenSource, onOpenValue, places }: {
     fact: Loadable<V2FactResponse>;
     /** The clicked value's own filing: "Open the filing" (at the value when `elementId` is set). */
     filing?: null | { elementId: null | string; onOpen: () => void };
     formula: null | string | undefined;
     onOpenFiling: (accession: string) => void;
     onOpenPlace: (target: FactPlaceTarget) => void;
+    /** A source fact's filing at its element (default: `onOpenFiling`, at the top). */
+    onOpenSource?: (accession: string, elementId: null | string) => void;
+    /** An operand's own filing, looked up by concept and period. */
+    onOpenValue?: (ref: ValueRef, title: string) => void;
     /** null = the plan lacks the places operation (no request was sent). */
     places: Loadable<V2FactPlacesResponse> | null;
 }) {
     const model = React.useMemo(() => (fact.data ? factExplanationModel(fact.data) : null), [fact.data]);
+
+    const stated = formula ?? model?.rule.formula ?? null;
+
+    const terms = React.useMemo(() => (stated && model ? formulaTerms(stated, model.operands.map(operand => operand.ref)) : []), [model, stated]);
 
     if (fact.error) return <FinancialsStateNotice error={fact.error} pendingTitle="Explanation is being prepared" title="Failed to explain this value" />;
 
@@ -102,80 +109,113 @@ export function FactExplanationView({ fact, filing = null, formula, onOpenFiling
 
     const cik = fact.data.company.cik;
 
-    const stated = formula ?? model.rule.formula;
+    const concepts = new Set(model.operands.map(operand => operand.concept ?? operand.label));
 
-    // Raw fact ids in a derived value's formula read as concept + period (F036).
-    const shownFormula = stated ? readableFormula(stated) : null;
+    const mixed = concepts.size > 1;
+
+    const sharedConcept = !mixed ? model.operands.at(0)?.concept ?? null : null;
+
+    const matched = new Set(terms.flatMap(term => (term.kind === "operand" && term.member !== null ? [term.member] : [])));
+
+    const openable = onOpenValue !== undefined && model.operands.some(operand => operand.ref !== null);
+
+    const chip = (operand: FactOperandModel, index: number) => {
+        const { ref } = operand;
+
+        return (
+            // The operand tree has no id: its position is its identity.
+            <OperandChip
+                chip={{
+                    concept: mixed ? operand.concept ?? operand.label : null,
+                    months: operand.months,
+                    period: operand.period ?? (mixed ? null : (operand.nested > 0 ? `${operand.label} (${operand.nested} more)` : operand.label)),
+                    value: terms.length > 0 ? operand.stored : operand.value,
+                }}
+                key={index}
+                onOpen={ref && onOpenValue ? () => onOpenValue(ref, [operand.concept, operand.period].filter(Boolean).join(" · ")) : undefined}
+            />
+        );
+    };
+
+    const openSource = (accession: string, anchor: null | string) => (onOpenSource ? onOpenSource(accession, anchor) : onOpenFiling(accession));
 
     return (
         <div className="flex min-w-0 flex-col gap-5 [overflow-wrap:anywhere]" data-testid="fact-explanation">
-            <Section title="Value">
-                <Field label="Metric">{model.metricName}</Field>
-                <Field label="Value"><span className="tabular-nums">{`${full(model.value)}${model.unit ? ` ${model.unit.toUpperCase()}` : ""}`}</span></Field>
-                <Field label="Fact id"><code className="text-xs">{model.factId}</code></Field>
-                {filing && <Field label="Filing"><OpenFilingButton elementId={filing.elementId} onOpen={filing.onOpen} /></Field>}
-            </Section>
+            <ValueHero
+                action={filing ? <ShowInFilingButton elementId={filing.elementId} onOpen={filing.onOpen} /> : null}
+                caption={model.metricName}
+                sub={<Mono>{model.factId}</Mono>}
+                unit={model.unit}
+                value={model.value}
+            />
 
-            <Section title="Rule">
-                {model.rule.kind && <Field label="Kind">{model.rule.kind}</Field>}
-                {model.rule.alias && <Field label="Takes"><code className="text-xs">{model.rule.alias}</code></Field>}
-                <Field label="Formula">{shownFormula ? <code className="text-xs">{shownFormula}</code> : "None: the value is reported as filed"}</Field>
-                {model.rule.notes && <Field label="Notes"><span className="text-muted-foreground">{model.rule.notes}</span></Field>}
-            </Section>
+            <ExplainSection aside={openable && terms.length > 0 ? <span className="text-muted-foreground text-xs">Click an operand to see it in its filing</span> : null} title="Rule">
+                <ExplainFields>
+                    {model.rule.kind && <ExplainField label="Kind"><Badge variant="outline">{model.rule.kind}</Badge></ExplainField>}
+                    {model.rule.alias && <ExplainField label="Takes"><Mono>{model.rule.alias}</Mono></ExplainField>}
+                    {terms.length === 0 && <ExplainField label="Formula">None: the value is reported as filed</ExplainField>}
+                    {model.rule.notes && <ExplainField label="Notes"><span className="text-muted-foreground text-xs leading-relaxed">{model.rule.notes}</span></ExplainField>}
+                </ExplainFields>
+                {terms.length > 0 && (
+                    <div className="flex flex-col gap-1.5 border-t pt-2">
+                        <span className="text-muted-foreground">
+                            Formula
+                            {sharedConcept && (
+                                <>
+                                    {" · "}
+                                    <Mono>{sharedConcept}</Mono>
+                                </>
+                            )}
+                        </span>
+                        <FormulaExpression
+                            fallbackText={readableFormula}
+                            renderOperand={index => chip(model.operands[index], index)}
+                            result={<ResultChip value={model.value} />}
+                            terms={terms}
+                        />
+                    </div>
+                )}
+            </ExplainSection>
 
-            {model.operands.length > 0 && (
-                <Section title="Operands">
-                    <ul className="flex flex-col gap-1">
-                        {model.operands.map((operand, index) => (
-                            // The operand tree has no id: its position is its identity.
-                            <li className="flex justify-between gap-4" key={index}>
-                                <span>{operand.nested > 0 ? `${operand.label} (${operand.nested} more)` : operand.label}</span>
-                                <span className="tabular-nums">{full(operand.value)}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </Section>
+            {model.operands.length > matched.size && (
+                <ExplainSection title="Operands">
+                    <div className="flex flex-wrap gap-1.5">{model.operands.map((operand, index) => (matched.has(index) ? null : chip(operand, index)))}</div>
+                </ExplainSection>
             )}
 
-            <Section title="Source facts">
+            <ExplainSection title="Source facts">
                 {model.sources.length === 0
                     ? <span className="text-muted-foreground">None stated.</span>
                     : (
-                            <ul className="flex flex-col gap-3">
-                                {model.sources.map((source, index) => {
-                                    const edgar = edgarFolderUrl(cik, source.accession);
-
-                                    return (
-                                        <li className="flex flex-col gap-1 rounded-md border p-2" key={index}>
-                                            <Field label="Concept"><code className="text-xs">{source.concept}</code></Field>
-                                            <Field label="Value"><span className="tabular-nums">{full(source.value)}</span></Field>
-                                            {source.period && <Field label="Period">{source.period}</Field>}
-                                            {source.segment && <Field label="Segment">{source.segment}</Field>}
-                                            {source.accession && (
-                                                <Field label="Filing">
-                                                    <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                                        <button className="font-medium underline-offset-4 hover:underline" onClick={() => onOpenFiling(source.accession!)} type="button">
-                                                            {source.accession}
-                                                        </button>
-                                                        {edgar && <a className="text-muted-foreground underline-offset-4 hover:underline" href={edgar} rel="noopener noreferrer" target="_blank">EDGAR</a>}
-                                                        {source.anchor && <span className="text-muted-foreground text-xs">{`element ${source.anchor}`}</span>}
-                                                    </span>
-                                                </Field>
-                                            )}
-                                        </li>
-                                    );
-                                })}
+                            <ul className="flex flex-col gap-2">
+                                {model.sources.map((source, index) => (
+                                    // The source facts have no id: their position is their identity.
+                                    <li className="bg-background flex flex-col gap-1.5 rounded-md border p-2.5" key={index}>
+                                        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                                            <Mono className="font-medium">{source.concept}</Mono>
+                                            <span className="font-medium tabular-nums">{fullNumber(source.value)}</span>
+                                        </div>
+                                        {(source.period || source.segment) && (
+                                            <span className="text-muted-foreground text-xs">{[source.period, source.segment].filter(Boolean).join(" · ")}</span>
+                                        )}
+                                        {source.accession && (
+                                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                                                <FilingRef accession={source.accession} cik={cik} onOpen={() => onOpenFiling(source.accession!)} />
+                                                {source.anchor && (
+                                                    <ShowInFilingButton elementId={source.anchor} label="Open at the value" onOpen={() => openSource(source.accession!, source.anchor)} />
+                                                )}
+                                            </div>
+                                        )}
+                                    </li>
+                                ))}
                             </ul>
                         )}
-            </Section>
+            </ExplainSection>
 
-            <Section title="Show in filing">
-                <div className="flex items-center gap-2 pb-1">
-                    <span className="text-muted-foreground">Where the value sits in the filed document</span>
-                    <PlanBadge operationId="listFactPlaces" />
-                </div>
+            <ExplainSection aside={<PlanBadge operationId="listFactPlaces" />} title="Show in filing">
+                <span className="text-muted-foreground">Where the value sits in the filed document</span>
                 <PlacesBlock onOpenPlace={onOpenPlace} places={places} />
-            </Section>
+            </ExplainSection>
         </div>
     );
 }
@@ -195,12 +235,14 @@ export function FactExplainDialog({ onClose, target }: { onClose: () => void; ta
 
     const [document, setDocument] = React.useState<FilingDocumentTarget | null>(null);
 
+    const [value, setValue] = React.useState<null | ValueFilingTarget>(null);
+
     const valueFiling = target?.accession ?? null;
 
     return (
         <>
             <Dialog onOpenChange={open => !open && onClose()} open={target !== null}>
-                <DialogContent className="sm:max-w-2xl h-[min(44rem,calc(100vh-2rem))] p-0">
+                <DialogContent className="sm:max-w-2xl h-[min(48rem,calc(100vh-2rem))] p-0">
                     <div className="flex h-full min-h-0 min-w-0 flex-col">
                         <DialogHeader className="p-4 pb-2">
                             <DialogTitle>Explain this number</DialogTitle>
@@ -214,8 +256,10 @@ export function FactExplainDialog({ onClose, target }: { onClose: () => void; ta
                                         ? { elementId: target.htmlTagId ?? null, onOpen: () => setDocument({ accession: valueFiling, elementId: target.htmlTagId ?? null, title: target.period }) }
                                         : null}
                                     formula={target.formula}
-                                    onOpenFiling={accession => setSource({ accession, kind: "filing" })}
+                                    onOpenFiling={accession => setDocument({ accession, elementId: null, title: target.period })}
                                     onOpenPlace={place => setSource({ blockId: place.blockId, kind: "citation", title: `${target.period} in the filing · ${place.label.toLowerCase()}`, versionId: place.versionId })}
+                                    onOpenSource={(accession, elementId) => setDocument({ accession, elementId, title: target.period })}
+                                    onOpenValue={(ref, title) => setValue({ ref, title })}
                                     places={placesAllowed === false ? null : { data: places.data, error: places.error, isLoading: places.isLoading }}
                                 />
                             )}
@@ -225,6 +269,7 @@ export function FactExplainDialog({ onClose, target }: { onClose: () => void; ta
             </Dialog>
             <SecSourceDialog onClose={() => setSource(null)} target={source} />
             <FilingDocumentDialog onClose={() => setDocument(null)} target={document} />
+            <ValueFilingDialog cik={fact.data?.company.cik ?? null} onClose={() => setValue(null)} target={value} />
         </>
     );
 }
