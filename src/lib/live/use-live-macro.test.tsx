@@ -137,6 +137,44 @@ describe("macro live page", () => {
         expect(result.current.latest?.event_id).toBe(sample("correction").event_id);
     });
 
+    it.each(["channel_unavailable", "unavailable"])("resubscribes after %s and waits for confirmation before REST recovery", (code) => {
+        vi.stubGlobal("WebSocket", Socket);
+
+        vi.useFakeTimers();
+
+        const client = new QueryClient(), opts = options(client);
+
+        const refresh = vi.spyOn(client, "cancelQueries");
+
+        const { result, unmount } = renderHook(() => useLiveMacro(opts));
+
+        act(() => {
+            Socket.last.open();
+
+            Socket.last.frame({ channel: "macro", families: ["gdp"], type: "subscribed" });
+
+            Socket.last.frame({ channel: "macro", code, type: "error" });
+        });
+
+        expect(result.current.mode).toBe("retrying");
+
+        expect(opts.onStop).not.toHaveBeenCalled();
+
+        act(() => vi.advanceTimersByTime(10_000));
+
+        expect(Socket.last.sent).toHaveLength(2);
+
+        expect(refresh).toHaveBeenCalledTimes(1);
+
+        act(() => Socket.last.frame({ channel: "macro", families: ["gdp"], type: "subscribed" }));
+
+        expect(refresh).toHaveBeenCalledTimes(2);
+
+        expect(result.current.mode).toBe("live");
+
+        unmount();
+    });
+
     it("recovers only after acknowledgement on reconnect and leaves paid REST usable when refused", () => {
         vi.stubGlobal("WebSocket", Socket);
 

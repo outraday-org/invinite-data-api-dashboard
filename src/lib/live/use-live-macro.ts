@@ -76,7 +76,6 @@ export async function refreshMacroQueries(client: QueryClient, scope: MacroFamil
 
 const stops: Record<string, StreamStop> = {
     bad_message: { kind: "error", message: "The macro subscription was rejected." },
-    channel_unavailable: { kind: "unavailable", message: "Live macro delivery is unavailable." },
     forbidden_tier: { kind: "plan", message: "Live macro delivery requires Pro." },
 };
 
@@ -155,7 +154,7 @@ export function useLiveMacro({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, onStop
                 else if (f.type === "error") {
                     acknowledged = false;
 
-                    if (f.code === "unavailable") {
+                    if (f.code === "unavailable" || f.code === "channel_unavailable") {
                         setMode("retrying");
 
                         stream.resubscribeLater(subscribe);
