@@ -458,3 +458,19 @@ export const V2_FINANCIAL_VINTAGES: V2FinancialVintagesResponse = {
     meta: {},
     next_cursor: null,
 };
+
+/** As-reported summary, balance sheet (instants): the period row still names its quarter's start. */
+export const V2_AS_REPORTED_BALANCE_SHEET: V2AsReportedResponse = {
+    data: [
+        {
+            ...coordinates(2026, 3, "2026-06-27"),
+            currency: "USD",
+            period_start: "2026-03-29",
+            source: source("0000320193-26-000073"),
+            statements: { balance_sheet: { facts: { "us-gaap:Assets": { derived: false, value: 331_495_000_000 } } } },
+        },
+    ],
+    has_more: false,
+    meta: { basis: "as_reported", currency: "USD", point_in_time: null },
+    next_cursor: null,
+};

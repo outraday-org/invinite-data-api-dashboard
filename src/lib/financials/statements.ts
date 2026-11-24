@@ -138,12 +138,18 @@ export function statementFacts(row: V2StatementPeriod, statement: StatementType)
     return statements[V2_STATEMENT_KEYS[statement]]?.facts;
 }
 
-/** The period columns of a statement page (label + the filing it was rendered from). */
-export function statementColumns(rows: ReadonlyArray<V2StatementPeriod>): Array<StatementColumn> {
+/**
+ * The period columns of a statement page (label + the filing it was rendered from). A balance-sheet value is an instant
+ * (no start): its column carries no `periodStart`, so "Filed values" asks by the period's end alone — a start would
+ * match no instant (404 `not_found`).
+ */
+export function statementColumns(rows: ReadonlyArray<V2StatementPeriod>, statement: StatementType): Array<StatementColumn> {
+    const instant = statement === "balance-sheet";
+
     return rows.map(row => ({
         label: periodLabel(row),
         periodEnd: row.period_end,
-        periodStart: row.period_start ?? null,
+        periodStart: instant ? null : row.period_start ?? null,
         preliminary: row.source.is_preliminary,
         title: filingSourceText(row.source),
     }));

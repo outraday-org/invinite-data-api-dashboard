@@ -19,6 +19,7 @@ import { useFinancialVintages, useReportedValueLookup } from "@/lib/api/queries"
 import { factExplanationModel, factIdText, factPlaceTargets, readableFormula } from "@/lib/financials/fact-explanation";
 import { completePeriodsOnly, periodLabel, segmentLines, statementLines } from "@/lib/financials/statements";
 import {
+    V2_AS_REPORTED_BALANCE_SHEET,
     V2_AS_REPORTED_DETAILED,
     V2_AS_REPORTED_PRESENTATION,
     V2_AS_REPORTED_Q4,
@@ -430,6 +431,16 @@ describe("Preliminary periods and filed values (Data API 11.2)", () => {
         expect(within(rows[2]).getByText("Served")).toBeInTheDocument();
 
         expect(within(rows[0]).getByRole("link", { name: "0000320193-26-000073" })).toHaveAttribute("href", expect.stringContaining("/filings/$accession"));
+    });
+
+    it("balance sheet: an instant's filed values are asked by the period's end alone (no period_start)", () => {
+        vi.mocked(useFinancialVintages).mockClear();
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_BALANCE_SHEET]} statement="balance-sheet" view="summary" />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Filed values of us-gaap:Assets, Q3 2026" }));
+
+        expect(useFinancialVintages).toHaveBeenLastCalledWith(expect.objectContaining({ concept: "us-gaap:Assets", periodEnd: "2026-06-27", periodStart: null }));
     });
 
     it("standardized summary values (no concept) offer no filed values", () => {

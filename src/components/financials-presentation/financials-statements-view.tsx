@@ -72,7 +72,7 @@ export function FinancialsStatementsView({
 }) {
     const rows = React.useMemo(() => pages.flatMap<V2StatementPeriod>(page => page.data), [pages]);
 
-    const columns = React.useMemo(() => statementColumns(rows), [rows]);
+    const columns = React.useMemo(() => statementColumns(rows, statement), [rows, statement]);
 
     const lines = React.useMemo(
         () => (view === "presentation" ? [] : statementLines(rows, statement, basis === "standardized")),

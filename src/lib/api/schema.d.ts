@@ -21452,7 +21452,7 @@ export interface operations {
                 company: string;
                 /**
                  * @description XBRL concept as filed: the local name (`Revenues`) or with its prefix (`us-gaap:Revenues`)
-                 * @example Revenues
+                 * @example RevenueFromContractWithCustomerExcludingAssessedTax
                  */
                 concept: string;
                 /**
@@ -21461,7 +21461,7 @@ export interface operations {
                  */
                 period_end: string;
                 /**
-                 * @description Start of the duration (omitted = every duration ending on `period_end`, and instants)
+                 * @description Start of the duration (omitted = every duration ending on `period_end`, and instants). Omit it for a balance-sheet value: an instant has no start
                  * @example 2023-10-01
                  */
                 period_start?: string;
