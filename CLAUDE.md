@@ -19,7 +19,7 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
 
 ### API Layer (`src/lib/api/`)
 
-- **openapi.json**: the pinned data API spec, adopted from the API's versioned `reference/openapi.json` (see "Data contract ownership"). It is the additive US macro reference at API commit `eb6efa3d3923c38bf26ec67cd88da994ef5ec0ed`, based on the Data API 11.0.0 contract (tag `data-sdk-v11.0.0`, API commit `79fe20a`). Its status groups include Corporate actions, Calendar, Offerings and Macro. 10.3.0 spells a pay-as-you-go account `payg` in `/v1/me/usage` too, so `PLAN_LABELS` has no `prepaid`, and the earnings-call transcript / document alert events need PRO; 10.1 / 10.2 were additive. 10.0 (tag `data-sdk-v10.0.0`; invinite `tasks-julian/todo-0/data-api-pricing-v2` task 4): 10.0 moved 32 STANDARD operations to LITE (filings, filers, documents, guidance, holders, metrics, news items, people, IPOs, offerings) and 8 to PRO (transcript, Q&A, stats, investor documents and their two searches), added `payg` to `/v1/me.plan` (credits without a plan, reaches what PRO reaches except live data, the API's 403 says which) and made LITE internal use (no licensing right) with the note `internal_use`; 9.0 had introduced the five tiers and `by_contract`. Copy it over, then `pnpm generate:api` (its output is committed after `pnpm run check`'s `eslint --fix`, which re-sorts it). `pnpm-workspace.yaml` holds pnpm 11's `allowBuilds` (esbuild `true`; `@parcel/watcher`, `msw`, `sharp`, `unrs-resolver` `false` — prebuilt binaries / an unused msw worker): without a decision for every dependency build script pnpm 11 stops with `ERR_PNPM_IGNORED_BUILDS`. A new dependency with a build script needs its own entry
+- **openapi.json**: the pinned data API spec, adopted from the API's versioned `reference/openapi.json` (see "Data contract ownership"). It is the US macro reference pinned in "US macro pages" (API commit `d19ac33`, byte-identical to the one of `eb6efa3d3923c38bf26ec67cd88da994ef5ec0ed`), based on the Data API 11.0.0 contract (tag `data-sdk-v11.0.0`, API commit `79fe20a`). Its status groups include Corporate actions, Calendar, Offerings and Macro. 10.3.0 spells a pay-as-you-go account `payg` in `/v1/me/usage` too, so `PLAN_LABELS` has no `prepaid`, and the earnings-call transcript / document alert events need PRO; 10.1 / 10.2 were additive. 10.0 (tag `data-sdk-v10.0.0`; invinite `tasks-julian/todo-0/data-api-pricing-v2` task 4): 10.0 moved 32 STANDARD operations to LITE (filings, filers, documents, guidance, holders, metrics, news items, people, IPOs, offerings) and 8 to PRO (transcript, Q&A, stats, investor documents and their two searches), added `payg` to `/v1/me.plan` (credits without a plan, reaches what PRO reaches except live data, the API's 403 says which) and made LITE internal use (no licensing right) with the note `internal_use`; 9.0 had introduced the five tiers and `by_contract`. Copy it over, then `pnpm generate:api` (its output is committed after `pnpm run check`'s `eslint --fix`, which re-sorts it). `pnpm-workspace.yaml` holds pnpm 11's `allowBuilds` (esbuild `true`; `@parcel/watcher`, `msw`, `sharp`, `unrs-resolver` `false` — prebuilt binaries / an unused msw worker): without a decision for every dependency build script pnpm 11 stops with `ERR_PNPM_IGNORED_BUILDS`. A new dependency with a build script needs its own entry
 - **schema.d.ts**: Auto-generated TypeScript types from OpenAPI spec. Regenerate with `pnpm run generate:api`
 - **types.ts**: Derived response/entity types using the `ApiResponse` helper to extract typed responses from schema
 - **client.server.ts**: Creates typed `openapi-fetch` client with Bearer auth
@@ -352,7 +352,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 ### API inspector, export, URL state (backend `tasks/data-api-dashboard` O6)
 
 - **Operations table** `src/lib/api/operations.gen.ts` (generated, committed after `pnpm run check`): `pnpm generate:api`
-  = `openapi-typescript` + `node scripts/generate-operations.mjs`. One entry per operation of `openapi.json` (135,
+  = `openapi-typescript` + `node scripts/generate-operations.mjs`. One entry per operation of `openapi.json` (133,
   `operations.test.ts` counts them): method, path template, summary, `credits` (`x-credits`, null for `/health`,
   `/status*`), `tier` (`x-tier`), `cli` (`x-cli` group / action / positional), `docsUrl`
   (`https://data.invinite.com/docs/<method>--<path, / → _>`); `OPERATION_IDS_BY_ROUTE` (`"GET /v1/funds/{fund}"` → id);
@@ -762,8 +762,8 @@ calls, with its page. Created by O7 group 1 from `server-functions.ts` at `ab8a8
 `healthGet` with its reason), group 6's (`getInsiderTrade`, `getOffering`, `listFilerHoldingChanges`); group 5 adds no operation, it widens five rows (`listKpis`,
 `searchTranscripts`, `getEventComparison`, `listInvestorDocuments`, `getInvestorDocument`). Every O7
 group appended its rows, the alerts tasklist its 36 (30 alert / destination + 6 script operations); an operation
-with no view states why here. **136 rows cover the 136 operation IDs in `openapi.json`, each
-exactly once** — the 135 HTTP operations of `operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, one
+with no view states why here. **Complete (A4-final, 2026-11-21): 134 rows = the 134 operation ids of `openapi.json`, each
+exactly once** — the 133 HTTP operations of `operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, one
 row naming its channels). `src/lib/api/coverage.test.ts` parses this table against `openapi.json` and fails on a
 missing, duplicate or unknown id: a new operation of the spec needs its row (page or reason) here.
 
@@ -831,8 +831,6 @@ missing, duplicate or unknown id: a new operation of the spec needs its row (pag
 | `listHolderChanges` | `GET /v1/holder-changes` | `/$ticker/holders?tab=changes` (`type`, `filer`, `prior_period_end`) |
 | `listHolders` | `GET /v1/holders` | `/$ticker/holders` (`instruments=` on the overview / 13F) |
 | `listInsiderTrades` | `GET /v1/insider-trades` | `/$ticker/insider-trades` (filed / traded days, `is_derivative`, `sort`) |
-| `listCoins` | `GET /v1/coins` | `/spot-coins` and top-bar search, by coin slug, name or display symbol |
-| `getCoin` | `GET /v1/coins/{coin}` | `/spot-coins/$coin`, identified by its canonical coin slug |
 | `listInstruments` | `GET /v1/instruments` | `/instruments`; top-bar search |
 | `listInvestorDocuments` | `GET /v1/investor-documents` | `/$ticker/documents`; call page · Documents tab (`sort`) |
 | `listIpos` | `GET /v1/ipos` | `/ipo-calendar`; `/` |
@@ -908,13 +906,4 @@ missing, duplicate or unknown id: a new operation of the spec needs its row (pag
 
 ## US macro pages
 
-Market navigation and the home cards open four ticker-independent pages under `/us-macro/`. The Free catalog lives at `/catalog?tab=macro`; Lite history and snapshot reads use the same stored key and inspector as the other data pages. The pinned API revision is `eb6efa3d3923c38bf26ec67cd88da994ef5ec0ed`, reference SHA-256 `03945a9e4a5f8ce2d79c334a476fff35754d2a587a02b7a85cd15d9c8659c35b`.
-
-
-## Spot coin pages
-
-The pinned coin reference has SHA-256 `69d43a7825307259bdc6e39c5e004e0cddda4048e78b9ac2c4d89b698973ec5a`. It adds `listCoins`, `getCoin` and the public Coins status group to the macro-compatible contract.
-
-The Browse menu and home card open `/spot-coins`. The directory accepts a shareable `?q=` and loads additional cursor pages on request. `/spot-coins/$coin` uses the canonical slug from the API. The detail shows rank, nullable supplies in coin units, quote currency, genesis date, hashing algorithm, categories, profile update time in UTC and the provider link. Catalog and detail require the same authenticated key and display licence as their API operations. The page inspector shows the requests.
-
-The global search's Coins tab searches by display symbol, name or slug through the directory query. All groups exact coin and listed-symbol matches first, preserving a distinct row and route for each. Recents use the subject kind and stable identifier. Market prices and candle history are outside the public coin profile contract.
+Market navigation and the home cards open four ticker-independent pages under `/us-macro/`. The Free catalog lives at `/catalog?tab=macro`; Lite history and snapshot reads use the same stored key and inspector as the other data pages. The pinned API revision is `d19ac33` (invinite-data-api, the spot-coin reads removed again; byte-identical to the US macro reference of `eb6efa3d3923c38bf26ec67cd88da994ef5ec0ed`), reference SHA-256 `03945a9e4a5f8ce2d79c334a476fff35754d2a587a02b7a85cd15d9c8659c35b`.

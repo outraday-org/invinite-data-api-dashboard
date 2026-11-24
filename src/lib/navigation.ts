@@ -5,7 +5,6 @@ import {
     ArrowUpRightIcon,
     BarChart3Icon,
     BellIcon,
-    BitcoinIcon,
     BookOpenIcon,
     BriefcaseIcon,
     BuildingIcon,
@@ -79,8 +78,6 @@ export const MACRO_NAV = [
     { description: "Daily nominal Treasury yields by maturity.", icon: SplineIcon, keywords: ["Treasury", "yield curve", "rates", "maturity"], label: "Treasury yield curve", to: "/us-macro/yield-curve" },
 ] as const satisfies ReadonlyArray<NavPage>;
 
-const COINS_NAV = { description: "Spot cryptocurrency profiles and trading symbols.", icon: BitcoinIcon, keywords: ["coins", "crypto", "cryptocurrency", "spot"], label: "Spot coins", to: "/spot-coins" } as const;
-
 /** Market: always shown. */
 export const MARKET_NAV: ReadonlyArray<NavPage> = [
     { description: "Live calls, today's earnings, next IPOs and holidays.", icon: HouseIcon, keywords: ["home", "start", "landing"], label: "Home", to: "/" },
@@ -95,7 +92,6 @@ export const MARKET_NAV: ReadonlyArray<NavPage> = [
 export const BROWSE_NAV: ReadonlyArray<NavPage> = [
     { description: "Every exchange-traded US symbol: stocks, ETFs, closed-end funds, ETNs.", icon: ListIcon, keywords: ["instruments", "stocks", "symbols", "tickers", "etn", "etns", "browse"], label: "Instruments", to: "/instruments" },
     { description: "Every listed ETF and closed-end fund with net assets.", icon: LayersIcon, keywords: ["funds", "etf", "etfs", "closed-end", "holdings"], label: "Funds", to: "/funds" },
-    COINS_NAV,
     { description: "13F investment managers and their portfolios.", icon: LandmarkIcon, keywords: ["institutions", "managers", "13f", "holders", "filers"], label: "Institutions", to: "/institutions" },
     { description: "Executives and analysts who speak on calls, with every call of each.", icon: ContactIcon, keywords: ["people", "persons", "executives", "analysts", "speakers", "participants"], label: "People", to: "/people" },
     { description: "Your watchlist's news in one list, and every company's new items live.", icon: RssIcon, keywords: ["news", "feed", "watchlist", "live", "press releases"], label: "News feed", to: "/news-feed" },
@@ -271,7 +267,7 @@ export const OPEN_LISTING_ICON = ArrowUpRightIcon;
 
 /** A card of the landing page's "Browse" row: a Browse page opened with its filter. */
 export type BrowseCard = { description: string; icon: LucideIcon; label: string } & (
-    | { search: Record<string, never>; to: "/institutions" | "/spot-coins" | typeof MACRO_NAV[number]["to"] }
+    | { search: Record<string, never>; to: "/institutions" | typeof MACRO_NAV[number]["to"] }
     | { search: { structure: "registered_fund" }; to: "/funds" }
     | { search: { type: "closed_end_fund" | "etf" | "etn" | "stock" }; to: "/instruments" }
 );
@@ -284,7 +280,6 @@ export const BROWSE_CARDS: ReadonlyArray<BrowseCard> = [
     { description: "Exchange-traded notes.", icon: ReceiptIcon, label: "ETNs", search: { type: "etn" }, to: "/instruments" },
     { description: "Registered funds with their reported holdings.", icon: LayersIcon, label: "Funds with holdings", search: { structure: "registered_fund" }, to: "/funds" },
     { description: "13F managers and their portfolios.", icon: LandmarkIcon, label: "Institutions", search: {}, to: "/institutions" },
-    { ...COINS_NAV, search: {} },
     ...MACRO_NAV.map(page => ({ ...page, search: {} })),
 ];
 

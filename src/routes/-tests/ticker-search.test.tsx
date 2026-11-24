@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { V2FilersResponse } from "@/lib/api/types";
 
 import { mergeFilers, rankInstruments, TickerSearch } from "@/components/search/ticker-search";
-import { useCoinList } from "@/lib/api/coin-queries";
 import { useInstrumentSearch, useV2Filers, useV2PeopleSearch } from "@/lib/api/queries";
 import { AAPL_INSTRUMENT, GLD_INSTRUMENT, INSTRUMENT_SEARCH } from "@/lib/instruments-fixtures";
 import { PERSON_ANALYST, V2_PEOPLE } from "@/lib/people-fixtures";
@@ -19,8 +18,6 @@ vi.mock("@tanstack/react-router", () => ({
     useParams: ({ select }: { select: (params: { ticker?: string }) => string | undefined }) => select({ ticker: router.ticker }),
     useRouterState: ({ select }: { select: (state: { location: { pathname: string } }) => string }) => select({ location: { pathname: router.pathname } }),
 }));
-
-vi.mock("@/lib/api/coin-queries", () => ({ useCoinList: vi.fn() }));
 
 vi.mock("@/lib/api/queries", () => ({ useInstrumentSearch: vi.fn(), useKeyReady: () => true, useV2Filers: vi.fn(), useV2PeopleSearch: vi.fn() }));
 
@@ -44,8 +41,6 @@ beforeEach(() => {
     router.ticker = "AAPL";
 
     useTickerStore.setState({ hasHydrated: true, recents: [] });
-
-    vi.mocked(useCoinList).mockReturnValue({ data: undefined, isFetching: false } as never);
 
     vi.mocked(useInstrumentSearch).mockImplementation((query, types) => ({
         data: query
@@ -106,84 +101,6 @@ describe("top-bar search: groups, pills, keyboard, recents", () => {
         fireEvent.click(option("VANGUARD GROUP INC"));
 
         expect(router.navigate).toHaveBeenLastCalledWith({ params: { cik: "102909" }, to: "/sec/$cik" });
-    });
-
-    it("keeps an ETF and a coin with the same symbol as independently selectable hits", () => {
-        vi.mocked(useInstrumentSearch).mockImplementation(q => ({ data: q ? { data: [{ ...INSTRUMENT_SEARCH.data[0], name: "Bitcoin fund", symbol: "BTC", type: "etf" }] } : null, isFetching: false }) as never);
-
-        vi.mocked(useCoinList).mockImplementation((q, enabled) => ({ data: enabled && q === "BTC" ? { pages: [{ data: [{ name: "Bitcoin", slug: "bitcoin", symbol: "BTC" }] }] } : null, isFetching: false }) as never);
-
-        openSearch();
-
-        type("BTC");
-
-        const exact = screen.getAllByRole("option").filter(row => within(row).queryByText("BTC"));
-
-        expect(exact).toHaveLength(2);
-
-        expect(within(exact[0]).getByText("ETF")).toBeInTheDocument();
-
-        expect(within(exact[1]).getByText("Spot coin")).toBeInTheDocument();
-
-        fireEvent.keyDown(screen.getByRole("combobox"), { key: "ArrowDown" });
-
-        fireEvent.keyDown(screen.getByRole("combobox"), { key: "Enter" });
-
-        expect(router.navigate).toHaveBeenCalledWith({ params: { coin: "bitcoin" }, to: "/spot-coins/$coin" });
-    });
-
-    it("the Coins pill requests only coins and uses the slug when a symbol is absent", () => {
-        vi.mocked(useCoinList).mockImplementation((q, enabled) => ({ data: enabled && q === "Example coin" ? { pages: [{ data: [{ name: "Example coin", slug: "example-coin", symbol: null }] }] } : null, isFetching: false }) as never);
-
-        openSearch();
-
-        fireEvent.click(screen.getByRole("tab", { name: "Coins" }));
-
-        type("Example coin");
-
-        expect(useInstrumentSearch).toHaveBeenLastCalledWith("", undefined);
-
-        expect(useV2Filers).toHaveBeenLastCalledWith(expect.objectContaining({ q: "" }));
-
-        fireEvent.click(option("example-coin"));
-
-        expect(router.navigate).toHaveBeenCalledWith({ params: { coin: "example-coin" }, to: "/spot-coins/$coin" });
-    });
-
-    it("distinguishes matching coins with the same display name and symbol by slug", () => {
-        vi.mocked(useCoinList).mockImplementation((_q, enabled) => ({
-            data: enabled
-                ? { pages: [{ data: [
-                        { name: "Same", slug: "same-a", symbol: "SAM" },
-                        { name: "Same", slug: "same-b", symbol: "SAM" },
-                    ] }] }
-                : null,
-            isFetching: false,
-        }) as never);
-
-        openSearch();
-
-        fireEvent.click(screen.getByRole("tab", { name: "Coins" }));
-
-        type("SAM");
-
-        fireEvent.click(screen.getByRole("option", { name: /same-b/i }));
-
-        expect(router.navigate).toHaveBeenCalledWith({ params: { coin: "same-b" }, to: "/spot-coins/$coin" });
-    });
-
-    it("shows a failed coin search separately from an empty result", () => {
-        vi.mocked(useCoinList).mockReturnValue({ error: new Error("forbidden"), isFetching: false } as never);
-
-        openSearch();
-
-        fireEvent.click(screen.getByRole("tab", { name: "Coins" }));
-
-        type("Z");
-
-        expect(screen.getByText("Coin search is unavailable.")).toBeInTheDocument();
-
-        expect(screen.queryByText("Nothing found")).not.toBeInTheDocument();
     });
 
     it("a pill sends only its own request: ETFs + gold = instruments of type etf, no filer request", () => {

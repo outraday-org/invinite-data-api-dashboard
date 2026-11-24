@@ -29,10 +29,8 @@ export function recentFiler(filer: ManagerSignal & Pick<V2FilerMatch | V2FilerRe
     return { badge: filesThirteenF(filer) ? "Institution" : "SEC filer", kind: "filer", label: filer.name || `CIK ${cik}`, name: `CIK ${cik}`, ref: cik };
 }
 
-/** The slug identifies a coin even when its display symbol is also a listed instrument. */
+/** The link of a recent subject: a filer's `/sec/$cik`, else the instrument's `/$ticker`. */
 export function recentLink(subject: RecentSubject) {
-    if (subject.kind === "coin") return { params: { coin: subject.ref }, to: "/spot-coins/$coin" } as const;
-
     if (subject.kind === "filer") return { params: { cik: subject.ref }, to: "/sec/$cik" } as const;
 
     return { params: { ticker: subject.ref }, to: "/$ticker" } as const;

@@ -1,7 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 
 import { useNavigate, useParams, useRouterState } from "@tanstack/react-router";
-import { CoinsIcon, HistoryIcon, LandmarkIcon, SearchIcon, UserRoundIcon } from "lucide-react";
+import { HistoryIcon, LandmarkIcon, SearchIcon, UserRoundIcon } from "lucide-react";
 import * as React from "react";
 
 import type { V2Dataset, V2FilerMatch, V2Instrument, V2InstrumentType } from "@/lib/api/types";
@@ -13,21 +13,19 @@ import { filerCikParam } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { useCoinList } from "@/lib/api/coin-queries";
 import { useInstrumentSearch, useKeyReady, useV2Filers, useV2PeopleSearch } from "@/lib/api/queries";
 import { INSTRUMENT_TYPE_PLURALS, instrumentBadges, servesSection } from "@/lib/instruments";
 import { filesThirteenF, searchPages } from "@/lib/navigation";
 import { personDetail, personRoleLabel } from "@/lib/people";
-import { recentLink } from "@/lib/recents";
 import { selectRecents, useTickerStore } from "@/lib/stores/ticker-store";
 import { cn } from "@/lib/utils";
 
 /** The category pills (owner 2026-11-21): one active at a time, All by default. */
-export const SEARCH_PILLS = ["all", "stock", "etf", "closed_end_fund", "etn", "coins", "institutions", "people"] as const;
+export const SEARCH_PILLS = ["all", "stock", "etf", "closed_end_fund", "etn", "institutions", "people"] as const;
 
 export type SearchPill = (typeof SEARCH_PILLS)[number];
 
-const PILL_LABELS: Record<SearchPill, string> = { all: "All", coins: "Coins", institutions: "Institutions", people: "People", ...INSTRUMENT_TYPE_PLURALS };
+const PILL_LABELS: Record<SearchPill, string> = { all: "All", institutions: "Institutions", people: "People", ...INSTRUMENT_TYPE_PLURALS };
 
 const PILL_OPTIONS = SEARCH_PILLS.map(pill => ({ label: PILL_LABELS[pill], value: pill }));
 
@@ -43,7 +41,7 @@ const PEOPLE_LIMIT = 5;
 /** The typing pause before a request. */
 const DEBOUNCE_MS = 300;
 
-const PLACEHOLDER = "Search stocks, ETFs, coins, institutions, people and pages";
+const PLACEHOLDER = "Search stocks, ETFs, funds, institutions, people and pages";
 
 /** One pickable row of the list. */
 type SearchOption = {
@@ -141,9 +139,11 @@ function OptionIcon({ option }: { option: SearchOption }) {
 }
 
 /**
- * The global command palette. Each remote category uses its own typed query after the typing pause.
- * Exact coin and exchange-traded symbol hits stay separately selectable when their tickers overlap.
- * Keyboard focus stays in the combobox while arrows move and Enter selects a result.
+ * The top-bar search (⌘K / Ctrl K, also from inside an input): groups Instruments (`/v1/instruments?q=`, type badges),
+ * Institutions & filers (`/v1/filers?q=`, from 3 characters, after a typing pause — billed), People (`/v1/people?q=`,
+ * the same rule: one billed request per pause) and Pages (the navigation table, no request); category pills (All ·
+ * Stocks · ETFs · Closed-end funds · ETNs · Institutions · People) send only their own request. Combobox + listbox: arrows move, Enter picks the highlighted or first hit (waiting for an answer in flight);
+ * empty = the recently opened subjects. Picking an instrument keeps the current section when it has it.
  */
 export function TickerSearch() {
     const navigate = useNavigate();
@@ -181,13 +181,13 @@ export function TickerSearch() {
         return () => window.clearTimeout(timer);
     }, [query]);
 
-    const instrumentPill = pill !== "coins" && pill !== "institutions" && pill !== "people";
+    const instrumentPill = pill !== "institutions" && pill !== "people";
 
     const filerPill = pill === "all" || pill === "institutions";
 
     const peoplePill = pill === "all" || pill === "people";
 
-    const types: ReadonlyArray<V2InstrumentType> | undefined = pill === "all" || !instrumentPill ? undefined : [pill];
+    const types: ReadonlyArray<V2InstrumentType> | undefined = pill === "all" || pill === "institutions" || pill === "people" ? undefined : [pill];
 
     // A pill sends only its own request; nothing before the key answered `/v1/me`.
     const instruments = useInstrumentSearch(keyReady && instrumentPill ? debounced : "", types);
@@ -202,11 +202,7 @@ export function TickerSearch() {
     // People by name (`/v1/people?q=`): one billed request per typing pause, from 3 characters.
     const people = useV2PeopleSearch({ limit: PEOPLE_LIMIT, minLength: PEOPLE_MIN_CHARS, q: keyReady && peoplePill ? debounced : "" });
 
-    const coinPill = pill === "all" || pill === "coins";
-
-    const coins = useCoinList(debounced, open && keyReady && coinPill && !!debounced);
-
-    const settled = debounced === query && !instruments.isFetching && !coins.isFetching && !managers.isFetching && !filers.isFetching && !people.isFetching;
+    const settled = debounced === query && !instruments.isFetching && !managers.isFetching && !filers.isFetching && !people.isFetching;
 
     const goToTicker = React.useCallback((ticker: string, datasets?: ReadonlyArray<V2Dataset>) => {
         const normalizedTicker = ticker.toUpperCase();
@@ -234,54 +230,28 @@ export function TickerSearch() {
             return recents.map((recent: RecentSubject) => ({
                 badges: recent.badge ? [recent.badge] : [],
                 group: "Recently opened",
-                icon: recent.kind === "coin" ? CoinsIcon : recent.kind === "filer" ? LandmarkIcon : HistoryIcon,
+                icon: recent.kind === "filer" ? LandmarkIcon : HistoryIcon,
                 id: `recent-${recent.kind}-${recent.ref}`,
                 label: recent.label,
-                pick: close(() => (recent.kind === "instrument" ? goToTicker(recent.ref) : void navigate(recentLink(recent)))),
+                pick: close(() => (recent.kind === "filer"
+                    ? void navigate({ params: { cik: recent.ref }, to: "/sec/$cik" })
+                    : goToTicker(recent.ref))),
                 sub: recent.name,
             }));
         }
 
         const list: Array<SearchOption> = [];
 
-        const exact: Array<SearchOption> = [];
-
-        const text = query.toLowerCase();
-
-        const coinRows = coinPill && debounced === query ? (coins.data?.pages[0]?.data ?? []).slice(0, pill === "all" ? 5 : 20) : [];
-
-        const exactCoin = (coin: typeof coinRows[number]) => [coin.slug, coin.symbol, coin.name].some(value => value?.toLowerCase() === text);
-
-        const showExact = pill === "all" && coinRows.some(exactCoin);
-
         if (instrumentPill && debounced === query) {
             for (const instrument of rankInstruments(query, instruments.data?.data ?? [])) {
-                const matched = showExact && instrument.symbol.toLowerCase() === text;
-
-                (matched ? exact : list).push({
+                list.push({
                     badges: instrumentBadges(instrument),
-                    group: matched ? "Exact matches" : "Instruments",
+                    group: "Instruments",
                     id: `instrument-${instrument.symbol}`,
                     label: instrument.symbol,
                     logoUrl: instrument.logo_url,
                     pick: close(() => goToTicker(instrument.symbol, instrument.datasets)),
                     sub: instrument.name,
-                });
-            }
-        }
-
-        if (coinPill && debounced === query) {
-            for (const coin of coinRows) {
-                const matched = showExact && exactCoin(coin);
-
-                (matched ? exact : list).push({
-                    badges: ["Spot coin"],
-                    group: matched ? "Exact matches" : "Coins",
-                    icon: CoinsIcon,
-                    id: `coin-${coin.slug}`,
-                    label: coin.symbol ?? coin.slug,
-                    pick: close(() => void navigate({ params: { coin: coin.slug }, to: "/spot-coins/$coin" })),
-                    sub: coinRows.some(other => other.slug !== coin.slug && other.name === coin.name && other.symbol === coin.symbol) ? `${coin.name} · ${coin.slug}` : coin.name,
                 });
             }
         }
@@ -333,8 +303,8 @@ export function TickerSearch() {
             }
         }
 
-        return [...exact, ...list];
-    }, [coinPill, coins.data, debounced, filerPill, filers.data, goToTicker, instrumentPill, instruments.data, managers.data, navigate, people.data, peoplePill, pill, query, recents]);
+        return list;
+    }, [debounced, filerPill, filers.data, goToTicker, instrumentPill, instruments.data, managers.data, navigate, people.data, peoplePill, pill, query, recents]);
 
     const activeIndex = Math.min(active, Math.max(0, options.length - 1));
 
@@ -421,7 +391,7 @@ export function TickerSearch() {
             >
                 <span className="text-muted-foreground inline-flex min-w-0 items-center gap-2">
                     <SearchIcon className="size-4 shrink-0" />
-                    <span className="truncate">Search stocks, ETFs, coins, institutions and people</span>
+                    <span className="truncate">Search stocks, ETFs, funds, institutions and people</span>
                 </span>
                 <span className="text-muted-foreground shrink-0 text-xs" data-testid="search-shortcut">{shortcut}</span>
             </DialogTrigger>
@@ -467,12 +437,9 @@ export function TickerSearch() {
                     {query && !settled && options.length === 0 && (
                         <div className="text-muted-foreground px-2 py-2">Searching…</div>
                     )}
-                    {query && settled && coinPill && coins.error && (
-                        <div className="text-muted-foreground px-2 py-2" role="status">Coin search is unavailable.</div>
-                    )}
-                    {query && settled && options.length === 0 && !(coinPill && coins.error) && (
+                    {query && settled && options.length === 0 && (
                         <div className="text-muted-foreground px-2 py-2">
-                            {(pill === "people" || pill === "institutions") && query.length < FILER_MIN_CHARS ? `Type ${FILER_MIN_CHARS} characters to search ${pill === "people" ? "people" : "institutions"}.` : "Nothing found"}
+                            {!instrumentPill && query.length < FILER_MIN_CHARS ? `Type ${FILER_MIN_CHARS} characters to search ${pill === "people" ? "people" : "institutions"}.` : "Nothing found"}
                         </div>
                     )}
                     {!query && options.length === 0 && (

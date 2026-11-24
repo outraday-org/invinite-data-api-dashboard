@@ -1,9 +1,9 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
-/** A subject opened recently: an instrument (`/$ticker`), a spot coin (`/spot-coins/$coin`) or a filer (`/sec/$cik`). */
+/** A subject opened recently: an instrument (`/$ticker`) or an SEC filer / institution (`/sec/$cik`). */
 export type RecentSubject
-    = | { badge: null | string; kind: "coin" | "filer"; label: string; name: null | string; ref: string }
+    = | { badge: null | string; kind: "filer"; label: string; name: null | string; ref: string }
         | { badge: null | string; kind: "instrument"; label: string; name: null | string; ref: string };
 
 /** The recents before the store is hydrated (one stable empty list: a selector must not build a new one per call). */
@@ -41,8 +41,25 @@ export function withRecent(recents: ReadonlyArray<RecentSubject>, subject: Recen
 }
 
 /**
- * The recently opened subjects (instruments, coins and filers) of this browser: the search's empty state and the landing
- * page's "Recently opened". Written when a subject page has loaded its profile.
+ * The stored recents this build can open: kinds `instrument` and `filer`, in their stored order. An entry of another
+ * kind — the spot coins of an earlier build (removed 2026-11-24) — is dropped, so it never links to a dead route.
+ * Null when nothing usable is stored (no stored state, or no `recents` list).
+ */
+export function storedRecents(persisted: unknown): Array<RecentSubject> | null {
+    const recents = (persisted as null | undefined | { recents?: unknown })?.recents;
+
+    if (!Array.isArray(recents)) return null;
+
+    return recents.filter((entry): entry is RecentSubject => {
+        const kind = (entry as null | undefined | { kind?: unknown })?.kind;
+
+        return kind === "instrument" || kind === "filer";
+    });
+}
+
+/**
+ * The recently opened subjects (instruments and filers) of this browser: the search's empty state and the landing
+ * page's "Recently opened". Written when an instrument or filer page has loaded its subject.
  */
 export const useTickerStore = create<RecentsState>()(
     persist(
@@ -57,6 +74,12 @@ export const useTickerStore = create<RecentsState>()(
             recents: [],
         }),
         {
+            // Runs on every hydration: the stored list keeps only the kinds this build can open.
+            merge: (persisted, current) => {
+                const recents = storedRecents(persisted);
+
+                return recents ? { ...current, recents } : current;
+            },
             name: "invinite-recents",
             onRehydrateStorage: () => (state) => {
                 if (typeof window === "undefined") return;

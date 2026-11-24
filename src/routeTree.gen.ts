@@ -25,7 +25,6 @@ import { Route as AccountRouteImport } from './routes/account'
 import { Route as AlertsRouteRouteImport } from './routes/alerts/route'
 import { Route as TickerRouteRouteImport } from './routes/$ticker/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SpotCoinsIndexRouteImport } from './routes/spot-coins/index'
 import { Route as PeopleIndexRouteImport } from './routes/people/index'
 import { Route as OfferingsIndexRouteImport } from './routes/offerings/index'
 import { Route as FilingsIndexRouteImport } from './routes/filings/index'
@@ -35,7 +34,6 @@ import { Route as UsMacroYieldCurveRouteImport } from './routes/us-macro/yield-c
 import { Route as UsMacroLaborRouteImport } from './routes/us-macro/labor'
 import { Route as UsMacroInflationRouteImport } from './routes/us-macro/inflation'
 import { Route as UsMacroGdpRouteImport } from './routes/us-macro/gdp'
-import { Route as SpotCoinsCoinRouteImport } from './routes/spot-coins/$coin'
 import { Route as SecDatasetsRouteImport } from './routes/sec/datasets'
 import { Route as SecCikRouteImport } from './routes/sec/$cik'
 import { Route as PeoplePersonIdRouteImport } from './routes/people/$personId'
@@ -152,11 +150,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SpotCoinsIndexRoute = SpotCoinsIndexRouteImport.update({
-  id: '/spot-coins/',
-  path: '/spot-coins/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PeopleIndexRoute = PeopleIndexRouteImport.update({
   id: '/people/',
   path: '/people/',
@@ -200,11 +193,6 @@ const UsMacroInflationRoute = UsMacroInflationRouteImport.update({
 const UsMacroGdpRoute = UsMacroGdpRouteImport.update({
   id: '/us-macro/gdp',
   path: '/us-macro/gdp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SpotCoinsCoinRoute = SpotCoinsCoinRouteImport.update({
-  id: '/spot-coins/$coin',
-  path: '/spot-coins/$coin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SecDatasetsRoute = SecDatasetsRouteImport.update({
@@ -421,7 +409,6 @@ export interface FileRoutesByFullPath {
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/sec/datasets': typeof SecDatasetsRoute
-  '/spot-coins/$coin': typeof SpotCoinsCoinRoute
   '/us-macro/gdp': typeof UsMacroGdpRoute
   '/us-macro/inflation': typeof UsMacroInflationRoute
   '/us-macro/labor': typeof UsMacroLaborRoute
@@ -431,7 +418,6 @@ export interface FileRoutesByFullPath {
   '/filings': typeof FilingsIndexRoute
   '/offerings': typeof OfferingsIndexRoute
   '/people': typeof PeopleIndexRoute
-  '/spot-coins': typeof SpotCoinsIndexRoute
   '/alerts/destinations/$id': typeof AlertsDestinationsIdRoute
   '/alerts/scripts/$id': typeof AlertsScriptsIdRoute
   '/alerts/users/$externalUserId': typeof AlertsUsersExternalUserIdRoute
@@ -483,7 +469,6 @@ export interface FileRoutesByTo {
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/sec/datasets': typeof SecDatasetsRoute
-  '/spot-coins/$coin': typeof SpotCoinsCoinRoute
   '/us-macro/gdp': typeof UsMacroGdpRoute
   '/us-macro/inflation': typeof UsMacroInflationRoute
   '/us-macro/labor': typeof UsMacroLaborRoute
@@ -493,7 +478,6 @@ export interface FileRoutesByTo {
   '/filings': typeof FilingsIndexRoute
   '/offerings': typeof OfferingsIndexRoute
   '/people': typeof PeopleIndexRoute
-  '/spot-coins': typeof SpotCoinsIndexRoute
   '/alerts/destinations/$id': typeof AlertsDestinationsIdRoute
   '/alerts/scripts/$id': typeof AlertsScriptsIdRoute
   '/alerts/users/$externalUserId': typeof AlertsUsersExternalUserIdRoute
@@ -548,7 +532,6 @@ export interface FileRoutesById {
   '/people/$personId': typeof PeoplePersonIdRoute
   '/sec/$cik': typeof SecCikRoute
   '/sec/datasets': typeof SecDatasetsRoute
-  '/spot-coins/$coin': typeof SpotCoinsCoinRoute
   '/us-macro/gdp': typeof UsMacroGdpRoute
   '/us-macro/inflation': typeof UsMacroInflationRoute
   '/us-macro/labor': typeof UsMacroLaborRoute
@@ -558,7 +541,6 @@ export interface FileRoutesById {
   '/filings/': typeof FilingsIndexRoute
   '/offerings/': typeof OfferingsIndexRoute
   '/people/': typeof PeopleIndexRoute
-  '/spot-coins/': typeof SpotCoinsIndexRoute
   '/alerts/destinations/$id': typeof AlertsDestinationsIdRoute
   '/alerts/scripts/$id': typeof AlertsScriptsIdRoute
   '/alerts/users/$externalUserId': typeof AlertsUsersExternalUserIdRoute
@@ -614,7 +596,6 @@ export interface FileRouteTypes {
     | '/people/$personId'
     | '/sec/$cik'
     | '/sec/datasets'
-    | '/spot-coins/$coin'
     | '/us-macro/gdp'
     | '/us-macro/inflation'
     | '/us-macro/labor'
@@ -624,7 +605,6 @@ export interface FileRouteTypes {
     | '/filings'
     | '/offerings'
     | '/people'
-    | '/spot-coins'
     | '/alerts/destinations/$id'
     | '/alerts/scripts/$id'
     | '/alerts/users/$externalUserId'
@@ -676,7 +656,6 @@ export interface FileRouteTypes {
     | '/people/$personId'
     | '/sec/$cik'
     | '/sec/datasets'
-    | '/spot-coins/$coin'
     | '/us-macro/gdp'
     | '/us-macro/inflation'
     | '/us-macro/labor'
@@ -686,7 +665,6 @@ export interface FileRouteTypes {
     | '/filings'
     | '/offerings'
     | '/people'
-    | '/spot-coins'
     | '/alerts/destinations/$id'
     | '/alerts/scripts/$id'
     | '/alerts/users/$externalUserId'
@@ -740,7 +718,6 @@ export interface FileRouteTypes {
     | '/people/$personId'
     | '/sec/$cik'
     | '/sec/datasets'
-    | '/spot-coins/$coin'
     | '/us-macro/gdp'
     | '/us-macro/inflation'
     | '/us-macro/labor'
@@ -750,7 +727,6 @@ export interface FileRouteTypes {
     | '/filings/'
     | '/offerings/'
     | '/people/'
-    | '/spot-coins/'
     | '/alerts/destinations/$id'
     | '/alerts/scripts/$id'
     | '/alerts/users/$externalUserId'
@@ -801,7 +777,6 @@ export interface RootRouteChildren {
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
   SecCikRoute: typeof SecCikRoute
   SecDatasetsRoute: typeof SecDatasetsRoute
-  SpotCoinsCoinRoute: typeof SpotCoinsCoinRoute
   UsMacroGdpRoute: typeof UsMacroGdpRoute
   UsMacroInflationRoute: typeof UsMacroInflationRoute
   UsMacroLaborRoute: typeof UsMacroLaborRoute
@@ -809,7 +784,6 @@ export interface RootRouteChildren {
   FilingsIndexRoute: typeof FilingsIndexRoute
   OfferingsIndexRoute: typeof OfferingsIndexRoute
   PeopleIndexRoute: typeof PeopleIndexRoute
-  SpotCoinsIndexRoute: typeof SpotCoinsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -926,13 +900,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/spot-coins/': {
-      id: '/spot-coins/'
-      path: '/spot-coins'
-      fullPath: '/spot-coins'
-      preLoaderRoute: typeof SpotCoinsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/people/': {
       id: '/people/'
       path: '/people'
@@ -994,13 +961,6 @@ declare module '@tanstack/react-router' {
       path: '/us-macro/gdp'
       fullPath: '/us-macro/gdp'
       preLoaderRoute: typeof UsMacroGdpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/spot-coins/$coin': {
-      id: '/spot-coins/$coin'
-      path: '/spot-coins/$coin'
-      fullPath: '/spot-coins/$coin'
-      preLoaderRoute: typeof SpotCoinsCoinRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sec/datasets': {
@@ -1358,7 +1318,6 @@ const rootRouteChildren: RootRouteChildren = {
   PeoplePersonIdRoute: PeoplePersonIdRoute,
   SecCikRoute: SecCikRoute,
   SecDatasetsRoute: SecDatasetsRoute,
-  SpotCoinsCoinRoute: SpotCoinsCoinRoute,
   UsMacroGdpRoute: UsMacroGdpRoute,
   UsMacroInflationRoute: UsMacroInflationRoute,
   UsMacroLaborRoute: UsMacroLaborRoute,
@@ -1366,7 +1325,6 @@ const rootRouteChildren: RootRouteChildren = {
   FilingsIndexRoute: FilingsIndexRoute,
   OfferingsIndexRoute: OfferingsIndexRoute,
   PeopleIndexRoute: PeopleIndexRoute,
-  SpotCoinsIndexRoute: SpotCoinsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
