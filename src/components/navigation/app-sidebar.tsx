@@ -106,7 +106,7 @@ function InstrumentContext({ enabled, ticker }: { enabled: boolean; ticker: stri
 
     return (
         <SidebarGroup data-testid="sidebar-context">
-            <SidebarGroupLabel className="normal-case">{label}</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-[13px] normal-case">{label}</SidebarGroupLabel>
             <SidebarGroupContent>
                 {groups.length === 0
                     ? <SkeletonRows />
