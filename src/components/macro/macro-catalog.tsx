@@ -11,6 +11,8 @@ import { useMacroCatalog } from "@/lib/api/macro-queries";
 import { OPERATIONS } from "@/lib/api/operations.gen";
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 
+import { MacroAvailability } from "./macro-availability";
+
 const columns: Array<ColumnDef<MacroSeries>> = [
     {
         cell: ({ row: { original: r } }) => (
@@ -47,7 +49,11 @@ const columns: Array<ColumnDef<MacroSeries>> = [
     { accessorFn: r => r.last_date ?? "No coverage", header: "Latest" },
 ];
 
-export function MacroCatalog({ filter = "" }: { filter?: string }) {
+export function MacroCatalog(props: { filter?: string }) {
+    return <MacroAvailability><MacroCatalogContent {...props} /></MacroAvailability>;
+}
+
+function MacroCatalogContent({ filter = "" }: { filter?: string }) {
     const query = useMacroCatalog();
 
     useAutoLoadPages(query);

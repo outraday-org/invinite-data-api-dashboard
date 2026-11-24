@@ -5,6 +5,7 @@ import type { AlertType } from "@/lib/api/types";
 
 import { CreateAlertForm } from "@/components/alerts/alert-editor";
 import { AlertsState } from "@/components/alerts/alert-parts";
+import { MacroAvailability } from "@/components/macro/macro-availability";
 import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fromAlert, prefilledForm } from "@/lib/alerts/alert-form";
@@ -72,10 +73,12 @@ function NewAlertPage() {
 
     const initial = source.data ? fromAlert(source.data, { duplicate: true }) : prefilledForm(search.type, search.symbol, { series: search.series, template: search.template, version: search.version });
 
+    const form = <CreateAlertForm initial={initial} initialScriptId={search.script} key={search.from ?? [search.type, search.symbol, search.series, search.version, search.template].map(part => part ?? "").join(":")} />;
+
     return (
         <div className="flex flex-col gap-4">
             {header}
-            <CreateAlertForm initial={initial} initialScriptId={search.script} key={search.from ?? [search.type, search.symbol, search.series, search.version, search.template].map(part => part ?? "").join(":")} />
+            {initial.type === "macro" ? <MacroAvailability>{form}</MacroAvailability> : form}
         </div>
     );
 }

@@ -9,6 +9,7 @@ import { useAlertFormPickers } from "@/components/alerts/alert-form-pickers";
 import { AlertFormView } from "@/components/alerts/alert-form-view";
 import { LimitNotice } from "@/components/alerts/alert-parts";
 import { useAlertUserOptions } from "@/components/alerts/alert-user-picker";
+import { useMacroAccess } from "@/components/macro/macro-availability";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { Notice } from "@/components/ui/notice";
@@ -71,6 +72,8 @@ function WriteOutcomeNotice({ onReload, outcome }: { onReload?: () => void; outc
  */
 export function CreateAlertForm({ initial, initialScriptId }: { initial: AlertFormState; initialScriptId?: string }) {
     const navigate = useNavigate();
+
+    const macroAccess = useMacroAccess();
 
     const [state, setState] = React.useState(initial);
 
@@ -155,6 +158,7 @@ export function CreateAlertForm({ initial, initialScriptId }: { initial: AlertFo
                 destinationOptions={pickers.destinationOptions}
                 endUserOptions={endUserOptions}
                 errors={errors}
+                macroAccess={macroAccess}
                 mode="create"
                 notice={<WriteOutcomeNotice outcome={outcome} />}
                 onChange={(next) => {
@@ -179,6 +183,8 @@ export function CreateAlertForm({ initial, initialScriptId }: { initial: AlertFo
  * `version` the form was loaded at — a 409 `conflict` says "changed elsewhere" and offers a reload, never a blind retry.
  */
 export function EditAlertForm({ alert, initial, onDone, onReload }: { alert: Alert; initial: AlertFormState; onDone: () => void; onReload: () => void }) {
+    const macroAccess = useMacroAccess();
+
     const [state, setState] = React.useState(initial);
 
     // The version the form was loaded at: a background refetch of the alert must not move it (the conflict check).
@@ -227,6 +233,7 @@ export function EditAlertForm({ alert, initial, onDone, onReload }: { alert: Ale
                 destinationOptions={pickers.destinationOptions}
                 endUserOptions={endUserOptions}
                 errors={errors}
+                macroAccess={macroAccess}
                 mode="edit"
                 notice={<WriteOutcomeNotice onReload={onReload} outcome={outcome} />}
                 onCancel={onDone}

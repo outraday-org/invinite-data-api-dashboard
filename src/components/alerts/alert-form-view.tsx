@@ -2,12 +2,14 @@ import * as React from "react";
 
 import type { DestinationOptions, ScriptOptions } from "@/components/alerts/alert-form-pickers";
 import type { AlertUserOption } from "@/components/alerts/alert-user-picker";
+import type { MacroAccess } from "@/components/macro/macro-availability";
 import type { ActiveWindowState, AlertFormState, FieldErrors, FieldText } from "@/lib/alerts/alert-form";
 import type { ConditionFieldSpec, FieldSpec } from "@/lib/alerts/condition-fields";
 import type { AlertTemplate, AlertType } from "@/lib/api/types";
 
 import { declaredInputsOf, DestinationPicker, ScriptInputsFields, ScriptVersionPicker } from "@/components/alerts/alert-form-pickers";
 import { AlertUserPicker } from "@/components/alerts/alert-user-picker";
+import { MacroAvailabilityNotice } from "@/components/macro/macro-availability";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -279,13 +281,13 @@ function ActiveWindowFields({ errors, onChange, window }: { errors: FieldErrors;
     );
 }
 
-function TypePicker({ disabled, onChange, type }: { disabled: boolean; onChange: (type: AlertType) => void; type: AlertType }) {
+function TypePicker({ disabled, macroAvailable, onChange, type }: { macroAvailable: boolean; disabled: boolean; onChange: (type: AlertType) => void; type: AlertType }) {
     return (
         <FieldShell help={ALERT_TYPE_INFO[type].summary} htmlFor={fieldId("type")} label="Type">
             <Select disabled={disabled} onValueChange={next => next && onChange(next)} value={type}>
                 <SelectTrigger aria-label="Alert type" className="w-full sm:w-80" id={fieldId("type")}>{ALERT_TYPE_INFO[type].label}</SelectTrigger>
                 <SelectContent>
-                    {ALERT_TYPE_GROUPS.map(group => (
+                    {ALERT_TYPE_GROUPS.filter(group => macroAvailable || !group.types.includes("macro")).map(group => (
                         <SelectGroup key={group.label}>
                             <SelectLabel>{group.label}</SelectLabel>
                             {group.types.map(item => <SelectItem key={item} value={item}>{ALERT_TYPE_INFO[item].label}</SelectItem>)}
@@ -318,6 +320,7 @@ export function AlertFormView({
     destinationOptions,
     endUserOptions = [],
     errors,
+    macroAccess = "available",
     mode,
     notice,
     onCancel,
@@ -331,6 +334,7 @@ export function AlertFormView({
 }: {
     /** The destination picker's data (A4); absent = the id text field. */
     destinationOptions?: DestinationOptions;
+    macroAccess?: MacroAccess;
     /** Existing end users suggested for the end-user field (A4: `useAlertUserOptions`). */
     endUserOptions?: ReadonlyArray<AlertUserOption>;
     errors: FieldErrors;
@@ -354,6 +358,8 @@ export function AlertFormView({
         return state.indicatorMode === "template" ? !INDICATOR_STRUCTURED_FIELDS.includes(spec.name) : spec.name !== "template";
     });
 
+    if (state.type === "macro" && macroAccess !== "available") return <MacroAvailabilityNotice access={macroAccess} />;
+
     const busy = pending.check || pending.submit;
 
     return (
@@ -367,7 +373,7 @@ export function AlertFormView({
             }}
         >
             <Section title="1. Type">
-                <TypePicker disabled={mode === "edit"} onChange={type => set({ type, ...(type === "macro" && !state.condition.macro_events ? { condition: { ...state.condition, macro_events: ["macro.released", "macro.revised"] } } : {}) })} type={state.type} />
+                <TypePicker disabled={mode === "edit"} macroAvailable={macroAccess === "available"} onChange={type => set({ type, ...(type === "macro" && !state.condition.macro_events ? { condition: { ...state.condition, macro_events: ["macro.released", "macro.revised"] } } : {}) })} type={state.type} />
                 {mode === "edit" && <p className="text-muted-foreground">The type of an alert never changes; duplicate it to start from another type.</p>}
             </Section>
             <Section title="2. Condition">

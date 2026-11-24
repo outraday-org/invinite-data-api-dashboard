@@ -30,6 +30,7 @@ import {
 import { OPERATIONS } from "@/lib/api/operations.gen";
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 
+import { MacroAvailability } from "./macro-availability";
 import { historyPoints, MacroChart } from "./macro-chart";
 import { MacroPageActions } from "./macro-page-actions";
 
@@ -161,7 +162,11 @@ function Panel({ children, family, onChange, search, seriesId }: Props & { serie
     );
 }
 
-export function ScalarMacroPage({ family, onChange, search }: Props & { family: ScalarFamily }) {
+export function ScalarMacroPage(props: Props & { family: ScalarFamily }) {
+    return <MacroAvailability><ScalarMacroContent {...props} /></MacroAvailability>;
+}
+
+function ScalarMacroContent({ family, onChange, search }: Props & { family: ScalarFamily }) {
     const metadata = useMacroCatalog(family);
 
     useAutoLoadPages(metadata);
@@ -312,7 +317,11 @@ const curveColumns = (search: MacroSearch): Array<ColumnDef<MacroCurve>> => [
     { accessorKey: "observed_at", header: "Observed (UTC)" },
 ];
 
-export function TreasuryMacroPage({ onChange, search }: Omit<Props, "family">) {
+export function TreasuryMacroPage(props: Omit<Props, "family">) {
+    return <MacroAvailability><TreasuryMacroContent {...props} /></MacroAvailability>;
+}
+
+function TreasuryMacroContent({ onChange, search }: Omit<Props, "family">) {
     const family = "yield_curve" as const,
         history = macroView(search) === "history",
         tenor: Tenor = search.tenor ?? "y10";

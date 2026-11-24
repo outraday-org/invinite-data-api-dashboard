@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MacroCatalog } from "@/components/macro/macro-catalog";
@@ -15,8 +15,11 @@ const f = vi.hoisted(() => ({
     curve: vi.fn(),
     curves: vi.fn(),
     history: vi.fn(),
+    me: vi.fn(),
     snapshot: vi.fn(),
 }));
+
+vi.mock("@/lib/api/server-functions", async original => ({ ...await original<object>(), getMe: f.me }));
 
 vi.mock("@/lib/api/server-functions-macro", () => ({
     getMacroCatalog: f.catalog,
@@ -80,6 +83,8 @@ beforeEach(() => {
 
     f.allows = true;
 
+    f.me.mockResolvedValue({ allowed_families: ["Macro"], plan: "lite" });
+
     useApiKeyStore.setState({ apiKey: "test-key", hasHydrated: true });
 
     f.catalog.mockResolvedValue(
@@ -99,6 +104,63 @@ beforeEach(() => {
 });
 
 describe("keyed macro page requests", () => {
+    it("waits for /v1/me, suppresses all four families and the catalog on the old API, and resumes after its response advertises Macro", async () => {
+        let answer!: (profile: object) => void;
+
+        f.me.mockReturnValueOnce(new Promise((resolve) => {
+            answer = resolve;
+        }));
+
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+        render(
+            <QueryClientProvider client={client}>
+                <MacroCatalog />
+                <ScalarMacroPage family="inflation" onChange={vi.fn()} search={{}} />
+                <ScalarMacroPage family="labor" onChange={vi.fn()} search={{ view: "history" }} />
+                <ScalarMacroPage family="gdp" onChange={vi.fn()} search={{}} />
+                <TreasuryMacroPage onChange={vi.fn()} search={{}} />
+                <TreasuryMacroPage onChange={vi.fn()} search={{ view: "history" }} />
+            </QueryClientProvider>,
+        );
+
+        expect(screen.queryByText("US macro data is not available on this API yet")).toBeNull();
+
+        for (const req of [f.catalog, f.snapshot, f.history, f.curve, f.curves])expect(req).not.toHaveBeenCalled();
+
+        answer({ allowed_families: ["Alerts", "Calendar"], plan: "lite" });
+
+        await waitFor(() => expect(screen.getAllByText("US macro data is not available on this API yet")).toHaveLength(6));
+
+        for (const req of [f.catalog, f.snapshot, f.history, f.curve, f.curves])expect(req).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getAllByRole("button", { name: "Check again" })[0]);
+
+        await waitFor(() => {
+            for (const req of [f.catalog, f.snapshot, f.history, f.curve, f.curves]) expect(req).toHaveBeenCalled();
+        });
+
+        expect(screen.queryByText("US macro data is not available on this API yet")).toBeNull();
+
+        client.clear();
+    });
+
+    it("recognizes a newly selected key with Macro without reusing a legacy account's cached capabilities", async () => {
+        f.me.mockImplementation(({ data}: { data: { apiKey: string } }) => Promise.resolve({ allowed_families: data.apiKey === "new-key" ? ["Macro"] : ["Calendar"], plan: "free" }));
+
+        mount(<MacroCatalog />);
+
+        await screen.findByText("US macro data is not available on this API yet");
+
+        expect(f.catalog).not.toHaveBeenCalled();
+
+        act(() => useApiKeyStore.setState({ apiKey: "new-key", apiKeyUpdatedAt: Date.now(), hasHydrated: true }));
+
+        await waitFor(() => expect(f.catalog).toHaveBeenCalledTimes(1));
+
+        expect(f.catalog.mock.calls[0][0].data.apiKey).toBe("new-key");
+    });
+
     it("follows Free catalog cursors and links a tenor from the final page without reading observations", async () => {
         f.allows = false;
 
@@ -137,7 +199,7 @@ describe("keyed macro page requests", () => {
             />,
         );
 
-        expect(screen.getByText(/History and snapshots require Lite/)).toBeInTheDocument();
+        expect(await screen.findByText(/History and snapshots require Lite/)).toBeInTheDocument();
 
         await waitFor(() => expect(f.catalog).toHaveBeenCalledTimes(1));
 

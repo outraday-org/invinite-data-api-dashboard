@@ -8,6 +8,7 @@ import { BatchResultsView } from "@/components/alerts/alert-parts";
 import { AlertsListView } from "@/components/alerts/alerts-list-view";
 import { useAlertActions } from "@/components/alerts/use-alert-actions";
 import { useIdSelection } from "@/components/alerts/use-id-selection";
+import { MacroAvailabilityNotice, useMacroAccess } from "@/components/macro/macro-availability";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { buttonVariants } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -67,6 +68,14 @@ const TYPE_OPTIONS: Array<{ label: string; value: AlertType | typeof ALL }> = [
 function AlertsPage() {
     const search = Route.useSearch();
 
+    const macroAccess = useMacroAccess();
+
+    if (search.type === "macro" && macroAccess !== "available") return <MacroAvailabilityNotice access={macroAccess} />;
+
+    return <AlertsListContent macroAvailable={macroAccess === "available"} search={search} />;
+}
+
+function AlertsListContent({ macroAvailable, search}: { search: AlertsSearch; macroAvailable: boolean }) {
     const navigate = Route.useNavigate();
 
     const onChange = (patch: Partial<AlertsSearch>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
@@ -86,7 +95,7 @@ function AlertsPage() {
             />
             <div className="flex flex-wrap items-center gap-2">
                 <FilterSelect aria-label="Status" className="w-[150px]" onValueChange={value => onChange({ status: value === ALL ? undefined : value })} options={STATUS_OPTIONS} value={search.status ?? ALL} />
-                <FilterSelect aria-label="Type" className="w-[200px]" onValueChange={value => onChange({ type: value === ALL ? undefined : value })} options={TYPE_OPTIONS} value={search.type ?? ALL} />
+                <FilterSelect aria-label="Type" className="w-[200px]" onValueChange={value => onChange({ type: value === ALL ? undefined : value })} options={macroAvailable ? TYPE_OPTIONS : TYPE_OPTIONS.filter(option => option.value !== "macro")} value={search.type ?? ALL} />
                 <DebouncedInput aria-label="Symbol" className="w-[120px]" onCommit={symbol => onChange({ symbol: symbol || undefined })} placeholder="Symbol" value={search.symbol ?? ""} />
                 <DebouncedInput aria-label="Destination id" className="w-[220px]" onCommit={id => onChange({ destination_id: id || undefined })} placeholder="Destination id (dst_…)" value={search.destination_id ?? ""} />
                 <DebouncedInput aria-label="End user id" className="w-[160px]" onCommit={id => onChange({ external_user_id: id || undefined })} placeholder="End user id" value={search.external_user_id ?? ""} />

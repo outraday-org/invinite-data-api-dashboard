@@ -24,14 +24,14 @@ vi.mock("@/lib/api/mutations", async importOriginal => ({
     }),
 }));
 
-vi.mock("@/lib/api/queries", () => ({
-    ALERT_QUERY_KEYS: { alert: ["a"], event: ["e"], events: ["es"], list: ["l"], templates: ["t"] }, ALERT_USER_QUERY_KEYS: { defaults: ["d"], users: ["u"] },
-    // A4's pickers: no destination / script on the mocked account.
+vi.mock("@/lib/api/queries", () => ({ ALERT_QUERY_KEYS: { alert: ["a"], event: ["e"], events: ["es"], list: ["l"], templates: ["t"] },
+    ALERT_USER_QUERY_KEYS: { defaults: ["d"], users: ["u"] }, // A4's pickers: no destination / script on the mocked account.
     DESTINATION_QUERY_KEYS: { deliveries: ["dd"], destination: ["d1"], list: ["dl"] },
     useAlertsQuota: () => ({ data: null }),
     useAlertTemplates: () => ({ data: TEMPLATES_FIXTURE, error: null, isLoading: false }),
     useAlertUserSuggestions: () => ({ data: null }),
     useDestinationsInfinite: () => ({ data: null, error: null, fetchNextPage: vi.fn(), hasNextPage: false, isFetchingNextPage: false, isLoading: false }),
+    useKeyState: () => ({ me: { allowed_families: ["Macro", "Alerts"] }, state: "ready" }),
     useScriptsInfinite: () => ({ data: null, error: null, isLoading: false }),
     useScriptVersions: () => ({ data: null, error: null, isLoading: false }),
 }));
@@ -104,6 +104,24 @@ describe("AlertFormView (one form from the field map)", () => {
         fireEvent.click(screen.getByRole("radio", { name: "Structured condition" }));
 
         expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ indicatorMode: "structured" }));
+    });
+
+    it("offers macro as a new rule type only after the API advertises it", async () => {
+        const screenView = render(view({ macroAccess: "not-advertised" }));
+
+        fireEvent.click(screen.getByRole("combobox", { name: "Alert type" }));
+
+        await screen.findByRole("option", { name: "SEC filing" });
+
+        expect(screen.queryByRole("option", { name: "US macro" })).toBeNull();
+
+        screenView.unmount();
+
+        render(view({ macroAccess: "available" }));
+
+        fireEvent.click(screen.getByRole("combobox", { name: "Alert type" }));
+
+        expect(await screen.findByRole("option", { name: "US macro" })).toBeInTheDocument();
     });
 
     it("numeric bounds as a hint", () => {
