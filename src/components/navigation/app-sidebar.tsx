@@ -329,7 +329,7 @@ export function AppSidebar() {
                 : personId ? <PersonContext enabled={keyReady} personId={personId} /> : null;
 
     return (
-        <Sidebar className="group-data-[side=left]:border-none [&>div]:bg-background">
+        <Sidebar className="border-sidebar-border [&>div]:bg-background">
             {/* The app's navigation landmark (docked, and inside the off-canvas sheet below 1024 px). */}
             <nav aria-label="Main" className="flex min-h-0 flex-1 flex-col">
                 {/* Below 640 px the top bar shows no brand: the off-canvas sidebar does. */}

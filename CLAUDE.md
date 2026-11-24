@@ -259,7 +259,8 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 - **Top bar** (`__root.tsx`): sidebar trigger · brand mark + "Invinite Data" → `/` (from `sm`) · `TickerSearch`
   (520 px, centred from `lg`, fills the space below) · theme switch (from `sm`; below it beside Account in the sidebar)
   · plan badge (from `sm`) · key button · `RequestPanelToggle` (see "API inspector"). A
-  `border-b` hairline shows once the document is scrolled (`data-scrolled`, read once per frame).
+  `border-b` hairline always separates it from the content; the docked sidebar has a `border-r`, the docked request
+  panel a `border-l`.
 - **`PageContainer`** (`src/components/ui/page-container.tsx`): THE page frame of every route — `width` `default`
   (1200 px), `narrow` (`max-w-3xl`: `/search`, the onboarding card, the route error) or `wide` (1440 px: macro);
   `px-4 py-5` / `sm:px-6 sm:py-6` / `xl:px-8 xl:py-8`, sections `gap-6`, `min-w-0`. No route writes its own

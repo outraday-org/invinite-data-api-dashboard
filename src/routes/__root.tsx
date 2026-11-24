@@ -77,8 +77,6 @@ export const Route = createRootRoute({
  * the key gate.
  */
 function RootLayout() {
-    const scrolled = useScrolled();
-
     return (
         <>
             {/* The first focusable element: skips the top bar and the sidebar (a ticker page's section tabs are its first stop). */}
@@ -88,10 +86,9 @@ function RootLayout() {
             >
                 Skip to content
             </a>
-            {/* The hairline appears once the page is scrolled (a border colour change, no layout shift). */}
+            {/* A hairline always separates the top bar from the sidebar, the content and the request panel. */}
             <header
-                className="sticky shrink-0 top-0 z-40 h-14 border-b border-transparent bg-background/80 transition-colors supports-backdrop-filter:backdrop-blur-md data-scrolled:border-border"
-                data-scrolled={scrolled || undefined}
+                className="sticky shrink-0 top-0 z-40 h-14 border-b border-border bg-background/80 supports-backdrop-filter:backdrop-blur-md"
                 data-slot="top-bar"
             >
                 <div className="grid h-full w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-2 sm:gap-3 sm:pr-4 lg:grid-cols-[1fr_auto_1fr]">
@@ -140,37 +137,6 @@ function RootLayout() {
             <RequestPanel />
         </>
     );
-}
-
-/** Whether the document is scrolled away from the top (the top bar's hairline); read once per frame. */
-function useScrolled(): boolean {
-    const [scrolled, setScrolled] = React.useState(false);
-
-    React.useEffect(() => {
-        let frame = 0;
-
-        const read = () => {
-            frame = 0;
-
-            setScrolled(window.scrollY > 0);
-        };
-
-        const onScroll = () => {
-            if (!frame) frame = window.requestAnimationFrame(read);
-        };
-
-        read();
-
-        window.addEventListener("scroll", onScroll, { passive: true });
-
-        return () => {
-            window.removeEventListener("scroll", onScroll);
-
-            if (frame) window.cancelAnimationFrame(frame);
-        };
-    }, []);
-
-    return scrolled;
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
