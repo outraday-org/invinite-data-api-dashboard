@@ -141,7 +141,8 @@ export function statementFacts(row: V2StatementPeriod, statement: StatementType)
 /**
  * The period columns of a statement page (label + the filing it was rendered from). A balance-sheet value is an instant
  * (no start): its column carries no `periodStart`, so "Filed values" asks by the period's end alone — a start would
- * match no instant (404 `not_found`).
+ * match no instant (404 `not_found`). An instant line on another statement (cash at the end of the period) is caught
+ * by the server function, which re-asks by the end alone on that 404 (`api/vintages-fallback.ts`).
  */
 export function statementColumns(rows: ReadonlyArray<V2StatementPeriod>, statement: StatementType): Array<StatementColumn> {
     const instant = statement === "balance-sheet";

@@ -83,6 +83,11 @@ export function parseCikList(text: string | undefined): Array<string> | undefine
     return ciks.length > 0 ? ciks : undefined;
 }
 
+/** The typed tokens of a CIK list that are no CIK ("1214156, abc" → `["abc"]`): the filter says it ignores them. */
+export function ignoredCikTokens(text: string | undefined): Array<string> {
+    return (text ?? "").split(/[\s,]+/).filter(part => part !== "" && !/^\d{1,10}$/.test(part));
+}
+
 /** A filed yes / no flag in words; not stated = null (a fact grid leaves it out). */
 export const yesNoText = (value: boolean | null | undefined) => (value == null ? null : value ? "Yes" : "No");
 

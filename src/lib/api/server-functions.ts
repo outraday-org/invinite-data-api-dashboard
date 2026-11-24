@@ -151,6 +151,7 @@ import {
     v2Expand,
     v2Query,
 } from "./v2";
+import { readWithInstantFallback } from "./vintages-fallback";
 
 const instrumentTypeSchema = z.enum(["stock", "etf", "closed_end_fund", "etn"] as const satisfies ReadonlyArray<V2InstrumentType>);
 
@@ -1679,7 +1680,7 @@ export const getFinancialVintages = createServerFn({ method: "POST" })
         periodStart: z.iso.date().optional(),
     }))
     .handler(async ({ data }): Promise<V2FinancialVintagesResponse> => {
-        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/financials/vintages", {
+        const read = (periodStart: string | undefined) => createApiClient(data.apiKey).GET("/v1/financials/vintages", {
             params: {
                 query: v2Query({
                     company: data.company,
@@ -1687,10 +1688,12 @@ export const getFinancialVintages = createServerFn({ method: "POST" })
                     cursor: data.cursor,
                     limit: data.limit,
                     period_end: data.periodEnd,
-                    period_start: data.periodStart,
+                    period_start: periodStart,
                 }),
             },
         });
+
+        const { data: res, error, response } = await readWithInstantFallback(read, data.periodStart, data.cursor);
 
         if (error) throwApiError(error, response);
 

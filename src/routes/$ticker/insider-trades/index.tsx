@@ -28,7 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useInsiderTrade, useV2InsiderHoldingsInfinite, useV2InsiderTradesInfinite } from "@/lib/api/queries";
 import { formatDay, formatInstant, formatMoney, formatShares } from "@/lib/format";
 import { tickerHead, WRAPPING_TABS_LIST_CLASS } from "@/lib/layout";
-import { insiderCodeLegend, insiderCodeText, parseCikList, yesNoText as yesNo } from "@/lib/sec/ownership";
+import { ignoredCikTokens, insiderCodeLegend, insiderCodeText, parseCikList, yesNoText as yesNo } from "@/lib/sec/ownership";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { IN_PLACE, optionalDay, optionalEnum, optionalText, orderedWindow } from "@/lib/url-state";
 
@@ -691,6 +691,12 @@ function InsiderTradesPage() {
                 </FilterBar>
 
                 {search.owner && !ownerParam(search.owner) && <div className="text-muted-foreground text-xs">No CIK in this list: every insider is shown</div>}
+                {ownerParam(search.owner) && ignoredCikTokens(search.owner).length > 0 && (
+                    <div className="text-muted-foreground text-xs">
+                        Ignored (no CIK):
+                        {ignoredCikTokens(search.owner).join(", ")}
+                    </div>
+                )}
 
                 <TabsContent value="trades">
                     <InsiderTradesView
