@@ -12,6 +12,7 @@ import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
 import type { PresentationPeriod, TreeRow } from "./types";
 
 import { ExpandCollapseButtons } from "./expand-collapse-buttons";
+import { PeriodHeadLabel } from "./period-head";
 import { addFactTypes, buildTreeRows, flattenToValueMap } from "./utils";
 
 /**
@@ -135,7 +136,7 @@ export function FinancialsPresentationTable({
                             </TableHead>
                             {periods.map(period => (
                                 <TableHead className={PERIOD_CELL} key={period.label} title={period.title}>
-                                    {period.label}
+                                    <PeriodHeadLabel label={period.label} preliminary={period.preliminary} />
                                 </TableHead>
                             ))}
                         </TableRow>

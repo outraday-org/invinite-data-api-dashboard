@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { changeTypesParam, insiderCodeLegend, insiderCodeText, OFFERING_ID_PATTERN, parseChangeTypes, parseCikList } from "@/lib/sec/ownership";
+import { changeTypesParam, ignoredCikTokens, insiderCodeLegend, insiderCodeText, OFFERING_ID_PATTERN, parseChangeTypes, parseCikList } from "@/lib/sec/ownership";
 
 describe("ownership helpers", () => {
     it("insider codes in words; an unknown code stays as filed; the legend keeps first appearance and drops repeats", () => {
@@ -35,6 +35,12 @@ describe("ownership helpers", () => {
         expect(parseCikList("abc")).toBeUndefined();
 
         expect(parseCikList(Array.from({ length: 60 }, (_, index) => String(index + 1)).join(","))).toHaveLength(50);
+
+        expect(ignoredCikTokens("0000102909, 2012383 abc,102909, 12345678901")).toEqual(["abc", "12345678901"]);
+
+        expect(ignoredCikTokens(" 102909 ,")).toEqual([]);
+
+        expect(ignoredCikTokens(undefined)).toEqual([]);
     });
 
     it("an offering id is a Form D file number or an accession number", () => {

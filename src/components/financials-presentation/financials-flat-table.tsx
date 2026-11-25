@@ -13,9 +13,12 @@ import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
 
 import type { AsReportedExplainTarget } from "./as-reported-explain-dialog";
 import type { ExplainTarget } from "./fact-explain-dialog";
+import type { FiledValuesDialogTarget } from "./filed-values";
 
 import { AsReportedExplainDialog } from "./as-reported-explain-dialog";
 import { FactExplainDialog } from "./fact-explain-dialog";
+import { FiledValuesDialog } from "./filed-values";
+import { PeriodHeadLabel } from "./period-head";
 
 const formatterOf = (id: string) => (id === "is_effective_tax_rate" ? formatPercentCompact : formatNumberEnCompact);
 
@@ -36,11 +39,14 @@ function cellTitle(cell: NonNullable<StatementLine["values"][number]>) {
  * (newest first). A derived value is italic (its tooltip says so); a click charts the line. A detailed value is a
  * button: "Explain this number" without charting the line — a standardized one by its fact id (`/v1/facts/{id}`), an
  * as-reported one from the fact itself (formula, operands, filing; `cik` = the company's, for the EDGAR links; `rows` =
- * the loaded periods, where a formula member's own filing is looked up first).
+ * the loaded periods, where a formula member's own filing is looked up first). `filedValues` (the as-reported summary,
+ * whose lines are filed concepts): a filed value is a button that opens its "Filed values" (`/v1/financials/vintages`
+ * for the concept and the column's period); a period whose values are preliminary carries its badge.
  */
-export function FinancialsFlatTable({ cik = null, columns, lines, rows }: {
+export function FinancialsFlatTable({ cik = null, columns, filedValues = false, lines, rows }: {
     cik?: null | string;
     columns: Array<StatementColumn>;
+    filedValues?: boolean;
     lines: Array<StatementLine>;
     rows?: ReadonlyArray<V2StatementPeriod>;
 }) {
@@ -49,6 +55,13 @@ export function FinancialsFlatTable({ cik = null, columns, lines, rows }: {
     const [explaining, setExplaining] = React.useState<ExplainTarget | null>(null);
 
     const [explainingReported, setExplainingReported] = React.useState<AsReportedExplainTarget | null>(null);
+
+    const [filed, setFiled] = React.useState<FiledValuesDialogTarget | null>(null);
+
+    // The "Filed values" request of a concept in a column: a company (CIK) and the period's end are needed.
+    const vintagesOf = (concept: string, column: StatementColumn) => (cik && column.periodEnd
+        ? { company: cik, concept, periodEnd: column.periodEnd, periodStart: column.periodStart ?? null }
+        : null);
 
     return (
         <>
@@ -59,7 +72,7 @@ export function FinancialsFlatTable({ cik = null, columns, lines, rows }: {
                             <TableHead className={cn(STICKY_FIRST_CELL, STATEMENT_LABEL_CELL)}>Metric</TableHead>
                             {columns.map(column => (
                                 <TableHead className={PERIOD_CELL} key={column.label} title={column.title}>
-                                    {column.label}
+                                    <PeriodHeadLabel label={column.label} preliminary={column.preliminary} />
                                 </TableHead>
                             ))}
                         </TableRow>
@@ -77,6 +90,9 @@ export function FinancialsFlatTable({ cik = null, columns, lines, rows }: {
                                 {columns.map((column, index) => {
                                     const cell = line.values[index];
 
+                                    // A filed (not derived) as-reported summary value opens its filed values.
+                                    const vintages = filedValues && cell && !cell.derived && !cell.factId && !cell.reported ? vintagesOf(line.id, column) : null;
+
                                     return (
                                         <TableCell className={PERIOD_CELL} key={`${line.id}:${column.label}`}>
                                             {cell?.factId || cell?.reported
@@ -90,7 +106,7 @@ export function FinancialsFlatTable({ cik = null, columns, lines, rows }: {
                                                                 const period = `${line.label} · ${column.label}`;
 
                                                                 if (cell.factId) setExplaining({ accession: cell.accession ?? null, factId: cell.factId, formula: cell.formula, htmlTagId: cell.htmlTagId ?? null, period });
-                                                                else if (cell.reported) setExplainingReported({ cik, concept: line.id, fact: cell.reported, period, rows });
+                                                                else if (cell.reported) setExplainingReported({ cik, concept: line.id, fact: cell.reported, period, rows, vintages: vintagesOf(line.id, column) });
                                                             }}
                                                             title={[cellTitle(cell), "Click: explain this number"].filter(Boolean).join("\n")}
                                                             type="button"
@@ -98,13 +114,29 @@ export function FinancialsFlatTable({ cik = null, columns, lines, rows }: {
                                                             {formatterOf(line.id)(cell.value)}
                                                         </button>
                                                     )
-                                                : cell
+                                                : cell && vintages
                                                     ? (
-                                                            <span className={cn("tabular-nums", cell.derived ? "italic" : null)} title={cellTitle(cell)}>
+                                                            <button
+                                                                aria-label={`Filed values of ${line.label}, ${column.label}`}
+                                                                className="tabular-nums rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
+                                                                onClick={(event) => {
+                                                                    event.stopPropagation();
+
+                                                                    setFiled({ ...vintages, title: `${line.label} · ${column.label}` });
+                                                                }}
+                                                                title={[cellTitle(cell), "Click: every filing that stated this value"].filter(Boolean).join("\n")}
+                                                                type="button"
+                                                            >
                                                                 {formatterOf(line.id)(cell.value)}
-                                                            </span>
+                                                            </button>
                                                         )
-                                                    : <span className="tabular-nums">—</span>}
+                                                    : cell
+                                                        ? (
+                                                                <span className={cn("tabular-nums", cell.derived ? "italic" : null)} title={cellTitle(cell)}>
+                                                                    {formatterOf(line.id)(cell.value)}
+                                                                </span>
+                                                            )
+                                                        : <span className="tabular-nums">—</span>}
                                         </TableCell>
                                     );
                                 })}
@@ -124,6 +156,7 @@ export function FinancialsFlatTable({ cik = null, columns, lines, rows }: {
             />
             <FactExplainDialog onClose={() => setExplaining(null)} target={explaining} />
             <AsReportedExplainDialog onClose={() => setExplainingReported(null)} target={explainingReported} />
+            <FiledValuesDialog onClose={() => setFiled(null)} target={filed} />
         </>
     );
 }

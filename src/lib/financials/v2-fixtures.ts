@@ -5,9 +5,11 @@
 import type {
     V2AsReportedDetailedResponse,
     V2AsReportedPresentationResponse,
+    V2AsReportedResponse,
     V2CagrResponse,
     V2FactPlacesResponse,
     V2FactResponse,
+    V2FinancialVintagesResponse,
     V2GrowthResponse,
     V2RatiosResponse,
     V2SegmentsDetailedResponse,
@@ -29,7 +31,7 @@ const coordinates = (fiscalYear: number, fiscalQuarter: number, periodEnd: strin
     period_start: null,
 });
 
-const source = (accession: string, restated = false) => ({ accession, filed_at: "2026-08-01T20:30:00Z", form: "10-Q", restated });
+const source = (accession: string, restated = false, isPreliminary = false) => ({ accession, filed_at: "2026-08-01T20:30:00Z", form: "10-Q", is_preliminary: isPreliminary, restated });
 
 export const V2_STANDARDIZED: V2StandardizedResponse = {
     data: [
@@ -417,4 +419,58 @@ export const V2_SEGMENTS_DETAILED: V2SegmentsDetailedResponse = {
     has_more: true,
     meta: { coverage: { state: "complete" } },
     next_cursor: "eyJ2Ijo0fQ",
+};
+
+/**
+ * As-reported summary, quarterly (Data API 11.2 shape): the newest quarter preliminary (the earnings release before the
+ * 10-Q), the older one from its 10-Q; each period with its start, for the "Filed values" request.
+ */
+export const V2_AS_REPORTED_SUMMARY: V2AsReportedResponse = {
+    data: [
+        {
+            ...coordinates(2026, 4, "2026-09-26"),
+            currency: "USD",
+            period_start: "2026-06-28",
+            source: { ...source("0000320193-26-000090", false, true), form: "8-K" },
+            statements: { income_statement: { facts: { "us-gaap:Revenues": { derived: false, value: 102_466_000_000 } } } },
+        },
+        {
+            ...coordinates(2026, 3, "2026-06-27"),
+            currency: "USD",
+            period_start: "2026-03-29",
+            source: source("0000320193-26-000073"),
+            statements: { income_statement: { facts: { "us-gaap:NetIncomeLoss": { derived: true, value: 23_434_000_000 }, "us-gaap:Revenues": { derived: false, value: 94_036_000_000 } } } },
+        },
+    ],
+    has_more: false,
+    meta: { basis: "as_reported", currency: "USD", point_in_time: null },
+    next_cursor: null,
+};
+
+/** `GET /v1/financials/vintages` (Data API 11.2 shape): the 10-Q's value, repeated by the 10-K, restated by a later 10-Q. */
+export const V2_FINANCIAL_VINTAGES: V2FinancialVintagesResponse = {
+    data: [
+        { accession: "0000320193-26-000073", filing_date: "2026-08-01", form: "10-Q", is_current: false, period_end: "2026-06-27", period_start: "2026-03-29", unit: "USD", value: 94_036_000_000 },
+        { accession: "0000320193-26-000100", filing_date: "2026-10-31", form: "10-K", is_current: false, period_end: "2026-06-27", period_start: "2026-03-29", unit: "USD", value: 94_036_000_000 },
+        { accession: "0000320193-27-000010", filing_date: "2027-05-01", form: "10-Q", is_current: true, period_end: "2026-06-27", period_start: "2026-03-29", unit: "USD", value: 94_100_000_000 },
+    ],
+    has_more: false,
+    meta: {},
+    next_cursor: null,
+};
+
+/** As-reported summary, balance sheet (instants): the period row still names its quarter's start. */
+export const V2_AS_REPORTED_BALANCE_SHEET: V2AsReportedResponse = {
+    data: [
+        {
+            ...coordinates(2026, 3, "2026-06-27"),
+            currency: "USD",
+            period_start: "2026-03-29",
+            source: source("0000320193-26-000073"),
+            statements: { balance_sheet: { facts: { "us-gaap:Assets": { derived: false, value: 331_495_000_000 } } } },
+        },
+    ],
+    has_more: false,
+    meta: { basis: "as_reported", currency: "USD", point_in_time: null },
+    next_cursor: null,
 };

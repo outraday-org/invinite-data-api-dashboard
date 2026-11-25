@@ -54,7 +54,11 @@ export function filingSourceText(source: V2FilingSource) {
     // The day as the "From filing" picker names it (`formatDay`: the viewer's day of the instant), never its UTC slice.
     const filed = formatDay(source.filed_at);
 
-    return `${source.form} filed ${filed} · ${source.accession}${source.restated ? " · restated by a later filing" : ""}`;
+    return [
+        `${source.form} filed ${filed} · ${source.accession}`,
+        source.restated ? "restated by a later filing" : null,
+        source.is_preliminary ? "preliminary: earnings release figures before the 10-Q / 10-K" : null,
+    ].filter(Boolean).join(" · ");
 }
 
 /** One cell of a flat statement table. */
@@ -82,7 +86,16 @@ export type StatementLine = {
     values: Array<StatementCell | undefined>;
 };
 
-export type StatementColumn = { label: string; title: string };
+export type StatementColumn = {
+    label: string;
+    /** First day of the period (null for an instant / not stated): the "Filed values" request's `period_start`. */
+    periodStart?: null | string;
+    /** Last day of the period: the "Filed values" request's `period_end`. */
+    periodEnd?: string;
+    /** `source.is_preliminary`: the period's values come from the earnings release before the 10-Q / 10-K. */
+    preliminary?: boolean;
+    title: string;
+};
 
 type FlatFact = number | V2AsReportedDetailedFact | V2AsReportedFacts[string] | V2StandardizedDetailedFact;
 
@@ -125,9 +138,22 @@ export function statementFacts(row: V2StatementPeriod, statement: StatementType)
     return statements[V2_STATEMENT_KEYS[statement]]?.facts;
 }
 
-/** The period columns of a statement page (label + the filing it was rendered from). */
-export function statementColumns(rows: ReadonlyArray<V2StatementPeriod>): Array<StatementColumn> {
-    return rows.map(row => ({ label: periodLabel(row), title: filingSourceText(row.source) }));
+/**
+ * The period columns of a statement page (label + the filing it was rendered from). A balance-sheet value is an instant
+ * (no start): its column carries no `periodStart`, so "Filed values" asks by the period's end alone — a start would
+ * match no instant (404 `not_found`). An instant line on another statement (cash at the end of the period) is caught
+ * by the server function, which re-asks by the end alone on that 404 (`api/vintages-fallback.ts`).
+ */
+export function statementColumns(rows: ReadonlyArray<V2StatementPeriod>, statement: StatementType): Array<StatementColumn> {
+    const instant = statement === "balance-sheet";
+
+    return rows.map(row => ({
+        label: periodLabel(row),
+        periodEnd: row.period_end,
+        periodStart: instant ? null : row.period_start ?? null,
+        preliminary: row.source.is_preliminary,
+        title: filingSourceText(row.source),
+    }));
 }
 
 /**
@@ -174,6 +200,7 @@ export function presentationPeriods(rows: ReadonlyArray<V2StatementPeriod>, stat
         return {
             facts: (Array.isArray(facts) ? facts : []) as Array<V2AsReportedPresentationNode> | Array<V2StandardizedPresentationNode>,
             label: periodLabel(row),
+            preliminary: row.source.is_preliminary,
             title: filingSourceText(row.source),
         };
     });

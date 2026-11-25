@@ -359,11 +359,11 @@ export const API_FAMILIES: ReadonlyArray<ApiFamily> = [
         prefixes: ["/v1/financials", "/v1/metrics", "/v1/segments", "/v1/facts", "/v1/fact-places", "/v1/fiscal-periods"],
     },
     {
-        description: "13F and N-PORT holders, quarter-on-quarter changes, manager portfolios and insider trades.",
+        description: "13F and N-PORT holders, quarter-on-quarter changes, manager portfolios and insider trades and holdings.",
         id: "ownership",
         label: "Ownership",
         link: { to: "/institutions" },
-        prefixes: ["/v1/holders", "/v1/holder-changes", "/v1/insider-trades", "/v1/filers/{cik}/holdings", "/v1/filers/{cik}/holding-changes"],
+        prefixes: ["/v1/holders", "/v1/holder-changes", "/v1/insider-trades", "/v1/insider-holdings", "/v1/filers/{cik}/holdings", "/v1/filers/{cik}/holding-changes"],
     },
     {
         description: "ETFs and closed-end funds with net assets, positions and weights.",

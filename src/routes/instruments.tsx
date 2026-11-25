@@ -1,13 +1,14 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
+import * as React from "react";
 import { z } from "zod";
 
 import type { V2Instrument, V2InstrumentsResponse } from "@/lib/api/types";
 import type { InstrumentTab } from "@/lib/instruments";
 
 import { DebouncedInput } from "@/components/navigation/debounced-input";
-import { CompaniesList, companiesSort, COMPANY_SECTORS } from "@/components/reference/companies-list";
+import { CompaniesList, companiesSort } from "@/components/reference/companies-list";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
@@ -16,7 +17,8 @@ import { FilterSelect } from "@/components/ui/filter-select";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCompaniesInfinite, useInstrumentsInfinite } from "@/lib/api/queries";
+import { useCompaniesInfinite, useInstrumentsInfinite, useSectorCatalogInfinite } from "@/lib/api/queries";
+import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { formatDay } from "@/lib/format";
 import { EXCHANGE_LABELS, FUND_STRUCTURE_LABELS, INSTRUMENT_TABS, INSTRUMENT_TYPE_PLURALS, instrumentBadges } from "@/lib/instruments";
 import { titleHead, WRAPPING_TABS_LIST_CLASS } from "@/lib/layout";
@@ -30,8 +32,11 @@ const instrumentsSearchSchema = z.object({
     active: z.enum(["listed", "delisted"]).optional().catch(undefined),
     exchange: z.string().regex(/^[A-Z]{4}$/).optional().catch(undefined),
     q: z.string().trim().min(1).max(100).optional().catch(undefined),
-    /** Companies tab (`GET /v1/companies`) only. */
-    sector: z.enum(COMPANY_SECTORS).optional().catch(undefined),
+    /**
+     * Companies tab (`GET /v1/companies`) only: any text here; it filters only when `/v1/catalog/sectors` names it
+     * (`sectorFilter`, at render time — the sector list is the API's, not a constant).
+     */
+    sector: z.string().trim().min(1).max(80).optional().catch(undefined),
     sort: z.enum(SORTS).optional().catch(undefined),
     structure: z.enum(["registered_fund", "exchange_traded_trust"]).optional().catch(undefined),
     type: z.enum(INSTRUMENT_TABS).optional().catch(undefined),
@@ -52,11 +57,6 @@ const COMPANIES = "companies";
 const TAB_OPTIONS: Array<{ label: string; value: InstrumentTab | typeof COMPANIES }> = [
     ...INSTRUMENT_TABS.map(tab => ({ label: tab === ALL ? "All" : INSTRUMENT_TYPE_PLURALS[tab], value: tab })),
     { label: "Companies", value: COMPANIES },
-];
-
-const SECTOR_OPTIONS: Array<{ label: string; value: (typeof COMPANY_SECTORS)[number] | typeof ALL }> = [
-    { label: "Every sector", value: ALL },
-    ...COMPANY_SECTORS.map(sector => ({ label: sector, value: sector })),
 ];
 
 const STRUCTURE_OPTIONS = [
@@ -152,14 +152,42 @@ export function instrumentsRequest(search: InstrumentsSearch) {
     };
 }
 
-/** The request of the Companies tab: the shared search, exchange and sort, plus the sector (`GET /v1/companies`). */
-export function companiesRequest(search: InstrumentsSearch) {
+/**
+ * The sectors `/v1/catalog/sectors` answered (every page); undefined while they load. A failed read = no sector known
+ * (the filter then sends nothing, the picker offers only "Every sector").
+ */
+function useSectorNames(enabled: boolean): ReadonlyArray<string> | undefined {
+    const query = useSectorCatalogInfinite({ enabled });
+
+    useAutoLoadPages(query);
+
+    return React.useMemo(() => {
+        if (query.error) return [];
+
+        if (!query.data || query.hasNextPage) return undefined;
+
+        return query.data.pages.flatMap(page => page.data.map(entry => entry.sector));
+    }, [query.data, query.error, query.hasNextPage]);
+}
+
+/** The URL's sector when the sector list names it; an unknown one (or none) = no filter; undefined list = still loading. */
+export function sectorFilter(sector: string | undefined, sectors: ReadonlyArray<string> | undefined): string | undefined {
+    return sector && sectors?.includes(sector) ? sector : undefined;
+}
+
+/**
+ * The request of the Companies tab: the shared search, exchange and sort, plus the sector (`GET /v1/companies`) when
+ * the sector list names it. A sector in the URL waits for that list (no unfiltered page first).
+ */
+export function companiesRequest(search: InstrumentsSearch, sectors: ReadonlyArray<string> | undefined) {
+    const sector = sectorFilter(search.sector, sectors);
+
     return {
-        enabled: true,
+        enabled: !(search.sector && sectors === undefined),
         exchange: search.exchange ? [search.exchange] : undefined,
         limit: 50,
         q: search.q,
-        sector: search.sector ? [search.sector] : undefined,
+        sector: sector ? [sector] : undefined,
         sort: companiesSort(search.sort),
     };
 }
@@ -181,8 +209,8 @@ function InstrumentsTabBody({ search }: { search: InstrumentsSearch }) {
 }
 
 /** The Companies tab's list (`GET /v1/companies`; asked only while the tab is open). */
-function CompaniesTabBody({ search }: { search: InstrumentsSearch }) {
-    const list = useCompaniesInfinite(companiesRequest(search));
+function CompaniesTabBody({ search, sectors }: { search: InstrumentsSearch; sectors: ReadonlyArray<string> | undefined }) {
+    const list = useCompaniesInfinite(companiesRequest(search, sectors));
 
     return (
         <CompaniesList
@@ -192,7 +220,7 @@ function CompaniesTabBody({ search }: { search: InstrumentsSearch }) {
             isLoading={list.isLoading}
             onLoadMore={() => void list.fetchNextPage()}
             pages={list.data?.pages ?? []}
-            scope={[search.exchange, search.sector, search.q].filter(Boolean).join("-") || "us"}
+            scope={[search.exchange, sectorFilter(search.sector, sectors), search.q].filter(Boolean).join("-") || "us"}
         />
     );
 }
@@ -217,6 +245,13 @@ function InstrumentsPage() {
     // The structure is a fund's: its filter shows on the ETF / closed-end fund tabs only.
     const fundTab = !companiesTab && (tab === "etf" || tab === "closed_end_fund");
 
+    // The sector picker's choices and the sector filter's check (asked only on the Companies tab).
+    const sectors = useSectorNames(companiesTab);
+
+    const sector = sectorFilter(search.sector, sectors);
+
+    const sectorOptions = React.useMemo(() => [{ label: "Every sector", value: ALL }, ...(sectors ?? []).map(name => ({ label: name, value: name }))], [sectors]);
+
     return (
         <PageContainer>
             <PageHeader
@@ -235,7 +270,7 @@ function InstrumentsPage() {
                 </TabsList>
             </Tabs>
             <FilterBar
-                activeCount={[search.q, fundTab ? search.structure : undefined, search.exchange, companiesTab ? search.sector : search.active, search.sort].filter(value => value !== undefined).length}
+                activeCount={[search.q, fundTab ? search.structure : undefined, search.exchange, companiesTab ? sector : search.active, search.sort].filter(value => value !== undefined).length}
                 onReset={() => onChange({ active: undefined, exchange: undefined, q: undefined, sector: undefined, sort: undefined, structure: undefined })}
             >
                 <FilterField label="Search" span={2}>
@@ -252,7 +287,7 @@ function InstrumentsPage() {
                 {companiesTab
                     ? (
                             <FilterField label="Sector">
-                                {id => <FilterSelect aria-label="Sector" className="w-full" id={id} onValueChange={value => onChange({ sector: value === ALL ? undefined : value })} options={SECTOR_OPTIONS} value={search.sector ?? ALL} />}
+                                {id => <FilterSelect aria-label="Sector" className="w-full" id={id} onValueChange={value => onChange({ sector: value === ALL ? undefined : value })} options={sectorOptions} value={sector ?? ALL} />}
                             </FilterField>
                         )
                     : (
@@ -264,7 +299,7 @@ function InstrumentsPage() {
                     {id => <FilterSelect aria-label="Sort" className="w-full" id={id} onValueChange={value => onChange({ sort: value === "symbol" ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? "symbol"} />}
                 </FilterField>
             </FilterBar>
-            {companiesTab ? <CompaniesTabBody search={search} /> : <InstrumentsTabBody search={search} />}
+            {companiesTab ? <CompaniesTabBody search={search} sectors={sectors} /> : <InstrumentsTabBody search={search} />}
         </PageContainer>
     );
 }

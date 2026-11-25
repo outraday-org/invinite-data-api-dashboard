@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import type { FilingDocumentTarget } from "@/components/sec/filing-document-dialog";
+import type { FinancialVintagesTarget } from "@/lib/api/queries";
 import type { V2AsReportedDetailedFact, V2StatementPeriod } from "@/lib/api/types";
 import type { AsReportedExplanationModel, AsReportedMemberModel } from "@/lib/financials/as-reported-explanation";
 import type { ValueRef } from "@/lib/financials/value-ref";
@@ -27,10 +28,12 @@ import {
     ValueFilingDialog,
     ValueHero,
 } from "./explain-parts";
+import { FiledValuesPanel } from "./filed-values";
 
 /**
- * The as-reported value a reader clicked: its concept (the line id), the fact as answered, its cell's name and the
- * loaded statement rows (a formula member's filing is looked up there first).
+ * The as-reported value a reader clicked: its concept (the line id), the fact as answered, its cell's name, the
+ * loaded statement rows (a formula member's filing is looked up there first) and its "Filed values" request (company,
+ * concept, the period's end and start; null = not known).
  */
 export type AsReportedExplainTarget = {
     cik: null | string;
@@ -38,6 +41,7 @@ export type AsReportedExplainTarget = {
     fact: V2AsReportedDetailedFact;
     period: string;
     rows?: ReadonlyArray<V2StatementPeriod>;
+    vintages?: FinancialVintagesTarget | null;
 };
 
 function MemberChip({ member, mixedConcepts, onOpenValue }: { member: AsReportedMemberModel; mixedConcepts: boolean; onOpenValue?: (ref: ValueRef, title: string) => void }) {
@@ -55,14 +59,16 @@ function MemberChip({ member, mixedConcepts, onOpenValue }: { member: AsReported
  * "Explain this number" for an as-reported value (pure): the value up front with how it came about — filed by the
  * company (its place in the filing), or computed by Invinite with its formula as operand chips (each opening its own
  * filing at the value) —, a restatement or split adjustment, and the filing. `onOpenDocument` opens the filing's
- * document — at the value, marked, when its element is known; `onOpenValue` a member's filing.
+ * document — at the value, marked, when its element is known; `onOpenValue` a member's filing. A filed value with a
+ * known period offers its "Filed values" (`vintages`: every filing that stated it, on a click).
  */
-export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFiling, onOpenValue }: {
+export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFiling, onOpenValue, vintages = null }: {
     cik: null | string;
     model: AsReportedExplanationModel;
     onOpenDocument: (accession: string, elementId: null | string) => void;
     onOpenFiling: (accession: string) => void;
     onOpenValue?: (ref: ValueRef, title: string) => void;
+    vintages?: FinancialVintagesTarget | null;
 }) {
     const chip = (member: AsReportedMemberModel, index: number) => (
         // The members have no id: their position in the formula is their identity.
@@ -150,6 +156,13 @@ export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFi
                         )
                     : <span className="text-muted-foreground">No filing stated.</span>}
             </ExplainSection>
+
+            {/* A computed value (Q4, TTM, YTD) was filed by no one: nothing to list. */}
+            {!model.derived && vintages && (
+                <ExplainSection title="Filed values">
+                    <FiledValuesPanel key={`${vintages.concept}|${vintages.periodEnd}|${vintages.periodStart ?? ""}`} target={vintages} />
+                </ExplainSection>
+            )}
         </div>
     );
 }
@@ -182,6 +195,7 @@ export function AsReportedExplainDialog({ onClose, target }: { onClose: () => vo
                                     onOpenDocument={(accession, elementId) => setDocument({ accession, elementId, title: target.period })}
                                     onOpenFiling={accession => setDocument({ accession, elementId: null, title: target.period })}
                                     onOpenValue={(ref, title) => setValue({ ref, title: `${model.caption} · ${title}` })}
+                                    vintages={target.vintages}
                                 />
                             )}
                         </ScrollArea>

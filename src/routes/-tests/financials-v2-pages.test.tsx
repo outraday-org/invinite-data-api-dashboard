@@ -15,13 +15,15 @@ import { FinancialsStatementsView } from "@/components/financials-presentation/f
 import { addFactTypes, buildTreeRows } from "@/components/financials-presentation/utils";
 import { highlightStyle } from "@/hooks/use-html-document-processing";
 import { ApiRequestError } from "@/lib/api/errors";
-import { useReportedValueLookup } from "@/lib/api/queries";
+import { useFinancialVintages, useReportedValueLookup } from "@/lib/api/queries";
 import { factExplanationModel, factIdText, factPlaceTargets, readableFormula } from "@/lib/financials/fact-explanation";
 import { completePeriodsOnly, periodLabel, segmentLines, statementLines } from "@/lib/financials/statements";
 import {
+    V2_AS_REPORTED_BALANCE_SHEET,
     V2_AS_REPORTED_DETAILED,
     V2_AS_REPORTED_PRESENTATION,
     V2_AS_REPORTED_Q4,
+    V2_AS_REPORTED_SUMMARY,
     V2_CAGR,
     V2_FACT,
     V2_FACT_PLACES,
@@ -44,9 +46,11 @@ vi.mock("@tanstack/react-router", () => ({
 
 // Keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", async () => {
-    const { V2_AS_REPORTED_ANNUAL_LOOKUP } = await import("@/lib/financials/v2-fixtures");
+    const { V2_AS_REPORTED_ANNUAL_LOOKUP, V2_FINANCIAL_VINTAGES } = await import("@/lib/financials/v2-fixtures");
 
     return {
+        // "Filed values" (`/v1/financials/vintages`): idle until asked, then answered at once.
+        useFinancialVintages: vi.fn((target: unknown) => ({ data: target ? V2_FINANCIAL_VINTAGES : null, error: null, isLoading: false })),
         // A formula member's filing outside the loaded rows: one as-reported detailed request (answered at once here).
         useReportedValueLookup: vi.fn((company: null | string, lookup: unknown) => ({
             data: company && lookup ? V2_AS_REPORTED_ANNUAL_LOOKUP : null,
@@ -381,6 +385,96 @@ describe("Statements (`/v1/financials/*`)", () => {
         expect(screen.queryByText("No financial data available.")).toBeNull();
 
         expect(screen.getByRole("button", { name: /Load older periods/ })).toBeInTheDocument();
+    });
+});
+
+describe("Preliminary periods and filed values (Data API 11.2)", () => {
+    it("a preliminary period carries its badge in the header; its tooltip says so", () => {
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_SUMMARY]} statement="income-statement" view="summary" />);
+
+        const q4 = screen.getByText("Q4 2026").closest("th")!;
+
+        expect(within(q4).getByTestId("preliminary-badge")).toHaveTextContent("Preliminary");
+
+        expect(q4.getAttribute("title")).toContain("preliminary: earnings release figures");
+
+        expect(within(screen.getByText("Q3 2026").closest("th")!).queryByTestId("preliminary-badge")).toBeNull();
+    });
+
+    it("as-reported summary: a filed value opens its filed values for the column's period; a computed one does not", () => {
+        vi.mocked(useFinancialVintages).mockClear();
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_SUMMARY]} statement="income-statement" view="summary" />);
+
+        expect(screen.getByTestId("explain-hint")).toHaveTextContent("Click a filed value");
+
+        // The derived net income is no button.
+        expect(screen.queryByRole("button", { name: /Filed values of us-gaap:NetIncomeLoss/ })).toBeNull();
+
+        fireEvent.click(screen.getByRole("button", { name: "Filed values of us-gaap:Revenues, Q3 2026" }));
+
+        expect(useFinancialVintages).toHaveBeenLastCalledWith(expect.objectContaining({ company: "0000320193", concept: "us-gaap:Revenues", periodEnd: "2026-06-27", periodStart: "2026-03-29" }));
+
+        const table = screen.getByTestId("filed-values");
+
+        const rows = within(table).getAllByRole("row").slice(1);
+
+        expect(rows).toHaveLength(3);
+
+        // The original, a repeat, then the restatement the statements serve today.
+        expect(within(rows[0]).queryByText("Restated")).toBeNull();
+
+        expect(within(rows[1]).queryByText("Restated")).toBeNull();
+
+        expect(within(rows[2]).getByText("Restated")).toBeInTheDocument();
+
+        expect(within(rows[2]).getByText("Served")).toBeInTheDocument();
+
+        expect(within(rows[0]).getByRole("link", { name: "0000320193-26-000073" })).toHaveAttribute("href", expect.stringContaining("/filings/$accession"));
+    });
+
+    it("balance sheet: an instant's filed values are asked by the period's end alone (no period_start)", () => {
+        vi.mocked(useFinancialVintages).mockClear();
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_BALANCE_SHEET]} statement="balance-sheet" view="summary" />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Filed values of us-gaap:Assets, Q3 2026" }));
+
+        expect(useFinancialVintages).toHaveBeenLastCalledWith(expect.objectContaining({ concept: "us-gaap:Assets", periodEnd: "2026-06-27", periodStart: null }));
+    });
+
+    it("standardized summary values (no concept) offer no filed values", () => {
+        render(<FinancialsStatementsView {...list} basis="standardized" pages={[V2_STANDARDIZED]} statement="income-statement" view="summary" />);
+
+        expect(screen.queryByRole("button", { name: /^Filed values of / })).toBeNull();
+    });
+
+    it("as-reported detailed: a filed value's explanation asks its filed values on a click; a computed one has none", () => {
+        vi.mocked(useFinancialVintages).mockClear();
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_DETAILED]} statement="income-statement" view="detailed" />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Explain Revenues, Q3 2026" }));
+
+        const filed = screen.getByTestId("as-reported-explanation");
+
+        expect(within(filed).queryByTestId("filed-values")).toBeNull();
+
+        expect(useFinancialVintages).not.toHaveBeenCalledWith(expect.objectContaining({ concept: "us-gaap:Revenues" }));
+
+        fireEvent.click(within(filed).getByRole("button", { name: "Show filed values" }));
+
+        expect(useFinancialVintages).toHaveBeenLastCalledWith(expect.objectContaining({ concept: "us-gaap:Revenues", periodEnd: "2026-06-27" }));
+
+        expect(within(filed).getByTestId("filed-values")).toBeInTheDocument();
+
+        cleanup();
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_DETAILED]} statement="income-statement" view="detailed" />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Explain Net income, Q3 2026" }));
+
+        expect(within(screen.getByTestId("as-reported-explanation")).queryByRole("button", { name: "Show filed values" })).toBeNull();
     });
 });
 
