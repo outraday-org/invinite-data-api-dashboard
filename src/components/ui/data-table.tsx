@@ -75,6 +75,17 @@ function useTableFits(wrapper: React.RefObject<HTMLDivElement | null>) {
     return { atEnd, fits };
 }
 
+const INTERACTIVE_SELECTOR = "a, button, input, select, textarea, label, summary, [role='button'], [role='menuitem'], [role='checkbox']";
+
+/** A plain primary click on the row itself: not on a control inside it, not the end of a text selection. */
+function isRowClick(event: React.MouseEvent<HTMLTableRowElement>) {
+    if (event.defaultPrevented || event.button !== 0) return false;
+
+    if (event.target instanceof Element && event.target.closest(INTERACTIVE_SELECTOR)) return false;
+
+    return !window.getSelection()?.toString();
+}
+
 /** "40 loaded" while a next page exists (the API has no total), else "12 rows". */
 export function loadedCountText(count: number, hasNextPage: boolean) {
     if (hasNextPage) return `${formatNumber(count)} loaded`;
@@ -119,6 +130,7 @@ export function DataTable<TRow>({
     isFetchingNextPage = false,
     isLoading,
     onLoadMore,
+    onRowClick,
     operationId,
     rowClassName,
     rows,
@@ -145,6 +157,11 @@ export function DataTable<TRow>({
     isFetchingNextPage?: boolean;
     isLoading: boolean;
     onLoadMore?: () => void;
+    /**
+     * Makes the whole row a click target (a pointer cursor): a click that lands on a link, button or input of the row,
+     * or that ends a text selection, is left to it. The row keeps a real link in a cell for the keyboard.
+     */
+    onRowClick?: (row: TRow, event: React.MouseEvent<HTMLTableRowElement>) => void;
     /** The list's operation: its cost on "Load more" and in the export's "load all". */
     operationId?: OperationId;
     rowClassName?: (row: TRow) => string | undefined;
@@ -245,7 +262,14 @@ export function DataTable<TRow>({
                                             </TableCell>
                                         </TableRow>
                                     )}
-                                    <TableRow className={rowClassName?.(row.original)}>
+                                    <TableRow
+                                        className={cn(onRowClick && "cursor-pointer", rowClassName?.(row.original))}
+                                        onClick={onRowClick
+                                            ? (event) => {
+                                                    if (isRowClick(event)) onRowClick(row.original, event);
+                                                }
+                                            : undefined}
+                                    >
                                         {row.getVisibleCells().map((cell, index) => (
                                             <TableCell className={cn(index === 0 && "font-medium", firstColumn(index), columnClassName?.(cell.column.id))} key={cell.id}>
                                                 <ColumnContent props={cell.getContext()} template={cell.column.columnDef.cell} />

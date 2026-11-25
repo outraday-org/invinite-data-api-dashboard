@@ -28,7 +28,7 @@ import { DocumentSearch } from "@/routes/$ticker/documents/-components/document-
 import { AskThisCall } from "./-components/ask-this-call";
 import { AvailabilityIcons } from "./-components/availability-icons";
 import { CallStatusBadge } from "./-components/call-status-badge";
-import { CallTime } from "./-components/call-time";
+import { CallClock, CallDay } from "./-components/call-time";
 import { EventLink } from "./-components/event-link";
 import { EventTypeBadge } from "./-components/event-type-badge";
 import { LiveNowStrip } from "./-components/live-now-strip";
@@ -178,9 +178,14 @@ function EarningsCallsPage() {
                 id: "fiscal_period",
             },
             {
-                cell: ({ row }) => <CallTime event={row.original} />,
-                header: "Date / time",
+                cell: ({ row }) => <CallDay event={row.original} />,
+                header: "Day",
                 id: "scheduled_at",
+            },
+            {
+                cell: ({ row }) => <CallClock event={row.original} />,
+                header: "Time",
+                id: "time",
             },
             {
                 cell: ({ row }) => <CallStatusBadge event={row.original} />,
@@ -305,6 +310,15 @@ function EarningsCallsPage() {
                                     isFetchingNextPage={isFetchingNextPage}
                                     isLoading={isLoading}
                                     onLoadMore={() => void fetchNextPage()}
+                                    onRowClick={(event, click) => {
+                                        if (click.metaKey || click.ctrlKey) {
+                                            window.open(`/${encodeURIComponent(event.symbol)}/earnings-calls/${encodeURIComponent(event.event_id)}`, "_blank", "noopener");
+
+                                            return;
+                                        }
+
+                                        void navigate({ params: { eventId: event.event_id, ticker: event.symbol }, to: "/$ticker/earnings-calls/$eventId" });
+                                    }}
                                     operationId="listEvents"
                                     rows={events}
                                 />

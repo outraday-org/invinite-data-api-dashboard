@@ -5,7 +5,6 @@ import { orderedWindow } from "@/lib/url-state";
 import {
     calendarDefaultWindow,
     calendarWindow,
-    dateStatusVariant,
     eventLabel,
     formatBytes,
     formatCallTime,
@@ -56,20 +55,6 @@ describe("formatFiscalPeriod", () => {
         expect(formatFiscalPeriod({ fiscal_quarter: null, fiscal_year: 2026 })).toBe("FY2026");
 
         expect(formatFiscalPeriod({ fiscal_quarter: 2, fiscal_year: null })).toBe("—");
-    });
-});
-
-describe("dateStatusVariant", () => {
-    it("maps every status to a badge variant", () => {
-        expect(dateStatusVariant("confirmed")).toBe("default");
-
-        expect(dateStatusVariant("unconfirmed")).toBe("secondary");
-
-        expect(dateStatusVariant("estimated")).toBe("outline");
-
-        expect(dateStatusVariant("postponed")).toBe("destructive");
-
-        expect(dateStatusVariant("cancelled")).toBe("destructive");
     });
 });
 

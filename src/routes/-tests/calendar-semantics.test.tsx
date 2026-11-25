@@ -7,11 +7,13 @@ import type { V2Event, V2EventCalendar } from "@/lib/api/types";
 import { CALENDAR_EVENT, CALENDAR_EVENT_EXPIRED_CALL } from "@/lib/earnings/calendar-fixtures";
 import { matchesCalendarSearch, validateCalendarSearch } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 import {
-    CalendarCallCell,
-    CalendarReportCell,
+    CalendarDayCell,
+    CalendarRowStatus,
     CalendarStatusBadge,
+    CalendarTimeCell,
     hasNoCall,
 } from "@/routes/$ticker/earnings-calls/-components/calendar-semantics";
+import { callBadgeStatus } from "@/routes/$ticker/earnings-calls/-components/call-status-badge";
 
 afterEach(cleanup);
 
@@ -26,71 +28,49 @@ const REPORT_ONLY_CALENDAR: V2EventCalendar = {
 const REPORT_ONLY: V2Event = { ...CALENDAR_EVENT, calendar: REPORT_ONLY_CALENDAR };
 
 describe("calendar semantics", () => {
-    it("live event: report day + BMO + filing, call time with its quality / source / zone, event status", () => {
+    it("a timed call: day and time apart, the time in the viewer's zone with its quality and source (no company zone)", () => {
         render(
             <>
-                <CalendarReportCell calendar={CALENDAR_EVENT.calendar} />
-                <CalendarCallCell event={CALENDAR_EVENT} />
+                <CalendarDayCell event={CALENDAR_EVENT} />
+                <CalendarTimeCell event={CALENDAR_EVENT} />
                 <CalendarStatusBadge calendar={CALENDAR_EVENT.calendar} />
             </>,
         );
 
-        expect(screen.getByText("Nov 5, 2026")).toBeInTheDocument();
+        expect(screen.getByText("first-party time · via wire")).toBeInTheDocument();
 
-        expect(screen.getByText("Before open · from the filing's acceptance")).toBeInTheDocument();
-
-        expect(screen.getByText("6-K · 0001193125-26-448358")).toBeInTheDocument();
-
-        expect(screen.getByText("first-party time · via wire · America/New_York")).toBeInTheDocument();
+        expect(screen.queryByText(/America\/New_York/)).toBeNull();
 
         expect(screen.getByText("Reported")).toBeInTheDocument();
     });
 
-    it("the meta lines wrap at a fixed width (a nowrap table cell made the calendar wider than its column: no sticky day headings)", () => {
-        render(
-            <>
-                <CalendarReportCell calendar={CALENDAR_EVENT.calendar} />
-                <CalendarCallCell event={CALENDAR_EVENT} />
-            </>,
-        );
+    it("the meta line wraps at a fixed width (a nowrap table cell made the calendar wider than its column: no sticky day headings)", () => {
+        render(<CalendarTimeCell event={CALENDAR_EVENT} />);
 
-        for (const text of ["Before open · from the filing's acceptance", "6-K · 0001193125-26-448358", "first-party time · via wire · America/New_York"]) {
-            const line = screen.getByText(text);
-
-            // Wraps at a fixed width inside a `whitespace-nowrap` cell (else the calendar outgrew its column).
-            expect(line).toHaveClass("whitespace-normal", "max-w-52");
-        }
+        expect(screen.getByText("first-party time · via wire")).toHaveClass("whitespace-normal", "max-w-52");
     });
 
-    it("a report without a call renders 'No call' (no time taken from the release) and its report", () => {
+    it("a report without a call renders 'No call' (no time taken from the release)", () => {
         expect(hasNoCall(REPORT_ONLY.calendar)).toBe(true);
 
-        render(
-            <>
-                <CalendarCallCell event={REPORT_ONLY} />
-                <CalendarReportCell calendar={REPORT_ONLY.calendar} />
-            </>,
-        );
+        render(<CalendarTimeCell event={REPORT_ONLY} />);
 
         expect(screen.getByText("No call")).toBeInTheDocument();
 
         expect(screen.getByText("no call")).toBeInTheDocument();
-
-        expect(screen.getByText("Nov 5, 2026")).toBeInTheDocument();
     });
 
-    it("an expired date-only call keeps its date with 'date only' quality", () => {
+    it("an expired date-only call keeps its day; its time reads 'Time TBA'", () => {
         expect(hasNoCall(CALENDAR_EVENT_EXPIRED_CALL.calendar)).toBe(false);
 
-        render(<CalendarCallCell event={CALENDAR_EVENT_EXPIRED_CALL} />);
+        render(
+            <>
+                <CalendarDayCell event={CALENDAR_EVENT_EXPIRED_CALL} />
+                <CalendarTimeCell event={CALENDAR_EVENT_EXPIRED_CALL} />
+            </>,
+        );
 
-        expect(screen.getAllByText(/date only/).length).toBeGreaterThan(0);
-    });
-
-    it("no report yet → a dash", () => {
-        render(<CalendarReportCell calendar={{ ...REPORT_ONLY_CALENDAR, report: { date: null, quality: "none", source: null, time_kind: null } }} />);
-
-        expect(screen.getByText("—")).toBeInTheDocument();
+        expect(screen.getByText("Time TBA")).toBeInTheDocument();
     });
 });
 
@@ -124,5 +104,70 @@ describe("validateCalendarSearch", () => {
         expect(matchesCalendarSearch(row, { calendarStatus: "reported" })).toBe(false);
 
         expect(matchesCalendarSearch({ calendar: null, session: null }, { calendarStatus: "reported" })).toBe(false);
+    });
+});
+
+describe("callBadgeStatus (every capture status shown, not only Live / Published)", () => {
+    const START = "2026-11-25T14:00:00.000Z";
+
+    const BEFORE = Date.parse("2026-11-25T13:00:00.000Z");
+
+    const AFTER = Date.parse("2026-11-25T15:30:00.000Z");
+
+    const call = (capture_status: string, date_status: V2Event["date_status"] = "confirmed") =>
+        ({ ...CALENDAR_EVENT, capture_status, date_status, scheduled_at: START }) as V2Event;
+
+    it.each([
+        ["capturing", "live"],
+        ["published", "published"],
+        ["captured", "processing"],
+        ["missed", "missed"],
+        ["no_call", "no_call"],
+        ["not_started", "no_call"],
+        ["expired", "expired"],
+        ["armed", "starting"],
+    ] as const)("%s → %s, before and after the start", (capture, expected) => {
+        expect(callBadgeStatus(call(capture), BEFORE)).toBe(expected);
+
+        expect(callBadgeStatus(call(capture), AFTER)).toBe(expected);
+    });
+
+    it("pending / replay_only keep the date status before the start and say what is missing after it (DSX 2026-11-25)", () => {
+        expect(callBadgeStatus(call("pending"), BEFORE)).toBe("confirmed");
+
+        expect(callBadgeStatus(call("pending"), AFTER)).toBe("not_captured");
+
+        expect(callBadgeStatus(call("replay_only", "unconfirmed"), BEFORE)).toBe("unconfirmed");
+
+        expect(callBadgeStatus(call("replay_only"), AFTER)).toBe("awaiting_replay");
+    });
+
+    it("a date-only call starts at the end of its day", () => {
+        const dateOnly = {
+            ...call("pending"),
+            calendar: { ...CALENDAR_EVENT.calendar!, call: { ...CALENDAR_EVENT.calendar!.call, time_quality: "date_only" as const } },
+        } as V2Event;
+
+        expect(callBadgeStatus(dateOnly, AFTER)).toBe("confirmed");
+
+        expect(callBadgeStatus(dateOnly, AFTER + 24 * 60 * 60 * 1000)).toBe("not_captured");
+    });
+
+    it("a cancelled / postponed date wins over a capture that has not happened, never over a recording", () => {
+        expect(callBadgeStatus(call("missed", "cancelled"), AFTER)).toBe("cancelled");
+
+        expect(callBadgeStatus(call("pending", "postponed"), AFTER)).toBe("postponed");
+
+        expect(callBadgeStatus(call("published", "cancelled"), AFTER)).toBe("published");
+    });
+
+    it("an unknown capture status falls back to the date status", () => {
+        expect(callBadgeStatus(call("something_new"), AFTER)).toBe("confirmed");
+    });
+
+    it("the calendar row reads 'Missed' for a missed confirmed call, the date status in its tooltip", () => {
+        render(<CalendarRowStatus event={{ ...call("missed"), expired_reason: null }} />);
+
+        expect(screen.getByText("Missed")).toHaveAttribute("title", expect.stringContaining("Date: Confirmed · Capture: Missed"));
     });
 });

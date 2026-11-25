@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { joinCompanyList, parseCompanyList } from "@/lib/company-list";
+
 /**
  * URL state (O6): every filter, tab, sort and open item of a page is a search param, validated by the route's
  * `validateSearch` (each field optional + `.catch(undefined)`: an invalid value falls back to the default, never an
@@ -22,6 +24,12 @@ export const optionalDay = () => z.iso.date().optional().catch(undefined);
  */
 export const optionalText = (max = 100, min = 1) => z
     .preprocess(value => (typeof value === "number" && Number.isFinite(value) ? String(value) : value), z.string().trim().min(min).max(max))
+    .optional()
+    .catch(undefined);
+
+/** A `?company=` comma list of tickers / CIKs (≤ 50, upper case, no repeats; `CompanyFilter`); empty = undefined. */
+export const optionalCompanyList = () => z
+    .preprocess(value => (typeof value === "number" && Number.isFinite(value) ? String(value) : value), z.string().trim().min(1).max(800).transform(text => joinCompanyList(parseCompanyList(text))))
     .optional()
     .catch(undefined);
 

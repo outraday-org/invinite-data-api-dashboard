@@ -1748,7 +1748,7 @@ const personIdSchema = z.uuid();
 export const getV2People = createServerFn({ method: "POST" })
     .inputValidator(z.object({
         apiKey: apiKeySchema,
-        company: z.string().trim().min(1).max(200).optional(),
+        company: z.string().trim().min(1).max(800).optional(),
         cursor: cursorSchema,
         event: eventIdSchema.optional(),
         limit: pageLimitSchema,

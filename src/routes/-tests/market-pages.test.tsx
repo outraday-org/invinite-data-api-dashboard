@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type * as React from "react";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { V2Event } from "@/lib/api/types";
@@ -10,6 +10,8 @@ import { financialViewsFor } from "@/components/financials-pages/views";
 import { CALENDAR_EVENT, CALENDAR_EVENT_EXPIRED_CALL } from "@/lib/earnings/calendar-fixtures";
 import { AAPL_INSTRUMENT, SPY_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { V2_IPOS } from "@/lib/sec/v2-fixtures";
+import { CalendarFilters } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
+import { CalendarWeekStrip } from "@/routes/$ticker/earnings-calls/-components/calendar-week-strip";
 import { CalendarView } from "@/routes/calendar";
 import { IpoDetail, ipoRequest, IposView, undatedPages, upcomingUndatedRequest } from "@/routes/ipo-calendar";
 import { LiveCallsView, nextCallsOf } from "@/routes/live-calls";
@@ -29,7 +31,7 @@ vi.mock("@/routes/$ticker/earnings-calls/-components/live-now-strip", () => ({ L
 
 afterEach(cleanup);
 
-const view = { capped: false, error: null, filtering: false, hasNextPage: false, isFetchingNextPage: false, isLoading: false, now: new Date("2026-11-04T15:00:00Z"), onLoadMore: () => undefined };
+const view = { capped: false, error: null, filtering: false, hasNextPage: false, isFetchingNextPage: false, isLoading: false, now: new Date("2026-11-04T15:00:00Z"), onLoadMore: () => undefined, timeZone: "America/New_York" };
 
 describe("/calendar (`/v1/events`, grouped by New York day)", () => {
     it("one heading per New York day with its count; rows under their day", () => {
@@ -57,6 +59,14 @@ describe("/calendar (`/v1/events`, grouped by New York day)", () => {
         expect(headings).toEqual(["Wed, Nov 42 calls", "Thu, Nov 51 call"]);
     });
 
+    it("days follow the viewer's zone: a 7 PM New York call sits on the next day in Berlin", () => {
+        const evening: V2Event = { ...CALENDAR_EVENT, event_id: "evening", scheduled_at: "2026-11-05T00:00:00.000Z", symbol: "EVENING" };
+
+        render(<CalendarView {...view} events={[CALENDAR_EVENT, evening]} timeZone="Europe/Berlin" />);
+
+        expect(screen.getAllByTestId("data-table-group").map(row => row.textContent)).toEqual(["Wed, Nov 41 call", "Thu, Nov 51 call"]);
+    });
+
     it("a client-side filter that found nothing in ten pages says so; while it still looks, no empty line", () => {
         const { rerender } = render(<CalendarView {...view} events={[]} filtering hasNextPage />);
 
@@ -69,6 +79,103 @@ describe("/calendar (`/v1/events`, grouped by New York day)", () => {
         expect(screen.getByText(/No call in the pages loaded so far matches/)).toBeInTheDocument();
 
         expect(screen.getByRole("button", { name: /load more/i })).toBeInTheDocument();
+    });
+
+    it("a click anywhere on a row opens its call; a click on a link inside it is left to the link", () => {
+        const onOpenEvent = vi.fn();
+
+        render(<CalendarView {...view} events={[CALENDAR_EVENT]} onOpenEvent={onOpenEvent} />);
+
+        fireEvent.click(screen.getByText(CALENDAR_EVENT.company_name));
+
+        expect(onOpenEvent).toHaveBeenCalledWith(CALENDAR_EVENT, false);
+
+        fireEvent.click(screen.getByRole("link", { name: CALENDAR_EVENT.symbol }));
+
+        expect(onOpenEvent).toHaveBeenCalledTimes(1);
+    });
+
+    it("every call status has its own colour; Published is green", () => {
+        const published: V2Event = { ...CALENDAR_EVENT, capture_status: "published", event_id: "pub", symbol: "PUB" };
+
+        const estimated: V2Event = { ...CALENDAR_EVENT, capture_status: "scheduled", date_status: "estimated", event_id: "est", symbol: "EST" };
+
+        render(<CalendarView {...view} events={[published, estimated]} />);
+
+        expect(screen.getByText("Published").className).toMatch(/emerald/);
+
+        expect(screen.getByText("Estimated").className).toMatch(/amber/);
+    });
+});
+
+describe("/calendar week strip and filters", () => {
+    it("one card per weekday with its count; a card picks its day, previous / next only move the strip", () => {
+        const onSelectDay = vi.fn();
+
+        const onShowWeek = vi.fn();
+
+        render(<CalendarWeekStrip counts={new Map([["2026-11-25", 82]])} countsPartial={false} day="2026-11-25" onSelectDay={onSelectDay} onShowWeek={onShowWeek} today="2026-11-25" weekOf="2026-11-25" />);
+
+        const strip = screen.getByTestId("calendar-week-strip");
+
+        expect(within(strip).getByText("Week 48")).toBeInTheDocument();
+
+        // Monday … Friday; the weekend has no call.
+        expect(within(strip).getAllByRole("button").filter(card => card.hasAttribute("aria-pressed"))).toHaveLength(5);
+
+        expect(screen.getByRole("button", { name: "Wed Nov 25, today: 82 calls", pressed: true })).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole("button", { name: /^Mon Nov 23/ }));
+
+        expect(onSelectDay).toHaveBeenLastCalledWith("2026-11-23");
+
+        fireEvent.click(screen.getByRole("button", { name: "Next week" }));
+
+        expect(onShowWeek).toHaveBeenLastCalledWith("2026-11-30");
+
+        fireEvent.click(screen.getByRole("button", { name: "Previous week" }));
+
+        expect(onShowWeek).toHaveBeenLastCalledWith("2026-11-16");
+
+        expect(onSelectDay).toHaveBeenCalledTimes(1);
+    });
+
+    it("another week shows no selected card; Today comes back", () => {
+        const onSelectDay = vi.fn();
+
+        render(<CalendarWeekStrip counts={new Map()} countsPartial={false} day="2026-11-25" onSelectDay={onSelectDay} onShowWeek={() => undefined} today="2026-11-25" weekOf="2026-11-30" />);
+
+        expect(screen.getByText("Week 49")).toBeInTheDocument();
+
+        expect(screen.queryByRole("button", { pressed: true })).toBeNull();
+
+        fireEvent.click(screen.getByRole("button", { name: "Today" }));
+
+        expect(onSelectDay).toHaveBeenCalledWith("2026-11-25");
+    });
+
+    it("rare filters and the custom day range wait behind \"More filters\"", () => {
+        render(<CalendarFilters onChange={() => undefined} search={{}} />);
+
+        expect(screen.queryByText("Fiscal year")).toBeNull();
+
+        expect(screen.queryByLabelText("From")).toBeNull();
+
+        fireEvent.click(screen.getByRole("button", { name: "More filters" }));
+
+        expect(screen.getByText("Fiscal year")).toBeInTheDocument();
+
+        expect(screen.getByLabelText("From")).toBeInTheDocument();
+
+        expect(screen.getByText("Companies")).toBeInTheDocument();
+    });
+
+    it("a set rare filter opens \"More filters\" and counts on Reset", () => {
+        render(<CalendarFilters onChange={() => undefined} search={{ fiscalYear: 2026, from: "2026-11-01" }} />);
+
+        expect(screen.getByText("Fiscal year")).toBeInTheDocument();
+
+        expect(screen.getByRole("button", { name: "Fewer filters" })).toBeInTheDocument();
     });
 });
 

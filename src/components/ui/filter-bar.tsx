@@ -1,4 +1,4 @@
-import { SlidersHorizontal, X } from "lucide-react";
+import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -21,12 +21,16 @@ const isTrailing = (child: React.ReactNode) => React.isValidElement(child) && ch
  * Below 640 px a bar of more than one field collapses into a "Filters · n" disclosure button (`aria-expanded`; the open
  * state is local). The collapse is CSS (`max-sm:hidden`), so the server render is already collapsed on a phone — no
  * `useIsMobile`, no hydration flash. A bar of one field shows it inline.
+ * `more` = the rarely needed fields behind a "More filters" toggle (`aria-expanded`, local state; open at mount when
+ * `moreActiveCount` > 0, and the toggle names that count while closed): they join the same grid once open.
  */
 export function FilterBar({
     activeCount = 0,
     children,
     className,
     label = "Filters",
+    more,
+    moreActiveCount = 0,
     onReset,
 }: {
     /** The filters set (a day range counts once): > 0 shows "Reset filters" and the count on the phone button. */
@@ -35,9 +39,15 @@ export function FilterBar({
     className?: string;
     /** The accessible name of the bar's group. */
     label?: string;
+    /** Fields shown only after "More filters" (a fragment of `FilterField`s). */
+    more?: React.ReactNode;
+    /** The filters set among `more`. */
+    moreActiveCount?: number;
     onReset?: () => void;
 }) {
     const [open, setOpen] = React.useState(false);
+
+    const [moreOpen, setMoreOpen] = React.useState(() => moreActiveCount > 0);
 
     const fieldsId = React.useId();
 
@@ -47,7 +57,7 @@ export function FilterBar({
 
     const trailing = items.filter(isTrailing);
 
-    const collapsible = fields.length > 1;
+    const collapsible = fields.length > 1 || more !== undefined;
 
     const canReset = activeCount > 0 && onReset !== undefined;
 
@@ -59,6 +69,7 @@ export function FilterBar({
                 id={fieldsId}
             >
                 {fields}
+                {moreOpen && more}
             </div>
             {(collapsible || canReset || trailing.length > 0) && (
                 <div className="flex flex-wrap items-center gap-2 max-sm:order-first sm:shrink-0">
@@ -66,6 +77,12 @@ export function FilterBar({
                         <Button aria-controls={fieldsId} aria-expanded={open} className="sm:hidden" onClick={() => setOpen(value => !value)} type="button" variant="outline">
                             <SlidersHorizontal />
                             {activeCount > 0 ? `Filters · ${activeCount}` : "Filters"}
+                        </Button>
+                    )}
+                    {more !== undefined && (
+                        <Button aria-controls={fieldsId} aria-expanded={moreOpen} className={cn(collapsible && !open && "max-sm:hidden")} onClick={() => setMoreOpen(value => !value)} type="button" variant="ghost">
+                            <ChevronDown className={cn("transition-transform", moreOpen && "rotate-180")} />
+                            {moreOpen ? "Fewer filters" : moreActiveCount > 0 ? `More filters · ${moreActiveCount}` : "More filters"}
                         </Button>
                     )}
                     {canReset && (

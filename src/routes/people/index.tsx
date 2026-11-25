@@ -10,6 +10,7 @@ import { SpeakerAvatar } from "@/components/earnings/speaker-avatar";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { PeopleState } from "@/components/people/people-state";
 import { PersonLink } from "@/components/people/person-link";
+import { CompanyFilter } from "@/components/search/company-filter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
@@ -18,6 +19,7 @@ import { FilterSelect } from "@/components/ui/filter-select";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2PeopleInfinite } from "@/lib/api/queries";
+import { joinCompanyList, parseCompanyList } from "@/lib/company-list";
 import { formatDay, formatNumber } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import {
@@ -29,11 +31,11 @@ import {
     personDetail,
     personRoleLabel,
 } from "@/lib/people";
-import { IN_PLACE, optionalEnum, optionalText } from "@/lib/url-state";
+import { IN_PLACE, optionalCompanyList, optionalEnum, optionalText } from "@/lib/url-state";
 
 /** `?q=` (name), `?company=` (ticker or CIK), `?event=` (one call), `?role=`, `?sort=` (absent = `-last_seen`). */
 const peopleSearchSchema = z.object({
-    company: optionalText(20),
+    company: optionalCompanyList(),
     event: z.uuid().optional().catch(undefined),
     q: optionalText(200),
     role: optionalEnum(PERSON_ROLES),
@@ -169,17 +171,8 @@ function PeoplePage() {
                         />
                     )}
                 </FilterField>
-                <FilterField label="Company">
-                    {id => (
-                        <DebouncedInput
-                            aria-label="Company (ticker or CIK)"
-                            className="w-full"
-                            id={id}
-                            onCommit={company => onChange({ company: company.toUpperCase() || undefined })}
-                            placeholder="Ticker or CIK"
-                            value={search.company ?? ""}
-                        />
-                    )}
+                <FilterField label="Companies" span={2}>
+                    {id => <CompanyFilter id={id} onChange={companies => onChange({ company: joinCompanyList(companies) })} value={parseCompanyList(search.company)} />}
                 </FilterField>
                 <FilterField label="Role">
                     {id => (

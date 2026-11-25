@@ -8,10 +8,13 @@ import type {
     V2Session,
 } from "@/lib/api/types";
 
+import { CompanyFilter } from "@/components/search/company-filter";
+import { DayRange } from "@/components/ui/day-range";
 import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { Input } from "@/components/ui/input";
-import { orderedWindow } from "@/lib/url-state";
+import { joinCompanyList, parseCompanyList } from "@/lib/company-list";
+import { optionalCompanyList, orderedWindow } from "@/lib/url-state";
 
 const SESSIONS = ["bmo", "amc", "intraday"] as const satisfies ReadonlyArray<V2Session>;
 
@@ -45,10 +48,12 @@ const EVENT_STATUSES = ["upcoming", "live", "ended"] as const satisfies Readonly
 const calendarSearchSchema = z.object({
     // `calendarStatus` and `session` have no `/v1/events` filter: they filter the loaded rows (`matchesCalendarSearch`).
     calendarStatus: z.enum(CALENDAR_STATUSES).optional().catch(undefined),
-    // A ticker (`company`); the calendar then lists that company's calls in the window.
-    company: z.string().trim().min(1).max(15).optional().catch(undefined),
+    // Tickers / CIKs (`company`, a comma list of ≤ 50); the calendar then lists those companies' calls.
+    company: optionalCompanyList(),
     // Date certainty (`date_kind`); omitted = any.
     dateKind: z.enum(DATE_KINDS).optional().catch(undefined),
+    // The New York day the week strip shows (its week is the request window); absent = today.
+    day: z.iso.date().optional().catch(undefined),
     eventType: z.enum(EVENT_TYPES).optional().catch(undefined),
     fiscalQuarter: z.coerce.number().int().min(1).max(4).optional().catch(undefined),
     fiscalYear: z.coerce.number().int().min(1900).max(2200).optional().catch(undefined),
@@ -56,6 +61,8 @@ const calendarSearchSchema = z.object({
     session: z.enum(SESSIONS).optional().catch(undefined),
     status: z.enum(EVENT_STATUSES).optional().catch(undefined),
     to: z.iso.date().optional().catch(undefined),
+    // A day of the week the strip shows (absent = the selected day's week): browsing weeks never changes `day`.
+    week: z.iso.date().optional().catch(undefined),
 });
 
 export type CalendarSearch = z.infer<typeof calendarSearchSchema>;
@@ -126,7 +133,10 @@ export function matchesCalendarSearch(
     return !search.calendarStatus || event.calendar?.status === search.calendarStatus;
 }
 
-/** The calendar filters a reader sets, cleared (the window is not one of them: it has its own presets and day inputs). */
+/**
+ * The calendar filters a reader sets, cleared — the custom day range too (back to the week strip); the strip's day is
+ * not a filter.
+ */
 const FILTER_RESET = {
     calendarStatus: undefined,
     company: undefined,
@@ -134,37 +144,31 @@ const FILTER_RESET = {
     eventType: undefined,
     fiscalQuarter: undefined,
     fiscalYear: undefined,
+    from: undefined,
     session: undefined,
     status: undefined,
+    to: undefined,
 } satisfies Partial<CalendarSearch>;
 
-const FILTER_KEYS = Object.keys(FILTER_RESET) as Array<keyof typeof FILTER_RESET>;
+/** The filters behind "More filters" (rarely needed); the day range counts once. */
+const MORE_KEYS = ["company", "dateKind", "status", "calendarStatus", "fiscalYear", "fiscalQuarter"] as const satisfies ReadonlyArray<keyof CalendarSearch>;
+
+const MAIN_KEYS = ["eventType", "session"] as const satisfies ReadonlyArray<keyof CalendarSearch>;
 
 /**
- * Calendar filters (ui-redesign task 11): one labelled `FilterBar`, controlled by the route's search params (a filter
- * set is a shareable URL). "Reset filters" clears every filter but the window.
+ * Calendar filters: one labelled `FilterBar`, controlled by the route's search params (a filter set is a shareable URL).
+ * Event type and session stay in view; the companies (`CompanyFilter`), date certainty, call / event status, fiscal year / quarter and a custom
+ * day range (instead of the week strip) sit behind "More filters". "Reset filters" clears them all, never the strip's day.
  */
 export function CalendarFilters({ onChange, search }: { onChange: (patch: Partial<CalendarSearch>) => void; search: CalendarSearch }) {
-    const activeCount = FILTER_KEYS.filter(key => search[key] !== undefined).length;
+    const rangeSet = search.from !== undefined || search.to !== undefined ? 1 : 0;
+
+    const moreActiveCount = MORE_KEYS.filter(key => search[key] !== undefined).length + rangeSet;
+
+    const activeCount = MAIN_KEYS.filter(key => search[key] !== undefined).length + moreActiveCount;
 
     return (
-        <FilterBar activeCount={activeCount} onReset={() => onChange(FILTER_RESET)}>
-            <FilterField label="Symbol">
-                {id => (
-                    <Input
-                        aria-label="Symbol"
-                        className="w-full uppercase placeholder:normal-case"
-                        defaultValue={search.company ?? ""}
-                        id={id}
-                        key={search.company ?? ""}
-                        onBlur={event => onChange({ company: event.target.value.trim().toUpperCase() || undefined })}
-                        onKeyDown={(event) => {
-                            if (event.key === "Enter") onChange({ company: event.currentTarget.value.trim().toUpperCase() || undefined });
-                        }}
-                        placeholder="Any company"
-                    />
-                )}
-            </FilterField>
+        <FilterBar activeCount={activeCount} more={<MoreCalendarFilters onChange={onChange} search={search} />} moreActiveCount={moreActiveCount} onReset={() => onChange(FILTER_RESET)}>
             <FilterField label="Session">
                 {id => (
                     <FilterSelect
@@ -187,6 +191,19 @@ export function CalendarFilters({ onChange, search }: { onChange: (patch: Partia
                         options={EVENT_TYPE_OPTIONS}
                         value={search.eventType ?? "earnings_call"}
                     />
+                )}
+            </FilterField>
+        </FilterBar>
+    );
+}
+
+/** The fields behind "More filters". */
+function MoreCalendarFilters({ onChange, search }: { onChange: (patch: Partial<CalendarSearch>) => void; search: CalendarSearch }) {
+    return (
+        <>
+            <FilterField label="Companies" span={2}>
+                {id => (
+                    <CompanyFilter id={id} onChange={companies => onChange({ company: joinCompanyList(companies) })} value={parseCompanyList(search.company)} />
                 )}
             </FilterField>
             <FilterField label="Date certainty">
@@ -257,6 +274,9 @@ export function CalendarFilters({ onChange, search }: { onChange: (patch: Partia
                     />
                 )}
             </FilterField>
-        </FilterBar>
+            <FilterField label="Custom days" span={2}>
+                <DayRange from={search.from} labels={{ from: "From", to: "To" }} onChange={onChange} to={search.to} />
+            </FilterField>
+        </>
     );
 }

@@ -5,7 +5,7 @@ import { z } from "zod";
 import type { SearchMode, V2TranscriptSearchResponse, V2TranscriptSearchType } from "@/lib/api/types";
 
 import { ExportMenu } from "@/components/api/export-menu";
-import { DebouncedInput } from "@/components/navigation/debounced-input";
+import { CompanyFilter } from "@/components/search/company-filter";
 import { SearchChip, SearchModeChips, SearchQueryForm } from "@/components/search/search-box";
 import { DayRange } from "@/components/ui/day-range";
 import { FilterBar, FilterField } from "@/components/ui/filter-bar";
@@ -13,10 +13,11 @@ import { Notice } from "@/components/ui/notice";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { useV2TranscriptSearch } from "@/lib/api/queries";
+import { joinCompanyList, parseCompanyList } from "@/lib/company-list";
 import { SEARCH_MODES } from "@/lib/earnings/labels";
 import { formatDay } from "@/lib/format";
 import { READING_COLUMN_CLASS, titleHead } from "@/lib/layout";
-import { IN_PLACE, optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
+import { IN_PLACE, optionalCompanyList, optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
 import { cn } from "@/lib/utils";
 import { AskResults, TYPE_LABELS, TYPES } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
 
@@ -34,7 +35,7 @@ const TYPE_VALUES = ["transcript", "qa", "prepared", "presentation"] as const sa
  * `mode` (absent = keyword), `type` (absent = every type), `company` (one ticker or CIK), `from` / `to` (call days).
  */
 const searchPageSchema = z.object({
-    company: optionalText(20),
+    company: optionalCompanyList(),
     from: optionalDay(),
     mode: optionalEnum(SEARCH_MODES),
     q: optionalText(500),
@@ -181,17 +182,8 @@ function SearchPage() {
                         ))}
                     </div>
                 </FilterField>
-                <FilterField label="Company">
-                    {id => (
-                        <DebouncedInput
-                            aria-label="Company (ticker or CIK)"
-                            className="w-full"
-                            id={id}
-                            onCommit={company => onChange({ company: company.toUpperCase() || undefined })}
-                            placeholder="One company"
-                            value={search.company ?? ""}
-                        />
-                    )}
+                <FilterField label="Companies" span={2}>
+                    {id => <CompanyFilter id={id} onChange={companies => onChange({ company: joinCompanyList(companies) })} value={parseCompanyList(search.company)} />}
                 </FilterField>
                 <FilterField label="Calls" span={2}>
                     <DayRange from={search.from} labels={{ from: "Calls from", to: "Calls to" }} onChange={onChange} to={search.to} />

@@ -44,12 +44,11 @@ export const ROW_ACTION_REVEAL_CLASS = "lg:[@media(hover:hover)]:opacity-0 group
 export const WRAPPING_TABS_LIST_CLASS = "flex-wrap justify-start gap-y-2 group-data-horizontal/tabs:h-auto";
 
 /**
- * The call page's reading column (ui-redesign task 10): 14 / 24 px text, about 72 characters a line and never more than
- * 80. `ch` is the width of "0", which IBM Plex Sans draws wider than an average letter: `72ch` measured 92 characters a
- * line (101 at most) on a real transcript, `56ch` (≈ 470 px) gives ≈ 72 (≤ 80). `ch` follows the element's own size,
- * so the size is part of the class. Transcript turns in every format, Q&A, the live transcript, the press release.
+ * The reading text of the call page (14 / 24 px): transcript turns in every format, Q&A, the live transcript, the press
+ * release; also `/search` hits and the news item. It fills its column (owner, 2026-11-25: the `56ch` column left the
+ * right half of the call page empty); narrow pages and dialogs bound it themselves.
  */
-export const READING_COLUMN_CLASS = "max-w-[56ch] text-sm leading-6";
+export const READING_COLUMN_CLASS = "text-sm leading-6";
 
 /** The CSS variable the ticker layout writes on `<html>` (the instrument header's height, `0px` without one). */
 export const TICKER_HEADER_HEIGHT_VAR = "--ticker-header-height";

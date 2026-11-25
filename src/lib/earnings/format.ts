@@ -1,15 +1,10 @@
-import type { VariantProps } from "class-variance-authority";
-
-import type { badgeVariants } from "@/components/ui/badge";
-import type { V2DateStatus, V2Event } from "@/lib/api/types";
+import type { V2Event } from "@/lib/api/types";
 
 import { orderedWindow } from "@/lib/url-state";
 
 type CallTimeFields = Pick<V2Event, "call_time_source" | "scheduled_at" | "tz">;
 
 type FiscalFields = Pick<V2Event, "fiscal_quarter" | "fiscal_year">;
-
-type BadgeVariant = NonNullable<VariantProps<typeof badgeVariants>["variant"]>;
 
 /**
  * "Oct 29, 2026 · 4:30 PM ET" in the viewer's timezone (`timeZone`, default = the browser's), never the
@@ -57,19 +52,6 @@ export function eventLabel(event: FiscalFields & Pick<V2Event, "event_title" | "
     if (event.event_type === "earnings_call") return formatFiscalPeriod(event);
 
     return event.event_title?.trim() || formatFiscalPeriod(event);
-}
-
-const DATE_STATUS_VARIANTS: Record<V2DateStatus, BadgeVariant> = {
-    cancelled: "destructive",
-    confirmed: "default",
-    estimated: "outline",
-    postponed: "destructive",
-    unconfirmed: "secondary",
-};
-
-/** `Badge` variant of a call's `date_status`. */
-export function dateStatusVariant(status: V2DateStatus): BadgeVariant {
-    return DATE_STATUS_VARIANTS[status];
 }
 
 /** `m:ss` or `h:mm:ss` of a millisecond position (same output as the admin console's `formatClock`). */

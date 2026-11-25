@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { calendarPresetWindow, dayHeading, groupEventsByNewYorkDay, presetOf } from "./calendar-groups";
+import { calendarPresetWindow, dayHeading, groupEventsByNewYorkDay, isoWeekNumber, presetOf, weekDaysOf } from "./calendar-groups";
 
 const at = (scheduled_at: string, timed = true) => ({ call_time_source: timed ? "wire" as const : null, id: scheduled_at, scheduled_at });
 
@@ -65,5 +65,25 @@ describe("calendar presets (New York days)", () => {
         expect(presetOf({ from: "2026-11-23", to: "2026-11-29" }, now)).toBe("next-week");
 
         expect(presetOf({ from: "2026-11-17", to: "2026-12-02" }, now)).toBeNull();
+    });
+});
+
+describe("week helpers", () => {
+    it("weekDaysOf: Monday … Sunday around a day", () => {
+        expect(weekDaysOf("2026-11-25")).toEqual(["2026-11-23", "2026-11-24", "2026-11-25", "2026-11-26", "2026-11-27", "2026-11-28", "2026-11-29"]);
+
+        expect(weekDaysOf("2026-11-29")[0]).toBe("2026-11-23");
+
+        expect(weekDaysOf("2026-11-23")[0]).toBe("2026-11-23");
+    });
+
+    it("isoWeekNumber", () => {
+        expect(isoWeekNumber("2026-11-25")).toBe(48);
+
+        expect(isoWeekNumber("2026-01-01")).toBe(1);
+
+        expect(isoWeekNumber("2027-01-01")).toBe(53);
+
+        expect(isoWeekNumber("2024-12-30")).toBe(1);
     });
 });

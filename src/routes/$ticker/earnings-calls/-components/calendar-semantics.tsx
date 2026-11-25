@@ -1,17 +1,14 @@
 import type { V2CalendarStatus, V2Event, V2EventCalendar } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
-import { dateStatusVariant } from "@/lib/earnings/format";
-import { formatDay } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
-import { DATE_STATUS_LABELS } from "./call-status-badge";
-import { CallTime } from "./call-time";
-import { LiveDot } from "./live-dot";
+import { callBadgeStatus, callStatusDetail, CallStatusTag } from "./call-status-badge";
+import { CallClock, CallDay } from "./call-time";
 
 /**
- * The per-event `calendar` (2026-11): the report (results release) and the call kept apart, each with its quality and
- * source, plus the event status. A report can exist without a call; a call time is never inferred from the release.
+ * The per-event `calendar` (2026-11) on the calendar rows: the call's day and time (viewer's timezone) with the time's
+ * quality and source, plus the event status. A report can exist without a call; a call time is never inferred from the
+ * release (the report itself is not a column since 2026-11-25).
  */
 
 export const CALENDAR_STATUS_LABELS: Record<V2CalendarStatus, string> = {
@@ -21,15 +18,6 @@ export const CALENDAR_STATUS_LABELS: Record<V2CalendarStatus, string> = {
     estimated: "Estimated",
     postponed: "Postponed",
     reported: "Reported",
-};
-
-type ReportTimeKind = NonNullable<V2EventCalendar["report"]["time_kind"]>;
-
-export const REPORT_TIME_LABELS: Record<ReportTimeKind, string> = {
-    amc: "After close",
-    bmo: "Before open",
-    exact: "Exact time",
-    unknown: "Time unknown",
 };
 
 type CallTimeQuality = NonNullable<V2EventCalendar["call"]["time_quality"]>;
@@ -45,9 +33,8 @@ export const CALL_TIME_QUALITY_LABELS: Record<CallTimeQuality, string> = {
 };
 
 /**
- * The small meta lines under a call time / report day (quality · source · zone, the filing): they wrap at a fixed
- * width, since a table cell does not (`whitespace-nowrap`) — unwrapped they made the calendar wider than its column at
- * every screen width, so its day headings never stuck.
+ * The small meta line under a call time (quality · source): it wraps at a fixed width, since a table cell does not
+ * (`whitespace-nowrap`) — unwrapped it made the calendar wider than its column, so its day headings never stuck.
  */
 const CELL_META_CLASS = "text-muted-foreground block max-w-52 min-w-36 text-xs whitespace-normal";
 
@@ -70,59 +57,27 @@ export function CalendarStatusBadge({ calendar }: { calendar: null | undefined |
 }
 
 /**
- * ONE status badge per calendar row: "Live" while capturing, else "Published" once the transcript is out, else the
- * call's date status; the other dimensions (date status, event status) in its tooltip.
+ * ONE status badge per calendar row (`callBadgeStatus`): the capture's outcome once there is one ("Live", "Processing",
+ * "Published", "Missed", "No call", "Expired", …), else the call's date status; date, capture and event status in its
+ * tooltip.
  */
-export function CalendarRowStatus({ event }: { event: Pick<V2Event, "calendar" | "capture_status" | "date_status"> }) {
-    const dateLabel = DATE_STATUS_LABELS[event.date_status];
-
+export function CalendarRowStatus({ event }: { event: Pick<V2Event, "calendar" | "capture_status" | "date_status" | "expired_reason" | "scheduled_at"> }) {
     const eventStatus = event.calendar?.status ? CALENDAR_STATUS_LABELS[event.calendar.status] : null;
 
-    const detail = [`Date: ${dateLabel}`, eventStatus ? `Event: ${eventStatus}` : null].filter(Boolean).join(" · ");
-
-    if (event.capture_status === "capturing") {
-        return (
-            <Badge title={detail} variant="destructive">
-                <LiveDot className="size-1.5" />
-                Live
-            </Badge>
-        );
-    }
-
-    if (event.capture_status === "published") return <Badge title={detail} variant="secondary">Published</Badge>;
-
-    return <Badge title={detail} variant={dateStatusVariant(event.date_status)}>{dateLabel}</Badge>;
+    return <CallStatusTag status={callBadgeStatus(event)} title={callStatusDetail(event, eventStatus)} />;
 }
 
-/** Report day + time kind + quality + its filing (form · accession); "—" before the results. */
-export function CalendarReportCell({ calendar }: { calendar: null | undefined | V2EventCalendar }) {
-    const report = calendar?.report;
-
-    if (!report?.date) return <span className="text-muted-foreground">—</span>;
-
-    const source = report.source;
-
-    return (
-        <div className="flex flex-col">
-            <span className="tabular-nums whitespace-nowrap">{formatDay(report.date)}</span>
-            <span className={CELL_META_CLASS}>
-                {[
-                    report.time_kind ? REPORT_TIME_LABELS[report.time_kind] : null,
-                    report.quality === "filing_acceptance" ? "from the filing's acceptance" : null,
-                ].filter(Boolean).join(" · ")}
-            </span>
-            {source?.accession && (
-                <span className={cn(CELL_META_CLASS, "tabular-nums")}>{`${source.form ?? "Filing"} · ${source.accession}`}</span>
-            )}
-        </div>
-    );
+/** The call's day (viewer's timezone; a date-only call its stated day). A report-only event keeps its day too. */
+export function CalendarDayCell({ event }: { event: V2Event }) {
+    return <CallDay event={event} />;
 }
 
 /**
- * The call column: the call time (viewer's zone) with the call's time quality and source type, or "No call"
- * for a report-only event (never a time taken from the release).
+ * The call's start time in the viewer's timezone with its time quality and source type ("first-party time · via wire"),
+ * or "No call" for a report-only event (never a time taken from the release). The company's own zone is not shown:
+ * every time on the page is the viewer's.
  */
-export function CalendarCallCell({ event }: { event: V2Event }) {
+export function CalendarTimeCell({ event }: { event: V2Event }) {
     const { calendar } = event;
 
     if (hasNoCall(calendar)) {
@@ -136,25 +91,15 @@ export function CalendarCallCell({ event }: { event: V2Event }) {
 
     const call = calendar?.call;
 
-    // A date-only call already says "date only" under its day (`CallTime`): the quality would repeat it.
-    const quality = call?.time_quality && !(call.time_quality === "date_only" && event.call_time_source === null)
-        ? CALL_TIME_QUALITY_LABELS[call.time_quality]
-        : null;
+    // A date-only call already reads "Time TBA": "date only" would repeat it.
+    const quality = call?.time_quality && call.time_quality !== "date_only" ? CALL_TIME_QUALITY_LABELS[call.time_quality] : null;
 
-    const source = call?.source;
+    const meta = [quality, call?.source?.type ? `via ${call.source.type}` : null].filter(Boolean).join(" · ");
 
     return (
         <div className="flex flex-col">
-            <CallTime event={event} />
-            {(quality || source?.type) && (
-                <span className={CELL_META_CLASS}>
-                    {[
-                        quality,
-                        source?.type ? `via ${source.type}` : null,
-                        source?.tz ? `${source.tz}${source.tz_inferred ? " (inferred)" : ""}` : null,
-                    ].filter(Boolean).join(" · ")}
-                </span>
-            )}
+            <CallClock event={event} />
+            {meta && <span className={CELL_META_CLASS}>{meta}</span>}
         </div>
     );
 }
