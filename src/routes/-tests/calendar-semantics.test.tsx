@@ -92,6 +92,18 @@ describe("validateCalendarSearch", () => {
         expect(validateCalendarSearch({ calendarStatus: "held", dateKind: "report" })).toMatchObject({ calendarStatus: undefined, dateKind: undefined });
     });
 
+    it("call status Live drops a replay capture the API lists as live (it reads \"Replay\")", () => {
+        const row = { calendar: { status: "confirmed" as const }, session: "amc" as const };
+
+        expect(matchesCalendarSearch({ ...row, capture_mode: "replay" }, { status: "live" })).toBe(false);
+
+        expect(matchesCalendarSearch({ ...row, capture_mode: "live" }, { status: "live" })).toBe(true);
+
+        expect(matchesCalendarSearch(row, { status: "live" })).toBe(true);
+
+        expect(matchesCalendarSearch({ ...row, capture_mode: "replay" }, { status: "ended" })).toBe(true);
+    });
+
     it("filters the loaded rows by session and event status (no `/v1/events` parameter)", () => {
         const row = { calendar: { status: "confirmed" as const }, session: "amc" as const };
 
@@ -169,5 +181,124 @@ describe("callBadgeStatus (every capture status shown, not only Live / Published
         render(<CalendarRowStatus event={{ ...call("missed"), expired_reason: null }} />);
 
         expect(screen.getByText("Missed")).toHaveAttribute("title", expect.stringContaining("Date: Confirmed · Capture: Missed"));
+    });
+});
+
+describe("callBadgeStatus with capture_mode / awaiting_replay (Data API 11.4, backend capture-mode-on-events task 3)", () => {
+    const START = "2026-11-25T14:00:00.000Z";
+
+    const BEFORE = Date.parse("2026-11-25T13:00:00.000Z");
+
+    const AFTER = Date.parse("2026-11-25T14:10:00.000Z");
+
+    type Mode = "live" | "replay" | null | undefined;
+
+    const call = (capture_status: string, capture_mode: Mode, awaiting_replay?: boolean, date_status: V2Event["date_status"] = "confirmed") => {
+        const event = { ...CALENDAR_EVENT, capture_status, date_status, scheduled_at: START } as V2Event;
+
+        if (capture_mode !== undefined) event.capture_mode = capture_mode;
+
+        if (awaiting_replay !== undefined) event.awaiting_replay = awaiting_replay;
+
+        return event;
+    };
+
+    // The rule table of task 3, one row each.
+    it.each([
+        ["published + an active upgrade replay", call("published", "replay"), "published"],
+        ["published, no run", call("published", null, false), "published"],
+        ["captured + replay", call("captured", "replay"), "processing"],
+        ["captured + live", call("captured", "live"), "processing"],
+        ["capturing + replay", call("capturing", "replay"), "replay"],
+        ["capturing + live", call("capturing", "live"), "live"],
+        ["capturing without the field", call("capturing", undefined), "live"],
+        ["armed + replay", call("armed", "replay"), "replay"],
+        ["armed + live", call("armed", "live"), "starting"],
+        ["expired + replay", call("expired", "replay"), "expired"],
+        ["no_call + replay", call("no_call", "replay"), "no_call"],
+        ["missed + awaiting_replay", call("missed", null, true), "awaiting_replay"],
+        ["missed without hand-off", call("missed", null, false), "missed"],
+        ["missed + an active replay", call("missed", "replay", false), "awaiting_replay"],
+        ["missed + live run, no hand-off", call("missed", "live", false), "missed"],
+        ["pending + replay after the start (a queued attempt)", call("pending", "replay"), "awaiting_replay"],
+        ["pending + live after the start", call("pending", "live"), "not_captured"],
+        ["replay_only after the start", call("replay_only", null), "awaiting_replay"],
+        ["cancelled + missed + awaiting_replay", call("missed", null, true, "cancelled"), "cancelled"],
+        ["postponed + armed + replay", call("armed", "replay", false, "postponed"), "postponed"],
+        ["cancelled + capturing + replay (a capture beats the date)", call("capturing", "replay", false, "cancelled"), "replay"],
+    ] as const)("%s → %s", (_label, event, expected) => {
+        expect(callBadgeStatus(event, AFTER)).toBe(expected);
+    });
+
+    it("pending + replay before the start keeps the date status", () => {
+        expect(callBadgeStatus(call("pending", "replay"), BEFORE)).toBe("confirmed");
+
+        expect(callBadgeStatus(call("pending", "replay", false, "estimated"), BEFORE)).toBe("estimated");
+    });
+
+    // The README's life-cycle table of a probe-mode call, in order.
+    it.each([
+        ["before the start, live run scheduled", call("pending", "live", false), BEFORE, "confirmed"],
+        ["probe armed (its 60 s are not mirrored)", call("armed", "live", false), AFTER, "starting"],
+        ["probe ended probe:media, no replay run yet", call("missed", null, true), AFTER, "awaiting_replay"],
+        ["replay attempt created, waiting", call("pending", "replay", false), AFTER, "awaiting_replay"],
+        ["replay armed", call("armed", "replay", false), AFTER, "replay"],
+        ["replay capturing", call("capturing", "replay", false), AFTER, "replay"],
+        ["replay transcribing", call("captured", "replay", false), AFTER, "processing"],
+        ["replay published", call("published", null, false), AFTER, "published"],
+        ["replay attempt failed, follow-up not run yet (open decision 1)", call("missed", null, false), AFTER, "missed"],
+        ["follow-up queued the next attempt", call("pending", "replay", false), AFTER, "awaiting_replay"],
+        ["follow-up escalated (a real miss)", call("missed", null, false), AFTER, "missed"],
+        ["recovery from stored audio (live mode)", call("captured", "live", false), AFTER, "processing"],
+    ] as const)("life cycle: %s → %s", (_label, event, now, expected) => {
+        expect(callBadgeStatus(event, now)).toBe(expected);
+    });
+
+    it("an event without both fields reads as before for every status", () => {
+        for (const capture of ["armed", "captured", "capturing", "expired", "missed", "no_call", "not_started", "pending", "published", "replay_only", "something_new"]) {
+            for (const now of [BEFORE, AFTER]) {
+                expect(callBadgeStatus(call(capture, undefined), now)).toBe(callBadgeStatus(call(capture, null, false), now));
+            }
+        }
+
+        expect(callBadgeStatus(call("capturing", undefined), AFTER)).toBe("live");
+
+        expect(callBadgeStatus(call("missed", undefined), AFTER)).toBe("missed");
+
+        expect(callBadgeStatus(call("pending", undefined), AFTER)).toBe("not_captured");
+    });
+
+    it("'Replay' has no live dot; 'Live' keeps it", () => {
+        const { container, unmount } = render(<CalendarRowStatus event={{ ...call("capturing", "replay"), expired_reason: null }} />);
+
+        expect(screen.getByText("Replay")).toBeInTheDocument();
+
+        expect(container.querySelector(".animate-pulse")).toBeNull();
+
+        unmount();
+
+        const live = render(<CalendarRowStatus event={{ ...call("capturing", "live"), expired_reason: null }} />);
+
+        expect(screen.getByText("Live")).toBeInTheDocument();
+
+        expect(live.container.querySelector(".animate-pulse")).not.toBeNull();
+    });
+
+    it("the tooltip names the run kind and the probe hand-off", () => {
+        render(<CalendarRowStatus event={{ ...call("missed", null, true), expired_reason: null }} />);
+
+        expect(screen.getByText("Awaiting replay")).toHaveAttribute("title", expect.stringContaining("Date: Confirmed · Capture: Missed · Live capture handed over to the replay"));
+
+        cleanup();
+
+        render(<CalendarRowStatus event={{ ...call("capturing", "replay"), expired_reason: null }} />);
+
+        expect(screen.getByText("Replay")).toHaveAttribute("title", expect.stringContaining("Capture: Capturing · Run: replay"));
+
+        cleanup();
+
+        render(<CalendarRowStatus event={{ ...call("pending", "live"), expired_reason: null }} />);
+
+        expect(screen.getByText("Not captured")).toHaveAttribute("title", expect.stringContaining("Run: live"));
     });
 });

@@ -433,6 +433,7 @@ export function InsiderHoldingsView({
 }
 
 const SOURCE_LABELS: Record<V2InsiderTradeDetail["source"], string> = {
+    edgar: "Realtime SEC filing feed",
     f345: "SEC Form 3/4/5 data set",
     sec_api: "Realtime Form 4 feed",
 };

@@ -12,6 +12,7 @@ import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { Section } from "@/components/ui/section";
 import { isEarningsEventLiveish, useV2PriceAttribution } from "@/lib/api/queries";
+import { isReplayCapture } from "@/lib/earnings/capture-mode";
 import { formatInstant } from "@/lib/format";
 import { liveHighlightList, parseKeywords } from "@/lib/live/live-highlights";
 import { textBehindEdgeS } from "@/lib/live/live-sync";
@@ -179,7 +180,7 @@ function LiveCallCard({ event, live }: { event: V2Event; live: LiveCall }) {
 
     // The price line's backlog: the live minute rows (a 404 = none yet). Settled rows of the post-call run use another
     // reference, so only live rows seed the line.
-    const minuteRows = useV2PriceAttribution(event.event_id, { live: isEarningsEventLiveish(event) }).data;
+    const minuteRows = useV2PriceAttribution(event.event_id, { live: isEarningsEventLiveish(event) && !isReplayCapture(event) }).data;
 
     const priceSeed = minuteRows?.live ? minuteRows.buckets : [];
 

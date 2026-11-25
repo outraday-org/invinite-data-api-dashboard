@@ -85,6 +85,14 @@ describe("EventVideoSlot", () => {
         expect(screen.getByRole("button", { name: `Play video: ${GTC.title}` })).toBeInTheDocument();
     });
 
+    it("a capturing REPLAY is no live capture: the video stays shown, no \"Watch the broadcast\"", () => {
+        render(<EventVideoSlot event={{ capture_mode: "replay", capture_status: "capturing", video: GTC }} />);
+
+        expect(screen.getByRole("button", { name: `Play video: ${GTC.title}` })).toBeInTheDocument();
+
+        expect(screen.queryByRole("button", { name: "Watch the broadcast" })).toBeNull();
+    });
+
     it("keeps a playing video when a live capture starts (the 30-s refetch)", () => {
         const { container, rerender } = render(<EventVideoSlot event={{ capture_status: "published", video: GTC }} />);
 

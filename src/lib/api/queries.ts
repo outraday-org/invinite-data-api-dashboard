@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import type { AssetGroupCategory } from "@/lib/earnings/documents";
 import type { ValueLookup } from "@/lib/financials/value-ref";
 
+import { withoutReplayCaptures } from "@/lib/earnings/capture-mode";
 import { isSymbolParam } from "@/lib/instruments";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
@@ -404,7 +405,11 @@ export function useEarningsInfinite<TPage extends { next_cursor?: null | string 
 // Pipeline capture states of a call that is (about to be) live or just ended without a transcript.
 const LIVE_CAPTURE_STATUSES = new Set(["armed", "captured", "capturing"]);
 
-/** Whether a call may be live (or just ended) and not published yet: the call page then polls it. */
+/**
+ * Whether a call may be live (or just ended) and not published yet: the call page then polls it. A replay capture
+ * (`capture_mode` "replay") counts too, so its badge moves on; the live experience (player, live list, live minute
+ * rows) asks `isReplayCapture` (`src/lib/earnings/capture-mode.ts`) on top.
+ */
 export function isEarningsEventLiveish(event: Pick<V2Event, "capture_status" | "has_transcript">) {
     return !event.has_transcript && LIVE_CAPTURE_STATUSES.has(event.capture_status);
 }
@@ -804,14 +809,16 @@ export function useV2EventsInfinite(input: V2EventsInput) {
 }
 
 /**
- * Events being captured right now (`status=live&type=all`, one page), refetched every 15 s. Status-aware (no toast: a
+ * Events being captured LIVE right now (`status=live&type=all`, one page, replay captures dropped), refetched every 15 s. Status-aware (no toast: a
  * failing refetch would toast every 15 s; the strip shows a note). `enabled: false` keeps it idle.
  */
 export function useV2LiveEvents(enabled = true) {
     return useEarningsQuery<V2EventsResponse>({
         enabled,
         errorMessage: null,
-        load: apiKey => getV2Events({ data: { apiKey, limit: 200, status: ["live"], type: "all" } }),
+        // The API's live list counts a capturing replay (README open decision 3 of backend capture-mode-on-events): every
+        // live surface (strip, /live-calls, landing, sidebar count, the call page's session) reads it without them.
+        load: apiKey => getV2Events({ data: { apiKey, limit: 200, status: ["live"], type: "all" } }).then(withoutReplayCaptures),
         queryKey: ["v2", "events", "live"],
         refetchInterval: 15 * 1000,
         staleTime: EARNINGS_LIST_STALE_MS,

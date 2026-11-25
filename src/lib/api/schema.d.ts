@@ -6168,7 +6168,7 @@ export interface components {
             side: "buy" | "sell";
             /**
              * Format: date
-             * @description Date of the transaction (YYYY-MM-DD); sec_api rows (realtime Form 4 feed) leave it null
+             * @description Date of the transaction (YYYY-MM-DD); sec_api rows leave it null, edgar rows (the realtime feed built from the filing's own XML) fill it
              * @example 2026-11-10
              */
             transaction_date: null | string;
@@ -6183,7 +6183,7 @@ export interface components {
              */
             owner_cik: null | string;
             /**
-             * @description Ownership form: D = direct, I = indirect; sec_api rows (realtime Form 4 feed) leave it null
+             * @description Ownership form: D = direct, I = indirect; sec_api rows leave it null, edgar rows (the realtime feed built from the filing's own XML) fill it
              * @example D
              * @enum {string|null}
              */
@@ -6191,7 +6191,7 @@ export interface components {
             /** @description Nature of an indirect ownership as filed (e.g. By Trust) */
             nature_of_ownership: null | string;
             /**
-             * @description true = a derivative-security line (option, RSU, warrant); false = a non-derivative line (sec_api rows are always false)
+             * @description true = a derivative-security line (option, RSU, warrant); false = a non-derivative line (sec_api rows are always false; edgar and f345 rows carry derivative lines too)
              * @example false
              */
             is_derivative: boolean;
@@ -6211,16 +6211,16 @@ export interface components {
             underlying_security_title: null | string;
             /** @description Number of underlying shares of a derivative */
             underlying_shares: null | number;
-            /** @description The filing's footnotes referenced by this line; sec_api rows (realtime Form 4 feed) leave it null */
+            /** @description The filing's footnotes referenced by this line; sec_api rows leave it null, edgar rows (the realtime feed built from the filing's own XML) fill it */
             footnotes: Array<components["schemas"]["InsiderTradeFootnote"]> | null;
-            /** @description true = the filer marked the transaction as made under a Rule 10b5-1 trading plan; sec_api rows (realtime Form 4 feed) leave it null */
+            /** @description true = the filer marked the transaction as made under a Rule 10b5-1 trading plan; sec_api rows leave it null, edgar rows (the realtime feed built from the filing's own XML) fill it */
             is_10b5_1: boolean | null;
             /**
-             * @description Origin of the row: sec_api = the realtime Form 4 feed; f345 = the SEC insider transactions dataset (Forms 3, 4, 5), whose rows carry the fields above
+             * @description Origin of the row: sec_api = the earlier realtime Form 4 feed, which leaves the fields above null; edgar = the realtime feed built from the SEC filing's own XML (Forms 3, 4, 5), one row per reporting owner, which fills them; f345 = the SEC insider transactions dataset (Forms 3, 4, 5), whose rows carry the fields above
              * @example sec_api
              * @enum {string}
              */
-            source: "f345" | "sec_api";
+            source: "edgar" | "f345" | "sec_api";
         };
         /**
          * InsiderTradeFootnote
@@ -6340,11 +6340,11 @@ export interface components {
             /** @description The filing's footnotes referenced by this line */
             footnotes: Array<components["schemas"]["InsiderTradeFootnote"]> | null;
             /**
-             * @description f345 = the SEC Form 3/4/5 data set (quarterly, the record), sec_api = the realtime feed
+             * @description f345 = the SEC Form 3/4/5 data set (quarterly, the record); sec_api = the earlier realtime feed; edgar = the realtime feed built from the SEC filing's own XML
              * @example f345
              * @enum {string}
              */
-            source: "f345" | "sec_api";
+            source: "edgar" | "f345" | "sec_api";
         };
         /**
          * Ipo
@@ -6771,6 +6771,13 @@ export interface components {
              * @enum {string|null}
              */
             expired_reason?: "agent_different_date" | "agent_no_call" | "agent_no_webcast" | "agent_notice_pending" | "date_passed" | "duplicate" | "early_results_filing" | "inactive_company" | "never_planned" | "non_call_issuer" | "release_names_no_call" | "results_without_call" | "superseded_by_reschedule" | "superseded_estimate" | null;
+            /**
+             * @description The kind of the capture run that is planned or running for the call: `live` = captured while the call runs, `replay` = a recording captured after the call (a missed call being recovered; capture_status then moves through pending / armed / capturing / captured like a live capture). Null when no capture run is planned or running (for example after publication or a final miss)
+             * @enum {string|null}
+             */
+            capture_mode?: "live" | "replay" | null;
+            /** @description True while capture_status is `missed` only because the live capture handed the call over to a later replay capture (live capture probe mode) that is still being attempted and has not produced a transcript yet; false otherwise, including every published call and a call whose replay attempts are exhausted. It turns false as soon as the replay capture is queued; capture_mode then reads `replay` */
+            awaiting_replay?: boolean;
             /** @description How often the call was rescheduled */
             reschedule_count: number;
             /** @description A transcript is available */
