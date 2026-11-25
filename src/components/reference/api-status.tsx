@@ -56,7 +56,7 @@ export const FAMILY_LABELS: Record<Family["family"] | Service["family"], string>
     market: "Market",
     metadata: "Metadata",
     news: "News",
-    ownership_forms: "Ownership forms",
+    ownership_forms: "Ownership filings",
     sec_filings: "SEC filings",
     websocket: "WebSocket",
 };
